@@ -80,6 +80,7 @@ $.components.bind(path, value, [selector]); // --> bind value to model according
 $.components.validate([path], [selector]); // --> validate values
 $.components.reset([path], [selector]); // --> reset dirty, valid to default state (dirty=true,valid=true)
 $.components.refresh([path], [selector]); // --> refresh setter
+$.components.get(selector); // --> Component instance
 ```
 
 ## Example

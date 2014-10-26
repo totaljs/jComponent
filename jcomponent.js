@@ -91,6 +91,10 @@ $.components.valid = function(value, container) {
     return valid;
 };
 
+$.components.get = function(selector) {
+    return $(selector).data('component');
+};
+
 $.components.dirty = function(value, container) {
 
     if (typeof(value) !== 'boolean') {
