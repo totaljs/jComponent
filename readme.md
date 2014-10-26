@@ -63,8 +63,8 @@ COMPONENT('input', function() {
     this.element; // jQuery object
 
     // Methods
-    this.get(); // get a value according to path from a model
-    this.set(value); // set a value according to path into the model
+    this.get([path]); // get a value according to path from a model
+    this.set([path], value); // set a value according to path into the model
 });
 ```
 

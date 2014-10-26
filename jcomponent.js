@@ -237,18 +237,29 @@ function Component(type, container) {
     };
 }
 
-Component.prototype.get = function() {
+Component.prototype.get = function(path) {
     var self = this;
-    var path = self.element.attr('path');
+
+    if (!path)
+        path = self.element.attr('path');
+
     if (!path)
         return;
+
     return component_getvalue(self.container, path);
 };
 
-Component.prototype.set = function(value) {
+Component.prototype.set = function(path, value) {
 
     var self = this;
-    var path = self.element.attr('path');
+
+    if (value === undefined) {
+        value = path;
+        path = undefined;
+    }
+
+    if (!path)
+        path = self.element.attr('path');
 
     if (!path)
         return self;
