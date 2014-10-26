@@ -176,12 +176,18 @@ $.components.refresh = function(path, container, value) {
 
     $.components.each(function(obj) {
         var current = obj.element.attr('path');
+
+        if (obj.watch)
+            obj.watch(value, path);
+
         if (path && path !== current)
             return;
         if (current === undefined)
             return;
+
         if (obj.setter)
             obj.setter(value === undefined ? component_getvalue(window, current) : value);
+
     }, container);
 };
 
