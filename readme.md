@@ -100,7 +100,7 @@ COMPONENT('label', function() {
 COMPONENT('button', function() {    
     this.make = '<button disabled="true">' + this.element.text() + '</button>';
     this.watch = function() {
-        this.element.find('button').prop({ disabled: $.components.dirty() && $.components.valid() });
+        this.element.find('button').prop({ disabled: $.components.dirty() === true || $.components.valid() === false });
     };
 });
 ```
