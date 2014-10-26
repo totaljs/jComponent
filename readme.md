@@ -60,6 +60,7 @@ COMPONENT('input', function() {
     // Properties
     this.dirty; // Boolean
     this.valid; // Boolean
+    this.element; // jQuery object
 
     // Methods
     this.get(); // get a value according to path from a model
