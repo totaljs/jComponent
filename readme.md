@@ -1,4 +1,4 @@
-# jQuery Component Framework with two way binding
+# jQuery Component Framework with two way bindings
 
 - only __5.4 kB__ (minified)
 - great functionality
