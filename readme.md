@@ -4,6 +4,7 @@
 - great functionality
 - similar functionality as directives from Angularjs
 - supports validation
+- supports nested components
 - best of use with <www.totaljs.com> - web application framework for node.js
 - [DEMO EXAMPLE](http://source.858project.com/jquery-jcomponent-demo.html)
 
