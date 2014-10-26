@@ -44,6 +44,8 @@ $.components = function(container) {
         init(el, obj);
 
     });
+
+
 };
 
 function init(el, obj) {
@@ -95,6 +97,19 @@ $.components.get = function(selector) {
     return $(selector).data('component');
 };
 
+$.components.emit = function() {
+
+    var args = arguments;
+
+    $('component').each(function() {
+        var el = $(this);
+        var obj = el.data('component');
+        obj.$emit.apply(obj, args);
+    });
+
+    return $.components;
+};
+
 $.components.dirty = function(value, container) {
 
     if (typeof(value) !== 'boolean') {
@@ -105,9 +120,8 @@ $.components.dirty = function(value, container) {
 
     var key = 'dirty' + (container ? container.selector : '');
 
-    if (typeof(value) !== 'boolean' && $components_cache[key] !== undefined) {
+    if (typeof(value) !== 'boolean' && $components_cache[key] !== undefined)
         return $components_cache[key];
-    }
 
     var dirty = true;
 
@@ -223,6 +237,7 @@ function $components_cache_clear(name) {
 
 function Component(type, container) {
 
+    this.events = {};
     this.dirty = true;
     this.valid = true;
     this.type = type;
@@ -242,6 +257,31 @@ function Component(type, container) {
         this.element.find('input[data-bind],textarea[data-bind],select[data-bind]').val(value === undefined || value === null ? '' : value);
     };
 }
+
+Component.prototype.on = function(name, fn) {
+    if (!this.events[name])
+        this.events[name] = [fn];
+    else
+        this.events[name].push(fn);
+    return this;
+};
+
+Component.prototype.emit = function() {
+    $.components.emit.apply($.components, arguments);
+};
+
+Component.prototype.$emit = function(name, args) {
+
+    var e = this.events[name];
+
+    if (!e)
+        return;
+
+    for (var i = 0, length = e.length; i < length; i++)
+        e[i].apply(this, args);
+
+    return this;
+};
 
 Component.prototype.get = function(path) {
     var self = this;

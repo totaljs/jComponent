@@ -57,6 +57,13 @@ COMPONENT('input', function() {
         this.element.find('input[data-bind],textarea[data-bind],select[data-bind]').val(value === undefined || value === null ? '' : value);
     };
 
+    this.on('some-event', function() {
+        console.log('HELLO FROM EVENT');
+    });
+
+    // $.components.emit('some-event');
+    // this.emit('some-event');
+
     // Properties
     this.dirty; // Boolean
     this.valid; // Boolean
@@ -81,6 +88,7 @@ $.components.validate([path], [selector]); // --> validate values
 $.components.reset([path], [selector]); // --> reset dirty, valid to default state (dirty=true,valid=true)
 $.components.refresh([path], [selector]); // --> refresh setter
 $.components.get(selector); // --> Component instance
+$.components.emit(name, arg1, arg2); // --> Trigger event
 ```
 
 ## Example
@@ -97,7 +105,7 @@ COMPONENT('label', function() {
     this.make = '<label></label>';
     this.setter = function(value) {
         this.element.find('label').html(value);
-    };
+    };    
 });
 
 COMPONENT('button', function() {    
