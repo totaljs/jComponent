@@ -120,6 +120,12 @@ $.components.on('event-type', fn);
 
 ```
 
+## jQuery
+
+```js
+$('#my-component').component() // ---> Component object
+```
+
 ## Example
 
 ```js

@@ -5,6 +5,10 @@ var $components_events = {};
 var COM_DATA_BIND_SELECTOR = 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
 var COM_ATTR = '[data-component]';
 
+$.fn.component = function() {
+    return this.data('component');
+};
+
 $.components = function(container) {
 
     var els = container ? container.find(COM_ATTR) : $(COM_ATTR);
