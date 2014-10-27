@@ -106,6 +106,18 @@ $.components.remove([path], [selector]); // --> remove components
 $.components.get(selector); // --> Component instance
 $.components.invalid([path], [selector]) // --> Array with all invalid components
 $.components.emit(name, arg1, arg2); // --> Trigger event
+$.components.on('event-type', fn);
+
+// event-type:
+// value
+// valid
+// dirty
+// validate
+// state
+// reset
+// refresh
+// destroy
+
 ```
 
 ## Example

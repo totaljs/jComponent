@@ -1,12 +1,20 @@
 var $components = {};
 var $components_cache = {};
+var $components_events = {};
+
 var COM_DATA_BIND_SELECTOR = 'input[data-bind],textarea[data-bind],select[data-bind]';
 
 $.components = function(container) {
 
     var els = container ? container.find('component') : $('component');
+    var skip = 0;
 
     els.each(function() {
+
+        if (skip > 0) {
+            skip--;
+            return;
+        }
 
         var el = $(this);
         var type = el.attr('type');
@@ -15,6 +23,7 @@ $.components = function(container) {
         if (!component)
             return;
 
+        skip += el.find('component').length;
         if (el.data('component'))
             return;
 
@@ -45,7 +54,18 @@ $.components = function(container) {
         init(el, obj);
 
     });
+};
 
+$.components.on = function(name, fn) {
+    var arr = name.split('+');
+    for (var i = 0, length = arr.length; i < length; i++) {
+        var id = arr[i].replace(/\s/g, '');
+        if (!$components_events[id])
+            $components_events[id] = [fn];
+        else
+            $components_events[id].push(fn);
+    }
+    return $.components;
 };
 
 function init(el, obj) {
@@ -96,16 +116,18 @@ $.components.valid = function(value, container) {
         if (value !== undefined) {
             if (obj.state)
                 arr.push(obj);
-            obj.valid = value;
+            obj.$valid = value;
         }
 
-        if (obj.valid === false)
+        if (obj.$valid === false)
             valid = false;
 
     }, container);
 
-    if (value !== undefined && arr.length > 0)
+    if (value !== undefined && arr.length > 0) {
         $.components.state(arr, 'valid', valid);
+        $.components.$emit('valid', valid);
+    }
 
     $components_cache[key] = valid;
     return valid;
@@ -113,6 +135,24 @@ $.components.valid = function(value, container) {
 
 $.components.get = function(selector) {
     return $(selector).data('component');
+};
+
+$.components.$emit = function(name) {
+
+    var e = $components_events[name];
+
+    if (!e)
+        return;
+
+    var args = [];
+
+    for (var i = 1, length = arguments.length; i < length; i++)
+        args.push(arguments[i]);
+
+    for (var i = 0, length = e.length; i < length; i++)
+        e[i].apply(this, args);
+
+    return this;
 };
 
 $.components.emit = function() {
@@ -149,17 +189,19 @@ $.components.dirty = function(value, container) {
         if (value !== undefined) {
             if (obj.state)
                 arr.push(obj);
-            obj.dirty = value;
+            obj.$dirty = value;
         }
 
-        if (obj.dirty === false)
+        if (obj.$dirty === false)
             dirty = false;
     }, container);
 
     $components_cache[key] = dirty;
 
-    if (value !== undefined && arr.length > 0)
+    if (value !== undefined && arr.length > 0) {
         $.components.state(arr, 'dirty', dirty);
+        $.components.$emit('dirty', dirty);
+    }
 
     return dirty;
 };
@@ -206,14 +248,18 @@ $.components.validate = function(path, container) {
         var current = obj.element.attr('path');
         if (path && path !== current)
             return;
+
         if (obj.validate)
             obj.validate(component_getvalue(window, current));
+
     }, container);
 
     $components_cache_clear('valid');
+
     if (arr.length > 0)
         $.components.state(arr, 'validate');
 
+    $.components.$emit('validate');
     return $.components;
 };
 
@@ -225,7 +271,7 @@ $.components.invalid = function(path, container) {
         var current = obj.element.attr('path');
         if (path && path !== current)
             return;
-        if (obj.valid === false)
+        if (obj.$valid === false)
             arr.push(obj);
     }, container);
 
@@ -237,6 +283,8 @@ $.components.state = function(container, name, value) {
     if (container instanceof Array) {
         for (var i = 0, length = container.length; i < length; i++)
             container[i].state(name, value);
+
+        $.components.$emit('state', name, value);
         return;
     }
 
@@ -244,6 +292,8 @@ $.components.state = function(container, name, value) {
         if (obj.state)
             obj.state(name, value);
     }, container);
+
+    $.components.$emit('state', name, value);
 };
 
 $.components.reset = function(path, container) {
@@ -264,8 +314,9 @@ $.components.reset = function(path, container) {
         var current = obj.element.attr('path');
         if (path && path !== current)
             return;
-        obj.dirty = false;
-        obj.valid = true;
+        obj.$dirty = false;
+        obj.$valid = true;
+
     }, container);
 
     $components_cache_clear();
@@ -273,6 +324,7 @@ $.components.reset = function(path, container) {
     if (arr.length > 0)
         $.components.state(obj, 'reset');
 
+    $.components.$emit('reset');
     return $.components;
 };
 
@@ -313,6 +365,7 @@ $.components.refresh = function(path, container, value) {
     if (arr.length > 0)
         $.components.state(arr, 'refresh');
 
+    $.components.$emit('refresh');
     return $.components;
 };
 
@@ -351,8 +404,8 @@ function $components_cache_clear(name) {
 function Component(type, container) {
 
     this.events = {};
-    this.dirty = true;
-    this.valid = true;
+    this.$dirty = true;
+    this.$valid = true;
     this.type = type;
 
     this.make;
@@ -373,6 +426,26 @@ function Component(type, container) {
     };
 }
 
+Component.prototype.valid = function(value) {
+    if (value === undefined)
+        return this.$valid;
+    this.$valid = value;
+    $components_cache_clear('valid');
+    $.components.state(undefined, 'valid', value);
+    $.components.$emit('valid', value);
+    return this;
+};
+
+Component.prototype.dirty = function(value) {
+    if (value === undefined)
+        return this.$dirty;
+    this.$dirty = value;
+    $components_cache_clear('dirty');
+    $.components.state(undefined, 'dirty', value);
+    $.components.$emit('dirty', value);
+    return this;
+};
+
 Component.prototype.remove = function(noClear) {
 
     if (this.destroy)
@@ -387,14 +460,19 @@ Component.prototype.remove = function(noClear) {
 
     $.components.$removed = true;
     $.components.state(undefined, 'destroy', this);
+    $.components.$emit('destroy', this.type, this.element.attr('path'));
 
 };
 
 Component.prototype.on = function(name, fn) {
-    if (!this.events[name])
-        this.events[name] = [fn];
-    else
-        this.events[name].push(fn);
+    var arr = name.split('+');
+    for (var i = 0, length = arr.length; i < length; i++) {
+        var id = arr[i].replace(/\s/g, '');
+        if (!this.events[id])
+            this.events[id] = [fn];
+        else
+            this.events[id].push(fn);
+    }
     return this;
 };
 
@@ -442,12 +520,12 @@ Component.prototype.set = function(path, value) {
     if (!path)
         return self;
 
-    self.dirty = false;
+    self.$dirty = false;
 
     if (self.validate)
-        self.valid = self.validate(value, 1);
+        self.$valid = self.validate(value, 1);
     else
-        self.valid = true;
+        self.$valid = true;
 
     component_setvalue(self.container, path, value);
     $components_cache_clear();
@@ -474,6 +552,7 @@ Component.prototype.set = function(path, value) {
     if (arr.length > 0)
         $.components.state(arr, 'value', path, value);
 
+    $.components.$emit('value', path, value);
     return self;
 };
 
