@@ -99,8 +99,7 @@ $.components.dirty([value], [selector]); // --> are values dirty? or setter dirt
 $.components.valid([value], [selector]); // --> are values valid? or setter valid value.
 $.components.bind(path, value, [selector]); // --> bind value to model according to path
 $.components.validate([path], [selector]); // --> validate values
-$.components.reset([path], [selector]); // --> reset dirty, valid to default state (dirty=true,
-    valid=true)
+$.components.reset([path], [selector]); // --> reset dirty, valid to default state (dirty=true, valid=true)
 $.components.update([path], [selector]); // --> refresh setter
 $.components.refresh([path], [selector]); // --> refresh setter (@alias to update())
 $.components.remove([path], [selector]); // --> remove components
