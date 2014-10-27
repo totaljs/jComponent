@@ -362,10 +362,17 @@ $.components.refresh = function(path, container, value) {
         if (current === undefined)
             return;
 
+        var val = value === undefined ? component_getvalue(window, current) : value;
+
+        if (obj.validate)
+            obj.$valid = obj.validate(val, 3);
+
         if (obj.setter)
-            obj.setter(value === undefined ? component_getvalue(window, current) : value);
+            obj.setter(val);
 
     }, container);
+
+    $components_cache_clear('valid');
 
     if (arr.length > 0)
         $.components.state(arr, 'refresh');
@@ -534,35 +541,27 @@ Component.prototype.set = function(path, value) {
         self.$valid = true;
 
     $components_cache_clear();
-
-    if (self.$valid)
-        component_setvalue(self.container, path, value);
-    else
-        return;
+    component_setvalue(self.container, path, value);
 
     var arr = [];
 
     // emit change
     $.components.each(function(obj) {
-
         if (obj.state)
             arr.push(obj);
-
         if (obj.watch)
             obj.watch(value, path);
         if (path !== obj.element.attr('data-component-path'))
             return;
         if (obj.validate)
-            self.validate(value, 2);
+            obj.validate(value, 2);
         if (!obj.setter)
             return;
         obj.setter(value);
     });
-
     if (arr.length > 0)
-        $.components.state(arr, 'value', path, value);
-
-    $.components.$emit('value', path, value);
+        $.components.state(arr, 'value', path, value, self.$valid);
+    $.components.$emit('value', path, value, self.$valid);
     return self;
 };
 

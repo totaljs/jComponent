@@ -40,6 +40,7 @@ COMPONENT('input', function() {
         // type === 0 - initialized value
         // type === 1 - value change a user through a INPUT/SELECT/TEXTAREA
         // type === 2 - new value is assigned into the component
+        // type === 3 - refresh/update
         return value.length > 0;
     };
     
