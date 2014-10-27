@@ -208,7 +208,7 @@ $.components.dirty = function(value, container) {
 
 $.components.bind = function(path, value, container) {
     component_setvalue(window, path, value);
-    $.components.refresh(path, container, value);
+    $.components.refresh(path, container, component_getvalue(window, path));
     return $.components;
 };
 
@@ -422,6 +422,7 @@ function Component(type, container) {
     };
 
     this.setter = function(value) {
+        console.log('OK');
         this.element.find(COM_DATA_BIND_SELECTOR).val(value === undefined || value === null ? '' : value);
     };
 }
@@ -608,10 +609,16 @@ function component_findpipe(current, name, value) {
         return pipe;
 
     if (index !== -1) {
-        current[name][index] = value;
+        if (typeof(value) === 'function')
+            current[name][index] = value(current[name][index]);
+        else
+            current[name][index] = value;
         pipe = current[name][index];
     } else {
-        current[name] = value;
+        if (typeof(value) === 'function')
+            current[name] = value(current[name]);
+        else
+            current[name] = value;
         pipe = current[name];
     }
 
