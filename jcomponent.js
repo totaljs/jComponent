@@ -89,16 +89,23 @@ $.components.valid = function(value, container) {
         return $components_cache[key];
 
     var valid = true;
+    var arr = value !== undefined ? [] : null;
 
     $.components.each(function(obj) {
-        if (value !== undefined)
+
+        if (value !== undefined) {
+            if (obj.state)
+                arr.push(obj);
             obj.valid = value;
+        }
+
         if (obj.valid === false)
             valid = false;
-    });
 
-    if (value !== undefined)
-        $.components.state(container, 'valid', valid);
+    }, container);
+
+    if (value !== undefined && arr.length > 0)
+        $.components.state(arr, 'valid', valid);
 
     $components_cache[key] = valid;
     return valid;
@@ -135,17 +142,24 @@ $.components.dirty = function(value, container) {
         return $components_cache[key];
 
     var dirty = true;
+    var arr = value !== undefined ? [] : null;
+
     $.components.each(function(obj) {
-        if (value !== undefined)
+
+        if (value !== undefined) {
+            if (obj.state)
+                arr.push(obj);
             obj.dirty = value;
+        }
+
         if (obj.dirty === false)
             dirty = false;
     }, container);
 
     $components_cache[key] = dirty;
 
-    if (value !== undefined)
-        $.components.state(container, 'dirty', dirty);
+    if (value !== undefined && arr.length > 0)
+        $.components.state(arr, 'dirty', dirty);
 
     return dirty;
 };
@@ -182,7 +196,13 @@ $.components.validate = function(path, container) {
         path = tmp;
     }
 
+    var arr = [];
+
     $.components.each(function(obj) {
+
+        if (obj.state)
+            arr.push(obj);
+
         var current = obj.element.attr('path');
         if (path && path !== current)
             return;
@@ -191,6 +211,9 @@ $.components.validate = function(path, container) {
     }, container);
 
     $components_cache_clear('valid');
+    if (arr.length > 0)
+        $.components.state(arr, 'validate');
+
     return $.components;
 };
 
@@ -210,6 +233,13 @@ $.components.invalid = function(path, container) {
 };
 
 $.components.state = function(container, name, value) {
+
+    if (container instanceof Array) {
+        for (var i = 0, length = container.length; i < length; i++)
+            container[i].state(name, value);
+        return;
+    }
+
     $.components.each(function(obj) {
         if (obj.state)
             obj.state(name, value);
@@ -224,7 +254,13 @@ $.components.reset = function(path, container) {
         path = tmp;
     }
 
+    var arr = [];
+
     $.components.each(function(obj) {
+
+        if (obj.state)
+            arr.push(obj);
+
         var current = obj.element.attr('path');
         if (path && path !== current)
             return;
@@ -233,7 +269,9 @@ $.components.reset = function(path, container) {
     }, container);
 
     $components_cache_clear();
-    $.components.state(container, 'reset');
+
+    if (arr.length > 0)
+        $.components.state(obj, 'reset');
 
     return $.components;
 };
@@ -250,14 +288,20 @@ $.components.refresh = function(path, container, value) {
         path = tmp;
     }
 
+    var arr = [];
+
     $.components.each(function(obj) {
         var current = obj.element.attr('path');
+
+        if (obj.state)
+            arr.push(obj);
 
         if (obj.watch)
             obj.watch(value, path);
 
         if (path && path !== current)
             return;
+
         if (current === undefined)
             return;
 
@@ -266,7 +310,9 @@ $.components.refresh = function(path, container, value) {
 
     }, container);
 
-    $.components.state(container, 'refresh');
+    if (arr.length > 0)
+        $.components.state(arr, 'refresh');
+
     return $.components;
 };
 
@@ -406,8 +452,14 @@ Component.prototype.set = function(path, value) {
     component_setvalue(self.container, path, value);
     $components_cache_clear();
 
+    var arr = [];
+
     // emit change
     $.components.each(function(obj) {
+
+        if (obj.state)
+            arr.push(obj);
+
         if (obj.watch)
             obj.watch(value, path);
         if (path !== obj.element.attr('path'))
@@ -421,7 +473,9 @@ Component.prototype.set = function(path, value) {
         obj.setter(value);
     });
 
-    $.components.state(undefined, 'value', path, value);
+    if (arr.length > 0)
+        $.components.state(arr, 'value', path, value);
+
     return self;
 };
 
