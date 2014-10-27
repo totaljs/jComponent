@@ -533,8 +533,12 @@ Component.prototype.set = function(path, value) {
     else
         self.$valid = true;
 
-    component_setvalue(self.container, path, value);
     $components_cache_clear();
+
+    if (self.$valid)
+        component_setvalue(self.container, path, value);
+    else
+        return;
 
     var arr = [];
 
