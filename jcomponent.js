@@ -464,8 +464,6 @@ Component.prototype.set = function(path, value) {
             obj.watch(value, path);
         if (path !== obj.element.attr('path'))
             return;
-        if (obj === self)
-            return;
         if (obj.validate)
             self.validate(value, 2);
         if (!obj.setter)
