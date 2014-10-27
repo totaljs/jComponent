@@ -2,11 +2,12 @@ var $components = {};
 var $components_cache = {};
 var $components_events = {};
 
-var COM_DATA_BIND_SELECTOR = 'input[data-bind],textarea[data-bind],select[data-bind]';
+var COM_DATA_BIND_SELECTOR = 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
+var COM_ATTR = '[data-component]';
 
 $.components = function(container) {
 
-    var els = container ? container.find('component') : $('component');
+    var els = container ? container.find(COM_ATTR) : $(COM_ATTR);
     var skip = 0;
 
     els.each(function() {
@@ -17,14 +18,14 @@ $.components = function(container) {
         }
 
         var el = $(this);
-        var type = el.attr('type');
+        var type = el.attr('data-component');
         var component = $components[type];
 
         if (!component)
             return;
 
-        skip += el.find('component').length;
-        if (el.data('component'))
+        skip += el.find(COM_ATTR).length;
+        if (el.data(COM_ATTR))
             return;
 
         var obj = component(el);
@@ -159,7 +160,7 @@ $.components.emit = function() {
 
     var args = arguments;
 
-    $('component').each(function() {
+    $(COM_ATTR).each(function() {
         var el = $(this);
         var obj = el.data('component');
         obj.$emit.apply(obj, args);
@@ -221,7 +222,7 @@ $.components.remove = function(path, container) {
 
     $components_cache_clear();
     $.components.each(function(obj) {
-        var current = obj.element.attr('path');
+        var current = obj.element.attr('data-component-path');
         if (path && path !== current)
             return;
         obj.remove(true);
@@ -245,7 +246,7 @@ $.components.validate = function(path, container) {
         if (obj.state)
             arr.push(obj);
 
-        var current = obj.element.attr('path');
+        var current = obj.element.attr('data-component-path');
         if (path && path !== current)
             return;
 
@@ -268,7 +269,7 @@ $.components.invalid = function(path, container) {
     var arr = [];
 
     $.components.each(function(obj) {
-        var current = obj.element.attr('path');
+        var current = obj.element.attr('data-component-path');
         if (path && path !== current)
             return;
         if (obj.$valid === false)
@@ -311,7 +312,7 @@ $.components.reset = function(path, container) {
         if (obj.state)
             arr.push(obj);
 
-        var current = obj.element.attr('path');
+        var current = obj.element.attr('data-component-path');
         if (path && path !== current)
             return;
         obj.$dirty = false;
@@ -343,7 +344,7 @@ $.components.refresh = function(path, container, value) {
     var arr = [];
 
     $.components.each(function(obj) {
-        var current = obj.element.attr('path');
+        var current = obj.element.attr('data-component-path');
 
         if (obj.state)
             arr.push(obj);
@@ -372,9 +373,9 @@ $.components.refresh = function(path, container, value) {
 $.components.each = function(fn, container) {
 
     if (container)
-        container = container.find('component');
+        container = container.find(COM_ATTR);
     else
-        container = $('component');
+        container = $(COM_ATTR);
 
     container.each(function() {
         var component = $(this).data('component');
@@ -407,6 +408,7 @@ function Component(type, container) {
     this.$dirty = true;
     this.$valid = true;
     this.type = type;
+    this.path;
 
     this.make;
     this.done;
@@ -422,7 +424,6 @@ function Component(type, container) {
     };
 
     this.setter = function(value) {
-        console.log('OK');
         this.element.find(COM_DATA_BIND_SELECTOR).val(value === undefined || value === null ? '' : value);
     };
 }
@@ -461,7 +462,7 @@ Component.prototype.remove = function(noClear) {
 
     $.components.$removed = true;
     $.components.state(undefined, 'destroy', this);
-    $.components.$emit('destroy', this.type, this.element.attr('path'));
+    $.components.$emit('destroy', this.type, this.element.attr('data-component-path'));
 
 };
 
@@ -498,7 +499,7 @@ Component.prototype.get = function(path) {
     var self = this;
 
     if (!path)
-        path = self.element.attr('path');
+        path = self.element.attr('data-component-path');
 
     if (!path)
         return;
@@ -516,7 +517,7 @@ Component.prototype.set = function(path, value) {
     }
 
     if (!path)
-        path = self.element.attr('path');
+        path = self.element.attr('data-component-path');
 
     if (!path)
         return self;
@@ -541,7 +542,7 @@ Component.prototype.set = function(path, value) {
 
         if (obj.watch)
             obj.watch(value, path);
-        if (path !== obj.element.attr('path'))
+        if (path !== obj.element.attr('data-component-path'))
             return;
         if (obj.validate)
             self.validate(value, 2);
@@ -562,6 +563,7 @@ function COMPONENT(type, declaration, container) {
     var fn = function(el) {
         var obj = new Component(type, container);
         obj.element = el;
+        obj.path = el.attr('data-component-path');
         declaration.call(obj);
         return obj;
     };

@@ -1,6 +1,6 @@
 # jQuery Component Framework with two way bindings
 
-- only __5.4 kB__ (minified)
+- only __3 kB__ (minified, gzipped)
 - `>= IE9`
 - great functionality
 - similar functionality as directives from Angularjs
@@ -20,7 +20,7 @@ COMPONENT('input', function() {
     
     // make() === render
     this.make = function() {
-        this.element.append('<input type="text" data-bind />');
+        this.element.append('<input type="text" data-component-bind />');
     };
 
     // or
@@ -68,7 +68,7 @@ COMPONENT('input', function() {
     // Set a value to input/select/textarea
     // OPTIONAL, default declaration:
     this.setter = function(value) {
-        this.element.find('input[data-bind],textarea[data-bind],select[data-bind]').val(value === undefined || value === null ? '' : value);
+        this.element.find('input[data-component-bind],textarea[data-component-bind],select[data-component-bind]').val(value === undefined || value === null ? '' : value);
     };
 
     this.on('some-event', function() {
@@ -124,7 +124,7 @@ $.components.on('event-type', fn);
 
 ```js
 COMPONENT('input', function() {
-    this.make = '<input type="text" data-bind /><component type="label" path="' + this.element.attr('path') + '"></component>';
+    this.make = '<input type="text" data-component-bind /><div data-component="label" data-component-path="' + this.element.attr('path') + '"></div>';
     this.validate = function(value) {
         return value.length > 0;
     };
@@ -146,8 +146,8 @@ COMPONENT('button', function() {
 ```
 
 ```html
-<component type="input" path="model.name"></component>
-<component type="button">SUBMIT</component>
+<div data-component="input" data-component-path="model.name"></div>
+<div data-component="button">SUBMIT</div>
 <script>
     var model = {};
     model.name = 'Peter';

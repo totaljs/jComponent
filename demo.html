@@ -19,12 +19,12 @@
 
     <br />
     <h1>jComponent - A component framework for jQuery</h1>
-    <p class="claim">Only 1.8 kB minified and compressed (GZIP).</p>
+    <p class="claim">Only 3 kB minified and compressed (GZIP).</p>
     <div class="content form">
         <div class="content-padding">
-            <component type="input" path="model.name"></component>
+            <div data-component="input" data-component-path="model.name"></div>
             <br />
-            <component type="button">SUBMIT</component>
+            <div data-component="button">SUBMIT</div>
             <br />
             <br />
             <pre>model.name='Janko';
@@ -44,7 +44,7 @@ $.components.update();</pre>
     <script type="text/javascript">
 
     COMPONENT('input', function() {
-        this.make = '<div><div style="margin-bottom:5px">Type your name:</div><input type="text" data-bind /><component type="label" path="' + this.element.attr('path') + '"></component></div>';
+        this.make = '<div><div style="margin-bottom:5px">Type your name:</div><input type="text" data-component-bind /><span data-component="label" data-component-path="' + this.path + '"></span></div>';
         this.validate = function(value, type) {
             return value.length > 0;
         };
