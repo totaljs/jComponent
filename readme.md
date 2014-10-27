@@ -1,6 +1,7 @@
 # jQuery Component Framework with two way bindings
 
 - only __5.4 kB__ (minified)
+- `>= IE9`
 - great functionality
 - similar functionality as directives from Angularjs
 - supports validation
@@ -35,13 +36,26 @@ COMPONENT('input', function() {
     };
 
     // OPTIONAL
-    this.validate = function(value) {
+    this.validate = function(value, type) {
+        // type === 0 - initialized value
+        // type === 1 - value change a user through a INPUT/SELECT/TEXTAREA
+        // type === 2 - new value is assigned into the component
         return value.length > 0;
     };
     
     // Watching all changes (all changes from all components) 
     this.watch = function(value, path) {
         
+    };
+
+    this.state = function(name, [value]) {
+        // name === init
+        // name === destroy
+        // name === refresh
+        // name === valid
+        // name === dirty
+        // name === reset
+        // name === value
     };
 
     // Get a value from input/select/textarea
@@ -87,9 +101,11 @@ $.components.bind(path, value, [selector]); // --> bind value to model according
 $.components.validate([path], [selector]); // --> validate values
 $.components.reset([path], [selector]); // --> reset dirty, valid to default state (dirty=true,
     valid=true)
-$.components.refresh([path], [selector]); // --> refresh setter
-$.components.update([path], [selector]); // --> refresh setter (@alias to refresh())
+$.components.update([path], [selector]); // --> refresh setter
+$.components.refresh([path], [selector]); // --> refresh setter (@alias to update())
+$.components.remove([path], [selector]); // --> remove components
 $.components.get(selector); // --> Component instance
+$.components.invalid([path], [selector]) // --> Array with all invalid components
 $.components.emit(name, arg1, arg2); // --> Trigger event
 ```
 

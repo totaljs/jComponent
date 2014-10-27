@@ -1,5 +1,6 @@
 var $components = {};
 var $components_cache = {};
+var COM_DATA_BIND_SELECTOR = 'input[data-bind],textarea[data-bind],select[data-bind]';
 
 $.components = function(container) {
 
@@ -45,23 +46,30 @@ $.components = function(container) {
 
     });
 
-
 };
 
 function init(el, obj) {
 
     // autobind
-    el.find('textarea[data-bind],select[data-bind],input[data-bind]').bind('change', function() {
+    el.find(COM_DATA_BIND_SELECTOR).bind('change', function() {
         var el = $(this);
         if (obj.getter)
             obj.getter(el.val());
     });
 
+    var value = obj.get();
+
     if (obj.setter)
-        obj.setter(obj.get());
+        obj.setter(value);
+
+    if (obj.validate)
+        obj.validate(value, 0);
 
     if (obj.done)
         obj.done();
+
+    if (obj.state)
+        obj.state('init');
 
     $.components(el);
 }
@@ -88,6 +96,9 @@ $.components.valid = function(value, container) {
         if (obj.valid === false)
             valid = false;
     });
+
+    if (value !== undefined)
+        $.components.state(container, 'valid', valid);
 
     $components_cache[key] = valid;
     return valid;
@@ -124,7 +135,6 @@ $.components.dirty = function(value, container) {
         return $components_cache[key];
 
     var dirty = true;
-
     $.components.each(function(obj) {
         if (value !== undefined)
             obj.dirty = value;
@@ -133,12 +143,34 @@ $.components.dirty = function(value, container) {
     }, container);
 
     $components_cache[key] = dirty;
+
+    if (value !== undefined)
+        $.components.state(container, 'dirty', dirty);
+
     return dirty;
 };
 
 $.components.bind = function(path, value, container) {
     component_setvalue(window, path, value);
     $.components.refresh(path, container, value);
+    return $.components;
+};
+
+$.components.remove = function(path, container) {
+    if (typeof(path) === 'object') {
+        var tmp = container;
+        container = path;
+        path = tmp;
+    }
+
+    $components_cache_clear();
+    $.components.each(function(obj) {
+        var current = obj.element.attr('path');
+        if (path && path !== current)
+            return;
+        obj.remove(true);
+    }, container);
+
     return $.components;
 };
 
@@ -159,6 +191,29 @@ $.components.validate = function(path, container) {
     }, container);
 
     $components_cache_clear('valid');
+    return $.components;
+};
+
+$.components.invalid = function(path, container) {
+
+    var arr = [];
+
+    $.components.each(function(obj) {
+        var current = obj.element.attr('path');
+        if (path && path !== current)
+            return;
+        if (obj.valid === false)
+            arr.push(obj);
+    }, container);
+
+    return arr;
+};
+
+$.components.state = function(container, name, value) {
+    $.components.each(function(obj) {
+        if (obj.state)
+            obj.state(name, value);
+    }, container);
 };
 
 $.components.reset = function(path, container) {
@@ -178,6 +233,13 @@ $.components.reset = function(path, container) {
     }, container);
 
     $components_cache_clear();
+    $.components.state(container, 'reset');
+
+    return $.components;
+};
+
+$.components.update = function(path, container, value) {
+    return this.refresh(path, container, value);
 };
 
 $.components.refresh = function(path, container, value) {
@@ -203,6 +265,9 @@ $.components.refresh = function(path, container, value) {
             obj.setter(value === undefined ? component_getvalue(window, current) : value);
 
     }, container);
+
+    $.components.state(container, 'refresh');
+    return $.components;
 };
 
 $.components.each = function(fn, container) {
@@ -214,9 +279,10 @@ $.components.each = function(fn, container) {
 
     container.each(function() {
         var component = $(this).data('component');
-        if (component)
+        if (component && !component.$removed)
             fn(component);
     });
+    return $.components;
 };
 
 function $components_cache_clear(name) {
@@ -231,6 +297,7 @@ function $components_cache_clear(name) {
 
         if (key.substring(0, name.length) !== name)
             continue;
+
         delete $components_cache[key];
     }
 }
@@ -245,6 +312,8 @@ function Component(type, container) {
     this.make;
     this.done;
     this.watch;
+    this.destroy;
+    this.state;
 
     this.validate;
     this.container = container || window;
@@ -254,9 +323,26 @@ function Component(type, container) {
     };
 
     this.setter = function(value) {
-        this.element.find('input[data-bind],textarea[data-bind],select[data-bind]').val(value === undefined || value === null ? '' : value);
+        this.element.find(COM_DATA_BIND_SELECTOR).val(value === undefined || value === null ? '' : value);
     };
 }
+
+Component.prototype.remove = function(noClear) {
+
+    if (this.destroy)
+        this.destroy();
+
+    this.element.removeData('component');
+    this.element.find(COM_DATA_BIND_SELECTOR).unbind('change');
+    this.element.remove();
+
+    if (!noClear)
+        $components_cache_clear();
+
+    $.components.$removed = true;
+    $.components.state(undefined, 'destroy', this);
+
+};
 
 Component.prototype.on = function(name, fn) {
     if (!this.events[name])
@@ -313,7 +399,7 @@ Component.prototype.set = function(path, value) {
     self.dirty = false;
 
     if (self.validate)
-        self.valid = self.validate(value);
+        self.valid = self.validate(value, 1);
     else
         self.valid = true;
 
@@ -326,10 +412,16 @@ Component.prototype.set = function(path, value) {
             obj.watch(value, path);
         if (path !== obj.element.attr('path'))
             return;
-        if (obj.setter)
-            obj.setter(value);
+        if (obj === self)
+            return;
+        if (obj.validate)
+            self.validate(value, 2);
+        if (!obj.setter)
+            return;
+        obj.setter(value);
     });
 
+    $.components.state(undefined, 'value', path, value);
     return self;
 };
 
