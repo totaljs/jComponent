@@ -5,6 +5,7 @@
 - `>= IE9`
 - great functionality
 - similar functionality as directives from Angularjs
+- easy property mapping + supports Array indexes e.g. `<div data-component-path="model.list[2].name">...`
 - supports validation
 - supports nested components
 - best of use with www.totaljs.com - web application framework for node.js
@@ -12,13 +13,27 @@
 
 ```html
 <script src="jcomponent.js"></script>
+
+<div data-component="COMPONENT NAME" data-component-path="model.name"></div>
+<div data-component="COMPONENT NAME" data-component-path="model.list[2]"></div>
+
+<script>
+    var model = {};
+    model.list = ['1', '2', '3'];
+    model.name = 'OK';
+</script>
 ```
+
+Framework knows three types of HTML attributes:
+- `data-component="COMPONENT NAME"` - a component name
+- `data-component-path="PATH TO PROPERTY"` - mapping
+- `data-component-bind` - auto attach "change" event to input/select/textarea (only in component)
 
 ## Component methods/properties
 
 ```js
 COMPONENT('input', function() {
-    
+
     // make() === render
     this.make = function() {
         // According to "data-component-bind" attribute framework attaches "change" event automatically.
@@ -27,7 +42,7 @@ COMPONENT('input', function() {
 
     // or
     // this.make = '<input type="text" data-bind />';
-    
+
     // or
     // this.make = "/templates/input.html";
 
@@ -45,10 +60,10 @@ COMPONENT('input', function() {
         // type === 3 - refresh/update
         return value.length > 0;
     };
-    
-    // Watching all changes (all changes from all components) 
+
+    // Watching all changes (all changes from all components)
     this.watch = function(value, path) {
-        
+
     };
 
     this.state = function(name, [value]) {
@@ -95,7 +110,9 @@ COMPONENT('input', function() {
 ## Global methods
 
 ```js
+
 // [parameter] --> is OPTIONAL
+// path --> path to object property
 
 $.components(); // --> component compiler (is called automatically)
 $.components.dirty([value], [selector]); // --> are values dirty? or setter dirty value.
@@ -103,8 +120,8 @@ $.components.valid([value], [selector]); // --> are values valid? or setter vali
 $.components.bind(path, value, [selector]); // --> bind value to model according to path
 $.components.validate([path], [selector]); // --> validate values
 $.components.reset([path], [selector]); // --> reset dirty, valid to default state (dirty=true, valid=true)
-$.components.update([path], [selector]); // --> refresh setter
-$.components.refresh([path], [selector]); // --> refresh setter (@alias to update())
+$.components.refresh([path], [selector]); // --> refresh setter
+$.components.update([path], [selector]); // --> refresh setter (@alias to refresh())
 $.components.remove([path], [selector]); // --> remove components
 $.components.get(selector); // --> Component instance
 $.components.invalid([path], [selector]) // --> Array with all invalid components
@@ -138,11 +155,11 @@ COMPONENT('input', function() {
     };
 });
 
-COMPONENT('label', function() {    
+COMPONENT('label', function() {
     this.make = '<label></label>';
     this.setter = function(value) {
         this.element.find('label').html(value);
-    };    
+    };
 });
 
 COMPONENT('button', function() {
@@ -154,9 +171,31 @@ COMPONENT('button', function() {
 
 ```html
 <div data-component="input" data-component-path="model.name"></div>
+<div data-component="input" data-component-path="model.arr[1]"></div>
 <button data-component="button">SUBMIT</button>
 <script>
+
     var model = {};
+
+    model.arr = ['A', 'B', 'C'];
     model.name = 'Peter';
+
+    function change_name() {
+
+        model.name = 'Janko';
+        $.components.refresh();
+
+        // or
+        // $.components.bind('model.name', 'Janko');
+
+        // or
+        /*
+        $.components.bind('model.arr', function(value) {
+            value.push('C');
+            return value;
+        });
+        */
+    }
+
 </script>
 ```
