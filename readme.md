@@ -125,6 +125,7 @@ $.components.update([path], [selector]); // --> refresh setter (@alias to refres
 $.components.remove([path], [selector]); // --> remove components
 $.components.get(selector); // --> Component instance
 $.components.invalid([path], [selector]) // --> Array with all invalid components
+$.components.ready(function(componentCount) {}); // --> Is the framework ready?
 $.components.emit(name, arg1, arg2); // --> Trigger event
 $.components.on('event-type', fn);
 
@@ -143,8 +144,13 @@ $.components.on('event-type', fn);
 
 ```js
 $('#my-component').component() // ---> Component object
+
 $('#my-component').on('component', function() {
-    // component is ready
+    // a component is ready
+});
+
+$(document).on('components', function(count) {
+    // components are ready
 });
 ```
 

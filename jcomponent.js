@@ -1,6 +1,8 @@
 var $components = {};
 var $components_cache = {};
 var $components_events = {};
+var $components_timeout;
+var $components_counter = 0;
 
 var COM_DATA_BIND_SELECTOR = 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
 var COM_ATTR = '[data-component]';
@@ -61,6 +63,26 @@ $.components = function(container) {
     });
 };
 
+$.components.ready = function(fn) {
+    if (!$components_cache['ready'])
+        $components_cache['ready'] = [];
+    $components_cache['ready'].push(fn);
+};
+
+function $components_ready() {
+    clearTimeout($components_timeout);
+    $components_timeout = setTimeout(function() {
+        $(document).trigger('components', [$components_counter]);
+        $(document).off('components');
+        if (!$components_cache['ready'])
+            return;
+        var arr = $components_cache['ready'];
+        for (var i = 0, length = arr.length; i < length; i++)
+            arr[i]($components_counter);
+        delete $components_cache['ready'];
+    }, 100);
+}
+
 $.components.on = function(name, fn) {
     var arr = name.split('+');
     for (var i = 0, length = arr.length; i < length; i++) {
@@ -100,6 +122,8 @@ function init(el, obj) {
 
     el.trigger('component');
     el.off('component');
+    $components_counter++;
+    $components_ready();
     $.components(el);
 }
 
