@@ -8,7 +8,7 @@ var COM_DATA_BIND_SELECTOR = 'input[data-component-bind],textarea[data-component
 var COM_ATTR = '[data-component]';
 
 $.fn.component = function() {
-    return this.data('component');
+    return this.data(COM_ATTR);
 };
 
 $.components = function(container) {
@@ -31,13 +31,14 @@ $.components = function(container) {
             return;
 
         skip += el.find(COM_ATTR).length;
+
         if (el.data(COM_ATTR))
             return;
 
         var obj = component(el);
 
         // Reference to implementation
-        el.data('component', obj);
+        el.data(COM_ATTR, obj);
 
         if (typeof(obj.make) === 'string') {
 
@@ -167,7 +168,7 @@ $.components.valid = function(value, container) {
 };
 
 $.components.get = function(selector) {
-    return $(selector).data('component');
+    return $(selector).data(COM_ATTR);
 };
 
 $.components.$emit = function(name) {
@@ -194,7 +195,7 @@ $.components.emit = function() {
 
     $(COM_ATTR).each(function() {
         var el = $(this);
-        var obj = el.data('component');
+        var obj = el.data(COM_ATTR);
         obj.$emit.apply(obj, args);
     });
 
@@ -376,7 +377,8 @@ $.components.refresh = function(path, container, value) {
     var arr = [];
 
     $.components.each(function(obj) {
-        var current = obj.element.attr('data-component-path');
+
+        var current = obj.element ? obj.element.attr('data-component-path') : '';
 
         if (obj.state)
             arr.push(obj);
@@ -417,7 +419,7 @@ $.components.each = function(fn, container) {
         container = $(COM_ATTR);
 
     container.each(function() {
-        var component = $(this).data('component');
+        var component = $(this).data(COM_ATTR);
         if (component && !component.$removed)
             fn(component);
     });
@@ -505,7 +507,7 @@ Component.prototype.remove = function(noClear) {
     if (this.destroy)
         this.destroy();
 
-    this.element.removeData('component');
+    this.element.removeData(COM_ATTR);
     this.element.find(COM_DATA_BIND_SELECTOR).unbind('change');
     this.element.remove();
 
