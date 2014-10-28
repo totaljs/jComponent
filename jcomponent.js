@@ -78,8 +78,10 @@ function init(el, obj) {
     // autobind
     el.find(COM_DATA_BIND_SELECTOR).bind('change', function() {
         var el = $(this);
-        if (obj.getter)
-            obj.getter(el.val());
+        if (!obj.getter)
+            return;
+        var value = this.type === 'checkbox' ? this.checked : el.val();
+        obj.getter(value);
     });
 
     var value = obj.get();
@@ -435,7 +437,20 @@ function Component(type, container) {
     };
 
     this.setter = function(value) {
-        this.element.find(COM_DATA_BIND_SELECTOR).val(value === undefined || value === null ? '' : value);
+        this.element.find(COM_DATA_BIND_SELECTOR).each(function() {
+
+            if (this.type === 'checkbox') {
+                this.checked = value == true;
+                return;
+            }
+
+            if (this.type === 'select-one') {
+                $(this).val(value);
+                return;
+            }
+
+            this.value = value;
+        });
     };
 }
 
