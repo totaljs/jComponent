@@ -27,7 +27,7 @@
 Framework knows three types of HTML attributes:
 - `data-component="COMPONENT NAME"` - a component name
 - `data-component-path="PATH TO PROPERTY"` - mapping
-- `data-component-bind` - auto attach "change" event to input/select/textarea (only in component)
+- `data-component-bind` - auto attach "change" event for input/select/textarea (only in a component)
 
 ## Component methods/properties
 
@@ -173,8 +173,8 @@ COMPONENT('button', function() {
 <div data-component="input" data-component-path="model.name"></div>
 <div data-component="input" data-component-path="model.arr[1]"></div>
 <button data-component="button">SUBMIT</button>
-<script>
 
+<script>
     var model = {};
 
     model.arr = ['A', 'B', 'C'];
@@ -196,6 +196,5 @@ COMPONENT('button', function() {
         });
         */
     }
-
 </script>
 ```
