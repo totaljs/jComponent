@@ -98,6 +98,8 @@ function init(el, obj) {
     if (obj.state)
         obj.state('init');
 
+    el.trigger('component');
+    el.off('component');
     $.components(el);
 }
 

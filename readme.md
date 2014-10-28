@@ -143,6 +143,9 @@ $.components.on('event-type', fn);
 
 ```js
 $('#my-component').component() // ---> Component object
+$('#my-component').on('component', function() {
+    // component is ready
+});
 ```
 
 ## Example
