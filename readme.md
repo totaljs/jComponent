@@ -1,25 +1,27 @@
 # jQuery Component Framework with two way bindings
 
 - only __3 kB__ (minified, gzipped)
+- `>= jQuery +1.7`
 - `>= IE9`
 - great functionality
 - similar functionality as directives from Angularjs
 - supports validation
 - supports nested components
-- best of use with <www.totaljs.com> - web application framework for node.js
-- [DEMO EXAMPLE](http://source.858project.com/jquery-jcomponent-demo.html)
+- best of use with www.totaljs.com - web application framework for node.js
+- [ONLINE DEMO EXAMPLE](http://source.858project.com/jquery-jcomponent-demo.html)
 
 ```html
 <script src="jcomponent.js"></script>
 ```
 
-## All component methods/properties
+## Component methods/properties
 
 ```js
 COMPONENT('input', function() {
     
     // make() === render
     this.make = function() {
+        // According to "data-component-bind" attribute framework attaches "change" event automatically.
         this.element.append('<input type="text" data-component-bind />');
     };
 
@@ -109,7 +111,7 @@ $.components.invalid([path], [selector]) // --> Array with all invalid component
 $.components.emit(name, arg1, arg2); // --> Trigger event
 $.components.on('event-type', fn);
 
-// event-type:
+// event-type (contains only simple informations about the behavior):
 // value
 // valid
 // dirty
@@ -118,7 +120,6 @@ $.components.on('event-type', fn);
 // reset
 // refresh
 // destroy
-
 ```
 
 ## jQuery
@@ -144,17 +145,16 @@ COMPONENT('label', function() {
     };    
 });
 
-COMPONENT('button', function() {    
-    this.make = '<button disabled="true">' + this.element.text() + '</button>';
-    this.watch = function() {
-        this.element.find('button').prop({ disabled: $.components.dirty() === true || $.components.valid() === false });
+COMPONENT('button', function() {
+    this.state = function(name) {
+        this.element.prop({ disabled: $.components.dirty() === true || $.components.valid() === false });
     };
 });
 ```
 
 ```html
 <div data-component="input" data-component-path="model.name"></div>
-<div data-component="button">SUBMIT</div>
+<button data-component="button">SUBMIT</button>
 <script>
     var model = {};
     model.name = 'Peter';

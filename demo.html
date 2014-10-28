@@ -24,7 +24,7 @@
         <div class="content-padding">
             <div data-component="input" data-component-path="model.name"></div>
             <br />
-            <div data-component="button">SUBMIT</div>
+            <button data-component="button">SUBMIT</button>
             <br />
             <br />
             <pre>model.name='Janko';
@@ -67,9 +67,8 @@ $.components.update();</pre>
     });
 
     COMPONENT('button', function() {
-        this.make = '<button disabled="true">' + this.element.text() + '</button>';
         this.state = function(name, value) {
-            this.element.find('button').prop({ disabled: $.components.dirty() === true || $.components.valid() === false });
+            this.element.prop({ disabled: $.components.dirty() === true || $.components.valid() === false });
         };
     });
 
