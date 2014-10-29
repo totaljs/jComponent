@@ -131,12 +131,20 @@ function init(el, obj) {
 
     // autobind
     el.find(COM_DATA_BIND_SELECTOR).bind('change', function() {
+
         var el = $(this);
+        var path = el.attr('data-component-bind');
+
+        if (path && path.length > 0 && path !== obj.path)
+            return;
+
         if (!obj.getter)
             return;
+
         var value = this.type === 'checkbox' ? this.checked : el.val();
         obj.getter(value);
-    });
+
+    }).attr('data-component-bind', obj.path);
 
     var value = obj.get();
 
@@ -504,7 +512,14 @@ function Component(type, container) {
     };
 
     this.setter = function(value) {
+        var self = this;
         this.element.find(COM_DATA_BIND_SELECTOR).each(function() {
+
+            var el = $(this);
+            var path = el.attr('data-component-bind');
+
+            if (path && path.length > 0 && path !== self.path)
+                return;
 
             if (this.type === 'checkbox') {
                 this.checked = value == true;
@@ -512,7 +527,7 @@ function Component(type, container) {
             }
 
             if (this.type === 'select-one') {
-                $(this).val(value);
+                el.val(value);
                 return;
             }
 
