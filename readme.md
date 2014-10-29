@@ -28,6 +28,8 @@ Framework knows three types of HTML attributes:
 - `data-component="COMPONENT NAME"` - a component name
 - `data-component-path="PATH TO PROPERTY"` - mapping
 - `data-component-bind` - auto attach "change" event for input/select/textarea (only in a component)
+- `data-component-url="URL TO TEMPLATE"` - framework downloads template with components and compile
+- `data-component-class="class1 class2 class3"` - framework toggles classes after is a component ready
 
 ## Component methods/properties
 
@@ -102,8 +104,10 @@ COMPONENT('input', function() {
     this.element; // jQuery object
 
     // Methods
+    this.remove(); // remove current component
     this.get([path]); // get a value according to path from a model
     this.set([path], value); // set a value according to path into the model
+    this.trigger(name, arg1, arg2); // trigger some event within all components
 });
 ```
 
@@ -123,11 +127,11 @@ $.components.reset([path], [selector]); // --> reset dirty, valid to default sta
 $.components.each(fn(component), [selector]); // --> A generic iterator function
 $.components.refresh([path], [selector]); // --> refresh setter
 $.components.update([path], [selector]); // --> refresh setter (@alias to refresh())
-$.components.remove([path], [selector]); // --> remove components
-$.components.get(selector); // --> Component instance
-$.components.invalid([path], [selector]) // --> Array with all invalid components
-$.components.ready(function(componentCount) {}); // --> Is the framework ready?
-$.components.emit(name, arg1, arg2); // --> Trigger event
+$.components.remove([path], [selector]); // --> remove components (triggers "destroy" event)
+$.components.get(selector); // --> a component instance
+$.components.invalid([path], [selector]) // --> returns an array with all invalid components
+$.components.emit(name, arg1, arg2); // --> trigger some event within all components
+$.components.ready(function(componentCount) {}); // --> is the framework ready?
 $.components.on('event-type', fn);
 
 // event-type (contains only simple informations about the behavior):
@@ -180,8 +184,9 @@ COMPONENT('button', function() {
 ```
 
 ```html
-<div data-component="input" data-component-path="model.name"></div>
+<div data-component="input" data-component-path="model.name" class="hide" data-component-class="hide"></div>
 <div data-component="input" data-component-path="model.arr[1]"></div>
+<div data-component-url="/templates/button.html"></div>
 <button data-component="button">SUBMIT</button>
 
 <script>

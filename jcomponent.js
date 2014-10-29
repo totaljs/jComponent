@@ -6,6 +6,7 @@ var $components_counter = 0;
 
 var COM_DATA_BIND_SELECTOR = 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
 var COM_ATTR = '[data-component]';
+var COM_ATTR_URL = '[data-component-url]';
 
 $.fn.component = function() {
     return this.data(COM_ATTR);
@@ -61,6 +62,36 @@ $.components = function(container) {
 
         init(el, obj);
 
+    });
+
+    if (container === undefined)
+        $.components.inject();
+};
+
+$.components.inject = function() {
+
+    var els = $(COM_ATTR_URL);
+    var arr = [];
+    var count = 0;
+
+    els.each(function() {
+        var el = $(this);
+        if (el.data(COM_ATTR_URL))
+            return;
+        el.data(COM_ATTR_URL, '1');
+        arr.push({ element: el, url: el.attr('data-component-url') });
+    });
+
+    component_async(arr, function(item, next) {
+        $.get(item.url, function(response) {
+            item.element.append(response);
+            count++;
+            next();
+        });
+    }, function() {
+        if (count === 0)
+            return;
+        $.components();
     });
 };
 
@@ -123,6 +154,14 @@ function init(el, obj) {
 
     el.trigger('component');
     el.off('component');
+
+    var cls = el.attr('data-component-class');
+    if (cls) {
+        cls = cls.split(' ');
+        for (var i = 0, length = cls.length; i < length; i++)
+            el.toggleClass(cls[i]);
+    }
+
     $components_counter++;
     $components_ready();
     $.components(el);
@@ -691,6 +730,20 @@ function component_getvalue(obj, path) {
             return;
     }
     return current;
+}
+
+function component_async(arr, fn, done) {
+
+    var item = arr.shift();
+    if (item === undefined) {
+        if (done)
+            done();
+        return;
+    }
+
+    fn(item, function() {
+        component_async(arr, fn, done);
+    });
 }
 
 $.components();
