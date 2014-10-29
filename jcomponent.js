@@ -1,5 +1,5 @@
 var $components = {};
-var $components_cache = {};
+var $components_cache = { toggle: [] };
 var $components_events = {};
 var $components_timeout;
 var $components_counter = 0;
@@ -64,8 +64,18 @@ $.components = function(container) {
 
     });
 
-    if (container === undefined)
-        $.components.inject();
+    if (container !== undefined)
+        return;
+
+    $.components.inject();
+    if ($components_cache.toggle.length === 0)
+        return;
+
+    component_async($components_cache.toggle, function(item, next) {
+        for (var i = 0, length = item.toggle.length; i < length; i++)
+            item.element.toggleClass(item.toggle[i]);
+        next();
+    });
 };
 
 $.components.inject = function() {
@@ -79,12 +89,14 @@ $.components.inject = function() {
         if (el.data(COM_ATTR_URL))
             return;
         el.data(COM_ATTR_URL, '1');
-        arr.push({ element: el, url: el.attr('data-component-url') });
+        arr.push({ element: el, url: el.attr('data-component-url'), toggle: (el.attr('data-component-class') || '').split(' ') });
     });
 
     component_async(arr, function(item, next) {
         $.get(item.url, function(response) {
             item.element.append(response);
+            if (item.toggle.length > 0 && item.toggle[0] !== '')
+                $components_cache.toggle.push(item);
             count++;
             next();
         });
@@ -525,6 +537,9 @@ function Component(type, container) {
                 this.checked = value == true;
                 return;
             }
+
+            if (value === undefined)
+                value = '';
 
             if (this.type === 'select-one') {
                 el.val(value);
