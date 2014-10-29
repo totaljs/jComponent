@@ -114,12 +114,13 @@ COMPONENT('input', function() {
 // [parameter] --> is OPTIONAL
 // path --> path to object property
 
-$.components(); // --> component compiler (is called automatically)
+$.components(); // --> Component compiler for new components
 $.components.dirty([value], [selector]); // --> are values dirty? or setter dirty value.
 $.components.valid([value], [selector]); // --> are values valid? or setter valid value.
 $.components.bind(path, value, [selector]); // --> bind value to model according to path
 $.components.validate([path], [selector]); // --> validate values
 $.components.reset([path], [selector]); // --> reset dirty, valid to default state (dirty=true, valid=true)
+$.components.each(fn(component), [selector]); // --> A generic iterator function.
 $.components.refresh([path], [selector]); // --> refresh setter
 $.components.update([path], [selector]); // --> refresh setter (@alias to refresh())
 $.components.remove([path], [selector]); // --> remove components
