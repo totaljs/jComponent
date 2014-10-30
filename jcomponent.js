@@ -61,7 +61,6 @@ $.components = function(container) {
             obj.make();
 
         init(el, obj);
-
     });
 
     if (container !== undefined)
@@ -104,6 +103,8 @@ $.components.inject = function() {
             next();
         });
     }, function() {
+        $components_cache_clear('dirty');
+        $components_cache_clear('valid');
         if (count === 0)
             return;
         $.components();
@@ -114,6 +115,8 @@ $.components.ready = function(fn) {
     if (!$components_cache['ready'])
         $components_cache['ready'] = [];
     $components_cache['ready'].push(fn);
+    $components_cache_clear('dirty');
+    $components_cache_clear('valid');
 };
 
 function $components_ready() {
@@ -284,7 +287,6 @@ $.components.dirty = function(value, container) {
     var arr = value !== undefined ? [] : null;
 
     $.components.each(function(obj) {
-
         if (value !== undefined) {
             if (obj.state)
                 arr.push(obj);
@@ -293,9 +295,9 @@ $.components.dirty = function(value, container) {
 
         if (obj.$dirty === false)
             dirty = false;
+
     }, container);
 
-    $components_cache[key] = dirty;
 
     if (value !== undefined && arr.length > 0) {
         $.components.state(arr, 'dirty', dirty);
@@ -338,6 +340,7 @@ $.components.validate = function(path, container) {
     }
 
     var arr = [];
+    var valid = true;
 
     $.components.each(function(obj) {
 
@@ -348,8 +351,14 @@ $.components.validate = function(path, container) {
         if (path && path !== current)
             return;
 
-        if (obj.validate)
-            obj.validate(component_getvalue(window, current));
+        if (obj.validate) {
+            obj.$valid = obj.validate(component_getvalue(window, current));
+            if (!obj.$valid)
+                valid = false;
+        }
+
+        if (obj.state)
+            obj.state('validity');
 
     }, container);
 
@@ -359,7 +368,7 @@ $.components.validate = function(path, container) {
         $.components.state(arr, 'validate');
 
     $.components.$emit('validate');
-    return $.components;
+    return valid;
 };
 
 $.components.invalid = function(path, container) {
@@ -661,8 +670,11 @@ Component.prototype.set = function(path, value) {
 
     self.$dirty = false;
 
-    if (self.validate)
+    if (self.validate) {
         self.$valid = self.validate(value, 1);
+        if (self.state)
+            self.state('validity');
+    }
     else
         self.$valid = true;
 
@@ -677,10 +689,12 @@ Component.prototype.set = function(path, value) {
             arr.push(obj);
         if (obj.watch)
             obj.watch(value, path);
-        if (path !== obj.element.attr('data-component-path'))
+        if (path !== obj.path)
             return;
         if (obj.validate)
             obj.validate(value, 2);
+        if (obj !== self && obj.state)
+            obj.state('highlight', 'validation');
         if (!obj.setter)
             return;
         obj.setter(value);

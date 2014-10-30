@@ -136,14 +136,15 @@ $.components.emit(name, arg1, arg2); // --> trigger some event within all compon
 $.components.ready(function(componentCount) {}); // --> is the framework ready?
 $.components.on('event-type', fn);
 // event-type (contains only simple informations about the behavior):
-// value
-// valid
-// dirty
-// validate
-// state
-// reset
-// refresh
-// destroy
+// value       --> some value was changed
+// validate    --> $.components.validate()
+// validity    --> for changing design of some inputs and selects
+// valid       --> $.components.valid() or component.valid(value)
+// dirty       --> $.components.dirty() or component.dirty(value)
+// reset       --> $.components.reset()
+// refresh     --> $.components.refresh()
+// destroy     --> $.components.remove() or component.remove();
+// state       --> some component state
 
 // Value parser (only for inputs/selects/textareas)
 // for component.getter
