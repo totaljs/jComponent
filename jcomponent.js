@@ -25,8 +25,8 @@ $.components = function(container) {
         }
 
         var el = $(this);
-        var type = el.attr('data-component');
-        var component = $components[type];
+        var name = el.attr('data-component');
+        var component = $components[name];
 
         if (!component)
             return;
@@ -77,6 +77,9 @@ $.components = function(container) {
         next();
     });
 };
+
+$.components.formatter = [];
+$.components.parser = [];
 
 $.components.inject = function() {
 
@@ -159,6 +162,9 @@ function init(el, obj) {
     }).attr('data-component-bind', obj.path);
 
     var value = obj.get();
+
+    obj.type = el.attr('data-component-type') || typeof(value);
+    obj.id = el.attr('data-component-id') || obj.name;
 
     if (obj.setter)
         obj.setter(value);
@@ -502,13 +508,15 @@ function $components_cache_clear(name) {
     }
 }
 
-function Component(type, container) {
+function Component(name, container) {
 
     this.events = {};
     this.$dirty = true;
     this.$valid = true;
-    this.type = type;
+    this.name = name;
     this.path;
+    this.type;
+    this.id;
 
     this.make;
     this.done;
@@ -520,11 +528,17 @@ function Component(type, container) {
     this.container = container || window;
 
     this.getter = function(value) {
+        for (var i = 0, length = $.components.parser.length; i < length; i++)
+            value = $.components.parser[i].call(this, this.path, value, this.type);
         this.set(value);
     };
 
     this.setter = function(value) {
+
         var self = this;
+        for (var i = 0, length = $.components.formatter.length; i < length; i++)
+            value = $.components.formatter[i].call(this, this.path, value, this.type);
+
         this.element.find(COM_DATA_BIND_SELECTOR).each(function() {
 
             var el = $(this);
@@ -538,7 +552,7 @@ function Component(type, container) {
                 return;
             }
 
-            if (value === undefined)
+            if (value === undefined || value === null)
                 value = '';
 
             if (this.type === 'select-one') {
@@ -585,7 +599,7 @@ Component.prototype.remove = function(noClear) {
 
     $.components.$removed = true;
     $.components.state(undefined, 'destroy', this);
-    $.components.$emit('destroy', this.type, this.element.attr('data-component-path'));
+    $.components.$emit('destroy', this.name, this.element.attr('data-component-path'));
 
 };
 

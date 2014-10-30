@@ -79,16 +79,16 @@ COMPONENT('input', function() {
     };
 
     // Get a value from input/select/textarea
-    // OPTIONAL, default declaration:
+    // OPTIONAL, framework has an own declaration for this
     this.getter = function(value) {
         // set value to model (by path name)
         this.set(value);
     };
 
     // Set a value to input/select/textarea
-    // OPTIONAL, default declaration:
+    // OPTIONAL, framework has an own declaration for this
     this.setter = function(value) {
-        this.element.find('input[data-component-bind],textarea[data-component-bind],select[data-component-bind]').val(value === undefined || value === null ? '' : value);
+        this.element.find('input').val(value === undefined || value === null ? '' : value);
     };
 
     this.on('some-event', function() {
@@ -99,11 +99,13 @@ COMPONENT('input', function() {
     // this.emit('some-event');
 
     // Properties
-    this.dirty; // Boolean
-    this.valid; // Boolean
-    this.element; // jQuery object
+    this.element; // jQuery element
+    this.id; // ID -> optional, [data-component-id]
+    this.name; // Component type name [data-component]
 
     // Methods
+    this.dirty([value]); // Boolean, is input dirty? If you enter a value then is the setter.
+    this.valid([value]); // Boolean, is input valid? If you enter a value then is the setter.
     this.remove(); // remove current component
     this.get([path]); // get a value according to path from a model
     this.set([path], value); // set a value according to path into the model
@@ -133,7 +135,6 @@ $.components.invalid([path], [selector]) // --> returns an array with all invali
 $.components.emit(name, arg1, arg2); // --> trigger some event within all components
 $.components.ready(function(componentCount) {}); // --> is the framework ready?
 $.components.on('event-type', fn);
-
 // event-type (contains only simple informations about the behavior):
 // value
 // valid
@@ -143,6 +144,27 @@ $.components.on('event-type', fn);
 // reset
 // refresh
 // destroy
+
+// Value parser (only for inputs/selects/textareas)
+// for component.getter
+$.components.parser.push(function(path, value, type) {
+    // this === component
+    // type === [data-component-type]
+    // example:
+    if (path === 'model.price')
+        return value.format('### ### ###.##');
+    return value;
+});
+
+// Value formatter (only for inputs/selects/textareas)
+// for component.setter
+$.components.formatter.push(function(path, value, type) {
+    // this === component
+    // type === [data-component-type]
+    if (path === 'model.price')
+        return parseFloat(value.replace(/\s/g, ''));
+    return value;
+});
 ```
 
 ## jQuery
