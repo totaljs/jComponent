@@ -358,7 +358,7 @@ $.components.validate = function(path, container) {
         }
 
         if (obj.state)
-            obj.state('validity');
+            obj.state('validity', true);
 
     }, container);
 
@@ -430,7 +430,7 @@ $.components.reset = function(path, container) {
     $components_cache_clear();
 
     if (arr.length > 0)
-        $.components.state(obj, 'reset');
+        $.components.state(arr, 'reset');
 
     $.components.$emit('reset');
     return $.components;
@@ -673,7 +673,7 @@ Component.prototype.set = function(path, value) {
     if (self.validate) {
         self.$valid = self.validate(value, 1);
         if (self.state)
-            self.state('validity');
+            self.state('validity', false);
     }
     else
         self.$valid = true;
