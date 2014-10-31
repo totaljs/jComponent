@@ -160,10 +160,6 @@ function init(el, obj) {
             return;
 
         var value = this.type === 'checkbox' ? this.checked : el.val();
-        if (obj.tmp === value)
-            return;
-
-        obj.tmp = value;
         obj.getter(value);
 
     }).attr('data-component-bind', obj.path);
@@ -172,13 +168,12 @@ function init(el, obj) {
 
     obj.type = el.attr('data-component-type') || typeof(value);
     obj.id = el.attr('data-component-id') || obj.name;
-    obj.tmp = value;
 
     if (obj.setter)
         obj.setter(value);
 
     if (obj.validate)
-        obj.validate(value, 0);
+        obj.$valid = obj.validate(obj.get(), 0);
 
     if (obj.done)
         obj.done();
@@ -427,8 +422,12 @@ $.components.reset = function(path, container) {
         var current = obj.element.attr('data-component-path');
         if (path && path !== current)
             return;
+
         obj.$dirty = false;
         obj.$valid = true;
+
+        if (obj.validate)
+            obj.$valid = obj.validate(obj.get(), 3);
 
     }, container);
 
@@ -531,6 +530,7 @@ function Component(name, container) {
     this.path;
     this.type;
     this.id;
+    this.$tmp = null;
 
     this.make;
     this.done;
@@ -542,26 +542,15 @@ function Component(name, container) {
     this.container = container || window;
 
     this.getter = function(value) {
-        for (var i = 0, length = $.components.parser.length; i < length; i++)
-            value = $.components.parser[i].call(this, this.path, value, this.type);
-
-        if (obj.tmp === value)
-            return;
-
-        obj.tmp = value;
+        var value = this.parser(value);
         this.set(value);
+        return this;
     };
 
     this.setter = function(value) {
 
         var self = this;
-        for (var i = 0, length = $.components.formatter.length; i < length; i++)
-            value = $.components.formatter[i].call(this, this.path, value, this.type);
-
-        if (self.tmp === value)
-            return;
-
-        obj.tmp = value;
+        value = this.formatter(value);
         this.element.find(COM_DATA_BIND_SELECTOR).each(function() {
 
             var el = $(this);
@@ -638,6 +627,18 @@ Component.prototype.on = function(name, fn) {
     return this;
 };
 
+Component.prototype.formatter = function(value) {
+    for (var i = 0, length = $.components.formatter.length; i < length; i++)
+        value = $.components.formatter[i].call(this, this.path, value, this.type);
+    return value;
+};
+
+Component.prototype.parser = function(value) {
+    for (var i = 0, length = $.components.parser.length; i < length; i++)
+        value = $.components.parser[i].call(this, this.path, value, this.type);
+    return value;
+};
+
 Component.prototype.emit = function() {
     $.components.emit.apply($.components, arguments);
 };
@@ -676,6 +677,11 @@ Component.prototype.set = function(path, value) {
         path = undefined;
     }
 
+    if (this.$tmp === value)
+        return;
+
+    this.$tmp = value;
+
     if (!path)
         path = self.element.attr('data-component-path');
 
@@ -713,6 +719,7 @@ Component.prototype.set = function(path, value) {
             return;
         obj.setter(value);
     });
+
     if (arr.length > 0)
         $.components.state(arr, 'value', path, value, self.$valid);
     $.components.$emit('value', path, value, self.$valid);
