@@ -148,7 +148,7 @@ $.components.on = function(name, fn) {
 function init(el, obj) {
 
     // autobind
-    el.find(COM_DATA_BIND_SELECTOR).bind('change', function() {
+    el.find(COM_DATA_BIND_SELECTOR).bind('change blur', function(e) {
 
         var el = $(this);
         var path = el.attr('data-component-bind');
@@ -160,6 +160,10 @@ function init(el, obj) {
             return;
 
         var value = this.type === 'checkbox' ? this.checked : el.val();
+        if (obj.tmp === value)
+            return;
+
+        obj.tmp = value;
         obj.getter(value);
 
     }).attr('data-component-bind', obj.path);
@@ -168,6 +172,7 @@ function init(el, obj) {
 
     obj.type = el.attr('data-component-type') || typeof(value);
     obj.id = el.attr('data-component-id') || obj.name;
+    obj.tmp = value;
 
     if (obj.setter)
         obj.setter(value);
@@ -539,6 +544,11 @@ function Component(name, container) {
     this.getter = function(value) {
         for (var i = 0, length = $.components.parser.length; i < length; i++)
             value = $.components.parser[i].call(this, this.path, value, this.type);
+
+        if (obj.tmp === value)
+            return;
+
+        obj.tmp = value;
         this.set(value);
     };
 
@@ -548,6 +558,10 @@ function Component(name, container) {
         for (var i = 0, length = $.components.formatter.length; i < length; i++)
             value = $.components.formatter[i].call(this, this.path, value, this.type);
 
+        if (self.tmp === value)
+            return;
+
+        obj.tmp = value;
         this.element.find(COM_DATA_BIND_SELECTOR).each(function() {
 
             var el = $(this);
