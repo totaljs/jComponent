@@ -677,17 +677,13 @@ Component.prototype.set = function(path, value) {
         path = undefined;
     }
 
-    if (this.$tmp === value)
-        return;
-
-    this.$tmp = value;
-
     if (!path)
         path = self.element.attr('data-component-path');
 
     if (!path)
         return self;
 
+    this.$tmp = value;
     self.$dirty = false;
 
     if (self.validate) {
@@ -712,9 +708,9 @@ Component.prototype.set = function(path, value) {
         if (path !== obj.path)
             return;
         if (obj.validate)
-            obj.validate(value, 2);
+            obj.$valid = obj.validate(value, 2);
         if (obj !== self && obj.state)
-            obj.state('highlight', 'validation');
+            obj.state('validity', obj.$valid);
         if (!obj.setter)
             return;
         obj.setter(value);
