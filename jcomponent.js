@@ -737,17 +737,18 @@ function COMPONENT(type, declaration, container) {
 
 function component_setvalue(obj, path, value) {
 
-    path = path.split('.');
-    var length = path.length;
+    var arr = path.split('.');
+    var length = arr.length;
     var current = obj;
+    var tmp;
 
     for (var i = 0; i < length - 1; i++) {
-        current = component_findpipe(current, path[i]);
+        current = component_findpipe(current, arr[i]);
         if (current === undefined)
             return false;
     }
 
-    current = component_findpipe(current, path[length - 1], value);
+    current = component_findpipe(current, arr[length - 1], value);
     return true;
 }
 
@@ -765,11 +766,15 @@ function component_findpipe(current, name, value) {
         name = name.substring(0, beg);
         pipe = current[name][index];
 
-    } else
+    } else {
         pipe = current[name];
-
-    if (pipe === undefined)
-        return;
+        if (pipe === undefined) {
+            current[name] = {};
+            if (value === undefined)
+                return current[name];
+            pipe = current[name];
+        }
+    }
 
     if (value === undefined)
         return pipe;
