@@ -28,6 +28,9 @@ $.components = function(container) {
         var name = el.attr('data-component');
         var component = $components[name];
 
+        if ((name || '') === '')
+            component = $components['$default'];
+
         if (!component)
             return;
 
@@ -166,7 +169,7 @@ function init(el, obj) {
 
     var value = obj.get();
 
-    obj.type = el.attr('data-component-type') || typeof(value);
+    obj.type = el.attr('data-component-type') || '';
     obj.id = el.attr('data-component-id') || obj.name;
 
     if (obj.setter)
@@ -453,6 +456,7 @@ $.components.refresh = function(path, container, value) {
     }
 
     var arr = [];
+    var isArray = value instanceof Array;
 
     $.components.each(function(obj) {
 
@@ -479,6 +483,11 @@ $.components.refresh = function(path, container, value) {
             obj.setter(val);
 
     }, container);
+
+    if (isArray) {
+        $.components.refresh(path + '.length', container, value.length);
+        return;
+    }
 
     $components_cache_clear('valid');
 
@@ -829,4 +838,12 @@ function component_async(arr, fn, done) {
 $.components();
 $(document).ready(function() {
     $.components();
+});
+
+COMPONENT('$default', function() {
+    this.getter = null;
+    this.setter = function(value) {
+        value = this.formatter(value);
+        this.element.html(value);
+    };
 });
