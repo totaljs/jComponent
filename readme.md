@@ -51,31 +51,22 @@ COMPONENT('input', function() {
     // Is called after make()
     // OPTIONAL
     this.done = function() {
-
     };
 
     // OPTIONAL
-    this.validate = function(value, type) {
-        // type === 0 - initialized value
-        // type === 1 - value change a user through a INPUT/SELECT/TEXTAREA
-        // type === 2 - new value is assigned into the component
-        // type === 3 - refresh/update
+    this.validate = function(value) {
         return value.length > 0;
     };
 
     // Watching all changes (all changes from all components)
     this.watch = function(value, path) {
-
+    
     };
 
-    this.state = function(name, [value]) {
-        // name === init
-        // name === destroy
-        // name === refresh
-        // name === valid
-        // name === dirty
-        // name === reset
-        // name === value
+    this.state = function(type) {
+        // 0 === init
+        // 1 === valid/validate
+        // 2 === dirty
     };
 
     // Get a value from input/select/textarea
@@ -93,6 +84,14 @@ COMPONENT('input', function() {
 
     this.on('some-event', function() {
         console.log('HELLO FROM EVENT');
+    });
+
+    this.on('watch', '*', function(value) {
+        console.log('changed value', value);
+    });
+
+    this.on('watch', 'model.user.*', function(value) {
+        console.log('changed value', value);
     });
 
     // $.components.emit('some-event');

@@ -26,10 +26,7 @@ $.components = function(container) {
 
         var el = $(this);
         var name = el.attr('data-component');
-        var component = $components[name];
-
-        if ((name || '') === '')
-            component = $components['$default'];
+        var component = $components[name || ''];
 
         if (!component)
             return;
@@ -127,6 +124,8 @@ function $components_ready() {
     $components_timeout = setTimeout(function() {
         $(document).trigger('components', [$components_counter]);
         $(document).off('components');
+        $.components.emit('init');
+        $.components.emit('ready');
         if (!$components_cache['ready'])
             return;
         var arr = $components_cache['ready'];
@@ -136,16 +135,28 @@ function $components_ready() {
     }, 100);
 }
 
-$.components.on = function(name, fn) {
+$.components.on = function(name, path, fn, context) {
+
+    if (typeof(path) === 'function') {
+        fn = path;
+        path = '';
+    }
+
     var arr = name.split('+');
+
+    if (context === undefined)
+        context = $.components;
+
     for (var i = 0, length = arr.length; i < length; i++) {
         var id = arr[i].replace(/\s/g, '');
-        if (!$components_events[id])
-            $components_events[id] = [fn];
-        else
-            $components_events[id].push(fn);
+        if (!$components_events[path]) {
+            $components_events[path] = {};
+            $components_events[path][name] = [];
+        } else if (!$components_events[path][name])
+            $components_events[path][name] = [];
+        $components_events[path][name].push({ fn: fn, context: context });
     }
-    return $.components;
+    return this;
 };
 
 function init(el, obj) {
@@ -162,8 +173,14 @@ function init(el, obj) {
         if (!obj.getter)
             return;
 
+        obj.$dirty = false;
+
         var value = this.type === 'checkbox' ? this.checked : el.val();
-        obj.getter(value);
+        if (value === obj.$tmp)
+            return;
+
+        obj.$tmp = value;
+        obj.getter(value, 2);
 
     }).attr('data-component-bind', obj.path);
 
@@ -182,7 +199,7 @@ function init(el, obj) {
         obj.done();
 
     if (obj.state)
-        obj.state('init');
+        obj.state(0);
 
     el.trigger('component');
     el.off('component');
@@ -200,15 +217,9 @@ function init(el, obj) {
 }
 
 $.components.version = 'v1.0.0';
-$.components.valid = function(value, container) {
+$.components.valid = function(path, value) {
 
-    if (typeof(value) === 'object') {
-        var tmp = container;
-        container = value;
-        value = tmp;
-    }
-
-    var key = 'valid' + (container ? container.selector : '');
+    var key = 'valid' + path;
 
     if (typeof(value) !== 'boolean' && $components_cache[key] !== undefined)
         return $components_cache[key];
@@ -222,19 +233,17 @@ $.components.valid = function(value, container) {
             if (obj.state)
                 arr.push(obj);
             obj.$valid = value;
+            obj.$validate = false;
         }
 
         if (obj.$valid === false)
             valid = false;
 
-    }, container);
+    }, path);
 
-    if (value !== undefined && arr.length > 0) {
-        $.components.state(arr, 'valid', valid);
-        $.components.$emit('valid', valid);
-    }
-
+    $.components.state(arr, 1);
     $components_cache[key] = valid;
+
     return valid;
 };
 
@@ -242,12 +251,53 @@ $.components.get = function(selector) {
     return $(selector).data(COM_ATTR);
 };
 
-$.components.$emit = function(name) {
-
-    var e = $components_events[name];
-
+$.components.$emit2 = function(name, path, args) {
+    var e = $components_events[path];
     if (!e)
+        return false;
+
+    e = e[name];
+    if (!e)
+        return false;
+
+    for (var i = 0, length = e.length; i < length; i++)
+        e[i].fn.apply(e[i].context, args);
+
+    return true;
+};
+
+$.components.$emit = function(name, path) {
+
+    if (!path)
         return;
+
+    var arr = path.split('.');
+    var args = [];
+
+    for (var i = 2, length = arguments.length; i < length; i++)
+        args.push(arguments[i]);
+
+    $.components.$emit2(name, '*', args);
+
+    var p = '';
+
+    for (var i = 0, length = arr.length; i < length; i++) {
+        p += (p.length > 0 ? '.' : '') + arr[i];
+        $.components.$emit2(name, p, args);
+    }
+
+    return true;
+};
+
+$.components.emit = function(name) {
+
+    var e = $components_events[''];
+    if (!e)
+        return false;
+
+    e = $components_events[''][name];
+    if (!e)
+        return false;
 
     var args = [];
 
@@ -255,33 +305,14 @@ $.components.$emit = function(name) {
         args.push(arguments[i]);
 
     for (var i = 0, length = e.length; i < length; i++)
-        e[i].apply(this, args);
+        e[i].fn.apply(e[i].context, arguments);
 
-    return this;
+    return true;
 };
 
-$.components.emit = function() {
+$.components.dirty = function(path, value) {
 
-    var args = arguments;
-
-    $(COM_ATTR).each(function() {
-        var el = $(this);
-        var obj = el.data(COM_ATTR);
-        obj.$emit.apply(obj, args);
-    });
-
-    return $.components;
-};
-
-$.components.dirty = function(value, container) {
-
-    if (typeof(value) !== 'boolean') {
-        var tmp = container;
-        container = value;
-        value = tmp;
-    }
-
-    var key = 'dirty' + (container ? container.selector : '');
+    var key = 'dirty' + path;
 
     if (typeof(value) !== 'boolean' && $components_cache[key] !== undefined)
         return $components_cache[key];
@@ -299,21 +330,36 @@ $.components.dirty = function(value, container) {
         if (obj.$dirty === false)
             dirty = false;
 
-    }, container);
+    }, path);
 
-
-    if (value !== undefined && arr.length > 0) {
-        $.components.state(arr, 'dirty', dirty);
-        $.components.$emit('dirty', dirty);
-    }
-
+    $.components.state(arr, 2);
     return dirty;
 };
 
-$.components.bind = function(path, value, container) {
+// 1 === by developer
+// 2 === by input
+$.components.set = function(path, value, type) {
     component_setvalue(window, path, value);
-    $.components.refresh(path, container, component_getvalue(window, path));
+    var result = component_getvalue(window, path);
+    var state = [];
+    $.components.each(function(component) {
+        if (component.setter)
+            component.setter(result);
+        if (component.validate)
+            component.valid(component.validate(result), true);
+        if (component.state)
+            state.push(component);
+    }, path);
+
+    for (var i = 0, length = state.length; i < length; i++)
+        state[i].state(type);
+
+    $.components.$emit('watch', path, value, type === undefined ? 1 : type);
     return $.components;
+};
+
+$.components.get = function(path, value) {
+    return component_getvalue(window, path, value);
 };
 
 $.components.remove = function(path, container) {
@@ -325,34 +371,25 @@ $.components.remove = function(path, container) {
 
     $components_cache_clear();
     $.components.each(function(obj) {
-        var current = obj.element.attr('data-component-path');
-        if (path && path !== current)
-            return;
         obj.remove(true);
-    }, container);
+    }, path);
 
     return $.components;
 };
 
-$.components.validate = function(path, container) {
-
-    if (typeof(path) === 'object') {
-        var tmp = container;
-        container = path;
-        path = tmp;
-    }
+$.components.validate = function(path) {
 
     var arr = [];
     var valid = true;
 
     $.components.each(function(obj) {
 
+        var current = obj.path;
+
         if (obj.state)
             arr.push(obj);
 
-        var current = obj.element.attr('data-component-path');
-        if (path && path !== current)
-            return;
+        obj.$validate = true;
 
         if (obj.validate) {
             obj.$valid = obj.validate(component_getvalue(window, current));
@@ -360,156 +397,84 @@ $.components.validate = function(path, container) {
                 valid = false;
         }
 
-        if (obj.state)
-            obj.state('validity', true);
-
-    }, container);
+    }, path);
 
     $components_cache_clear('valid');
 
     if (arr.length > 0)
-        $.components.state(arr, 'validate');
-
-    $.components.$emit('validate');
+        $.components.state(arr, 1);
+    $.components.$emit('validate', path);
     return valid;
 };
 
-$.components.invalid = function(path, container) {
-
+$.components.invalid = function(path) {
     var arr = [];
-
     $.components.each(function(obj) {
-        var current = obj.element.attr('data-component-path');
-        if (path && path !== current)
-            return;
         if (obj.$valid === false)
             arr.push(obj);
-    }, container);
-
+    }, path);
     return arr;
 };
 
-$.components.state = function(container, name, value) {
+$.components.state = function(arr, type) {
 
-    if (container instanceof Array) {
-        for (var i = 0, length = container.length; i < length; i++)
-            container[i].state(name, value);
-
-        $.components.$emit('state', name, value);
+    if (!arr || arr.length === 0)
         return;
-    }
 
-    $.components.each(function(obj) {
-        if (obj.state)
-            obj.state(name, value);
-    }, container);
-
-    $.components.$emit('state', name, value);
+    for (var i = 0, length = arr.length; i < length; i++)
+        arr[i].state(type);
 };
 
-$.components.reset = function(path, container) {
-
-    if (typeof(path) === 'object') {
-        var tmp = container;
-        container = path;
-        path = tmp;
-    }
+$.components.reset = function(path) {
 
     var arr = [];
-
     $.components.each(function(obj) {
-
+        var current = obj.path;
         if (obj.state)
             arr.push(obj);
-
-        var current = obj.element.attr('data-component-path');
-        if (path && path !== current)
-            return;
-
-        obj.$dirty = false;
+        obj.$dirty = true;
         obj.$valid = true;
-
+        obj.$validate = false;
         if (obj.validate)
             obj.$valid = obj.validate(obj.get(), 3);
 
-    }, container);
+    }, path);
 
     $components_cache_clear();
-
-    if (arr.length > 0)
-        $.components.state(arr, 'reset');
-
-    $.components.$emit('reset');
+    $.components.state(arr, 3);
+    $.components.$emit('reset', path);
     return $.components;
 };
 
-$.components.update = function(path, container, value) {
-    return this.refresh(path, container, value);
-};
+$.components.each = function(fn, path) {
 
-$.components.refresh = function(path, container, value) {
+    var isAsterix = path ? path.lastIndexOf('*') !== -1 : false;
 
-    if (typeof(path) === 'object') {
-        var tmp = container;
-        container = path;
-        path = tmp;
-    }
+    if (isAsterix)
+        path = path.replace('.*', '').replace('*', '');
 
-    var arr = [];
-    var isArray = value instanceof Array;
+    $(COM_ATTR).each(function() {
 
-    $.components.each(function(obj) {
-
-        var current = obj.element ? obj.element.attr('data-component-path') : '';
-
-        if (obj.state)
-            arr.push(obj);
-
-        if (obj.watch)
-            obj.watch(value, path);
-
-        if (path && path !== current)
-            return;
-
-        if (current === undefined)
-            return;
-
-        var val = value === undefined ? component_getvalue(window, current) : value;
-
-        if (obj.validate)
-            obj.$valid = obj.validate(val, 3);
-
-        if (obj.setter)
-            obj.setter(val);
-
-    }, container);
-
-    if (isArray) {
-        $.components.refresh(path + '.length', container, value.length);
-        return;
-    }
-
-    $components_cache_clear('valid');
-
-    if (arr.length > 0)
-        $.components.state(arr, 'refresh');
-
-    $.components.$emit('refresh');
-    return $.components;
-};
-
-$.components.each = function(fn, container) {
-
-    if (container)
-        container = container.find(COM_ATTR);
-    else
-        container = $(COM_ATTR);
-
-    container.each(function() {
         var component = $(this).data(COM_ATTR);
+        if (!component)
+            return;
+
+        if (path) {
+            if (!component.path)
+                return;
+            if (isAsterix) {
+                if (component.path.indexOf(path) !== 0)
+                    return;
+            } else {
+                if (path !== component.path)
+                    return;
+            }
+        }
+
         if (component && !component.$removed)
             fn(component);
     });
+
     return $.components;
 };
 
@@ -535,6 +500,8 @@ function Component(name, container) {
     this.events = {};
     this.$dirty = true;
     this.$valid = true;
+    this.$validate = false;
+
     this.name = name;
     this.path;
     this.type;
@@ -545,14 +512,14 @@ function Component(name, container) {
     this.done;
     this.watch;
     this.destroy;
-    this.state;
+    this.state; // 0 init, 1 valid/validate, 2 dirty
 
     this.validate;
     this.container = container || window;
 
-    this.getter = function(value) {
+    this.getter = function(value, type) {
         var value = this.parser(value);
-        this.set(value);
+        this.set(this.path, value, type);
         return this;
     };
 
@@ -560,6 +527,7 @@ function Component(name, container) {
 
         var self = this;
         value = this.formatter(value);
+
         this.element.find(COM_DATA_BIND_SELECTOR).each(function() {
 
             var el = $(this);
@@ -586,23 +554,35 @@ function Component(name, container) {
     };
 }
 
-Component.prototype.valid = function(value) {
+Component.prototype.valid = function(value, noEmit) {
     if (value === undefined)
         return this.$valid;
+
     this.$valid = value;
+    this.$validate = false;
+
     $components_cache_clear('valid');
-    $.components.state(undefined, 'valid', value);
-    $.components.$emit('valid', value);
+
+    if (noEmit)
+        return this;
+
+    if (this.state)
+        this.state(1);
+
     return this;
 };
 
 Component.prototype.dirty = function(value) {
+
     if (value === undefined)
         return this.$dirty;
+
     this.$dirty = value;
     $components_cache_clear('dirty');
-    $.components.state(undefined, 'dirty', value);
-    $.components.$emit('dirty', value);
+
+    if (this.state)
+        this.state(2);
+
     return this;
 };
 
@@ -624,14 +604,16 @@ Component.prototype.remove = function(noClear) {
 
 };
 
-Component.prototype.on = function(name, fn) {
+Component.prototype.on = function(name, path, fn) {
     var arr = name.split('+');
     for (var i = 0, length = arr.length; i < length; i++) {
         var id = arr[i].replace(/\s/g, '');
-        if (!this.events[id])
-            this.events[id] = [fn];
-        else
-            this.events[id].push(fn);
+        if (!$components_events[path]) {
+            $components_events[path] = {};
+            $components_events[path][name] = [];
+        } else if (!$components_events[path][name])
+            $components_events[path][name] = [];
+        $components_events[path][name].push({ fn: fn, context: this });
     }
     return this;
 };
@@ -652,7 +634,7 @@ Component.prototype.emit = function() {
     $.components.emit.apply($.components, arguments);
 };
 
-Component.prototype.$emit = function(name, args) {
+Component.prototype.$emit2 = function(name, args) {
 
     var e = this.events[name];
 
@@ -666,68 +648,19 @@ Component.prototype.$emit = function(name, args) {
 };
 
 Component.prototype.get = function(path) {
-    var self = this;
-
     if (!path)
-        path = self.element.attr('data-component-path');
-
+        path = this.path;
     if (!path)
         return;
-
-    return component_getvalue(self.container, path);
+    return component_getvalue(window, path);
 };
 
-Component.prototype.set = function(path, value) {
-
-    var self = this;
-
+Component.prototype.set = function(path, value, type) {
     if (value === undefined) {
         value = path;
-        path = undefined;
+        path = this.path;
     }
-
-    if (!path)
-        path = self.element.attr('data-component-path');
-
-    if (!path)
-        return self;
-
-    this.$tmp = value;
-    self.$dirty = false;
-
-    if (self.validate) {
-        self.$valid = self.validate(value, 1);
-        if (self.state)
-            self.state('validity', false);
-    }
-    else
-        self.$valid = true;
-
-    $components_cache_clear();
-    component_setvalue(self.container, path, value);
-
-    var arr = [];
-
-    // emit change
-    $.components.each(function(obj) {
-        if (obj.state)
-            arr.push(obj);
-        if (obj.watch)
-            obj.watch(value, path);
-        if (path !== obj.path)
-            return;
-        if (obj.validate)
-            obj.$valid = obj.validate(value, 2);
-        if (obj !== self && obj.state)
-            obj.state('validity', obj.$valid);
-        if (!obj.setter)
-            return;
-        obj.setter(value);
-    });
-
-    if (arr.length > 0)
-        $.components.state(arr, 'value', path, value, self.$valid);
-    $.components.$emit('value', path, value, self.$valid);
+    $.components.set(path, value, type);
     return self;
 };
 
@@ -835,12 +768,22 @@ function component_async(arr, fn, done) {
     });
 }
 
+function component_event(arr) {
+    if (!arr || arr.length === 0)
+        return;
+    var args = [];
+    for (var i = 1, length = arguments.length; i < length; i++)
+        args.push(arguments[i]);
+    for (var i = 0, length = arr.length; i < length; i++)
+        arr[i].apply($.components, args);
+}
+
 $.components();
 $(document).ready(function() {
     $.components();
 });
 
-COMPONENT('$default', function() {
+COMPONENT('', function() {
     this.getter = null;
     this.setter = function(value) {
         value = this.formatter(value);
