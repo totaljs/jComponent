@@ -363,6 +363,7 @@ $.components.get = function(path, value) {
 };
 
 $.components.remove = function(path, container) {
+
     if (typeof(path) === 'object') {
         var tmp = container;
         container = path;
@@ -497,6 +498,8 @@ function $components_cache_clear(name) {
 
 function Component(name, container) {
 
+    this._id = new Date().getTime() + 'X' + Math.floor(Math.random() * 10000);
+
     this.events = {};
     this.$dirty = true;
     this.$valid = true;
@@ -613,7 +616,7 @@ Component.prototype.on = function(name, path, fn) {
             $components_events[path][name] = [];
         } else if (!$components_events[path][name])
             $components_events[path][name] = [];
-        $components_events[path][name].push({ fn: fn, context: this });
+        $components_events[path][name].push({ fn: fn, context: this, id: this._id });
     }
     return this;
 };
@@ -768,6 +771,57 @@ function component_async(arr, fn, done) {
     });
 }
 
+// Autocleaner
+function component_event_remove() {
+
+    var aks = Object.keys($components_events);
+    for (var a = 0, al = aks.length; a < al; a++) {
+
+        var ak = aks[a];
+
+        if (!$components_events[ak])
+            continue;
+
+        var bks = Object.keys($components_events[ak]);
+
+        for (var b = 0, bl = bks.length; b < bl; b++) {
+
+            var bk = bks[b];
+            var arr = $components_events[ak][bk];
+
+            if (!arr)
+                continue;
+
+            var index = 0;
+
+            while (true) {
+
+                var item = arr[index++];
+                if (item === undefined)
+                    break;
+
+                if (item.context === undefined)
+                    continue;
+
+                if (item.context === null || !item.context.element || item.context.element.parent().length !== 0)
+                    continue;
+
+                item.context = null;
+                $components_events[ak][bk].splice(index - 1, 1);
+
+                if ($components_events[ak][bk].length === 0) {
+                    delete $components_events[ak][bk];
+                    if (Object.keys($components_events[ak]).length === 0)
+                        delete $components_events[ak];
+                }
+
+                index -= 2;
+            }
+
+        }
+    }
+}
+
 function component_event(arr) {
     if (!arr || arr.length === 0)
         return;
@@ -790,3 +844,5 @@ COMPONENT('', function() {
         this.element.html(value);
     };
 });
+
+setInterval(component_event_remove, 1000 * 60);
