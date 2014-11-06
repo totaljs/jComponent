@@ -608,6 +608,12 @@ Component.prototype.remove = function(noClear) {
 };
 
 Component.prototype.on = function(name, path, fn) {
+
+    if (typeof(path) === 'function') {
+        fn = path;
+        path = '';
+    }
+
     var arr = name.split('+');
     for (var i = 0, length = arr.length; i < length; i++) {
         var id = arr[i].replace(/\s/g, '');
