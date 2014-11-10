@@ -1,6 +1,6 @@
 # jQuery Component Framework with two way bindings
 
-- only __3 kB__ (minified, gzipped)
+- only __5 kB__ (minified, gzipped)
 - `>= jQuery +1.7`
 - `>= IE9`
 - great functionality
@@ -120,17 +120,17 @@ COMPONENT('input', function() {
 // path --> path to object property
 
 $.components(); // --> Component compiler for new components
-$.components.dirty([value], [selector]); // --> are values dirty? or setter dirty value.
-$.components.valid([value], [selector]); // --> are values valid? or setter valid value.
-$.components.bind(path, value, [selector]); // --> bind value to model according to path
+$.components.dirty(path, [value]); // --> are values dirty? or setter dirty value.
+$.components.valid(path, [value]); // --> are values valid? or setter valid value.
+$.components.set(path, value); // --> set value to model according to path
+$.components.get(path); // --> get value from the model
 $.components.validate([path], [selector]); // --> validate values
 $.components.reset([path], [selector]); // --> reset dirty, valid to default state (dirty=true, valid=true)
-$.components.each(fn(component), [selector]); // --> A generic iterator function
-$.components.refresh([path], [selector]); // --> refresh setter
-$.components.update([path], [selector]); // --> refresh setter (@alias to refresh())
-$.components.remove([path], [selector]); // --> remove components (triggers "destroy" event)
+$.components.each(fn(component), path); // --> A generic iterator function
+$.components.update([path]); // --> re-update values, example: "model.user.*"
+$.components.remove([path]); // --> remove components (triggers "destroy" event)
 $.components.get(selector); // --> a component instance
-$.components.invalid([path], [selector]) // --> returns an array with all invalid components
+$.components.invalid([path]) // --> returns an array with all invalid components
 $.components.emit(name, arg1, arg2); // --> trigger some event within all components
 $.components.ready(function(componentCount) {}); // --> is the framework ready?
 $.components.on('event-type', fn);

@@ -338,10 +338,48 @@ $.components.dirty = function(path, value) {
 
 // 1 === by developer
 // 2 === by input
+$.components.update = function(path) {
+
+    var state = [];
+    path = path.replace('*', '');
+
+    var length = path.length;
+
+    $.components.each(function(component) {
+
+        if (length > 0 && (!component.path || component.path.substring(0, length) !== path))
+            return;
+
+        var result = component.get();
+
+        if (component.setter)
+            component.setter(result);
+
+        if (component.validate)
+            component.valid(component.validate(result), true);
+
+        if (component.state)
+            state.push(component);
+
+        $.components.$emit('watch', component.path, result, 1);
+
+    });
+
+    for (var i = 0, length = state.length; i < length; i++)
+        state[i].state(1);
+
+    //return $.components;
+};
+
+// 1 === by developer
+// 2 === by input
 $.components.set = function(path, value, type) {
+
     component_setvalue(window, path, value);
+
     var result = component_getvalue(window, path);
     var state = [];
+
     $.components.each(function(component) {
         if (component.setter)
             component.setter(result);
@@ -669,6 +707,10 @@ Component.prototype.set = function(path, value, type) {
         value = path;
         path = this.path;
     }
+
+    if (!path)
+        return self;
+
     $.components.set(path, value, type);
     return self;
 };
@@ -701,6 +743,22 @@ function component_setvalue(obj, path, value) {
 
     current = component_findpipe(current, arr[length - 1], value);
     return true;
+}
+
+function component_getvalue(obj, path) {
+
+    if (path === undefined)
+        return;
+
+    path = path.split('.');
+    var length = path.length;
+    var current = obj;
+    for (var i = 0; i < path.length; i++) {
+        current = component_findpipe(current, path[i]);
+        if (current === undefined)
+            return;
+    }
+    return current;
 }
 
 function component_findpipe(current, name, value) {
@@ -745,22 +803,6 @@ function component_findpipe(current, name, value) {
     }
 
     return pipe;
-}
-
-function component_getvalue(obj, path) {
-
-    if (path === undefined)
-        return;
-
-    path = path.split('.');
-    var length = path.length;
-    var current = obj;
-    for (var i = 0; i < path.length; i++) {
-        current = component_findpipe(current, path[i]);
-        if (current === undefined)
-            return;
-    }
-    return current;
 }
 
 function component_async(arr, fn, done) {
