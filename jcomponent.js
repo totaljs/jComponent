@@ -344,6 +344,7 @@ $.components.update = function(path) {
     path = path.replace('*', '');
 
     var length = path.length;
+    var was = false;
 
     $.components.each(function(component) {
 
@@ -361,6 +362,8 @@ $.components.update = function(path) {
         if (component.state)
             state.push(component);
 
+        if (component.path === path)
+            was = true;
         $.components.$emit('watch', component.path, result, 1);
 
     });
@@ -368,7 +371,10 @@ $.components.update = function(path) {
     for (var i = 0, length = state.length; i < length; i++)
         state[i].state(1);
 
-    //return $.components;
+    if (!was)
+        $.components.$emit('watch', path, $.components.get(path), 1);
+
+    return $.components;
 };
 
 // 1 === by developer
