@@ -7,6 +7,7 @@ var $components_counter = 0;
 var COM_DATA_BIND_SELECTOR = 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
 var COM_ATTR = '[data-component]';
 var COM_ATTR_URL = '[data-component-url]';
+var COM_ATTR_P = 'data-component-path';
 
 $.fn.component = function() {
     return this.data(COM_ATTR);
@@ -45,13 +46,13 @@ $.components = function(container) {
 
             if (obj.make.indexOf('<') !== -1) {
                 el.html(obj.make);
-                init(el, obj);
+                component_init(el, obj);
                 return;
             }
 
             $.get(obj.make, function(data) {
                 el.html(data);
-                init(el, obj);
+                component_init(el, obj);
             });
 
             return;
@@ -60,7 +61,7 @@ $.components = function(container) {
         if (obj.make)
             obj.make();
 
-        init(el, obj);
+        component_init(el, obj);
     });
 
     if (container !== undefined)
@@ -91,17 +92,31 @@ $.components.inject = function() {
         if (el.data(COM_ATTR_URL))
             return;
         el.data(COM_ATTR_URL, '1');
-        arr.push({ element: el, url: el.attr('data-component-url'), toggle: (el.attr('data-component-class') || '').split(' ') });
+        arr.push({ element: el, path: el.attr(COM_ATTR_P), url: el.attr('data-component-url'), toggle: (el.attr('data-component-class') || '').split(' ') });
     });
 
     component_async(arr, function(item, next) {
-        $.get(item.url, function(response) {
-            item.element.append(response);
+        item.element.load(item.url, function(text, status) {
+
+            if (item.path) {
+                var com = item.element.find(COM_ATTR);
+                com.each(function() {
+                    var el = $(this);
+                    var attr = el.attr(COM_ATTR_P);
+                    if (!attr)
+                        el.attr(COM_ATTR_P, item.path);
+                    else if (attr.indexOf('$') !== -1)
+                        el.attr(COM_ATTR_P, attr.replace('$', item.path));
+                });
+            }
+
             if (item.toggle.length > 0 && item.toggle[0] !== '')
                 $components_cache.toggle.push(item);
+
             count++;
             next();
         });
+
     }, function() {
         $components_cache_clear('dirty');
         $components_cache_clear('valid');
@@ -159,7 +174,7 @@ $.components.on = function(name, path, fn, context) {
     return this;
 };
 
-function init(el, obj) {
+function component_init(el, obj) {
 
     // autobind
     el.find(COM_DATA_BIND_SELECTOR).bind('change blur', function(e) {
@@ -200,6 +215,9 @@ function init(el, obj) {
 
     if (obj.state)
         obj.state(0);
+
+    if (obj.watch !== null)
+        obj.watch(value, 0);
 
     el.trigger('component');
     el.off('component');
@@ -362,8 +380,12 @@ $.components.update = function(path) {
         if (component.state)
             state.push(component);
 
+        if (component.watch)
+            component.watch(result, 1);
+
         if (component.path === path)
             was = true;
+
         $.components.$emit('watch', component.path, result, 1);
 
     });
@@ -386,6 +408,9 @@ $.components.set = function(path, value, type) {
     var result = component_getvalue(window, path);
     var state = [];
 
+    if (type === undefined)
+        type = 1;
+
     $.components.each(function(component) {
         if (component.setter)
             component.setter(result);
@@ -393,12 +418,14 @@ $.components.set = function(path, value, type) {
             component.valid(component.validate(result), true);
         if (component.state)
             state.push(component);
+        if (component.watch)
+            component.watch(value, type);
     }, path);
 
     for (var i = 0, length = state.length; i < length; i++)
         state[i].state(type);
 
-    $.components.$emit('watch', path, value, type === undefined ? 1 : type);
+    $.components.$emit('watch', path, value, type);
     return $.components;
 };
 
@@ -557,7 +584,7 @@ function Component(name, container) {
 
     this.make;
     this.done;
-    this.watch;
+    this.watch = null;
     this.destroy;
     this.state; // 0 init, 1 valid/validate, 2 dirty
 
@@ -647,7 +674,7 @@ Component.prototype.remove = function(noClear) {
 
     $.components.$removed = true;
     $.components.state(undefined, 'destroy', this);
-    $.components.$emit('destroy', this.name, this.element.attr('data-component-path'));
+    $.components.$emit('destroy', this.name, this.element.attr(COM_ATTR_P));
 
 };
 
@@ -726,7 +753,7 @@ function COMPONENT(type, declaration, container) {
     var fn = function(el) {
         var obj = new Component(type, container);
         obj.element = el;
-        obj.path = el.attr('data-component-path');
+        obj.path = el.attr(COM_ATTR_P);
         declaration.call(obj);
         return obj;
     };
