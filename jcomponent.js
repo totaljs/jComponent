@@ -78,8 +78,8 @@ $.components = function(container) {
     });
 };
 
-$.components.formatter = [];
-$.components.parser = [];
+$.components.$formatter = [];
+$.components.$parser = [];
 
 $.components.inject = function() {
 
@@ -176,12 +176,11 @@ $.components.on = function(name, path, fn, context) {
 
 function component_init(el, obj) {
 
-    // autobind
-    el.find(COM_DATA_BIND_SELECTOR).bind('change blur', function(e) {
+    function change_value(el) {
 
-        var el = $(this);
+        var plain = el.get(0);
+
         var path = el.attr('data-component-bind');
-
         if (path && path.length > 0 && path !== obj.path)
             return;
 
@@ -190,13 +189,25 @@ function component_init(el, obj) {
 
         obj.$dirty = false;
 
-        var value = this.type === 'checkbox' ? this.checked : el.val();
+        var value = plain.type === 'checkbox' ? plain.checked : el.val();
         if (value === obj.$tmp)
             return;
 
         obj.$tmp = value;
         obj.getter(value, 2);
+    }
 
+    // autobind
+    el.find(COM_DATA_BIND_SELECTOR).bind('change blur keypress', function(e) {
+        var el = $(this);
+        clearTimeout(el.data('delay'));
+        if (e.type === 'keypress') {
+            el.data('delay', setTimeout(function() {
+                change_value(el);
+            }, 500));
+            return;
+        }
+        change_value(el);
     }).attr('data-component-bind', obj.path);
 
     var value = obj.get();
@@ -380,7 +391,7 @@ $.components.update = function(path) {
         if (component.state)
             state.push(component);
 
-        if (component.watch)
+        if (component.watch !== null)
             component.watch(result, 1);
 
         if (component.path === path)
@@ -418,14 +429,14 @@ $.components.set = function(path, value, type) {
             component.valid(component.validate(result), true);
         if (component.state)
             state.push(component);
-        if (component.watch)
-            component.watch(value, type);
+        if (component.watch !== null)
+            component.watch(result, type);
     }, path);
 
     for (var i = 0, length = state.length; i < length; i++)
         state[i].state(type);
 
-    $.components.$emit('watch', path, value, type);
+    $.components.$emit('watch', path, result, type);
     return $.components;
 };
 
@@ -433,19 +444,12 @@ $.components.get = function(path, value) {
     return component_getvalue(window, path, value);
 };
 
-$.components.remove = function(path, container) {
-
-    if (typeof(path) === 'object') {
-        var tmp = container;
-        container = path;
-        path = tmp;
-    }
-
+$.components.remove = function(path) {
     $components_cache_clear();
     $.components.each(function(obj) {
         obj.remove(true);
     }, path);
-
+    component_event_remove();
     return $.components;
 };
 
@@ -567,14 +571,15 @@ function $components_cache_clear(name) {
     }
 }
 
-function Component(name, container) {
+function Component(name) {
 
     this._id = new Date().getTime() + 'X' + Math.floor(Math.random() * 10000);
 
-    this.events = {};
     this.$dirty = true;
     this.$valid = true;
     this.$validate = false;
+    this.$parser = [];
+    this.$formatter = [];
 
     this.name = name;
     this.path;
@@ -589,10 +594,9 @@ function Component(name, container) {
     this.state; // 0 init, 1 valid/validate, 2 dirty
 
     this.validate;
-    this.container = container || window;
 
     this.getter = function(value, type) {
-        var value = this.parser(value);
+        var value = this.parser(value, this.type);
         this.set(this.path, value, type);
         return this;
     };
@@ -600,7 +604,7 @@ function Component(name, container) {
     this.setter = function(value) {
 
         var self = this;
-        value = this.formatter(value);
+        value = this.formatter(value, this.type);
 
         this.element.find(COM_DATA_BIND_SELECTOR).each(function() {
 
@@ -676,6 +680,8 @@ Component.prototype.remove = function(noClear) {
     $.components.state(undefined, 'destroy', this);
     $.components.$emit('destroy', this.name, this.element.attr(COM_ATTR_P));
 
+    if (!noClear)
+        component_event_remove();
 };
 
 Component.prototype.on = function(name, path, fn) {
@@ -698,15 +704,17 @@ Component.prototype.on = function(name, path, fn) {
     return this;
 };
 
-Component.prototype.formatter = function(value) {
-    for (var i = 0, length = $.components.formatter.length; i < length; i++)
-        value = $.components.formatter[i].call(this, this.path, value, this.type);
+Component.prototype.formatter = function(value, g) {
+    var a = g ? $.components.$formatter : this.$formatter;
+    for (var i = 0, length = a.length; i < length; i++)
+        value = a[i].call(this, this.path, value, this.type);
     return value;
 };
 
-Component.prototype.parser = function(value) {
-    for (var i = 0, length = $.components.parser.length; i < length; i++)
-        value = $.components.parser[i].call(this, this.path, value, this.type);
+Component.prototype.parser = function(value, g) {
+    var a = g ? $.components.$parser : this.$parser;
+    for (var i = 0, length = a.length; i < length; i++)
+        value = a[i].call(this, this.path, value, this.type);
     return value;
 };
 
@@ -714,28 +722,18 @@ Component.prototype.emit = function() {
     $.components.emit.apply($.components, arguments);
 };
 
-Component.prototype.$emit2 = function(name, args) {
-
-    var e = this.events[name];
-
-    if (!e)
-        return;
-
-    for (var i = 0, length = e.length; i < length; i++)
-        e[i].apply(this, args);
-
-    return this;
-};
-
 Component.prototype.get = function(path) {
     if (!path)
         path = this.path;
+
     if (!path)
         return;
+
     return component_getvalue(window, path);
 };
 
 Component.prototype.set = function(path, value, type) {
+
     if (value === undefined) {
         value = path;
         path = this.path;
@@ -748,10 +746,10 @@ Component.prototype.set = function(path, value, type) {
     return self;
 };
 
-function COMPONENT(type, declaration, container) {
+function COMPONENT(type, declaration) {
 
     var fn = function(el) {
-        var obj = new Component(type, container);
+        var obj = new Component(type);
         obj.element = el;
         obj.path = el.attr(COM_ATTR_P);
         declaration.call(obj);
@@ -783,6 +781,9 @@ function component_getvalue(obj, path) {
     if (path === undefined)
         return;
 
+    if (path.substring(path.length - 1) === '.')
+        return;
+
     path = path.split('.');
     var length = path.length;
     var current = obj;
@@ -791,10 +792,15 @@ function component_getvalue(obj, path) {
         if (current === undefined)
             return;
     }
+
     return current;
 }
 
 function component_findpipe(current, name, value) {
+
+    if (current === null)
+        current = {};
+
     var beg = name.lastIndexOf('[');
     var pipe;
     var index = -1;
@@ -903,16 +909,6 @@ function component_event_remove() {
     }
 }
 
-function component_event(arr) {
-    if (!arr || arr.length === 0)
-        return;
-    var args = [];
-    for (var i = 1, length = arguments.length; i < length; i++)
-        args.push(arguments[i]);
-    for (var i = 0, length = arr.length; i < length; i++)
-        arr[i].apply($.components, args);
-}
-
 $.components();
 $(document).ready(function() {
     $.components();
@@ -921,7 +917,7 @@ $(document).ready(function() {
 COMPONENT('', function() {
     this.getter = null;
     this.setter = function(value) {
-        value = this.formatter(value);
+        value = this.formatter(value, true);
         this.element.html(value);
     };
 });
