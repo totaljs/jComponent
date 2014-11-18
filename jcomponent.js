@@ -11,8 +11,16 @@ $.fn.component = function() {
 
 $.components = function(container) {
 
+    $.components.inject();
+
+    if ($cmanager.pending.length > 0) {
+        $cmanager.pending.push(function() {
+            $.components(container);
+        });
+        return self;
+    }
+
     var els = container ? container.find(COM_ATTR) : $(COM_ATTR);
-    var skip = 0;
 
     els.each(function() {
 
@@ -22,16 +30,10 @@ $.components = function(container) {
         if (el.data(COM_ATTR))
             return;
 
-        if (skip > 0) {
-            skip--;
-            return;
-        }
-
         var component = $cmanager.register[name || ''];
         if (!component)
             return;
 
-        skip += el.find(COM_ATTR).length;
         var obj = component(el);
 
         // Reference to implementation
@@ -59,18 +61,22 @@ $.components = function(container) {
         component_init(el, obj);
     });
 
-    if (container !== undefined)
+    if (container !== undefined) {
+        $cmanager.next();
         return;
+    }
 
-    $.components.inject();
-
-    if ($cmanager.toggle.length === 0)
+    if ($cmanager.toggle.length === 0) {
+        $cmanager.next();
         return;
+    }
 
     component_async($cmanager.toggle, function(item, next) {
         for (var i = 0, length = item.toggle.length; i < length; i++)
             item.element.toggleClass(item.toggle[i]);
         next();
+    }, function() {
+        $cmanager.next();
     });
 };
 
@@ -90,6 +96,9 @@ $.components.inject = function() {
         el.data(COM_ATTR_URL, '1');
         arr.push({ element: el, path: el.attr(COM_ATTR_P), url: el.attr('data-component-url'), toggle: (el.attr('data-component-class') || '').split(' ') });
     });
+
+    if (arr.length === 0)
+        return;
 
     component_async(arr, function(item, next) {
         item.element.load(item.url, function(text, status) {
@@ -789,7 +798,15 @@ function ComponentManager() {
     this.ready = [];
     this.events = {};
     this.timeout;
+    this.pending = [];
 }
+
+ComponentManager.prototype.next = function() {
+    var next = this.pending.shift();
+    if (next === undefined)
+        return this;
+    next();
+};
 
 /**
  * Clear cache
