@@ -209,7 +209,6 @@ function component_init(el, obj) {
         }
 
         var val = this.checked ? 'true' : el.val();
-
         if (el.data('value') === val)
             return;
 
@@ -228,10 +227,10 @@ function component_init(el, obj) {
     if (type === 'INPUT' || type === 'SELECT' || type === 'TEXTAREA') {
         if (obj.type === '') {
             obj.$input = true;
-            el.bind('change blur keypress', binder).attr('data-component-bind', obj.path);
+            el.bind('change blur keydown', binder).attr('data-component-bind', obj.path);
         }
     } else
-        el.find(COM_DATA_BIND_SELECTOR).bind('change blur keypress', binder).attr('data-component-bind', obj.path);
+        el.find(COM_DATA_BIND_SELECTOR).bind('change blur keydown', binder).attr('data-component-bind', obj.path);
 
     var value = obj.get();
     obj.id = el.attr('data-component-id') || obj.name;
@@ -300,6 +299,7 @@ $.components.valid = function(path, value) {
 
 $.components.$emit2 = function(name, path, args) {
     var e = $cmanager.events[path];
+
     if (!e)
         return false;
 
@@ -321,7 +321,7 @@ $.components.$emit = function(name, path) {
     var arr = path.split('.');
     var args = [];
 
-    for (var i = 2, length = arguments.length; i < length; i++)
+    for (var i = name === 'watch' ? 1 : 2, length = arguments.length; i < length; i++)
         args.push(arguments[i]);
 
     $.components.$emit2(name, '*', args);
@@ -329,8 +329,20 @@ $.components.$emit = function(name, path) {
     var p = '';
 
     for (var i = 0, length = arr.length; i < length; i++) {
-        p += (p.length > 0 ? '.' : '') + arr[i];
-        $.components.$emit2(name, p, args);
+
+        var k = arr[i];
+        var a = arr[i];
+
+        if (a.substring(a.length - 1, a.length) === ']') {
+            var beg = a.lastIndexOf('[');
+            a = a.substring(0, beg);
+        }
+
+        p += (i > 0 ? '.' : '');
+        $.components.$emit2(name, p + k, args);
+        if (k !== a)
+            $.components.$emit2(name, p + a, args);
+        p += k;
     }
 
     return true;
@@ -869,7 +881,15 @@ ComponentManager.prototype.get = function(path) {
     for (var i = 0, path = path.split('.'), len = path.length; i < len; i++) {
         if (!obj)
             return;
-        obj = obj[path[i]];
+
+        var p = path[i];
+        if (p.substring(p.length - 1, p.length) === ']') {
+            var beg = p.lastIndexOf('[');
+            index = parseInt(p.substring(beg + 1, p.length - 1));
+            p = p.substring(0, beg);
+            obj = obj[p][index];
+        } else
+            obj = obj[p];
     }
 
     return obj;
@@ -892,17 +912,37 @@ ComponentManager.prototype.set = function(path, value) {
 
     for (var i = 0, path = path.split('.'), len = path.length; i < len; i++) {
 
+        var p = path[i];
+        var index = -1;
+
+        if (p.substring(p.length - 1, p.length) === ']') {
+            var beg = p.lastIndexOf('[');
+            index = parseInt(p.substring(beg + 1, p.length - 1));
+            p = p.substring(0, beg);
+        }
+
         if (!obj) {
-            obj[path[i]] = {};
+            if (index === -1)
+                obj[p] = {};
+            else {
+                obj[p] = [];
+                obj[p][index] = {};
+            }
             return;
         }
 
         if (len - 1 !== i) {
-            obj = obj[path[i]];
+            if (index === -1)
+                obj = obj[p];
+            else
+                obj = obj[p][index];
             continue;
         }
 
-        obj[path[i]] = isFn ? value(obj[path[i]]) : value;
+        if (index === -1)
+            obj[p] = isFn ? value(obj[p]) : value;
+        else
+            obj[p][index] = isFn ? value(obj[p][index]) : value;
     }
 
     return self;

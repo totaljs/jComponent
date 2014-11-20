@@ -67,12 +67,14 @@ $.components.update();</pre>
     });
 
     COMPONENT('button', function() {
-        this.state = function(name, value) {
-            this.element.prop({ disabled: $.components.dirty() === true || $.components.valid() === false });
-        };
+        this.element.prop({ disabled: true });
+        this.on('watch', 'model', function(path, value) {
+            this.element.prop({ disabled: $.components.dirty('model.*') === true || $.components.valid('model.*') === false });
+        });
     });
 
     var model = {};
+    model.arr = [{ id: 1, name: 'Peter' }, { id: 2, name: 'Jozef' }];
     model.name = 'Peter';
 
     function evl() {
