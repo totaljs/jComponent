@@ -4,6 +4,7 @@ var COM_DATA_BIND_SELECTOR = 'input[data-component-bind],textarea[data-component
 var COM_ATTR = '[data-component]';
 var COM_ATTR_URL = '[data-component-url]';
 var COM_ATTR_P = 'data-component-path';
+var COM_ATTR_T = 'data-component-template';
 
 $.fn.component = function() {
     return this.data(COM_ATTR);
@@ -39,15 +40,34 @@ $.components = function(container) {
         // Reference to implementation
         el.data(COM_ATTR, obj);
 
+        var template = el.attr(COM_ATTR_T) || obj.template;
+        if (template)
+            obj.template = template;
+
+        if (template) {
+            $.get(template, function(data) {
+                if (obj.prerender)
+                    data = prerender(data);
+                if (typeof(obj.make) === 'function')
+                    obj.make(data);
+                component_init(el, obj);
+            });
+            return;
+        }
+
         if (typeof(obj.make) === 'string') {
 
             if (obj.make.indexOf('<') !== -1) {
+                if (obj.prerender)
+                    obj.make = obj.prerender(obj.make);
                 el.html(obj.make);
                 component_init(el, obj);
                 return;
             }
 
             $.get(obj.make, function(data) {
+                if (obj.prerender)
+                    data = prerender(data);
                 el.html(data);
                 component_init(el, obj);
             });
@@ -604,6 +624,7 @@ function Component(name) {
     this.make;
     this.done;
     this.watch = null;
+    this.prerender;
     this.destroy;
     this.state; // 0 init, 1 valid/validate, 2 dirty
 
