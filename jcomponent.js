@@ -228,11 +228,6 @@ function component_init(el, obj) {
             return;
         }
 
-        var val = this.checked ? 'true' : el.val();
-        if (el.data('value') === val)
-            return;
-
-        el.data('value', val);
         clearTimeout(el.data('delay'));
         el.data('delay', setTimeout(function() {
             el.data('skip', e.type);
