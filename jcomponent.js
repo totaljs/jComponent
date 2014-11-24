@@ -1018,11 +1018,6 @@ ComponentManager.prototype.cleaner = function() {
     return self;
 };
 
-$.components();
-$(document).ready(function() {
-    $.components();
-});
-
 /**
  * Default component
  */
@@ -1040,3 +1035,8 @@ COMPONENT('', function() {
 setInterval(function() {
     $cmanager.cleaner();
 }, 1000 * 60);
+
+$.components();
+$(document).ready(function() {
+    $.components();
+});
