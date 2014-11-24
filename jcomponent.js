@@ -242,7 +242,7 @@ function component_init(el, obj) {
         el.find(COM_DATA_BIND_SELECTOR).bind('change blur keydown', binder).attr('data-component-bind', obj.path);
 
     var value = obj.get();
-    obj.id = el.attr('data-component-id') || obj.name;
+    obj.id = el.attr('data-component-id') || name;
 
     if (obj.setter)
         obj.setter(value);
@@ -596,7 +596,7 @@ $.components.each = function(fn, path) {
 
 function Component(name) {
 
-    this._id = new Date().getTime() + 'X' + Math.floor(Math.random() * 10000);
+    this._id = 'component' + Math.floor(Math.random() * 100000);
 
     this.$dirty = true;
     this.$valid = true;
