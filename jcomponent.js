@@ -193,7 +193,6 @@ $.components.on = function(name, path, fn, context) {
 function component_init(el, obj) {
 
     function change_value(el) {
-
         var plain = el.get(0);
         var path = el.attr('data-component-bind');
         if (path && path.length > 0 && path !== obj.path)
@@ -208,13 +207,25 @@ function component_init(el, obj) {
     }
 
     function binder(e) {
+
+        var el = $(this);
+
+        if (e.type === 'blur') {
+            obj.$can = true;
+            clearTimeout(el.data('delay'));
+            el.data('skip', e.type);
+            change_value(el);
+            return;
+        }
+
+        obj.$can = false;
+
         if (e.type === 'change' && this.tagName !== 'SELECT') {
             var type = this.type.toLowerCase();
             if (type !== 'checkbox' && type !== 'radio')
                 return;
         }
 
-        var el = $(this);
         var skip = el.data('skip');
 
         if (skip && skip !== e.type) {
@@ -236,10 +247,13 @@ function component_init(el, obj) {
     if (type === 'INPUT' || type === 'SELECT' || type === 'TEXTAREA') {
         if (obj.type === '') {
             obj.$input = true;
+            obj.$can = true;
             el.bind('change blur keydown', binder).attr('data-component-bind', obj.path);
         }
-    } else
+    } else {
         el.find(COM_DATA_BIND_SELECTOR).bind('change blur keydown', binder).attr('data-component-bind', obj.path);
+        obj.$can = true;
+    }
 
     var value = obj.get();
     obj.id = el.attr('data-component-id') || name;
@@ -601,6 +615,7 @@ function Component(name) {
     this.$dirty = true;
     this.$valid = true;
     this.$validate = false;
+    this.$can = true;
     this.$parser = [];
     this.$formatter = [];
 
@@ -619,13 +634,18 @@ function Component(name) {
     this.validate;
 
     this.getter = function(value, type) {
-        var value = this.parser(value);
+        value = this.parser(value);
         this.set(this.path, value, type);
         return this;
     };
 
     this.setter = function(value) {
+
         var self = this;
+
+        if (!self.$can)
+            return;
+
         var selector = self.$input === true ? this.element : this.element.find(COM_DATA_BIND_SELECTOR);
         value = self.formatter(value);
         var tmp = value !== null && value !== undefined ? value.toString().toLowerCase() : '';
@@ -659,7 +679,7 @@ function Component(name) {
 
         if (type === 'number') {
             if (typeof(value) === 'string')
-                value = value.replace(/,/g, '.');
+                value = value.replace(/\s/g, '').replace(/,/g, '.');
             var v = parseFloat(value);
             if (isNaN(v))
                 v = null;
