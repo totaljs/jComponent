@@ -1,2 +1,2 @@
 ECHO "[COMPILING]"
-uglifyjs jcomponent.js -o jcomponent.min.js
+uglifyjs jcomponent.js -c -m -o jcomponent.min.js

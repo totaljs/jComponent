@@ -121,7 +121,7 @@ $.components.inject = function() {
         return;
 
     component_async(arr, function(item, next) {
-        item.element.load(item.url, function(text, status) {
+        item.element.load(item.url, function() {
 
             if (item.path) {
                 var com = item.element.find(COM_ATTR);
@@ -178,21 +178,15 @@ $.components.on = function(name, path, fn, context) {
         fn = path;
         path = '';
     }
-
-    var arr = name.split('+');
-
     if (context === undefined)
         context = $.components;
 
-    for (var i = 0, length = arr.length; i < length; i++) {
-        var id = arr[i].replace(/\s/g, '');
-        if (!$cmanager.events[path]) {
-            $cmanager.events[path] = {};
-            $cmanager.events[path][name] = [];
-        } else if (!$cmanager.events[path][name])
-            $cmanager.events[path][name] = [];
-        $cmanager.events[path][name].push({ fn: fn, context: context });
-    }
+    if (!$cmanager.events[path]) {
+        $cmanager.events[path] = {};
+        $cmanager.events[path][name] = [];
+    } else if (!$cmanager.events[path][name])
+        $cmanager.events[path][name] = [];
+    $cmanager.events[path][name].push({ fn: fn, context: context });
     return this;
 };
 
@@ -555,7 +549,6 @@ $.components.reset = function(path) {
 
     var arr = [];
     $.components.each(function(obj) {
-        var current = obj.path;
         if (obj.state)
             arr.push(obj);
         obj.$dirty = true;
@@ -634,7 +627,9 @@ function Component(name) {
     this.setter = function(value) {
         var self = this;
         var selector = self.$input === true ? this.element : this.element.find(COM_DATA_BIND_SELECTOR);
-        value = this.formatter(value);
+        value = self.formatter(value);
+        var tmp = value !== null && value !== undefined ? value.toString().toLowerCase() : '';
+
         selector.each(function() {
 
             var el = $(this);
@@ -644,7 +639,7 @@ function Component(name) {
                 return;
 
             if (this.type === 'checkbox') {
-                this.checked = value == true;
+                this.checked = tmp === 'true' || tmp === '1' || tmp === 'on';
                 return;
             }
 
@@ -737,16 +732,12 @@ Component.prototype.on = function(name, path, fn) {
         path = '';
     }
 
-    var arr = name.split('+');
-    for (var i = 0, length = arr.length; i < length; i++) {
-        var id = arr[i].replace(/\s/g, '');
-        if (!$cmanager.events[path]) {
-            $cmanager.events[path] = {};
-            $cmanager.events[path][name] = [];
-        } else if (!$cmanager.events[path][name])
-            $cmanager.events[path][name] = [];
-        $cmanager.events[path][name].push({ fn: fn, context: this, id: this._id });
-    }
+    if (!$cmanager.events[path]) {
+        $cmanager.events[path] = {};
+        $cmanager.events[path][name] = [];
+    } else if (!$cmanager.events[path][name])
+        $cmanager.events[path][name] = [];
+    $cmanager.events[path][name].push({ fn: fn, context: this, id: this._id });
     return this;
 };
 
@@ -887,7 +878,6 @@ ComponentManager.prototype.refresh = function() {
  * @return {Object}
  */
 ComponentManager.prototype.get = function(path) {
-    var self = this;
 
     if (path === undefined)
         return;
@@ -1038,7 +1028,7 @@ $(document).ready(function() {
  */
 COMPONENT('', function() {
     var type = this.element.get(0).tagName;
-    if (type === 'INPUT' || type === 'SELECT' || 'TEXTAREA' || this.element.find(COM_DATA_BIND_SELECTOR).length > 0)
+    if (type === 'INPUT' || type === 'SELECT' || type === 'TEXTAREA' || this.element.find(COM_DATA_BIND_SELECTOR).length > 0)
         return;
     this.getter = null;
     this.setter = function(value) {
