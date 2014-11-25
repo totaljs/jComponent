@@ -210,15 +210,16 @@ function component_init(el, obj) {
 
         var el = $(this);
 
-        if (e.type === 'blur') {
-            obj.$can = true;
-            clearTimeout(el.data('delay'));
-            el.data('skip', e.type);
-            change_value(el);
-            return;
+        if (this.tagName !== 'SELECT') {
+            if (e.type === 'blur') {
+                obj.$can = true;
+                clearTimeout(el.data('delay'));
+                el.data('skip', e.type);
+                change_value(el);
+                return;
+            }
+            obj.$can = false;
         }
-
-        obj.$can = false;
 
         if (e.type === 'change' && this.tagName !== 'SELECT') {
             var type = this.type.toLowerCase();
