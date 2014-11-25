@@ -949,13 +949,15 @@ ComponentManager.prototype.set = function(path, value) {
         }
 
         if (!obj) {
+            return;
+            /*
             if (index === -1)
                 obj[p] = {};
             else {
                 obj[p] = [];
                 obj[p][index] = {};
             }
-            return;
+            return;*/
         }
 
         if (len - 1 !== i) {
