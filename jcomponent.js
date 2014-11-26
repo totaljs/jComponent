@@ -44,14 +44,20 @@ $.components = function(container) {
         if (template)
             obj.template = template;
 
-        if (template) {
-            $.get(template, function(data) {
+        if (typeof(template) === 'string') {
+            var fn = function(data) {
                 if (obj.prerender)
                     data = prerender(data);
                 if (typeof(obj.make) === 'function')
                     obj.make(data);
                 component_init(el, obj);
-            });
+            };
+
+            var c = template.substring(0, 1);
+            if (c === '.' || c === '#' || c === '[')
+                fn($(c).html());
+            else
+                $.get(template, fn);
             return;
         }
 
