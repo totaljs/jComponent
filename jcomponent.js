@@ -328,6 +328,7 @@ $.components.valid = function(path, value) {
 };
 
 $.components.$emit2 = function(name, path, args) {
+
     var e = $cmanager.events[path];
 
     if (!e)
@@ -341,6 +342,27 @@ $.components.$emit2 = function(name, path, args) {
         e[i].fn.apply(e[i].context, args);
 
     return true;
+};
+
+$.components.$emitonly = function(name, paths) {
+
+    var unique = {};
+    var keys = Object.keys(paths);
+
+    for (var a = 0, al = keys.length; a < al; a++) {
+        var arr = keys[a].split('.');
+        var p = '';
+        for (var b = 0, bl = arr.length; b < bl; b++) {
+            p += (p ? '.' : '') + arr[b];
+            unique[p] = paths[p];
+        }
+    }
+
+    Object.keys(unique).forEach(function(key) {
+        $.components.$emit2(name, key, [key, unique[key]]);
+    });
+
+    return this;
 };
 
 $.components.$emit = function(name, path) {
@@ -369,9 +391,12 @@ $.components.$emit = function(name, path) {
         }
 
         p += (i > 0 ? '.' : '');
+
+        args[1] = $.components.get(p + k);
         $.components.$emit2(name, p + k, args);
         if (k !== a)
             $.components.$emit2(name, p + a, args);
+
         p += k;
     }
 
@@ -431,11 +456,12 @@ $.components.dirty = function(path, value) {
 // 2 === by input
 $.components.update = function(path) {
 
-    var state = [];
-    path = path.replace('*', '');
+    path = path.replace('.*', '');
 
+    var state = [];
     var length = path.length;
     var was = false;
+    var updates = {};
 
     $.components.each(function(component) {
 
@@ -459,16 +485,13 @@ $.components.update = function(path) {
         if (component.path === path)
             was = true;
 
-        $.components.$emit('watch', component.path, result, 1);
-
+        updates[component.path] = result;
     });
 
     for (var i = 0, length = state.length; i < length; i++)
         state[i].state(1);
 
-    if (!was)
-        $.components.$emit('watch', path, $.components.get(path), 1);
-
+    $.components.$emitonly('watch', updates, 1);
     return $.components;
 };
 
@@ -501,7 +524,7 @@ $.components.set = function(path, value, type) {
     for (var i = 0, length = state.length; i < length; i++)
         state[i].state(type);
 
-    $.components.$emit('watch', path, result, type);
+    $.components.$emit('watch', path, undefined, type);
     return $.components;
 };
 
@@ -757,7 +780,8 @@ Component.prototype.on = function(name, path, fn) {
     if (typeof(path) === 'function') {
         fn = path;
         path = '';
-    }
+    } else
+        path = path.replace('.*', '');
 
     if (!$cmanager.events[path]) {
         $cmanager.events[path] = {};
@@ -1068,4 +1092,7 @@ setInterval(function() {
 $.components();
 $(document).ready(function() {
     $.components();
+    setTimeout(function() {
+        $cmanager.cleaner();
+    }, 3000);
 });
