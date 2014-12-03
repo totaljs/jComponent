@@ -271,8 +271,8 @@ function component_init(el, obj) {
 
     $cmanager.components.push(obj);
     $cmanager.init.push(obj);
-    $components_ready();
     $.components(el);
+    $components_ready();
 }
 
 $.components.version = 'v1.0.0';
@@ -890,8 +890,10 @@ ComponentManager.prototype.initialize = function(obj) {
 
 ComponentManager.prototype.initialize = function() {
     var item = this.init.pop();
-    if (item === undefined)
+    if (item === undefined) {
+        $.components();
         return this;
+    }
     this.prepare(item);
     this.initialize();
     return this;
