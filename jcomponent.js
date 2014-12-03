@@ -638,7 +638,7 @@ function Component(name) {
     this.watch = null;
     this.prerender;
     this.destroy;
-    this.state; // 0 init, 1 valid/validate, 2 dirty
+    this.state;
 
     this.validate;
 
