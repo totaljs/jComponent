@@ -164,11 +164,18 @@ $.components.ready = function(fn) {
 function $components_ready() {
     clearTimeout($cmanager.timeout);
     $cmanager.timeout = setTimeout(function() {
+
+        $cmanager.initialize();
+
         var count = $cmanager.components.length;
         $(document).trigger('components', [count]);
-        $(document).off('components');
-        $.components.emit('init');
-        $.components.emit('ready');
+
+        if (!$cmanager.isReady) {
+            $cmanager.isReady = true;
+            $.components.emit('init');
+            $.components.emit('ready');
+        }
+
         if (!$cmanager.ready)
             return;
         var arr = $cmanager.ready;
@@ -216,8 +223,15 @@ function component_init(el, obj) {
 
         var el = $(this);
 
+        var skip = el.data('skip');
+
+        if (skip && skip !== e.type) {
+            el.removeData('skip');
+            return;
+        }
+
         if (this.tagName !== 'SELECT') {
-            if (e.type === 'blur') {
+            if (e.type === 'blur' || (this.type == 'checkbox' || this.type === 'radio')) {
                 obj.$can = true;
                 clearTimeout(el.data('delay'));
                 el.data('skip', e.type);
@@ -231,13 +245,6 @@ function component_init(el, obj) {
             var type = this.type.toLowerCase();
             if (type !== 'checkbox' && type !== 'radio')
                 return;
-        }
-
-        var skip = el.data('skip');
-
-        if (skip && skip !== e.type) {
-            el.removeData('skip');
-            return;
         }
 
         clearTimeout(el.data('delay'));
@@ -262,36 +269,8 @@ function component_init(el, obj) {
         obj.$can = true;
     }
 
-    var value = obj.get();
-    obj.id = el.attr('data-component-id') || name;
-
-    if (obj.setter)
-        obj.setter(value);
-
-    if (obj.validate)
-        obj.$valid = obj.validate(obj.get(), 0);
-
-    if (obj.done)
-        obj.done();
-
-    if (obj.state)
-        obj.state(0);
-
-    if (obj.watch !== null)
-        obj.watch(value, 0);
-
     $cmanager.components.push(obj);
-
-    el.trigger('component');
-    el.off('component');
-
-    var cls = el.attr('data-component-class');
-    if (cls) {
-        cls = cls.split(' ');
-        for (var i = 0, length = cls.length; i < length; i++)
-            el.toggleClass(cls[i]);
-    }
-
+    $cmanager.init.push(obj);
     $components_ready();
     $.components(el);
 }
@@ -860,6 +839,8 @@ function component_async(arr, fn, done) {
 }
 
 function ComponentManager() {
+    this.isReady = false;
+    this.init = [];
     this.register = {};
     this.cache = {};
     this.model = {};
@@ -870,6 +851,89 @@ function ComponentManager() {
     this.timeout;
     this.pending = [];
 }
+
+ComponentManager.prototype.initialize = function(obj) {
+
+    if (!obj)
+        return this;
+
+    var value = obj.get();
+    obj.id = el.attr('data-component-id') || name;
+
+    if (obj.setter)
+        obj.setter(value);
+
+    if (obj.validate)
+        obj.$valid = obj.validate(obj.get(), 0);
+
+    if (obj.done)
+        obj.done();
+
+    if (obj.state)
+        obj.state(0);
+
+    if (obj.watch !== null)
+        obj.watch(value, 0);
+
+    el.trigger('component');
+    el.off('component');
+
+    var cls = el.attr('data-component-class');
+    if (cls) {
+        cls = cls.split(' ');
+        for (var i = 0, length = cls.length; i < length; i++)
+            el.toggleClass(cls[i]);
+    }
+
+    return this;
+};
+
+ComponentManager.prototype.initialize = function() {
+    var item = this.init.pop();
+    if (item === undefined)
+        return this;
+    this.prepare(item);
+    this.initialize();
+    return this;
+};
+
+ComponentManager.prototype.prepare = function(obj) {
+
+    if (!obj)
+        return this;
+
+    var value = obj.get();
+    var el = obj.element;
+    obj.id = el.attr('data-component-id') || name;
+
+    if (obj.setter)
+        obj.setter(value);
+
+    if (obj.validate)
+        obj.$valid = obj.validate(obj.get(), 0);
+
+    if (obj.done)
+        obj.done();
+
+    if (obj.state)
+        obj.state(0);
+
+    if (obj.watch !== null)
+        obj.watch(value, 0);
+
+
+    el.trigger('component');
+    el.off('component');
+
+    var cls = el.attr('data-component-class');
+    if (cls) {
+        cls = cls.split(' ');
+        for (var i = 0, length = cls.length; i < length; i++)
+            el.toggleClass(cls[i]);
+    }
+
+    return this;
+};
 
 ComponentManager.prototype.next = function() {
     var next = this.pending.shift();
@@ -919,6 +983,13 @@ ComponentManager.prototype.refresh = function() {
             return;
         self.components.push(component);
     });
+
+    return self;
+};
+
+ComponentManager.prototype.ready = function() {
+    var self = this;
+    if (self.init.length === 0)
 
     return self;
 };
