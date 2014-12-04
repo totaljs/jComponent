@@ -158,7 +158,6 @@ $.components.inject = function() {
 
 $.components.ready = function(fn) {
     $cmanager.ready.push(fn);
-    $cmanager.clear();
 };
 
 function $components_ready() {
@@ -171,6 +170,7 @@ function $components_ready() {
         $(document).trigger('components', [count]);
 
         if (!$cmanager.isReady) {
+            $cmanager.clear();
             $cmanager.isReady = true;
             $.components.emit('init');
             $.components.emit('ready');
@@ -178,9 +178,11 @@ function $components_ready() {
 
         if (!$cmanager.ready)
             return;
+
         var arr = $cmanager.ready;
         for (var i = 0, length = arr.length; i < length; i++)
             arr[i](count);
+
         delete $cmanager.ready;
     }, 100);
 }
