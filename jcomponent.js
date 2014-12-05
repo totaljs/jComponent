@@ -36,6 +36,7 @@ $.components = function(container) {
             return;
 
         var obj = component(el);
+        obj.type = el.attr('data-component-type') || '';
 
         // Reference to implementation
         el.data(COM_ATTR, obj);
@@ -257,7 +258,6 @@ function component_init(el, obj) {
     }
 
     var type = el.get(0).tagName;
-    obj.type = el.attr('data-component-type') || '';
 
     // autobind
     if (type === 'INPUT' || type === 'SELECT' || type === 'TEXTAREA') {
@@ -854,42 +854,6 @@ function ComponentManager() {
     this.pending = [];
 }
 
-ComponentManager.prototype.initialize = function(obj) {
-
-    if (!obj)
-        return this;
-
-    var value = obj.get();
-    obj.id = el.attr('data-component-id') || name;
-
-    if (obj.setter)
-        obj.setter(value);
-
-    if (obj.validate)
-        obj.$valid = obj.validate(obj.get(), 0);
-
-    if (obj.done)
-        obj.done();
-
-    if (obj.state)
-        obj.state(0);
-
-    if (obj.watch !== null)
-        obj.watch(value, 0);
-
-    el.trigger('component');
-    el.off('component');
-
-    var cls = el.attr('data-component-class');
-    if (cls) {
-        cls = cls.split(' ');
-        for (var i = 0, length = cls.length; i < length; i++)
-            el.toggleClass(cls[i]);
-    }
-
-    return this;
-};
-
 ComponentManager.prototype.initialize = function() {
     var item = this.init.pop();
     if (item === undefined) {
@@ -924,7 +888,6 @@ ComponentManager.prototype.prepare = function(obj) {
 
     if (obj.watch !== null)
         obj.watch(value, 0);
-
 
     el.trigger('component');
     el.off('component');
