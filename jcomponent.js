@@ -189,20 +189,18 @@ function $components_ready() {
 }
 
 $.components.on = function(name, path, fn, context) {
-
     if (typeof(path) === 'function') {
         fn = path;
         path = '';
-    }
-    if (context === undefined)
-        context = $.components;
+    } else
+        path = path.replace('.*', '');
 
     if (!$cmanager.events[path]) {
         $cmanager.events[path] = {};
         $cmanager.events[path][name] = [];
     } else if (!$cmanager.events[path][name])
         $cmanager.events[path][name] = [];
-    $cmanager.events[path][name].push({ fn: fn, context: context });
+    $cmanager.events[path][name].push({ fn: fn, context: this, id: this._id });
     return this;
 };
 
@@ -468,6 +466,9 @@ $.components.update = function(path) {
 
         updates[component.path] = result;
     });
+
+    if (!updates[path])
+        updates[path] = $.components.get(path);
 
     for (var i = 0, length = state.length; i < length; i++)
         state[i].state(1);
