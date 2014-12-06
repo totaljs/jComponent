@@ -188,7 +188,7 @@ function $components_ready() {
     }, 100);
 }
 
-$.components.on = function(name, path, fn, context) {
+$.components.on = function(name, path, fn) {
     if (typeof(path) === 'function') {
         fn = path;
         path = '';
@@ -300,8 +300,8 @@ $.components.valid = function(path, value) {
 
     }, path);
 
-    $.components.state(arr, 1);
     $cmanager.cache[key] = valid;
+    $.components.state(arr, 1);
 
     return valid;
 };
