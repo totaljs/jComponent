@@ -398,7 +398,7 @@ $.components.emit = function(name) {
         args.push(arguments[i]);
 
     for (var i = 0, length = e.length; i < length; i++)
-        e[i].fn.apply(e[i].context, arguments);
+        e[i].fn.apply(e[i].context, args);
 
     return true;
 };
@@ -900,6 +900,7 @@ ComponentManager.prototype.prepare = function(obj) {
             el.toggleClass(cls[i]);
     }
 
+    $.components.emit('component', obj);
     return this;
 };
 
