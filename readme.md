@@ -49,7 +49,7 @@
 ```js
 COMPONENT('input', function() {
 
-    this._id; // contains internal component ID
+    this._id; // contains internal component ID (it's generated randomly)
     this.id; // custom component ID according to data-component-id
     this.name; // component name
     this.path; // component bindings path data-component-path
@@ -192,6 +192,7 @@ $.components.invalid([path]) // The function returns an array with all invalid c
 $.components.emit(name, arg1, arg2); // The function triggers event within all components
 $.components.ready(function(componentCount) {}); // --> Are components ready?
 $.components.on('watch', 'path.*', function(path, value)); // Declare a watch event
+$.components.on('component', function(component)); // A spy for new components
 
 // Value parser (only for inputs/selects/textareas)
 // for component.getter
