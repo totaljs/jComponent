@@ -211,10 +211,8 @@ function component_init(el, obj) {
         var path = el.attr('data-component-bind');
         if (path && path.length > 0 && path !== obj.path)
             return;
-
         if (!obj.getter)
             return;
-
         obj.dirty(false);
         var value = plain.type === 'checkbox' ? plain.checked : el.val();
         obj.getter(value, 2);
@@ -223,15 +221,15 @@ function component_init(el, obj) {
     function binder(e) {
 
         var el = $(this);
-
         var skip = el.data('skip');
+        var tag = this.tagName;
 
         if (skip && skip !== e.type) {
             el.removeData('skip');
             return;
         }
 
-        if (this.tagName !== 'SELECT') {
+        if (tag !== 'SELECT') {
             if (e.type === 'blur' || (this.type == 'checkbox' || this.type === 'radio')) {
                 obj.$can = true;
                 clearTimeout(el.data('delay'));
@@ -242,10 +240,18 @@ function component_init(el, obj) {
             obj.$can = false;
         }
 
-        if (e.type === 'change' && this.tagName !== 'SELECT') {
+        if (e.type === 'change' && tag !== 'SELECT') {
             var type = this.type.toLowerCase();
             if (type !== 'checkbox' && type !== 'radio')
                 return;
+        }
+
+        if (e.type === 'change' && tag === 'SELECT') {
+            obj.$can = true;
+            clearTimeout(el.data('delay'));
+            el.data('skip', e.type);
+            change_value(el);
+            return;
         }
 
         clearTimeout(el.data('delay'));
