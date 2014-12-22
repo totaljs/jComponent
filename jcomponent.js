@@ -220,12 +220,21 @@ function component_init(el, obj) {
 
     function binder(e) {
 
-        if (e.keyCode === 13 || e.keyCode === 27)
+        if (e.keyCode === 27)
             return;
 
-        var el = $(this);
-        var skip = el.data('skip');
         var tag = this.tagName;
+        var el = $(this);
+
+        if (tag === 'INPUT' && e.keyCode === 13) {
+            obj.$can = true;
+            clearTimeout(el.data('delay'));
+            el.data('skip', e.type);
+            change_value(el);
+            return;
+        }
+
+        var skip = el.data('skip');
 
         if (skip && skip !== e.type) {
             el.removeData('skip');
