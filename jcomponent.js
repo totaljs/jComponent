@@ -220,6 +220,9 @@ function component_init(el, obj) {
 
     function binder(e) {
 
+        if (e.keyCode === 13 || e.keyCode === 27)
+            return;
+
         var el = $(this);
         var skip = el.data('skip');
         var tag = this.tagName;
@@ -455,6 +458,8 @@ $.components.update = function(path) {
 
         var result = component.get();
 
+        component.$can = true;
+
         if (component.setter)
             component.setter(result);
 
@@ -499,6 +504,7 @@ $.components.set = function(path, value, type) {
         type = 1;
 
     $.components.each(function(component) {
+        component.$can = true;
         if (component.setter)
             component.setter(result);
         if (component.validate)
