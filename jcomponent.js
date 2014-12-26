@@ -213,11 +213,9 @@ function component_init(el, obj) {
             return;
         if (!obj.getter)
             return;
-<<<<<<< HEAD
 
-=======
         obj.dirty(false);
->>>>>>> FETCH_HEAD
+
         var value = plain.type === 'checkbox' ? plain.checked : el.val();
         if (obj.$value === value)
             return;
@@ -229,35 +227,10 @@ function component_init(el, obj) {
 
     function binder(e) {
 
-        if (e.keyCode === 27)
-            return;
-
-        var tag = this.tagName;
         var el = $(this);
 
-<<<<<<< HEAD
         if (this.tagName !== 'SELECT') {
             if (e.type === 'blur') {
-=======
-        if (tag === 'INPUT' && e.keyCode === 13) {
-            obj.$can = true;
-            clearTimeout(el.data('delay'));
-            el.data('skip', e.type);
-            change_value(el);
-            return;
-        }
-
-        var skip = el.data('skip');
-
-        if (skip && skip !== e.type) {
-            el.removeData('skip');
-            return;
-        }
-
-        if (tag !== 'SELECT') {
-            if (e.type === 'blur' || (this.type == 'checkbox' || this.type === 'radio')) {
-                obj.$can = true;
->>>>>>> FETCH_HEAD
                 clearTimeout(el.data('delay'));
                 el.data('skip', e.type);
                 change_value(el);
@@ -265,17 +238,16 @@ function component_init(el, obj) {
             }
         }
 
-        if (e.type === 'change' && tag !== 'SELECT') {
+        if (e.type === 'change' && this.tagName !== 'SELECT') {
             var type = this.type.toLowerCase();
             if (type !== 'checkbox' && type !== 'radio')
                 return;
         }
 
-        if (e.type === 'change' && tag === 'SELECT') {
-            obj.$can = true;
-            clearTimeout(el.data('delay'));
-            el.data('skip', e.type);
-            change_value(el);
+        var skip = el.data('skip');
+
+        if (skip && skip !== e.type) {
+            el.removeData('skip');
             return;
         }
 
