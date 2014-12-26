@@ -1,11 +1,11 @@
 # jQuery Component Framework with two way bindings
 
-- only __5 kB__ (minified, gzipped)
+- only __8 kB__ (minified, gzipped)
 - `>= jQuery +1.7`
 - `>= IE9`
 - great functionality
-- similar functionality as directives from Angularjs
-- easy property mapping + supports Array indexes e.g. `<div data-component-path="model.list[2].name">...`
+- similar functionality as directives from Angular.js
+- easy property mapping + supports Array indexes
 - supports validation
 - supports nested components
 - best of use with www.totaljs.com - web application framework for node.js
@@ -15,100 +15,159 @@
 <script src="jcomponent.js"></script>
 
 <div data-component="COMPONENT NAME" data-component-path="model.name"></div>
-<div data-component="COMPONENT NAME" data-component-path="model.list[2]"></div>
+<div data-component="COMPONENT NAME" data-component-template="/input.html"></div>
+<div data-component="COMPONENT NAME" data-component-path="model.list[2]" data-component-type="number"></div>
+<div data-component-url="/dashboard.html" data-component-path="common.dashboard"></div>
 
 <script>
+    var common = {};
     var model = {};
+
     model.list = ['1', '2', '3'];
     model.name = 'OK';
+
+    common.dashboard = {};
 </script>
 ```
 
-Framework knows three types of HTML attributes:
-- `data-component="COMPONENT NAME"` - a component name
-- `data-component-path="PATH TO PROPERTY"` - mapping
+## HTML attributes
+
+- `data-component="COMPONENT NAME"` - a component name (required)
+- `data-component-path="PATH TO PROPERTY"` - mapping to property (optional)
+- `data-component-template="URL"` - mapping to URL address (optional)
+- `data-component-type="number"` - custom type name (optional)
+- `data-component-id="myid"` - custom component ID
+- `data-component-class="class1 class2 class3"` - framework toggles classes after is a component  (optional)
+
+## Special HTML attributes
+
+- `data-component-url="URL TO TEMPLATE"` - framework downloads HTML template with `<script>` and evals
 - `data-component-bind` - auto attach "change" event for input/select/textarea (only in a component)
-- `data-component-url="URL TO TEMPLATE"` - framework downloads template with components and compile
-- `data-component-class="class1 class2 class3"` - framework toggles classes after is a component ready
 
 ## Component methods/properties
 
 ```js
 COMPONENT('input', function() {
 
-    // make() === render
-    this.make = function() {
-        // According to "data-component-bind" attribute framework attaches "change" event automatically.
-        this.element.append('<input type="text" data-component-bind />');
+    this._id; // contains internal component ID (it's generated randomly)
+    this.id; // custom component ID according to data-component-id
+    this.name; // component name
+    this.path; // component bindings path data-component-path
+    this.element; // contains component element
+    this.template; // contains template according to data-component-template
+    this.type; // contains data-component-type
+    
+    // A prerender function and it's called when:
+    // 1. component.make contains a string value (URL or valid HTML)
+    // 2. is specified data-component-template attribute
+    this.prerender = function(template) {
     };
 
-    // or
-    // this.make = '<input type="text" data-bind />';
+    // make() === render
+    this.make = function(template) {
+        // template argument contains (sometimes) downloaded HTML template - {String}
+        // According to "data-component-bind" attribute attaches "change" event automatically.
+        this.element.append('<input type="text" data-component-bind />');
+        // or
+        // this.element.append('<input type="text" data-component-bind="new-data-component-path" />');
+    };
 
-    // or
+    // or (after prerender function is called)
+    // this.make = '<input type="text" data-component-bind />';
+
+    // or (after prerender function is called)
     // this.make = "/templates/input.html";
 
-    // Is called after make()
     // OPTIONAL
+    // It's called after make()
     this.done = function() {
     };
 
     // OPTIONAL
+    // It's called after remove
+    this.destroy = function() {
+    };
+
+    // OPTIONAL
+    // Must return {Boolean}
     this.validate = function(value) {
         return value.length > 0;
     };
 
-    // Watching all changes (all changes from all components)
-    this.watch = function(value, path) {
-    
+    // OPTIONAL
+    // Watch changes of value
+    this.watch = function(value, type) {
+        // type === 1 : by developer
+        // type === 2 : by input
     };
 
+    // OPTIONAL
+    // Watch the state of value, suitable for toggling classes of element
     this.state = function(type) {
-        // 0 === init
-        // 1 === valid/validate
-        // 2 === dirty
+        // type === 1 : by developer
+        // type === 2 : by input
     };
 
-    // Get a value from input/select/textarea
-    // OPTIONAL, framework has an own declaration for this
+    // Get the value from input/select/textarea
+    // OPTIONAL, framework has an own mechanism for this (but you can rewrite it)
     this.getter = function(value) {
-        // set value to model (by path name)
+        // set value to model (according path name)
         this.set(value);
     };
 
-    // Set a value to input/select/textarea
-    // OPTIONAL, framework has an own declaration for this
+    // Set the value to input/select/textarea
+    // OPTIONAL, framework has an own mechanism for this (but you can rewrite it)
     this.setter = function(value) {
         this.element.find('input').val(value === undefined || value === null ? '' : value);
     };
 
+    // Declare a simple event
     this.on('some-event', function() {
         console.log('HELLO FROM EVENT');
     });
 
-    this.on('watch', '*', function(value) {
-        console.log('changed value', value);
+    // Declare a watch event
+    this.on('watch', '*', function(path, value) {
+        console.log('changed value', path, value);
     });
 
-    this.on('watch', 'model.user.*', function(value) {
-        console.log('changed value', value);
+    // Declare a watch event
+    this.on('watch', 'model.user.*', function(path, value) {
+        console.log('changed value', path, value);
     });
-
-    // $.components.emit('some-event');
-    // this.emit('some-event');
-
-    // Properties
-    this.element; // jQuery element
-    this.id; // ID -> optional, [data-component-id]
-    this.name; // Component type name [data-component]
 
     // Methods
-    this.dirty([value]); // Boolean, is input dirty? If you enter a value then is the setter.
-    this.valid([value]); // Boolean, is input valid? If you enter a value then is the setter.
-    this.remove(); // remove current component
-    this.get([path]); // get a value according to path from a model
-    this.set([path], value); // set a value according to path into the model
-    this.trigger(name, arg1, arg2); // trigger some event within all components
+    this.remove(); // remove the component
+    this.dirty([value]); // Boolean, is component dirty? ... or you can set "dirty" value
+    this.valid([value]); // Boolean, is component valid? ... or you can set "valid" value
+    this.get([path]); // get/read the value
+    this.set([path], value); // set/write the value
+    this.emit(name, arg1, arg2); // The function triggers event within all components
+    
+    // this function formats the value according to formatters 
+    // it's called automatically (data-component-bind) when is value changed
+    // returns a formatted value
+    this.formatter(value);
+
+    // this function parses the value according to parsers
+    // it's called automatically (data-component-bind) when input/select/textarea changes the value
+    // returns a parsed value
+    this.parser(value);
+
+    // Properties
+    this.$parser; // Is function(path, value, type) array
+    this.$formatter; // Is function(path, value, type) array
+
+    // Example
+    this.$parsers.push(function(path, value, type) {
+        if (type === 'number') {
+            var tmp = parseInt(value.replace(/\s/g, ''));
+            if (isNaN(tmp))
+                return 0;
+            return tmp;
+        }
+        return value;
+    });
 });
 ```
 
@@ -119,35 +178,25 @@ COMPONENT('input', function() {
 // [parameter] --> is OPTIONAL
 // path --> path to object property
 
-$.components(); // --> Component compiler for new components
-$.components.dirty(path, [value]); // --> are values dirty? or setter dirty value.
-$.components.valid(path, [value]); // --> are values valid? or setter valid value.
-$.components.set(path, value); // --> set value to model according to path
-$.components.get(path); // --> get value from the model
-$.components.validate([path], [selector]); // --> validate values
-$.components.reset([path], [selector]); // --> reset dirty, valid to default state (dirty=true, valid=true)
-$.components.each(fn(component), path); // --> A generic iterator function
-$.components.update([path]); // --> re-update values, example: "model.user.*"
-$.components.remove([path]); // --> remove components (triggers "destroy" event)
-$.components.get(selector); // --> a component instance
-$.components.invalid([path]) // --> returns an array with all invalid components
-$.components.emit(name, arg1, arg2); // --> trigger some event within all components
-$.components.ready(function(componentCount) {}); // --> is the framework ready?
-$.components.on('event-type', fn);
-// event-type (contains only simple informations about the behavior):
-// value       --> some value was changed
-// validate    --> $.components.validate()
-// validity    --> for changing design of some inputs and selects
-// valid       --> $.components.valid() or component.valid(value)
-// dirty       --> $.components.dirty() or component.dirty(value)
-// reset       --> $.components.reset()
-// refresh     --> $.components.refresh()
-// destroy     --> $.components.remove() or component.remove();
-// state       --> some component state
+$.components(); // A component compiler. It compiles only new components.
+$.components.set(path, value); // Set/write value to model according to path
+$.components.get(path); // Get/read value from the model
+$.components.dirty(path, [value]); // Are values dirty? or setter "dirty" state.
+$.components.valid(path, [value]); // Are values valid? or setter "valid" state.
+$.components.validate([path], [selector]); // The function validates all values according the path
+$.components.reset([path], [selector]); // Reset dirty and valid state to dirty=true, valid=true
+$.components.each(fn(component), path); // A generic iterator function
+$.components.update([path]); // Re-update values, example: "model.user.*"
+$.components.remove([path]); // The function removes components (triggers "destroy" event)
+$.components.invalid([path]) // The function returns an array with all invalid components
+$.components.emit(name, arg1, arg2); // The function triggers event within all components
+$.components.ready(function(componentCount) {}); // --> Are components ready?
+$.components.on('watch', 'path.*', function(path, value)); // Declare a watch event
+$.components.on('component', function(component)); // A spy for new components
 
 // Value parser (only for inputs/selects/textareas)
 // for component.getter
-$.components.parser.push(function(path, value, type) {
+$.components.$parser.push(function(path, value, type) {
     // this === component
     // type === [data-component-type]
     // example:
@@ -158,7 +207,7 @@ $.components.parser.push(function(path, value, type) {
 
 // Value formatter (only for inputs/selects/textareas)
 // for component.setter
-$.components.formatter.push(function(path, value, type) {
+$.components.$formatter.push(function(path, value, type) {
     // this === component
     // type === [data-component-type]
     if (path === 'model.price')
@@ -220,7 +269,7 @@ COMPONENT('button', function() {
     function change_name() {
 
         model.name = 'Janko';
-        $.components.refresh();
+        $.components.update('model');
 
         // or
         // $.components.bind('model.name', 'Janko');

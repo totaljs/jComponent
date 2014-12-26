@@ -36,6 +36,7 @@ $.components = function(container) {
             return;
 
         var obj = component(el);
+        obj.type = el.attr('data-component-type') || '';
 
         // Reference to implementation
         el.data(COM_ATTR, obj);
@@ -158,41 +159,48 @@ $.components.inject = function() {
 
 $.components.ready = function(fn) {
     $cmanager.ready.push(fn);
-    $cmanager.clear();
 };
 
 function $components_ready() {
     clearTimeout($cmanager.timeout);
     $cmanager.timeout = setTimeout(function() {
+
+        $cmanager.initialize();
+
         var count = $cmanager.components.length;
         $(document).trigger('components', [count]);
-        $(document).off('components');
-        $.components.emit('init');
-        $.components.emit('ready');
+
+        if (!$cmanager.isReady) {
+            $cmanager.clear();
+            $cmanager.isReady = true;
+            $.components.emit('init');
+            $.components.emit('ready');
+        }
+
         if (!$cmanager.ready)
             return;
+
         var arr = $cmanager.ready;
         for (var i = 0, length = arr.length; i < length; i++)
             arr[i](count);
+
         delete $cmanager.ready;
     }, 100);
 }
 
-$.components.on = function(name, path, fn, context) {
-
+$.components.on = function(name, path, fn) {
     if (typeof(path) === 'function') {
         fn = path;
         path = '';
-    }
-    if (context === undefined)
-        context = $.components;
+    } else
+        path = path.replace('.*', '');
 
     if (!$cmanager.events[path]) {
         $cmanager.events[path] = {};
         $cmanager.events[path][name] = [];
     } else if (!$cmanager.events[path][name])
         $cmanager.events[path][name] = [];
-    $cmanager.events[path][name].push({ fn: fn, context: context });
+    $cmanager.events[path][name].push({ fn: fn, context: this, id: this._id });
     return this;
 };
 
@@ -203,10 +211,13 @@ function component_init(el, obj) {
         var path = el.attr('data-component-bind');
         if (path && path.length > 0 && path !== obj.path)
             return;
-
         if (!obj.getter)
             return;
+<<<<<<< HEAD
 
+=======
+        obj.dirty(false);
+>>>>>>> FETCH_HEAD
         var value = plain.type === 'checkbox' ? plain.checked : el.val();
         if (obj.$value === value)
             return;
@@ -218,10 +229,35 @@ function component_init(el, obj) {
 
     function binder(e) {
 
+        if (e.keyCode === 27)
+            return;
+
+        var tag = this.tagName;
         var el = $(this);
 
+<<<<<<< HEAD
         if (this.tagName !== 'SELECT') {
             if (e.type === 'blur') {
+=======
+        if (tag === 'INPUT' && e.keyCode === 13) {
+            obj.$can = true;
+            clearTimeout(el.data('delay'));
+            el.data('skip', e.type);
+            change_value(el);
+            return;
+        }
+
+        var skip = el.data('skip');
+
+        if (skip && skip !== e.type) {
+            el.removeData('skip');
+            return;
+        }
+
+        if (tag !== 'SELECT') {
+            if (e.type === 'blur' || (this.type == 'checkbox' || this.type === 'radio')) {
+                obj.$can = true;
+>>>>>>> FETCH_HEAD
                 clearTimeout(el.data('delay'));
                 el.data('skip', e.type);
                 change_value(el);
@@ -229,16 +265,17 @@ function component_init(el, obj) {
             }
         }
 
-        if (e.type === 'change' && this.tagName !== 'SELECT') {
+        if (e.type === 'change' && tag !== 'SELECT') {
             var type = this.type.toLowerCase();
             if (type !== 'checkbox' && type !== 'radio')
                 return;
         }
 
-        var skip = el.data('skip');
-
-        if (skip && skip !== e.type) {
-            el.removeData('skip');
+        if (e.type === 'change' && tag === 'SELECT') {
+            obj.$can = true;
+            clearTimeout(el.data('delay'));
+            el.data('skip', e.type);
+            change_value(el);
             return;
         }
 
@@ -250,7 +287,6 @@ function component_init(el, obj) {
     }
 
     var type = el.get(0).tagName;
-    obj.type = el.attr('data-component-type') || '';
 
     // autobind
     if (type === 'INPUT' || type === 'SELECT' || type === 'TEXTAREA') {
@@ -261,38 +297,10 @@ function component_init(el, obj) {
     } else
         el.find(COM_DATA_BIND_SELECTOR).bind('change blur keydown', binder).attr('data-component-bind', obj.path);
 
-    var value = obj.get();
-    obj.id = el.attr('data-component-id') || name;
-
-    if (obj.setter)
-        obj.setter(value);
-
-    if (obj.validate)
-        obj.$valid = obj.validate(obj.get(), 0);
-
-    if (obj.done)
-        obj.done();
-
-    if (obj.state)
-        obj.state(0);
-
-    if (obj.watch !== null)
-        obj.watch(value, 0);
-
     $cmanager.components.push(obj);
-
-    el.trigger('component');
-    el.off('component');
-
-    var cls = el.attr('data-component-class');
-    if (cls) {
-        cls = cls.split(' ');
-        for (var i = 0, length = cls.length; i < length; i++)
-            el.toggleClass(cls[i]);
-    }
-
-    $components_ready();
+    $cmanager.init.push(obj);
     $.components(el);
+    $components_ready();
 }
 
 $.components.version = 'v1.0.0';
@@ -320,8 +328,8 @@ $.components.valid = function(path, value) {
 
     }, path);
 
-    $.components.state(arr, 1);
     $cmanager.cache[key] = valid;
+    $.components.state(arr, 1);
 
     return valid;
 };
@@ -419,7 +427,7 @@ $.components.emit = function(name) {
         args.push(arguments[i]);
 
     for (var i = 0, length = e.length; i < length; i++)
-        e[i].fn.apply(e[i].context, arguments);
+        e[i].fn.apply(e[i].context, args);
 
     return true;
 };
@@ -470,6 +478,8 @@ $.components.update = function(path) {
 
         var result = component.get();
 
+        component.$can = true;
+
         if (component.setter)
             component.setter(result);
 
@@ -487,6 +497,9 @@ $.components.update = function(path) {
 
         updates[component.path] = result;
     });
+
+    if (!updates[path])
+        updates[path] = $.components.get(path);
 
     for (var i = 0, length = state.length; i < length; i++)
         state[i].state(1);
@@ -511,6 +524,7 @@ $.components.set = function(path, value, type) {
         type = 1;
 
     $.components.each(function(component) {
+        component.$can = true;
         if (component.setter)
             component.setter(result);
         if (component.validate)
@@ -659,7 +673,7 @@ function Component(name) {
     this.watch = null;
     this.prerender;
     this.destroy;
-    this.state; // 0 init, 1 valid/validate, 2 dirty
+    this.state;
 
     this.validate;
 
@@ -855,6 +869,8 @@ function component_async(arr, fn, done) {
 }
 
 function ComponentManager() {
+    this.isReady = false;
+    this.init = [];
     this.register = {};
     this.cache = {};
     this.model = {};
@@ -865,6 +881,55 @@ function ComponentManager() {
     this.timeout;
     this.pending = [];
 }
+
+ComponentManager.prototype.initialize = function() {
+    var item = this.init.pop();
+    if (item === undefined) {
+        $.components();
+        return this;
+    }
+    this.prepare(item);
+    this.initialize();
+    return this;
+};
+
+ComponentManager.prototype.prepare = function(obj) {
+
+    if (!obj)
+        return this;
+
+    var value = obj.get();
+    var el = obj.element;
+    obj.id = el.attr('data-component-id') || name;
+
+    if (obj.setter)
+        obj.setter(value);
+
+    if (obj.validate)
+        obj.$valid = obj.validate(obj.get(), 0);
+
+    if (obj.done)
+        obj.done();
+
+    if (obj.state)
+        obj.state(0);
+
+    if (obj.watch !== null)
+        obj.watch(value, 0);
+
+    el.trigger('component');
+    el.off('component');
+
+    var cls = el.attr('data-component-class');
+    if (cls) {
+        cls = cls.split(' ');
+        for (var i = 0, length = cls.length; i < length; i++)
+            el.toggleClass(cls[i]);
+    }
+
+    $.components.emit('component', obj);
+    return this;
+};
 
 ComponentManager.prototype.next = function() {
     var next = this.pending.shift();
@@ -914,6 +979,13 @@ ComponentManager.prototype.refresh = function() {
             return;
         self.components.push(component);
     });
+
+    return self;
+};
+
+ComponentManager.prototype.ready = function() {
+    var self = this;
+    if (self.init.length === 0)
 
     return self;
 };
