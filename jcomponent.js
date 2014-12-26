@@ -207,8 +207,12 @@ function component_init(el, obj) {
         if (!obj.getter)
             return;
 
-        obj.dirty(false);
         var value = plain.type === 'checkbox' ? plain.checked : el.val();
+        if (obj.$value === value)
+            return;
+
+        obj.$value = value;
+        obj.dirty(false);
         obj.getter(value, 2);
     }
 
@@ -218,13 +222,11 @@ function component_init(el, obj) {
 
         if (this.tagName !== 'SELECT') {
             if (e.type === 'blur') {
-                obj.$can = true;
                 clearTimeout(el.data('delay'));
                 el.data('skip', e.type);
                 change_value(el);
                 return;
             }
-            obj.$can = false;
         }
 
         if (e.type === 'change' && this.tagName !== 'SELECT') {
@@ -254,13 +256,10 @@ function component_init(el, obj) {
     if (type === 'INPUT' || type === 'SELECT' || type === 'TEXTAREA') {
         if (obj.type === '') {
             obj.$input = true;
-            obj.$can = true;
             el.bind('change blur keydown', binder).attr('data-component-bind', obj.path);
         }
-    } else {
+    } else
         el.find(COM_DATA_BIND_SELECTOR).bind('change blur keydown', binder).attr('data-component-bind', obj.path);
-        obj.$can = true;
-    }
 
     var value = obj.get();
     obj.id = el.attr('data-component-id') || name;
@@ -344,7 +343,7 @@ $.components.$emit2 = function(name, path, args) {
     return true;
 };
 
-$.components.$emitonly = function(name, paths) {
+$.components.$emitonly = function(name, paths, type, path) {
 
     var unique = {};
     var keys = Object.keys(paths);
@@ -359,7 +358,8 @@ $.components.$emitonly = function(name, paths) {
     }
 
     Object.keys(unique).forEach(function(key) {
-        $.components.$emit2(name, key, [key, unique[key]]);
+        // OLDER: $.components.$emit2(name, key, [key, unique[key]]);
+        $.components.$emit2(name, key, [path, unique[key]]);
     });
 
     return this;
@@ -491,7 +491,7 @@ $.components.update = function(path) {
     for (var i = 0, length = state.length; i < length; i++)
         state[i].state(1);
 
-    $.components.$emitonly('watch', updates, 1);
+    $.components.$emitonly('watch', updates, 1, path);
     return $.components;
 };
 
@@ -645,9 +645,9 @@ function Component(name) {
     this.$dirty = true;
     this.$valid = true;
     this.$validate = false;
-    this.$can = true;
     this.$parser = [];
     this.$formatter = [];
+    this.$value;
 
     this.name = name;
     this.path;
@@ -670,12 +670,7 @@ function Component(name) {
     };
 
     this.setter = function(value) {
-
         var self = this;
-
-        if (!self.$can)
-            return;
-
         var selector = self.$input === true ? this.element : this.element.find(COM_DATA_BIND_SELECTOR);
         value = self.formatter(value);
         var tmp = value !== null && value !== undefined ? value.toString().toLowerCase() : '';
@@ -701,7 +696,7 @@ function Component(name) {
                 return;
             }
 
-            this.value = value;
+            self.$value = this.value = value;
         });
     };
 
