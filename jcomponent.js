@@ -206,19 +206,24 @@ $.components.on = function(name, path, fn) {
 
 function component_init(el, obj) {
 
-    function change_value(el) {
+    function change_value(el, can) {
         var plain = el.get(0);
         var path = el.attr('data-component-bind');
+
         if (path && path.length > 0 && path !== obj.path)
             return;
+
         if (!obj.getter)
             return;
 
         obj.dirty(false);
 
         var value = plain.type === 'checkbox' ? plain.checked : el.val();
-        if (obj.$value === value)
+        if (obj.$value === value) {
+            if (can)
+                obj.setter(obj.get());
             return;
+        }
 
         obj.$value = value;
         obj.dirty(false);
@@ -233,7 +238,7 @@ function component_init(el, obj) {
             if (e.type === 'blur') {
                 clearTimeout(el.data('delay'));
                 el.data('skip', e.type);
-                change_value(el);
+                change_value(el, true);
                 return;
             }
         }
@@ -449,9 +454,6 @@ $.components.update = function(path) {
             return;
 
         var result = component.get();
-
-        component.$can = true;
-
         if (component.setter)
             component.setter(result);
 
@@ -496,9 +498,8 @@ $.components.set = function(path, value, type) {
         type = 1;
 
     $.components.each(function(component) {
-        component.$can = true;
         if (component.setter)
-            component.setter(result);
+            component.setter(result, type);
         if (component.validate)
             component.valid(component.validate(result), true);
         if (component.state)
@@ -655,8 +656,12 @@ function Component(name) {
         return this;
     };
 
-    this.setter = function(value) {
+    this.setter = function(value, type) {
         var self = this;
+
+        if (type === 2)
+            return self;
+
         var selector = self.$input === true ? this.element : this.element.find(COM_DATA_BIND_SELECTOR);
         value = self.formatter(value);
         var tmp = value !== null && value !== undefined ? value.toString().toLowerCase() : '';
@@ -1125,7 +1130,7 @@ COMPONENT('', function() {
 });
 
 setInterval(function() {
-    $cmanager.cleaner();
+        cmanager.cleaner();
 }, 1000 * 60);
 
 $.components();
