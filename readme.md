@@ -138,8 +138,8 @@ COMPONENT('input', function() {
 
     // Methods
     this.remove(); // remove the component
-    this.dirty([value]); // Boolean, is component dirty? ... or you can set "dirty" value
-    this.valid([value]); // Boolean, is component valid? ... or you can set "valid" value
+    this.dirty([value]); // Boolean, is the component dirty? ... or you can set "dirty" value
+    this.valid([value]); // Boolean, is the component valid? ... or you can set "valid" value
     this.get([path]); // get/read the value
     this.set([path], value); // set/write the value
     this.emit(name, arg1, arg2); // The function triggers event within all components

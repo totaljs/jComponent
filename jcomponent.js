@@ -342,6 +342,8 @@ $.components.$emitonly = function(name, paths, type, path) {
         }
     }
 
+    $.components.$emit2(name, '*', [path, unique[path]]);
+
     Object.keys(unique).forEach(function(key) {
         // OLDER: $.components.$emit2(name, key, [key, unique[key]]);
         $.components.$emit2(name, key, [path, unique[key]]);
@@ -407,6 +409,12 @@ $.components.emit = function(name) {
         e[i].fn.apply(e[i].context, args);
 
     return true;
+};
+
+$.components.change = function(path, value) {
+    if (value === undefined)
+        return !$.components.dirty(path);
+    return !$.components.dirty(path, !value);
 };
 
 $.components.dirty = function(path, value) {
@@ -722,6 +730,12 @@ Component.prototype.valid = function(value, noEmit) {
         this.state(1);
 
     return this;
+};
+
+Component.prototype.change = function(value) {
+    if (value === undefined)
+        return !this.dirty();
+    return this.dirty(!value);
 };
 
 Component.prototype.dirty = function(value) {
