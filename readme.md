@@ -38,6 +38,7 @@
 - `data-component-type="number"` - custom type name (optional)
 - `data-component-id="myid"` - custom component ID
 - `data-component-class="class1 class2 class3"` - framework toggles classes after is a component  (optional)
+- `data-component-init="function"` - initialization
 
 ## Special HTML attributes
 

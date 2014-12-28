@@ -5,6 +5,7 @@ var COM_ATTR = '[data-component]';
 var COM_ATTR_URL = '[data-component-url]';
 var COM_ATTR_P = 'data-component-path';
 var COM_ATTR_T = 'data-component-template';
+var COM_ATTR_I = 'data-component-init';
 
 $.fn.component = function() {
     return this.data(COM_ATTR);
@@ -36,6 +37,8 @@ $.components = function(container) {
             return;
 
         var obj = component(el);
+
+        obj.$init = el.attr(COM_ATTR_I) || null;
         obj.type = el.attr('data-component-type') || '';
 
         // Reference to implementation
@@ -908,6 +911,12 @@ ComponentManager.prototype.prepare = function(obj) {
     if (obj.watch !== null)
         obj.watch(value, 0);
 
+    if (obj.$init) {
+        var fn = $.component.get(obj.$init)();
+        if (typeof(fn) === 'function')
+            fn.call(obj);
+    }
+
     el.trigger('component');
     el.off('component');
 
@@ -1144,7 +1153,7 @@ COMPONENT('', function() {
 });
 
 setInterval(function() {
-        cmanager.cleaner();
+    $cmanager.cleaner();
 }, 1000 * 60);
 
 $.components();
