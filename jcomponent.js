@@ -912,7 +912,7 @@ ComponentManager.prototype.prepare = function(obj) {
         obj.watch(value, 0);
 
     if (obj.$init) {
-        var fn = $.component.get(obj.$init)();
+        var fn = $.components.get(obj.$init);
         if (typeof(fn) === 'function')
             fn.call(obj);
     }
