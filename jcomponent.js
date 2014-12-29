@@ -246,10 +246,15 @@ function component_init(el, obj) {
             }
         }
 
-        if (e.type === 'change' && this.tagName !== 'SELECT') {
-            var type = this.type.toLowerCase();
-            if (type !== 'checkbox' && type !== 'radio')
+        if (e.type === 'change') {
+            if (this.tagName !== 'SELECT') {
+                var type = this.type.toLowerCase();
+                if (type !== 'checkbox' && type !== 'radio')
+                    return;
+            } else {
+                change_value(el);
                 return;
+            }
         }
 
         var skip = el.data('skip');
