@@ -191,6 +191,11 @@ function $components_ready() {
     }, 100);
 }
 
+$.components.watch = function(path, fn) {
+    $.components.on('watch', path, fn);
+    return $.components;
+};
+
 $.components.on = function(name, path, fn) {
     if (typeof(path) === 'function') {
         fn = path;
@@ -204,7 +209,7 @@ $.components.on = function(name, path, fn) {
     } else if (!$cmanager.events[path][name])
         $cmanager.events[path][name] = [];
     $cmanager.events[path][name].push({ fn: fn, context: this, id: this._id });
-    return this;
+    return $.components;
 };
 
 function component_init(el, obj) {
@@ -231,6 +236,9 @@ function component_init(el, obj) {
         obj.$value = value;
         obj.dirty(false);
         obj.getter(value, 2);
+
+        if (can)
+            obj.setter(obj.get());
     }
 
     function binder(e) {
