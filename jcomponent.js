@@ -259,6 +259,8 @@ function component_init(el, obj) {
                 var type = this.type.toLowerCase();
                 if (type !== 'checkbox' && type !== 'radio')
                     return;
+                change_value(el);
+                return; // TODO: maybe remove
             } else {
                 change_value(el);
                 return;
