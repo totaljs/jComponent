@@ -708,7 +708,8 @@ function Component(name) {
                 return;
 
             if (this.type === 'checkbox') {
-                this.checked = tmp === 'true' || tmp === '1' || tmp === 'on';
+                self.$value = tmp === 'true' || tmp === '1' || tmp === 'on';
+                this.checked = self.$value;
                 return;
             }
 
@@ -716,6 +717,7 @@ function Component(name) {
                 value = '';
 
             if (this.type === 'select-one') {
+                self.$value = value;
                 el.val(value);
                 return;
             }
