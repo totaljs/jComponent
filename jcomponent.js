@@ -661,6 +661,7 @@ function Component(name) {
     this.$parser = [];
     this.$formatter = [];
     this.$value;
+    this.$skip = false;
 
     this.name = name;
     this.path;
@@ -678,6 +679,8 @@ function Component(name) {
 
     this.getter = function(value, type) {
         value = this.parser(value);
+        if (type === 2)
+            this.$skip = true;
         this.set(this.path, value, type);
         return this;
     };
@@ -685,8 +688,12 @@ function Component(name) {
     this.setter = function(value, type) {
         var self = this;
 
-        if (type === 2)
-            return self;
+        if (type === 2) {
+            if (self.$skip === true) {
+                self.$skip = false;
+                return self;
+            }
+        }
 
         var selector = self.$input === true ? this.element : this.element.find(COM_DATA_BIND_SELECTOR);
         value = self.formatter(value);
@@ -838,6 +845,8 @@ Component.prototype.get = function(path) {
 
 Component.prototype.set = function(path, value, type) {
 
+    var self = this;
+
     if (value === undefined) {
         value = path;
         path = this.path;
@@ -846,7 +855,7 @@ Component.prototype.set = function(path, value, type) {
     if (!path)
         return self;
 
-    $.components.set(path, value, type);
+    $.components.set(path, value, type, self);
     return self;
 };
 
