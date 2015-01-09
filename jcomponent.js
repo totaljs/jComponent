@@ -594,6 +594,10 @@ $.components.invalid = function(path) {
 };
 
 $.components.can = function(path) {
+    return !$.components.dirty(path) && $.components.valid(path);
+};
+
+$.components.disable = function(path) {
     return $.components.dirty(path) || !$.components.valid(path);
 };
 
