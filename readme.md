@@ -57,7 +57,7 @@ COMPONENT('input', function() {
     this.element; // contains component element
     this.template; // contains template according to data-component-template
     this.type; // contains data-component-type
-    
+
     // A prerender function and it's called when:
     // 1. component.make contains a string value (URL or valid HTML)
     // 2. is specified data-component-template attribute
@@ -144,8 +144,8 @@ COMPONENT('input', function() {
     this.get([path]); // get/read the value
     this.set([path], value); // set/write the value
     this.emit(name, arg1, arg2); // The function triggers event within all components
-    
-    // this function formats the value according to formatters 
+
+    // this function formats the value according to formatters
     // it's called automatically (data-component-bind) when is value changed
     // returns a formatted value
     this.formatter(value);
@@ -236,6 +236,9 @@ $(document).on('components', function(count) {
 ## Example
 
 ```js
+// COMPONENT(type, declaration);
+// component(type, declaration);
+// Component(type, declaration);
 COMPONENT('input', function() {
     this.make = '<input type="text" data-component-bind /><div data-component="label" data-component-path="' + this.element.attr('path') + '"></div>';
     this.validate = function(value) {
