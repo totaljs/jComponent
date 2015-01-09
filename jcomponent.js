@@ -873,10 +873,6 @@ function component(type, declaration) {
     return COMPONENT(type, declaration);
 }
 
-function Component(type, declaration) {
-    return COMPONENT(type, declaration);
-}
-
 function COMPONENT(type, declaration) {
 
     var fn = function(el) {

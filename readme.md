@@ -238,7 +238,6 @@ $(document).on('components', function(count) {
 ```js
 // COMPONENT(type, declaration);
 // component(type, declaration);
-// Component(type, declaration);
 COMPONENT('input', function() {
     this.make = '<input type="text" data-component-bind /><div data-component="label" data-component-path="' + this.element.attr('path') + '"></div>';
     this.validate = function(value) {
