@@ -184,6 +184,7 @@ $.components.set(path, value); // Set/write value to model according to path
 $.components.get(path); // Get/read value from the model
 $.components.dirty(path, [value]); // Are values dirty? or setter "dirty" state.
 $.components.valid(path, [value]); // Are values valid? or setter "valid" state.
+$.components.can(path); // Combine dirty and valid together (e.g. for button disabling)
 $.components.validate([path], [selector]); // The function validates all values according the path
 $.components.reset([path], [selector]); // Reset dirty and valid state to dirty=true, valid=true
 $.components.each(fn(component), path); // A generic iterator function

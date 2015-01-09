@@ -593,6 +593,10 @@ $.components.invalid = function(path) {
     return arr;
 };
 
+$.components.can = function(path) {
+    return $.components.dirty(path) || !$.components.valid(path);
+};
+
 $.components.state = function(arr, type) {
 
     if (!arr || arr.length === 0)
