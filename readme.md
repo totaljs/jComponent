@@ -180,6 +180,7 @@ COMPONENT('input', function() {
 // path --> path to object property
 
 $.components(); // A component compiler. It compiles only new components.
+$.components.inject(url, [target], [callback]); // Inject script or HTML
 $.components.set(path, value); // Set/write value to model according to path
 $.components.get(path); // Get/read value from the model
 $.components.dirty(path, [value]); // Are values dirty? or setter "dirty" state.
@@ -193,6 +194,10 @@ $.components.update([path]); // Re-update values, example: "model.user.*"
 $.components.remove([path]); // The function removes components (triggers "destroy" event)
 $.components.invalid([path]) // The function returns an array with all invalid components
 $.components.emit(name, arg1, arg2); // The function triggers event within all components
+$.components.POST(url, data, [callback or path]); // Send data
+$.components.PUT(url, data, [callback or path]); // Send data
+$.components.GET(url, [callback or path]); // Send data
+$.components.DELETE(url, [callback or path]); // Send data
 $.components.ready(function(componentCount) {}); // --> Are components ready?
 $.components.on('watch', 'path.*', function(path, value)); // Declare a watch event
 $.components.on('component', function(component)); // A spy for new components

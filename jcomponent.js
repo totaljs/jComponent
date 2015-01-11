@@ -13,7 +13,7 @@ $.fn.component = function() {
 
 $.components = function(container) {
 
-    $.components.inject();
+    $.components.$inject();
 
     if ($cmanager.pending.length > 0) {
         $cmanager.pending.push(function() {
@@ -113,7 +113,7 @@ $.components = function(container) {
 $.components.$formatter = [];
 $.components.$parser = [];
 
-$.components.inject = function() {
+$.components.$inject = function() {
 
     var els = $(COM_ATTR_URL);
     var arr = [];
@@ -160,8 +160,68 @@ $.components.inject = function() {
     });
 };
 
+$.components.inject = function(url, target, callback) {
+
+    if (typeof(target) === 'function') {
+        callback = target;
+        target = 'document';
+    }
+
+    if (!target)
+        target = 'document';
+
+    $(target).load(url, function() {
+        $.components();
+        if (callback)
+            callback();
+    });
+
+    return $.components;
+};
+
+$.components.POST = function(url, data, callback) {
+    $.ajax(url, { type: 'POST', data: JSON.stringify(obj), success: function(r) {
+        if (typeof(callback) === 'string')
+            return $.components.set(callback, r);
+        if (callback)
+            callback(r);
+    }, contentType: 'application/json' });
+    return $.components;
+};
+
+$.components.PUT = function(url, data, callback) {
+    $.ajax(url, { type: 'PUT', data: JSON.stringify(obj), success: function(r) {
+        if (typeof(callback) === 'string')
+            return $.components.set(callback, r);
+        if (callback)
+            callback(r);
+    }, contentType: 'application/json' });
+    return $.components;
+};
+
+$.components.GET = function(url, callback) {
+    $.ajax(url, { type: 'GET', success: function(r) {
+        if (typeof(callback) === 'string')
+            return $.components.set(callback, r);
+        if (callback)
+            callback(r);
+    }});
+    return $.components;
+};
+
+$.components.DELETE = function(url, callback) {
+    $.ajax(url, { type: 'DELETE', success: function(r) {
+        if (typeof(callback) === 'string')
+            return $.components.set(callback, r);
+        if (callback)
+            callback(r);
+    }});
+    return $.components;
+};
+
 $.components.ready = function(fn) {
     $cmanager.ready.push(fn);
+    return $.components;
 };
 
 function $components_ready() {
@@ -751,10 +811,6 @@ function Component(name) {
 
 Component.prototype.html = function(value) {
     return this.element.html(value);
-};
-
-Component.prototype.attr = function(name, value) {
-    return this.element.attr(name, value);
 };
 
 Component.prototype.valid = function(value, noEmit) {
