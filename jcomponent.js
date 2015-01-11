@@ -749,6 +749,14 @@ function Component(name) {
     });
 }
 
+Component.prototype.html = function(value) {
+    return this.element.html(value);
+};
+
+Component.prototype.attr = function(name, value) {
+    return this.element.attr(name, value);
+};
+
 Component.prototype.valid = function(value, noEmit) {
     if (value === undefined)
         return this.$valid;
@@ -879,11 +887,6 @@ function COMPONENT(type, declaration) {
         var obj = new Component(type);
         obj.element = el;
         obj.path = el.attr(COM_ATTR_P);
-
-        obj.html = function(val) {
-            return obj.element.html(val);
-        };
-
         declaration.call(obj);
         return obj;
     };
