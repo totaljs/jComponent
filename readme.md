@@ -183,6 +183,7 @@ $.components.$version = ''; // --> Set additional query parameter into the all r
 $.components.$language = ''; // --> Set additional query parameter into the all requests
 
 $.components(); // A component compiler. It compiles only new components.
+$.components.find(name, [path], fn(component)); // Find components by its name/type
 $.components.inject(url, [target], [callback]); // Inject script or HTML
 $.components.set(path, value); // Set/write value to model according to path
 $.components.get(path); // Get/read value from the model

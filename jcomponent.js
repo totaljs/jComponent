@@ -753,6 +753,21 @@ $.components.reset = function(path) {
     return $.components;
 };
 
+$.components.find = function(type, path, callback) {
+
+    if (typeof(path) === 'function') {
+        callback = path;
+        path = undefined;
+    }
+
+    $.components.each(function(component) {
+        if (component.name === type)
+            callback(component);
+    }, path);
+
+    return $.components;
+};
+
 $.components.each = function(fn, path) {
 
     var isAsterix = path ? path.lastIndexOf('*') !== -1 : false;
