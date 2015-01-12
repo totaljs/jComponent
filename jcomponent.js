@@ -162,15 +162,22 @@ $.components.$inject = function() {
     });
 };
 
-$.components.inject = function(url, target, callback) {
+$.components.inject = function(url, target, callback, timeout) {
 
     if (typeof(target) === 'function') {
+        timeout = callback;
         callback = target;
         target = 'document';
     }
 
     if (!target)
         target = 'document';
+
+
+    if (typeof(callback) === 'number') {
+        timeout = callback;
+        callback = undefined;
+    }
 
     $(target).load($components_url(url), function() {
         $.components();
@@ -181,43 +188,75 @@ $.components.inject = function(url, target, callback) {
     return $.components;
 };
 
-$.components.POST = function(url, data, callback) {
-    $.ajax($components_url(url), { type: 'POST', data: JSON.stringify(obj), success: function(r) {
-        if (typeof(callback) === 'string')
-            return $.components.set(callback, r);
-        if (callback)
-            callback(r);
-    }, contentType: 'application/json' });
+$.components.POST = function(url, data, callback, timeout) {
+
+    if (typeof(callback) === 'number') {
+        timeout = callback;
+        callback = undefined;
+    }
+
+    setTimeout(function() {
+        $.ajax($components_url(url), { type: 'POST', data: JSON.stringify(data), success: function(r) {
+            if (typeof(callback) === 'string')
+                return $.components.set(callback, r);
+            if (callback)
+                callback(r);
+        }, contentType: 'application/json' });
+    }, timeout || 0);
     return $.components;
 };
 
-$.components.PUT = function(url, data, callback) {
-    $.ajax($components_url(url), { type: 'PUT', data: JSON.stringify(obj), success: function(r) {
-        if (typeof(callback) === 'string')
-            return $.components.set(callback, r);
-        if (callback)
-            callback(r);
-    }, contentType: 'application/json' });
+$.components.PUT = function(url, data, callback, timeout) {
+
+    if (typeof(callback) === 'number') {
+        timeout = callback;
+        callback = undefined;
+    }
+
+    setTimeout(function() {
+        $.ajax($components_url(url), { type: 'PUT', data: JSON.stringify(data), success: function(r) {
+            if (typeof(callback) === 'string')
+                return $.components.set(callback, r);
+            if (callback)
+                callback(r);
+        }, contentType: 'application/json' });
+    }, timeout || 0);
     return $.components;
 };
 
-$.components.GET = function(url, callback) {
-    $.ajax($components_url(url), { type: 'GET', success: function(r) {
-        if (typeof(callback) === 'string')
-            return $.components.set(callback, r);
-        if (callback)
-            callback(r);
-    }});
+$.components.GET = function(url, callback, timeout) {
+
+    if (typeof(callback) === 'number') {
+        timeout = callback;
+        callback = undefined;
+    }
+
+    setTimeout(function() {
+        $.ajax($components_url(url), { type: 'GET', success: function(r) {
+            if (typeof(callback) === 'string')
+                return $.components.set(callback, r);
+            if (callback)
+                callback(r);
+        }});
+    }, timeout || 0);
     return $.components;
 };
 
-$.components.DELETE = function(url, callback) {
-    $.ajax($components_url(url), { type: 'DELETE', success: function(r) {
-        if (typeof(callback) === 'string')
-            return $.components.set(callback, r);
-        if (callback)
-            callback(r);
-    }});
+$.components.DELETE = function(url, callback, timeout) {
+
+    if (typeof(callback) === 'number') {
+        timeout = callback;
+        callback = undefined;
+    }
+
+    setTimeout(function() {
+        $.ajax($components_url(url), { type: 'DELETE', success: function(r) {
+            if (typeof(callback) === 'string')
+                return $.components.set(callback, r);
+            if (callback)
+                callback(r);
+        }});
+    }, timeout || 0);
     return $.components;
 };
 
