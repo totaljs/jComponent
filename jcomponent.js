@@ -1094,7 +1094,7 @@ ComponentManager.prototype.prepare = function(obj) {
     if (obj.$init) {
         var fn = $.components.get(obj.$init);
         if (typeof(fn) === 'function')
-            fn.call(obj);
+            fn.call(obj, obj);
     }
 
     el.trigger('component');
@@ -1159,13 +1159,6 @@ ComponentManager.prototype.refresh = function() {
             return;
         self.components.push(component);
     });
-
-    return self;
-};
-
-ComponentManager.prototype.ready = function() {
-    var self = this;
-    if (self.init.length === 0)
 
     return self;
 };
