@@ -61,7 +61,7 @@ $.components = function(container) {
             if (c === '.' || c === '#' || c === '[')
                 fn($(c).html());
             else
-                $.get(template, fn);
+                $.get($components_url(template), fn);
             return;
         }
 
@@ -75,7 +75,7 @@ $.components = function(container) {
                 return;
             }
 
-            $.get(obj.make, function(data) {
+            $.get($components_url(obj.make), function(data) {
                 if (obj.prerender)
                     data = prerender(data);
                 el.html(data);
@@ -110,6 +110,8 @@ $.components = function(container) {
     });
 };
 
+$.components.$version = '';
+$.components.$language = '';
 $.components.$formatter = [];
 $.components.$parser = [];
 
@@ -131,7 +133,7 @@ $.components.$inject = function() {
         return;
 
     component_async(arr, function(item, next) {
-        item.element.load(item.url, function() {
+        item.element.load($components_url(item.url), function() {
 
             if (item.path) {
                 var com = item.element.find(COM_ATTR);
@@ -170,7 +172,7 @@ $.components.inject = function(url, target, callback) {
     if (!target)
         target = 'document';
 
-    $(target).load(url, function() {
+    $(target).load($components_url(url), function() {
         $.components();
         if (callback)
             callback();
@@ -180,7 +182,7 @@ $.components.inject = function(url, target, callback) {
 };
 
 $.components.POST = function(url, data, callback) {
-    $.ajax(url, { type: 'POST', data: JSON.stringify(obj), success: function(r) {
+    $.ajax($components_url(url), { type: 'POST', data: JSON.stringify(obj), success: function(r) {
         if (typeof(callback) === 'string')
             return $.components.set(callback, r);
         if (callback)
@@ -190,7 +192,7 @@ $.components.POST = function(url, data, callback) {
 };
 
 $.components.PUT = function(url, data, callback) {
-    $.ajax(url, { type: 'PUT', data: JSON.stringify(obj), success: function(r) {
+    $.ajax($components_url(url), { type: 'PUT', data: JSON.stringify(obj), success: function(r) {
         if (typeof(callback) === 'string')
             return $.components.set(callback, r);
         if (callback)
@@ -200,7 +202,7 @@ $.components.PUT = function(url, data, callback) {
 };
 
 $.components.GET = function(url, callback) {
-    $.ajax(url, { type: 'GET', success: function(r) {
+    $.ajax($components_url(url), { type: 'GET', success: function(r) {
         if (typeof(callback) === 'string')
             return $.components.set(callback, r);
         if (callback)
@@ -210,7 +212,7 @@ $.components.GET = function(url, callback) {
 };
 
 $.components.DELETE = function(url, callback) {
-    $.ajax(url, { type: 'DELETE', success: function(r) {
+    $.ajax($components_url(url), { type: 'DELETE', success: function(r) {
         if (typeof(callback) === 'string')
             return $.components.set(callback, r);
         if (callback)
@@ -223,6 +225,27 @@ $.components.ready = function(fn) {
     $cmanager.ready.push(fn);
     return $.components;
 };
+
+function $components_url(url) {
+    var index = url.indexOf('?');
+    var builder = [];
+
+    if ($.components.$version)
+        builder.push('version=' + encodeURIComponent($.components.$version));
+
+    if ($.components.$language)
+        builder.push('language=' + encodeURIComponent($.components.$language));
+
+    if (builder.length === 0)
+        return url;
+
+    if (index !== -1)
+        url += '&';
+    else
+        url += '?';
+
+    return url + builder.join('&');
+}
 
 function $components_ready() {
     clearTimeout($cmanager.timeout);
@@ -359,6 +382,7 @@ function component_init(el, obj) {
 }
 
 $.components.version = 'v1.0.0';
+
 $.components.valid = function(path, value) {
 
     var key = 'valid' + path;

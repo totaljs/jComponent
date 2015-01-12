@@ -172,12 +172,15 @@ COMPONENT('input', function() {
 });
 ```
 
-## Global methods
+## Global properties and methods
 
 ```js
 
 // [parameter] --> is OPTIONAL
 // path --> path to object property
+
+$.components.$version = ''; // --> Set additional query parameter into the all requests
+$.components.$language = ''; // --> Set additional query parameter into the all requests
 
 $.components(); // A component compiler. It compiles only new components.
 $.components.inject(url, [target], [callback]); // Inject script or HTML
