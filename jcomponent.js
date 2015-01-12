@@ -162,21 +162,50 @@ $.components.$inject = function() {
     });
 };
 
-$.components.inject = function(url, target, callback, timeout) {
+$.components.inject = function(url, target, callback) {
 
     if (typeof(target) === 'function') {
         timeout = callback;
         callback = target;
-        target = 'document';
+        target = 'body';
     }
 
     if (!target)
-        target = 'document';
+        target = 'body';
 
+    var extension = url.lastIndexOf('.');
+    if (extension !== -1)
+        extension = url.substring(extension).toLowerCase();
+    else
+        extension = '';
 
-    if (typeof(callback) === 'number') {
-        timeout = callback;
-        callback = undefined;
+    if (extension === '.js') {
+        var script = d.createElement('script');
+        script.type = 'text/javascript';
+        script.async = true;
+        script.onload = function(){
+            if (callback)
+                callback();
+        };
+        script.src = Url;
+        document.getElementsByTagName('head')[0].appendChild(script);
+        return;
+    }
+
+    if (extension === '.css') {
+        var style = document.createElement('link');
+        style.type = 'text/css';
+        style.rel = 'stylesheet';
+        style.href = 'style.css';
+        document.getElementsByTagName('head')[0].appendChild(style);
+        return;
+    }
+
+    if (target === 'body') {
+        var random = Math.floor(Math.random() * 100000);
+        var id = 'data-component-injector="' + random +'"';
+        $(target).append('<div ' + id + '></div>');
+        target = $(target).find('> div[' + id + ']');
     }
 
     $(target).load($components_url(url), function() {
@@ -1347,4 +1376,8 @@ function GET(name) {
 
 function UPDATE(path) {
     return $.components.update(path);
+}
+
+function INJECT(url, target, callback, timeout) {
+    return $.components.inject(url, target, callback, timeout);
 }
