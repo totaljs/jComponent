@@ -1336,3 +1336,15 @@ $(document).ready(function() {
         $cmanager.cleaner();
     }, 3000);
 });
+
+function SET(name, value) {
+    return $.components.set(name, value);
+}
+
+function GET(name) {
+    return $.components.get(name);
+}
+
+function UPDATE(path) {
+    return $.components.update(path);
+}
