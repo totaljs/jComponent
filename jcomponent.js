@@ -1370,6 +1370,18 @@ function SET(name, value) {
     return $.components.set(name, value);
 }
 
+function RESET(path) {
+    return $.components.reset(path);
+}
+
+function VALID(path, value) {
+    return $.components.valid(path, value);
+}
+
+function DIRTY(path, value) {
+    return $.components.dirty(path, value);
+}
+
 function GET(name) {
     return $.components.get(name);
 }
