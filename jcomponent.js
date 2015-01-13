@@ -1460,6 +1460,10 @@ function RESET(path) {
     return $.components.reset(path);
 }
 
+function WATCH(path, callback) {
+    return $.components.on('watch', path, callback);
+}
+
 function GET(name) {
     return $.components.get(name);
 }
