@@ -183,7 +183,8 @@ $.components.$version = ''; // --> Set additional query parameter into the all r
 $.components.$language = ''; // --> Set additional query parameter into the all requests
 
 $.components(); // A component compiler. It compiles only new components.
-$.components.find(name, [path], fn(component)); // Find components by its name/type
+$.components.findByName(name, [path], fn(component)); // Find components by name (data-component)
+$.components.findById(id, [path], fn(component)); // Find components by id (data-component-id)
 $.components.inject(url, [target], [callback]); // Inject script or HTML
 $.components.set(path, value); // Set/write value to model according to path
 $.components.get(path); // Get/read value from the model
@@ -205,6 +206,12 @@ $.components.DELETE(url, [callback or path]); // Send data
 $.components.ready(function(componentCount) {}); // --> Are components ready?
 $.components.on('watch', 'path.*', function(path, value)); // Declare a watch event
 $.components.on('component', function(component)); // A spy for new components
+$.components.schema(name, [declaration]); // returns schema declaration
+
+$.components.schema('user', { name: '', age: 20 });
+$.components.schema('user', '{"name":"","age":20}');
+$.components.schema('user', '/json/user.json');
+console.log($.components.schema('user')); // returns new instance of user
 
 // Value parser (only for inputs/selects/textareas)
 // for component.getter
@@ -226,6 +233,17 @@ $.components.$formatter.push(function(path, value, type) {
         return parseFloat(value.replace(/\s/g, ''));
     return value;
 });
+```
+
+## Shortcuts methods
+
+```js
+SCHEMA(); // --> $.components.schema()
+RESET(); // --> $.components.reste()
+SET(); // --> $.components.set()
+GET(); // --> $.components.get()
+UPDATE(); // --> $.components.update()
+INJECT(); // --> $.components.inject()
 ```
 
 ## jQuery

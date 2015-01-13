@@ -598,6 +598,7 @@ $.components.dirty = function(path, value) {
     var arr = value !== undefined ? [] : null;
 
     $.components.each(function(obj) {
+
         if (value !== undefined) {
             if (obj.state)
                 arr.push(obj);
@@ -782,7 +783,7 @@ $.components.reset = function(path) {
     return $.components;
 };
 
-$.components.find = function(type, path, callback) {
+$.components.findByName = function(name, path, callback) {
 
     if (typeof(path) === 'function') {
         callback = path;
@@ -790,11 +791,66 @@ $.components.find = function(type, path, callback) {
     }
 
     $.components.each(function(component) {
-        if (component.name === type)
+        if (component.name === name)
             callback(component);
     }, path);
 
     return $.components;
+};
+
+$.components.findById = function(id, path, callback) {
+
+    if (typeof(path) === 'function') {
+        callback = path;
+        path = undefined;
+    }
+
+    $.components.each(function(component) {
+        if (component.id === id)
+            callback(component);
+    }, path);
+
+    return $.components;
+};
+
+$.components.schema = function(name, declaration, callback) {
+
+    if (!declaration)
+        return $.extend(true, {}, $cmanager.schemas[name]);
+
+    if (typeof(declaration) === 'object') {
+        $cmanager.schemas[name] = declaration;
+        return declaration;
+    }
+
+    if (typeof(declaration) === 'function') {
+        var f = declaration();
+        $cmanager.schemas[name] = f;
+        return f;
+    }
+
+    if (typeof(declaration) !== 'string')
+        return undefined;
+
+    var a = declaration.substring(0, 1);
+    var b = declaration.substring(declaration.length - 1);
+
+    if ((a === '"' && b === '"') || (a === '[' && b === ']') || (a === '{' && b === '}')) {
+        var d = JSON.parse(declaration);
+        $cmanager.schemas[name] = d;
+        if (callback)
+            callback(d)
+        return d;
+    }
+
+    // url?
+    $.get(declaration, function(d) {
+        if (typeof(d) === 'string')
+            d = JSON.parse(d);
+        $cmanager.schemas[name] = d;
+        if (callback)
+            callback(d);
+    });
 };
 
 $.components.each = function(fn, path) {
@@ -957,7 +1013,6 @@ Component.prototype.dirty = function(value) {
 
     return this;
 };
-
 Component.prototype.remove = function(noClear) {
 
     if (this.destroy)
@@ -1078,6 +1133,7 @@ function ComponentManager() {
     this.cache = {};
     this.model = {};
     this.components = [];
+    this.schemas = {};
     this.toggle = [];
     this.ready = [];
     this.events = {};
@@ -1374,14 +1430,6 @@ function RESET(path) {
     return $.components.reset(path);
 }
 
-function VALID(path, value) {
-    return $.components.valid(path, value);
-}
-
-function DIRTY(path, value) {
-    return $.components.dirty(path, value);
-}
-
 function GET(name) {
     return $.components.get(name);
 }
@@ -1392,4 +1440,8 @@ function UPDATE(path) {
 
 function INJECT(url, target, callback, timeout) {
     return $.components.inject(url, target, callback, timeout);
+}
+
+function SCHEMA(name, declaration, callback) {
+    return $.components.schema(name, declaration, callback);
 }
