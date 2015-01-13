@@ -790,12 +790,25 @@ $.components.findByName = function(name, path, callback) {
         path = undefined;
     }
 
+    var isCallback = typeof(callback) === 'function';
+    var com;
+
     $.components.each(function(component) {
-        if (component.name === name)
+
+        if (component.name !== name)
+            return;
+
+        if (isCallback) {
             callback(component);
+            return;
+        }
+
+        com = component;
+        return true; // stop
+
     }, path);
 
-    return $.components;
+    return isCallback ? $.components : com;
 };
 
 $.components.findById = function(id, path, callback) {
@@ -805,12 +818,26 @@ $.components.findById = function(id, path, callback) {
         path = undefined;
     }
 
+
+    var isCallback = typeof(callback) === 'function';
+    var com;
+
     $.components.each(function(component) {
-        if (component.id === id)
+
+        if (component.id !== id)
+            return;
+
+        if (isCallback) {
             callback(component);
+            return;
+        }
+
+        com = component;
+        return true; // stop
+
     }, path);
 
-    return $.components;
+    return isCallback ? $.components : com;
 };
 
 $.components.schema = function(name, declaration, callback) {
@@ -875,8 +902,11 @@ $.components.each = function(fn, path) {
             }
         }
 
-        if (component && !component.$removed)
-            fn(component);
+        if (component && !component.$removed) {
+            var stop = fn(component);
+            if (stop === true)
+                return $.components;
+        }
     }
 
     return $.components;
