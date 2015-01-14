@@ -183,8 +183,9 @@ $.components.$version = ''; // --> Set additional query parameter into the all r
 $.components.$language = ''; // --> Set additional query parameter into the all requests
 
 $.components(); // A component compiler. It compiles only new components.
-$.components.findByName(name, [path], fn(component)); // Find components by name (data-component)
-$.components.findById(id, [path], fn(component)); // Find components by id (data-component-id)
+$.components.findByName(name, [path], [fn(component)]); // Find components by name (data-component)
+$.components.findById(id, [path], [fn(component)]); // Find components by id (data-component-id)
+$.components.findByPath([path], [fn(component)]); // Find components by name (data-component)
 $.components.inject(url, [target], [callback]); // Inject script or HTML
 $.components.set(path, value); // Set/write value to model according to path
 $.components.get(path); // Get/read value from the model
@@ -238,12 +239,13 @@ $.components.$formatter.push(function(path, value, type) {
 ## Shortcuts methods
 
 ```js
-SCHEMA(); // --> $.components.schema()
-RESET(); // --> $.components.reste()
-SET(); // --> $.components.set()
 GET(); // --> $.components.get()
-UPDATE(); // --> $.components.update()
 INJECT(); // --> $.components.inject()
+RESET(); // --> $.components.reste()
+SCHEMA(); // --> $.components.schema()
+SET(); // --> $.components.set()
+UPDATE(); // --> $.components.update()
+WATCH(); // --> $.components.on('watch', path, callback);
 ```
 
 ## jQuery

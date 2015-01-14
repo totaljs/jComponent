@@ -1,5 +1,4 @@
 var $cmanager = new ComponentManager();
-
 var COM_DATA_BIND_SELECTOR = 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
 var COM_ATTR = '[data-component]';
 var COM_ATTR_URL = '[data-component-url]';
@@ -12,14 +11,21 @@ $.fn.component = function() {
 };
 
 $.components = function(container) {
+    if ($cmanager.isCompiling)
+        return $.components;
+    return $.components.compile(container);
+};
 
+$.components.compile = function(container) {
+
+    $cmanager.isCompiling = true;
     $.components.$inject();
 
     if ($cmanager.pending.length > 0) {
         $cmanager.pending.push(function() {
-            $.components(container);
+            $.components.compile(container);
         });
-        return self;
+        return $.components;
     }
 
     var els = container ? container.find(COM_ATTR) : $(COM_ATTR);
@@ -91,6 +97,7 @@ $.components = function(container) {
         component_init(el, obj);
     });
 
+
     if (container !== undefined) {
         $cmanager.next();
         return;
@@ -158,7 +165,7 @@ $.components.$inject = function() {
         $cmanager.clear();
         if (count === 0)
             return;
-        $.components();
+        $.components.compile();
     });
 };
 
@@ -209,7 +216,7 @@ $.components.inject = function(url, target, callback) {
     }
 
     $(target).load($components_url(url), function() {
-        $.components();
+        $.components.compile();
         if (callback)
             callback();
     });
@@ -331,6 +338,8 @@ function $components_ready() {
             $.components.emit('ready');
         }
 
+        $cmanager.isCompiling = false;
+
         if (!$cmanager.ready)
             return;
 
@@ -339,6 +348,7 @@ function $components_ready() {
             arr[i](count);
 
         delete $cmanager.ready;
+
     }, 100);
 }
 
@@ -433,23 +443,32 @@ function component_init(el, obj) {
     }
 
     var type = el.get(0).tagName;
+    var collection;
 
     // autobind
     if (type === 'INPUT' || type === 'SELECT' || type === 'TEXTAREA') {
         if (obj.type === '') {
             obj.$input = true;
-            el.bind('change blur keydown', binder).attr('data-component-bind', obj.path);
+            collection = el;
         }
     } else
-        el.find(COM_DATA_BIND_SELECTOR).bind('change blur keydown', binder).attr('data-component-bind', obj.path);
+        collection = el.find(COM_DATA_BIND_SELECTOR);
+
+    collection.each(function() {
+        var self = $(this);
+        if (self.data('binded'))
+            return;
+        self.data('binded', true);
+        self.bind('change blur keydown', binder).attr('data-component-bind', obj.path);
+    });
 
     $cmanager.components.push(obj);
     $cmanager.init.push(obj);
-    $.components(el);
+    $.components.compile(el);
     $components_ready();
 }
 
-$.components.version = 'v1.0.0';
+$.components.version = 'v1.1.0';
 
 $.components.valid = function(path, value) {
 
@@ -811,6 +830,31 @@ $.components.findByName = function(name, path, callback) {
     return isCallback ? $.components : com;
 };
 
+$.components.findByPath = function(path, callback) {
+
+    if (typeof(path) === 'function') {
+        callback = path;
+        path = undefined;
+    }
+
+    var isCallback = typeof(callback) === 'function';
+    var com;
+
+    $.components.each(function(component) {
+
+        if (isCallback) {
+            callback(component);
+            return;
+        }
+
+        com = component;
+        return true; // stop
+
+    }, path);
+
+    return isCallback ? $.components : com;
+};
+
 $.components.findById = function(id, path, callback) {
 
     if (typeof(path) === 'function') {
@@ -1158,6 +1202,7 @@ function component_async(arr, fn, done) {
 
 function ComponentManager() {
     this.isReady = false;
+    this.isCompiling = false;
     this.init = [];
     this.register = {};
     this.cache = {};
@@ -1174,7 +1219,7 @@ function ComponentManager() {
 ComponentManager.prototype.initialize = function() {
     var item = this.init.pop();
     if (item === undefined) {
-        $.components();
+        $.components.compile();
         return this;
     }
     this.prepare(item);
@@ -1228,8 +1273,11 @@ ComponentManager.prototype.prepare = function(obj) {
 
 ComponentManager.prototype.next = function() {
     var next = this.pending.shift();
-    if (next === undefined)
+    if (next === undefined) {
+        if (this.isReady)
+            this.isCompiling = false;
         return this;
+    }
     next();
 };
 
@@ -1444,9 +1492,9 @@ setInterval(function() {
     $cmanager.cleaner();
 }, 1000 * 60);
 
-$.components();
+$.components.compile();
 $(document).ready(function() {
-    $.components();
+    $.components.compile();
     setTimeout(function() {
         $cmanager.cleaner();
     }, 3000);
