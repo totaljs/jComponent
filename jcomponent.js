@@ -459,7 +459,7 @@ function component_init(el, obj) {
         if (self.data('binded'))
             return;
         self.data('binded', true);
-        self.bind('change blur keydown', binder).attr('data-component-bind', obj.path);
+        self.bind('change blur keyup', binder).attr('data-component-bind', obj.path);
     });
 
     $cmanager.components.push(obj);
