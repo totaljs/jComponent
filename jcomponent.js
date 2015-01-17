@@ -915,7 +915,7 @@ $.components.schema = function(name, declaration, callback) {
     }
 
     // url?
-    $.get(declaration, function(d) {
+    $.get($components_url(declaration), function(d) {
         if (typeof(d) === 'string')
             d = JSON.parse(d);
         $cmanager.schemas[name] = d;
