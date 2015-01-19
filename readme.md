@@ -12,6 +12,7 @@
 - best of use with [www.totaljs.com - web application framework for node.js](http://www.totaljs.com)
 - [__DEMO EXAMPLE__](http://clientside.totaljs.com/jcomponent.html)
 - [__IMPORTANT DEMO: jComponent + Tangular + jRouting__ = jctajr.js](http://clientside.totaljs.com/jctajr.html)
+- __PLEASE LOOK INTO THE EXAMPLE__
 
 ```html
 <script src="jcomponent.min.js"></script>
