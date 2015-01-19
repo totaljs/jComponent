@@ -167,6 +167,7 @@ COMPONENT('input', function() {
     this.set([path], value); // set/write the value
     this.emit(name, arg1, arg2); // The function triggers event within all components
     this.html([value]); // Get or Set the value into the component element
+    this.isInvalid(); // returns true if the component is not valid or dirty
 
     // this function formats the value according to formatters
     // it's called automatically (data-component-bind) when is value changed

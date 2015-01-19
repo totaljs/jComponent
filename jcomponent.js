@@ -1056,6 +1056,13 @@ Component.prototype.html = function(value) {
     return this.element.html(value);
 };
 
+Component.prototype.isInvalid = function() {
+    var is = !this.$valid;
+    if (is && !this.$validate)
+        is = !this.$dirty;
+    return is;
+};
+
 Component.prototype.valid = function(value, noEmit) {
     if (value === undefined)
         return this.$valid;
