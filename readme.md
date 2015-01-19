@@ -24,13 +24,13 @@ __YOU MUST SEE:__
 ```html
 <script src="jcomponent.min.js"></script>
 
-<div data-component="COMPONENT NAME" data-component-path="model.name" data-component-init="init_handler"></div>
-<span data-component="COMPONENT NAME" data-component-template="/input.html" data-component-id="my-input"></span>
-<div data-component="COMPONENT NAME" data-component-path="model.list[2]" data-component-type="number"></div>
+<div data-component="textbox" data-component-path="model.name" data-component-init="init_handler"></div>
+<span data-component="wysiwyg" data-component-template="/editor.html" data-component-id="my-input"></span>
+<div data-component="datagrid" data-component-path="model"></div>
 
 <table>
     <tr>
-        <td data-component-url="/dashboard.html" data-component-path="common.dashboard"></td>
+        <td data-component-url="/dashboard.html"></td>
     </tr>
 </table>
 
