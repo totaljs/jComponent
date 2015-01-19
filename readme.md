@@ -1,6 +1,7 @@
-# jQuery Component Framework with two way bindings
+[![MIT License][license-image]][license-url]
+# jQuery Component library
 
-- only __8 kB__ (minified, gzipped)
+- only __19 kB__ (minified, without GZIP compression)
 - `>= jQuery +1.7`
 - `>= IE9`
 - great functionality
@@ -8,16 +9,22 @@
 - easy property mapping + supports Array indexes
 - supports validation
 - supports nested components
-- best of use with www.totaljs.com - web application framework for node.js
-- [ONLINE DEMO EXAMPLE](http://source.858project.com/jquery-jcomponent-demo.html)
+- best of use with [www.totaljs.com - web application framework for node.js](http://www.totaljs.com)
+- [__DEMO EXAMPLE__](http://clientside.totaljs.com/jcomponent.html)
+- [__IMPORTANT DEMO: jComponent + Tangular + jRouting__ = jctajr.js](http://clientside.totaljs.com/jctajr.html)
 
 ```html
-<script src="jcomponent.js"></script>
+<script src="jcomponent.min.js"></script>
 
-<div data-component="COMPONENT NAME" data-component-path="model.name"></div>
-<div data-component="COMPONENT NAME" data-component-template="/input.html"></div>
+<div data-component="COMPONENT NAME" data-component-path="model.name" data-component-init="init_handler"></div>
+<span data-component="COMPONENT NAME" data-component-template="/input.html" data-component-id="my-input"></span>
 <div data-component="COMPONENT NAME" data-component-path="model.list[2]" data-component-type="number"></div>
-<div data-component-url="/dashboard.html" data-component-path="common.dashboard"></div>
+
+<table>
+    <tr>
+        <td data-component-url="/dashboard.html" data-component-path="common.dashboard"></td>
+    </tr>
+</table>
 
 <script>
     var common = {};
@@ -33,17 +40,17 @@
 ## HTML attributes
 
 - `data-component="COMPONENT NAME"` - a component name (required)
-- `data-component-path="PATH TO PROPERTY"` - mapping to property (optional)
+- `data-component-path="PATH TO PROPERTY"` - a mapping to the property (optional)
 - `data-component-template="URL"` - mapping to URL address (optional)
-- `data-component-type="number"` - custom type name (optional)
-- `data-component-id="myid"` - custom component ID
+- `data-component-type="number"` - a custom type name (optional)
+- `data-component-id="myid"` - a custom component ID (optional)
 - `data-component-class="class1 class2 class3"` - framework toggles classes after is a component  (optional)
-- `data-component-init="function"` - initialization
+- `data-component-init="function"` - the initialization handler (optional)
 
 ## Special HTML attributes
 
-- `data-component-url="URL TO TEMPLATE"` - framework downloads HTML template with `<script>` and evals
-- `data-component-bind` - auto attach "change" event for input/select/textarea (only in a component)
+- `data-component-url="URL TO TEMPLATE"` - the library downloads the HTML template from the URL address
+- `data-component-bind` - auto attach `change` event for the input/select/textarea (only in the component)
 
 ## Component methods/properties
 
@@ -57,6 +64,12 @@ COMPONENT('input', function() {
     this.element; // contains component element
     this.template; // contains template according to data-component-template
     this.type; // contains data-component-type
+
+    // internal
+    this.$validate; // contains true if the component has been validated manually
+    this.$parser = []; // internal parsers for parsing value (getter)
+    this.$formatter = []; // internal formatter for formatting value (render)
+    this.$value; // cached value
 
     // A prerender function and it's called when:
     // 1. component.make contains a string value (URL or valid HTML)
@@ -140,10 +153,12 @@ COMPONENT('input', function() {
     // Methods
     this.remove(); // remove the component
     this.dirty([value]); // Boolean, is the component dirty? ... or you can set "dirty" value
+    this.change([value]); // Boolean, is an opposite alias for dirty() -> is same as dirty but in reverse
     this.valid([value]); // Boolean, is the component valid? ... or you can set "valid" value
     this.get([path]); // get/read the value
     this.set([path], value); // set/write the value
     this.emit(name, arg1, arg2); // The function triggers event within all components
+    this.html([value]); // Get or Set the value into the component element
 
     // this function formats the value according to formatters
     // it's called automatically (data-component-bind) when is value changed
@@ -213,7 +228,8 @@ $.components.schema(name, [declaration]); // returns schema declaration
 $.components.schema('user', { name: '', age: 20 });
 $.components.schema('user', '{"name":"","age":20}');
 $.components.schema('user', '/json/user.json');
-console.log($.components.schema('user')); // returns new instance of user
+
+console.log($.components.schema('user')); // returns new instance of user (deep clone)
 
 // Value parser (only for inputs/selects/textareas)
 // for component.getter
@@ -319,3 +335,10 @@ COMPONENT('button', function() {
     }
 </script>
 ```
+
+## Contact
+
+Peter Širka - www.petersirka.eu / <petersirka@gmail.com>
+
+[license-image]: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
+[license-url]: license.txt
