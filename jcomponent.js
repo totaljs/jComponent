@@ -133,7 +133,7 @@ $.components.$inject = function() {
         if (el.data(COM_ATTR_URL))
             return;
         el.data(COM_ATTR_URL, '1');
-        arr.push({ element: el, path: el.attr(COM_ATTR_P), url: el.attr('data-component-url'), toggle: (el.attr('data-component-class') || '').split(' ') });
+        arr.push({ element: el, cb: el.attr(COM_ATTR_I), path: el.attr(COM_ATTR_P), url: el.attr('data-component-url'), toggle: (el.attr('data-component-class') || '').split(' ') });
     });
 
     if (arr.length === 0)
@@ -156,6 +156,12 @@ $.components.$inject = function() {
 
             if (item.toggle.length > 0 && item.toggle[0] !== '')
                 $cmanager.toggle.push(item);
+
+            if (item.cb) {
+                var cb = $cmanager.get(item.cb);
+                if (typeof(cb) === 'function')
+                    cb(item.element);
+            }
 
             count++;
             next();
@@ -1266,6 +1272,9 @@ ComponentManager.prototype.prepare = function(obj) {
         for (var i = 0, length = cls.length; i < length; i++)
             el.toggleClass(cls[i]);
     }
+
+    if (obj.id)
+        $.components.emit('#' + obj.id, obj);
 
     $.components.emit('component', obj);
     return this;
