@@ -1510,7 +1510,9 @@ setInterval(function() {
 
 $.components.compile();
 $(document).ready(function() {
-    $.components.compile();
+    setTimeout(function() {
+        $.components.compile();
+    }, 2);
     setTimeout(function() {
         $cmanager.cleaner();
     }, 3000);
