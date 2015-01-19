@@ -260,7 +260,7 @@ $.components.PUT = function(url, data, callback, timeout) {
     return $.components;
 };
 
-$.components.GET = function(url, callback, timeout) {
+$.components.GET = function(url, data, callback, timeout) {
 
     if (typeof(callback) === 'number') {
         timeout = callback;
@@ -268,7 +268,7 @@ $.components.GET = function(url, callback, timeout) {
     }
 
     setTimeout(function() {
-        $.ajax($components_url(url), { type: 'GET', success: function(r) {
+        $.ajax($components_url(url), { type: 'GET', data: data, success: function(r) {
             if (typeof(callback) === 'string')
                 return $.components.set(callback, r);
             if (callback)
@@ -278,7 +278,7 @@ $.components.GET = function(url, callback, timeout) {
     return $.components;
 };
 
-$.components.DELETE = function(url, callback, timeout) {
+$.components.DELETE = function(url, data, callback, timeout) {
 
     if (typeof(callback) === 'number') {
         timeout = callback;
@@ -286,7 +286,7 @@ $.components.DELETE = function(url, callback, timeout) {
     }
 
     setTimeout(function() {
-        $.ajax($components_url(url), { type: 'DELETE', success: function(r) {
+        $.ajax($components_url(url), { type: 'DELETE', data: data, success: function(r) {
             if (typeof(callback) === 'string')
                 return $.components.set(callback, r);
             if (callback)
