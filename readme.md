@@ -1,9 +1,10 @@
 [![MIT License][license-image]][license-url]
-# jQuery Component library
+# A jQuery component library
 
 - only __19 kB__ (minified, without GZIP compression)
 - `>= jQuery +1.7`
 - `>= IE9`
+- two way bindings
 - great functionality
 - similar functionality as directives from Angular.js
 - easy property mapping + supports Array indexes
