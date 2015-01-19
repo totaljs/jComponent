@@ -15,6 +15,12 @@
 - [__IMPORTANT DEMO: jComponent + Tangular + jRouting__ = jctajr.js](http://clientside.totaljs.com/jctajr.html)
 - __PLEASE LOOK INTO THE EXAMPLE__
 
+__YOU MUST SEE:__
+
+- [jRouting](https://github.com/petersirka/jRouting)
+- [Tangular - A template engine like Angular.js](https://github.com/petersirka/Tangular)
+- [jQuery two way bindings](https://github.com/petersirka/jquery.bindings)
+
 ```html
 <script src="jcomponent.min.js"></script>
 
