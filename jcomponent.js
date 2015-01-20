@@ -159,6 +159,7 @@ $.components.$inject = function() {
 
             if (item.cb && !item.element.attr('data-component')) {
                 var cb = $cmanager.get(item.cb);
+                console.log('-->', item);
                 if (typeof(cb) === 'function')
                     cb(item.element);
             }
@@ -1265,9 +1266,11 @@ ComponentManager.prototype.prepare = function(obj) {
         obj.watch(value, 0);
 
     if (obj.$init) {
-        var fn = $.components.get(obj.$init);
-        if (typeof(fn) === 'function')
-            fn.call(obj, obj);
+        setTimeout(function() {
+            var fn = $.components.get(obj.$init);
+            if (typeof(fn) === 'function')
+                fn.call(obj, obj);
+        }, 2);
     }
 
     el.trigger('component');
