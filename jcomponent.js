@@ -157,7 +157,7 @@ $.components.$inject = function() {
             if (item.toggle.length > 0 && item.toggle[0] !== '')
                 $cmanager.toggle.push(item);
 
-            if (item.cb) {
+            if (item.cb && !item.element.attr('data-component')) {
                 var cb = $cmanager.get(item.cb);
                 if (typeof(cb) === 'function')
                     cb(item.element);
