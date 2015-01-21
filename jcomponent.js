@@ -54,6 +54,9 @@ $.components.compile = function(container) {
         if (template)
             obj.template = template;
 
+        if (el.attr('data-component-url'))
+            throw new Error('You cannot use [data-component-url] for the component: ' + obj.name + '[' + obj.path + ']. Instead of it you must use data-component-template.');
+
         if (typeof(template) === 'string') {
             var fn = function(data) {
                 if (obj.prerender)

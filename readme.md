@@ -57,7 +57,7 @@ __YOU MUST SEE:__
 
 ## Special HTML attributes
 
-- `data-component-url="URL TO TEMPLATE"` - the library downloads the HTML template from the URL address
+- `data-component-url="URL TO TEMPLATE"` - the library downloads the HTML content from the URL address and eval. This attribute cannot be bound with the `data-component` attribute.
 - `data-component-bind` - auto attach `change` event for the input/select/textarea (only in the component)
 
 ## Component methods/properties
