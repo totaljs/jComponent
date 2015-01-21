@@ -159,7 +159,6 @@ $.components.$inject = function() {
 
             if (item.cb && !item.element.attr('data-component')) {
                 var cb = $cmanager.get(item.cb);
-                console.log('-->', item);
                 if (typeof(cb) === 'function')
                     cb(item.element);
             }
@@ -454,10 +453,8 @@ function component_init(el, obj) {
 
     // autobind
     if (type === 'INPUT' || type === 'SELECT' || type === 'TEXTAREA') {
-        if (obj.type === '') {
-            obj.$input = true;
-            collection = el;
-        }
+        obj.$input = true;
+        collection = obj.element;
     } else
         collection = el.find(COM_DATA_BIND_SELECTOR);
 
@@ -475,7 +472,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.1.0';
+$.components.version = 'v1.2.0';
 
 $.components.valid = function(path, value) {
 
@@ -1498,8 +1495,11 @@ ComponentManager.prototype.cleaner = function() {
  */
 COMPONENT('', function() {
     var type = this.element.get(0).tagName;
-    if (type === 'INPUT' || type === 'SELECT' || type === 'TEXTAREA' || this.element.find(COM_DATA_BIND_SELECTOR).length > 0)
+    if (type === 'INPUT' || type === 'SELECT' || type === 'TEXTAREA' || this.element.find(COM_DATA_BIND_SELECTOR).length > 0) {
+        this.$parser.push.apply(this.$parser, $.components.$parser);
+        this.$formatter.push.apply(this.$formatter, $.components.$formatter);
         return;
+    }
     this.getter = null;
     this.setter = function(value) {
         value = this.formatter(value, true);
