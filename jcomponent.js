@@ -659,8 +659,11 @@ $.components.update = function(path) {
             return;
 
         var result = component.get();
+        
         if (component.setter)
             component.setter(result);
+
+        component.$ready = true;
 
         if (component.validate)
             component.valid(component.validate(result), true);
@@ -705,6 +708,7 @@ $.components.set = function(path, value, type) {
     $.components.each(function(component) {
         if (component.setter)
             component.setter(result, type);
+        component.$ready = true;
         if (component.validate)
             component.valid(component.validate(result), true);
         if (component.state)
@@ -974,6 +978,7 @@ function Component(name) {
     this.$formatter = [];
     this.$value;
     this.$skip = false;
+    this.$ready = false;
 
     this.name = name;
     this.path;
@@ -1250,8 +1255,12 @@ ComponentManager.prototype.prepare = function(obj) {
     var el = obj.element;
     obj.id = el.attr('data-component-id') || name;
 
-    if (obj.setter)
-        obj.setter(value);
+    if (obj.setter) {
+        if (!obj.$ready) {
+            obj.setter(value);
+            obj.$ready = true;
+        }
+    }
 
     if (obj.validate)
         obj.$valid = obj.validate(obj.get(), 0);
@@ -1400,17 +1409,8 @@ ComponentManager.prototype.set = function(path, value) {
             p = p.substring(0, beg);
         }
 
-        if (!obj) {
+        if (!obj)
             return;
-            /*
-            if (index === -1)
-                obj[p] = {};
-            else {
-                obj[p] = [];
-                obj[p][index] = {};
-            }
-            return;*/
-        }
 
         if (len - 1 !== i) {
             if (index === -1)
