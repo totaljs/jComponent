@@ -77,7 +77,6 @@ COMPONENT('input', function() {
     this.$validate; // contains true if the component has been validated manually
     this.$parser = []; // internal parsers for parsing value (getter)
     this.$formatter = []; // internal formatter for formatting value (render)
-    this.$value; // The temporary value for inputs (setter can't be defined)
     this.$ready; // Is the component ready? It's set to true after is the setter executed first time.
 
     // A prerender function and it's called when:
