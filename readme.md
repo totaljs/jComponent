@@ -174,6 +174,14 @@ COMPONENT('input', function() {
     // returns a formatted value
     this.formatter(value);
 
+    this.watch(function(path, value) {
+        // watch for changes
+    });
+
+    this.watch('model.*', function(path, value) {
+        // watch for changes
+    });
+
     // this function parses the value according to parsers
     // it's called automatically (data-component-bind) when input/select/textarea changes the value
     // returns a parsed value

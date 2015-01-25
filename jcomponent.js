@@ -991,6 +991,19 @@ Component.prototype.isInvalid = function() {
     return is;
 };
 
+Component.prototype.watch = function(path, fn) {
+
+    var self = this;
+
+    if (typeof(path) === 'function') {
+        fn = path;
+        path = self.path;
+    }
+
+    self.on('watch', path, fn);
+    return self;
+};
+
 Component.prototype.valid = function(value, noEmit) {
     if (value === undefined)
         return this.$valid;
