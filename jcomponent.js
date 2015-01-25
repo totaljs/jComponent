@@ -1,10 +1,13 @@
 var $cmanager = new ComponentManager();
 var COM_DATA_BIND_SELECTOR = 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
 var COM_ATTR = '[data-component]';
-var COM_ATTR_URL = '[data-component-url]';
+var COM_ATTR_U = 'data-component-url';
+var COM_ATTR_URL = '[' + COM_ATTR_U + ']';
+var COM_ATTR_B = 'data-component-bind';
 var COM_ATTR_P = 'data-component-path';
 var COM_ATTR_T = 'data-component-template';
 var COM_ATTR_I = 'data-component-init';
+var COM_ATTR_C = 'data-component-class';
 
 $.fn.component = function() {
     return this.data(COM_ATTR);
@@ -54,7 +57,7 @@ $.components.compile = function(container) {
         if (template)
             obj.template = template;
 
-        if (el.attr('data-component-url'))
+        if (el.attr(COM_ATTR_U))
             throw new Error('You cannot use [data-component-url] for the component: ' + obj.name + '[' + obj.path + ']. Instead of it you must use data-component-template.');
 
         if (typeof(template) === 'string') {
@@ -100,7 +103,6 @@ $.components.compile = function(container) {
         component_init(el, obj);
     });
 
-
     if (container !== undefined) {
         $cmanager.next();
         return;
@@ -136,7 +138,7 @@ $.components.$inject = function() {
         if (el.data(COM_ATTR_URL))
             return;
         el.data(COM_ATTR_URL, '1');
-        arr.push({ element: el, cb: el.attr(COM_ATTR_I), path: el.attr(COM_ATTR_P), url: el.attr('data-component-url'), toggle: (el.attr('data-component-class') || '').split(' ') });
+        arr.push({ element: el, cb: el.attr(COM_ATTR_I), path: el.attr(COM_ATTR_P), url: el.attr(COM_ATTR_U), toggle: (el.attr(COM_ATTR_C) || '').split(' ') });
     });
 
     if (arr.length === 0)
@@ -384,73 +386,6 @@ $.components.on = function(name, path, fn) {
 
 function component_init(el, obj) {
 
-    function change_value(el, can) {
-        var plain = el.get(0);
-        var path = el.attr('data-component-bind');
-
-        if (path && path.length > 0 && path !== obj.path)
-            return;
-
-        if (!obj.getter)
-            return;
-
-        obj.dirty(false);
-
-        var value = plain.type === 'checkbox' ? plain.checked : el.val();
-        if (obj.$value === value) {
-            if (can)
-                obj.setter(obj.get());
-            return;
-        }
-
-        obj.$value = value;
-        obj.dirty(false);
-        obj.getter(value, 2);
-
-        if (can)
-            obj.setter(obj.get());
-    }
-
-    function binder(e) {
-
-        var el = $(this);
-
-        if (this.tagName !== 'SELECT') {
-            if (e.type === 'blur') {
-                clearTimeout(el.data('delay'));
-                el.data('skip', e.type);
-                change_value(el, true);
-                return;
-            }
-        }
-
-        if (e.type === 'change') {
-            if (this.tagName !== 'SELECT') {
-                var type = this.type.toLowerCase();
-                if (type !== 'checkbox' && type !== 'radio')
-                    return;
-                change_value(el);
-                return; // TODO: maybe remove
-            } else {
-                change_value(el);
-                return;
-            }
-        }
-
-        var skip = el.data('skip');
-
-        if (skip && skip !== e.type) {
-            el.removeData('skip');
-            return;
-        }
-
-        clearTimeout(el.data('delay'));
-        el.data('delay', setTimeout(function() {
-            el.data('skip', e.type);
-            change_value(el);
-        }, 300));
-    }
-
     var type = el.get(0).tagName;
     var collection;
 
@@ -462,11 +397,7 @@ function component_init(el, obj) {
         collection = el.find(COM_DATA_BIND_SELECTOR);
 
     collection.each(function() {
-        var self = $(this);
-        if (self.data('binded'))
-            return;
-        self.data('binded', true);
-        self.bind('change blur keyup', binder).attr('data-component-bind', obj.path);
+        this.$component = obj;
     });
 
     $cmanager.components.push(obj);
@@ -659,9 +590,9 @@ $.components.update = function(path) {
             return;
 
         var result = component.get();
-        
+
         if (component.setter)
-            component.setter(result);
+            component.setter(result, 1);
 
         component.$ready = true;
 
@@ -670,9 +601,6 @@ $.components.update = function(path) {
 
         if (component.state)
             state.push(component);
-
-        if (component.watch !== null)
-            component.watch(result, 1);
 
         if (component.path === path)
             was = true;
@@ -713,8 +641,6 @@ $.components.set = function(path, value, type) {
             component.valid(component.validate(result), true);
         if (component.state)
             state.push(component);
-        if (component.watch !== null)
-            component.watch(result, type);
     }, path);
 
     for (var i = 0, length = state.length; i < length; i++)
@@ -976,7 +902,6 @@ function Component(name) {
     this.$validate = false;
     this.$parser = [];
     this.$formatter = [];
-    this.$value;
     this.$skip = false;
     this.$ready = false;
 
@@ -987,7 +912,6 @@ function Component(name) {
 
     this.make;
     this.done;
-    this.watch = null;
     this.prerender;
     this.destroy;
     this.state;
@@ -1014,38 +938,36 @@ function Component(name) {
 
         var selector = self.$input === true ? this.element : this.element.find(COM_DATA_BIND_SELECTOR);
         value = self.formatter(value);
-        var tmp = value !== null && value !== undefined ? value.toString().toLowerCase() : '';
 
         selector.each(function() {
 
             var el = $(this);
-            var path = el.attr('data-component-bind');
+            var path = el.attr(COM_ATTR_B);
 
             if (path && path.length > 0 && path !== self.path)
                 return;
 
             if (this.type === 'checkbox') {
-                self.$value = tmp === 'true' || tmp === '1' || tmp === 'on';
-                this.checked = self.$value;
+                var tmp = value !== null && value !== undefined ? value.toString().toLowerCase() : '';
+                this.checked = tmp === 'true' || tmp === '1' || tmp === 'on';
                 return;
             }
 
             if (value === undefined || value === null)
                 value = '';
 
-            if (this.type === 'select-one') {
-                self.$value = value;
+            if (this.type === 'select-one' || this.type === 'select') {
                 el.val(value);
                 return;
             }
 
-            self.$value = this.value = value;
+            this.value = value;
         });
     };
 
     this.$parser.push(function(path, value, type) {
 
-        if (type === 'number') {
+        if (type === 'number' || type === 'currency' || type === 'float') {
             if (typeof(value) === 'string')
                 value = value.replace(/\s/g, '').replace(/,/g, '.');
             var v = parseFloat(value);
@@ -1172,6 +1094,10 @@ Component.prototype.get = function(path) {
     return $cmanager.get(path);
 };
 
+Component.prototype.update = function(path) {
+    $.components.update(path || this.path);
+};
+
 Component.prototype.set = function(path, value, type) {
 
     var self = this;
@@ -1197,7 +1123,7 @@ function COMPONENT(type, declaration) {
     var fn = function(el) {
         var obj = new Component(type);
         obj.element = el;
-        obj.path = el.attr(COM_ATTR_P);
+        obj.path = el.attr(COM_ATTR_P) || obj._id;
         declaration.call(obj);
         return obj;
     };
@@ -1271,9 +1197,6 @@ ComponentManager.prototype.prepare = function(obj) {
     if (obj.state)
         obj.state(0);
 
-    if (obj.watch !== null)
-        obj.watch(value, 0);
-
     if (obj.$init) {
         setTimeout(function() {
             var fn = $.components.get(obj.$init);
@@ -1285,7 +1208,7 @@ ComponentManager.prototype.prepare = function(obj) {
     el.trigger('component');
     el.off('component');
 
-    var cls = el.attr('data-component-class');
+    var cls = el.attr(COM_ATTR_C);
     if (cls) {
         cls = cls.split(' ');
         for (var i = 0, length = cls.length; i < length; i++)
@@ -1516,9 +1439,72 @@ setInterval(function() {
 
 $.components.compile();
 $(document).ready(function() {
+
+    $(document).on('change blur keyup', 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]', function(e) {
+
+        var self = this;
+
+        if (!self.$component || !self.$component.getter || !self.$component.setter)
+            return;
+
+        var path = self.getAttribute(COM_ATTR_B) || self.$component.path;
+        if (!path)
+            return;
+
+        var value;
+
+        if (self.type === 'checkbox' || self.type === 'radio') {
+            if (e.type === 'keyup')
+                return;
+            var value = self.checked;
+            if (self.$value === value)
+                return;
+            self.$value = value;
+            self.$component.dirty(false);
+            self.$component.getter(value, 2);
+            self.$component.$skip = false;
+            return;
+        }
+
+        if (self.tagName === 'SELECT') {
+            if (e.type === 'keyup')
+                return
+            var selected = self[self.selectedIndex];
+            value = selected.value;
+            if (self.$value === value)
+                return;
+            self.$component.dirty(false);
+            self.$component.getter(value, 2);
+            self.$component.$skip = false;
+            return;
+        }
+
+        value = self.value;
+
+        if (e.type === 'keyup') {
+            clearTimeout(self.$timeout);
+            self.$timeout = setTimeout(function() {
+                self.$component.dirty(false);
+                self.$component.getter(value, 2);
+            }, 200);
+            return;
+        }
+
+        if (self.$value === value)
+            return;
+
+        clearTimeout(self.$timeout);
+        self.$component.dirty(false);
+        self.$component.getter(value, 2);
+        self.$component.$skip = false;
+        self.$component.setter(value, 2);
+        self.$value = self.value;
+    });
+
     setTimeout(function() {
         $.components.compile();
     }, 2);
+
     setTimeout(function() {
         $cmanager.cleaner();
     }, 3000);
