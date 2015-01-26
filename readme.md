@@ -117,11 +117,12 @@ COMPONENT('input', function() {
     };
 
     // OPTIONAL
-    // Watch changes of value
-    this.watch = function(value, type) {
+    // Watch changes
+    this.watch([path], function(path, value, index) {
         // type === 1 : by developer
         // type === 2 : by input
-    };
+        // index === Array index if exists
+    });
 
     // OPTIONAL
     // Watch the state of value, suitable for toggling classes of element
@@ -178,7 +179,7 @@ COMPONENT('input', function() {
         // watch for changes
     });
 
-    this.watch('model.*', function(path, value) {
+    this.watch('model.*', function(path, value, index) {
         // watch for changes
     });
 

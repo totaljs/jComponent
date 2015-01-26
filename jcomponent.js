@@ -406,7 +406,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.2.0';
+$.components.version = 'v1.2.1';
 
 $.components.valid = function(path, value) {
 
@@ -1434,7 +1434,9 @@ ComponentManager.prototype.cleaner = function() {
  */
 COMPONENT('', function() {
     var type = this.element.get(0).tagName;
-    if (type === 'INPUT' || type === 'SELECT' || type === 'TEXTAREA' || this.element.find(COM_DATA_BIND_SELECTOR).length > 0) {
+    if (type === 'INPUT' || type === 'SELECT' || type === 'TEXTAREA') {
+        if (!this.element.attr(COM_ATTR_B))
+            this.element.attr(COM_ATTR_B, this.path);
         this.$parser.push.apply(this.$parser, $.components.$parser);
         this.$formatter.push.apply(this.$formatter, $.components.$formatter);
         return;
@@ -1494,21 +1496,26 @@ $(document).ready(function() {
 
         value = self.value;
 
+        if (self.$value === value)
+            return;
+
         if (e.type === 'keyup') {
             clearTimeout(self.$timeout);
             self.$timeout = setTimeout(function() {
+                self.$timeout = null;
                 self.$component.dirty(false);
                 self.$component.getter(value, 2);
             }, 200);
             return;
         }
 
-        if (self.$value === value)
-            return;
+        if (self.$timeout) {
+            clearTimeout(self.$timeout);
+            self.$timeout = null;
+            self.$component.dirty(false);
+            self.$component.getter(value, 2);
+        }
 
-        clearTimeout(self.$timeout);
-        self.$component.dirty(false);
-        self.$component.getter(value, 2);
         self.$component.$skip = false;
         self.$component.setter(value, 2);
         self.$value = self.value;
