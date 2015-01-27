@@ -922,11 +922,14 @@ function Component(name) {
         value = this.parser(value);
         if (type === 2)
             this.$skip = true;
+        if (value === this.get())
+            return this;
         this.set(this.path, value, type);
         return this;
     };
 
     this.setter = function(value, type) {
+
         var self = this;
 
         if (type === 2) {
@@ -1454,27 +1457,24 @@ setInterval(function() {
 
 $.components.compile();
 $(document).ready(function() {
-
-    $(document).on('change blur keyup', 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]', function(e) {
+    $(document).on('change keydown blur', 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]', function(e) {
 
         var self = this;
 
-        if (!self.$component || !self.$component.getter || !self.$component.setter)
+        if (self.$skip && e.type === 'focusout') {
+            self.$skip = false;
             return;
+        }
 
-        var path = self.getAttribute(COM_ATTR_B) || self.$component.path;
-        if (!path)
+        if (!self.$component || !self.$component.getter || !self.$component.setter)
             return;
 
         var value;
 
         if (self.type === 'checkbox' || self.type === 'radio') {
-            if (e.type === 'keyup')
+            if (e.type === 'keydown')
                 return;
             var value = self.checked;
-            if (self.$value === value)
-                return;
-            self.$value = value;
             self.$component.dirty(false);
             self.$component.getter(value, 2);
             self.$component.$skip = false;
@@ -1482,12 +1482,10 @@ $(document).ready(function() {
         }
 
         if (self.tagName === 'SELECT') {
-            if (e.type === 'keyup')
+            if (e.type === 'keydown')
                 return
             var selected = self[self.selectedIndex];
             value = selected.value;
-            if (self.$value === value)
-                return;
             self.$component.dirty(false);
             self.$component.getter(value, 2);
             self.$component.$skip = false;
@@ -1495,30 +1493,18 @@ $(document).ready(function() {
         }
 
         value = self.value;
+        clearTimeout(self.$timeout);
 
-        if (self.$value === value)
-            return;
-
-        if (e.type === 'keyup') {
-            clearTimeout(self.$timeout);
-            self.$timeout = setTimeout(function() {
-                self.$timeout = null;
-                self.$component.dirty(false);
-                self.$component.getter(value, 2);
-            }, 200);
-            return;
-        }
-
-        if (self.$timeout) {
-            clearTimeout(self.$timeout);
+        self.$timeout = setTimeout(function() {
             self.$timeout = null;
             self.$component.dirty(false);
-            self.$component.getter(value, 2);
-        }
-
-        self.$component.$skip = false;
-        self.$component.setter(value, 2);
-        self.$value = self.value;
+            self.$component.getter(self.value, 2);
+            if (e.type === 'keydown')
+                return;
+            self.$skip = true;
+            self.$component.$skip = false;
+            self.$component.setter(self.value, 2);
+        }, 300);
     });
 
     setTimeout(function() {
