@@ -397,7 +397,8 @@ function component_init(el, obj) {
         collection = el.find(COM_DATA_BIND_SELECTOR);
 
     collection.each(function() {
-        this.$component = obj;
+        if (!this.$component)
+            this.$component = obj;
     });
 
     $cmanager.components.push(obj);
@@ -944,8 +945,7 @@ function Component(name) {
 
         selector.each(function() {
 
-            var el = $(this);
-            var path = el.attr(COM_ATTR_B);
+            var path = this.$component.path;
 
             if (path && path.length > 0 && path !== self.path)
                 return;
@@ -960,7 +960,7 @@ function Component(name) {
                 value = '';
 
             if (this.type === 'select-one' || this.type === 'select') {
-                el.val(value);
+                $(this).val(value);
                 return;
             }
 
