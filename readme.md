@@ -281,6 +281,7 @@ SCHEMA(); // --> $.components.schema()
 SET(); // --> $.components.set()
 UPDATE(); // --> $.components.update()
 WATCH(); // --> $.components.on('watch', path, callback);
+CHANGE(); // --> $.components.change();
 ```
 
 ## jQuery

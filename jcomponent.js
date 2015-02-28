@@ -237,6 +237,9 @@ $.components.inject = function(url, target, callback) {
 
 $.components.POST = function(url, data, callback, timeout) {
 
+    if (!url)
+        url = window.location.pathname;
+
     if (typeof(callback) === 'number') {
         timeout = callback;
         callback = undefined;
@@ -254,6 +257,9 @@ $.components.POST = function(url, data, callback, timeout) {
 };
 
 $.components.PUT = function(url, data, callback, timeout) {
+
+    if (!url)
+        url = window.location.pathname;
 
     if (typeof(callback) === 'number') {
         timeout = callback;
@@ -273,6 +279,9 @@ $.components.PUT = function(url, data, callback, timeout) {
 
 $.components.GET = function(url, data, callback, timeout) {
 
+    if (!url)
+        url = window.location.pathname;
+
     if (typeof(callback) === 'number') {
         timeout = callback;
         callback = undefined;
@@ -290,6 +299,9 @@ $.components.GET = function(url, data, callback, timeout) {
 };
 
 $.components.DELETE = function(url, data, callback, timeout) {
+
+    if (!url)
+        url = window.location.pathname;
 
     if (typeof(callback) === 'number') {
         timeout = callback;
@@ -1534,6 +1546,10 @@ function GET(name) {
 
 function UPDATE(path) {
     return $.components.update(path);
+}
+
+function CHANGE(path, value) {
+    return $.components.change(path, value);
 }
 
 function INJECT(url, target, callback, timeout) {
