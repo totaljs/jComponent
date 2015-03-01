@@ -419,7 +419,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.2.1';
+$.components.version = 'v1.3.0';
 
 $.components.valid = function(path, value) {
 
@@ -1037,6 +1037,11 @@ Component.prototype.valid = function(value, noEmit) {
     return this;
 };
 
+Component.prototype.style = function(value) {
+    STYLE(value);
+    return this;
+};
+
 Component.prototype.change = function(value) {
     if (value === undefined)
         return !this.dirty();
@@ -1187,6 +1192,8 @@ function ComponentManager() {
     this.events = {};
     this.timeout;
     this.pending = [];
+    this.timeoutStyles;
+    this.styles = [];
 }
 
 ComponentManager.prototype.initialize = function() {
@@ -1558,4 +1565,13 @@ function INJECT(url, target, callback, timeout) {
 
 function SCHEMA(name, declaration, callback) {
     return $.components.schema(name, declaration, callback);
+}
+
+function STYLE(value) {
+    clearTimeout($cmanager.timeoutStyles);
+    $cmanager.styles.push(value);
+    $cmanager.timeoutStyles = setTimeout(function() {
+        $('<style type="text/css">' + $cmanager.styles.join('') + '</style>').appendTo('head');
+        $cmanager.styles = [];
+    }, 50);
 }

@@ -160,7 +160,8 @@ COMPONENT('input', function() {
     });
 
     // Methods
-    this.remove(); // remove the component
+    this.style(style); // creates styles
+    this.remove(); // removes the component
     this.dirty([value]); // Boolean, is the component dirty? ... or you can set "dirty" value
     this.change([value]); // Boolean, is an opposite alias for dirty() -> is same as dirty but in reverse
     this.valid([value]); // Boolean, is the component valid? ... or you can set "valid" value
@@ -282,6 +283,7 @@ SET(); // --> $.components.set()
 UPDATE(); // --> $.components.update()
 WATCH(); // --> $.components.on('watch', path, callback);
 CHANGE(); // --> $.components.change();
+STYLE(style); // --> create inline style
 ```
 
 ## jQuery
