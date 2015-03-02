@@ -1338,9 +1338,9 @@ ComponentManager.prototype.get = function(path) {
     var builder = [];
     var p = '';
 
-    for (var i = 0, length = arr.length; i < length; i++) {
+    for (var i = 0, length = arr.length - 1; i < length; i++) {
         p += (p !== '' ? '.' : '') + arr[i];
-        builder.push('if(!w.' + p + ')return w.' + p);
+        builder.push('if(!w.' + p + ')return');
     }
 
     var fn = (new Function('w', builder.join(';') + ';return w.' + path.replace(/\'/, '\'')));
@@ -1368,14 +1368,17 @@ ComponentManager.prototype.set = function(path, value) {
     for (var i = 0, length = arr.length; i < length; i++) {
         p += (p !== '' ? '.' : '') + arr[i];
         var type = self.isArray(arr[i]) ? '[]' : '{}';
-        if (i === length - 1) {
-            if (type === '{}')
-                break;
-            p = p.substring(0, p.lastIndexOf('['));
-            builder.push('if(!(w.' + p + ' instanceof Array))w.' + p + '=' + type);
-            break;
+        if (i !== length - 1) {
+            builder.push('if(typeof(w.' + p + ')!=="object")w.' + p + '=' + type);
+            continue;
         }
-        builder.push('if(typeof(w.' + p + ')!=="object")w.' + p + '=' + type);
+
+        if (type === '{}')
+            break;
+
+        p = p.substring(0, p.lastIndexOf('['));
+        builder.push('if(!(w.' + p + ' instanceof Array))w.' + p + '=' + type);
+        break;
     }
 
     var fn = (new Function('w', 'a', builder.join(';') + ';w.' + path.replace(/\'/, '\'') + '=a;return a;'));
