@@ -1184,6 +1184,7 @@ function ComponentManager() {
     this.init = [];
     this.register = {};
     this.cache = {};
+    this.temp = {};
     this.model = {};
     this.components = [];
     this.schemas = {};
@@ -1312,33 +1313,39 @@ ComponentManager.prototype.refresh = function() {
     return self;
 };
 
+ComponentManager.prototype.isArray = function(path) {
+    var index = path.lastIndexOf('[');
+    if (index === -1)
+        return false;
+    path = path.substring(index + 1, path.length - 1).substring(0, 1);
+    if (path === '"' || path === '\'')
+        return false;
+    return true;
+};
+
 /**
  * Get value from a model
  * @param {String} path
  * @return {Object}
  */
 ComponentManager.prototype.get = function(path) {
+    var cachekey = '=' + path;
+    var self = this;
+    if (self.temp[cachekey])
+        return self.temp[cachekey](window);
 
-    if (path === undefined)
-        return;
+    var arr = path.split('.');
+    var builder = [];
+    var p = '';
 
-    var obj = window;
-
-    for (var i = 0, path = path.split('.'), len = path.length; i < len; i++) {
-        if (!obj)
-            return;
-
-        var p = path[i];
-        if (p.substring(p.length - 1, p.length) === ']') {
-            var beg = p.lastIndexOf('[');
-            index = parseInt(p.substring(beg + 1, p.length - 1));
-            p = p.substring(0, beg);
-            obj = obj[p][index];
-        } else
-            obj = obj[p];
+    for (var i = 0, length = arr.length; i < length; i++) {
+        p += (p !== '' ? '.' : '') + arr[i];
+        builder.push('if(!w.' + p + ')return w.' + p);
     }
 
-    return obj;
+    var fn = (new Function('w', builder.join(';') + ';return w.' + path.replace(/\'/, '\'')));
+    self.temp[cachekey] = fn;
+    return fn(window);
 };
 
 /**
@@ -1348,42 +1355,32 @@ ComponentManager.prototype.get = function(path) {
  */
 ComponentManager.prototype.set = function(path, value) {
 
+    var cachekey = '+' + path;
     var self = this;
 
-    if (!path)
-        return self;
+    if (self.temp[cachekey])
+        return self.cache[cachekey](window, value);
 
-    var obj = window;
-    var isFn = typeof(value) === 'function';
+    var arr = path.split('.');
+    var builder = [];
+    var p = '';
 
-    for (var i = 0, path = path.split('.'), len = path.length; i < len; i++) {
-
-        var p = path[i];
-        var index = -1;
-
-        if (p.substring(p.length - 1, p.length) === ']') {
-            var beg = p.lastIndexOf('[');
-            index = parseInt(p.substring(beg + 1, p.length - 1));
-            p = p.substring(0, beg);
+    for (var i = 0, length = arr.length; i < length; i++) {
+        p += (p !== '' ? '.' : '') + arr[i];
+        var type = self.isArray(arr[i]) ? '[]' : '{}';
+        if (i === length - 1) {
+            if (type === '{}')
+                break;
+            p = p.substring(0, p.lastIndexOf('['));
+            builder.push('if(!(w.' + p + ' instanceof Array))w.' + p + '=' + type);
+            break;
         }
-
-        if (!obj)
-            return;
-
-        if (len - 1 !== i) {
-            if (index === -1)
-                obj = obj[p];
-            else
-                obj = obj[p][index];
-            continue;
-        }
-
-        if (index === -1)
-            obj[p] = isFn ? value(obj[p]) : value;
-        else
-            obj[p][index] = isFn ? value(obj[p][index]) : value;
+        builder.push('if(typeof(w.' + p + ')!=="object")w.' + p + '=' + type);
     }
 
+    var fn = (new Function('w', 'a', builder.join(';') + ';w.' + path.replace(/\'/, '\'') + '=a;return a;'));
+    self.cache[cachekey] = fn;
+    fn(window, value);
     return self;
 };
 
@@ -1473,6 +1470,10 @@ COMPONENT('', function() {
 setInterval(function() {
     $cmanager.cleaner();
 }, 1000 * 60);
+
+setInterval(function() {
+    $cmanager.temp = {};
+}, (1000 * 60) * 5);
 
 $.components.compile();
 $(document).ready(function() {
