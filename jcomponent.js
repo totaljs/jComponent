@@ -504,13 +504,15 @@ $.components.$emit = function(name, path) {
         args.push(arguments[i]);
 
     $.components.$emit2(name, '*', args);
-
     var p = '';
 
     for (var i = 0, length = arr.length; i < length; i++) {
 
         var k = arr[i];
         var a = arr[i];
+
+        if (k === '*')
+            continue;
 
         if (a.substring(a.length - 1, a.length) === ']') {
             var beg = a.lastIndexOf('[');
@@ -523,7 +525,6 @@ $.components.$emit = function(name, path) {
         $.components.$emit2(name, p + k, args);
         if (k !== a)
             $.components.$emit2(name, p + a, args);
-
         p += k;
     }
 
