@@ -167,9 +167,9 @@ COMPONENT('input', function() {
     // Methods
     this.style(style); // creates styles
     this.remove(); // removes the component
-    this.dirty([value]); // Boolean, is the component dirty? ... or you can set "dirty" value
-    this.change([value]); // Boolean, is an opposite alias for dirty() -> is same as dirty but in reverse
-    this.valid([value]); // Boolean, is the component valid? ... or you can set "valid" value
+    this.dirty([value]); // Boolean, is the component dirty? ... or you can set "dirty" value (the method calls the state delegate only in this component, for all use $.components.valid())
+    this.change([value]); // Boolean, is an opposite alias for dirty() -> is same as dirty but in reverse (the method calls the state delegate only in this component, for all use $.components.valid())
+    this.valid([value]); // Boolean, is the component valid? ... or you can set "valid" value (the method calls the state delegate only in this component, for all use $.components.valid())
     this.get([path]); // get/read the value
     this.set([path], value); // set/write the value
     this.emit(name, arg1, arg2); // The function triggers event within all components
