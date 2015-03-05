@@ -32,8 +32,12 @@ $.components.compile = function(container) {
     }
 
     var els = container ? container.find(COM_ATTR) : $(COM_ATTR);
+    var skip = false;
 
     els.each(function() {
+
+        if (skip)
+            return;
 
         var el = $(this);
         var name = el.attr('data-component');
@@ -50,7 +54,7 @@ $.components.compile = function(container) {
         obj.$init = el.attr(COM_ATTR_I) || null;
         obj.type = el.attr('data-component-type') || '';
 
-        // Reference to implementation
+        // A reference to implementation
         el.data(COM_ATTR, obj);
 
         var template = el.attr(COM_ATTR_T) || obj.template;
@@ -97,11 +101,18 @@ $.components.compile = function(container) {
             return;
         }
 
-        if (obj.make)
-            obj.make();
+        if (obj.make) {
+            if (obj.make())
+                skip = true;
+        }
 
         component_init(el, obj);
     });
+
+    if (skip) {
+        $.components.compile();
+        return;
+    }
 
     if (container !== undefined) {
         $cmanager.next();
@@ -419,7 +430,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.3.0';
+$.components.version = 'v1.3.1';
 
 $.components.valid = function(path, value) {
 
@@ -504,7 +515,9 @@ $.components.$emit = function(name, path) {
         args.push(arguments[i]);
 
     $.components.$emit2(name, '*', args);
+
     var p = '';
+    var cache = {};
 
     for (var i = 0, length = arr.length; i < length; i++) {
 
@@ -663,6 +676,11 @@ $.components.set = function(path, value, type) {
     $.components.$emit('watch', path, undefined, type);
     return $.components;
 };
+
+$.components.clean = function() {
+    $cmanager.cleaner();
+    return $.components;
+}
 
 $.components.get = function(path) {
     return $cmanager.get(path);
@@ -1200,11 +1218,15 @@ function ComponentManager() {
 
 ComponentManager.prototype.initialize = function() {
     var item = this.init.pop();
+
     if (item === undefined) {
         $.components.compile();
         return this;
     }
-    this.prepare(item);
+
+    if (!item.$removed)
+        this.prepare(item);
+
     this.initialize();
     return this;
 };
@@ -1216,7 +1238,7 @@ ComponentManager.prototype.prepare = function(obj) {
 
     var value = obj.get();
     var el = obj.element;
-    obj.id = el.attr('data-component-id') || name;
+    obj.id = el.attr('data-component-id') || obj._id;
 
     if (obj.setter) {
         if (!obj.$ready) {
@@ -1426,9 +1448,13 @@ ComponentManager.prototype.cleaner = function() {
                 if (item.context === undefined)
                     continue;
 
-                if (item.context === null || !item.context.element || item.context.element.parent().length !== 0)
+                if (item.context === null || (item.context.element && item.context.element.closest(document.documentElement)))
                     continue;
 
+                if (item.context && item.context.element)
+                    item.context.element.remove();
+
+                item.context.$removed = true;
                 item.context = null;
                 self.events[ak][bk].splice(index - 1, 1);
 

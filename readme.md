@@ -92,6 +92,11 @@ COMPONENT('input', function() {
         this.element.append('<input type="text" data-component-bind />');
         // or
         // this.element.append('<input type="text" data-component-bind="new-data-component-path" />');
+        
+        // IMPORTANT:
+        // Do you replace the current content with new content and new components?
+        // If you return a true then the library cancels the current compilation and recompiles it again.
+        // return true;
     };
 
     // or (after prerender function is called)
