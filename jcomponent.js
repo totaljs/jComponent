@@ -392,6 +392,7 @@ $.components.watch = function(path, fn) {
 };
 
 $.components.on = function(name, path, fn) {
+
     if (typeof(path) === 'function') {
         fn = path;
         path = '';
@@ -403,7 +404,7 @@ $.components.on = function(name, path, fn) {
         $cmanager.events[path][name] = [];
     } else if (!$cmanager.events[path][name])
         $cmanager.events[path][name] = [];
-    $cmanager.events[path][name].push({ fn: fn, context: this, id: this._id });
+    $cmanager.events[path][name].push({ fn: fn, id: this._id });
     return $.components;
 };
 
@@ -1482,15 +1483,23 @@ ComponentManager.prototype.cleaner = function() {
  * Default component
  */
 COMPONENT('', function() {
-    var type = this.element.get(0).tagName;
-    if (type === 'INPUT' || type === 'SELECT' || type === 'TEXTAREA') {
+
+    this.make = function() {
+        var type = this.element.get(0).tagName;
+
+        if (type !== 'INPUT' && type !== 'SELECT' && type !== 'TEXTAREA') {
+            this.getter = null;
+            return;
+        }
+
         if (!this.element.attr(COM_ATTR_B))
             this.element.attr(COM_ATTR_B, this.path);
+
         this.$parser.push.apply(this.$parser, $.components.$parser);
         this.$formatter.push.apply(this.$formatter, $.components.$formatter);
-        return;
-    }
-    this.getter = null;
+        this.element.$component = this;
+    };
+
     this.setter = function(value) {
         value = this.formatter(value, true);
         this.element.html(value);
