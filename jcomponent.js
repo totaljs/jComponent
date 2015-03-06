@@ -518,8 +518,6 @@ $.components.$emit = function(name, path) {
     $.components.$emit2(name, '*', args);
 
     var p = '';
-    var cache = {};
-
     for (var i = 0, length = arr.length; i < length; i++) {
 
         var k = arr[i];
