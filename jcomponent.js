@@ -1489,6 +1489,10 @@ COMPONENT('', function() {
 
         if (type !== 'INPUT' && type !== 'SELECT' && type !== 'TEXTAREA') {
             this.getter = null;
+            this.setter = function(value) {
+                value = this.formatter(value, true);
+                this.element.html(value);
+            };
             return;
         }
 
@@ -1498,11 +1502,6 @@ COMPONENT('', function() {
         this.$parser.push.apply(this.$parser, $.components.$parser);
         this.$formatter.push.apply(this.$formatter, $.components.$formatter);
         this.element.$component = this;
-    };
-
-    this.setter = function(value) {
-        value = this.formatter(value, true);
-        this.element.html(value);
     };
 });
 
