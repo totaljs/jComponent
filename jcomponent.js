@@ -1403,9 +1403,9 @@ ComponentManager.prototype.set = function(path, value) {
         break;
     }
 
-    var fn = (new Function('w', 'a', builder.join(';') + ';w.' + path.replace(/\'/, '\'') + '=a;return a;'));
+    var fn = (new Function('w', 'a', 'b', builder.join(';') + ';var v=typeof(a) === \'function\' ? a($cmanager.get(b)) : a;w.' + path.replace(/\'/, '\'') + '=v;return v'));
     self.cache[cachekey] = fn;
-    fn(window, value);
+    fn(window, value, path);
     return self;
 };
 
@@ -1548,6 +1548,22 @@ $(document).ready(function() {
             return;
         }
 
+        if (self.$delay === undefined)
+            self.$delay = parseInt(self.getAttribute('data-component-keypress-delay') || '0');
+
+        if (self.$nokeypress === undefined)
+            self.$nokeypress = self.getAttribute('data-component-keypress') === 'false';
+
+        var delay = self.$delay;
+
+        if (self.$nokeypress) {
+            if (e.type === 'keydown' || e.type === 'blur')
+                return;
+            if (delay === 0)
+                delay = 1;
+        } else if (delay === 0)
+            delay = 300;
+
         value = self.value;
         clearTimeout(self.$timeout);
 
@@ -1560,7 +1576,7 @@ $(document).ready(function() {
             self.$skip = true;
             self.$component.$skip = false;
             self.$component.setter(self.value, 2);
-        }, 300);
+        }, delay);
     });
 
     setTimeout(function() {
