@@ -246,7 +246,7 @@ $.components.inject = function(url, target, callback) {
     return $.components;
 };
 
-$.components.POST = function(url, data, callback, timeout) {
+$.components.POST = function(url, data, callback, timeout, error) {
 
     if (!url)
         url = window.location.pathname;
@@ -254,6 +254,12 @@ $.components.POST = function(url, data, callback, timeout) {
     if (typeof(callback) === 'number') {
         timeout = callback;
         callback = undefined;
+    }
+
+    if (typeof(timeout) !== 'number') {
+        var tmp = error;
+        error = timeout;
+        timeout = tmp;
     }
 
     setTimeout(function() {
@@ -262,12 +268,17 @@ $.components.POST = function(url, data, callback, timeout) {
                 return $.components.set(callback, r);
             if (callback)
                 callback(r);
+        }, error: function(req, status, r) {
+            if (typeof(error) === 'string')
+                return $.components.set(error, r);
+            if (error)
+                error(r, req.status, status);
         }, contentType: 'application/json' });
     }, timeout || 0);
     return $.components;
 };
 
-$.components.PUT = function(url, data, callback, timeout) {
+$.components.PUT = function(url, data, callback, timeout, error) {
 
     if (!url)
         url = window.location.pathname;
@@ -275,6 +286,12 @@ $.components.PUT = function(url, data, callback, timeout) {
     if (typeof(callback) === 'number') {
         timeout = callback;
         callback = undefined;
+    }
+
+    if (typeof(timeout) !== 'number') {
+        var tmp = error;
+        error = timeout;
+        timeout = tmp;
     }
 
     setTimeout(function() {
@@ -283,12 +300,17 @@ $.components.PUT = function(url, data, callback, timeout) {
                 return $.components.set(callback, r);
             if (callback)
                 callback(r);
+        }, error: function(req, status, r) {
+            if (typeof(error) === 'string')
+                return $.components.set(error, r);
+            if (error)
+                error(r, req.status, status);
         }, contentType: 'application/json' });
     }, timeout || 0);
     return $.components;
 };
 
-$.components.GET = function(url, data, callback, timeout) {
+$.components.GET = function(url, data, callback, timeout, error) {
 
     if (!url)
         url = window.location.pathname;
@@ -296,6 +318,12 @@ $.components.GET = function(url, data, callback, timeout) {
     if (typeof(callback) === 'number') {
         timeout = callback;
         callback = undefined;
+    }
+
+    if (typeof(timeout) !== 'number') {
+        var tmp = error;
+        error = timeout;
+        timeout = tmp;
     }
 
     setTimeout(function() {
@@ -304,12 +332,17 @@ $.components.GET = function(url, data, callback, timeout) {
                 return $.components.set(callback, r);
             if (callback)
                 callback(r);
+        }, error: function(req, status, r) {
+            if (typeof(error) === 'string')
+                return $.components.set(error, r);
+            if (error)
+                error(r, req.status, status);
         }});
     }, timeout || 0);
     return $.components;
 };
 
-$.components.DELETE = function(url, data, callback, timeout) {
+$.components.DELETE = function(url, data, callback, timeout, error) {
 
     if (!url)
         url = window.location.pathname;
@@ -319,12 +352,23 @@ $.components.DELETE = function(url, data, callback, timeout) {
         callback = undefined;
     }
 
+    if (typeof(timeout) !== 'number') {
+        var tmp = error;
+        error = timeout;
+        timeout = tmp;
+    }
+
     setTimeout(function() {
         $.ajax($components_url(url), { type: 'DELETE', data: data, success: function(r) {
             if (typeof(callback) === 'string')
                 return $.components.set(callback, r);
             if (callback)
                 callback(r);
+        }, error: function(req, status, r) {
+            if (typeof(error) === 'string')
+                return $.components.set(error, r);
+            if (error)
+                error(r, req.status, status);
         }});
     }, timeout || 0);
     return $.components;
@@ -431,7 +475,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.3.1';
+$.components.version = 'v1.4.0';
 
 $.components.valid = function(path, value) {
 
