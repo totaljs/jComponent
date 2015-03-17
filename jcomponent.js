@@ -246,6 +246,33 @@ $.components.inject = function(url, target, callback) {
     return $.components;
 };
 
+$.components.parseQuery = function(value) {
+
+    if (!value)
+        value = window.location.search;
+
+    if (value.substring(0, 1) === '?')
+        value = value.substring(1);
+
+    var arr = value.split('&');
+    var obj = {};
+    for (var i = 0, length = arr.length; i < length; i++) {
+        var sub = arr[i].split('=');
+        var key = sub[0];
+        var val = decodeURIComponent(sub[1] || '');
+
+        if (!obj[key]) {
+            obj[key] = val;
+            continue;
+        }
+
+        if (!(obj[key] instanceof Array))
+            obj[key] = [obj[key]];
+        obj[key].push(val);
+    }
+    return obj;
+};
+
 $.components.POST = function(url, data, callback, timeout, error) {
 
     if (!url)
