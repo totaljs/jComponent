@@ -1,3 +1,4 @@
+
 var $cmanager = new ComponentManager();
 var COM_DATA_BIND_SELECTOR = 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
 var COM_ATTR = '[data-component]';
@@ -502,7 +503,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.4.0';
+$.components.version = 'v1.4.1';
 
 $.components.valid = function(path, value) {
 
@@ -1584,19 +1585,28 @@ setInterval(function() {
 
 $.components.compile();
 $(document).ready(function() {
-    $(document).on('change keydown blur', 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]', function(e) {
+    $(document).on('change keydown blur focus', 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]', function(e) {
 
         var self = this;
+
+        if (e.type.substring(0, 5) === 'focus') {
+            self.$value = self.value;
+            return;
+        }
 
         if (self.$skip && e.type === 'focusout') {
             self.$skip = false;
             return;
         }
 
-        if (!self.$component || !self.$component.getter || !self.$component.setter)
+        if (!self.$component || self.$component.$removed || !self.$component.getter || !self.$component.setter)
             return;
 
+        var old = self.$value;
         var value;
+
+        // cleans old value
+        self.$value = null;
 
         if (self.type === 'checkbox' || self.type === 'radio') {
             if (e.type === 'keydown')
@@ -1637,8 +1647,9 @@ $(document).ready(function() {
 
         value = self.value;
         clearTimeout(self.$timeout);
-
         self.$timeout = setTimeout(function() {
+            if (value === old)
+                return;
             self.$timeout = null;
             self.$component.dirty(false);
             self.$component.getter(self.value, 2);
