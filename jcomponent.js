@@ -1,4 +1,3 @@
-
 var $cmanager = new ComponentManager();
 var COM_DATA_BIND_SELECTOR = 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
 var COM_ATTR = '[data-component]';
@@ -1585,11 +1584,11 @@ setInterval(function() {
 
 $.components.compile();
 $(document).ready(function() {
-    $(document).on('change keydown blur focus', 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]', function(e) {
+    $(document).on('change keyup blur focus', 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]', function(e) {
 
         var self = this;
 
-        if (e.type.substring(0, 5) === 'focus') {
+        if (e.type === 'focusin') {
             self.$value = self.value;
             return;
         }
@@ -1609,7 +1608,7 @@ $(document).ready(function() {
         self.$value = null;
 
         if (self.type === 'checkbox' || self.type === 'radio') {
-            if (e.type === 'keydown')
+            if (e.type === 'keyup')
                 return;
             var value = self.checked;
             self.$component.dirty(false);
@@ -1619,7 +1618,7 @@ $(document).ready(function() {
         }
 
         if (self.tagName === 'SELECT') {
-            if (e.type === 'keydown')
+            if (e.type === 'keyup')
                 return
             var selected = self[self.selectedIndex];
             value = selected.value;
@@ -1638,7 +1637,7 @@ $(document).ready(function() {
         var delay = self.$delay;
 
         if (self.$nokeypress) {
-            if (e.type === 'keydown' || e.type === 'blur')
+            if (e.type === 'keyup' || e.type === 'blur')
                 return;
             if (delay === 0)
                 delay = 1;
@@ -1653,7 +1652,7 @@ $(document).ready(function() {
             self.$timeout = null;
             self.$component.dirty(false);
             self.$component.getter(self.value, 2);
-            if (e.type === 'keydown')
+            if (e.type === 'keyup')
                 return;
             self.$skip = true;
             self.$component.$skip = false;
