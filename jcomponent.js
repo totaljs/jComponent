@@ -502,7 +502,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.4.1';
+$.components.version = 'v1.5.0';
 
 $.components.valid = function(path, value) {
 
@@ -1284,6 +1284,7 @@ function ComponentManager() {
     this.pending = [];
     this.timeoutStyles;
     this.styles = [];
+    this.operations = {};
 }
 
 ComponentManager.prototype.initialize = function() {
@@ -1700,6 +1701,13 @@ function INJECT(url, target, callback, timeout) {
 function SCHEMA(name, declaration, callback) {
     return $.components.schema(name, declaration, callback);
 }
+
+function OPERATION(name, fn) {
+    if (!fn)
+        return $cmanager.operations[name];
+    $cmanager.operations[name] = fn;
+    return fn;
+};
 
 function STYLE(value) {
     clearTimeout($cmanager.timeoutStyles);

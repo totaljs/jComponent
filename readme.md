@@ -292,6 +292,8 @@ UPDATE(); // --> $.components.update()
 WATCH(); // --> $.components.on('watch', path, callback);
 CHANGE(); // --> $.components.change();
 STYLE(style); // --> create inline style
+OPERATION(name, fn); // --> creates an operation
+OPERATION(name); // --> returns function
 ```
 
 ## jQuery
