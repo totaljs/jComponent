@@ -1329,9 +1329,19 @@ ComponentManager.prototype.prepare = function(obj) {
 
     if (obj.$init) {
         setTimeout(function() {
+            if ($cmanager.isOperation(obj.$init)) {
+                var op = OPERATION(obj.$init);
+                if (op)
+                    op.call(obj, obj);
+                else if (console)
+                    console.warn('Operation ' + obj.$init + ' not found.');
+                delete obj.$init;
+                return;
+            }
             var fn = $.components.get(obj.$init);
             if (typeof(fn) === 'function')
                 fn.call(obj, obj);
+            delete obj.$init;
         }, 2);
     }
 
@@ -1417,12 +1427,27 @@ ComponentManager.prototype.isArray = function(path) {
     return true;
 };
 
+ComponentManager.prototype.isOperation = function(name) {
+    if (name.charCodeAt(0) === 35)
+        return true;
+    return false;
+};
 /**
  * Get value from a model
  * @param {String} path
  * @return {Object}
  */
 ComponentManager.prototype.get = function(path) {
+
+    if (path.charCodeAt(0) === 35) {
+        var op = OPERATION(path);
+        if (op)
+            return op;
+        else if (console)
+            console.warn('Operation ' + path.substring(1) + ' not found.');
+        return function(){};
+    }
+
     var cachekey = '=' + path;
     var self = this;
     if (self.temp[cachekey])
@@ -1448,7 +1473,14 @@ ComponentManager.prototype.get = function(path) {
  * @param {Object} value
  */
 ComponentManager.prototype.set = function(path, value) {
-
+    if (path.charCodeAt(0) === 35) {
+        var op = OPERATION(path);
+        if (op)
+            op(value, path);
+        else if (console)
+            console.warn('Operation ' + path + ' not found.');
+        return self;
+    }
     var cachekey = '+' + path;
     var self = this;
 
@@ -1703,8 +1735,11 @@ function SCHEMA(name, declaration, callback) {
 }
 
 function OPERATION(name, fn) {
-    if (!fn)
+    if (!fn) {
+        if (name.charCodeAt(0) === 35)
+            return $cmanager.operations[name.substring(1)];
         return $cmanager.operations[name];
+    }
     $cmanager.operations[name] = fn;
     return fn;
 };
