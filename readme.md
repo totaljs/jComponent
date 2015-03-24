@@ -242,10 +242,10 @@ $.components.remove([path]); // The function removes components (triggers "destr
 $.components.invalid([path]) // The function returns an array with all invalid components
 $.components.emit(name, arg1, arg2); // The function triggers event within all components
 $.components.parseQuery([querystring]); // Parsers query string and returns object
-$.components.POST(url, data, [callback or path], [timeout], [error(response, status, type) or path]); // Send data
-$.components.PUT(url, data, [callback or path], [timeout], [error(response, status, type) or path]); // Send data
-$.components.GET(url, data, [callback or path], [timeout], [error(response, status, type) or path]); // Send data
-$.components.DELETE(url, data, [callback or path], [timeout], [error(response, status, type) or path]); // Send data
+$.components.POST(url, data, [callback or path], [sleep], [error(response, status, type) or path]); // Send data
+$.components.PUT(url, data, [callback or path], [sleep], [error(response, status, type) or path]); // Send data
+$.components.GET(url, data, [callback or path], [sleep], [error(response, status, type) or path]); // Send data
+$.components.DELETE(url, data, [callback or path], [sleep], [error(response, status, type) or path]); // Send data
 $.components.ready(function(componentCount) {}); // --> Are components ready?
 $.components.on('watch', 'path.*', function(path, value)); // Declare a watch event
 $.components.on('component', function(component)); // A spy for new components
