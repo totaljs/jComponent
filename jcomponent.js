@@ -502,7 +502,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.5.0';
+$.components.version = 'v1.5.1';
 
 $.components.valid = function(path, value) {
 
@@ -1319,7 +1319,7 @@ ComponentManager.prototype.prepare = function(obj) {
     }
 
     if (obj.validate)
-        obj.$valid = obj.validate(obj.get(), 0);
+        obj.$valid = obj.validate(obj.get(), true);
 
     if (obj.done)
         obj.done();

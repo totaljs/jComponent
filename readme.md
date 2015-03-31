@@ -119,12 +119,13 @@ COMPONENT('input', function() {
 
     // OPTIONAL
     // Must return {Boolean}
-    this.validate = function(value) {
+    // IMPORTANT: The intial value executes this delegate.
+    this.validate = function(value, isInitial) {
         return value.length > 0;
     };
 
     // OPTIONAL
-    // Watch changes
+    // Watch changes. IMPORTANT: The initial value is not called.
     this.watch([path], function(path, value, index) {
         // type === 1 : by developer
         // type === 2 : by input
@@ -132,7 +133,8 @@ COMPONENT('input', function() {
     });
 
     // OPTIONAL
-    // Watch the state of value, suitable for toggling classes of element
+    // Watch the state of the value, suitable for toggling classes of element
+    // IMPORTANT: The intial value executes this delegate.
     this.state = function(type) {
         // type === 1 : by developer
         // type === 2 : by input
@@ -147,6 +149,7 @@ COMPONENT('input', function() {
 
     // Set the value to input/select/textarea
     // OPTIONAL, framework has an own mechanism for this (but you can rewrite it)
+    // IMPORTANT: The intial value executes this delegate.
     this.setter = function(value) {
         this.element.find('input').val(value === undefined || value === null ? '' : value);
     };
