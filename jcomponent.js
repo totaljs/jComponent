@@ -1679,6 +1679,10 @@ $(document).ready(function() {
 
         value = self.value;
         clearTimeout(self.$timeout);
+
+        if (e.type === 'focusout')
+            delay = 0;
+
         self.$timeout = setTimeout(function() {
             if (value === old)
                 return;
