@@ -59,8 +59,8 @@ __YOU MUST SEE:__
 
 - `data-component-url="URL TO TEMPLATE"` - the library downloads the HTML content from the URL address and eval. This attribute cannot be bound with the `data-component` attribute.
 - `data-component-bind` - auto attach `change` event for the input/select/textarea (only in the component)
-- `data-component-keypress` - (works only with `data-component-bind`) and can be `true` | `false` (default `true`). Enable/Disable keypress real-time value binding.
-- `data-component-keypress-delay` - (works only with `data-component-bind`) and can be only `number` (default: `300`). This is a delay for real-time value binding.
+- `data-component-keypress` - (works only with: `data-component-bind` and `<input`, `<textarea`) and it can be `true` | `false` (default `true`). Enable/Disable keypress real-time value binding.
+- `data-component-keypress-delay` - (works only with `data-component-bind` and `<input`, `<textarea`) and it can be only `number` (default: `300`). This is a delay for real-time value binding.
 
 ## Component methods/properties
 
