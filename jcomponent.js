@@ -502,7 +502,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.5.1';
+$.components.version = 'v1.5.2';
 
 $.components.valid = function(path, value) {
 
@@ -1321,8 +1321,11 @@ ComponentManager.prototype.prepare = function(obj) {
     if (obj.validate)
         obj.$valid = obj.validate(obj.get(), true);
 
-    if (obj.done)
-        obj.done();
+    if (obj.done) {
+        setTimeout(function() {
+            obj.done();
+        }, 20);
+    }
 
     if (obj.state)
         obj.state(0);
@@ -1358,6 +1361,7 @@ ComponentManager.prototype.prepare = function(obj) {
     if (obj.id)
         $.components.emit('#' + obj.id, obj);
 
+    $.components.emit('@' + obj.name, obj);
     $.components.emit('component', obj);
     return this;
 };
@@ -1706,8 +1710,12 @@ $(document).ready(function() {
     }, 3000);
 });
 
-function SET(name, value) {
-    return $.components.set(name, value);
+function SET(name, value, timeout) {
+    if (!timeout)
+        return $.components.set(name, value);
+    setTimeout(function() {
+        SET(name, value);
+    }, timeout);
 }
 
 function RESET(path) {
@@ -1722,8 +1730,12 @@ function GET(name) {
     return $.components.get(name);
 }
 
-function UPDATE(path) {
-    return $.components.update(path);
+function UPDATE(path, timeout) {
+    if (!timeout)
+        return $.components.update(path);
+    setTimeout(function() {
+        UPDATE(path);
+    }, timeout);
 }
 
 function CHANGE(path, value) {

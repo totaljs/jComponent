@@ -253,6 +253,7 @@ $.components.ready(function(componentCount) {}); // --> Are components ready?
 $.components.on('watch', 'path.*', function(path, value)); // Declare a watch event
 $.components.on('component', function(component)); // A spy for new components
 $.components.on('#data-component-id', function(component) {}); // Is triggered when is the component ready
+$.components.on('@component-name', function(component) {}); // Is triggered when is the component ready
 $.components.schema(name, [declaration]); // returns schema declaration
 
 $.components.schema('user', { name: '', age: 20 });
