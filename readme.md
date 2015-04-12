@@ -180,6 +180,7 @@ COMPONENT('input', function() {
     this.emit(name, arg1, arg2); // The function triggers event within all components
     this.html([value]); // Get or Set the value into the component element
     this.isInvalid(); // returns true if the component is not valid or dirty
+    this.invalid(); // sets valid(false).dirty(false)
 
     // this function formats the value according to formatters
     // it's called automatically (data-component-bind) when is value changed

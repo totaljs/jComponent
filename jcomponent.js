@@ -502,7 +502,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.5.2';
+$.components.version = 'v1.5.3';
 
 $.components.valid = function(path, value) {
 
@@ -1106,6 +1106,10 @@ Component.prototype.watch = function(path, fn) {
 
     self.on('watch', path, fn);
     return self;
+};
+
+Component.prototype.invalid = function() {
+    return this.valid(false).dirty(false);
 };
 
 Component.prototype.valid = function(value, noEmit) {
