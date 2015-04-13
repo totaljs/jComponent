@@ -502,7 +502,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.5.3';
+$.components.version = 'v1.5.4';
 
 $.components.valid = function(path, value) {
 
@@ -1628,6 +1628,9 @@ $(document).ready(function() {
     $(document).on('change keyup blur focus', 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]', function(e) {
 
         var self = this;
+
+        if ((e.type === 'focusin' || e.type === 'focusout') && (self.type === 'checkbox' || self.type === 'radio'))
+            return;
 
         if (e.type === 'focusin') {
             self.$value = self.value;
