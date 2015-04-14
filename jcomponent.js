@@ -1629,7 +1629,7 @@ $(document).ready(function() {
 
         var self = this;
 
-        if ((e.type === 'focusin' || e.type === 'focusout') && (self.type === 'checkbox' || self.type === 'radio'))
+        if ((e.type === 'focusin' || e.type === 'focusout') && (self.type === 'checkbox' || self.type === 'radio' || self.tagName === 'SELECT'))
             return;
 
         if (e.type === 'focusin') {
@@ -1699,9 +1699,15 @@ $(document).ready(function() {
                 return;
             self.$timeout = null;
             self.$component.dirty(false);
-            self.$component.getter(self.value, 2);
+
+            // because validation
+            setTimeout(function() {
+                self.$component.getter(self.value, 2);
+            }, 2);
+
             if (e.type === 'keyup')
                 return;
+
             self.$skip = true;
             self.$component.$skip = false;
             self.$component.setter(self.value, 2);
