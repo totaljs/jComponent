@@ -221,6 +221,11 @@ COMPONENT('input', function() {
 
 ```js
 
+console.log($.components.version); // current version
+
+$.components.defaults.delay = 300; // keypress delay for data-component-bind
+$.components.defaults.keypress = true; // keypress enable/disable for data-component-bind
+
 // [parameter] --> is OPTIONAL
 // path --> path to object property
 
@@ -234,8 +239,8 @@ $.components.findByPath([path], [fn(component)]); // Find components by name (da
 $.components.inject(url, [target], [callback]); // Inject script or HTML
 $.components.set(path, value); // Set/write value to model according to path
 $.components.get(path); // Get/read value from the model
-$.components.dirty(path, [value]); // Are values dirty? or setter "dirty" state.
-$.components.valid(path, [value]); // Are values valid? or setter "valid" state.
+$.components.dirty(path, [value], [nofifyPath]); // Are values dirty? or setter "dirty" state.
+$.components.valid(path, [value], [nofifyPath]); // Are values valid? or setter "valid" state.
 $.components.can(path); // Combine dirty and valid together (e.g. for keypressing)
 $.components.disable(path); // Combine dirty and valid together (e.g. for button disabling)
 $.components.validate([path], [selector]); // The function validates all values according the path

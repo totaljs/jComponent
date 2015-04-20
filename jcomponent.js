@@ -19,6 +19,10 @@ $.components = function(container) {
     return $.components.compile(container);
 };
 
+$.components.defaults = {}
+$.components.defaults.delay = 300;
+$.components.defaults.keypress = true;
+
 $.components.compile = function(container) {
 
     $cmanager.isCompiling = true;
@@ -502,9 +506,9 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.5.4';
+$.components.version = 'v1.5.5';
 
-$.components.valid = function(path, value) {
+$.components.valid = function(path, value, notifyPath) {
 
     var key = 'valid' + path;
 
@@ -513,24 +517,26 @@ $.components.valid = function(path, value) {
 
     var valid = true;
     var arr = value !== undefined ? [] : null;
+    var fn = notifyPath ? $.components.eachPath : $.components.each;
 
-    $.components.each(function(obj) {
-
+    fn(function(obj) {
         if (value !== undefined) {
             if (obj.state)
                 arr.push(obj);
-            obj.$valid = value;
-            obj.$validate = false;
+            if (!notifyPath || obj.path === path) {
+                obj.$valid = value;
+                obj.$validate = false;
+            }
         }
-
         if (obj.$valid === false)
             valid = false;
-
     }, path);
+
+    if (notifyPath)
+        $cmanager.clear('valid');
 
     $cmanager.cache[key] = valid;
     $.components.state(arr, 1);
-
     return valid;
 };
 
@@ -641,7 +647,7 @@ $.components.change = function(path, value) {
     return !$.components.dirty(path, !value);
 };
 
-$.components.dirty = function(path, value) {
+$.components.dirty = function(path, value, notifyPath) {
 
     var key = 'dirty' + path;
 
@@ -650,13 +656,15 @@ $.components.dirty = function(path, value) {
 
     var dirty = true;
     var arr = value !== undefined ? [] : null;
+    var fn = notifyPath ? $.components.eachPath : $.components.each;
 
-    $.components.each(function(obj) {
+    fn(function(obj) {
 
         if (value !== undefined) {
             if (obj.state)
                 arr.push(obj);
-            obj.$dirty = value;
+            if (!notifyPath || obj.path === path)
+                obj.$dirty = value;
         }
 
         if (obj.$dirty === false)
@@ -664,8 +672,13 @@ $.components.dirty = function(path, value) {
 
     }, path);
 
+    if (notifyPath)
+        $cmanager.clear('dirty');
+
     $cmanager.cache[key] = dirty;
-    $.components.state(arr, 2);
+
+    if (arr)
+        $.components.state(arr, 2);
 
     return dirty;
 };
@@ -817,8 +830,10 @@ $.components.state = function(arr, type) {
     if (!arr || arr.length === 0)
         return;
 
-    for (var i = 0, length = arr.length; i < length; i++)
-        arr[i].state(type);
+    setTimeout(function() {
+        for (var i = 0, length = arr.length; i < length; i++)
+            arr[i].state(type);
+    }, 10);
 };
 
 $.components.reset = function(path) {
@@ -964,14 +979,10 @@ $.components.schema = function(name, declaration, callback) {
 };
 
 $.components.each = function(fn, path) {
-
     var isAsterix = path ? path.lastIndexOf('*') !== -1 : false;
-
     if (isAsterix)
         path = path.replace('.*', '').replace('*', '');
-
     for (var i = 0, length = $cmanager.components.length; i < length; i++) {
-
         var component = $cmanager.components[i];
         if (path) {
             if (!component.path)
@@ -984,16 +995,38 @@ $.components.each = function(fn, path) {
                     continue;
             }
         }
-
         if (component && !component.$removed) {
             var stop = fn(component);
             if (stop === true)
                 return $.components;
         }
     }
+    return $.components;
+};
+
+$.components.eachPath = function(fn, path) {
+
+    var isAsterix = path ? path.lastIndexOf('*') !== -1 : false;
+    if (isAsterix)
+        path = path.replace('.*', '').replace('*', '');
+
+    for (var i = 0, length = $cmanager.components.length; i < length; i++) {
+        var component = $cmanager.components[i];
+        if (component.removed || !component.path)
+            continue;
+        if (isAsterix) {
+            if (path.indexOf(component.path) !== 0 || component.path.indexOf(path))
+                fn(component);
+            continue;
+        }
+
+        if (path.indexOf(component.path) === 0)
+            fn(component);
+    }
 
     return $.components;
 };
+
 
 function Component(name) {
 
@@ -1141,13 +1174,16 @@ Component.prototype.change = function(value) {
     return this.dirty(!value);
 };
 
-Component.prototype.dirty = function(value) {
+Component.prototype.dirty = function(value, noEmit) {
 
     if (value === undefined)
         return this.$dirty;
 
     this.$dirty = value;
     $cmanager.clear('dirty');
+
+    if (noEmit)
+        return this;
 
     if (this.state)
         this.state(2);
@@ -1655,7 +1691,7 @@ $(document).ready(function() {
             if (e.type === 'keyup')
                 return;
             var value = self.checked;
-            self.$component.dirty(false);
+            self.$component.dirty(false, true);
             self.$component.getter(value, 2);
             self.$component.$skip = false;
             return;
@@ -1666,7 +1702,7 @@ $(document).ready(function() {
                 return
             var selected = self[self.selectedIndex];
             value = selected.value;
-            self.$component.dirty(false);
+            self.$component.dirty(false, true);
             self.$component.getter(value, 2);
             self.$component.$skip = false;
             return;
@@ -1675,8 +1711,13 @@ $(document).ready(function() {
         if (self.$delay === undefined)
             self.$delay = parseInt(self.getAttribute('data-component-keypress-delay') || '0');
 
-        if (self.$nokeypress === undefined)
-            self.$nokeypress = self.getAttribute('data-component-keypress') === 'false';
+        if (self.$nokeypress === undefined) {
+            var v = self.getAttribute('data-component-keypress');
+            if (v)
+                self.$nokeypress = v === 'false';
+            else
+                self.$nokeypress = $.components.defaults.keypress === false;
+        }
 
         var delay = self.$delay;
 
@@ -1686,7 +1727,7 @@ $(document).ready(function() {
             if (delay === 0)
                 delay = 1;
         } else if (delay === 0)
-            delay = 300;
+            delay = $.components.defaults.delay;
 
         value = self.value;
         clearTimeout(self.$timeout);
@@ -1697,8 +1738,9 @@ $(document).ready(function() {
         self.$timeout = setTimeout(function() {
             if (value === old)
                 return;
+
             self.$timeout = null;
-            self.$component.dirty(false);
+            self.$component.dirty(false, true);
 
             // because validation
             setTimeout(function() {
