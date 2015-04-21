@@ -188,7 +188,7 @@ $.components.$inject = function() {
         });
 
     }, function() {
-        $cmanager.clear();
+        $cmanager.clear('valid', 'dirty');
         if (count === 0)
             return;
         $.components.compile();
@@ -441,7 +441,7 @@ function $components_ready() {
         $(document).trigger('components', [count]);
 
         if (!$cmanager.isReady) {
-            $cmanager.clear();
+            $cmanager.clear('valid', 'dirty');
             $cmanager.isReady = true;
             $.components.emit('init');
             $.components.emit('ready');
@@ -506,39 +506,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.5.5';
-
-$.components.valid = function(path, value, notifyPath) {
-
-    var key = 'valid' + path;
-
-    if (typeof(value) !== 'boolean' && $cmanager.cache[key] !== undefined)
-        return $cmanager.cache[key];
-
-    var valid = true;
-    var arr = value !== undefined ? [] : null;
-    var fn = notifyPath ? $.components.eachPath : $.components.each;
-
-    fn(function(obj) {
-        if (value !== undefined) {
-            if (obj.state)
-                arr.push(obj);
-            if (!notifyPath || obj.path === path) {
-                obj.$valid = value;
-                obj.$validate = false;
-            }
-        }
-        if (obj.$valid === false)
-            valid = false;
-    }, path);
-
-    if (notifyPath)
-        $cmanager.clear('valid');
-
-    $cmanager.cache[key] = valid;
-    $.components.state(arr, 1);
-    return valid;
-};
+$.components.version = 'v1.6.0';
 
 $.components.$emit2 = function(name, path, args) {
 
@@ -647,6 +615,56 @@ $.components.change = function(path, value) {
     return !$.components.dirty(path, !value);
 };
 
+$.components.valid = function(path, value, notifyPath) {
+
+    var key = 'valid' + path;
+    if (typeof(value) !== 'boolean' && $cmanager.cache[key] !== undefined)
+        return $cmanager.cache[key];
+
+    var valid = true;
+    var arr = value !== undefined ? [] : null;
+    var fn = notifyPath ? $.components.eachPath : $.components.each;
+
+    fn(function(obj) {
+
+        if (value === undefined) {
+            if (obj.$valid === false)
+                valid = false;
+            return;
+        }
+
+        var isState = true;
+        var isUpdate = true;
+
+        if (notifyPath) {
+            var isAsterix = obj.path.substring(obj.path.length - 1) !== -1;
+            if (!isAsterix)
+                isState = obj.path === path;
+            isUpdate = obj.path === path;
+        } else {
+            isUpdate = true;
+            isState = true;
+        }
+
+        if (isState && obj.state)
+            arr.push(obj);
+
+        if (isUpdate) {
+            obj.$valid = value;
+            obj.$validate = false;
+        }
+
+        if (obj.$valid === false)
+            valid = false;
+
+    }, path);
+
+    $cmanager.clear('valid');
+    $cmanager.cache[key] = valid;
+    $.components.state(arr, 1, 1);
+    return valid;
+};
+
 $.components.dirty = function(path, value, notifyPath) {
 
     var key = 'dirty' + path;
@@ -660,32 +678,45 @@ $.components.dirty = function(path, value, notifyPath) {
 
     fn(function(obj) {
 
-        if (value !== undefined) {
-            if (obj.state)
-                arr.push(obj);
-            if (!notifyPath || obj.path === path)
-                obj.$dirty = value;
+        if (value === undefined) {
+            if (obj.$dirty === false)
+                dirty = false;
+            return;
         }
+
+        var isState = true;
+        var isUpdate = true;
+
+        if (notifyPath) {
+            var isAsterix = obj.path.substring(obj.path.length - 1) !== -1;
+            if (!isAsterix)
+                isState = obj.path === path;
+            isUpdate = obj.path === path;
+        } else {
+            isUpdate = true;
+            isState = true;
+        }
+
+        if (isState && obj.state)
+            arr.push(obj);
+
+        if (isUpdate)
+            obj.$dirty = value;
 
         if (obj.$dirty === false)
             dirty = false;
 
     }, path);
 
-    if (notifyPath)
-        $cmanager.clear('dirty');
-
+    $cmanager.clear('dirty');
     $cmanager.cache[key] = dirty;
-
-    if (arr)
-        $.components.state(arr, 2);
-
+    $.components.state(arr, 2, 2);
     return dirty;
 };
 
 // 1 === by developer
 // 2 === by input
-$.components.update = function(path) {
+$.components.update = function(path, reset) {
 
     path = path.replace('.*', '');
 
@@ -706,7 +737,13 @@ $.components.update = function(path) {
 
         component.$ready = true;
 
-        if (component.validate)
+        if (reset === true) {
+            component.$dirty = true;
+            component.$valid = true;
+            component.$validate = false;
+            if (component.validate)
+                component.$valid = component.validate(result);
+        } else if (component.validate)
             component.valid(component.validate(result), true);
 
         if (component.state)
@@ -722,7 +759,7 @@ $.components.update = function(path) {
         updates[path] = $.components.get(path);
 
     for (var i = 0, length = state.length; i < length; i++)
-        state[i].state(1);
+        state[i].state(1, 4);
 
     $.components.$emitonly('watch', updates, 1, path);
     return $.components;
@@ -732,10 +769,14 @@ $.components.update = function(path) {
 // 2 === by input
 $.components.set = function(path, value, type) {
 
+    var reset = type === true;
+    if (reset)
+        type = 1;
+
     $cmanager.set(path, value);
 
     if (typeof(value) === 'object' && !(value instanceof Array) && value !== null && value !== undefined)
-        return $.components.update(path);
+        return $.components.update(path, reset);
 
     var result = $cmanager.get(path);
     var state = [];
@@ -744,17 +785,27 @@ $.components.set = function(path, value, type) {
         type = 1;
 
     $.components.each(function(component) {
+
         if (component.setter)
             component.setter(result, type);
         component.$ready = true;
-        if (component.validate)
-            component.valid(component.validate(result), true);
+
         if (component.state)
             state.push(component);
+
+        if (reset) {
+            component.$dirty = true;
+            component.$valid = true;
+            component.$validate = false;
+            if (component.validate)
+                component.$valid = component.validate(result);
+        } else if (component.validate)
+            component.valid(component.validate(result), true);
+
     }, path);
 
     for (var i = 0, length = state.length; i < length; i++)
-        state[i].state(type);
+        state[i].state(type, 5);
 
     $.components.$emit('watch', path, undefined, type);
     return $.components;
@@ -801,9 +852,7 @@ $.components.validate = function(path) {
     }, path);
 
     $cmanager.clear('valid');
-
-    if (arr.length > 0)
-        $.components.state(arr, 1);
+    $.components.state(arr, 1, 1);
     $.components.$emit('validate', path);
     return valid;
 };
@@ -825,15 +874,19 @@ $.components.disable = function(path) {
     return $.components.dirty(path) || !$.components.valid(path);
 };
 
-$.components.state = function(arr, type) {
-
+// who:
+// 1. valid
+// 2. dirty
+// 3. reset
+// 4. update
+// 5. set
+$.components.state = function(arr, type, who) {
     if (!arr || arr.length === 0)
         return;
-
     setTimeout(function() {
         for (var i = 0, length = arr.length; i < length; i++)
-            arr[i].state(type);
-    }, 10);
+            arr[i].state(type, who);
+    }, 2);
 };
 
 $.components.reset = function(path) {
@@ -846,12 +899,12 @@ $.components.reset = function(path) {
         obj.$valid = true;
         obj.$validate = false;
         if (obj.validate)
-            obj.$valid = obj.validate(obj.get(), 3);
+            obj.$valid = obj.validate(obj.get());
 
     }, path);
 
-    $cmanager.clear();
-    $.components.state(arr, 3);
+    $cmanager.clear('valid', 'dirty');
+    $.components.state(arr, 1, 3);
     $.components.$emit('reset', path);
     return $.components;
 };
@@ -996,7 +1049,7 @@ $.components.each = function(fn, path) {
             }
         }
         if (component && !component.$removed) {
-            var stop = fn(component);
+            var stop = fn(component, index, isAsterix);
             if (stop === true)
                 return $.components;
         }
@@ -1012,16 +1065,18 @@ $.components.eachPath = function(fn, path) {
 
     for (var i = 0, length = $cmanager.components.length; i < length; i++) {
         var component = $cmanager.components[i];
-        if (component.removed || !component.path)
+
+        if ((component && component.$removed) || !component.path)
             continue;
+
         if (isAsterix) {
             if (path.indexOf(component.path) !== 0 || component.path.indexOf(path))
-                fn(component);
+                fn(component, index, true);
             continue;
         }
 
         if (path.indexOf(component.path) === 0)
-            fn(component);
+            fn(component, index, false);
     }
 
     return $.components;
@@ -1158,7 +1213,7 @@ Component.prototype.valid = function(value, noEmit) {
         return this;
 
     if (this.state)
-        this.state(1);
+        this.state(1, 1);
 
     return this;
 };
@@ -1186,10 +1241,11 @@ Component.prototype.dirty = function(value, noEmit) {
         return this;
 
     if (this.state)
-        this.state(2);
+        this.state(2, 2);
 
     return this;
 };
+
 Component.prototype.remove = function(noClear) {
 
     if (this.destroy)
@@ -1203,14 +1259,12 @@ Component.prototype.remove = function(noClear) {
         $cmanager.clear();
 
     $.components.$removed = true;
-    $.components.state(undefined, 'destroy', this);
     $.components.$emit('destroy', this.name, this.element.attr(COM_ATTR_P));
 
     if (!noClear)
         $cmanager.cleaner();
     else
         $cmanager.refresh();
-
 };
 
 Component.prototype.on = function(name, path, fn) {
@@ -1256,8 +1310,8 @@ Component.prototype.get = function(path) {
     return $cmanager.get(path);
 };
 
-Component.prototype.update = function(path) {
-    $.components.update(path || this.path);
+Component.prototype.update = function(path, reset) {
+    $.components.update(path || this.path, reset);
 };
 
 Component.prototype.set = function(path, value, type) {
@@ -1368,7 +1422,7 @@ ComponentManager.prototype.prepare = function(obj) {
     }
 
     if (obj.state)
-        obj.state(0);
+        obj.state(0, 3);
 
     if (obj.$init) {
         setTimeout(function() {
@@ -1421,22 +1475,30 @@ ComponentManager.prototype.next = function() {
  * @param {String} name
  * @return {ComponentManager}
  */
-ComponentManager.prototype.clear = function(name) {
+ComponentManager.prototype.clear = function() {
 
     var self = this;
+
+    if (arguments.length === 0) {
+        self.cache = {};
+        return self;
+    }
+
     var arr = Object.keys(self.cache);
 
     for (var i = 0, length = arr.length; i < length; i++) {
         var key = arr[i];
+        var remove = false;
 
-        if (!name) {
-            delete self.cache[key];
-            continue;
+        for (var j = 0; j < arguments.length; j++) {
+            if (key.substring(0, arguments[j].length) !== arguments[j])
+                continue;
+            remove = true;
+            break;
         }
 
-        if (key.substring(0, name.length) !== name)
-            continue;
-        delete self.cache[key];
+        if (remove)
+            delete self.cache[key];
     }
 
     return self;
@@ -1765,11 +1827,13 @@ $(document).ready(function() {
     }, 3000);
 });
 
-function SET(name, value, timeout) {
+function SET(path, value, timeout, reset) {
+    if (typeof(timeout) === 'boolean')
+        return $.components.set(path, value, timeout);
     if (!timeout)
-        return $.components.set(name, value);
+        return $.components.set(path, value, reset);
     setTimeout(function() {
-        SET(name, value);
+        $.components.set(path, value, reset);
     }, timeout);
 }
 
@@ -1781,15 +1845,17 @@ function WATCH(path, callback) {
     return $.components.on('watch', path, callback);
 }
 
-function GET(name) {
-    return $.components.get(name);
+function GET(path) {
+    return $.components.get(path);
 }
 
-function UPDATE(path, timeout) {
+function UPDATE(path, timeout, reset) {
+    if (typeof(timeout) === 'boolean')
+        return $.components.update(path, timeout);
     if (!timeout)
-        return $.components.update(path);
+        return $.components.update(path, reset);
     setTimeout(function() {
-        UPDATE(path);
+        $.components.update(path, reset);
     }, timeout);
 }
 

@@ -135,9 +135,16 @@ COMPONENT('input', function() {
     // OPTIONAL
     // Watch the state of the value, suitable for toggling classes of element
     // IMPORTANT: The intial value executes this delegate.
-    this.state = function(type) {
+    this.state = function(type, who) {
+        // type === 0 : init
         // type === 1 : by developer
         // type === 2 : by input
+        
+        // who  === 1 : valid
+        // who  === 2 : dirty
+        // who  === 3 : reset
+        // who  === 4 : update
+        // who  === 5 : set
     };
 
     // Get the value from input/select/textarea
@@ -237,16 +244,19 @@ $.components.findByName(name, [path], [fn(component)]); // Find components by na
 $.components.findById(id, [path], [fn(component)]); // Find components by id (data-component-id)
 $.components.findByPath([path], [fn(component)]); // Find components by name (data-component)
 $.components.inject(url, [target], [callback]); // Inject script or HTML
-$.components.set(path, value); // Set/write value to model according to path
+$.components.set(path, value, [reset]); // Set/write value to model according to path
 $.components.get(path); // Get/read value from the model
-$.components.dirty(path, [value], [nofifyPath]); // Are values dirty? or setter "dirty" state.
-$.components.valid(path, [value], [nofifyPath]); // Are values valid? or setter "valid" state.
+
+$.components.dirty(path, [value], [notifyPath]); // Are values dirty? or setter "dirty" state.
+$.components.valid(path, [value], [notifyPath]); // Are values valid? or setter "valid" state.
+// notifyPath executes Component.state() according to the path, serves for e.g. validations
+
 $.components.can(path); // Combine dirty and valid together (e.g. for keypressing)
 $.components.disable(path); // Combine dirty and valid together (e.g. for button disabling)
 $.components.validate([path], [selector]); // The function validates all values according the path
 $.components.reset([path], [selector]); // Reset dirty and valid state to dirty=true, valid=true
-$.components.each(fn(component), path); // A generic iterator function
-$.components.update([path]); // Re-update values, example: "model.user.*"
+$.components.each(fn(component, index, isAsterix), path); // A generic iterator function
+$.components.update(path, [reset]); // Re-update values, example: "model.user.*"
 $.components.remove([path]); // The function removes components (triggers "destroy" event)
 $.components.invalid([path]) // The function returns an array with all invalid components
 $.components.emit(name, arg1, arg2); // The function triggers event within all components
@@ -297,8 +307,8 @@ GET(); // --> $.components.get()
 INJECT(); // --> $.components.inject()
 RESET(); // --> $.components.reste()
 SCHEMA(); // --> $.components.schema()
-SET(); // --> $.components.set()
-UPDATE(); // --> $.components.update()
+SET(path, value, [timeout], [reset]); // --> $.components.set()
+UPDATE(path, [timeout], [reset]); // --> $.components.update()
 WATCH(); // --> $.components.on('watch', path, callback);
 CHANGE(); // --> $.components.change();
 STYLE(style); // --> create inline style
