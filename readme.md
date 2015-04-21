@@ -188,6 +188,7 @@ COMPONENT('input', function() {
     this.html([value]); // Get or Set the value into the component element
     this.isInvalid(); // returns true if the component is not valid or dirty
     this.invalid(); // sets valid(false).dirty(false)
+    this.evaluate([path], expression); // evaluate('this.age > 18')
 
     // this function formats the value according to formatters
     // it's called automatically (data-component-bind) when is value changed
@@ -272,6 +273,7 @@ $.components.on('#data-component-id', function(component) {}); // Is triggered w
 $.components.on('@component-name', function(component) {}); // Is triggered when is the component ready
 $.components.schema(name, [declaration]); // returns schema declaration
 
+$.components.evaluate(path, expression); // evaluate('some.model', 'this.age > 18')
 $.components.schema('user', { name: '', age: 20 });
 $.components.schema('user', '{"name":"","age":20}');
 $.components.schema('user', '/json/user.json');

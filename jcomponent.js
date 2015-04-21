@@ -19,6 +19,18 @@ $.components = function(container) {
     return $.components.compile(container);
 };
 
+$.components.evaluate = function(path, expression) {
+    var key = 'eval' + expression;
+    var exp = $cmanager.cache[key];
+    if (exp !== undefined)
+        return exp.call($.components.get(path));
+    if (expression.indexOf('return') === -1)
+        expression = 'return ' + expression;
+    exp = new Function(expression);
+    $cmanager.cache[key] = exp;
+    return exp.call($.components.get(path));
+};
+
 $.components.defaults = {}
 $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
@@ -1300,6 +1312,12 @@ Component.prototype.parser = function(value, g) {
 
 Component.prototype.emit = function() {
     $.components.emit.apply($.components, arguments);
+};
+
+Component.prototype.evaluate = function(path, expression) {
+    if (!expression)
+        path = self.path;
+    return $.components.evaluate(path, expression);
 };
 
 Component.prototype.get = function(path) {
