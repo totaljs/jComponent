@@ -1121,12 +1121,14 @@ function Component(name) {
 
     this.validate;
 
-    this.getter = function(value, type) {
+    this.getter = function(value, type, older) {
         value = this.parser(value);
         if (type === 2)
             this.$skip = true;
-        if (value === this.get())
-            return this;
+        if (value === this.get()) {
+            if (type !== 2 || older !== null)
+                return this;
+        }
         this.set(this.path, value, type);
         return this;
     };
@@ -1801,7 +1803,6 @@ $(document).ready(function() {
         }
 
         var delay = self.$delay;
-
         if (self.$nokeypress) {
             if (e.type === 'keyup' || e.type === 'blur')
                 return;
@@ -1810,14 +1811,14 @@ $(document).ready(function() {
         } else if (delay === 0)
             delay = $.components.defaults.delay;
 
-        value = self.value;
         clearTimeout(self.$timeout);
 
         if (e.type === 'focusout')
             delay = 0;
 
         self.$timeout = setTimeout(function() {
-            if (value === old)
+
+            if (self.value === old)
                 return;
 
             self.$timeout = null;
@@ -1825,7 +1826,7 @@ $(document).ready(function() {
 
             // because validation
             setTimeout(function() {
-                self.$component.getter(self.value, 2);
+                self.$component.getter(self.value, 2, old);
             }, 2);
 
             if (e.type === 'keyup')
