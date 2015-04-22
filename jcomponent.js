@@ -1047,6 +1047,7 @@ $.components.each = function(fn, path) {
     var isAsterix = path ? path.lastIndexOf('*') !== -1 : false;
     if (isAsterix)
         path = path.replace('.*', '').replace('*', '');
+    var index = 0;
     for (var i = 0, length = $cmanager.components.length; i < length; i++) {
         var component = $cmanager.components[i];
         if (path) {
@@ -1061,7 +1062,7 @@ $.components.each = function(fn, path) {
             }
         }
         if (component && !component.$removed) {
-            var stop = fn(component, index, isAsterix);
+            var stop = fn(component, index++, isAsterix);
             if (stop === true)
                 return $.components;
         }
@@ -1074,7 +1075,7 @@ $.components.eachPath = function(fn, path) {
     var isAsterix = path ? path.lastIndexOf('*') !== -1 : false;
     if (isAsterix)
         path = path.replace('.*', '').replace('*', '');
-
+    var index = 0;
     for (var i = 0, length = $cmanager.components.length; i < length; i++) {
         var component = $cmanager.components[i];
 
@@ -1083,12 +1084,12 @@ $.components.eachPath = function(fn, path) {
 
         if (isAsterix) {
             if (path.indexOf(component.path) !== 0 || component.path.indexOf(path))
-                fn(component, index, true);
+                fn(component, index++, true);
             continue;
         }
 
         if (path.indexOf(component.path) === 0)
-            fn(component, index, false);
+            fn(component, index++, false);
     }
 
     return $.components;
