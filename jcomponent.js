@@ -1897,7 +1897,11 @@ function OPERATION(name, fn) {
     }
     $cmanager.operations[name] = fn;
     return fn;
-};
+}
+
+function EVALUATE(path, expression) {
+    return $.components.evaluate(path, expression);
+}
 
 function STYLE(value) {
     clearTimeout($cmanager.timeoutStyles);
