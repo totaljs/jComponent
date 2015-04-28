@@ -22,13 +22,14 @@ $.components = function(container) {
 $.components.evaluate = function(path, expression) {
     var key = 'eval' + expression;
     var exp = $cmanager.cache[key];
+    var val = $.components.get(path);
     if (exp !== undefined)
-        return exp.call($.components.get(path));
+        return exp.call(val, val, path);
     if (expression.indexOf('return') === -1)
         expression = 'return ' + expression;
-    exp = new Function(expression);
+    exp = new Function('value', 'path', expression);
     $cmanager.cache[key] = exp;
-    return exp.call($.components.get(path));
+    return exp.call(val, val, path);
 };
 
 $.components.defaults = {}
@@ -518,7 +519,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.6.0';
+$.components.version = 'v1.6.1';
 
 $.components.$emit2 = function(name, path, args) {
 
