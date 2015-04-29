@@ -189,6 +189,7 @@ COMPONENT('input', function() {
     this.isInvalid(); // returns true if the component is not valid or dirty
     this.invalid(); // sets valid(false).dirty(false)
     this.evaluate([path], expression); // evaluate('this.age > 18') or evalute('value.age > 18 && path === 'path');
+    this.attr(name, [value]); // gets or sets attribute from/to element
 
     // this function formats the value according to formatters
     // it's called automatically (data-component-bind) when is value changed

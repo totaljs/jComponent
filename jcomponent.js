@@ -519,7 +519,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.6.1';
+$.components.version = 'v1.6.2';
 
 $.components.$emit2 = function(name, path, args) {
 
@@ -1187,6 +1187,13 @@ function Component(name) {
         return value;
     });
 }
+
+Component.prototype.attr = function(name, value) {
+    if (value === undefined)
+        return this.element.attr(name);
+    this.element.attr(name, value);
+    return this;
+};
 
 Component.prototype.html = function(value) {
     return this.element.html(value);
