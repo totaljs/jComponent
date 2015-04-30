@@ -309,12 +309,12 @@ $.components.POST = function(url, data, callback, timeout, error) {
     setTimeout(function() {
         $.ajax($components_url(url), { type: 'POST', data: JSON.stringify(data), success: function(r) {
             if (typeof(callback) === 'string')
-                return $.components.set(callback, r);
+                return $cmanager.remap(callback, r);
             if (callback)
                 callback(r);
         }, error: function(req, status, r) {
             if (typeof(error) === 'string')
-                return $.components.set(error, r);
+                return $cmanager.remap(error, r);
             if (error)
                 error(r, req.status, status);
         }, contentType: 'application/json' });
@@ -341,12 +341,12 @@ $.components.PUT = function(url, data, callback, timeout, error) {
     setTimeout(function() {
         $.ajax($components_url(url), { type: 'PUT', data: JSON.stringify(data), success: function(r) {
             if (typeof(callback) === 'string')
-                return $.components.set(callback, r);
+                return $cmanager.remap(callback, r);
             if (callback)
                 callback(r);
         }, error: function(req, status, r) {
             if (typeof(error) === 'string')
-                return $.components.set(error, r);
+                return $cmanager.remap(error, r);
             if (error)
                 error(r, req.status, status);
         }, contentType: 'application/json' });
@@ -373,12 +373,12 @@ $.components.GET = function(url, data, callback, timeout, error) {
     setTimeout(function() {
         $.ajax($components_url(url), { type: 'GET', data: data, success: function(r) {
             if (typeof(callback) === 'string')
-                return $.components.set(callback, r);
+                return $cmanager.remap(callback, r);
             if (callback)
                 callback(r);
         }, error: function(req, status, r) {
             if (typeof(error) === 'string')
-                return $.components.set(error, r);
+                return $cmanager.remap(error, r);
             if (error)
                 error(r, req.status, status);
         }});
@@ -405,12 +405,12 @@ $.components.DELETE = function(url, data, callback, timeout, error) {
     setTimeout(function() {
         $.ajax($components_url(url), { type: 'DELETE', data: data, success: function(r) {
             if (typeof(callback) === 'string')
-                return $.components.set(callback, r);
+                return $cmanager.remap(callback, r);
             if (callback)
                 callback(r);
         }, error: function(req, status, r) {
             if (typeof(error) === 'string')
-                return $.components.set(error, r);
+                return $cmanager.remap(error, r);
             if (error)
                 error(r, req.status, status);
         }});
@@ -519,7 +519,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.6.2';
+$.components.version = 'v1.6.3';
 
 $.components.$emit2 = function(name, path, args) {
 
@@ -1423,6 +1423,16 @@ ComponentManager.prototype.initialize = function() {
 
     this.initialize();
     return this;
+};
+
+ComponentManager.prototype.remap = function(path, value) {
+    var index = path.indexOf('->');
+    if (index === -1)
+        return $.components.set(path, value);
+    var o = path.substring(0, index).trim();
+    var n = path.substring(index + 2).trim();
+    $.components.set(n, value[o]);
+    return this;
 };
 
 ComponentManager.prototype.prepare = function(obj) {

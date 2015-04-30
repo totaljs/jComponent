@@ -267,6 +267,11 @@ $.components.POST(url, data, [callback or path], [sleep], [error(response, statu
 $.components.PUT(url, data, [callback or path], [sleep], [error(response, status, type) or path]); // Send data
 $.components.GET(url, data, [callback or path], [sleep], [error(response, status, type) or path]); // Send data
 $.components.DELETE(url, data, [callback or path], [sleep], [error(response, status, type) or path]); // Send data
+
+// POST, PUT, GET, DELETE supports "remap" feature, e.g.
+$.components.POST('/api/users/', {}, 'users->local.users');
+// response.users --> local.users
+
 $.components.ready(function(componentCount) {}); // --> Are components ready?
 $.components.on('watch', 'path.*', function(path, value)); // Declare a watch event
 $.components.on('component', function(component)); // A spy for new components
