@@ -272,6 +272,10 @@ $.components.DELETE(url, data, [callback or path], [sleep], [error(response, sta
 $.components.POST('/api/users/', {}, 'users->local.users');
 // response.users --> local.users
 
+$.components.GETCACHE(url, data, [callback or path], [expire], [sleep]); // Send data and cache
+$.components.POSTCACHE(url, data, [callback or path], [expire], [sleep]); // Send data and cache
+$.components.DELETECACHE(method, url, data); // Delete cache
+
 $.components.ready(function(componentCount) {}); // --> Are components ready?
 $.components.on('watch', 'path.*', function(path, value)); // Declare a watch event
 $.components.on('component', function(component)); // A spy for new components

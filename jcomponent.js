@@ -413,8 +413,74 @@ $.components.DELETE = function(url, data, callback, timeout, error) {
                 return $cmanager.remap(error, r);
             if (error)
                 error(r, req.status, status);
+            else
+                throw new Error(r);
         }});
     }, timeout || 0);
+    return $.components;
+};
+
+$.components.GETCACHE = function(url, data, callback, expire, timeout) {
+    var value = $cmanager.restcache('GET', url, data);
+
+    if (value !== undefined) {
+        if (typeof(callback) === 'string')
+            $cmanager.remap(callback, value);
+        else
+            callback(value);
+        return $.components;
+    }
+
+    $.components.GET(url, data, function(r) {
+        $cmanager.restcache('GET', url, data, r);
+        if (typeof(callback) === 'string')
+            $cmanager.remap(callback, r);
+        else
+            callback(value);
+    }, timeout);
+
+    if (!expire)
+        return $.components;
+
+    setTimeout(function() {
+        $.components.DELETECACHE('GET', url, data);
+    }, expire);
+
+    return $.components;
+};
+
+$.components.POSTCACHE = function(url, data, callback, expire) {
+    var value = $cmanager.restcache('POST', url, data);
+
+    if (value !== undefined) {
+        if (typeof(callback) === 'string')
+            $cmanager.remap(callback, value);
+        else
+            callback(value);
+        return $.components;
+    }
+
+    $.components.POST(url, data, function(r) {
+        $cmanager.restcache('POST', url, data, r);
+        if (typeof(callback) === 'string')
+            $cmanager.remap(callback, value);
+        else
+            callback(value);
+    }, timeout);
+
+    if (!expire)
+        return $.components;
+
+    setTimeout(function() {
+        $.components.DELETECACHE('POST', url, data);
+    }, expire);
+
+    return $.components;
+};
+
+$.components.DELETECACHE = function(method, url, data) {
+    var key = method.toUpperCase() + '#' + url + (data ? '?' + JSON.stringify(data) : '');
+    delete $cmanager.cacherest[key];
     return $.components;
 };
 
@@ -474,12 +540,20 @@ function $components_ready() {
     }, 100);
 }
 
-$.components.watch = function(path, fn) {
+$.components.watch = function(path, fn, init) {
     $.components.on('watch', path, fn);
+
+    if (!init)
+        return $.components;
+
+    setTimeout(function() {
+        fn.call($.components, path, $cmanager.get(path));
+    }, 5);
+
     return $.components;
 };
 
-$.components.on = function(name, path, fn) {
+$.components.on = function(name, path, fn, init) {
 
     if (typeof(path) === 'function') {
         fn = path;
@@ -493,6 +567,10 @@ $.components.on = function(name, path, fn) {
     } else if (!$cmanager.events[path][name])
         $cmanager.events[path][name] = [];
     $cmanager.events[path][name].push({ fn: fn, id: this._id });
+
+    if (!init)
+        return $.components;
+    fn.call($.components, path, $cmanager.get(path));
     return $.components;
 };
 
@@ -1206,7 +1284,7 @@ Component.prototype.isInvalid = function() {
     return is;
 };
 
-Component.prototype.watch = function(path, fn) {
+Component.prototype.watch = function(path, fn, init) {
 
     var self = this;
 
@@ -1216,6 +1294,14 @@ Component.prototype.watch = function(path, fn) {
     }
 
     self.on('watch', path, fn);
+
+    if (!init)
+        return self;
+
+    setTimeout(function() {
+        fn.call(self, path, self.get());
+    }, 5);
+
     return self;
 };
 
@@ -1396,6 +1482,7 @@ function ComponentManager() {
     this.init = [];
     this.register = {};
     this.cache = {};
+    this.cacherest = {};
     this.temp = {};
     this.model = {};
     this.components = [];
@@ -1409,6 +1496,13 @@ function ComponentManager() {
     this.styles = [];
     this.operations = {};
 }
+
+ComponentManager.prototype.restcache = function(method, url, params, value) {
+    var key = method + '#' + url + (params ? '?' + JSON.stringify(params) : '');
+    if (value === undefined)
+        return this.cacherest[key];
+    this.cacherest[key] = value;
+};
 
 ComponentManager.prototype.initialize = function() {
     var item = this.init.pop();
@@ -1879,8 +1973,8 @@ function RESET(path) {
     return $.components.reset(path);
 }
 
-function WATCH(path, callback) {
-    return $.components.on('watch', path, callback);
+function WATCH(path, callback, init) {
+    return $.components.on('watch', path, callback, init);
 }
 
 function GET(path) {
