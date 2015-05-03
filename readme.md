@@ -1,5 +1,5 @@
 [![MIT License][license-image]][license-url]
-# A jQuery component library
+# jQuery component library
 
 - only __19 kB__ (minified, without GZIP compression)
 - `>= jQuery +1.7`
