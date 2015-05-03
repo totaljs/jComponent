@@ -313,6 +313,7 @@ $.components.POST = function(url, data, callback, timeout, error) {
             if (callback)
                 callback(r);
         }, error: function(req, status, r) {
+            $.components.emit('error', r, req.status, url);
             if (typeof(error) === 'string')
                 return $cmanager.remap(error, r);
             if (error)
@@ -345,6 +346,7 @@ $.components.PUT = function(url, data, callback, timeout, error) {
             if (callback)
                 callback(r);
         }, error: function(req, status, r) {
+            $.components.emit('error', r, req.status, url);
             if (typeof(error) === 'string')
                 return $cmanager.remap(error, r);
             if (error)
@@ -377,6 +379,7 @@ $.components.GET = function(url, data, callback, timeout, error) {
             if (callback)
                 callback(r);
         }, error: function(req, status, r) {
+            $.components.emit('error', r, req.status, url);
             if (typeof(error) === 'string')
                 return $cmanager.remap(error, r);
             if (error)
@@ -409,6 +412,7 @@ $.components.DELETE = function(url, data, callback, timeout, error) {
             if (callback)
                 callback(r);
         }, error: function(req, status, r) {
+            $.components.emit('error', r, req.status, url);
             if (typeof(error) === 'string')
                 return $cmanager.remap(error, r);
             if (error)
