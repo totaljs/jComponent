@@ -1681,7 +1681,6 @@ ComponentManager.prototype.isOperation = function(name) {
  * @return {Object}
  */
 ComponentManager.prototype.get = function(path) {
-
     if (path.charCodeAt(0) === 35) {
         var op = OPERATION(path);
         if (op)
