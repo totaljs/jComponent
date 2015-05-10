@@ -440,7 +440,7 @@ $.components.GETCACHE = function(url, data, callback, expire, timeout) {
         if (typeof(callback) === 'string')
             $cmanager.remap(callback, r);
         else
-            callback(value);
+            callback(r);
     }, timeout);
 
     if (!expire)
@@ -467,9 +467,9 @@ $.components.POSTCACHE = function(url, data, callback, expire) {
     $.components.POST(url, data, function(r) {
         $cmanager.restcache('POST', url, data, r);
         if (typeof(callback) === 'string')
-            $cmanager.remap(callback, value);
+            $cmanager.remap(callback, r);
         else
-            callback(value);
+            callback(r);
     }, timeout);
 
     if (!expire)
@@ -601,7 +601,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.6.3';
+$.components.version = 'v1.6.4';
 
 $.components.$emit2 = function(name, path, args) {
 
@@ -1909,6 +1909,12 @@ $(document).ready(function() {
         if (self.$delay === undefined)
             self.$delay = parseInt(self.getAttribute('data-component-keypress-delay') || '0');
 
+        if (self.$only === undefined)
+            self.$only = self.getAttribute('data-component-keypress-only') === 'true';
+
+        if (self.$only && (e.type === 'focusout' || e.type === 'change'))
+            return;
+
         if (self.$nokeypress === undefined) {
             var v = self.getAttribute('data-component-keypress');
             if (v)
@@ -1919,7 +1925,7 @@ $(document).ready(function() {
 
         var delay = self.$delay;
         if (self.$nokeypress) {
-            if (e.type === 'keyup' || e.type === 'blur')
+            if (e.type === 'keyup' || e.type === 'focusout')
                 return;
             if (delay === 0)
                 delay = 1;
@@ -1944,7 +1950,7 @@ $(document).ready(function() {
                 self.$component.getter(self.value, 2, old);
             }, 2);
 
-            if (e.type === 'keyup')
+            if (!self.$only && e.type === 'keyup')
                 return;
 
             self.$skip = true;
