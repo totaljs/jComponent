@@ -1293,12 +1293,12 @@ Component.prototype.watch = function(path, fn, init) {
     var self = this;
 
     if (typeof(path) === 'function') {
+        init = fn;
         fn = path;
         path = self.path;
     }
 
     self.on('watch', path, fn);
-
     if (!init)
         return self;
 
