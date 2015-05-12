@@ -1278,6 +1278,8 @@ Component.prototype.attr = function(name, value) {
 };
 
 Component.prototype.html = function(value) {
+    if (value === undefined)
+        return this.element.html();
     return this.element.html(value);
 };
 
