@@ -601,7 +601,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.6.4';
+$.components.version = 'v1.6.5';
 
 $.components.$emit2 = function(name, path, args) {
 
@@ -1382,11 +1382,12 @@ Component.prototype.remove = function(noClear) {
         $cmanager.refresh();
 };
 
-Component.prototype.on = function(name, path, fn) {
+Component.prototype.on = function(name, path, fn, init) {
 
     if (typeof(path) === 'function') {
+        init = fn;
         fn = path;
-        path = '';
+        path = this.path;
     } else
         path = path.replace('.*', '');
 
@@ -1395,7 +1396,13 @@ Component.prototype.on = function(name, path, fn) {
         $cmanager.events[path][name] = [];
     } else if (!$cmanager.events[path][name])
         $cmanager.events[path][name] = [];
+
     $cmanager.events[path][name].push({ fn: fn, context: this, id: this._id });
+
+    if (!init)
+        return $.components;
+
+    fn.call($.components, path, $cmanager.get(path));
     return this;
 };
 
