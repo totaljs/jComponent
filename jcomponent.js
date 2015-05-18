@@ -601,7 +601,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.6.5';
+$.components.version = 'v1.6.6';
 
 $.components.$emit2 = function(name, path, args) {
 
@@ -984,7 +984,14 @@ $.components.state = function(arr, type, who) {
     }, 2);
 };
 
-$.components.reset = function(path) {
+$.components.reset = function(path, timeout) {
+
+    if (timeout > 0) {
+        setTimeout(function() {
+            $.components.reset(path);
+        }, timeout);
+        return $.components;
+    }
 
     var arr = [];
     $.components.each(function(obj) {
@@ -1987,8 +1994,8 @@ function SET(path, value, timeout, reset) {
     }, timeout);
 }
 
-function RESET(path) {
-    return $.components.reset(path);
+function RESET(path, timeout) {
+    return $.components.reset(path, timeout);
 }
 
 function WATCH(path, callback, init) {

@@ -257,7 +257,7 @@ $.components.valid(path, [value], [notifyPath]); // Are values valid? or setter 
 $.components.can(path); // Combine dirty and valid together (e.g. for keypressing)
 $.components.disable(path); // Combine dirty and valid together (e.g. for button disabling)
 $.components.validate([path], [selector]); // The function validates all values according the path
-$.components.reset([path], [selector]); // Reset dirty and valid state to dirty=true, valid=true
+$.components.reset([path], [timeout]); // Reset dirty and valid state to dirty=true, valid=true
 $.components.each(fn(component, index, isAsterix), path); // A generic iterator function
 $.components.update(path, [reset]); // Re-update values, example: "model.user.*"
 $.components.remove([path]); // The function removes components (triggers "destroy" event)
