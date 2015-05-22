@@ -601,7 +601,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.6.6';
+$.components.version = 'v1.7.0';
 
 $.components.$emit2 = function(name, path, args) {
 
@@ -904,6 +904,20 @@ $.components.set = function(path, value, type) {
 
     $.components.$emit('watch', path, undefined, type);
     return $.components;
+};
+
+$.components.push = function(path, value, type) {
+    var arr = $.components.get(path);
+    if (!(arr instanceof Array))
+        arr = [];
+
+    if (value instanceof Array)
+        arr.push.apply(arr, value);
+    else
+        arr.push(value);
+
+    $.components.update(path, type);
+    return self;
 };
 
 $.components.clean = function() {
@@ -1465,6 +1479,20 @@ Component.prototype.set = function(path, value, type) {
     return self;
 };
 
+Component.prototype.push = function(path, value, type) {
+    var self = this;
+
+    if (value === undefined) {
+        value = path;
+        path = this.path;
+    }
+
+    if (!path)
+        return self;
+
+    $.components.push(path, value, type, self);
+};
+
 function component(type, declaration) {
     return COMPONENT(type, declaration);
 }
@@ -1991,6 +2019,16 @@ function SET(path, value, timeout, reset) {
         return $.components.set(path, value, reset);
     setTimeout(function() {
         $.components.set(path, value, reset);
+    }, timeout);
+}
+
+function PUSH(path, value, timeout, reset) {
+    if (typeof(timeout) === 'boolean')
+        return $.components.push(path, value, timeout);
+    if (!timeout)
+        return $.components.push(path, value, reset);
+    setTimeout(function() {
+        $.components.push(path, value, reset);
     }, timeout);
 }
 

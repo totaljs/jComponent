@@ -249,6 +249,7 @@ $.components.findByPath([path], [fn(component)]); // Find components by name (da
 $.components.inject(url, [target], [callback]); // Inject script or HTML
 $.components.set(path, value, [reset]); // Set/write value to model according to path
 $.components.get(path); // Get/read value from the model
+$.components.push(path, value, [reset]); // Push new single value or array to array
 
 $.components.dirty(path, [value], [notifyPath]); // Are values dirty? or setter "dirty" state.
 $.components.valid(path, [value], [notifyPath]); // Are values valid? or setter "valid" state.
@@ -321,6 +322,7 @@ INJECT(); // --> $.components.inject()
 RESET(); // --> $.components.reste()
 SCHEMA(); // --> $.components.schema()
 SET(path, value, [timeout], [reset]); // --> $.components.set()
+PUSH(path, value, [timeout], [reset]); // --> $.components.push()
 UPDATE(path, [timeout], [reset]); // --> $.components.update()
 WATCH(); // --> $.components.on('watch', path, callback);
 CHANGE(); // --> $.components.change();
