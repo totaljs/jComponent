@@ -406,7 +406,7 @@ $.components.DELETE = function(url, data, callback, timeout, error) {
     }
 
     setTimeout(function() {
-        $.ajax($components_url(url), { type: 'DELETE', data: data, success: function(r) {
+        $.ajax($components_url(url), { type: 'DELETE', data: JSON.stringify(data), success: function(r) {
             if (typeof(callback) === 'string')
                 return $cmanager.remap(callback, r);
             if (callback)
@@ -419,7 +419,7 @@ $.components.DELETE = function(url, data, callback, timeout, error) {
                 error(r, req.status, status);
             else
                 throw new Error(r);
-        }});
+        }, contentType: 'application/json' });
     }, timeout || 0);
     return $.components;
 };
@@ -601,7 +601,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.7.0';
+$.components.version = 'v1.7.1';
 
 $.components.$emit2 = function(name, path, args) {
 
