@@ -873,6 +873,11 @@ $.components.update = function(path, reset) {
 // 2 === by input
 $.components.set = function(path, value, type) {
 
+    if (path.charCodeAt(0) === 43) {
+        path = path.substring(1);
+        return $.components.push(path, value, type);
+    }
+
     var reset = type === true;
     if (reset)
         type = 1;
@@ -920,12 +925,19 @@ $.components.push = function(path, value, type) {
     if (!(arr instanceof Array))
         arr = [];
 
-    if (value instanceof Array)
-        arr.push.apply(arr, value);
+    var is = true;
+
+    if (value instanceof Array) {
+        if (value.length > 0)
+            arr.push.apply(arr, value);
+        else
+            is = false;
+    }
     else
         arr.push(value);
 
-    $.components.update(path, type);
+    if (is)
+        $.components.update(path, type);
     return self;
 };
 
