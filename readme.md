@@ -230,7 +230,6 @@ COMPONENT('input', function() {
 ## Global properties and methods
 
 ```js
-
 console.log($.components.version); // current version
 
 $.components.defaults.delay = 300; // keypress delay for data-component-bind
@@ -250,6 +249,7 @@ $.components.inject(url, [target], [callback]); // Inject script or HTML
 $.components.set(path, value, [reset]); // Set/write value to model according to path
 $.components.get(path); // Get/read value from the model
 $.components.push(path, value, [reset]); // Push new single value or array to array
+$.components.set('+some.path', [1, 2, 3]); // Is same as $.components.push()
 
 $.components.dirty(path, [value], [notifyPath]); // Are values dirty? or setter "dirty" state.
 $.components.valid(path, [value], [notifyPath]); // Are values valid? or setter "valid" state.
