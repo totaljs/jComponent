@@ -35,6 +35,7 @@ $.components.evaluate = function(path, expression) {
 $.components.defaults = {}
 $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
+$.components.defaults.timeout = 15;
 
 $.components.compile = function(container) {
 
@@ -601,12 +602,11 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.7.1';
+$.components.version = 'v1.7.2';
 
 $.components.$emit2 = function(name, path, args) {
 
     var e = $cmanager.events[path];
-
     if (!e)
         return false;
 
@@ -855,6 +855,15 @@ $.components.update = function(path, reset) {
 
     for (var i = 0, length = state.length; i < length; i++)
         state[i].state(1, 4);
+
+    // watches
+    length = path.length;
+
+    Object.keys($cmanager.events).forEach(function(key) {
+        if (key.substring(0, length) !== path)
+            return;
+        updates[key] = $.components.get(key);
+    });
 
     $.components.$emitonly('watch', updates, 1, path);
     return $.components;
