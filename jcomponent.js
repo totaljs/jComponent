@@ -602,7 +602,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.7.2';
+$.components.version = 'v1.7.3';
 
 $.components.$emit2 = function(name, path, args) {
 
@@ -895,8 +895,14 @@ $.components.set = function(path, value, type) {
 
     $.components.each(function(component) {
 
-        if (component.setter)
-            component.setter(result, type);
+        if (component.path === path) {
+            if (component.setter)
+                component.setter(result, type);
+        } else {
+            if (component.setter)
+                component.setter($.components.get(component.path), type);
+        }
+
         component.$ready = true;
 
         if (component.state)
@@ -911,7 +917,7 @@ $.components.set = function(path, value, type) {
         } else if (component.validate)
             component.valid(component.validate(result), true);
 
-    }, path);
+    }, path, true);
 
     for (var i = 0, length = state.length; i < length; i++)
         state[i].state(type, 5);
@@ -1168,7 +1174,7 @@ $.components.schema = function(name, declaration, callback) {
     });
 };
 
-$.components.each = function(fn, path) {
+$.components.each = function(fn, path, watch) {
     var isAsterix = path ? path.lastIndexOf('*') !== -1 : false;
     if (isAsterix)
         path = path.replace('.*', '').replace('*', '');
@@ -1182,8 +1188,10 @@ $.components.each = function(fn, path) {
                 if (component.path.indexOf(path) !== 0)
                     continue;
             } else {
-                if (path !== component.path)
-                    continue;
+                if (path !== component.path) {
+                    if (watch && path.indexOf(component.path) === -1)
+                        continue;
+                }
             }
         }
         if (component && !component.$removed) {
