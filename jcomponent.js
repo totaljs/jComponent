@@ -23,6 +23,10 @@ $.components.evaluate = function(path, expression) {
     var key = 'eval' + expression;
     var exp = $cmanager.cache[key];
     var val = $.components.get(path);
+
+    if ($.components.debug)
+        console.log('%c$.components.evaluate(' + path + ')', 'color:gray');
+
     if (exp !== undefined)
         return exp.call(val, val, path);
     if (expression.indexOf('return') === -1)
@@ -36,6 +40,7 @@ $.components.defaults = {}
 $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.timeout = 15;
+$.components.debug = false;
 
 $.components.compile = function(container) {
 
@@ -308,6 +313,10 @@ $.components.POST = function(url, data, callback, timeout, error) {
     }
 
     setTimeout(function() {
+
+        if ($.components.debug)
+            console.log('%c$.components.POST(' + url + ')', 'color:magenta');
+
         $.ajax($components_url(url), { type: 'POST', data: JSON.stringify(data), success: function(r) {
             if (typeof(callback) === 'string')
                 return $cmanager.remap(callback, r);
@@ -341,6 +350,10 @@ $.components.PUT = function(url, data, callback, timeout, error) {
     }
 
     setTimeout(function() {
+
+        if ($.components.debug)
+            console.log('%c$.components.PUT(' + url + ')', 'color:magenta');
+
         $.ajax($components_url(url), { type: 'PUT', data: JSON.stringify(data), success: function(r) {
             if (typeof(callback) === 'string')
                 return $cmanager.remap(callback, r);
@@ -374,6 +387,10 @@ $.components.GET = function(url, data, callback, timeout, error) {
     }
 
     setTimeout(function() {
+
+        if ($.components.debug)
+            console.log('%c$.components.GET(' + url + ')', 'color:magenta');
+
         $.ajax($components_url(url), { type: 'GET', data: data, success: function(r) {
             if (typeof(callback) === 'string')
                 return $cmanager.remap(callback, r);
@@ -407,6 +424,10 @@ $.components.DELETE = function(url, data, callback, timeout, error) {
     }
 
     setTimeout(function() {
+
+        if ($.components.debug)
+            console.log('%c$.components.DELETE(' + url + ')', 'color:magenta');
+
         $.ajax($components_url(url), { type: 'DELETE', data: JSON.stringify(data), success: function(r) {
             if (typeof(callback) === 'string')
                 return $cmanager.remap(callback, r);
@@ -566,6 +587,9 @@ $.components.on = function(name, path, fn, init) {
     } else
         path = path.replace('.*', '');
 
+    if ($.components.debug)
+        console.log('%c$.components.on(' + name + (path ? ', ' + path : '') + ')', 'color:blue');
+
     if (!$cmanager.events[path]) {
         $cmanager.events[path] = {};
         $cmanager.events[path][name] = [];
@@ -583,6 +607,9 @@ function component_init(el, obj) {
 
     var type = el.get(0).tagName;
     var collection;
+
+    if ($.components.debug)
+        console.log('%c$.components.init: ' + obj.name + ' (' + (obj.id || obj._id) + ')', 'color:green');
 
     // autobind
     if (type === 'INPUT' || type === 'SELECT' || type === 'TEXTAREA') {
@@ -602,7 +629,7 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.7.3';
+$.components.version = 'v1.7.4';
 
 $.components.$emit2 = function(name, path, args) {
 
@@ -716,6 +743,9 @@ $.components.valid = function(path, value, notifyPath) {
     if (typeof(value) !== 'boolean' && $cmanager.cache[key] !== undefined)
         return $cmanager.cache[key];
 
+    if ($.components.debug)
+        console.log('%c$.components.valid(' + path + ')', 'color:orange');
+
     var valid = true;
     var arr = value !== undefined ? [] : null;
     var fn = notifyPath ? $.components.eachPath : $.components.each;
@@ -766,6 +796,9 @@ $.components.dirty = function(path, value, notifyPath) {
 
     if (typeof(value) !== 'boolean' && $cmanager.cache[key] !== undefined)
         return $cmanager.cache[key];
+
+    if ($.components.debug)
+        console.log('%c$.components.dirty(' + path + ')', 'color:orange');
 
     var dirty = true;
     var arr = value !== undefined ? [] : null;
@@ -819,6 +852,9 @@ $.components.update = function(path, reset) {
     var length = path.length;
     var was = false;
     var updates = {};
+
+    if ($.components.debug)
+        console.log('%c$.components.update(' + path + ')', 'color:red');
 
     $.components.each(function(component) {
 
@@ -878,6 +914,9 @@ $.components.set = function(path, value, type) {
         return $.components.push(path, value, type);
     }
 
+    if ($.components.debug)
+        console.log('%c$.components.set(' + path + ')', 'color:red');
+
     var reset = type === true;
     if (reset)
         type = 1;
@@ -927,10 +966,13 @@ $.components.set = function(path, value, type) {
 };
 
 $.components.push = function(path, value, type) {
+
+    if ($.components.debug)
+        console.log('%c$.components.push(' + path + ')', 'color:red');
+
     var arr = $.components.get(path);
     if (!(arr instanceof Array))
         arr = [];
-
     var is = true;
 
     if (value instanceof Array) {
@@ -1033,6 +1075,9 @@ $.components.reset = function(path, timeout) {
         }, timeout);
         return $.components;
     }
+
+    if ($.components.debug)
+        console.log('%c$.components.reset(' + path + ')', 'color:orange');
 
     var arr = [];
     $.components.each(function(obj) {
@@ -1181,6 +1226,7 @@ $.components.each = function(fn, path, watch) {
     var index = 0;
     for (var i = 0, length = $cmanager.components.length; i < length; i++) {
         var component = $cmanager.components[i];
+
         if (path) {
             if (!component.path)
                 continue;
@@ -1189,7 +1235,10 @@ $.components.each = function(fn, path, watch) {
                     continue;
             } else {
                 if (path !== component.path) {
-                    if (watch && path.indexOf(component.path) === -1)
+                    if (watch) {
+                        if (path.indexOf(component.path) === -1)
+                            continue;
+                    } else
                         continue;
                 }
             }

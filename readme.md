@@ -232,6 +232,7 @@ COMPONENT('input', function() {
 ```js
 console.log($.components.version); // current version
 
+$.components.debug = false; // debugging
 $.components.defaults.delay = 300; // keypress delay for data-component-bind
 $.components.defaults.keypress = true; // keypress enable/disable for data-component-bind
 
