@@ -41,6 +41,11 @@ $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.timeout = 15;
 $.components.debug = false;
+$.components.version = 'v1.7.5';
+$.components.$version = '';
+$.components.$language = '';
+$.components.$formatter = [];
+$.components.$parser = [];
 
 $.components.compile = function(container) {
 
@@ -155,11 +160,6 @@ $.components.compile = function(container) {
         $cmanager.next();
     });
 };
-
-$.components.$version = '';
-$.components.$language = '';
-$.components.$formatter = [];
-$.components.$parser = [];
 
 $.components.$inject = function() {
 
@@ -629,8 +629,6 @@ function component_init(el, obj) {
     $components_ready();
 }
 
-$.components.version = 'v1.7.4';
-
 $.components.$emit2 = function(name, path, args) {
 
     var e = $cmanager.events[path];
@@ -858,8 +856,14 @@ $.components.update = function(path, reset) {
 
     $.components.each(function(component) {
 
-        if (length > 0 && (!component.path || component.path.substring(0, length) !== path))
+        if (length > 0 && !component.path)
             return;
+
+        var len = component.path.length;
+        if (component.path.substring(0, length) !== path) {
+            if (path.substring(0, len) !== component.path)
+                return;
+        }
 
         var result = component.get();
 
