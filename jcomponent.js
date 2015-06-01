@@ -1281,7 +1281,6 @@ $.components.eachPath = function(fn, path) {
     return $.components;
 };
 
-
 function Component(name) {
 
     this._id = 'component' + Math.floor(Math.random() * 100000);
