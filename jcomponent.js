@@ -41,7 +41,7 @@ $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.timeout = 15;
 $.components.debug = false;
-$.components.version = 'v1.7.5';
+$.components.version = 'v1.7.6';
 $.components.$version = '';
 $.components.$language = '';
 $.components.$formatter = [];
@@ -868,7 +868,7 @@ $.components.update = function(path, reset) {
         var result = component.get();
 
         if (component.setter)
-            component.setter(result, 1);
+            component.setter(result, path, 1);
 
         component.$ready = true;
 
@@ -941,10 +941,10 @@ $.components.set = function(path, value, type) {
 
         if (component.path === path) {
             if (component.setter)
-                component.setter(result, type);
+                component.setter(result, path, type);
         } else {
             if (component.setter)
-                component.setter($.components.get(component.path), type);
+                component.setter($.components.get(component.path), path, type);
         }
 
         component.$ready = true;
@@ -1670,7 +1670,7 @@ ComponentManager.prototype.prepare = function(obj) {
 
     if (obj.setter) {
         if (!obj.$ready) {
-            obj.setter(value);
+            obj.setter(value, obj.path);
             obj.$ready = true;
         }
     }
@@ -2081,7 +2081,7 @@ $(document).ready(function() {
 
             self.$skip = true;
             self.$component.$skip = false;
-            self.$component.setter(self.value, 2);
+            self.$component.setter(self.value, self.$component.path, 2);
         }, delay);
     });
 

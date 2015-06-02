@@ -158,7 +158,18 @@ COMPONENT('input', function() {
     // Set the value to input/select/textarea
     // OPTIONAL, framework has an own mechanism for this (but you can rewrite it)
     // IMPORTANT: The intial value executes this delegate.
-    this.setter = function(value) {
+    this.setter = function(value, path, type) {
+        
+        // value === new value
+
+        // path  === changed path
+        // for only real changes uncomment:
+        // if (path !== this.path) return;
+
+        // type === 0 : init
+        // type === 1 : by developer
+        // type === 2 : by input
+
         this.element.find('input').val(value === undefined || value === null ? '' : value);
     };
 
