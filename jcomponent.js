@@ -918,16 +918,17 @@ $.components.set = function(path, value, type) {
         return $.components.push(path, value, type);
     }
 
-    if ($.components.debug)
-        console.log('%c$.components.set(' + path + ')', 'color:red');
-
+    var isUpdate = (typeof(value) === 'object' && !(value instanceof Array) && value !== null && value !== undefined);
     var reset = type === true;
     if (reset)
         type = 1;
 
+    if ($.components.debug && !isUpdate)
+        console.log('%c$.components.set(' + path + ')', 'color:red');
+
     $cmanager.set(path, value);
 
-    if (typeof(value) === 'object' && !(value instanceof Array) && value !== null && value !== undefined)
+    if (isUpdate)
         return $.components.update(path, reset);
 
     var result = $cmanager.get(path);
