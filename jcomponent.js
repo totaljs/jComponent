@@ -41,7 +41,7 @@ $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.timeout = 15;
 $.components.debug = false;
-$.components.version = 'v1.7.6';
+$.components.version = 'v1.8.0';
 $.components.$version = '';
 $.components.$language = '';
 $.components.$formatter = [];
@@ -909,6 +909,16 @@ $.components.update = function(path, reset) {
     return $.components;
 };
 
+$.components.extend = function(path, value, type) {
+    var val = $.components.get(path);
+    if (val === null || val === undefined)
+        val = {};
+    if ($.components.debug)
+        console.log('%c$.components.extend(' + path + ')', 'color:silver');
+    $.components.set(path, $.extend(true, val, value), type);
+    return $.components;
+};
+
 // 1 === by developer
 // 2 === by input
 $.components.set = function(path, value, type) {
@@ -973,7 +983,7 @@ $.components.set = function(path, value, type) {
 $.components.push = function(path, value, type) {
 
     if ($.components.debug)
-        console.log('%c$.components.push(' + path + ')', 'color:red');
+        console.log('%c$.components.push(' + path + ')', 'color:silver');
 
     var arr = $.components.get(path);
     if (!(arr instanceof Array))
@@ -1000,6 +1010,8 @@ $.components.clean = function() {
 }
 
 $.components.get = function(path) {
+    if ($.components.debug)
+        console.log('%c$.components.get(' + path + ')', 'color:gray');
     return $cmanager.get(path);
 };
 
@@ -1538,6 +1550,8 @@ Component.prototype.get = function(path) {
         path = this.path;
     if (!path)
         return;
+    if ($.components.debug)
+        console.log('%c$.components.get(' + path + ')', 'color:gray');
     return $cmanager.get(path);
 };
 
@@ -1557,7 +1571,23 @@ Component.prototype.set = function(path, value, type) {
     if (!path)
         return self;
 
-    $.components.set(path, value, type, self);
+    $.components.set(path, value, type);
+    return self;
+};
+
+Component.prototype.extend = function(path, value, type) {
+
+    var self = this;
+
+    if (value === undefined) {
+        value = path;
+        path = this.path;
+    }
+
+    if (!path)
+        return self;
+
+    $.components.extend(path, value, type);
     return self;
 };
 
@@ -2101,6 +2131,16 @@ function SET(path, value, timeout, reset) {
         return $.components.set(path, value, reset);
     setTimeout(function() {
         $.components.set(path, value, reset);
+    }, timeout);
+}
+
+function EXTEND(path, value, timeout, reset) {
+    if (typeof(timeout) === 'boolean')
+        return $.components.extend(path, value, timeout);
+    if (!timeout)
+        return $.components.extend(path, value, reset);
+    setTimeout(function() {
+        $.components.extend(path, value, reset);
     }, timeout);
 }
 

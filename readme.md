@@ -196,6 +196,8 @@ COMPONENT('input', function() {
     this.valid([value]); // Boolean, is the component valid? ... or you can set "valid" value (the method calls the state delegate only in this component, for all use $.components.valid())
     this.get([path]); // get/read the value
     this.set([path], value); // set/write the value
+    this.extend([path], value); // extend the value
+    this.push([path], value); // push the value or array to array
     this.emit(name, arg1, arg2); // The function triggers event within all components
     this.html([value]); // Get or Set the value into the component element
     this.isInvalid(); // returns true if the component is not valid or dirty
@@ -261,6 +263,7 @@ $.components.inject(url, [target], [callback]); // Inject script or HTML
 $.components.set(path, value, [reset]); // Set/write value to model according to path
 $.components.get(path); // Get/read value from the model
 $.components.push(path, value, [reset]); // Push new single value or array to array
+$.components.extend(path, value, [reset]); // Extend current object according to value
 $.components.set('+some.path', [1, 2, 3]); // Is same as $.components.push()
 
 $.components.dirty(path, [value], [notifyPath]); // Are values dirty? or setter "dirty" state.
@@ -334,6 +337,7 @@ INJECT(); // --> $.components.inject()
 RESET(); // --> $.components.reste()
 SCHEMA(); // --> $.components.schema()
 SET(path, value, [timeout], [reset]); // --> $.components.set()
+EXTEND(path, value, [timeout], [reset]); // --> $.components.extend()
 PUSH(path, value, [timeout], [reset]); // --> $.components.push()
 UPDATE(path, [timeout], [reset]); // --> $.components.update()
 WATCH(); // --> $.components.on('watch', path, callback);
