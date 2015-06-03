@@ -590,12 +590,19 @@ $.components.on = function(name, path, fn, init) {
     if ($.components.debug)
         console.log('%c$.components.on(' + name + (path ? ', ' + path : '') + ')', 'color:blue');
 
+    var fixed = null;
+    if (path.charCodeAt(0) === 33) {
+        path = path.substring(1);
+        fixed = path;
+    }
+
     if (!$cmanager.events[path]) {
         $cmanager.events[path] = {};
         $cmanager.events[path][name] = [];
     } else if (!$cmanager.events[path][name])
         $cmanager.events[path][name] = [];
-    $cmanager.events[path][name].push({ fn: fn, id: this._id });
+
+    $cmanager.events[path][name].push({ fn: fn, id: this._id, path: fixed });
 
     if (!init)
         return $.components;
@@ -639,8 +646,11 @@ $.components.$emit2 = function(name, path, args) {
     if (!e)
         return false;
 
-    for (var i = 0, length = e.length; i < length; i++)
-        e[i].fn.apply(e[i].context, args);
+    for (var i = 0, length = e.length; i < length; i++) {
+        var ev = e[i];
+        if (!ev.path || ev.path === path)
+            ev.fn.apply(ev.context, args);
+    }
 
     return true;
 };
@@ -865,6 +875,9 @@ $.components.update = function(path, reset) {
                 return;
         }
 
+        if (component.$path && component.$path !== path)
+            return;
+
         var result = component.get();
 
         if (component.setter)
@@ -948,6 +961,9 @@ $.components.set = function(path, value, type) {
         type = 1;
 
     $.components.each(function(component) {
+
+        if (component.$path && component.$path !== path)
+            return;
 
         if (component.path === path) {
             if (component.setter)
@@ -1174,7 +1190,6 @@ $.components.findById = function(id, path, callback) {
         path = undefined;
     }
 
-
     var isCallback = typeof(callback) === 'function';
     var com;
 
@@ -1277,7 +1292,6 @@ $.components.eachPath = function(fn, path) {
     var index = 0;
     for (var i = 0, length = $cmanager.components.length; i < length; i++) {
         var component = $cmanager.components[i];
-
         if ((component && component.$removed) || !component.path)
             continue;
 
@@ -1297,7 +1311,6 @@ $.components.eachPath = function(fn, path) {
 function Component(name) {
 
     this._id = 'component' + Math.floor(Math.random() * 100000);
-
     this.$dirty = true;
     this.$valid = true;
     this.$validate = false;
@@ -1305,6 +1318,7 @@ function Component(name) {
     this.$formatter = [];
     this.$skip = false;
     this.$ready = false;
+    this.$path;
 
     this.name = name;
     this.path;
@@ -1384,6 +1398,19 @@ function Component(name) {
         return value;
     });
 }
+
+Component.prototype.setPath = function(path) {
+    var fixed = null;
+
+    if (path.charCodeAt(0) === 33) {
+        path = substring(1);
+        fixed = path;
+    }
+
+    this.path = path;
+    this.$path = fixed;
+    return this;
+};
 
 Component.prototype.attr = function(name, value) {
     if (value === undefined)
@@ -1506,13 +1533,19 @@ Component.prototype.on = function(name, path, fn, init) {
     } else
         path = path.replace('.*', '');
 
+    var fixed = null;
+    if (path.charCodeAt(0) === 33) {
+        path = path.substring(1);
+        fixed = path;
+    }
+
     if (!$cmanager.events[path]) {
         $cmanager.events[path] = {};
         $cmanager.events[path][name] = [];
     } else if (!$cmanager.events[path][name])
         $cmanager.events[path][name] = [];
 
-    $cmanager.events[path][name].push({ fn: fn, context: this, id: this._id });
+    $cmanager.events[path][name].push({ fn: fn, context: this, id: this._id, path: fixed });
 
     if (!init)
         return $.components;
@@ -1614,7 +1647,7 @@ function COMPONENT(type, declaration) {
     var fn = function(el) {
         var obj = new Component(type);
         obj.element = el;
-        obj.path = el.attr(COM_ATTR_P) || obj._id;
+        obj.setPath(el.attr(COM_ATTR_P) || obj._id);
         declaration.call(obj);
         return obj;
     };

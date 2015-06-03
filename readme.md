@@ -71,7 +71,7 @@ COMPONENT('input', function() {
     this._id; // contains internal component ID (it's generated randomly)
     this.id; // custom component ID according to data-component-id
     this.name; // component name
-    this.path; // component bindings path data-component-path
+    this.path; // readonly, component bindings path data-component-path
     this.element; // contains component element
     this.template; // contains template according to data-component-template
     this.type; // contains data-component-type
@@ -189,6 +189,7 @@ COMPONENT('input', function() {
     });
 
     // Methods
+    this.setPath(newpath); // change the binding path
     this.style(style); // creates styles
     this.remove(); // removes the component
     this.dirty([value]); // Boolean, is the component dirty? ... or you can set "dirty" value (the method calls the state delegate only in this component, for all use $.components.valid())
@@ -417,6 +418,34 @@ COMPONENT('button', function() {
         */
     }
 </script>
+```
+
+## Important things
+
+#### Watching only fixed path
+
+__HTML__:
+
+```html
+<div data-component="some-component" data-component-path="!user.credits"></div>
+```
+
+```javascript
+COMPONENT('some-component', function() {
+    this.setter = function(value, path) {
+        // executed: initiliazation or the path must be updated strictly according to the path:
+        // $.components.SET('user.credits', value) -> executes this setter
+        // $.components.SET('user', value) -> doesn't execute this setter because the path is not strictly
+    };
+
+    this.watch(function(path, value) {
+        // same as setter
+    });
+});
+
+$.components.watch('!user.credits', function() {
+    // same as component setter
+});
 ```
 
 ## Contact
