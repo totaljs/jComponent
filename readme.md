@@ -278,7 +278,9 @@ $.components.reset([path], [timeout]); // Reset dirty and valid state to dirty=t
 $.components.each(fn(component, index, isAsterix), path); // A generic iterator function
 $.components.update(path, [reset]); // Re-update values, example: "model.user.*"
 $.components.remove([path]); // The function removes components (triggers "destroy" event)
-$.components.invalid([path]) // The function returns an array with all invalid components
+$.components.invalid([path]) // The path will be invalid: valid(false), dirty(false)
+
+$.components.errors([path]) // Returns array of invalid fields
 $.components.emit(name, arg1, arg2); // The function triggers event within all components
 $.components.parseQuery([querystring]); // Parsers query string and returns object
 $.components.POST(url, data, [callback or path], [sleep], [error(response, status, type) or path]); // Send data

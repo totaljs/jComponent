@@ -41,7 +41,7 @@ $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.timeout = 15;
 $.components.debug = false;
-$.components.version = 'v1.8.0';
+$.components.version = 'v1.8.1';
 $.components.$version = '';
 $.components.$language = '';
 $.components.$formatter = [];
@@ -1068,7 +1068,7 @@ $.components.validate = function(path) {
     return valid;
 };
 
-$.components.invalid = function(path) {
+$.components.errors = function(path) {
     var arr = [];
     $.components.each(function(obj) {
         if (obj.$valid === false)
@@ -1083,6 +1083,13 @@ $.components.can = function(path) {
 
 $.components.disable = function(path) {
     return $.components.dirty(path) || !$.components.valid(path);
+};
+
+$.components.invalid = function(path) {
+    var com = $.components;
+    com.dirty(path, false);
+    com.valid(path, false, true);
+    return com;
 };
 
 // who:
