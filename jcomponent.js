@@ -2058,11 +2058,12 @@ $(document).ready(function() {
     $(document).on('change keyup blur focus', 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]', function(e) {
 
         var self = this;
+        var special = self.type === 'checkbox' || self.type === 'radio' || self.tagName === 'SELECT';
 
-        if ((e.type === 'focusin' || e.type === 'focusout') && (self.type === 'checkbox' || self.type === 'radio' || self.tagName === 'SELECT'))
+        if ((e.type === 'focusin' || e.type === 'focusout') && special)
             return;
 
-        if (e.type === 'focusin' || e.type === 'change') {
+        if (e.type === 'focusin' || (e.type === 'change' && !special)) {
             self.$value = self.value;
             return;
         }
