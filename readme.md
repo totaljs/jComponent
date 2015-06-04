@@ -349,6 +349,12 @@ STYLE(style); // --> create inline style
 OPERATION(name, fn); // --> creates an operation
 OPERATION(name); // --> returns function
 EVALUATE(path, expression); // --> $.components.evaluate()
+
+// blocked operations
+// the method checks if the current statement is not blocked
+BLOCKED(name, timeout, [callback]);
+if (BLOCKED('login-enter', 1000)) 
+    return;
 ```
 
 ## jQuery

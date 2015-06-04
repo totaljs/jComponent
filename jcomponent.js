@@ -2062,7 +2062,7 @@ $(document).ready(function() {
         if ((e.type === 'focusin' || e.type === 'focusout') && (self.type === 'checkbox' || self.type === 'radio' || self.tagName === 'SELECT'))
             return;
 
-        if (e.type === 'focusin') {
+        if (e.type === 'focusin' || e.type === 'change') {
             self.$value = self.value;
             return;
         }
@@ -2111,6 +2111,20 @@ $(document).ready(function() {
         if (self.$only && (e.type === 'focusout' || e.type === 'change'))
             return;
 
+        if (e.keyCode === undefined)
+            return;
+
+        if (e.keyCode < 40 && e.keyCode !== 8 && e.keyCode !== 32) {
+            if (e.keyCode !== 13)
+                return;
+            if (e.tagName !== 'TEXTAREA') {
+                self.$value = self.value;
+                clearTimeout(self.$timeout);
+                $components_keypress(self, old, e);
+                return;
+            }
+        }
+
         if (self.$nokeypress === undefined) {
             var v = self.getAttribute('data-component-keypress');
             if (v)
@@ -2128,30 +2142,12 @@ $(document).ready(function() {
         } else if (delay === 0)
             delay = $.components.defaults.delay;
 
-        clearTimeout(self.$timeout);
-
         if (e.type === 'focusout')
             delay = 0;
 
+        clearTimeout(self.$timeout);
         self.$timeout = setTimeout(function() {
-
-            if (self.value === old)
-                return;
-
-            self.$timeout = null;
-            self.$component.dirty(false, true);
-
-            // because validation
-            setTimeout(function() {
-                self.$component.getter(self.value, 2, old);
-            }, 2);
-
-            if (!self.$only && e.type === 'keyup')
-                return;
-
-            self.$skip = true;
-            self.$component.$skip = false;
-            self.$component.setter(self.value, self.$component.path, 2);
+            $components_keypress(self, old, e);
         }, delay);
     });
 
@@ -2163,6 +2159,28 @@ $(document).ready(function() {
         $cmanager.cleaner();
     }, 3000);
 });
+
+function $components_keypress(self, old, e) {
+
+    if (self.value === old)
+        return;
+
+    self.$timeout = null;
+    self.$component.dirty(false, true);
+
+    // because validation
+    setTimeout(function() {
+        self.$component.getter(self.value, 2, old);
+        self.$value = self.value;
+    }, 2);
+
+    if (!self.$only && e.type === 'keyup')
+        return;
+
+    self.$skip = true;
+    self.$component.$skip = false;
+    self.$component.setter(self.value, self.$component.path, 2);
+}
 
 function SET(path, value, timeout, reset) {
     if (typeof(timeout) === 'boolean')
@@ -2249,4 +2267,16 @@ function STYLE(value) {
         $('<style type="text/css">' + $cmanager.styles.join('') + '</style>').appendTo('head');
         $cmanager.styles = [];
     }, 50);
+}
+
+function BLOCKED(name, timeout, callback) {
+    var key = '$blocked_' + name;
+    if ($cmanager.temp[key])
+        return true;
+    $cmanager.temp[key] = setTimeout(function() {
+        delete $cmanager.temp[key];
+        if (callback)
+            callback();
+    });
+    return false;
 }
