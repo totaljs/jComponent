@@ -40,8 +40,9 @@ $.components.defaults = {}
 $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.timeout = 15;
+$.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v1.8.1';
+$.components.version = 'v1.8.2';
 $.components.$version = '';
 $.components.$language = '';
 $.components.$formatter = [];
@@ -507,6 +508,8 @@ $.components.POSTCACHE = function(url, data, callback, expire) {
 $.components.DELETECACHE = function(method, url, data) {
     var key = method.toUpperCase() + '#' + url + (data ? '?' + JSON.stringify(data) : '');
     delete $cmanager.cacherest[key];
+    if ($.components.defaults.localstorage)
+        localstorage.setItem('jcomponent.cache', JSON.stringify($cmanager.cacherest));
     return $.components;
 };
 
@@ -1702,6 +1705,8 @@ ComponentManager.prototype.restcache = function(method, url, params, value) {
     if (value === undefined)
         return this.cacherest[key];
     this.cacherest[key] = value;
+    if ($.components.defaults.localstorage)
+        localstorage.setItem('jcomponent.cache', JSON.stringify(this.cacherest));
 };
 
 ComponentManager.prototype.initialize = function() {
@@ -2055,6 +2060,16 @@ setInterval(function() {
 
 $.components.compile();
 $(document).ready(function() {
+
+    if ($.components.defaults.localstorage) {
+        var cache = localstorage.getItem('jcomponent.cache');
+        if (cache && typeof(cache) === 'string') {
+            try {
+                $cmanager.cacherest = JSON.parse(cache);
+            } catch (e) {}
+        }
+    }
+
     $(document).on('change keyup blur focus', 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]', function(e) {
 
         var self = this;

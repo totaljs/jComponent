@@ -249,6 +249,7 @@ console.log($.components.version); // current version
 $.components.debug = false; // debugging
 $.components.defaults.delay = 300; // keypress delay for data-component-bind
 $.components.defaults.keypress = true; // keypress enable/disable for data-component-bind
+$.components.defaults.localstorage = true; // GETCACHE and POSTCACHE are stored into the localstorage 
 
 // [parameter] --> is OPTIONAL
 // path --> path to object property
