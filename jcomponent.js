@@ -509,7 +509,7 @@ $.components.DELETECACHE = function(method, url, data) {
     var key = method.toUpperCase() + '#' + url + (data ? '?' + JSON.stringify(data) : '');
     delete $cmanager.cacherest[key];
     if ($.components.defaults.localstorage)
-        localstorage.setItem('jcomponent.cache', JSON.stringify($cmanager.cacherest));
+        localStorage.setItem('jcomponent.cache', JSON.stringify($cmanager.cacherest));
     return $.components;
 };
 
@@ -906,6 +906,11 @@ $.components.update = function(path, reset) {
         updates[component.path] = result;
     });
 
+    if (reset) {
+        $cmanager.clear('dirty');
+        $cmanager.clear('valid');
+    }
+
     if (!updates[path])
         updates[path] = $.components.get(path);
 
@@ -991,6 +996,11 @@ $.components.set = function(path, value, type) {
             component.valid(component.validate(result), true);
 
     }, path, true);
+
+    if (reset) {
+        $cmanager.clear('dirty');
+        $cmanager.clear('valid');
+    }
 
     for (var i = 0, length = state.length; i < length; i++)
         state[i].state(type, 5);
@@ -1706,7 +1716,7 @@ ComponentManager.prototype.restcache = function(method, url, params, value) {
         return this.cacherest[key];
     this.cacherest[key] = value;
     if ($.components.defaults.localstorage)
-        localstorage.setItem('jcomponent.cache', JSON.stringify(this.cacherest));
+        localStorage.setItem('jcomponent.cache', JSON.stringify(this.cacherest));
 };
 
 ComponentManager.prototype.initialize = function() {
@@ -2062,7 +2072,7 @@ $.components.compile();
 $(document).ready(function() {
 
     if ($.components.defaults.localstorage) {
-        var cache = localstorage.getItem('jcomponent.cache');
+        var cache = localStorage.getItem('jcomponent.cache');
         if (cache && typeof(cache) === 'string') {
             try {
                 $cmanager.cacherest = JSON.parse(cache);
