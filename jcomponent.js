@@ -1423,7 +1423,7 @@ Component.prototype.setPath = function(path) {
     var fixed = null;
 
     if (path.charCodeAt(0) === 33) {
-        path = substring(1);
+        path = path.substring(1);
         fixed = path;
     }
 
