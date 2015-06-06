@@ -1365,7 +1365,7 @@ function Component(name) {
         return this;
     };
 
-    this.setter = function(value, type) {
+    this.setter = function(value, path, type) {
 
         var self = this;
 
@@ -1382,7 +1382,6 @@ function Component(name) {
         selector.each(function() {
 
             var path = this.$component.path;
-
             if (path && path.length > 0 && path !== self.path)
                 return;
 
@@ -2088,18 +2087,16 @@ $(document).ready(function() {
         if ((e.type === 'focusin' || e.type === 'focusout') && special)
             return;
 
-        if (e.type === 'focusin' || (e.type === 'change' && !special)) {
-            self.$value = self.value;
+        if (e.type === 'focusin' || (e.type === 'change' && !special))
             return;
-        }
-
-        if (self.$skip && e.type === 'focusout') {
-            self.$skip = false;
-            return;
-        }
 
         if (!self.$component || self.$component.$removed || !self.$component.getter || !self.$component.setter)
             return;
+
+        if (self.$skip && e.type === 'focusout') {
+            $components_keypress(self, self.$value, e);
+            return;
+        }
 
         var old = self.$value;
         var value;
@@ -2137,7 +2134,7 @@ $(document).ready(function() {
         if (self.$only && (e.type === 'focusout' || e.type === 'change'))
             return;
 
-        if (e.keyCode === undefined)
+        if (e.type === 'keyup' && e.keyCode === undefined)
             return;
 
         if (e.keyCode < 40 && e.keyCode !== 8 && e.keyCode !== 32) {
@@ -2197,15 +2194,15 @@ function $components_keypress(self, old, e) {
     // because validation
     setTimeout(function() {
         self.$component.getter(self.value, 2, old);
-        self.$value = self.value;
     }, 2);
 
-    if (!self.$only && e.type === 'keyup')
+    if (!self.$only && e.type === 'keyup' && e.keyCode !== 13)
         return;
 
     self.$skip = true;
     self.$component.$skip = false;
     self.$component.setter(self.value, self.$component.path, 2);
+    self.$value = self.value;
 }
 
 function SET(path, value, timeout, reset) {
