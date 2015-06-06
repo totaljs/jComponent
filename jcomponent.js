@@ -2294,12 +2294,12 @@ function STYLE(value) {
 
 function BLOCKED(name, timeout, callback) {
     var key = '$blocked_' + name;
-    if ($cmanager.temp[key])
+    if ($cmanager.temp[key] !== undefined)
         return true;
     $cmanager.temp[key] = setTimeout(function() {
         delete $cmanager.temp[key];
         if (callback)
             callback();
-    });
+    }, timeout || 1000);
     return false;
 }
