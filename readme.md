@@ -61,7 +61,7 @@ __YOU MUST SEE:__
 - `data-component-bind` - auto attach `change` event for the input/select/textarea (only in the component)
 - `data-component-keypress` - (works only with: `data-component-bind` and `<input`, `<textarea`) and it can be `true` | `false` (default `true`). Enable/Disable keypress real-time value binding.
 - `data-component-keypress-delay` - (works only with `data-component-bind` and `<input`, `<textarea`) and it can be only `number` (default: `300`). This is a delay for real-time value binding.
-- `data-component-keypress-only` - (works only with `data-component-bind` and `<input`, `<textarea`) and it can be only `boolean` (default: `false`). This behaviour skips blur/change event.
+- `data-component-keypress-only` - (works only with `data-component-bind` and `<input`, `<textarea`) and it can be only `boolean` (default: `false`). This behaviour skips blur/change event and directly sets the value.
 
 ## Component methods/properties
 
@@ -76,11 +76,12 @@ COMPONENT('input', function() {
     this.template; // contains template according to data-component-template
     this.type; // contains data-component-type
 
-    // internal
+    // IMPORTANT: INTERNAL ====
     this.$validate; // contains true if the component has been validated manually
     this.$parser = []; // internal parsers for parsing value (getter)
     this.$formatter = []; // internal formatter for formatting value (render)
     this.$ready; // Is the component ready? It's set to true after is the setter executed first time.
+    // ====
 
     // A prerender function and it's called when:
     // 1. component.make contains a string value (URL or valid HTML)
@@ -456,6 +457,17 @@ $.components.watch('!user.credits', function() {
     // same as component setter
 });
 ```
+
+#### Bind value without emitting current state
+
+Example:
+
+```javascript
+SET('!user.credits', 100);
+$.components.update('!user.credits');
+```
+
+All watchers on `user` won't know that the property `credits` is changed. 
 
 ## Contact
 

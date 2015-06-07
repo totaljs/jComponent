@@ -42,7 +42,7 @@ $.components.defaults.keypress = true;
 $.components.defaults.timeout = 15;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v1.8.2';
+$.components.version = 'v1.8.3';
 $.components.$version = '';
 $.components.$language = '';
 $.components.$formatter = [];
@@ -856,6 +856,9 @@ $.components.dirty = function(path, value, notifyPath) {
 // 1 === by developer
 // 2 === by input
 $.components.update = function(path, reset) {
+    var is = path.charCodeAt(0) === 33;
+    if (is)
+        path = path.substring(1);
 
     path = path.replace('.*', '');
 
@@ -866,6 +869,7 @@ $.components.update = function(path, reset) {
 
     if ($.components.debug)
         console.log('%c$.components.update(' + path + ')', 'color:red');
+
 
     $.components.each(function(component) {
 
@@ -904,7 +908,7 @@ $.components.update = function(path, reset) {
             was = true;
 
         updates[component.path] = result;
-    });
+    }, undefined, undefined, is);
 
     if (reset) {
         $cmanager.clear('dirty');
@@ -943,6 +947,10 @@ $.components.extend = function(path, value, type) {
 // 1 === by developer
 // 2 === by input
 $.components.set = function(path, value, type) {
+
+    var is = path.charCodeAt(0) === 33;
+    if (is)
+        path = path.substring(1);
 
     if (path.charCodeAt(0) === 43) {
         path = path.substring(1);
@@ -995,7 +1003,7 @@ $.components.set = function(path, value, type) {
         } else if (component.validate)
             component.valid(component.validate(result), true);
 
-    }, path, true);
+    }, path, true, is);
 
     if (reset) {
         $cmanager.clear('dirty');
@@ -1005,7 +1013,7 @@ $.components.set = function(path, value, type) {
     for (var i = 0, length = state.length; i < length; i++)
         state[i].state(type, 5);
 
-    $.components.$emit('watch', path, undefined, type);
+    $.components.$emit('watch', path, undefined, type, is);
     return $.components;
 };
 
@@ -1271,13 +1279,16 @@ $.components.schema = function(name, declaration, callback) {
     });
 };
 
-$.components.each = function(fn, path, watch) {
+$.components.each = function(fn, path, watch, fix) {
     var isAsterix = path ? path.lastIndexOf('*') !== -1 : false;
     if (isAsterix)
         path = path.replace('.*', '').replace('*', '');
     var index = 0;
     for (var i = 0, length = $cmanager.components.length; i < length; i++) {
         var component = $cmanager.components[i];
+
+        if (fix && component.path !== path)
+            continue;
 
         if (path) {
             if (!component.path)
