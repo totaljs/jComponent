@@ -42,7 +42,7 @@ $.components.defaults.keypress = true;
 $.components.defaults.timeout = 15;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v1.8.3';
+$.components.version = 'v1.8.4';
 $.components.$version = '';
 $.components.$language = '';
 $.components.$formatter = [];
@@ -1113,6 +1113,29 @@ $.components.invalid = function(path) {
     return com;
 };
 
+$.components.blocked = function(name, timeout, callback) {
+    var key = name;
+    var item = $cmanager.cacheblocked[key];
+    var now = Date.now();
+
+    if ($.components.debug)
+        console.log('%c$.components.blocked(' + name + ')', 'color:silver');
+
+    if (item > now)
+        return true;
+
+    var local = $.components.defaults.localstorage && timeout > 10000;
+    $cmanager.cacheblocked[key] = now + timeout;
+
+    if (local)
+        localStorage.setItem('jcomponent.blocked', JSON.stringify($cmanager.cacheblocked));
+
+    if (callback)
+        callback();
+
+    return false;
+};
+
 // who:
 // 1. valid
 // 2. dirty
@@ -1706,6 +1729,7 @@ function ComponentManager() {
     this.register = {};
     this.cache = {};
     this.cacherest = {};
+    this.cacheblocked = {};
     this.temp = {};
     this.model = {};
     this.components = [];
@@ -2037,6 +2061,19 @@ ComponentManager.prototype.cleaner = function() {
         }
     }
 
+    var now = Date.now();
+    var is2 = false;
+
+    Object.keys(self.cacheblocked).forEach(function(key) {
+        if (self.cacheblocked[key] > now)
+            return;
+        delete self.cacheblocked[key];
+        is2 = true;
+    });
+
+    if ($.components.defaults.localstorage && is2)
+        localStorage.setItem('jcomponent.cacheblocked', JSON.stringify(self.cacheblocked));
+
     if (!is)
         return self;
 
@@ -2086,6 +2123,12 @@ $(document).ready(function() {
         if (cache && typeof(cache) === 'string') {
             try {
                 $cmanager.cacherest = JSON.parse(cache);
+            } catch (e) {}
+        }
+        cache = localStorage.getItem('jcomponent.blocked');
+        if (cache && typeof(cache) === 'string') {
+            try {
+                $cmanager.cacheblocked = JSON.parse(cache);
             } catch (e) {}
         }
     }
@@ -2304,13 +2347,5 @@ function STYLE(value) {
 }
 
 function BLOCKED(name, timeout, callback) {
-    var key = '$blocked_' + name;
-    if ($cmanager.temp[key] !== undefined)
-        return true;
-    $cmanager.temp[key] = setTimeout(function() {
-        delete $cmanager.temp[key];
-        if (callback)
-            callback();
-    }, timeout || 1000);
-    return false;
+    return $.components.blocked(name, timeout, callback);
 }
