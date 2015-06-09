@@ -42,7 +42,7 @@ $.components.defaults.keypress = true;
 $.components.defaults.timeout = 15;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v1.8.4';
+$.components.version = 'v1.8.5';
 $.components.$version = '';
 $.components.$language = '';
 $.components.$formatter = [];
@@ -2133,7 +2133,13 @@ $(document).ready(function() {
         }
     }
 
-    $(document).on('change keyup blur focus', 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]', function(e) {
+    $(document).on('change keypress keyup blur focus', 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]', function(e) {
+
+        if (e.type === 'keypress') {
+            // IE 9+ PROBLEM
+            if (e.keyCode === 13)
+                return false;
+        }
 
         var self = this;
         var special = self.type === 'checkbox' || self.type === 'radio' || self.tagName === 'SELECT';
