@@ -42,7 +42,7 @@ $.components.defaults.keypress = true;
 $.components.defaults.timeout = 15;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v1.8.5';
+$.components.version = 'v1.9.0';
 $.components.$version = '';
 $.components.$language = '';
 $.components.$formatter = [];
@@ -448,7 +448,8 @@ $.components.DELETE = function(url, data, callback, timeout, error) {
 };
 
 $.components.GETCACHE = function(url, data, callback, expire, timeout) {
-    var value = $cmanager.restcache('GET', url, data);
+
+    var value = $cmanager.cacherest('GET', url, data);
 
     if (value !== undefined) {
         if (typeof(callback) === 'string')
@@ -459,25 +460,19 @@ $.components.GETCACHE = function(url, data, callback, expire, timeout) {
     }
 
     $.components.GET(url, data, function(r) {
-        $cmanager.restcache('GET', url, data, r);
+        $cmanager.cacherest('GET', url, data, r, expire);
         if (typeof(callback) === 'string')
             $cmanager.remap(callback, r);
         else
             callback(r);
     }, timeout);
 
-    if (!expire)
-        return $.components;
-
-    setTimeout(function() {
-        $.components.DELETECACHE('GET', url, data);
-    }, expire);
-
     return $.components;
 };
 
 $.components.POSTCACHE = function(url, data, callback, expire) {
-    var value = $cmanager.restcache('POST', url, data);
+
+    var value = $cmanager.cacherest('POST', url, data);
 
     if (value !== undefined) {
         if (typeof(callback) === 'string')
@@ -488,28 +483,45 @@ $.components.POSTCACHE = function(url, data, callback, expire) {
     }
 
     $.components.POST(url, data, function(r) {
-        $cmanager.restcache('POST', url, data, r);
+        $cmanager.cacherest('POST', url, data, r, expire);
         if (typeof(callback) === 'string')
             $cmanager.remap(callback, r);
         else
             callback(r);
     }, timeout);
 
-    if (!expire)
-        return $.components;
-
-    setTimeout(function() {
-        $.components.DELETECACHE('POST', url, data);
-    }, expire);
-
     return $.components;
 };
 
-$.components.DELETECACHE = function(method, url, data) {
-    var key = method.toUpperCase() + '#' + url + (data ? '?' + JSON.stringify(data) : '');
-    delete $cmanager.cacherest[key];
-    if ($.components.defaults.localstorage)
-        localStorage.setItem('jcomponent.cache', JSON.stringify($cmanager.cacherest));
+$.components.cache = function(key, value, expire) {
+    return $cmanager.cachestorage(key, value, expire);
+};
+
+$.components.removeCache = function(key, isSearching) {
+    if (isSearching) {
+        for (var m in $cmanager.storage) {
+            if (m.indexOf(key) !== -1)
+                delete $cmanager.storage[key];
+        }
+    } else {
+        delete $cmanager.storage[key];
+    }
+    $components_save();
+    return $.components;
+};
+
+$.components.REMOVECACHE = function(method, url, data) {
+
+    if (params && !params.version && $.components.$version)
+        params.version = $.components.$version;
+
+    if (params && !params.language && $.components.$language)
+        params.language = $.components.$language;
+
+    params = JSON.stringify(params);
+    var key = $components_hash(method + '#' + url + params).toString();
+    delete $cmanager.storage[key];
+    $components_save();
     return $.components;
 };
 
@@ -1728,7 +1740,7 @@ function ComponentManager() {
     this.init = [];
     this.register = {};
     this.cache = {};
-    this.cacherest = {};
+    this.storage = {};
     this.cacheblocked = {};
     this.temp = {};
     this.model = {};
@@ -1744,13 +1756,36 @@ function ComponentManager() {
     this.operations = {};
 }
 
-ComponentManager.prototype.restcache = function(method, url, params, value) {
-    var key = method + '#' + url + (params ? '?' + JSON.stringify(params) : '');
-    if (value === undefined)
-        return this.cacherest[key];
-    this.cacherest[key] = value;
-    if ($.components.defaults.localstorage)
-        localStorage.setItem('jcomponent.cache', JSON.stringify(this.cacherest));
+ComponentManager.prototype.cacherest = function(method, url, params, value, expire) {
+
+    if (params && !params.version && $.components.$version)
+        params.version = $.components.$version;
+
+    if (params && !params.language && $.components.$language)
+        params.language = $.components.$language;
+
+    params = JSON.stringify(params);
+
+    var key = $components_hash(method + '#' + url + params).toString();
+    return this.cachestorage(key, value, expire);
+};
+
+ComponentManager.prototype.cachestorage = function(key, value, expire) {
+
+    var now = Date.now();
+
+    if ($.components.debug)
+        console.log('%c$.components.cache.' + (value === undefined ? 'get' : 'set') + '(' + key + ')', 'color:silver');
+
+    if (value !== undefined) {
+        this.storage[key] = { expire: now + expire, value: value };
+        $components_save();
+        return;
+    }
+
+    var item = this.storage[key];
+    if (item && item.expire > now)
+        return item.value;
 };
 
 ComponentManager.prototype.initialize = function() {
@@ -2057,27 +2092,37 @@ ComponentManager.prototype.cleaner = function() {
                 index -= 2;
                 is = true;
             }
-
         }
     }
 
     var now = Date.now();
     var is2 = false;
+    var is3 = false;
 
-    Object.keys(self.cacheblocked).forEach(function(key) {
+    for (var key in self.cacheblocked) {
         if (self.cacheblocked[key] > now)
-            return;
+            continue;
         delete self.cacheblocked[key];
         is2 = true;
-    });
+    }
 
     if ($.components.defaults.localstorage && is2)
-        localStorage.setItem('jcomponent.cacheblocked', JSON.stringify(self.cacheblocked));
+        localStorage.setItem('jcomponent.blocked', JSON.stringify(self.cacheblocked));
 
-    if (!is)
-        return self;
+    for (var key in self.storage) {
+        var item = self.storage[key];
+        if (!item.expire || item.expire <= now) {
+            delete self.storage[key];
+            is3 = true;
+        }
+    }
 
-    self.refresh();
+    if (is3)
+        $components_save();
+
+    if (is)
+        self.refresh();
+
     return self;
 };
 
@@ -2122,7 +2167,7 @@ $(document).ready(function() {
         var cache = localStorage.getItem('jcomponent.cache');
         if (cache && typeof(cache) === 'string') {
             try {
-                $cmanager.cacherest = JSON.parse(cache);
+                $cmanager.storage = JSON.parse(cache);
             } catch (e) {}
         }
         cache = localStorage.getItem('jcomponent.blocked');
@@ -2265,6 +2310,11 @@ function $components_keypress(self, old, e) {
     self.$value = self.value;
 }
 
+function $components_save() {
+    if ($.components.defaults.localstorage)
+        localStorage.setItem('jcomponent.cache', JSON.stringify($cmanager.storage));
+}
+
 function SET(path, value, timeout, reset) {
     if (typeof(timeout) === 'boolean')
         return $.components.set(path, value, timeout);
@@ -2305,6 +2355,10 @@ function WATCH(path, callback, init) {
 
 function GET(path) {
     return $.components.get(path);
+}
+
+function CACHE(key, value, expire) {
+    return $.components.cache(key, value, expire);
 }
 
 function UPDATE(path, timeout, reset) {
@@ -2354,4 +2408,17 @@ function STYLE(value) {
 
 function BLOCKED(name, timeout, callback) {
     return $.components.blocked(name, timeout, callback);
+}
+
+function $components_hash(s) {
+    var hash = 0, i, char;
+    if (s.length === 0)
+        return hash;
+    var l = s.length;
+    for (i = 0; i < l; i++) {
+        char = s.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash |= 0; // Convert to 32bit integer
+    }
+    return hash;
 }

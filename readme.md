@@ -273,6 +273,8 @@ $.components.dirty(path, [value], [notifyPath]); // Are values dirty? or setter 
 $.components.valid(path, [value], [notifyPath]); // Are values valid? or setter "valid" state.
 // notifyPath executes Component.state() according to the path, serves for e.g. validations
 
+$.components.cache(key); // --> get a value from cache (default: undefined)
+$.components.cache(key, value, expire); // --> set a value to cache (expire in milliseconds)
 $.components.can(path); // Combine dirty and valid together (e.g. for keypressing)
 $.components.disable(path); // Combine dirty and valid together (e.g. for button disabling)
 $.components.validate([path], [selector]); // The function validates all values according the path
@@ -296,7 +298,7 @@ $.components.POST('/api/users/', {}, 'users->local.users');
 
 $.components.GETCACHE(url, data, [callback or path], [expire], [sleep]); // Send data and cache
 $.components.POSTCACHE(url, data, [callback or path], [expire], [sleep]); // Send data and cache
-$.components.DELETECACHE(method, url, data); // Delete cache
+$.components.REMOVECACHE(method, url, data); // Delete cache
 
 $.components.ready(function(componentCount) {}); // --> Are components ready?
 $.components.on('watch', 'path.*', function(path, value)); // Declare a watch event
@@ -341,6 +343,7 @@ GET(); // --> $.components.get()
 INJECT(); // --> $.components.inject()
 RESET(); // --> $.components.reste()
 SCHEMA(); // --> $.components.schema()
+CACHE(); // --> $.components.cache()
 SET(path, value, [timeout], [reset]); // --> $.components.set()
 EXTEND(path, value, [timeout], [reset]); // --> $.components.extend()
 PUSH(path, value, [timeout], [reset]); // --> $.components.push()
