@@ -275,6 +275,9 @@ $.components.parseQuery = function(value) {
     if (!value)
         value = window.location.search;
 
+    if (!value)
+        return {};
+
     if (value.substring(0, 1) === '?')
         value = value.substring(1);
 
