@@ -450,10 +450,15 @@ $.components.DELETE = function(url, data, callback, timeout, error) {
     return $.components;
 };
 
-$.components.GETCACHE = function(url, data, callback, expire, timeout) {
+$.components.GETCACHE = function(url, data, callback, expire, timeout, clear) {
 
-    var value = $cmanager.cacherest('GET', url, data);
+    if (typeof(timeout) === 'boolean') {
+        var tmp = clear;
+        clear = timeout;
+        timeout = tmp;
+    }
 
+    var value = clear ? undefined : $cmanager.cacherest('GET', url, data);
     if (value !== undefined) {
         if (typeof(callback) === 'string')
             $cmanager.remap(callback, value);
@@ -473,10 +478,15 @@ $.components.GETCACHE = function(url, data, callback, expire, timeout) {
     return $.components;
 };
 
-$.components.POSTCACHE = function(url, data, callback, expire) {
+$.components.POSTCACHE = function(url, data, callback, expire, timeout, clear) {
 
-    var value = $cmanager.cacherest('POST', url, data);
+    if (typeof(timeout) === 'boolean') {
+        var tmp = clear;
+        clear = timeout;
+        timeout = tmp;
+    }
 
+    var value = clear ? undefined : $cmanager.cacherest('POST', url, data);
     if (value !== undefined) {
         if (typeof(callback) === 'string')
             $cmanager.remap(callback, value);
@@ -514,15 +524,8 @@ $.components.removeCache = function(key, isSearching) {
 };
 
 $.components.REMOVECACHE = function(method, url, data) {
-
-    if (params && !params.version && $.components.$version)
-        params.version = $.components.$version;
-
-    if (params && !params.language && $.components.$language)
-        params.language = $.components.$language;
-
-    params = JSON.stringify(params);
-    var key = $components_hash(method + '#' + url + params).toString();
+    data = JSON.stringify(data);
+    var key = $components_hash(method + '#' + url.replace(/\//g, '') + data).toString();
     delete $cmanager.storage[key];
     $components_save();
     return $.components;
@@ -884,7 +887,6 @@ $.components.update = function(path, reset) {
 
     if ($.components.debug)
         console.log('%c$.components.update(' + path + ')', 'color:red');
-
 
     $.components.each(function(component) {
 
@@ -1768,8 +1770,7 @@ ComponentManager.prototype.cacherest = function(method, url, params, value, expi
         params.language = $.components.$language;
 
     params = JSON.stringify(params);
-
-    var key = $components_hash(method + '#' + url + params).toString();
+    var key = $components_hash(method + '#' + url.replace(/\//g, '') + params).toString();
     return this.cachestorage(key, value, expire);
 };
 

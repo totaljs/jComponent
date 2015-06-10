@@ -296,8 +296,8 @@ $.components.DELETE(url, data, [callback or path], [sleep], [error(response, sta
 $.components.POST('/api/users/', {}, 'users->local.users');
 // response.users --> local.users
 
-$.components.GETCACHE(url, data, [callback or path], [expire], [sleep]); // Send data and cache
-$.components.POSTCACHE(url, data, [callback or path], [expire], [sleep]); // Send data and cache
+$.components.GETCACHE(url, data, [callback or path], [expire], [sleep], [clear]); // Send data and cache
+$.components.POSTCACHE(url, data, [callback or path], [expire], [sleep], [clear]); // Send data and cache
 $.components.REMOVECACHE(method, url, data); // Delete cache
 
 $.components.ready(function(componentCount) {}); // --> Are components ready?
