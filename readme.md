@@ -360,6 +360,10 @@ EVALUATE(path, expression); // --> $.components.evaluate()
 BLOCKED(name, timeout, [callback]);
 if (BLOCKED('login-enter', 1000)) 
     return;
+
+CONTROLLER('users', function(patcher) {
+    console.log(patcher('{name}.datasource')); // --> users.datasource
+});
 ```
 
 ## jQuery
