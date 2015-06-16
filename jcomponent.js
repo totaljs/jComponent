@@ -889,7 +889,7 @@ $.components.update = function(path, reset) {
     var updates = {};
 
     if ($.components.debug)
-        console.log('%c$.components.update(' + path + ')', 'color:red');
+        console.log('%c$.components.update(' + (is ? '!' : '') + path + ')', 'color:red');
 
     var A = path.split('.');
     var AL = A.length;
@@ -930,7 +930,7 @@ $.components.update = function(path, reset) {
             was = true;
 
         updates[component.path] = result;
-    }, undefined, undefined, is);
+    }, is ? path : undefined, undefined, is);
 
     if (reset) {
         $cmanager.clear('dirty');
