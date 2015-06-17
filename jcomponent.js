@@ -42,7 +42,7 @@ $.components.defaults.keypress = true;
 $.components.defaults.timeout = 15;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v1.9.2';
+$.components.version = 'v1.9.3';
 $.components.$version = '';
 $.components.$language = '';
 $.components.$formatter = [];
@@ -1059,8 +1059,13 @@ $.components.push = function(path, value, type) {
         console.log('%c$.components.push(' + path + ')', 'color:silver');
 
     var arr = $.components.get(path);
-    if (!(arr instanceof Array))
+    var n = false;
+
+    if (!(arr instanceof Array)) {
         arr = [];
+        n = true;
+    }
+
     var is = true;
 
     if (value instanceof Array) {
@@ -1072,8 +1077,11 @@ $.components.push = function(path, value, type) {
     else
         arr.push(value);
 
-    if (is)
+    if (n) {
+        $.components.set(path, arr, type);
+    } else if (is)
         $.components.update(path, type);
+
     return self;
 };
 
