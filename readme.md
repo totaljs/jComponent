@@ -281,6 +281,7 @@ $.components.validate([path], [selector]); // The function validates all values 
 $.components.reset([path], [timeout]); // Reset dirty and valid state to dirty=true, valid=true
 $.components.each(fn(component, index, isAsterix), path); // A generic iterator function
 $.components.update(path, [reset]); // Re-update values, example: "model.user.*"
+$.components.notify([path1], [path2], [path3], [path4], ...); // Re-update values (only fixed path)
 $.components.remove([path]); // The function removes components (triggers "destroy" event)
 $.components.invalid([path]) // The path will be invalid: valid(false), dirty(false)
 
@@ -348,6 +349,7 @@ SET(path, value, [timeout], [reset]); // --> $.components.set()
 EXTEND(path, value, [timeout], [reset]); // --> $.components.extend()
 PUSH(path, value, [timeout], [reset]); // --> $.components.push()
 UPDATE(path, [timeout], [reset]); // --> $.components.update()
+NOTIFY(path1, path2, ...); // --> $.components.notify()
 WATCH(); // --> $.components.on('watch', path, callback);
 CHANGE(); // --> $.components.change();
 STYLE(style); // --> create inline style

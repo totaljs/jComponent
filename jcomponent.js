@@ -39,10 +39,9 @@ $.components.evaluate = function(path, expression) {
 $.components.defaults = {}
 $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
-$.components.defaults.timeout = 15;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v1.9.3';
+$.components.version = 'v1.9.5';
 $.components.$version = '';
 $.components.$language = '';
 $.components.$formatter = [];
@@ -953,6 +952,50 @@ $.components.update = function(path, reset) {
     });
 
     $.components.$emitonly('watch', updates, 1, path);
+    return $.components;
+};
+
+$.components.notify = function() {
+
+    var arg = arguments;
+    var length = arguments.length;
+
+    $.components.each(function(component) {
+
+        if (!component.path)
+            return;
+
+        var is = false;
+
+        for (var i = 0; i < length; i++) {
+            if (component.path === arg[i]) {
+                is = true;
+                break;
+            }
+        }
+
+        if (!is)
+            return;
+
+        component.setter(component.get(), component.path);
+    });
+
+    Object.keys($cmanager.events).forEach(function(key) {
+
+        var is = false;
+        for (var i = 0; i < length; i++) {
+            if (key === arg[i]) {
+                is = true;
+                break;
+            }
+        }
+
+        if (!is)
+            return;
+
+        $.components.$emit2('watch', key, [key, $.components.get(key)]);
+    });
+
     return $.components;
 };
 
@@ -2392,6 +2435,10 @@ function GET(path) {
 
 function CACHE(key, value, expire) {
     return $.components.cache(key, value, expire);
+}
+
+function NOTIFY() {
+    return $.components.notify.apply($.components, arguments);
 }
 
 function UPDATE(path, timeout, reset) {
