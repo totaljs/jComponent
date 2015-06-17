@@ -962,7 +962,7 @@ $.components.extend = function(path, value, type) {
         val = {};
     if ($.components.debug)
         console.log('%c$.components.extend(' + path + ')', 'color:silver');
-    $.components.set(path, $.extend(true, val, value), type);
+    $.components.set(path, $.extend(val, value), type);
     return $.components;
 };
 
