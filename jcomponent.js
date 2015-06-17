@@ -2212,13 +2212,14 @@ $(document).ready(function() {
 
     $(document).on('change keypress keyup blur focus', 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]', function(e) {
 
+        var self = this;
+
         if (e.type === 'keypress') {
             // IE 9+ PROBLEM
-            if (e.keyCode === 13)
+            if (self.tagName !== 'TEXTAREA' && e.keyCode === 13)
                 return false;
         }
 
-        var self = this;
         var special = self.type === 'checkbox' || self.type === 'radio' || self.tagName === 'SELECT';
 
         if ((e.type === 'focusin' || e.type === 'focusout') && special)
