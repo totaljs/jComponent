@@ -350,6 +350,7 @@ EXTEND(path, value, [timeout], [reset]); // --> $.components.extend()
 PUSH(path, value, [timeout], [reset]); // --> $.components.push()
 UPDATE(path, [timeout], [reset]); // --> $.components.update()
 NOTIFY(path1, path2, ...); // --> $.components.notify()
+ON(); // --> $.compoents.on()
 WATCH(); // --> $.components.on('watch', path, callback);
 CHANGE(); // --> $.components.change();
 STYLE(style); // --> create inline style

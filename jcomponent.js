@@ -41,7 +41,7 @@ $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v1.9.5';
+$.components.version = 'v1.9.6';
 $.components.$version = '';
 $.components.$language = '';
 $.components.$formatter = [];
@@ -2471,6 +2471,10 @@ function OPERATION(name, fn) {
     }
     $cmanager.operations[name] = fn;
     return fn;
+}
+
+function ON(name, path, fn, init) {
+    $.components.on(name, path, fn, init);
 }
 
 function EVALUATE(path, expression) {
