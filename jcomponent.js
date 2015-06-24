@@ -41,7 +41,7 @@ $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v1.9.6';
+$.components.version = 'v1.9.7';
 $.components.$version = '';
 $.components.$language = '';
 $.components.$formatter = [];
@@ -2253,7 +2253,7 @@ $(document).ready(function() {
 		}
 	}
 
-	$(document).on('change keypress keyup blur focus', 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]', function(e) {
+	$(document).on('change keypress keydown blur focus', 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]', function(e) {
 
 		var self = this;
 
@@ -2261,6 +2261,7 @@ $(document).ready(function() {
 			// IE 9+ PROBLEM
 			if (self.tagName !== 'TEXTAREA' && e.keyCode === 13)
 				return false;
+			return;
 		}
 
 		var special = self.type === 'checkbox' || self.type === 'radio' || self.tagName === 'SELECT';
@@ -2286,7 +2287,7 @@ $(document).ready(function() {
 		self.$value = null;
 
 		if (self.type === 'checkbox' || self.type === 'radio') {
-			if (e.type === 'keyup')
+			if (e.type === 'keydown')
 				return;
 			var value = self.checked;
 			self.$component.dirty(false, true);
@@ -2296,7 +2297,7 @@ $(document).ready(function() {
 		}
 
 		if (self.tagName === 'SELECT') {
-			if (e.type === 'keyup')
+			if (e.type === 'keydown')
 				return
 			var selected = self[self.selectedIndex];
 			value = selected.value;
@@ -2315,7 +2316,7 @@ $(document).ready(function() {
 		if (self.$only && (e.type === 'focusout' || e.type === 'change'))
 			return;
 
-		if (e.type === 'keyup' && e.keyCode === undefined)
+		if (e.type === 'keydown' && e.keyCode === undefined)
 			return;
 
 		if (e.keyCode < 41 && e.keyCode !== 8 && e.keyCode !== 32) {
@@ -2339,7 +2340,7 @@ $(document).ready(function() {
 
 		var delay = self.$delay;
 		if (self.$nokeypress) {
-			if (e.type === 'keyup' || e.type === 'focusout')
+			if (e.type === 'keydown' || e.type === 'focusout')
 				return;
 			if (delay === 0)
 				delay = 1;
@@ -2377,7 +2378,7 @@ function $components_keypress(self, old, e) {
 		self.$component.getter(self.value, 2, old);
 	}, 2);
 
-	if (!self.$only && e.type === 'keyup' && e.keyCode !== 13)
+	if (!self.$only && e.type === 'keydown' && e.keyCode !== 13)
 		return;
 
 	self.$skip = true;
