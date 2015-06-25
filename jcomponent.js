@@ -81,6 +81,7 @@ $.components.compile = function(container) {
 
 		obj.$init = el.attr(COM_ATTR_I) || null;
 		obj.type = el.attr('data-component-type') || '';
+		obj.id = el.attr('data-component-id') || obj._id;
 
 		// A reference to implementation
 		el.data(COM_ATTR, obj);
@@ -1895,7 +1896,6 @@ ComponentManager.prototype.prepare = function(obj) {
 
 	var value = obj.get();
 	var el = obj.element;
-	obj.id = el.attr('data-component-id') || obj._id;
 
 	if (obj.setter) {
 		if (!obj.$ready) {
