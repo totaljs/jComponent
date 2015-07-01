@@ -62,7 +62,6 @@ $.components.compile = function(container) {
 
 	var els = container ? container.find(COM_ATTR) : $(COM_ATTR);
 	var skip = false;
-
 	els.each(function() {
 
 		if (skip)
@@ -71,7 +70,7 @@ $.components.compile = function(container) {
 		var el = $(this);
 		var name = el.attr('data-component');
 
-		if (el.data(COM_ATTR))
+		if (el.data(COM_ATTR) || el.attr(COM_ATTR_R))
 			return;
 
 		var component = $cmanager.register[name || ''];
@@ -1143,6 +1142,7 @@ $.components.get = function(path) {
 
 $.components.remove = function(path) {
 
+
 	if (path instanceof jQuery) {
 		path.find(COM_ATTR).attr(COM_ATTR_R, 'true').each(function() {
 			var com = $(this).data('component');
@@ -1156,6 +1156,7 @@ $.components.remove = function(path) {
 		var com = path.data('component');
 		if (com)
 			com.$removed = true;
+
 		$cmanager.cleaner();
 		return $.components;
 	}
@@ -2194,17 +2195,20 @@ ComponentManager.prototype.cleaner = function() {
 	var index = 0;
 	while (true) {
 		var component = $cmanager.components[index++];
+
 		if (!component)
 			break;
+
 		if (!component.attr(COM_ATTR_R))
 			continue;
+
 		component.element.remove();
 		component.element = null;
 		component.path = null;
 		component.setter = null;
 		component.getter = null;
 		$cmanager.components.splice(index - 1, 1);
-		index = 0;
+		index = -1;
 	}
 
 	var now = Date.now();
