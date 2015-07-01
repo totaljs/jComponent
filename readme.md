@@ -283,6 +283,7 @@ $.components.each(fn(component, index, isAsterix), path); // A generic iterator 
 $.components.update(path, [reset]); // Re-update values, example: "model.user.*"
 $.components.notify([path1], [path2], [path3], [path4], ...); // Re-update values (only fixed path)
 $.components.remove([path]); // The function removes components (triggers "destroy" event)
+$.components.remove(jQuery_element); // Removes all components in element
 $.components.invalid([path]) // The path will be invalid: valid(false), dirty(false)
 
 $.components.errors([path]) // Returns array of invalid fields

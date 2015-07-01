@@ -7,6 +7,7 @@ var COM_ATTR_B = 'data-component-bind';
 var COM_ATTR_P = 'data-component-path';
 var COM_ATTR_T = 'data-component-template';
 var COM_ATTR_I = 'data-component-init';
+var COM_ATTR_R = 'data-component-removed';
 var COM_ATTR_C = 'data-component-class';
 
 $.fn.component = function() {
@@ -41,7 +42,7 @@ $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v1.9.7';
+$.components.version = 'v1.9.8';
 $.components.$version = '';
 $.components.$language = '';
 $.components.$formatter = [];
@@ -1141,6 +1142,24 @@ $.components.get = function(path) {
 };
 
 $.components.remove = function(path) {
+
+	if (path instanceof jQuery) {
+		path.find(COM_ATTR).attr(COM_ATTR_R, 'true').each(function() {
+			var com = $(this).data('component');
+			if (com)
+				com.$removed = true;
+		});
+
+		if (path.attr(COM_ATTR_T))
+			path.attr(COM_ATTR_R, 'true');
+
+		var com = path.data('component');
+		if (com)
+			com.$removed = true;
+		$cmanager.cleaner();
+		return $.components;
+	}
+
 	$cmanager.clear();
 	$.components.each(function(obj) {
 		obj.remove(true);
@@ -1394,9 +1413,12 @@ $.components.each = function(fn, path, watch, fix) {
 	var isAsterix = path ? path.lastIndexOf('*') !== -1 : false;
 	if (isAsterix)
 		path = path.replace('.*', '').replace('*', '');
+
 	var index = 0;
 	for (var i = 0, length = $cmanager.components.length; i < length; i++) {
 		var component = $cmanager.components[i];
+		if (component.$removed)
+			continue;
 
 		if (fix && component.path !== path)
 			continue;
@@ -1417,11 +1439,10 @@ $.components.each = function(fn, path, watch, fix) {
 				}
 			}
 		}
-		if (component && !component.$removed) {
-			var stop = fn(component, index++, isAsterix);
-			if (stop === true)
-				return $.components;
-		}
+
+		var stop = fn(component, index++, isAsterix);
+		if (stop === true)
+			return $.components;
 	}
 	return $.components;
 };
@@ -1434,7 +1455,7 @@ $.components.eachPath = function(fn, path) {
 	var index = 0;
 	for (var i = 0, length = $cmanager.components.length; i < length; i++) {
 		var component = $cmanager.components[i];
-		if ((component && component.$removed) || !component.path)
+		if (component.$removed || !component.path)
 			continue;
 
 		if (isAsterix) {
@@ -1651,8 +1672,8 @@ Component.prototype.remove = function(noClear) {
 		this.destroy();
 
 	this.element.removeData(COM_ATTR);
-	this.element.find(COM_DATA_BIND_SELECTOR).unbind('change');
-	this.element.remove();
+	this.element.find(COM_ATTR).attr(COM_ATTR_R, 'true');
+	this.element.attr(COM_ATTR_R, 'true');
 
 	if (!noClear)
 		$cmanager.clear();
@@ -2168,6 +2189,22 @@ ComponentManager.prototype.cleaner = function() {
 				is = true;
 			}
 		}
+	}
+
+	var index = 0;
+	while (true) {
+		var component = $cmanager.components[index++];
+		if (!component)
+			break;
+		if (!component.attr(COM_ATTR_R))
+			continue;
+		component.element.remove();
+		component.element = null;
+		component.path = null;
+		component.setter = null;
+		component.getter = null;
+		$cmanager.components.splice(index - 1, 1);
+		index = 0;
 	}
 
 	var now = Date.now();
