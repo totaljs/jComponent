@@ -42,7 +42,7 @@ $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v1.9.8';
+$.components.version = 'v1.9.9';
 $.components.$version = '';
 $.components.$language = '';
 $.components.$formatter = [];
@@ -371,6 +371,21 @@ $.components.PUT = function(url, data, callback, timeout, error) {
 				error(r, req.status, status);
 		}, contentType: 'application/json' });
 	}, timeout || 0);
+	return $.components;
+};
+
+$.components.TEMPLATE = function(url, callback, prepare) {
+
+	if ($cmanager.cache[url]) {
+		callback($cmanager.cache[url]);
+		return $.components;
+	}
+
+	$.components.GET(url, {}, function(response) {
+		$cmanager.cache[url] = prepare ? prepare(response) : response;
+		callback(response);
+	});
+
 	return $.components;
 };
 
