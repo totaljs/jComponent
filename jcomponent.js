@@ -377,13 +377,21 @@ $.components.PUT = function(url, data, callback, timeout, error) {
 $.components.TEMPLATE = function(url, callback, prepare) {
 
 	if ($cmanager.cache[url]) {
-		callback($cmanager.cache[url]);
+
+		if (typeof(callback) === 'string')
+			SET(callback, $cmanager.cache[url]);
+		else
+			callback($cmanager.cache[url]);
+
 		return $.components;
 	}
 
 	$.components.GET(url, {}, function(response) {
-		$cmanager.cache[url] = prepare ? prepare(response) : response;
-		callback(response);
+		var value = $cmanager.cache[url] = prepare ? prepare(response) : response;
+		if (typeof(callback) === 'string')
+			SET(callback, value);
+		else
+			callback(value);
 	});
 
 	return $.components;
