@@ -42,7 +42,7 @@ $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v1.9.9';
+$.components.version = 'v2.0.0';
 $.components.$version = '';
 $.components.$language = '';
 $.components.$formatter = [];
@@ -555,7 +555,8 @@ $.components.REMOVECACHE = function(method, url, data) {
 };
 
 $.components.ready = function(fn) {
-	$cmanager.ready.push(fn);
+	if ($cmanager.ready)
+		$cmanager.ready.push(fn);
 	return $.components;
 };
 
