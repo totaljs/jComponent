@@ -794,6 +794,12 @@ $.components.valid = function(path, value, notifyPath) {
 
 	var isExcept = value instanceof Array;
 	var key = 'valid' + path + (isExcept ? '>' + value.join('|') : '');
+	var except;
+
+	if (isExcept) {
+		except = value;
+		value = undefined;
+	}
 
 	if (typeof(value) !== 'boolean' && $cmanager.cache[key] !== undefined)
 		return $cmanager.cache[key];
@@ -807,7 +813,7 @@ $.components.valid = function(path, value, notifyPath) {
 
 	fn(function(obj) {
 
-		if (isExcept && value.indexOf(obj.path) !== -1)
+		if (isExcept && except.indexOf(obj.path) !== -1)
 			return;
 
 		if (value === undefined) {
@@ -852,6 +858,12 @@ $.components.dirty = function(path, value, notifyPath) {
 
 	var isExcept = value instanceof Array;
 	var key = 'dirty' + path + (isExcept ? '>' + value.join('|') : '');
+	var except;
+
+	if (isExcept) {
+		except = value;
+		value = undefined;
+	}
 
 	if (typeof(value) !== 'boolean' && $cmanager.cache[key] !== undefined)
 		return $cmanager.cache[key];
@@ -865,7 +877,7 @@ $.components.dirty = function(path, value, notifyPath) {
 
 	fn(function(obj) {
 
-		if (isExcept && value.indexOf(obj.path) !== -1)
+		if (isExcept && except.indexOf(obj.path) !== -1)
 			return;
 
 		if (value === undefined) {
