@@ -270,14 +270,15 @@ $.components.extend(path, value, [reset]); // Extend current object according to
 $.components.set('+some.path', [1, 2, 3]); // Is same as $.components.push()
 
 $.components.dirty(path, [value], [notifyPath]); // Are values dirty? or setter "dirty" state.
+$.components.dirty(path, [except_paths_arr]); // only for read
 $.components.valid(path, [value], [notifyPath]); // Are values valid? or setter "valid" state.
 // notifyPath executes Component.state() according to the path, serves for e.g. validations
-
+$.components.valid(path, [except_paths_arr]); // only for read
 $.components.cache(key); // --> get a value from cache (default: undefined)
 $.components.cache(key, value, expire); // --> set a value to cache (expire in milliseconds)
-$.components.can(path); // Combine dirty and valid together (e.g. for keypressing)
-$.components.disable(path); // Combine dirty and valid together (e.g. for button disabling)
-$.components.validate([path], [selector]); // The function validates all values according the path
+$.components.can(path, [except_paths_arr]); // Combine dirty and valid together (e.g. for keypressing)
+$.components.disable(path, [except_paths_arr]); // Combine dirty and valid together (e.g. for button disabling)
+$.components.validate([path], [except_paths_arr]); // The function validates all values according the path
 $.components.reset([path], [timeout]); // Reset dirty and valid state to dirty=true, valid=true
 $.components.each(fn(component, index, isAsterix), path); // A generic iterator function
 $.components.update(path, [reset]); // Re-update values, example: "model.user.*"

@@ -42,7 +42,7 @@ $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v2.0.0';
+$.components.version = 'v2.0.1';
 $.components.$version = '';
 $.components.$language = '';
 $.components.$formatter = [];
@@ -792,7 +792,9 @@ $.components.change = function(path, value) {
 
 $.components.valid = function(path, value, notifyPath) {
 
-	var key = 'valid' + path;
+	var isExcept = value instanceof Array;
+	var key = 'valid' + path + (isExcept ? '>' + value.join('|') : '');
+
 	if (typeof(value) !== 'boolean' && $cmanager.cache[key] !== undefined)
 		return $cmanager.cache[key];
 
@@ -804,6 +806,9 @@ $.components.valid = function(path, value, notifyPath) {
 	var fn = notifyPath ? $.components.eachPath : $.components.each;
 
 	fn(function(obj) {
+
+		if (isExcept && value.indexOf(obj.path) !== -1)
+			return;
 
 		if (value === undefined) {
 			if (obj.$valid === false)
@@ -845,7 +850,8 @@ $.components.valid = function(path, value, notifyPath) {
 
 $.components.dirty = function(path, value, notifyPath) {
 
-	var key = 'dirty' + path;
+	var isExcept = value instanceof Array;
+	var key = 'dirty' + path + (isExcept ? '>' + value.join('|') : '');
 
 	if (typeof(value) !== 'boolean' && $cmanager.cache[key] !== undefined)
 		return $cmanager.cache[key];
@@ -858,6 +864,9 @@ $.components.dirty = function(path, value, notifyPath) {
 	var fn = notifyPath ? $.components.eachPath : $.components.each;
 
 	fn(function(obj) {
+
+		if (isExcept && value.indexOf(obj.path) !== -1)
+			return;
 
 		if (value === undefined) {
 			if (obj.$dirty === false)
@@ -1166,7 +1175,6 @@ $.components.get = function(path) {
 
 $.components.remove = function(path) {
 
-
 	if (path instanceof jQuery) {
 		path.find(COM_ATTR).attr(COM_ATTR_R, 'true').each(function() {
 			var com = $(this).data('component');
@@ -1193,14 +1201,15 @@ $.components.remove = function(path) {
 	return $.components;
 };
 
-$.components.validate = function(path) {
+$.components.validate = function(path, except) {
 
 	var arr = [];
 	var valid = true;
 
 	$.components.each(function(obj) {
 
-		var current = obj.path;
+		if (except && except.indexOf(obj.path) !== -1)
+			return;
 
 		if (obj.state)
 			arr.push(obj);
@@ -1208,7 +1217,7 @@ $.components.validate = function(path) {
 		obj.$validate = true;
 
 		if (obj.validate) {
-			obj.$valid = obj.validate($cmanager.get(current));
+			obj.$valid = obj.validate($cmanager.get(obj.path));
 			if (!obj.$valid)
 				valid = false;
 		}
@@ -1221,21 +1230,29 @@ $.components.validate = function(path) {
 	return valid;
 };
 
-$.components.errors = function(path) {
+$.components.errors = function(path, except) {
+
+	if (path instanceof Array) {
+		except = path;
+		path = undefined;
+	}
+
 	var arr = [];
 	$.components.each(function(obj) {
+		if (except && except.indexOf(obj.path) !== -1)
+			return;
 		if (obj.$valid === false)
 			arr.push(obj);
 	}, path);
 	return arr;
 };
 
-$.components.can = function(path) {
-	return !$.components.dirty(path) && $.components.valid(path);
+$.components.can = function(path, except) {
+	return !$.components.dirty(path, except) && $.components.valid(path, except);
 };
 
-$.components.disable = function(path) {
-	return $.components.dirty(path) || !$.components.valid(path);
+$.components.disable = function(path, except) {
+	return $.components.dirty(path, except) || !$.components.valid(path, except);
 };
 
 $.components.invalid = function(path) {
