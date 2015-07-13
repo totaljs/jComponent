@@ -2334,7 +2334,7 @@ $.components.compile();
 $(document).ready(function() {
 
 	if ($.components.defaults.localstorage) {
-		var cache = localStorage.getItem('jcomponent.cache');
+		var cache = localStorage.getItem($.components.$localstorage);
 		if (cache && typeof(cache) === 'string') {
 			try {
 				$cmanager.storage = JSON.parse(cache);
@@ -2484,7 +2484,7 @@ function $components_keypress(self, old, e) {
 
 function $components_save() {
 	if ($.components.defaults.localstorage)
-		localStorage.setItem('jcomponent.cache', JSON.stringify($cmanager.storage));
+		localStorage.setItem($.components.$localstorage, JSON.stringify($cmanager.storage));
 }
 
 function SET(path, value, timeout, reset) {
