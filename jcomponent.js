@@ -42,8 +42,8 @@ $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v2.0.2';
-$.components.$localstorage = 'jcomponent.cache';
+$.components.version = 'v2.0.3';
+$.components.$localstorage = 'jcomponent';
 $.components.$version = '';
 $.components.$language = '';
 $.components.$formatter = [];
@@ -1290,7 +1290,7 @@ $.components.blocked = function(name, timeout, callback) {
 	$cmanager.cacheblocked[key] = now + timeout;
 
 	if (local)
-		localStorage.setItem('jcomponent.blocked', JSON.stringify($cmanager.cacheblocked));
+		localStorage.setItem($.components.$localstorage + '.blocked', JSON.stringify($cmanager.cacheblocked));
 
 	if (callback)
 		callback();
@@ -2277,7 +2277,7 @@ ComponentManager.prototype.cleaner = function() {
 	}
 
 	if ($.components.defaults.localstorage && is2)
-		localStorage.setItem('jcomponent.blocked', JSON.stringify(self.cacheblocked));
+		localStorage.setItem($.components.$localstorage + '.blocked', JSON.stringify(self.cacheblocked));
 
 	for (var key in self.storage) {
 		var item = self.storage[key];
@@ -2334,13 +2334,13 @@ $.components.compile();
 $(document).ready(function() {
 
 	if ($.components.defaults.localstorage) {
-		var cache = localStorage.getItem($.components.$localstorage);
+		var cache = localStorage.getItem($.components.$localstorage + '.cache');
 		if (cache && typeof(cache) === 'string') {
 			try {
 				$cmanager.storage = JSON.parse(cache);
 			} catch (e) {}
 		}
-		cache = localStorage.getItem('jcomponent.blocked');
+		cache = localStorage.getItem($.components.$localstorage + '.blocked');
 		if (cache && typeof(cache) === 'string') {
 			try {
 				$cmanager.cacheblocked = JSON.parse(cache);
@@ -2484,7 +2484,7 @@ function $components_keypress(self, old, e) {
 
 function $components_save() {
 	if ($.components.defaults.localstorage)
-		localStorage.setItem($.components.$localstorage, JSON.stringify($cmanager.storage));
+		localStorage.setItem($.components.$localstorage + '.cache', JSON.stringify($cmanager.storage));
 }
 
 function SET(path, value, timeout, reset) {
