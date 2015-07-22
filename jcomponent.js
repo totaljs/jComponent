@@ -42,7 +42,7 @@ $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v2.0.3';
+$.components.version = 'v2.0.4';
 $.components.$localstorage = 'jcomponent';
 $.components.$version = '';
 $.components.$language = '';
@@ -2535,6 +2535,12 @@ function CACHE(key, value, expire) {
 
 function NOTIFY() {
 	return $.components.notify.apply($.components, arguments);
+}
+
+function FIND(value) {
+	if (value.charCodeAt(0) === 64)
+		return $.components.findById(value.substring(1));
+	return $.components.findByName(value);
 }
 
 function UPDATE(path, timeout, reset) {

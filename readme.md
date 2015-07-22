@@ -96,7 +96,7 @@ COMPONENT('input', function() {
         this.element.append('<input type="text" data-component-bind />');
         // or
         // this.element.append('<input type="text" data-component-bind="new-data-component-path" />');
-        
+
         // IMPORTANT:
         // Do you replace the current content with new content and new components?
         // If you return a true then the library cancels the current compilation and recompiles it again.
@@ -141,7 +141,7 @@ COMPONENT('input', function() {
         // type === 0 : init
         // type === 1 : by developer
         // type === 2 : by input
-        
+
         // who  === 1 : valid
         // who  === 2 : dirty
         // who  === 3 : reset
@@ -160,7 +160,7 @@ COMPONENT('input', function() {
     // OPTIONAL, framework has an own mechanism for this (but you can rewrite it)
     // IMPORTANT: The intial value executes this delegate.
     this.setter = function(value, path, type) {
-        
+
         // value === new value
 
         // path  === changed path
@@ -250,7 +250,7 @@ console.log($.components.version); // current version
 $.components.debug = false; // debugging
 $.components.defaults.delay = 300; // keypress delay for data-component-bind
 $.components.defaults.keypress = true; // keypress enable/disable for data-component-bind
-$.components.defaults.localstorage = true; // GETCACHE and POSTCACHE are stored into the localstorage 
+$.components.defaults.localstorage = true; // GETCACHE and POSTCACHE are stored into the localstorage
 
 // [parameter] --> is OPTIONAL
 // path --> path to object property
@@ -360,11 +360,12 @@ STYLE(style); // --> create inline style
 OPERATION(name, fn); // --> creates an operation
 OPERATION(name); // --> returns function
 EVALUATE(path, expression); // --> $.components.evaluate()
+FIND(value) // --> when the value starts with '#' then is used $.components.findById() otherwise $.components.findByName()
 
 // blocked operations
 // the method checks if the current statement is not blocked
 BLOCKED(name, timeout, [callback]);
-if (BLOCKED('login-enter', 1000)) 
+if (BLOCKED('login-enter', 1000))
     return;
 
 CONTROLLER('users', function(patcher) {
@@ -480,7 +481,7 @@ SET('!user.credits', 100);
 $.components.update('!user.credits');
 ```
 
-All watchers on `user` won't know that the property `credits` is changed. 
+All watchers on `user` won't know that the property `credits` is changed.
 
 ## Contact
 
