@@ -2538,7 +2538,7 @@ function NOTIFY() {
 }
 
 function FIND(value) {
-	if (value.charCodeAt(0) === 64)
+	if (value.charCodeAt(0) === 35)
 		return $.components.findById(value.substring(1));
 	return $.components.findByName(value);
 }
