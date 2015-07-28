@@ -42,7 +42,7 @@ $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v2.0.4';
+$.components.version = 'v2.0.5';
 $.components.$localstorage = 'jcomponent';
 $.components.$version = '';
 $.components.$language = '';
@@ -419,7 +419,10 @@ $.components.GET = function(url, data, callback, timeout, error) {
 		if ($.components.debug)
 			console.log('%c$.components.GET(' + url + ')', 'color:magenta');
 
-		$.ajax($components_url(url), { type: 'GET', data: data, success: function(r) {
+		if (data)
+			url += '?' + jQuery.param(data);
+
+		$.ajax($components_url(url), { type: 'GET', success: function(r) {
 			if (typeof(callback) === 'string')
 				return $cmanager.remap(callback, r);
 			if (callback)
