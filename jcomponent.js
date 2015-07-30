@@ -287,7 +287,7 @@ $.components.parseQuery = function(value) {
 	for (var i = 0, length = arr.length; i < length; i++) {
 		var sub = arr[i].split('=');
 		var key = sub[0];
-		var val = decodeURIComponent(sub[1] || '').replace(/\+/g, '%20');
+		var val = decodeURIComponent((sub[1] || '').replace(/\+/g, '%20'));
 
 		if (!obj[key]) {
 			obj[key] = val;
