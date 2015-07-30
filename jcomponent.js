@@ -42,7 +42,7 @@ $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v2.0.5';
+$.components.version = 'v2.0.6';
 $.components.$localstorage = 'jcomponent';
 $.components.$version = '';
 $.components.$language = '';
@@ -287,7 +287,7 @@ $.components.parseQuery = function(value) {
 	for (var i = 0, length = arr.length; i < length; i++) {
 		var sub = arr[i].split('=');
 		var key = sub[0];
-		var val = decodeURIComponent(sub[1] || '');
+		var val = decodeURIComponent(sub[1] || '').replace(/\+/g, '%20');
 
 		if (!obj[key]) {
 			obj[key] = val;
