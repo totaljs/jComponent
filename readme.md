@@ -88,12 +88,12 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 ```
 Must contain a component name. If the value of this attribute is empty then jComponent writes only raw output according to binding path attribute.
 
-```html
-"data-component-path"
-```
+> data-component-path
+
 It's not required. The attribute contains the binding path for binding values between component and model, e.g. `form.name` (--> is binded to `window.form.name`) or `user.age` (--> is binded to `window.user.age`).
 
-##### "data-component-type"
+> data-component-type
+
 It's not required. The attribute can contain a type of the component. You must define own types e.g. `number`, `currency` or `date`.
 
 ##### "data-component-id"
