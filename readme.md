@@ -526,30 +526,42 @@ $.components.version
 ```
 `{Number}` returns the current version of jComponent.
 
+---
+
 ```javascript
 $.components.debug
 ```
 `{Boolean}` enables web browser console logging, default __false__.
+
+---
 
 ```javascript
 $.components.defaults.delay
 ```
 `{Number}` sets the delay for keypress real-time binding, default _300_.
 
+---
+
 ```javascript
 $.components.defaults.keypress
 ```
 `{Boolean}` enables / disables keypress real-time binding, default __true__.
+
+---
 
 ```javascript
 $.components.defaults.localstorage
 ```
 `{Boolean}` enables / disables localstorage for cache mechanism, default __true__.
 
+---
+
 ```javascript
 $.components.$version
 ```
 `{String}` appends the value to each URL address `?version=$version` called via jComponent, default: __""__.
+
+---
 
 ```javascript
 $.components.$language
