@@ -19,18 +19,7 @@ __YOU MUST SEE:__
 
 ***
 
-## Documentation
-
-This documentation is composed with 3 parts:
-
-- Library
-- HTML definition
-- Component definition
-- Global helpers
-
-***
-
-### Library
+# Library
 
 jComponent offers 3 libraries for developement rich web applications:
 
@@ -44,7 +33,7 @@ The component doesn't know scopes. Only the one scope with the components work i
 
 ***
 
-### HTML definition
+# HTML definition
 
 The library searches all components according to `data-component` attribute which must contain a component name and [the component must be defined in JavaScript](#component).
 
@@ -65,7 +54,7 @@ The library searches all components according to `data-component` attribute whic
 </table>
 ```
 
-#### Declaration with binding
+## Declaration with binding
 
 Binding is represented as `data-component-path` attribute. jComponent has own buil-in mechanism for binding values to/from component (you can rewrite it).
 
@@ -80,7 +69,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
 ---
 
-#### HTML attributes
+## HTML attributes
 
 ```plain
 <element data-component="" />
@@ -131,7 +120,7 @@ It's not required and can contain only URL address to component template. The li
 
 ---
 
-#### Special HTML attributes
+## Special HTML attributes
 
 ```html
 <element data-component-url="" />
@@ -168,7 +157,7 @@ This attribute can enable only real-time bindings. That means: `blur` and `chang
 
 ***
 
-### Component definition
+# Component definition
 
 The definition of the component must be defined in JavaScript. You can define the component in some HTML template (in `<script` tag) or in your own JavaScript libraries.
 
@@ -187,7 +176,7 @@ COMPONENT('my-component-name', function() {
 });
 ```
 
-#### Properties
+### Properties
 
 ```javascript
 instance.name
@@ -231,7 +220,7 @@ __Very important.__ The HTML element of the component.
 
 ---
 
-#### Delegates
+## Delegates
 
 ```javascript
 instance.prerender(template)
@@ -375,7 +364,7 @@ this.watch('some.other.path', function(path, value) {
 
 ---
 
-#### Methods
+## Methods
 
 ```javascript
 instance.setPath(path)
@@ -523,7 +512,7 @@ instance.parser(function(value) {
 
 ---
 
-#### Events
+## Events
 
 ```javascript
 instance.on('watch', path, fn(path, value))
@@ -574,7 +563,7 @@ instance.emit('some-event');
 
 ---
 
-### Global helpers
+# Global helpers
 
 #### Properties
 
@@ -627,7 +616,7 @@ $.components.$language
 
 ---
 
-#### Methods
+## Methods
 
 ```javascript
 $.components()
@@ -767,8 +756,7 @@ Injects content (with components) into the `target` (by default: `document.body`
 
 ---
 
-#### Events
-
+## Events
 
 ```js
 $.components.dirty(path, [value], [notifyPath]); // Are values dirty? or setter "dirty" state.
