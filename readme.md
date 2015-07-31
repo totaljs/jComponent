@@ -213,7 +213,7 @@ instance.validate = function(value, isInitialValue) {
 ```
 
 ##### ---> instance.state(type, who)
-This delegate watchs the value state. In this delegate you can change the `design` of the component according to the value state.
+This delegate watches the value state. In this delegate you can change the `design` of the component according to the value state.
 
 ```javascript
 instance.state = function(type, who) {
@@ -261,6 +261,102 @@ instance.getter = function(value) {
 };
 ```
 
+##### ---> instance.watch([path], function(path, value))
+This delegate watches all changes according to the model.
+
+```javascript
+this.watch(function(path, value) {
+    // watch the for changes
+});
+
+this.watch('some.other.path', function(path, value) {
+    // watch the for changes
+});
+```
+
+
+---
+
+#### Methods
+
+##### ---> instance.setPath(path)
+This method sets a new path for this component.
+
+##### ---> instance.remove()
+Removes current instance of this component.
+
+##### ---> instance.get()
+Gets the value from the model.
+
+##### ---> instance.set(value)
+Sets the value in the model.
+
+##### ---> instance.inc(value)
+Increments the value in the model.
+
+##### ---> instance.extend(value)
+Extends the value in the model. Only for objects.
+
+```javascript
+instance.extend({ price: 0, name: 'jComponent' });
+```
+
+##### ---> instance.push(value)
+Push the value (can be an Array) in the model. Only for arrays.
+
+```javascript
+instance.push(1);
+instance.push([1, 2, 3]);
+```
+
+##### ---> instance.attr(name, [value])
+Gets or Sets an attribute in the component element.
+
+##### ---> instance.html([value])
+Gets or Sets inner HTML in the component element.
+
+##### ---> instance.dirty([boolean])
+Gets or Sets the dirty state. Only for inputs, textareas and selects.
+
+##### ---> instance.valid([boolean])
+Gets or Sets the validation state.
+
+##### ---> instance.change([boolean])
+Contains `instance.dirty()` and `instance.valid()` together. This method means: the content of this element is `changed` or `unchanged`.
+
+##### ---> instance.invalid() or instance.isInvalid()
+Returns `{Booelan}` if the component is not valid.
+
+##### ---> instance.emit(event_name, [arg1], [arg2])
+Emits event for all components.
+
+##### ---> instance.evaluate([path], expression)
+Evalutes string expression. Default path is the component path.
+
+```javascript
+consolel.log(instance.evaluate('value.age > 18'));
+consolel.log(instance.evaluate('some.path', 'value === "Peter"'));
+```
+
+##### ---> instance.formatter(fn)
+Appends a new formatter. The formatter formats the model value for the render. E.g. date. Works only with components which contain `<input data-component-bind`, `<textarea data-component-bind` or `<select data-component-bind`.
+
+```javascript
+instance.formatter(function(value) {
+    return value.format('dd.MM.yyyy');
+});
+```
+
+##### ---> instance.parser(fn)
+Appneds a new parser. The parser parses the value from the `input`, `textarea` or `selectfor`. E.g. date. Works only with components which contain `<input data-component-bind`, `<textarea data-component-bind` or `<select data-component-bind`.
+
+```javascript
+instance.parser(function(value) {
+    var dt = value.split('.');
+    return new Date(parseInt(dt[2]), parseInt(dt[1] - 1), parserInt(dt[0]));
+});
+```
+
 ---
 ---
 
@@ -269,14 +365,6 @@ instance.getter = function(value) {
 
 ```js
 COMPONENT('input', function() {
-
-    // OPTIONAL
-    // Watch changes. IMPORTANT: The initial value is not called.
-    this.watch([path], function(path, value, index) {
-        // type === 1 : by developer
-        // type === 2 : by input
-        // index === Array index if exists
-    });
 
     // Declare a simple event
     this.on('some-event', function() {
@@ -291,57 +379,6 @@ COMPONENT('input', function() {
     // Declare a watch event
     this.on('watch', 'model.user.*', function(path, value) {
         console.log('changed value', path, value);
-    });
-
-    // Methods
-    this.setPath(newpath); // change the binding path
-    this.style(style); // creates styles
-    this.remove(); // removes the component
-    this.dirty([value]); // Boolean, is the component dirty? ... or you can set "dirty" value (the method calls the state delegate only in this component, for all use $.components.valid())
-    this.change([value]); // Boolean, is an opposite alias for dirty() -> is same as dirty but in reverse (the method calls the state delegate only in this component, for all use $.components.valid())
-    this.valid([value]); // Boolean, is the component valid? ... or you can set "valid" value (the method calls the state delegate only in this component, for all use $.components.valid())
-    this.get([path]); // get/read the value
-    this.set([path], value); // set/write the value
-    this.extend([path], value); // extend the value
-    this.push([path], value); // push the value or array to array
-    this.emit(name, arg1, arg2); // The function triggers event within all components
-    this.html([value]); // Get or Set the value into the component element
-    this.isInvalid(); // returns true if the component is not valid or dirty
-    this.invalid(); // sets valid(false).dirty(false)
-    this.evaluate([path], expression); // evaluate('this.age > 18') or evalute('value.age > 18 && path === 'path');
-    this.attr(name, [value]); // gets or sets attribute from/to element
-
-    // this function formats the value according to formatters
-    // it's called automatically (data-component-bind) when is value changed
-    // returns a formatted value
-    this.formatter(value);
-
-    this.watch(function(path, value) {
-        // watch for changes
-    });
-
-    this.watch('model.*', function(path, value, index) {
-        // watch for changes
-    });
-
-    // this function parses the value according to parsers
-    // it's called automatically (data-component-bind) when input/select/textarea changes the value
-    // returns a parsed value
-    this.parser(value);
-
-    // Properties
-    this.$parser; // Is function(path, value, type) array
-    this.$formatter; // Is function(path, value, type) array
-
-    // Example
-    this.$parsers.push(function(path, value, type) {
-        if (type === 'number') {
-            var tmp = parseInt(value.replace(/\s/g, ''));
-            if (isNaN(tmp))
-                return 0;
-            return tmp;
-        }
-        return value;
     });
 });
 ```
