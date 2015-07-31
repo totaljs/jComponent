@@ -3,13 +3,11 @@
 
 __Homepage:__ <http://www.jcomponent.org>
 
-- only __19 kB__ (minified, without GZIP compression)
 - `>= jQuery +1.7`
 - `>= IE9`
 - two way bindings
 - great functionality
-- similar functionality as directives from Angular.js
-- easy property mapping + supports Array indexes
+- similar functionality like directives in Angular.js
 - supports validation
 - supports nested components
 - best of use with [www.totaljs.com - web application framework for node.js](http://www.totaljs.com)
@@ -18,7 +16,6 @@ __YOU MUST SEE:__
 
 - [jRouting](https://github.com/petersirka/jRouting)
 - [Tangular - A template engine like Angular.js](https://github.com/petersirka/Tangular)
-- [jQuery two way bindings](https://github.com/petersirka/jquery.bindings)
 
 ## Documentation
 
@@ -395,25 +392,41 @@ instance.emit('some-event');
 ```
 
 ---
----
 
+### Global helpers
 
-## Global properties and methods
+#### Properties
+
+##### ----------- `$.components.version`
+`{Number}` returns the current version of jComponent.
+
+##### ----------- `$.components.debug`
+`{Boolean}` enables web browser console logging, default __false__.
+
+##### ----------- `$.components.defaults.delay`
+`{Number}` sets the delay for keypress real-time binding, default _300_.
+
+##### ----------- `$.components.defaults.keypress`
+`{Boolean}` enables / disables keypress real-time binding, default __true__.
+
+##### ----------- `$.components.defaults.localstorage`
+`{Boolean}` enables / disables localstorage for cache mechanism, default __true__.
+
+##### ----------- `$.components.$version`
+`{String}` Appends the value to each URL address `?version=$version` called via jComponent, default: __""__.
+
+##### ----------- `$.components.$language`
+`{String}` Appends the value to each URL address `?language=$language` called via jComponent, default: __""__.
+
+#### Methods
+
+##### ----------- `$.components()`
+Runs the compiler for new components. jComponent doesn't watch new elements in DOM.
+
+#### Events
+
 
 ```js
-console.log($.components.version); // current version
-
-$.components.debug = false; // debugging
-$.components.defaults.delay = 300; // keypress delay for data-component-bind
-$.components.defaults.keypress = true; // keypress enable/disable for data-component-bind
-$.components.defaults.localstorage = true; // GETCACHE and POSTCACHE are stored into the localstorage
-
-// [parameter] --> is OPTIONAL
-// path --> path to object property
-
-$.components.$version = ''; // --> Set additional query parameter into the all requests
-$.components.$language = ''; // --> Set additional query parameter into the all requests
-
 $.components(); // A component compiler. It compiles only new components.
 $.components.findByName(name, [path], [fn(component)]); // Find components by name (data-component)
 $.components.findById(id, [path], [fn(component)]); // Find components by id (data-component-id)
