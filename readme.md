@@ -83,49 +83,49 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 #### HTML attributes
 
 ```plain
-<... data-component="">
+<element data-component="" />
 ```
 Must contain a component name. If the value of this attribute is empty then jComponent writes only raw output according to binding path attribute.
 
 ---
 
 ```plain
-<... data-component-path="">
+<element data-component-path="" />
 ```
 It's not required. The attribute contains the binding path for binding values between component and model, e.g. `form.name` (--> is binded to `window.form.name`) or `user.age` (--> is binded to `window.user.age`).
 
 ---
 
 ```html
-<... data-component-type="">
+<element data-component-type="" />
 ```
 It's not required. The attribute can contain a type of the component. You must define own types e.g. `number`, `currency` or `date`.
 
 ---
 
 ```html
-<... data-component-id="">
+<element data-component-id="" />
 ```
 It's not required. This attribute is an identificator of the component for the searching.
 
 ---
 
 ```html
-<... data-component-class="">
+<element data-component-class="" />
 ```
 When is the component ready then the library automatically toggles the element `class` according to this attribute. It's not required.
 
 ---
 
 ```html
-<... data-component-init="">
+<element data-component-init="" />
 ```
 It's not required and must contain name of function which is executed when the component is ready. `function init(component) {}`.
 
 ---
 
 ```html
-<... data-component-template="">
+<element data-component-template="" />
 ```
 It's not required and can contain only URL address to component template. The library automatically downloads the content and sends it to the component (into the `make` delegate).
 
@@ -134,35 +134,35 @@ It's not required and can contain only URL address to component template. The li
 #### Special HTML attributes
 
 ```html
-<... data-component-url="">
+<element data-component-url="" />
 ```
 The library downloads a full HTML template with the component and its JavaScript declaration. The content will be inserted into the current element and then will be evaluated.
 
 ---
 
 ```html
-<... data-component-bind="">
+<element data-component-bind="" />
 ```
 This attribute can be used only in `<input`, `<textarea` and `<select` tags. If the component contains some said tag then the attribute ensures two way binding between the input (in component) and the model. You don't need to declare `setter` and `getter` because the library to create it automatically. The value of this attribute is empty like this `data-component-bind=""`.
 
 ---
 
 ```html
-<... data-component-keypress="">
+<element data-component-keypress="" />
 ```
 Works only with `<input` and `<textarea` tags and enables/disables keypress real-time bindings of values. Default: `true` and the tags must have `data-component-bind` attribute.
 
 ---
 
 ```html
-<... data-component-keypress-delay="">
+<element data-component-keypress-delay="" />
 ```
 It's delay / sleep time for real-time bindings of values in milliseconds. Default: `300`.
 
 ---
 
 ```html
-<... data-component-keypress-only="">
+<element data-component-keypress-only="" />
 ```
 This attribute can enable only real-time bindings. That means: `blur` and `change` event is skipped in `<input`, `<textarea` tags. Suitable for autocomplete fields. Default: `false`.
 
@@ -233,17 +233,6 @@ __Very important.__ The HTML element of the component.
 
 #### Delegates
 
-__Quick links__:
-- [instance.prerender(template)](##------------instanceprerendertemplate)
-- [instance.make([template])](#------------instancemaketemplate)
-- [instance.done()](#------------instancedone)
-- [instance.destroy()](#------------instancedestroy)
-- [instance.validate(value, isInitialValue)](#------------instancevalidatevalue-isinitialvalue)
-- [instance.state(type, who)](#------------instancestatetype-who)
-- [instance.setter(value, path, type)](#------------instancesettervalue-path-type)
-- [instance.getter(value)](#------------instancegettervalue)
-- [instance.watch([path], function(path, value))](#------------instancewatchpath-functionpath-value)
-
 ```javascript
 instance.prerender(template)
 ```
@@ -255,6 +244,8 @@ this.prerender = function(template) {
     this.template = Tangular.compile(template);
 };
 ```
+
+---
 
 ```javascript
 instance.make([template])
@@ -275,18 +266,24 @@ this.make = function(template) {
 };
 ```
 
+---
+
 ```javascript
 instance.done()
 ```
 This delegate is executed when the component is ready to use (after the making).
+
+---
 
 ```javascript
 instance.destroy()
 ```
 This delegate is executed when the component is destroyed.
 
+---
+
 ```javascript
-instance.validate(value, isInitialValue)`
+instance.validate(value, isInitialValue)
 ```
 Very important degelate for the validation of values. The library executes this delegate when the value is changed in the current component --> with `<input data-component-bind` or `<textarea data-component-bind` or `<select data-component-bind` otherwise you must call this delegate manually.
 
@@ -297,6 +294,8 @@ instance.validate = function(value, isInitialValue) {
     return value.length > 0;
 };
 ```
+
+---
 
 ```javascript
 instance.state(type, who)
@@ -316,6 +315,8 @@ instance.state = function(type, who) {
     // who  === 5 : set
 };
 ```
+
+---
 
 ```javascript
 instance.setter(value, path, type)
@@ -341,6 +342,8 @@ instance.setter = function(value, path, type) {
 };
 ```
 
+---
+
 ```javascript
 instance.getter(value)
 ```
@@ -353,8 +356,10 @@ instance.getter = function(value) {
 };
 ```
 
-```plain
-instance.watch([path], function(path, value))`
+---
+
+```javascript
+instance.watch([path], function(path, value))
 ```
 This delegate watches all changes according to the model.
 
