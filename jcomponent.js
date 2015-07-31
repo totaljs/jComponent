@@ -2512,6 +2512,7 @@ function $components_keypress(self, old, e) {
 	self.$timeout = null;
 	self.$component.dirty(false, true);
 
+	if (self.value !== self.$value2) {
 		// because validation
 		setTimeout(function() {
 			self.$value2 = self.value;
