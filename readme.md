@@ -161,6 +161,14 @@ COMPONENT('my-component-name', function() {
 
 #### Properties
 
+__Quick links__:
+- [instance.name](##------------instancename)
+- [instance.path](#------------instancepath)
+- [instance.id](#------------instanceid)
+- [instance.type](#------------instancetype)
+- [instance.template](#------------instancetemplate)
+- [instance.element](#------------instanceelement)
+
 ##### ----------- `instance.name`
 This property contains the component name, e.g. `my-component-name`. If you use multiple same components then this value will be same like other.
 
@@ -182,6 +190,17 @@ __Very important.__ The HTML element of the component.
 ---
 
 #### Delegates
+
+__Quick links__:
+- [instance.prerender(template)](##------------instanceprerendertemplate)
+- [instance.make([template])](#------------instancemaketemplate)
+- [instance.done()](#------------instancedone)
+- [instance.destroy()](#------------instancedestroy)
+- [instance.validate(value, isInitialValue)](#------------instancevalidatevalue-isinitialvalue)
+- [instance.state(type, who)](#------------instancestatetype-who)
+- [instance.setter(value, path, type)](#------------instancesettervalue-path-type)
+- [instance.getter(value)](#------------instancegettervalue)
+- [instance.watch([path], function(path, value))](#------------instancewatchpath-functionpath-value)
 
 ##### ----------- `instance.prerender(template)`
 A prerender delegate is executed when the `data-component-template` attribute contains URL to template. Is executed once.
