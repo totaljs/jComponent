@@ -1,7 +1,7 @@
 [![MIT License][license-image]][license-url]
 # jQuery component library
 
-Homepage: <www.jcomponent.org>
+__Homepage:__ <http://www.jcomponent.org>
 
 - only __19 kB__ (minified, without GZIP compression)
 - `>= jQuery +1.7`
@@ -274,7 +274,6 @@ this.watch('some.other.path', function(path, value) {
 });
 ```
 
-
 ---
 
 #### Methods
@@ -358,30 +357,46 @@ instance.parser(function(value) {
 ```
 
 ---
----
 
+#### Events
 
-## Component methods/properties
+##### ----------- instance.on('watch', path, fn(path, value))
 
-```js
-COMPONENT('input', function() {
+```javascript
+// Watchs all changes
+instance.on('watch', '*', function(path, value) {
 
-    // Declare a simple event
-    this.on('some-event', function() {
-        console.log('HELLO FROM EVENT');
-    });
+});
 
-    // Declare a watch event
-    this.on('watch', '*', function(path, value) {
-        console.log('changed value', path, value);
-    });
+// Watchs all changes
+instance.on('watch', 'model.user.name', function(path, value) {
 
-    // Declare a watch event
-    this.on('watch', 'model.user.*', function(path, value) {
-        console.log('changed value', path, value);
-    });
 });
 ```
+
+##### ----------- instance.on('#component-id', fn(component))
+
+This event is executed when is ready a new component with the `data-component-id` attribute.
+
+##### ----------- instance.on('@component-name', fn(component))
+
+This event is executed when is ready component. If the HTML contains multiple components with same name then the event is executes many times.
+
+
+##### ----------- instance.on('some-event')
+
+```javascript
+instance.on('some-event', function() {
+    console.log('EVENT IS CALLED');
+});
+
+// Call event
+instance.emit('some-event');
+```
+
+---
+---
+
 
 ## Global properties and methods
 
