@@ -623,6 +623,8 @@ $.components()
 ```
 Runs the compiler for new components. jComponent doesn't watch new elements in DOM.
 
+---
+
 ```javascript
 $.components.set(path, value, [reset])
 ```
@@ -636,6 +638,8 @@ $.components.set('+some.model.tags', 'HTML');
 $.components.set('+some.model.tags', ['CSS', 'JavaScript']);
 ```
 
+---
+
 ```javascript
 $.components.push(path, value, [reset])
 ```
@@ -646,6 +650,8 @@ $.components.push('some.model.tags', 'HTML');
 $.components.push('some.model.tags', ['CSS', 'JavaScript']);
 ```
 
+---
+
 ```javascript
 $.components.inc(path, value, [reset])
 ```
@@ -654,6 +660,8 @@ Increments the value in the model, only for numbers. `reset` argument resets dir
 ```javascript
 $.components.inc('some.model.age', 10);
 ```
+
+---
 
 ```javascript
 $.components.extend(path, value, [reset])
@@ -664,6 +672,8 @@ Extends the value in the model, only for objects. `reset` argument resets dirty 
 $.components.inc('some.model', { age: 30, name: 'Peter' });
 ```
 
+---
+
 ```javascript
 $.components.get(path)
 ```
@@ -673,6 +683,8 @@ Gets the value from the model.
 $.components.get('some.model.age');
 $.components.get('some.model.tags');
 ```
+
+---
 
 ```javascript
 $.components.findByName(name, [path], [fn(component)])
@@ -694,6 +706,8 @@ $.components.findByName('my-component', 'model.*', function(component) {
 });
 ```
 
+---
+
 ```javascript
 $.components.findById(name, [path], [fn(component)])
 ```
@@ -714,6 +728,8 @@ $.components.findById('my-component', 'model.*', function(component) {
 });
 ```
 
+---
+
 ```javascript
 $.components.findByPath([path], [fn(component)])
 ```
@@ -729,25 +745,35 @@ $.components.findByPath('some.model', function(component) {
 });
 ```
 
+---
+
 ```javascript
 $.components.errors([path])
 ```
 Returns array of invalid components;
+
+---
 
 ```javascript
 $.components.invalid(path)
 ```
 Sets the invalid state to all components according to the binding path.
 
+---
+
 ```javascript
 $.components.remove(path)
 ```
 Removes all components according to the binding path.
 
+---
+
 ```javascript
 $.components.remove(jquery_element)
 ```
 Removes component.
+
+---
 
 ```javascript
 $.components.inject(url, [target], [callback])
