@@ -162,7 +162,7 @@ This property contains the component type from `data-component-type` attribute. 
 This property contains the current `String` template. You can change the value of this property for anything.
 
 ##### ---> instance.element
-__Very important.__ The element of the component.
+__Very important.__ The HTML element of the component.
 
 ---
 
@@ -229,9 +229,40 @@ instance.state = function(type, who) {
 };
 ```
 
----
----
+##### ---> instance.setter(value, path, type)
+This delegate is executed when the value in the model is changed. This delegate has an own implementation for the components which contain `<input data-component-bind` or `<textarea data-component-bind` or `<select data-component-bind` elements. If the value is changed according to `data-component-path` then the library executes this delegate.
 
+```javascript
+instance.setter = function(value, path, type) {
+
+    // Arg: value
+    // value === new value
+
+    // Arg: path
+    // Which path has been changed in the model?
+
+    // Arg: type
+    // 0 : init
+    // 1 : by developer
+    // 2 : by input
+
+    // Example:
+    instance.element.html(JSON.stringify(value));
+};
+```
+
+##### ---> instance.getter(value)
+The library executes this delegate when the `<input data-component-bind`, `<textarea data-component-bind` or `<select data-component-bind` change the value in the current component. `getter` means --> get value from the input. This delegate has an own implementation, but you can rewrite it like that:
+
+```javascript
+instance.getter = function(value) {
+    // Sets a new value to the model according the binding path:
+    instance.set(value);
+};
+```
+
+---
+---
 
 
 ## Component methods/properties
@@ -246,31 +277,6 @@ COMPONENT('input', function() {
         // type === 2 : by input
         // index === Array index if exists
     });
-
-    // Get the value from input/select/textarea
-    // OPTIONAL, framework has an own mechanism for this (but you can rewrite it)
-    this.getter = function(value) {
-        // set value to model (according path name)
-        this.set(value);
-    };
-
-    // Set the value to input/select/textarea
-    // OPTIONAL, framework has an own mechanism for this (but you can rewrite it)
-    // IMPORTANT: The intial value executes this delegate.
-    this.setter = function(value, path, type) {
-
-        // value === new value
-
-        // path  === changed path
-        // for only real changes uncomment:
-        // if (path !== this.path) return;
-
-        // type === 0 : init
-        // type === 1 : by developer
-        // type === 2 : by input
-
-        this.element.find('input').val(value === undefined || value === null ? '' : value);
-    };
 
     // Declare a simple event
     this.on('some-event', function() {
