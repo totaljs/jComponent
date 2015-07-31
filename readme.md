@@ -29,7 +29,7 @@ This documentation is composed with 3 parts:
 - Component definition
 - Global helpers
 
----
+***
 
 ### Library
 
@@ -42,6 +42,8 @@ jComponent offers 3 libraries for developement rich web applications:
 If you want to use jComponent on your presentation website - use `jcomponent.min.js` only. If you create some rich web application, then use `jcta.min.js` because contains template engine and for __SPA__ use `jctajr.min.js` because contains template engine and HTML 5 history API.
 
 The component doesn't know scopes. Only scope with the components work is the browser `window.` scope. So each path in the form of `some.path.to.something` is automatically routed to `window.some.path.to.something`. The library automatically creates values according to the binding path.
+
+***
 
 ### HTML definition
 
@@ -117,7 +119,7 @@ It's delay / sleep time for real-time bindings of values in milliseconds. Defaul
 ##### "data-component-keypress-only"
 This attribute can enable only real-time bindings. That means: `blur` and `change` event is skipped in `<input`, `<textarea` tags. Suitable for autocomplete fields. Default: `false`.
 
----
+***
 
 ### Component definition
 
