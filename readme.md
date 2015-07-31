@@ -413,10 +413,10 @@ COMPONENT('my-component-name', function() {
 
     instance.watch([path], function(path, value));
     instance.watch(function(path, value) { // example
-        // watch the for changes
+        // watch for changes
     });
     instance.watch('some.other.path', function(path, value) { // example
-        // watch the for changes
+        // watch for changes
     });
     // This delegate watches all changes according to the model.
 });
@@ -425,108 +425,73 @@ COMPONENT('my-component-name', function() {
 ## Events
 
 ```javascript
-instance.on('watch', path, fn(path, value))
-```
+COMPONENT('my-component-name', function() {
 
-```javascript
-// Watchs all changes
-instance.on('watch', '*', function(path, value) {
+    var instance = this;
 
+    instance.on('#component-id', function(component) {
+        // This event is executed when is ready a new component
+        // with the `data-component-id` attribute.
+    });
+
+    instance.on('@component-name', function(component) {
+        // This event is executed when is ready component.
+        // If the HTML contains multiple components with the same name then
+        // the event is executed more times.
+    });
+
+    // WATCHING
+    // Watchs all changes
+    instance.on('watch', '*', function(path, value) {
+
+    });
+
+    // Watchs all changes
+    instance.on('watch', 'model.user.name', function(path, value) {
+
+    });
+
+    // OTHER
+    // Custom events
+    instance.on('some-event', function() {
+
+    });
+
+    // Call custom event
+    instance.emit('some-event');
 });
-
-// Watchs all changes
-instance.on('watch', 'model.user.name', function(path, value) {
-
-});
 ```
 
----
+## Global helpers
+
+### Properties
 
 ```javascript
-instance.on('#component-id', fn(component))
+$.components.version;
+// {Number} returns the current version of jComponent.
+
+$.components.debug;
+// {Boolean} enables web browser console logging, default `false`.
+
+$.components.defaults.delay;
+// {Number} sets the delay for keypress real-time binding, default `300`.
+
+$.components.defaults.keypress;
+// {Boolean} enables / disables keypress real-time binding, default `true`.
+
+$.components.defaults.localstorage;
+// {Boolean} enables / disables localstorage for cache mechanism, default `true`.
+
+$.components.$version;
+// {String} appends the value to each URL address `?version=$version`
+// called via jComponent, default: "".
+
+$.components.$language;
+// {String} appends the value to each URL address `?language=$language`
+// called via jComponent, default: "".
 ```
 
-This event is executed when is ready a new component with the `data-component-id` attribute.
-
----
-
-```javascript
-instance.on('@component-name', fn(component))
-```
-
-This event is executed when is ready component. If the HTML contains multiple components with same name then the event is executes many times.
-
----
-
-```javascript
-instance.on('some-event')
-```
-
-```javascript
-instance.on('some-event', function() {
-    console.log('EVENT IS CALLED');
-});
-
-// Call event
-instance.emit('some-event');
-```
-
----
-
-# Global helpers
-
-#### Properties
-
-```javascript
-$.components.version
-```
-`{Number}` returns the current version of jComponent.
-
----
-
-```javascript
-$.components.debug
-```
-`{Boolean}` enables web browser console logging, default `false`.
-
----
-
-```javascript
-$.components.defaults.delay
-```
-`{Number}` sets the delay for keypress real-time binding, default `300`.
-
----
-
-```javascript
-$.components.defaults.keypress
-```
-`{Boolean}` enables / disables keypress real-time binding, default `true`.
-
----
-
-```javascript
-$.components.defaults.localstorage
-```
-`{Boolean}` enables / disables localstorage for cache mechanism, default `true`.
-
----
-
-```javascript
-$.components.$version
-```
-`{String}` appends the value to each URL address `?version=$version` called via jComponent, default: `""`.
-
----
-
-```javascript
-$.components.$language
-```
-`{String}` appends the value to each URL address `?language=$language` called via jComponent, default: `""`.
-
----
-
-## Methods
+### Methods
 
 ```javascript
 $.components()
