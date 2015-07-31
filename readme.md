@@ -17,6 +17,8 @@ __YOU MUST SEE:__
 - [jRouting](https://github.com/petersirka/jRouting)
 - [Tangular - A template engine like Angular.js](https://github.com/petersirka/Tangular)
 
+***
+
 ## Documentation
 
 This documentation is composed with 3 parts:
@@ -285,7 +287,7 @@ Removes current instance of this component.
 Gets the value from the model.
 
 ##### ----------- `instance.set(value)`
-Sets the value in the model.
+Sets the value into the model.
 
 ##### ----------- `instance.inc(value)`
 Increments the value in the model.
@@ -413,31 +415,125 @@ instance.emit('some-event');
 `{Boolean}` enables / disables localstorage for cache mechanism, default __true__.
 
 ##### ----------- `$.components.$version`
-`{String}` Appends the value to each URL address `?version=$version` called via jComponent, default: __""__.
+`{String}` appends the value to each URL address `?version=$version` called via jComponent, default: __""__.
 
 ##### ----------- `$.components.$language`
-`{String}` Appends the value to each URL address `?language=$language` called via jComponent, default: __""__.
+`{String}` appends the value to each URL address `?language=$language` called via jComponent, default: __""__.
 
 #### Methods
 
 ##### ----------- `$.components()`
 Runs the compiler for new components. jComponent doesn't watch new elements in DOM.
 
+##### ----------- `$.components.set(path, value, [reset])`
+Sets the value into the model. `reset` argument resets dirty state (default: __false__).
+
+```javascript
+$.components.set('some.model.name', 'Peter');
+
+// Other modifications
+$.components.set('+some.model.tags', 'HTML');
+$.components.set('+some.model.tags', ['CSS', 'JavaScript']);
+```
+
+##### ----------- `$.components.push(path, value, [reset])`
+Pushs the value in the model, only for arrays. `reset` argument resets dirty state (default: __false__).
+
+```javascript
+$.components.push('some.model.tags', 'HTML');
+$.components.push('some.model.tags', ['CSS', 'JavaScript']);
+```
+
+##### ----------- `$.components.inc(path, value, [reset])`
+Increments the value in the model, only for numbers. `reset` argument resets dirty state (default: __false__).
+
+```javascript
+$.components.inc('some.model.age', 10);
+```
+
+##### ----------- `$.components.extend(path, value, [reset])`
+Extends the value in the model, only for objects. `reset` argument resets dirty state (default: __false__).
+
+```javascript
+$.components.inc('some.model', { age: 30, name: 'Peter' });
+```
+
+##### ----------- `$.components.get(path)`
+Gets the value from the model.
+
+```javascript
+$.components.get('some.model.age');
+$.components.get('some.model.tags');
+```
+
+##### ----------- `$.components.findByName(name, [path], [fn(component)])`
+Finds components by `data-component` attribute.
+
+```javascript
+// Returns only one component
+$.components.findByName('my-component');
+
+// Reads all components - `my-component`
+$.components.findByName('my-component', function(component) {
+    console.log(component);
+});
+
+// Reads all components - `my-component` according to the path
+$.components.findByName('my-component', 'model.*', function(component) {
+    console.log(component);
+});
+```
+
+##### ----------- `$.components.findById(name, [path], [fn(component)])`
+Finds components by `data-component-id` attribute.
+
+```javascript
+// Returns only one component
+$.components.findById('my-component');
+
+// Reads all components - `my-component`
+$.components.findById('my-component', function(component) {
+    console.log(component);
+});
+
+// Reads all components - `my-component` according to the path
+$.components.findById('my-component', 'model.*', function(component) {
+    console.log(component);
+});
+```
+
+##### ----------- `$.components.findByPath([path], [fn(component)])`
+Finds components by `data-component-id` attribute.
+
+```javascript
+// Returns only one component
+$.components.findByPath('some.model');
+
+// Reads all components
+$.components.findByPath('some.model', function(component) {
+    console.log(component);
+});
+```
+
+##### ----------- `$.components.errors([path])`
+Returns array of invalid components;
+
+##### ----------- `$.components.invalid(path)`
+Sets the invalid state to all components according to the binding path.
+
+##### ----------- `$.components.remove(path)`
+Removes all components according to the binding path.
+
+##### ----------- `$.components.remove(jquery_element)`
+Removes component.
+
+##### ----------- `$.components.inject(url, [target], [callback])`
+Injects content (with components) into the `target` (by default: `document.body`).
+
 #### Events
 
 
 ```js
-$.components(); // A component compiler. It compiles only new components.
-$.components.findByName(name, [path], [fn(component)]); // Find components by name (data-component)
-$.components.findById(id, [path], [fn(component)]); // Find components by id (data-component-id)
-$.components.findByPath([path], [fn(component)]); // Find components by name (data-component)
-$.components.inject(url, [target], [callback]); // Inject script or HTML
-$.components.set(path, value, [reset]); // Set/write value to model according to path
-$.components.get(path); // Get/read value from the model
-$.components.push(path, value, [reset]); // Push new single value or array to array
-$.components.extend(path, value, [reset]); // Extend current object according to value
-$.components.set('+some.path', [1, 2, 3]); // Is same as $.components.push()
-
 $.components.dirty(path, [value], [notifyPath]); // Are values dirty? or setter "dirty" state.
 $.components.dirty(path, [except_paths_arr]); // only for read
 $.components.valid(path, [value], [notifyPath]); // Are values valid? or setter "valid" state.
@@ -452,11 +548,7 @@ $.components.reset([path], [timeout]); // Reset dirty and valid state to dirty=t
 $.components.each(fn(component, index, isAsterix), path); // A generic iterator function
 $.components.update(path, [reset]); // Re-update values, example: "model.user.*"
 $.components.notify([path1], [path2], [path3], [path4], ...); // Re-update values (only fixed path)
-$.components.remove([path]); // The function removes components (triggers "destroy" event)
-$.components.remove(jQuery_element); // Removes all components in element
-$.components.invalid([path]) // The path will be invalid: valid(false), dirty(false)
 
-$.components.errors([path]) // Returns array of invalid fields
 $.components.emit(name, arg1, arg2); // The function triggers event within all components
 $.components.parseQuery([querystring]); // Parsers query string and returns object
 $.components.POST(url, data, [callback or path], [sleep], [error(response, status, type) or path]); // Send data
