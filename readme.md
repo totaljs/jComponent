@@ -316,25 +316,6 @@ COMPONENT('my-component-name', function() {
 });
 ```
 
----
-
-```javascript
-instance.watch([path], function(path, value))
-```
-This delegate watches all changes according to the model.
-
-```javascript
-this.watch(function(path, value) {
-    // watch the for changes
-});
-
-this.watch('some.other.path', function(path, value) {
-    // watch the for changes
-});
-```
-
----
-
 ### Methods
 
 ```javascript
@@ -345,55 +326,70 @@ COMPONENT('my-component-name', function() {
     instance.setPath(path);
     // This method sets a new path for this component.
     
+
     instance.remove();
     // Removes current instance of this component.
+
 
     instance.get();
     // Gets the value from the model.
 
+
     instance.set(value);
     // Sets the value into the model.
+
 
     instance.inc(value);
     instance.inc(1); // example
     // Increments the value in the model.
 
+
     instance.extend(value);
     instance.extend({ price: 0, name: 'jComponent' }); // example
     // Extends the value in the model. Only for objects.
+
 
     instance.push(value);
     instance.push(1); // example
     instance.push([1, 2, 3]); // example
     // Push the value (can be an Array) in the model. Only for arrays.
 
+
     instance.attr(name, [value]);
     // Gets or Sets an attribute in the component element.
+
 
     instance.html([value]);
     // Gets or Sets inner HTML in the component element.
     
+
     instance.dirty([boolean]);
     // Gets or Sets the dirty state. Only for inputs, textareas and selects.
+
 
     instance.valid([boolean]);
     // Gets or Sets the validation state.
     
+
     instance.change([boolean]);
     // Contains `instance.dirty()` and `instance.valid()` together.
     // This method means: the content of this element is `changed` or `unchanged`.
+
 
     instance.invalid();
     instance.isInvalid();
     // Returns `{Booelan}` if the component is not valid.
 
+
     instance.emit(event_name, [arg1], [arg2])
     // Emits event for all components.
+
 
     instance.evaluate([path], expression);
     console.log(instance.evaluate('value.age > 18')); // example
     console.log(instance.evaluate('some.path', 'value === "Peter"')); // example
     // Evalutes string expression. Default path is the component path.
+
 
     instance.formatter(fn);
     instance.formatter(function(value) { // example
@@ -402,6 +398,7 @@ COMPONENT('my-component-name', function() {
     // Appends a new formatter. The formatter formats the model value for the render.
     // E.g. date. Works only with components which contain `<input data-component-bind`,
     // `<textarea data-component-bind` or `<select data-component-bind`.
+
 
     instance.parser(fn);
     instance.parser(function(value) { // example
@@ -412,6 +409,16 @@ COMPONENT('my-component-name', function() {
     // or `selectfor`. E.g. date. Works only with components which contain
     // `<input data-component-bind`, `<textarea data-component-bind` or
     // `<select data-component-bind`.
+
+
+    instance.watch([path], function(path, value));
+    instance.watch(function(path, value) { // example
+        // watch the for changes
+    });
+    instance.watch('some.other.path', function(path, value) { // example
+        // watch the for changes
+    });
+    // This delegate watches all changes according to the model.
 });
 ```
 
