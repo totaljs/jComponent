@@ -83,11 +83,11 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
 #### HTML attributes
 
-| Attribute name          | Description              |
-|-------------------------|--------------------------|
-| "data-component" | Must contain a component name. If the value of this attribute is empty then jComponent writes only raw output according to binding path attribute. |
-| "data-component-path" | It's not required. The attribute contains the binding path for binding values between component and model, e.g. `form.name` (--> is binded to `window.form.name`) or `user.age` (--> is binded to `window.user.age`).
+##### "data-component"
+Must contain a component name. If the value of this attribute is empty then jComponent writes only raw output according to binding path attribute.
 
+##### "data-component-path"
+It's not required. The attribute contains the binding path for binding values between component and model, e.g. `form.name` (--> is binded to `window.form.name`) or `user.age` (--> is binded to `window.user.age`).
 
 ##### "data-component-type"
 It's not required. The attribute can contain a type of the component. You must define own types e.g. `number`, `currency` or `date`.
@@ -147,27 +147,21 @@ COMPONENT('my-component-name', function() {
 #### Properties
 
 ##### instance.name
-
 This property contains the component name, e.g. `my-component-name`. If you use multiple same components then this value will be same like other.
 
 ##### instance.path
-
 This property contains a binding path, it's __read-only__. The library according this path binds value between component and the scope / model.
 
 ##### instance.id
-
 This property contains the component identificator from `data-component-id` attribute. By default contains internal ID of the current component instance.
 
 ##### instance.type
-
 This property contains the component type from `data-component-type` attribute. Default: `""`.
 
 ##### instance.template
-
 This property contains the current `String` template. You can change the value of this property for anything.
 
 ##### instance.element
-
 __Very important.__ The element of the component.
 
 ---
@@ -175,7 +169,6 @@ __Very important.__ The element of the component.
 #### Delegates
 
 ##### instance.prerender(template)
-
 A prerender delegate is executed when the `data-component-template` attribute contains URL to template. Is executed once.
 
 ```javascript
@@ -186,7 +179,6 @@ this.prerender = function(template) {
 ```
 
 ##### instance.make([template])
-
 This delegate is executed when the component is creating own instance. Is executed once.
 
 ```javascript
@@ -204,15 +196,12 @@ this.make = function(template) {
 ```
 
 ##### instance.done()
-
 This delegate is executed when the component is ready to use (after the making).
 
 ##### instance.destroy()
-
 This delegate is executed when the component is destroyed.
 
 ##### instance.validate(value, isInitialValue)
-
 Very important degelate for the validation of values. The library executes this delegate when the value is changed in the current component --> with `<input data-component-bind` or `<textarea data-component-bind` or `<select data-component-bind` otherwise you must call this delegate manually.
 
 ```javascript
@@ -220,6 +209,23 @@ instance.validate = function(value, isInitialValue) {
     if (isInitialValue)
         return true;
     return value.length > 0;
+};
+```
+
+##### instance.state(type, who)
+This delegate watchs the value state. In this delegate you can change the `design` of the component according to the value state.
+
+```javascript
+instance.state = function(type, who) {
+    // type === 0 : init
+    // type === 1 : by developer
+    // type === 2 : by input
+
+    // who  === 1 : valid
+    // who  === 2 : dirty
+    // who  === 3 : reset
+    // who  === 4 : update
+    // who  === 5 : set
 };
 ```
 
@@ -240,21 +246,6 @@ COMPONENT('input', function() {
         // type === 2 : by input
         // index === Array index if exists
     });
-
-    // OPTIONAL
-    // Watch the state of the value, suitable for toggling classes of element
-    // IMPORTANT: The intial value executes this delegate.
-    this.state = function(type, who) {
-        // type === 0 : init
-        // type === 1 : by developer
-        // type === 2 : by input
-
-        // who  === 1 : valid
-        // who  === 2 : dirty
-        // who  === 3 : reset
-        // who  === 4 : update
-        // who  === 5 : set
-    };
 
     // Get the value from input/select/textarea
     // OPTIONAL, framework has an own mechanism for this (but you can rewrite it)
