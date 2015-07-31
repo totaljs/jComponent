@@ -2405,6 +2405,14 @@ $(document).ready(function() {
 		if (!self.$component || self.$component.$removed || !self.$component.getter || !self.$component.setter)
 			return;
 
+		// Tab
+		if (e.keyCode === 9)
+			return;
+
+		// Backspace
+		if (e.keyCode === 8 && !self.value)
+			return;
+
 		if (self.$skip && e.type === 'focusout') {
 			$components_keypress(self, self.$value, e);
 			return;
@@ -2446,7 +2454,7 @@ $(document).ready(function() {
 		if (self.$only && (e.type === 'focusout' || e.type === 'change'))
 			return;
 
-		if (e.type === 'keydown' && e.keyCode === undefined)
+		if (e.type === 'keydown' && (e.keyCode === undefined || e.keyCode === 9))
 			return;
 
 		if (e.keyCode < 41 && e.keyCode !== 8 && e.keyCode !== 32) {
@@ -2500,13 +2508,16 @@ function $components_keypress(self, old, e) {
 	if (self.value === old)
 		return;
 
+	clearTimeout(self.$timeout);
 	self.$timeout = null;
 	self.$component.dirty(false, true);
 
-	// because validation
-	setTimeout(function() {
-		self.$component.getter(self.value, 2, old);
-	}, 2);
+		// because validation
+		setTimeout(function() {
+			self.$value2 = self.value;
+			self.$component.getter(self.value, 2, old);
+		}, 5);
+	}
 
 	if (!self.$only && e.type === 'keydown' && e.keyCode !== 13)
 		return;
@@ -2515,6 +2526,11 @@ function $components_keypress(self, old, e) {
 	self.$component.$skip = false;
 	self.$component.setter(self.value, self.$component.path, 2);
 	self.$value = self.value;
+	clearTimeout(self.$cleanupmemory);
+	self.$cleanupmemory = setTimeout(function() {
+		delete self.$value2;
+		delete self.$value;
+	}, 300); // 5 minutes
 }
 
 function $components_save() {
