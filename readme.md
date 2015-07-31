@@ -83,44 +83,44 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
 #### HTML attributes
 
-##### ---> "data-component"
+##### === "data-component"
 Must contain a component name. If the value of this attribute is empty then jComponent writes only raw output according to binding path attribute.
 
-##### ---> "data-component-path"
+##### === "data-component-path"
 It's not required. The attribute contains the binding path for binding values between component and model, e.g. `form.name` (--> is binded to `window.form.name`) or `user.age` (--> is binded to `window.user.age`).
 
-##### ---> "data-component-type"
+##### === "data-component-type"
 It's not required. The attribute can contain a type of the component. You must define own types e.g. `number`, `currency` or `date`.
 
-##### ---> "data-component-id"
+##### === "data-component-id"
 It's not required. This attribute is an identificator of the component for the searching.
 
-##### ---> "data-component_class"
+##### === "data-component_class"
 When is the component ready then the library automatically toggles the element `class` according to this attribute. It's not required.
 
-##### ---> "data-component-init"
+##### === "data-component-init"
 It's not required and must contain name of function which is executed when the component is ready. `function init(component) {}`.
 
-##### ---> "data-component-template"
+##### === "data-component-template"
 It's not required and can contain only URL address to component template. The library automatically downloads the content and sends it to the component (into the `make` delegate).
 
 ---
 
 #### Special HTML attributes
 
-##### ---> "data-component-url"
+##### === "data-component-url"
 The library downloads a full HTML template with the component and its JavaScript declaration. The content will be inserted into the current element and then will be evaluated.
 
-##### ---> "data-component-bind"
+##### === "data-component-bind"
 This attribute can be used only in `<input`, `<textarea` and `<select` tags. If the component contains some said tag then the attribute ensures two way binding between the input (in component) and the model. You don't need to declare `setter` and `getter` because the library to create it automatically. The value of this attribute is empty like this `data-component-bind=""`.
 
-##### ---> "data-component-keypress"
+##### === "data-component-keypress"
 Works only with `<input` and `<textarea` tags and enables/disables keypress real-time bindings of values. Default: `true` and the tags must have `data-component-bind` attribute.
 
-##### ---> "data-component-keypress-delay"
+##### === "data-component-keypress-delay"
 It's delay / sleep time for real-time bindings of values in milliseconds. Default: `300`.
 
-##### ---> "data-component-keypress-only"
+##### === "data-component-keypress-only"
 This attribute can enable only real-time bindings. That means: `blur` and `change` event is skipped in `<input`, `<textarea` tags. Suitable for autocomplete fields. Default: `false`.
 
 ***
@@ -146,29 +146,29 @@ COMPONENT('my-component-name', function() {
 
 #### Properties
 
-##### ---> instance.name
+##### === instance.name
 This property contains the component name, e.g. `my-component-name`. If you use multiple same components then this value will be same like other.
 
-##### ---> instance.path
+##### === instance.path
 This property contains a binding path, it's __read-only__. The library according this path binds value between component and the scope / model.
 
-##### ---> instance.id
+##### === instance.id
 This property contains the component identificator from `data-component-id` attribute. By default contains internal ID of the current component instance.
 
-##### ---> instance.type
+##### === instance.type
 This property contains the component type from `data-component-type` attribute. Default: `""`.
 
-##### ---> instance.template
+##### === instance.template
 This property contains the current `String` template. You can change the value of this property for anything.
 
-##### ---> instance.element
+##### === instance.element
 __Very important.__ The HTML element of the component.
 
 ---
 
 #### Delegates
 
-##### ---> instance.prerender(template)
+##### === instance.prerender(template)
 A prerender delegate is executed when the `data-component-template` attribute contains URL to template. Is executed once.
 
 ```javascript
@@ -178,7 +178,7 @@ this.prerender = function(template) {
 };
 ```
 
-##### ---> instance.make([template])
+##### === instance.make([template])
 This delegate is executed when the component is creating own instance. Is executed once.
 
 ```javascript
@@ -195,13 +195,13 @@ this.make = function(template) {
 };
 ```
 
-##### ---> instance.done()
+##### === instance.done()
 This delegate is executed when the component is ready to use (after the making).
 
-##### ---> instance.destroy()
+##### === instance.destroy()
 This delegate is executed when the component is destroyed.
 
-##### ---> instance.validate(value, isInitialValue)
+##### === instance.validate(value, isInitialValue)
 Very important degelate for the validation of values. The library executes this delegate when the value is changed in the current component --> with `<input data-component-bind` or `<textarea data-component-bind` or `<select data-component-bind` otherwise you must call this delegate manually.
 
 ```javascript
@@ -212,7 +212,7 @@ instance.validate = function(value, isInitialValue) {
 };
 ```
 
-##### ---> instance.state(type, who)
+##### === instance.state(type, who)
 This delegate watches the value state. In this delegate you can change the `design` of the component according to the value state.
 
 ```javascript
@@ -229,7 +229,7 @@ instance.state = function(type, who) {
 };
 ```
 
-##### ---> instance.setter(value, path, type)
+##### === instance.setter(value, path, type)
 This delegate is executed when the value in the model is changed. This delegate has an own implementation for the components which contain `<input data-component-bind` or `<textarea data-component-bind` or `<select data-component-bind` elements. If the value is changed according to `data-component-path` then the library executes this delegate.
 
 ```javascript
@@ -251,7 +251,7 @@ instance.setter = function(value, path, type) {
 };
 ```
 
-##### ---> instance.getter(value)
+##### === instance.getter(value)
 The library executes this delegate when the `<input data-component-bind`, `<textarea data-component-bind` or `<select data-component-bind` change the value in the current component. `getter` means --> get value from the input. This delegate has an own implementation, but you can rewrite it like that:
 
 ```javascript
@@ -261,7 +261,7 @@ instance.getter = function(value) {
 };
 ```
 
-##### ---> instance.watch([path], function(path, value))
+##### === instance.watch([path], function(path, value))
 This delegate watches all changes according to the model.
 
 ```javascript
@@ -279,29 +279,29 @@ this.watch('some.other.path', function(path, value) {
 
 #### Methods
 
-##### ---> instance.setPath(path)
+##### === instance.setPath(path)
 This method sets a new path for this component.
 
-##### ---> instance.remove()
+##### === instance.remove()
 Removes current instance of this component.
 
-##### ---> instance.get()
+##### === instance.get()
 Gets the value from the model.
 
-##### ---> instance.set(value)
+##### === instance.set(value)
 Sets the value in the model.
 
-##### ---> instance.inc(value)
+##### === instance.inc(value)
 Increments the value in the model.
 
-##### ---> instance.extend(value)
+##### === instance.extend(value)
 Extends the value in the model. Only for objects.
 
 ```javascript
 instance.extend({ price: 0, name: 'jComponent' });
 ```
 
-##### ---> instance.push(value)
+##### === instance.push(value)
 Push the value (can be an Array) in the model. Only for arrays.
 
 ```javascript
@@ -309,28 +309,28 @@ instance.push(1);
 instance.push([1, 2, 3]);
 ```
 
-##### ---> instance.attr(name, [value])
+##### === instance.attr(name, [value])
 Gets or Sets an attribute in the component element.
 
-##### ---> instance.html([value])
+##### === instance.html([value])
 Gets or Sets inner HTML in the component element.
 
-##### ---> instance.dirty([boolean])
+##### === instance.dirty([boolean])
 Gets or Sets the dirty state. Only for inputs, textareas and selects.
 
-##### ---> instance.valid([boolean])
+##### === instance.valid([boolean])
 Gets or Sets the validation state.
 
-##### ---> instance.change([boolean])
+##### === instance.change([boolean])
 Contains `instance.dirty()` and `instance.valid()` together. This method means: the content of this element is `changed` or `unchanged`.
 
-##### ---> instance.invalid() or instance.isInvalid()
+##### === instance.invalid() or instance.isInvalid()
 Returns `{Booelan}` if the component is not valid.
 
-##### ---> instance.emit(event_name, [arg1], [arg2])
+##### === instance.emit(event_name, [arg1], [arg2])
 Emits event for all components.
 
-##### ---> instance.evaluate([path], expression)
+##### === instance.evaluate([path], expression)
 Evalutes string expression. Default path is the component path.
 
 ```javascript
@@ -338,7 +338,7 @@ consolel.log(instance.evaluate('value.age > 18'));
 consolel.log(instance.evaluate('some.path', 'value === "Peter"'));
 ```
 
-##### ---> instance.formatter(fn)
+##### === instance.formatter(fn)
 Appends a new formatter. The formatter formats the model value for the render. E.g. date. Works only with components which contain `<input data-component-bind`, `<textarea data-component-bind` or `<select data-component-bind`.
 
 ```javascript
@@ -347,7 +347,7 @@ instance.formatter(function(value) {
 });
 ```
 
-##### ---> instance.parser(fn)
+##### === instance.parser(fn)
 Appneds a new parser. The parser parses the value from the `input`, `textarea` or `selectfor`. E.g. date. Works only with components which contain `<input data-component-bind`, `<textarea data-component-bind` or `<select data-component-bind`.
 
 ```javascript
@@ -517,7 +517,7 @@ CONTROLLER('users', function(patcher) {
 ## jQuery
 
 ```js
-$('#my-component').component() // ---> Component object
+$('#my-component').component() // === Component object
 
 $('#my-component').on('component', function() {
     // a component is ready
