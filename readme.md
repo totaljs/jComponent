@@ -312,6 +312,25 @@ this.watch('some.other.path', function(path, value) {
 
 #### Methods
 
+__Quick links__:
+- [instance.setPath(path)](##------------instancesetpathpath)
+- [instance.remove()](##------------instanceremove)
+- [instance.get()](##------------instanceget)
+- [instance.set(value)](##------------instancesetvalue)
+- [instance.inc(value)](##------------instanceincvalue)
+- [instance.extend(value)](##------------instanceextendvalue)
+- [instance.push(value)](##------------instancepushvalue)
+- [instance.attr(name, [value])](##------------instanceattrname-value)
+- [instance.html([value])](##------------instancehtmlvalue)
+- [instance.dirty([boolean])](##------------instancedirtyboolean)
+- [instance.valid([boolean])](##------------instancevalidboolean)
+- [instance.change([boolean])](##------------instancechangeboolean)
+- [instance.invalid() or instance.isInvalid()](##------------instanceinvalid-or-instanceisinvalid)
+- [instance.emit(event_name, [arg1], [arg2])](##------------instanceemitevent_name-arg1-arg2)
+- [instance.evaluate([path], expression)](##------------instanceevaluatepath-expression)
+- [instance.formatter(fn)](##------------instanceformatterfn)
+- [instance.parser(fn)](##------------instanceparserfn)
+
 ##### ----------- `instance.setPath(path)`
 This method sets a new path for this component.
 
@@ -393,6 +412,12 @@ instance.parser(function(value) {
 ---
 
 #### Events
+
+__Quick links__:
+- [instance.on('watch', path, fn(path, value))](##------------instanceonwatch-path-fnpath-value)
+- [instance.on('#component-id', fn(component))](##------------instanceoncomponent-id-fncomponent)
+- [instance.on('@component-name', fn(component))](##------------instanceoncomponent-name-fncomponent)
+- [instance.on('some-event')](##------------instanceonsome-event)
 
 ##### ----------- `instance.on('watch', path, fn(path, value))`
 
