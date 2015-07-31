@@ -82,6 +82,15 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
 #### HTML attributes
 
+__Quick links__:
+- [data-component](#------------data-component)
+- [data-component-path](#------------data-component-path)
+- [data-component-type](#------------data-component-type)
+- [data-component-id](#------------data-component-id)
+- [data-component-class](#------------data-component-class)
+- [data-component-init](#------------data-component-init)
+- [data-component-template](#------------data-component-class)
+
 ##### ----------- `"data-component"`
 Must contain a component name. If the value of this attribute is empty then jComponent writes only raw output according to binding path attribute.
 
@@ -94,7 +103,7 @@ It's not required. The attribute can contain a type of the component. You must d
 ##### ----------- `"data-component-id"`
 It's not required. This attribute is an identificator of the component for the searching.
 
-##### ----------- `"data-component_class"`
+##### ----------- `"data-component-class"`
 When is the component ready then the library automatically toggles the element `class` according to this attribute. It's not required.
 
 ##### ----------- `"data-component-init"`
@@ -106,6 +115,13 @@ It's not required and can contain only URL address to component template. The li
 ---
 
 #### Special HTML attributes
+
+__Quick links__:
+- [data-component-url](#------------data-component-url)
+- [data-component-bind](#------------data-component-bind)
+- [data-component-keypress](#------------data-component-keypress)
+- [data-component-keypress-delay](#------------data-component-keypress-delay)
+- [data-component-keypress-only](#------------data-component-keypress-only)
 
 ##### ----------- `"data-component-url"`
 The library downloads a full HTML template with the component and its JavaScript declaration. The content will be inserted into the current element and then will be evaluated.
