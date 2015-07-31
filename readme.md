@@ -92,19 +92,29 @@ data-component-path="STRING"
 ```
 It's not required. The attribute contains the binding path for binding values between component and model, e.g. `form.name` (--> is binded to `window.form.name`) or `user.age` (--> is binded to `window.user.age`).
 
-##### ----------- `"data-component-type"`
+```plain
+"data-component-type"`
+```
 It's not required. The attribute can contain a type of the component. You must define own types e.g. `number`, `currency` or `date`.
 
-##### ----------- `"data-component-id"`
+```plain
+"data-component-id"`
+```
 It's not required. This attribute is an identificator of the component for the searching.
 
-##### ----------- `"data-component-class"`
+```plain
+"data-component-class"`
+```
 When is the component ready then the library automatically toggles the element `class` according to this attribute. It's not required.
 
-##### ----------- `"data-component-init"`
+```plain
+"data-component-init"`
+```
 It's not required and must contain name of function which is executed when the component is ready. `function init(component) {}`.
 
-##### ----------- `"data-component-template"`
+```plain
+"data-component-template"`
+```
 It's not required and can contain only URL address to component template. The library automatically downloads the content and sends it to the component (into the `make` delegate).
 
 ---
@@ -118,19 +128,29 @@ __Quick links__:
 - [data-component-keypress-delay](#------------data-component-keypress-delay)
 - [data-component-keypress-only](#------------data-component-keypress-only)
 
-##### ----------- `"data-component-url"`
+```plain
+"data-component-url"`
+```
 The library downloads a full HTML template with the component and its JavaScript declaration. The content will be inserted into the current element and then will be evaluated.
 
-##### ----------- `"data-component-bind"`
+```plain
+"data-component-bind"`
+```
 This attribute can be used only in `<input`, `<textarea` and `<select` tags. If the component contains some said tag then the attribute ensures two way binding between the input (in component) and the model. You don't need to declare `setter` and `getter` because the library to create it automatically. The value of this attribute is empty like this `data-component-bind=""`.
 
-##### ----------- `"data-component-keypress"`
+```plain
+"data-component-keypress"`
+```
 Works only with `<input` and `<textarea` tags and enables/disables keypress real-time bindings of values. Default: `true` and the tags must have `data-component-bind` attribute.
 
-##### ----------- `"data-component-keypress-delay"`
+```plain
+"data-component-keypress-delay"`
+```
 It's delay / sleep time for real-time bindings of values in milliseconds. Default: `300`.
 
-##### ----------- `"data-component-keypress-only"`
+```plain
+"data-component-keypress-only"`
+```
 This attribute can enable only real-time bindings. That means: `blur` and `change` event is skipped in `<input`, `<textarea` tags. Suitable for autocomplete fields. Default: `false`.
 
 ***
@@ -164,22 +184,34 @@ __Quick links__:
 - [instance.template](#------------instancetemplate)
 - [instance.element](#------------instanceelement)
 
-##### ----------- `instance.name`
+```plain
+instance.name`
+```
 This property contains the component name, e.g. `my-component-name`. If you use multiple same components then this value will be same like other.
 
-##### ----------- `instance.path`
+```plain
+instance.path`
+```
 This property contains a binding path, it's __read-only__. The library according this path binds value between component and the scope / model.
 
-##### ----------- `instance.id`
+```plain
+instance.id`
+```
 This property contains the component identificator from `data-component-id` attribute. By default contains internal ID of the current component instance.
 
-##### ----------- `instance.type`
+```plain
+instance.type`
+```
 This property contains the component type from `data-component-type` attribute. Default: `""`.
 
-##### ----------- `instance.template`
+```plain
+instance.template`
+```
 This property contains the current `String` template. You can change the value of this property for anything.
 
-##### ----------- `instance.element`
+```plain
+instance.element`
+```
 __Very important.__ The HTML element of the component.
 
 ---
@@ -197,7 +229,9 @@ __Quick links__:
 - [instance.getter(value)](#------------instancegettervalue)
 - [instance.watch([path], function(path, value))](#------------instancewatchpath-functionpath-value)
 
-##### ----------- `instance.prerender(template)`
+```plain
+instance.prerender(template)`
+```
 A prerender delegate is executed when the `data-component-template` attribute contains URL to template. Is executed once.
 
 ```javascript
@@ -207,7 +241,9 @@ this.prerender = function(template) {
 };
 ```
 
-##### ----------- `instance.make([template])`
+```plain
+instance.make([template])`
+```
 This delegate is executed when the component is creating own instance. Is executed once.
 
 ```javascript
@@ -224,13 +260,19 @@ this.make = function(template) {
 };
 ```
 
-##### ----------- `instance.done()`
+```plain
+instance.done()`
+```
 This delegate is executed when the component is ready to use (after the making).
 
-##### ----------- `instance.destroy()`
+```plain
+instance.destroy()`
+```
 This delegate is executed when the component is destroyed.
 
-##### ----------- `instance.validate(value, isInitialValue)`
+```plain
+instance.validate(value, isInitialValue)`
+```
 Very important degelate for the validation of values. The library executes this delegate when the value is changed in the current component --> with `<input data-component-bind` or `<textarea data-component-bind` or `<select data-component-bind` otherwise you must call this delegate manually.
 
 ```javascript
@@ -241,7 +283,9 @@ instance.validate = function(value, isInitialValue) {
 };
 ```
 
-##### ----------- `instance.state(type, who)`
+```plain
+instance.state(type, who)`
+```
 This delegate watches the value state. In this delegate you can change the `design` of the component according to the value state.
 
 ```javascript
@@ -258,7 +302,9 @@ instance.state = function(type, who) {
 };
 ```
 
-##### ----------- `instance.setter(value, path, type)`
+```plain
+instance.setter(value, path, type)`
+```
 This delegate is executed when the value in the model is changed. This delegate has an own implementation for the components which contain `<input data-component-bind` or `<textarea data-component-bind` or `<select data-component-bind` elements. If the value is changed according to `data-component-path` then the library executes this delegate.
 
 ```javascript
@@ -280,7 +326,9 @@ instance.setter = function(value, path, type) {
 };
 ```
 
-##### ----------- `instance.getter(value)`
+```plain
+instance.getter(value)`
+```
 The library executes this delegate when the `<input data-component-bind`, `<textarea data-component-bind` or `<select data-component-bind` change the value in the current component. `getter` means --> get value from the input. This delegate has an own implementation, but you can rewrite it like that:
 
 ```javascript
@@ -290,7 +338,9 @@ instance.getter = function(value) {
 };
 ```
 
-##### ----------- `instance.watch([path], function(path, value))`
+```plain
+instance.watch([path], function(path, value))`
+```
 This delegate watches all changes according to the model.
 
 ```javascript
@@ -326,29 +376,43 @@ __Quick links__:
 - [instance.formatter(fn)](##------------instanceformatterfn)
 - [instance.parser(fn)](##------------instanceparserfn)
 
-##### ----------- `instance.setPath(path)`
+```plain
+instance.setPath(path)`
+```
 This method sets a new path for this component.
 
-##### ----------- `instance.remove()`
+```plain
+instance.remove()`
+```
 Removes current instance of this component.
 
-##### ----------- `instance.get()`
+```plain
+instance.get()`
+```
 Gets the value from the model.
 
-##### ----------- `instance.set(value)`
+```plain
+instance.set(value)`
+```
 Sets the value into the model.
 
-##### ----------- `instance.inc(value)`
+```plain
+instance.inc(value)`
+```
 Increments the value in the model.
 
-##### ----------- `instance.extend(value)`
+```plain
+instance.extend(value)`
+```
 Extends the value in the model. Only for objects.
 
 ```javascript
 instance.extend({ price: 0, name: 'jComponent' });
 ```
 
-##### ----------- `instance.push(value)`
+```plain
+instance.push(value)`
+```
 Push the value (can be an Array) in the model. Only for arrays.
 
 ```javascript
@@ -356,28 +420,44 @@ instance.push(1);
 instance.push([1, 2, 3]);
 ```
 
-##### ----------- `instance.attr(name, [value])`
+```plain
+instance.attr(name, [value])`
+```
 Gets or Sets an attribute in the component element.
 
-##### ----------- `instance.html([value])`
+```plain
+instance.html([value])`
+```
 Gets or Sets inner HTML in the component element.
 
-##### ----------- `instance.dirty([boolean])`
+```plain
+instance.dirty([boolean])`
+```
 Gets or Sets the dirty state. Only for inputs, textareas and selects.
 
-##### ----------- `instance.valid([boolean])`
+```plain
+instance.valid([boolean])`
+```
 Gets or Sets the validation state.
 
-##### ----------- `instance.change([boolean])`
+```plain
+instance.change([boolean])`
+```
 Contains `instance.dirty()` and `instance.valid()` together. This method means: the content of this element is `changed` or `unchanged`.
 
-##### ----------- `instance.invalid() or instance.isInvalid()`
+```plain
+instance.invalid() or instance.isInvalid()`
+```
 Returns `{Booelan}` if the component is not valid.
 
-##### ----------- `instance.emit(event_name, [arg1], [arg2])`
+```plain
+instance.emit(event_name, [arg1], [arg2])`
+```
 Emits event for all components.
 
-##### ----------- `instance.evaluate([path], expression)`
+```plain
+instance.evaluate([path], expression)`
+```
 Evalutes string expression. Default path is the component path.
 
 ```javascript
@@ -385,7 +465,9 @@ consolel.log(instance.evaluate('value.age > 18'));
 consolel.log(instance.evaluate('some.path', 'value === "Peter"'));
 ```
 
-##### ----------- `instance.formatter(fn)`
+```plain
+instance.formatter(fn)`
+```
 Appends a new formatter. The formatter formats the model value for the render. E.g. date. Works only with components which contain `<input data-component-bind`, `<textarea data-component-bind` or `<select data-component-bind`.
 
 ```javascript
@@ -394,7 +476,9 @@ instance.formatter(function(value) {
 });
 ```
 
-##### ----------- `instance.parser(fn)`
+```plain
+instance.parser(fn)`
+```
 Appneds a new parser. The parser parses the value from the `input`, `textarea` or `selectfor`. E.g. date. Works only with components which contain `<input data-component-bind`, `<textarea data-component-bind` or `<select data-component-bind`.
 
 ```javascript
@@ -414,7 +498,9 @@ __Quick links__:
 - [instance.on('@component-name', fn(component))](##------------instanceoncomponent-name-fncomponent)
 - [instance.on('some-event')](##------------instanceonsome-event)
 
-##### ----------- `instance.on('watch', path, fn(path, value))`
+```plain
+instance.on('watch', path, fn(path, value))`
+```
 
 ```javascript
 // Watchs all changes
@@ -428,16 +514,22 @@ instance.on('watch', 'model.user.name', function(path, value) {
 });
 ```
 
-##### ----------- `instance.on('#component-id', fn(component))`
+```plain
+instance.on('#component-id', fn(component))`
+```
 
 This event is executed when is ready a new component with the `data-component-id` attribute.
 
-##### ----------- `instance.on('@component-name', fn(component))`
+```plain
+instance.on('@component-name', fn(component))`
+```
 
 This event is executed when is ready component. If the HTML contains multiple components with same name then the event is executes many times.
 
 
-##### ----------- `instance.on('some-event')`
+```plain
+instance.on('some-event')`
+```
 
 ```javascript
 instance.on('some-event', function() {
@@ -454,35 +546,53 @@ instance.emit('some-event');
 
 #### Properties
 
-##### ----------- `$.components.version`
+```plain
+$.components.version`
+```
 `{Number}` returns the current version of jComponent.
 
-##### ----------- `$.components.debug`
+```plain
+$.components.debug`
+```
 `{Boolean}` enables web browser console logging, default __false__.
 
-##### ----------- `$.components.defaults.delay`
+```plain
+$.components.defaults.delay`
+```
 `{Number}` sets the delay for keypress real-time binding, default _300_.
 
-##### ----------- `$.components.defaults.keypress`
+```plain
+$.components.defaults.keypress`
+```
 `{Boolean}` enables / disables keypress real-time binding, default __true__.
 
-##### ----------- `$.components.defaults.localstorage`
+```plain
+$.components.defaults.localstorage`
+```
 `{Boolean}` enables / disables localstorage for cache mechanism, default __true__.
 
-##### ----------- `$.components.$version`
+```plain
+$.components.$version`
+```
 `{String}` appends the value to each URL address `?version=$version` called via jComponent, default: __""__.
 
-##### ----------- `$.components.$language`
+```plain
+$.components.$language`
+```
 `{String}` appends the value to each URL address `?language=$language` called via jComponent, default: __""__.
 
 ---
 
 #### Methods
 
-##### ----------- `$.components()`
+```plain
+$.components()`
+```
 Runs the compiler for new components. jComponent doesn't watch new elements in DOM.
 
-##### ----------- `$.components.set(path, value, [reset])`
+```plain
+$.components.set(path, value, [reset])`
+```
 Sets the value into the model. `reset` argument resets dirty state (default: __false__).
 
 ```javascript
@@ -493,7 +603,9 @@ $.components.set('+some.model.tags', 'HTML');
 $.components.set('+some.model.tags', ['CSS', 'JavaScript']);
 ```
 
-##### ----------- `$.components.push(path, value, [reset])`
+```plain
+$.components.push(path, value, [reset])`
+```
 Pushs the value in the model, only for arrays. `reset` argument resets dirty state (default: __false__).
 
 ```javascript
@@ -501,21 +613,27 @@ $.components.push('some.model.tags', 'HTML');
 $.components.push('some.model.tags', ['CSS', 'JavaScript']);
 ```
 
-##### ----------- `$.components.inc(path, value, [reset])`
+```plain
+$.components.inc(path, value, [reset])`
+```
 Increments the value in the model, only for numbers. `reset` argument resets dirty state (default: __false__).
 
 ```javascript
 $.components.inc('some.model.age', 10);
 ```
 
-##### ----------- `$.components.extend(path, value, [reset])`
+```plain
+$.components.extend(path, value, [reset])`
+```
 Extends the value in the model, only for objects. `reset` argument resets dirty state (default: __false__).
 
 ```javascript
 $.components.inc('some.model', { age: 30, name: 'Peter' });
 ```
 
-##### ----------- `$.components.get(path)`
+```plain
+$.components.get(path)`
+```
 Gets the value from the model.
 
 ```javascript
@@ -523,7 +641,9 @@ $.components.get('some.model.age');
 $.components.get('some.model.tags');
 ```
 
-##### ----------- `$.components.findByName(name, [path], [fn(component)])`
+```plain
+$.components.findByName(name, [path], [fn(component)])`
+```
 Finds components by `data-component` attribute.
 
 ```javascript
@@ -541,7 +661,9 @@ $.components.findByName('my-component', 'model.*', function(component) {
 });
 ```
 
-##### ----------- `$.components.findById(name, [path], [fn(component)])`
+```plain
+$.components.findById(name, [path], [fn(component)])`
+```
 Finds components by `data-component-id` attribute.
 
 ```javascript
@@ -559,7 +681,9 @@ $.components.findById('my-component', 'model.*', function(component) {
 });
 ```
 
-##### ----------- `$.components.findByPath([path], [fn(component)])`
+```plain
+$.components.findByPath([path], [fn(component)])`
+```
 Finds components by `data-component-id` attribute.
 
 ```javascript
@@ -572,19 +696,29 @@ $.components.findByPath('some.model', function(component) {
 });
 ```
 
-##### ----------- `$.components.errors([path])`
+```plain
+$.components.errors([path])`
+```
 Returns array of invalid components;
 
-##### ----------- `$.components.invalid(path)`
+```plain
+$.components.invalid(path)`
+```
 Sets the invalid state to all components according to the binding path.
 
-##### ----------- `$.components.remove(path)`
+```plain
+$.components.remove(path)`
+```
 Removes all components according to the binding path.
 
-##### ----------- `$.components.remove(jquery_element)`
+```plain
+$.components.remove(jquery_element)`
+```
 Removes component.
 
-##### ----------- `$.components.inject(url, [target], [callback])`
+```plain
+$.components.inject(url, [target], [callback])`
+```
 Injects content (with components) into the `target` (by default: `document.body`).
 
 ---
