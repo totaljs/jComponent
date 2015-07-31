@@ -79,6 +79,8 @@ Binding is represented as `data-component-path` attribute. jComponent has own bu
 
 The value `contactform.name` is linked to `window.contactform.name` (`window` is meant as a browser window instance). The library automatically creates value in __window scope__ if the value doesn't exist.
 
+---
+
 #### HTML attributes
 
 ##### "data-component"
@@ -101,6 +103,8 @@ It's not required and must contain name of function which is executed when the c
 
 ##### "data-component-template"
 It's not required and can contain only URL address to component template. The library automatically downloads the content and sends it to the component (into the `make` delegate).
+
+---
 
 #### Special HTML attributes
 
@@ -165,6 +169,8 @@ This property contains the current `String` template. You can change the value o
 ##### instance.element
 
 __Very important.__ The element of the component.
+
+---
 
 #### Delegates
 
