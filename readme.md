@@ -20,6 +20,124 @@ __YOU MUST SEE:__
 - [Tangular - A template engine like Angular.js](https://github.com/petersirka/Tangular)
 - [jQuery two way bindings](https://github.com/petersirka/jquery.bindings)
 
+## Documentation
+
+This documentation is composed with 3 parts:
+
+- Library
+- HTML definition
+- Component definition
+- Global helpers
+
+---
+
+### Library
+
+jComponent offers 3 libraries for developement rich web applications:
+
+- `jcomponent.min.js` contains only jComponent library
+- `jcta.min.js` contains jComponent library and [Tangular template engine](https://github.com/petersirka/Tangular)
+- `jctajr.min.js` contains jComponent library, [Tangular template engine](https://github.com/petersirka/Tangular) and [jRouting](https://github.com/petersirka/jRouting)
+
+If you want to use jComponent on your presentation website - use `jcomponent.min.js` only. If you create some rich web application, then use `jcta.min.js` because contains template engine and for __SPA__ use `jctajr.min.js` because contains template engine and HTML 5 history API.
+
+The component doesn't know scopes. Only scope with the components work is the browser `window.` scope. So each path in the form of `some.path.to.something` is automatically routed to `window.some.path.to.something`. The library automatically creates values according to the binding path.
+
+### HTML definition
+
+The library searches all components according to `data-component` attribute which must contain a component name and [the component must be defined in JavaScript](#component).
+
+#### Simple declaration of component
+
+```html
+<div data-component="textbox">Name</div>
+
+<!-- OR -->
+<b data-component="timer"></b>
+
+<!-- OR -->
+<span data-component="email-decoder">your(AT)mail(DOT)com</span>
+
+<!-- OR -->
+<table>
+    <tbody data-component="pricelist"></tbody>
+</table>
+```
+
+#### Declaration with binding
+
+Binding is represented as `data-component-path` attribute. jComponent has own buil-in mechanism for binding values to/from component (you can rewrite it).
+
+```html
+<div data-component="textbox" data-component-path="contactform.name">Name</div>
+
+<!-- empty "data-component" can write only raw output according to binding path -->
+<div data-component="" data-component-path="contactform.name"></div>
+```
+
+The value `contactform.name` is linked to `window.contactform.name` (`window` is meant as a browser window instance). The library automatically creates value in __window scope__ if the value doesn't exist.
+
+#### HTML attributes
+
+__data-component__:
+Must contain a component name. If the value of this attribute is empty then jComponent writes only raw output according to binding path attribute.
+
+__data-component-path__:
+It's not required. The attribute contains the binding path for binding values between component and model, e.g. `form.name` (--> is binded to `window.form.name`) or `user.age` (--> is binded to `window.user.age`).
+
+__data-component-type__:
+It's not required. The attribute can contain a type of the component. You must define own types e.g. `number`, `currency` or `date`.
+
+__data-component-id__:
+It's not required. This attribute is an identificator of the component for the searching.
+
+__data-component_class__:
+When is the component ready then the library automatically toggles the element `class` according to this attribute. It's not required.
+
+__data-component-init__:
+It's not required and must contain name of function which is executed when the component is ready. `function init(component) {}`.
+
+__data-component-template__:
+It's not required and can contains only URL address to component template. The library automatically downloads the content and sends it to the component (into the `make` delegate).
+
+#### Special HTML attributes
+
+__data-component-url__:
+The library downloads a full HTML template with the component and its JavaScript declaration. The content will be inserted into the current element and then will be evaluated.
+
+__data-component-bind__:
+This attribute can be used only in `<input`, `<textarea` and `<select` tags. If the component contains some said tag then the attribute ensures two way binding between the input (in component) and the model. You don't need to declare `setter` and `getter` because the library to create it automatically. The value of this attribute is empty like this `data-component-bind=""`.
+
+__data-component-keypress__:
+Works only with `<input` and `<textarea` tags and enables/disables keypress real-time bindings of values. Default: `true` and the tags must have `data-component-bind` attribute.
+
+__data-component-keypress-delay__:
+It's delay / sleep time for real-time bindings of values in milliseconds. Default: `300`.
+
+__data-component-keypress-only__:
+This attribute can enable only real-time bindings. That means: `blur` and `change` event is skipped in `<input`, `<textarea` tags. Suitable for autocomplete fields. Default: `false`.
+
+---
+
+### Component definition
+
+The definition of the component must be defined in JavaScript. You can define the component in some HTML template (in `<script` tag) or in your own JavaScript libraries.
+
+__Simple example__:
+
+```javascript
+COMPONENT('my-component-name', function() {
+    // component definition
+    this.make = function(template) {
+        this.element.html('Hello world!');
+    };
+});
+```
+
+---
+---
+
+
 ```html
 <script src="jcomponent.min.js"></script>
 
