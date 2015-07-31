@@ -201,10 +201,11 @@ COMPONENT('my-component-name', function() {
     
     instance.template;
     // This property contains the current `String` template. You can change the value
-    // of this property for anything.
+    // of this property for anything. This property can contain URL address and the
+    // library download the template automatically.
 
     instance.element;
-    // The HTML element of the component.
+    // The HTML element of this component.
 });
 ```
 
@@ -213,126 +214,109 @@ COMPONENT('my-component-name', function() {
 ## Delegates
 
 ```javascript
-instance.prerender(template)
-```
-A prerender delegate is executed when the `data-component-template` attribute contains URL to template. Is executed once.
+COMPONENT('my-component-name', function() {
 
-```javascript
-this.prerender = function(template) {
-    // E.g.
-    this.template = Tangular.compile(template);
-};
-```
+    var instance = this;
 
----
+    instance.prerender = function(template) {
+        // A prerender delegate is executed when the `data-component-template` attribute
+        // contains URL to template. Is executed once.
 
-```javascript
-instance.make([template])
-```
-This delegate is executed when the component is creating own instance. Is executed once.
+        this.template = Tangular.compile(template);
+    });
 
-```javascript
-this.make = function(template) {
-    // Append some content
-    this.element.append('Hello world!');
 
-    // Append some content with two way binding
-    this.element.append('<input type="text" data-component-bind />');
+    instance.make = function(template) {
+        // This delegate is executed when the component is creating own instance.
+        // Is executed once.
+        
+        // if instance.prerender is not defined then the template will be {String}
+        // (only when the template will be defined).
+        this.template = Tangular.compile(template);
 
-    // IMPORTANT:
-    // If you return "true" then jComponent compiles new components now (otherwise at the end of all)
-    // return true;
-};
-```
+        // If you return "true" then jComponent compiles new components now.
+        // return true;
+    };
 
----
 
-```javascript
-instance.done()
-```
-This delegate is executed when the component is ready to use (after the making).
+    instance.done = function() {
+        // This delegate is executed when the component is ready to use
+        // (after the making).
+    };
 
----
 
-```javascript
-instance.destroy()
-```
-This delegate is executed when the component is destroyed.
+    instance.destroy = function() {
+        // This delegate is executed when the component is destroyed.
+    };
 
----
 
-```javascript
-instance.validate(value, isInitialValue)
-```
-Very important degelate for the validation of values. The library executes this delegate when the value is changed in the current component --> with `<input data-component-bind` or `<textarea data-component-bind` or `<select data-component-bind` otherwise you must call this delegate manually.
+    instance.validate = fucntion(value, isInitialValue) {
+        // Very important degelate for the validation of values. The library executes
+        // this delegate when the value is changed in the current component
+        // with `<input data-component-bind` or `<textarea data-component-bind`
+        // or `<select data-component-bind` elements. Otherwise you must call
+        // this delegate manually.
 
-```javascript
-instance.validate = function(value, isInitialValue) {
-    if (isInitialValue)
-        return true;
-    return value.length > 0;
-};
-```
+        if (isInitialValue)
+            return true;
 
----
+        return value.length > 0;
+    };
 
-```javascript
-instance.state(type, who)
-```
-This delegate watches the value state. In this delegate you can change the `design` of the component according to the value state.
 
-```javascript
-instance.state = function(type, who) {
-    // type === 0 : init
-    // type === 1 : by developer
-    // type === 2 : by input
+    instance.state = function(type, who) {
+        // This delegate watches the value state. In this delegate you can change
+        // the `design` of the component according to the value state.
 
-    // who  === 1 : valid
-    // who  === 2 : dirty
-    // who  === 3 : reset
-    // who  === 4 : update
-    // who  === 5 : set
-};
-```
+        // type === 0 : init
+        // type === 1 : by developer
+        // type === 2 : by input
 
----
+        // who  === 1 : valid
+        // who  === 2 : dirty
+        // who  === 3 : reset
+        // who  === 4 : update
+        // who  === 5 : set
+        
+        instance.element.toggleClass('error', instance.invalid());
+    };
 
-```javascript
-instance.setter(value, path, type)
-```
-This delegate is executed when the value in the model is changed. This delegate has an own implementation for the components which contain `<input data-component-bind` or `<textarea data-component-bind` or `<select data-component-bind` elements. If the value is changed according to `data-component-path` then the library executes this delegate.
 
-```javascript
-instance.setter = function(value, path, type) {
+    instance.setter = fucntion(value, path, type) {
+        // This delegate is executed when the value in the model is changed.
+        // This delegate has an own implementation for the components which
+        // contain `<input data-component-bind` or `<textarea data-component-bind`
+        // or `<select data-component-bind` elements. If the value is changed
+        // according to `data-component-path` then the library executes this delegate.
 
-    // Arg: value
-    // value === new value
+        // Argument: value
+        // value === new value
 
-    // Arg: path
-    // Which path has been changed in the model?
+        // Argument: path
+        // Which path has been changed in the model?
 
-    // Arg: type
-    // 0 : init
-    // 1 : by developer
-    // 2 : by input
+        // Argument: type
+        // 0 : init
+        // 1 : by developer
+        // 2 : by input
 
-    // Example:
-    instance.element.html(JSON.stringify(value));
-};
-```
+        // Example:
+        instance.element.html(JSON.stringify(value));
+    };
 
----
 
-```javascript
-instance.getter(value)
-```
-The library executes this delegate when the `<input data-component-bind`, `<textarea data-component-bind` or `<select data-component-bind` change the value in the current component. `getter` means --> get value from the input. This delegate has an own implementation, but you can rewrite it like that:
+    instance.getter = function(value) {
+        // The library executes this delegate when the `<input data-component-bind`,
+        // `<textarea data-component-bind` or `<select data-component-bind` change
+        // the value in the current component. `getter` means --> get value
+        // from the input. This delegate has an own implementation, but you can
+        // rewrite it like that:
 
-```javascript
-instance.getter = function(value) {
-    // Sets a new value to the model according the binding path:
-    instance.set(value);
-};
+        // Sets a new value to the model according the binding path:
+        instance.set(value);
+    };
+
+});
 ```
 
 ---
