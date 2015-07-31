@@ -19,7 +19,7 @@ __YOU MUST SEE:__
 
 ***
 
-# Library
+## Library
 
 jComponent offers 3 libraries for developement rich web applications:
 
@@ -33,7 +33,7 @@ The component doesn't know scopes. Only the one scope with the components work i
 
 ***
 
-# HTML definition
+## HTML definition
 
 The library searches all components according to `data-component` attribute which must contain a component name and [the component must be defined in JavaScript](#component).
 
@@ -157,7 +157,7 @@ This attribute can enable only real-time bindings. That means: `blur` and `chang
 
 ***
 
-# Component definition
+## Component definition
 
 The definition of the component must be defined in JavaScript. You can define the component in some HTML template (in `<script` tag) or in your own JavaScript libraries.
 
@@ -422,7 +422,7 @@ COMPONENT('my-component-name', function() {
 });
 ```
 
-## Events
+### Events
 
 ```javascript
 COMPONENT('my-component-name', function() {
