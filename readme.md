@@ -420,6 +420,8 @@ instance.emit('some-event');
 ##### ----------- `$.components.$language`
 `{String}` appends the value to each URL address `?language=$language` called via jComponent, default: __""__.
 
+---
+
 #### Methods
 
 ##### ----------- `$.components()`
@@ -529,6 +531,8 @@ Removes component.
 
 ##### ----------- `$.components.inject(url, [target], [callback])`
 Injects content (with components) into the `target` (by default: `document.body`).
+
+---
 
 #### Events
 
