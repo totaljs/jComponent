@@ -158,116 +158,74 @@ This property contains the component identificator from `data-component-id` attr
 
 This property contains the component type from `data-component-type` attribute. Default: `""`.
 
-#### Methods
+##### instance.template
 
----
----
+This property contains the current `String` template. You can change the value of this property for anything.
 
+##### instance.element
 
-```html
-<script src="jcomponent.min.js"></script>
+__Very important.__ The element of the component.
 
-<div data-component="textbox" data-component-path="model.name" data-component-init="init_handler"></div>
-<span data-component="wysiwyg" data-component-template="/editor.html" data-component-id="my-input"></span>
-<div data-component="datagrid" data-component-path="model"></div>
+#### Delegates
 
-<table>
-    <tr>
-        <td data-component-url="/dashboard.html"></td>
-    </tr>
-</table>
+##### instance.prerender(template)
 
-<script>
-    var common = {};
-    var model = {};
+A prerender delegate is executed when the `data-component-template` attribute contains URL to template. Is executed once.
 
-    model.list = ['1', '2', '3'];
-    model.name = 'OK';
-
-    common.dashboard = {};
-</script>
+```javascript
+this.prerender = function(template) {
+    // E.g.
+    this.template = Tangular.compile(template);
+};
 ```
 
-## HTML attributes
+##### instance.make([template])
 
-- `data-component="COMPONENT NAME"` - a component name (required)
-- `data-component-path="PATH TO PROPERTY"` - a mapping to the property (optional)
-- `data-component-template="URL"` - mapping to URL address (optional)
-- `data-component-type="number"` - a custom type name (optional)
-- `data-component-id="myid"` - a custom component ID (optional)
-- `data-component-class="class1 class2 class3"` - framework toggles classes after is a component  (optional)
-- `data-component-init="function"` - the initialization handler (optional)
+This delegate is executed when the component is creating own instance. Is executed once.
 
-## Special HTML attributes
+```javascript
+this.make = function(template) {
+    // Append some content
+    this.element.append('Hello world!');
 
-- `data-component-url="URL TO TEMPLATE"` - the library downloads the HTML content from the URL address and eval. This attribute cannot be bound with the `data-component` attribute.
-- `data-component-bind` - auto attach `change` event for the input/select/textarea (only in the component)
-- `data-component-keypress` - (works only with: `data-component-bind` and `<input`, `<textarea`) and it can be `true` | `false` (default `true`). Enable/Disable keypress real-time value binding.
-- `data-component-keypress-delay` - (works only with `data-component-bind` and `<input`, `<textarea`) and it can be only `number` (default: `300`). This is a delay for real-time value binding.
-- `data-component-keypress-only` - (works only with `data-component-bind` and `<input`, `<textarea`) and it can be only `boolean` (default: `false`). This behaviour skips blur/change event and directly sets the value.
+    // Append some content with two way binding
+    this.element.append('<input type="text" data-component-bind />');
+
+    // IMPORTANT:
+    // If you return "true" then jComponent compiles new components now (otherwise at the end of all)
+    // return true;
+};
+```
+
+##### instance.done()
+
+This delegate is executed when the component is ready to use (after the making).
+
+##### instance.destroy()
+
+This delegate is executed when the component is destroyed.
+
+##### instance.validate(value, isInitialValue)
+
+Very important degelate for the validation of values. The library executes this delegate when the value is changed in the current component --> with `<input data-component-bind` or `<textarea data-component-bind` or `<select data-component-bind` otherwise you must call this delegate manually.
+
+```javascript
+instance.validate = function(value, isInitialValue) {
+    if (isInitialValue)
+        return true;
+    return value.length > 0;
+};
+```
+
+---
+---
+
+
 
 ## Component methods/properties
 
 ```js
 COMPONENT('input', function() {
-
-    this._id; // contains internal component ID (it's generated randomly)
-    this.id; // custom component ID according to data-component-id
-    this.name; // component name
-    this.path; // readonly, component bindings path data-component-path
-    this.element; // contains component element
-    this.template; // contains template according to data-component-template
-    this.type; // contains data-component-type
-
-    // IMPORTANT: INTERNAL ====
-    this.$validate; // contains true if the component has been validated manually
-    this.$parser = []; // internal parsers for parsing value (getter)
-    this.$formatter = []; // internal formatter for formatting value (render)
-    this.$ready; // Is the component ready? It's set to true after is the setter executed first time.
-    // ====
-
-    // A prerender function and it's called when:
-    // 1. component.make contains a string value (URL or valid HTML)
-    // 2. is specified data-component-template attribute
-    this.prerender = function(template) {
-    };
-
-    // make() === render
-    this.make = function(template) {
-        // template argument contains (sometimes) downloaded HTML template - {String}
-        // According to "data-component-bind" attribute attaches "change" event automatically.
-        this.element.append('<input type="text" data-component-bind />');
-        // or
-        // this.element.append('<input type="text" data-component-bind="new-data-component-path" />');
-
-        // IMPORTANT:
-        // Do you replace the current content with new content and new components?
-        // If you return a true then the library cancels the current compilation and recompiles it again.
-        // return true;
-    };
-
-    // or (after prerender function is called)
-    // this.make = '<input type="text" data-component-bind />';
-
-    // or (after prerender function is called)
-    // this.make = "/templates/input.html";
-
-    // OPTIONAL
-    // It's called after make()
-    this.done = function() {
-    };
-
-    // OPTIONAL
-    // It's called after remove
-    this.destroy = function() {
-    };
-
-    // OPTIONAL
-    // Must return {Boolean}
-    // IMPORTANT: The intial value executes this delegate.
-    this.validate = function(value, isInitial) {
-        return value.length > 0;
-    };
 
     // OPTIONAL
     // Watch changes. IMPORTANT: The initial value is not called.
