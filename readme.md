@@ -362,25 +362,35 @@ instance.setPath(path)
 ```
 This method sets a new path for this component.
 
+---
+
 ```plain
 instance.remove()
 ```
 Removes current instance of this component.
+
+---
 
 ```plain
 instance.get()
 ```
 Gets the value from the model.
 
+---
+
 ```plain
 instance.set(value)
 ```
 Sets the value into the model.
 
+---
+
 ```plain
 instance.inc(value)
 ```
 Increments the value in the model.
+
+---
 
 ```plain
 instance.extend(value)
@@ -390,6 +400,8 @@ Extends the value in the model. Only for objects.
 ```javascript
 instance.extend({ price: 0, name: 'jComponent' });
 ```
+
+---
 
 ```plain
 instance.push(value)
@@ -401,40 +413,56 @@ instance.push(1);
 instance.push([1, 2, 3]);
 ```
 
+---
+
 ```plain
 instance.attr(name, [value])
 ```
 Gets or Sets an attribute in the component element.
+
+---
 
 ```plain
 instance.html([value])
 ```
 Gets or Sets inner HTML in the component element.
 
+---
+
 ```plain
 instance.dirty([boolean])
 ```
 Gets or Sets the dirty state. Only for inputs, textareas and selects.
+
+---
 
 ```plain
 instance.valid([boolean])
 ```
 Gets or Sets the validation state.
 
+---
+
 ```plain
 instance.change([boolean])
 ```
 Contains `instance.dirty()` and `instance.valid()` together. This method means: the content of this element is `changed` or `unchanged`.
+
+---
 
 ```plain
 instance.invalid() or instance.isInvalid()
 ```
 Returns `{Booelan}` if the component is not valid.
 
+---
+
 ```plain
 instance.emit(event_name, [arg1], [arg2])
 ```
 Emits event for all components.
+
+---
 
 ```plain
 instance.evaluate([path], expression)
@@ -445,6 +473,8 @@ Evalutes string expression. Default path is the component path.
 consolel.log(instance.evaluate('value.age > 18'));
 consolel.log(instance.evaluate('some.path', 'value === "Peter"'));
 ```
+
+---
 
 ```plain
 instance.formatter(fn)
@@ -457,7 +487,9 @@ instance.formatter(function(value) {
 });
 ```
 
-```plain
+---
+
+```javascript
 instance.parser(fn)
 ```
 Appneds a new parser. The parser parses the value from the `input`, `textarea` or `selectfor`. E.g. date. Works only with components which contain `<input data-component-bind`, `<textarea data-component-bind` or `<select data-component-bind`.
@@ -489,11 +521,15 @@ instance.on('watch', 'model.user.name', function(path, value) {
 });
 ```
 
+---
+
 ```javascript
 instance.on('#component-id', fn(component))
 ```
 
 This event is executed when is ready a new component with the `data-component-id` attribute.
+
+---
 
 ```javascript
 instance.on('@component-name', fn(component))
@@ -501,6 +537,7 @@ instance.on('@component-name', fn(component))
 
 This event is executed when is ready component. If the HTML contains multiple components with same name then the event is executes many times.
 
+---
 
 ```javascript
 instance.on('some-event')
@@ -531,42 +568,42 @@ $.components.version
 ```javascript
 $.components.debug
 ```
-`{Boolean}` enables web browser console logging, default __false__.
+`{Boolean}` enables web browser console logging, default `false`.
 
 ---
 
 ```javascript
 $.components.defaults.delay
 ```
-`{Number}` sets the delay for keypress real-time binding, default _300_.
+`{Number}` sets the delay for keypress real-time binding, default `300`.
 
 ---
 
 ```javascript
 $.components.defaults.keypress
 ```
-`{Boolean}` enables / disables keypress real-time binding, default __true__.
+`{Boolean}` enables / disables keypress real-time binding, default `true`.
 
 ---
 
 ```javascript
 $.components.defaults.localstorage
 ```
-`{Boolean}` enables / disables localstorage for cache mechanism, default __true__.
+`{Boolean}` enables / disables localstorage for cache mechanism, default `true`.
 
 ---
 
 ```javascript
 $.components.$version
 ```
-`{String}` appends the value to each URL address `?version=$version` called via jComponent, default: __""__.
+`{String}` appends the value to each URL address `?version=$version` called via jComponent, default: `""`.
 
 ---
 
 ```javascript
 $.components.$language
 ```
-`{String}` appends the value to each URL address `?language=$language` called via jComponent, default: __""__.
+`{String}` appends the value to each URL address `?language=$language` called via jComponent, default: `""`.
 
 ---
 
@@ -580,7 +617,7 @@ Runs the compiler for new components. jComponent doesn't watch new elements in D
 ```javascript
 $.components.set(path, value, [reset])
 ```
-Sets the value into the model. `reset` argument resets dirty state (default: __false__).
+Sets the value into the model. `reset` argument resets dirty state (default: `false`).
 
 ```javascript
 $.components.set('some.model.name', 'Peter');
@@ -593,7 +630,7 @@ $.components.set('+some.model.tags', ['CSS', 'JavaScript']);
 ```javascript
 $.components.push(path, value, [reset])
 ```
-Pushs the value in the model, only for arrays. `reset` argument resets dirty state (default: __false__).
+Pushs the value in the model, only for arrays. `reset` argument resets dirty state (default: `false`).
 
 ```javascript
 $.components.push('some.model.tags', 'HTML');
@@ -603,7 +640,7 @@ $.components.push('some.model.tags', ['CSS', 'JavaScript']);
 ```javascript
 $.components.inc(path, value, [reset])
 ```
-Increments the value in the model, only for numbers. `reset` argument resets dirty state (default: __false__).
+Increments the value in the model, only for numbers. `reset` argument resets dirty state (default: `false`).
 
 ```javascript
 $.components.inc('some.model.age', 10);
@@ -612,7 +649,7 @@ $.components.inc('some.model.age', 10);
 ```javascript
 $.components.extend(path, value, [reset])
 ```
-Extends the value in the model, only for objects. `reset` argument resets dirty state (default: __false__).
+Extends the value in the model, only for objects. `reset` argument resets dirty state (default: `false`).
 
 ```javascript
 $.components.inc('some.model', { age: 30, name: 'Peter' });
