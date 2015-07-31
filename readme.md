@@ -41,7 +41,7 @@ jComponent offers 3 libraries for developement rich web applications:
 
 If you want to use jComponent on your presentation website - use `jcomponent.min.js` only. If you create some rich web application, then use `jcta.min.js` because contains template engine and for __SPA__ use `jctajr.min.js` because contains template engine and HTML 5 history API.
 
-The component doesn't know scopes. Only scope with the components work is the browser `window.` scope. So each path in the form of `some.path.to.something` is automatically routed to `window.some.path.to.something`. The library automatically creates values according to the binding path.
+The component doesn't know scopes. Only the one scope with the components work is the browser `window.` scope. So each path in the form of `some.path.to.something` is automatically routed to `window.some.path.to.something`. The library automatically creates values according to the binding path.
 
 ***
 
@@ -129,12 +129,36 @@ __Simple example__:
 
 ```javascript
 COMPONENT('my-component-name', function() {
+
+    // A component instance
+    var instance = this;
+
     // component definition
     this.make = function(template) {
         this.element.html('Hello world!');
     };
 });
 ```
+
+#### Properties
+
+##### instance.name
+
+This property contains the component name, e.g. `my-component-name`. If you use multiple same components then this value will be same like other.
+
+##### instance.path
+
+This property contains a binding path, it's __read-only__. The library according this path binds value between component and the scope / model.
+
+##### instance.id
+
+This property contains the component identificator from `data-component-id` attribute. By default contains internal ID of the current component instance.
+
+##### instance.type
+
+This property contains the component type from `data-component-type` attribute. Default: `""`.
+
+#### Methods
 
 ---
 ---
