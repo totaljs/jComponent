@@ -71,14 +71,14 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
 ## HTML attributes
 
-```plain
+```html
 <element data-component="" />
 ```
 Must contain a component name. If the value of this attribute is empty then jComponent writes only raw output according to binding path attribute.
 
 ---
 
-```plain
+```html
 <element data-component-path="" />
 ```
 It's not required. The attribute contains the binding path for binding values between component and model, e.g. `form.name` (--> is binded to `window.form.name`) or `user.age` (--> is binded to `window.user.age`).
@@ -173,50 +173,40 @@ COMPONENT('my-component-name', function() {
     this.make = function(template) {
         this.element.html('Hello world!');
     };
+
 });
 ```
 
 ### Properties
 
 ```javascript
-instance.name
+COMPONENT('my-component-name', function() {
+    var instance = this;
+    
+    instance.name;
+    // This property contains the component name, e.g. my-component-name.
+    // If you use multiple // same components then this value will be same like other.
+
+    instance.path;
+    // This property contains a binding path, it's read-only. The library
+    // according this path binds value between component and the scope / model.
+
+    instance.id;
+    // This property contains the component identificator from 'data-component-id`
+    // attribute. By default contains internal ID of the current component instance.
+
+    instance.type;
+    // This property contains the component type from `data-component-type` attribute.
+    // Default: ""
+    
+    instance.template;
+    // This property contains the current `String` template. You can change the value
+    // of this property for anything.
+
+    instance.element;
+    // The HTML element of the component.
+});
 ```
-This property contains the component name, e.g. `my-component-name`. If you use multiple same components then this value will be same like other.
-
----
-
-```javascript
-instance.path
-```
-This property contains a binding path, it's __read-only__. The library according this path binds value between component and the scope / model.
-
----
-
-```javascript
-instance.id
-```
-This property contains the component identificator from `data-component-id` attribute. By default contains internal ID of the current component instance.
-
----
-
-```javascript
-instance.type
-```
-This property contains the component type from `data-component-type` attribute. Default: `"'.
-
----
-
-```javascript
-instance.template
-```
-This property contains the current `String` template. You can change the value of this property for anything.
-
----
-
-```javascript
-instance.element
-```
-__Very important.__ The HTML element of the component.
 
 ---
 
