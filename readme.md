@@ -827,12 +827,52 @@ EVALUATE(path, expression);
 
 ## Operations
 
-```javascript
-OPERATION(name, fn); // --> creates an operation
-OPERATION(name); // --> returns function
+Operations are preddefined functions. The operation can be executed automatically in some component attribute e.g. `data-component-init="#operation-name"`.
 
+```javascript
+OPERATION(name, fn);
+// Creates the operation.
+
+OPERATION(name);
+// Returns the operation.
+```
+
+### Example
+
+```javascript
+// CREATING
+OPERATION('get.users', function(filter, callback) {
+    $.components.GET('/api/users/', filter, callback);
+});
+
+OPERATION('now', function() {
+    return new Date().format('HH:mm:ss');
+});
+
+// EXECUTING
+OPERATION('get.users')({}, 'db.users');
+console.log(OPERATION('now')());
+
+GET('#get.users')({}, 'db.users');
+console.log(GET('#now')());
+```
+
+## Controllers
+
+Controllers don't know any special features. Thier implementation is very simple:
+
+```javascript
 CONTROLLER('users', function(patcher) {
-    console.log(patcher('{name}.datasource')); // --> users.datasource
+    // "this" === controller
+    // "patcher" argument can replace only paths
+
+    console.log(patcher('{name}.datasource'));
+    // Output: users.datasource
+
+    this.page = 1;
+    
+    console.log(patcher('{name}.datasource and {name}.{page}'));
+    // Output: users.datasource and users.1
 });
 ```
 
