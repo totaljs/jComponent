@@ -22,10 +22,8 @@ __YOU MUST SEE:__
 
 ---
 
-| Important links                                      |
-|------------------------------------------------------|
-| __Homepage:__ <http://www.jcomponent.org>            |
-| __Full SPA example__ <http://example.jcomponent.org> |
+- __Homepage:__ <http://www.jcomponent.org>            
+- __Full SPA example__ <http://example.jcomponent.org> 
 
 ***
 
