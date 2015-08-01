@@ -144,7 +144,8 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
 <element data-component-keypress-delay="" />
 <!--
-    It's delay / sleep time for real-time bindings of values in milliseconds. Default: `300`.
+    It's delay / sleep time for real-time bindings of values in milliseconds.
+    Default: `300`.
 -->
 
 <element data-component-keypress-only="" />
