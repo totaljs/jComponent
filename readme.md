@@ -5,15 +5,17 @@ __Homepage:__ <http://www.jcomponent.org>
 
 - `>= jQuery +1.7`
 - `>= IE9`
-- two way bindings
-- great functionality
+- supports two way bindings
 - similar functionality like directives in Angular.js
 - supports validation
 - supports nested components
+- works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
+- you can wrap thousands plugins of jQuery via jComponent
 - best of use with [www.totaljs.com - web application framework for node.js](http://www.totaljs.com)
 
 __YOU MUST SEE:__
 
+- [__jComponent full SPA example__](http://example.jcomponent.org/)
 - [jRouting](https://github.com/petersirka/jRouting)
 - [Tangular - A template engine like Angular.js](https://github.com/petersirka/Tangular)
 
@@ -277,7 +279,7 @@ COMPONENT('my-component-name', function() {
         // who  === 4 : update
         // who  === 5 : set
         
-        instance.element.toggleClass('error', instance.invalid());
+        instance.element.toggleClass('error', instance.isInvalid());
     };
 
 
@@ -377,9 +379,12 @@ COMPONENT('my-component-name', function() {
     // This method means: the content of this element is `changed` or `unchanged`.
 
 
-    instance.invalid();
     instance.isInvalid();
     // Returns `{Booelan}` if the component is not valid.
+
+
+    instance.invalid();
+    // The component will be invalid.
 
 
     instance.emit(event_name, [arg1], [arg2])
