@@ -20,10 +20,10 @@ __YOU MUST SEE:__
 - [jRouting - HTML 5 routing via History API](https://github.com/petersirka/jRouting)
 - [Tangular - A template engine like Angular.js](https://github.com/petersirka/Tangular)
 
----
+***
 
 - __Homepage:__ <http://www.jcomponent.org>            
-- __Full SPA example__ <http://example.jcomponent.org> 
+- __Full SPA example:__ <http://example.jcomponent.org> 
 
 ***
 
