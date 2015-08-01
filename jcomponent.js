@@ -37,7 +37,7 @@ $.components.evaluate = function(path, expression) {
 	return exp.call(val, val, path);
 };
 
-$.components.defaults = {}
+$.components.defaults = {};
 $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.localstorage = true;
@@ -2436,7 +2436,7 @@ $(document).ready(function() {
 
 		if (self.tagName === 'SELECT') {
 			if (e.type === 'keydown')
-				return
+				return;
 			var selected = self[self.selectedIndex];
 			value = selected.value;
 			self.$component.dirty(false, true);
