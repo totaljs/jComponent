@@ -494,168 +494,81 @@ $.components.$language;
 ### Methods
 
 ```javascript
-$.components()
-```
-Runs the compiler for new components. jComponent doesn't watch new elements in DOM.
+$.components();
+// Runs the compiler for new components. jComponent doesn't watch new elements in DOM.
 
----
 
-```javascript
-$.components.set(path, value, [reset])
-```
-Sets the value into the model. `reset` argument resets dirty state (default: `false`).
+$.components.set(path, value, [reset]);
+$.components.set('some.model.name', 'Peter'); // Example: sets the value
+$.components.set('+some.model.tags', 'HTML'); // Example: appends the value into the array
+$.components.set('+some.model.tags', ['CSS', 'JavaScript']); // Example: appends the array into the array
+// Sets the value into the model. `reset` argument resets the state
+// (dirty, validation), default: `false`.
 
-```javascript
-$.components.set('some.model.name', 'Peter');
 
-// Other modifications
-$.components.set('+some.model.tags', 'HTML');
-$.components.set('+some.model.tags', ['CSS', 'JavaScript']);
-```
+$.components.push(path, value, [reset]);
+$.components.push('some.model.tags', 'HTML'); // Example
+$.components.push('some.model.tags', ['CSS', 'JavaScript']); // Example
+// Pushs the value in the model, only for arrays. `reset` argument resets
+// the state (dirty, validation), default: `false`.
 
----
 
-```javascript
-$.components.push(path, value, [reset])
-```
-Pushs the value in the model, only for arrays. `reset` argument resets dirty state (default: `false`).
+$.components.inc(path, value, [reset]);
+$.components.inc('some.model.age', 10); // Example
+$.components.inc('some.model.price', -5); // Example
+// Increments the value in the model, only for numbers. `reset` argument
+// resets the state (dirty, validation), default: `false`.
 
-```javascript
-$.components.push('some.model.tags', 'HTML');
-$.components.push('some.model.tags', ['CSS', 'JavaScript']);
-```
 
----
+$.components.extend(path, value, [reset]);
+$.components.extend('some.model', { age: 30, name: 'Peter' }); // Example
+// Extends the value in the model, only for objects. `reset` argument resets
+// the state (dirty, validation), default: `false`.
 
-```javascript
-$.components.inc(path, value, [reset])
-```
-Increments the value in the model, only for numbers. `reset` argument resets dirty state (default: `false`).
 
-```javascript
-$.components.inc('some.model.age', 10);
-```
+$.components.get(path);
+$.components.get('some.model.age'); // Example
+$.components.get('some.model.tags'); // Example
+// Gets the value from the model.
 
----
 
-```javascript
-$.components.extend(path, value, [reset])
-```
-Extends the value in the model, only for objects. `reset` argument resets dirty state (default: `false`).
+$.components.findByName(name, [path], [fn(component)]);
+$.components.findByName('my-component'); // Example: Returns only one component
+$.components.findByName('my-component', function(component) { console.log(component); });  // Example: Crawls all components
+$.components.findByName('my-component', 'model.*', function(component) { console.log(component); }); // Example: Crawls all components according the path
+// Finds components by `data-component` attribute.
 
-```javascript
-$.components.inc('some.model', { age: 30, name: 'Peter' });
-```
 
----
+$.components.findById(name, [path], [fn(component)]);
+$.components.findById('my-component'); // Example: Returns only one component
+$.components.findById('my-component', function(component) { console.log(component); }); // Example: Crawls all components
+$.components.findById('my-component', 'model.*', function(component) { console.log(component); });  // Example: Crawls all components according the path
+// Finds components by `data-component-id` attribute.
 
-```javascript
-$.components.get(path)
-```
-Gets the value from the model.
 
-```javascript
-$.components.get('some.model.age');
-$.components.get('some.model.tags');
-```
+$.components.findByPath([path], [fn(component)]);
+$.components.findByPath('some.model'); // Example: Returns only one component
+$.components.findByPath('some.model', function(component) { console.log(component); });  // Example: Crawls all components
+// Finds components by `data-component-id` attribute.
 
----
 
-```javascript
-$.components.findByName(name, [path], [fn(component)])
-```
-Finds components by `data-component` attribute.
+$.components.errors([path]);
+// Returns array of invalid components.
 
-```javascript
-// Returns only one component
-$.components.findByName('my-component');
 
-// Reads all components - `my-component`
-$.components.findByName('my-component', function(component) {
-    console.log(component);
-});
+$.components.invalid(path);
+// Sets the invalid state to all components according to the binding path.
 
-// Reads all components - `my-component` according to the path
-$.components.findByName('my-component', 'model.*', function(component) {
-    console.log(component);
-});
-```
 
----
+$.components.remove(path);
+$.components.remove(jquery_element);
+// Removes all components according to the binding path.
 
-```javascript
-$.components.findById(name, [path], [fn(component)])
-```
-Finds components by `data-component-id` attribute.
 
-```javascript
-// Returns only one component
-$.components.findById('my-component');
-
-// Reads all components - `my-component`
-$.components.findById('my-component', function(component) {
-    console.log(component);
-});
-
-// Reads all components - `my-component` according to the path
-$.components.findById('my-component', 'model.*', function(component) {
-    console.log(component);
-});
-```
-
----
-
-```javascript
-$.components.findByPath([path], [fn(component)])
-```
-Finds components by `data-component-id` attribute.
-
-```javascript
-// Returns only one component
-$.components.findByPath('some.model');
-
-// Reads all components
-$.components.findByPath('some.model', function(component) {
-    console.log(component);
-});
-```
-
----
-
-```javascript
-$.components.errors([path])
-```
-Returns array of invalid components;
-
----
-
-```javascript
-$.components.invalid(path)
-```
-Sets the invalid state to all components according to the binding path.
-
----
-
-```javascript
-$.components.remove(path)
-```
-Removes all components according to the binding path.
-
----
-
-```javascript
-$.components.remove(jquery_element)
-```
-Removes component.
-
----
-
-```javascript
 $.components.inject(url, [target], [callback])
-```
-Injects content (with components) into the `target` (by default: `document.body`).
+// Injects content (with components) into the `target` (by default: `document.body`).
 
----
+```
 
 ## Events
 
