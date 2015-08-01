@@ -33,11 +33,11 @@ The component doesn't know scopes. Only the one scope with the components work i
 
 ***
 
-## HTML definition
+## HTML definition
 
 The library searches all components according `data-component` attribute which must contain a component name and [the component must be defined in JavaScript](#component).
 
-#### Simple declaration of the component
+#### Simple declaration of the component
 
 ```html
 <div data-component="textbox">Name</div>
@@ -120,7 +120,7 @@ It's not required and can contain only URL address to component template. The li
 
 ---
 
-## Special HTML attributes
+## Special HTML attributes
 
 ```html
 <element data-component-url="" />
@@ -157,7 +157,7 @@ This attribute can enable only real-time bindings. That means: `blur` and `chang
 
 ***
 
-## Component definition
+## Component definition
 
 The definition of the component must be defined in JavaScript. You can define the component in some HTML template (in `<script` tag) or in your own JavaScript libraries.
 
@@ -177,7 +177,7 @@ COMPONENT('my-component-name', function() {
 });
 ```
 
-### Properties
+### Properties
 
 ```javascript
 COMPONENT('my-component-name', function() {
@@ -762,7 +762,7 @@ $.components.on('@data-componnet', function(component) {
 });
 ```
 
-## Shortcuts methods
+## Shortcuts methods
 
 ```js
 GET();
@@ -825,7 +825,7 @@ EVALUATE(path, expression);
 // Alias for $.components.evaluate();
 ```
 
-## Operations
+## Operations
 
 Operations are preddefined functions. The operation can be executed automatically in some component attribute e.g. `data-component-init="#operation-name"`.
 
@@ -837,7 +837,7 @@ OPERATION(name);
 // Returns the operation.
 ```
 
-### Example
+### Example
 
 ```javascript
 // CREATING
@@ -857,7 +857,7 @@ GET('#get.users')({}, 'db.users');
 console.log(GET('#now')());
 ```
 
-## Controllers
+## Controllers
 
 Controllers don't know any special features. Thier implementation is very simple:
 
@@ -913,77 +913,7 @@ COMPONENT('button', function() {
 });
 ```
 
-```html
-<div data-component="input" data-component-path="model.name" class="hide" data-component-class="hide"></div>
-<div data-component="input" data-component-path="model.arr[1]"></div>
-<div data-component-url="/templates/button.html"></div>
-<button data-component="button">SUBMIT</button>
-
-<script>
-    var model = {};
-
-    model.arr = ['A', 'B', 'C'];
-    model.name = 'Peter';
-
-    function change_name() {
-
-        model.name = 'Janko';
-        $.components.update('model');
-
-        // or
-        // $.components.bind('model.name', 'Janko');
-
-        // or
-        /*
-        $.components.bind('model.arr', function(value) {
-            value.push('C');
-            return value;
-        });
-        */
-    }
-</script>
-```
-
-## Important things
-
-#### Watching only fixed path
-
-__HTML__:
-
-```html
-<div data-component="some-component" data-component-path="!user.credits"></div>
-```
-
-```javascript
-COMPONENT('some-component', function() {
-    this.setter = function(value, path) {
-        // executed: initiliazation or the path must be updated strictly according the path:
-        // $.components.SET('user.credits', value) -> executes this setter
-        // $.components.SET('user', value) -> doesn't execute this setter because the path is not strictly
-    };
-
-    this.watch(function(path, value) {
-        // same as setter
-    });
-});
-
-$.components.watch('!user.credits', function() {
-    // same as component setter
-});
-```
-
-#### Bind value without emitting current state
-
-Example:
-
-```javascript
-SET('!user.credits', 100);
-$.components.update('!user.credits');
-```
-
-All watchers on `user` won't know that the property `credits` is changed.
-
-## Contact
+## Contact
 
 Peter Širka - www.petersirka.eu / <petersirka@gmail.com>
 
