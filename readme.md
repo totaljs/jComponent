@@ -11,6 +11,7 @@
 - works with any template engine
 - works with any mobile device
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
+- works with [Bootstrap](http://getbootstrap.com/), [Foundation](foundation.zurb.com), [Pure](http://purecss.io/) and even more
 - you can wrap thousands plugins of jQuery via jComponent
 - best of use with [www.totaljs.com - web application framework for node.js](http://www.totaljs.com)
 
