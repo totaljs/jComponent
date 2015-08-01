@@ -491,9 +491,25 @@ $.components.$language;
 // called via jComponent, default: "".
 
 $.components.$parser;
+$.components.$parser.push(function(path, value, type) { // Example
+    // this === component
+    // type === [data-component-type]
+    if (path === 'model.created') {
+        var dt = value.split('.');
+        return new Date(parseInt(dt[2]), parseInt(dt[1] - 1), parserInt(dt[0]));
+    }
+    return value;
+});
 // {Array of Functions} contains all global parsers.
 
 $.components.$formatter;
+$.components.$formatter.push(function(path, value, type) { // Example
+    // this === component
+    // type === [data-component-type]
+    if (path === 'model.created')
+        return value.format('dd.MM.yyyy');
+    return value;
+});
 // {Array of Functions} contains all global formatters.
 ```
 
@@ -712,6 +728,15 @@ $.components.evaluate('model.age', 'value > 20 && value < 20'); // Example.
 // Evaluates the expression. The value in the expression is value according the path.
 
 
+$.components.blocked(name, timeout, [callback]);
+if ($.components.blocked('submitted', 1000)) { // Example.
+    alert('Try later.')
+    return;
+}
+// Prevention for some operations. It's stored in `localStorage` according
+// `$.components.defaults.localstorage`.
+
+
 $.components.ready(fn);
 $.components.ready(function(count) { console.log('Components ready:', count); }); // Example.
 // Are the components ready? Has a similar functionality like $.ready().
@@ -740,51 +765,71 @@ $.components.on('@data-componnet', function(component) {
 ## Shortcuts methods
 
 ```js
-// Value parser (only for inputs/selects/textareas)
-// for component.getter
-$.components.$parser.push(function(path, value, type) {
-    // this === component
-    // type === [data-component-type]
-    // example:
-    if (path === 'model.price')
-        return value.format('### ### ###.##');
-    return value;
-});
+GET();
+// Alias for $.components.get();
 
-// Value formatter (only for inputs/selects/textareas)
-// for component.setter
-$.components.$formatter.push(function(path, value, type) {
-    // this === component
-    // type === [data-component-type]
-    if (path === 'model.price')
-        return parseFloat(value.replace(/\s/g, ''));
-    return value;
-});
+INJECT();
+// Alias for $.components.inject();
 
-GET(); // --> $.components.get()
-INJECT(); // --> $.components.inject()
-RESET(); // --> $.components.reste()
-SCHEMA(); // --> $.components.schema()
-CACHE(); // --> $.components.cache()
-SET(path, value, [timeout], [reset]); // --> $.components.set()
-EXTEND(path, value, [timeout], [reset]); // --> $.components.extend()
-PUSH(path, value, [timeout], [reset]); // --> $.components.push()
-UPDATE(path, [timeout], [reset]); // --> $.components.update()
-NOTIFY(path1, path2, ...); // --> $.components.notify()
-ON(); // --> $.compoents.on()
-WATCH(); // --> $.components.on('watch', path, callback);
-CHANGE(); // --> $.components.change();
-STYLE(style); // --> create inline style
+RESET();
+// Alias for $.components.reset();
+
+SCHEMA();
+// Alias for $.components.schema();
+
+CACHE();
+// Alias for $.components.cache();
+
+SET(path, value, [sleep], [reset]);
+// Sets the value into the model. `reset` argument resets the state
+// (dirty and validation).
+
+EXTEND(path, value, [sleep], [reset]);
+// Extends the value in the model. `reset` argument resets the state
+// (dirty and validation).
+
+PUSH(path, value, [sleep], [reset]);
+// Push the value in the model (array). `reset` argument resets the state
+// (dirty and validation).
+
+UPDATE(path, [sleep], [reset]);
+// Updates components setter according the path. `reset` argument resets the state
+// (dirty and validation).
+
+NOTIFY(path1, path2, ...);
+// Notifies components setter according the path (only fixed path).
+
+ON();
+// Alias for $.components.on();
+
+WATCH();
+// Alias for $.components.on('watch', ...);
+
+CHANGE();
+// Alias for $.components.change();
+
+STYLE(style);
+STYLE('.hidden { display: none; }'); // Example
+// Creates inline style.
+
+FIND(value);
+FIND('data-component') // Example: Returns one component.
+FIND('#data-component–id') // Example: Returns one component.
+// Finds the components. When the value starts with `#` then the library will be
+// search components according the `data-component-id`;
+
+BLOCKED();
+// Alias for $.components.blocked();
+
+EVALUATE(path, expression);
+// Alias for $.components.evaluate();
+```
+
+## Operations
+
+```javascript
 OPERATION(name, fn); // --> creates an operation
 OPERATION(name); // --> returns function
-EVALUATE(path, expression); // --> $.components.evaluate()
-FIND(value) // --> when the value starts with '#' then is used $.components.findById() otherwise $.components.findByName()
-
-// blocked operations
-// the method checks if the current statement is not blocked
-BLOCKED(name, timeout, [callback]);
-if (BLOCKED('login-enter', 1000))
-    return;
 
 CONTROLLER('users', function(patcher) {
     console.log(patcher('{name}.datasource')); // --> users.datasource
@@ -794,14 +839,11 @@ CONTROLLER('users', function(patcher) {
 ## jQuery
 
 ```js
-$('#my-component').component() // ----------- `Component object`
-
-$('#my-component').on('component', function() {
-    // a component is ready
-});
+$('#my-component').component();
+// Returns the component.
 
 $(document).on('components', function(count) {
-    // components are ready
+    // New components are ready.
 });
 ```
 
