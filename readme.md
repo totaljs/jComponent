@@ -489,6 +489,12 @@ $.components.$version;
 $.components.$language;
 // {String} appends the value to each URL address `?language=$language`
 // called via jComponent, default: "".
+
+$.components.$parser;
+// {Array of Functions} contains all global parsers.
+
+$.components.$formatter;
+// {Array of Functions} contains all global formatters.
 ```
 
 ### Methods
@@ -649,6 +655,7 @@ $.components.POST('/api/', { name: 'jComponent' }, 'response.success-->form.resp
 $.components.POST('/api/', { name: 'jComponent' }, function(response) { console.log(response); }); // Example
 // Sends data as `JSON` format to server - POST method.
 
+
 $.components.PUT(url, data, [callback or path], [sleep], [error(response, status, type) or path]);
 $.components.PUT('/api/', { name: 'jComponent' }, 'form.response'); // Example
 $.components.PUT('/api/', { name: 'jComponent' }, 'response.success-->form.response'); // Example with remapping.
@@ -703,17 +710,36 @@ $.components.schema('user'); // Example: Getter.
 $.components.evaluate(path, expression);
 $.components.evaluate('model.age', 'value > 20 && value < 20'); // Example.
 // Evaluates the expression. The value in the expression is value according the path.
+
+
+$.components.ready(fn);
+$.components.ready(function(count) { console.log('Components ready:', count); }); // Example.
+// Are the components ready? Has a similar functionality like $.ready().
 ```
 
 ## Events
 
 ```js
-$.components.ready(function(componentCount) {}); // --> Are components ready?
-$.components.on('watch', 'path.*', function(path, value)); // Declare a watch event
-$.components.on('component', function(component)); // A spy for new components
-$.components.on('#data-component-id', function(component) {}); // Is triggered when is the component ready
-$.components.on('@component-name', function(component) {}); // Is triggered when is the component ready
+$.components.on('watch', 'path.*', function(path, value) {
+    // Watchs all changes according the path.
+});
 
+$.components.on('component', function(component) {
+    // New component is ready to use.
+});
+
+$.components.on('#data-component-id', function(component) {
+    // New component with `data-component-id` attribute is ready to use.
+}); 
+
+$.components.on('@data-componnet', function(component) {
+    // New component with `data-component` attribute is ready to use.
+});
+```
+
+## Shortcuts methods
+
+```js
 // Value parser (only for inputs/selects/textareas)
 // for component.getter
 $.components.$parser.push(function(path, value, type) {
@@ -734,11 +760,7 @@ $.components.$formatter.push(function(path, value, type) {
         return parseFloat(value.replace(/\s/g, ''));
     return value;
 });
-```
 
-## Shortcuts methods
-
-```js
 GET(); // --> $.components.get()
 INJECT(); // --> $.components.inject()
 RESET(); // --> $.components.reste()
