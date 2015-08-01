@@ -29,13 +29,13 @@ jComponent offers 3 libraries for developement rich web applications:
 
 If you want to use jComponent on your presentation website - use `jcomponent.min.js` only. If you create some rich web application, then use `jcta.min.js` because contains template engine and for __SPA__ use `jctajr.min.js` because contains template engine and HTML 5 history API.
 
-The component doesn't know scopes. Only the one scope with the components work is the browser `window.` scope. So each path in the form of `some.path.to.something` is automatically routed to `window.some.path.to.something`. The library automatically creates values according to the binding path.
+The component doesn't know scopes. Only the one scope with the components work is the browser `window.` scope. So each path in the form of `some.path.to.something` is automatically routed to `window.some.path.to.something`. The library automatically creates values according the binding path.
 
 ***
 
 ## HTML definition
 
-The library searches all components according to `data-component` attribute which must contain a component name and [the component must be defined in JavaScript](#component).
+The library searches all components according `data-component` attribute which must contain a component name and [the component must be defined in JavaScript](#component).
 
 #### Simple declaration of the component
 
@@ -61,7 +61,7 @@ Binding is represented as `data-component-path` attribute. jComponent has own bu
 ```html
 <div data-component="textbox" data-component-path="contactform.name">Name</div>
 
-<!-- empty "data-component" can write only raw output according to binding path -->
+<!-- empty "data-component" can write only raw output according binding path -->
 <div data-component="" data-component-path="contactform.name"></div>
 ```
 
@@ -74,7 +74,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 ```html
 <element data-component="" />
 ```
-Must contain a component name. If the value of this attribute is empty then jComponent writes only raw output according to binding path attribute.
+Must contain a component name. If the value of this attribute is empty then jComponent writes only raw output according binding path attribute.
 
 ---
 
@@ -102,7 +102,7 @@ It's not required. This attribute is an identificator of the component for the s
 ```html
 <element data-component-class="" />
 ```
-When is the component ready then the library automatically toggles the element `class` according to this attribute. It's not required.
+When is the component ready then the library automatically toggles the element `class` according this attribute. It's not required.
 
 ---
 
@@ -264,7 +264,7 @@ COMPONENT('my-component-name', function() {
 
     instance.state = function(type, who) {
         // This delegate watches the value state. In this delegate you can change
-        // the `design` of the component according to the value state.
+        // the `design` of the component according the value state.
 
         // type === 0 : init
         // type === 1 : by developer
@@ -285,7 +285,7 @@ COMPONENT('my-component-name', function() {
         // This delegate has an own implementation for the components which
         // contain `<input data-component-bind` or `<textarea data-component-bind`
         // or `<select data-component-bind` elements. If the value is changed
-        // according to `data-component-path` then the library executes this delegate.
+        // according `data-component-path` then the library executes this delegate.
 
         // Argument: value
         // value === new value
@@ -418,7 +418,7 @@ COMPONENT('my-component-name', function() {
     instance.watch('some.other.path', function(path, value) { // example
         // watch for changes
     });
-    // This delegate watches all changes according to the model.
+    // This delegate watches all changes according the model.
 });
 ```
 
@@ -557,66 +557,162 @@ $.components.errors([path]);
 
 
 $.components.invalid(path);
-// Sets the invalid state to all components according to the binding path.
+// Sets the invalid state to all components according the binding path.
 
 
 $.components.remove(path);
 $.components.remove(jquery_element);
-// Removes all components according to the binding path.
+// Removes all components according the binding path.
 
 
 $.components.inject(url, [target], [callback])
 // Injects content (with components) into the `target` (by default: `document.body`).
 
+
+$.components.dirty(path, [value], [notifyPath]);
+$.components.dirty('model.isDirty'); // Example: Checker.
+$.components.dirty('model.isDirty', false); // Example: Setter.
+// Checks or sets a dirty value. `notifyPath` executes Component.state() delegate.
+// Returns {Boolean}.
+// Supports wildcard path, e.g. `model.*`.
+
+
+$.components.valid(path, [value], [notifyPath]);
+$.components.valid('model.isValid'); // Example: Checker.
+$.components.valid('model.isValid', false); // Example: Setter.
+// Checks or sets a valid value. `notifyPath` executes Component.state() delegate.
+// Returns {Boolean}.
+// Supports wildcard path, e.g. `model.*`.
+
+
+$.components.can(path, [except_paths_arr]);
+// Combines the dirty and valid method together (e.g. for enabling of buttons)
+// Returns {Boolean}.
+// Opposite of $.components.disable()
+// Supports wildcard path, e.g. `model.*`.
+
+
+$.components.disable(path, [except_paths_arr]);
+// Combines the dirty and valid method together (e.g. for disabling of buttons)
+// Opposite of $.components.can()
+// Supports wildcard path, e.g. `model.*`.
+
+
+$.components.cache(key); // Example: Getter.
+$.components.cache(key, value, expire); // Example: Setter.
+// Gets or Sets the value from the cache. `Expire` in milliseconds.
+// Returns {Object}.
+
+
+$.components.validate([path], [except_paths_arr]);
+// Validates all values according the path.
+// Returns {Boolean}.
+// Supports wildcard path, e.g. `model.*`.
+
+
+$.components.reset([path], [timeout]);
+// Reset the dirty and valid method together (Sets: dirty=true and valid=true)
+// Supports wildcard path, e.g. `model.*`.
+
+
+$.components.each(fn(component, index, isAsterix), path);
+$.components.each(function(component) { console.log(component); }); // Example: All components.
+$.components.each(function(component) { console.log(component); }, 'model.*'); // Example: According the path.
+// Components selector.
+// Supports wildcard path, e.g. `model.*`.
+
+
+$.components.update(path, [reset]);
+$.components.update('model.*'); // Example
+$.components.update('model.name'); // Example
+// Executes `Component.setter` for each component according path. `reset` argument resets
+// the state (dirty, validation), default: `false`.
+
+
+$.components.notify([path1], [path2], [path3], [path4], ...);
+$.components.notify('model.age', 'model.name'); // Example
+// Executes `Component.setter` for each component according path (only fixed path).
+
+
+$.components.emit(name, [arg1], [arg2]);
+// Triggers event within all components.
+
+
+$.components.parseQuery([querystring]);
+$.components.parseQuery(); // Example: Returns parsed values from the current URL address.
+// Parsers query string (from URL address) and returns {Object}.
+
+
+$.components.POST(url, data, [callback or path], [sleep], [error(response, status, type) or path]);
+$.components.POST('/api/', { name: 'jComponent' }, 'form.response'); // Example
+$.components.POST('/api/', { name: 'jComponent' }, 'response.success-->form.response'); // Example with remapping.
+$.components.POST('/api/', { name: 'jComponent' }, function(response) { console.log(response); }); // Example
+// Sends data as `JSON` format to server - POST method.
+
+$.components.PUT(url, data, [callback or path], [sleep], [error(response, status, type) or path]);
+$.components.PUT('/api/', { name: 'jComponent' }, 'form.response'); // Example
+$.components.PUT('/api/', { name: 'jComponent' }, 'response.success-->form.response'); // Example with remapping.
+$.components.PUT('/api/', { name: 'jComponent' }, function(response) { console.log(response); }); // Example
+// Sends data as `JSON` format to server - PUT method.
+
+
+$.components.DELETE(url, data, [callback or path], [sleep], [error(response, status, type) or path]);
+$.components.DELETE('/api/', { name: 'jComponent' }, 'form.response'); // Example
+$.components.DELETE('/api/', { name: 'jComponent' }, 'response.success-->form.response'); // Example with remapping.
+$.components.DELETE('/api/', { name: 'jComponent' }, function(response) { console.log(response); }); // Example
+// Sends data as `JSON` format to server - DELETE method.
+
+
+$.components.GET(url, data, [callback or path], [sleep], [error(response, status, type) or path]);
+$.components.GET('/api/', { name: 'jComponent' }, 'form.response'); // Example
+$.components.GET('/api/', { name: 'jComponent' }, 'response.success-->form.response'); // Example with remapping.
+$.components.GET('/api/', { name: 'jComponent' }, function(response) { console.log(response); }); // Example
+// Sends data as `JSON` format to server - GET method.
+
+
+$.components.TEMPLATE(url, callback(template), [prepare(template)]);
+// Downloads the HTML content and caches it per session. This method is adapted for multiple
+// executing. The content is downloaded only once. `prepare` argument is optional
+// (and executed once), but if it's declared then must "return" template (e.g. compiled template).
+
+
+$.components.GETCACHE(url, data, [callback or path], [expire], [sleep], [clear]);
+// Sends data and caches the response. `expire` in milliseconds, `sleep` in milliseconds and
+// `clear` argument can replace the cache with a new content. Data are stored into
+// the `localStorage` according `$.components.defaults.localstorage`.
+
+
+$.components.POSTCACHE(url, data, [callback or path], [expire], [sleep], [clear]);
+// Sends data and caches the response. `expire` in milliseconds, `sleep` in milliseconds and
+// `clear` argument can replace the cache with a new content. Data are stored into
+// the `localStorage` according `$.components.defaults.localstorage`.
+
+
+$.components.REMOVECACHE(method, url, data);
+// Deletes cache (GETCACHE, POSTCACHE).
+
+
+$.components.schema(name, [declaration]);
+$.components.schema('user', { name: '', age: 30, email: '@' }); // Example: Creating.
+$.components.schema('user', '{"name":"","age":20}'); // Example: Creating with JSON.
+$.components.schema('user', '/json/user.json'); // Example: Creating from URL address.
+$.components.schema('user'); // Example: Getter.
+// Creates or Gets (new object instance) the schema.
+
+
+$.components.evaluate(path, expression);
+$.components.evaluate('model.age', 'value > 20 && value < 20'); // Example.
+// Evaluates the expression. The value in the expression is value according the path.
 ```
 
 ## Events
 
 ```js
-$.components.dirty(path, [value], [notifyPath]); // Are values dirty? or setter "dirty" state.
-$.components.dirty(path, [except_paths_arr]); // only for read
-$.components.valid(path, [value], [notifyPath]); // Are values valid? or setter "valid" state.
-// notifyPath executes Component.state() according to the path, serves for e.g. validations
-$.components.valid(path, [except_paths_arr]); // only for read
-$.components.cache(key); // --> get a value from cache (default: undefined)
-$.components.cache(key, value, expire); // --> set a value to cache (expire in milliseconds)
-$.components.can(path, [except_paths_arr]); // Combine dirty and valid together (e.g. for keypressing)
-$.components.disable(path, [except_paths_arr]); // Combine dirty and valid together (e.g. for button disabling)
-$.components.validate([path], [except_paths_arr]); // The function validates all values according the path
-$.components.reset([path], [timeout]); // Reset dirty and valid state to dirty=true, valid=true
-$.components.each(fn(component, index, isAsterix), path); // A generic iterator function
-$.components.update(path, [reset]); // Re-update values, example: "model.user.*"
-$.components.notify([path1], [path2], [path3], [path4], ...); // Re-update values (only fixed path)
-
-$.components.emit(name, arg1, arg2); // The function triggers event within all components
-$.components.parseQuery([querystring]); // Parsers query string and returns object
-$.components.POST(url, data, [callback or path], [sleep], [error(response, status, type) or path]); // Send data
-$.components.PUT(url, data, [callback or path], [sleep], [error(response, status, type) or path]); // Send data
-$.components.GET(url, data, [callback or path], [sleep], [error(response, status, type) or path]); // Send data
-$.components.DELETE(url, data, [callback or path], [sleep], [error(response, status, type) or path]); // Send data
-
-// POST, PUT, GET, DELETE supports "remap" feature, e.g.
-$.components.POST('/api/users/', {}, 'users->local.users');
-// response.users --> local.users
-
-$.components.TEMPLATE(url, callback(template), [prepare(template)]); // Downloads the HTML content and caches per session
-$.components.GETCACHE(url, data, [callback or path], [expire], [sleep], [clear]); // Send data and cache
-$.components.POSTCACHE(url, data, [callback or path], [expire], [sleep], [clear]); // Send data and cache
-$.components.REMOVECACHE(method, url, data); // Delete cache
-
 $.components.ready(function(componentCount) {}); // --> Are components ready?
 $.components.on('watch', 'path.*', function(path, value)); // Declare a watch event
 $.components.on('component', function(component)); // A spy for new components
 $.components.on('#data-component-id', function(component) {}); // Is triggered when is the component ready
 $.components.on('@component-name', function(component) {}); // Is triggered when is the component ready
-$.components.schema(name, [declaration]); // returns schema declaration
-
-$.components.evaluate(path, expression); // evaluate('some.model', 'this.age > 18')
-$.components.schema('user', { name: '', age: 20 });
-$.components.schema('user', '{"name":"","age":20}');
-$.components.schema('user', '/json/user.json');
-
-console.log($.components.schema('user')); // returns new instance of user (deep clone)
 
 // Value parser (only for inputs/selects/textareas)
 // for component.getter
@@ -757,7 +853,7 @@ __HTML__:
 ```javascript
 COMPONENT('some-component', function() {
     this.setter = function(value, path) {
-        // executed: initiliazation or the path must be updated strictly according to the path:
+        // executed: initiliazation or the path must be updated strictly according the path:
         // $.components.SET('user.credits', value) -> executes this setter
         // $.components.SET('user', value) -> doesn't execute this setter because the path is not strictly
     };
