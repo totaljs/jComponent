@@ -122,7 +122,8 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 <element data-component-url="" />
 <!--
     The library downloads a full HTML template with the component and its JavaScript
-    declaration. The content will be inserted into the current element and then will be evaluated.
+    declaration. The content will be inserted into the current element and then will
+    be evaluated.
 -->
 
 <element data-component-bind="" />
@@ -137,7 +138,8 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 <element data-component-keypress="" />
 <!--
     Works only with `<input` and `<textarea` tags and enables/disables keypress real-time
-    bindings of values. Default: `true` and the tags must have `data-component-bind` attribute.
+    bindings of values. Default: `true` and the tags must have `data-component-bind`
+    attribute.
 -->
 
 <element data-component-keypress-delay="" />
@@ -147,8 +149,9 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
 <element data-component-keypress-only="" />
 <!--
-    This attribute can enable only real-time bindings. That means: `blur` and `change` event is
-    skipped in `<input`, `<textarea` tags. Suitable for autocomplete fields. Default: `false`.
+    This attribute can enable only real-time bindings. That means: `blur` and `change`
+    event is skipped in `<input`, `<textarea` tags. Suitable for autocomplete fields.
+    Default: `false`.
 -->
 ```
 
