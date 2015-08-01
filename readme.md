@@ -1,11 +1,6 @@
 [![MIT License][license-image]][license-url]
 # jQuery component library
 
-| Important links                                       |
-|-------------------------------------------------------|
-| __Homepage:__ <http://www.jcomponent.org>             |
-| __Full SPA example__ <http://example.jcomponent.org/> |
-
 - Current version: `v2.1.0` (stable)
 - `>= jQuery +1.7`
 - `>= IE9`
@@ -24,6 +19,13 @@ __YOU MUST SEE:__
 - [__jComponent full SPA example with the source-code__](http://example.jcomponent.org/)
 - [jRouting - HTML 5 routing via History API](https://github.com/petersirka/jRouting)
 - [Tangular - A template engine like Angular.js](https://github.com/petersirka/Tangular)
+
+---
+
+| Important links                                      |
+|------------------------------------------------------|
+| __Homepage:__ <http://www.jcomponent.org>            |
+| __Full SPA example__ <http://example.jcomponent.org> |
 
 ***
 
