@@ -81,8 +81,8 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 <element data-component-path="" />
 <!--
     It's not required. The attribute contains the binding path for binding values between
-    component and model, e.g. `form.name` (--> is binded to `window.form.name`) or
-    `user.age` (--> is binded to `window.user.age`).
+    component and model, e.g. `form.name` (is binded to `window.form.name`) or
+    `user.age` (is binded to `window.user.age`).
 -->
 
 <element data-component-type="" />
