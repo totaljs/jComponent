@@ -887,32 +887,6 @@ $(document).on('components', function(count) {
 });
 ```
 
-## Example
-
-```js
-// COMPONENT(type, declaration);
-// component(type, declaration);
-COMPONENT('input', function() {
-    this.make = '<input type="text" data-component-bind /><div data-component="label" data-component-path="' + this.element.attr('path') + '"></div>';
-    this.validate = function(value) {
-        return value.length > 0;
-    };
-});
-
-COMPONENT('label', function() {
-    this.make = '<label></label>';
-    this.setter = function(value) {
-        this.element.find('label').html(value);
-    };
-});
-
-COMPONENT('button', function() {
-    this.state = function(name) {
-        this.element.prop({ disabled: $.components.dirty() === true || $.components.valid() === false });
-    };
-});
-```
-
 ## Contact
 
 Peter Širka - www.petersirka.eu / <petersirka@gmail.com>
