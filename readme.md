@@ -73,87 +73,83 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
 ```html
 <element data-component="" />
-```
-Must contain a component name. If the value of this attribute is empty then jComponent writes only raw output according binding path attribute.
+<!-- 
+    Must contain a component name. If the value of this attribute is empty then jComponent
+    writes only raw output according binding path attribute.
+-->
 
----
-
-```html
 <element data-component-path="" />
-```
-It's not required. The attribute contains the binding path for binding values between component and model, e.g. `form.name` (--> is binded to `window.form.name`) or `user.age` (--> is binded to `window.user.age`).
+<!--
+    It's not required. The attribute contains the binding path for binding values between
+    component and model, e.g. `form.name` (--> is binded to `window.form.name`) or
+    `user.age` (--> is binded to `window.user.age`).
+-->
 
----
-
-```html
 <element data-component-type="" />
-```
-It's not required. The attribute can contain a type of the component. You must define own types e.g. `number`, `currency` or `date`.
+<!--
+    It's not required. The attribute can contain a type of the component. You must define
+    own types e.g. `number`, `currency` or `date`.
+-->
 
----
-
-```html
 <element data-component-id="" />
-```
-It's not required. This attribute is an identificator of the component for the searching.
+<!--
+    It's not required. This attribute is an identificator of the component for the searching.
+-->
 
----
-
-```html
 <element data-component-class="" />
-```
-When is the component ready then the library automatically toggles the element `class` according this attribute. It's not required.
+<!--
+    When is the component ready then the library automatically toggles the element
+    `class` according this attribute. It's not required.
+-->
 
----
-
-```html
 <element data-component-init="" />
-```
-It's not required and must contain name of function which is executed when the component is ready. `function init(component) {}`.
+<!--
+    It's not required and must contain name of function which is executed when the
+    component is ready. `function init(component) {}`.
+-->
 
----
-
-```html
 <element data-component-template="" />
+<!--
+    It's not required and can contain only URL address to component template. The library
+    automatically downloads the content and sends it to the component (into the `make` delegate).
+-->
 ```
-It's not required and can contain only URL address to component template. The library automatically downloads the content and sends it to the component (into the `make` delegate).
-
----
 
 ## Special HTML attributes
 
 ```html
 <element data-component-url="" />
-```
-The library downloads a full HTML template with the component and its JavaScript declaration. The content will be inserted into the current element and then will be evaluated.
+<!--
+    The library downloads a full HTML template with the component and its JavaScript
+    declaration. The content will be inserted into the current element and then will be evaluated.
+-->
 
----
-
-```html
 <element data-component-bind="" />
-```
-This attribute can be used only in `<input`, `<textarea` and `<select` tags. If the component contains some said tag then the attribute ensures two way binding between the input (in component) and the model. You don't need to declare `setter` and `getter` because the library to create it automatically. The value of this attribute is empty like this `data-component-bind=""`.
+<!--
+    This attribute can be used only in `<input`, `<textarea` and `<select` tags. If the
+    component contains some said tag then the attribute ensures two way binding between
+    the input (in component) and the model. You don't need to declare `setter` and
+    `getter` because the library to create it automatically. The value of this attribute
+    is empty like this `data-component-bind=""`.
+-->
 
----
-
-```html
 <element data-component-keypress="" />
-```
-Works only with `<input` and `<textarea` tags and enables/disables keypress real-time bindings of values. Default: `true` and the tags must have `data-component-bind` attribute.
+<!--
+    Works only with `<input` and `<textarea` tags and enables/disables keypress real-time
+    bindings of values. Default: `true` and the tags must have `data-component-bind` attribute.
+-->
 
----
-
-```html
 <element data-component-keypress-delay="" />
-```
-It's delay / sleep time for real-time bindings of values in milliseconds. Default: `300`.
+<!--
+    It's delay / sleep time for real-time bindings of values in milliseconds. Default: `300`.
+-->
 
----
-
-```html
 <element data-component-keypress-only="" />
+<!--
+    This attribute can enable only real-time bindings. That means: `blur` and `change` event is
+    skipped in `<input`, `<textarea` tags. Suitable for autocomplete fields. Default: `false`.
+-->
 ```
-This attribute can enable only real-time bindings. That means: `blur` and `change` event is skipped in `<input`, `<textarea` tags. Suitable for autocomplete fields. Default: `false`.
 
 ***
 
