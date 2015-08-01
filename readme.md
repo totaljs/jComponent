@@ -1,8 +1,10 @@
 [![MIT License][license-image]][license-url]
 # jQuery component library
 
-__Homepage:__ <http://www.jcomponent.org>
-__Full SPA example__ <http://example.jcomponent.org/>
+| Important links                                       |
+|-------------------------------------------------------|
+| __Homepage:__ <http://www.jcomponent.org>             |
+| __Full SPA example__ <http://example.jcomponent.org/> |
 
 - Current version: `v2.1.0` (stable)
 - `>= jQuery +1.7`
