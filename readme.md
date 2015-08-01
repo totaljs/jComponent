@@ -110,8 +110,9 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
 <element data-component-template="" />
 <!--
-    It's not required and can contain only URL address to component template. The library
-    automatically downloads the content and sends it to the component (into the `make` delegate).
+    It's not required and can contain only URL address to component template. The
+    library automatically downloads the content and sends it to the component (into
+    the `make` delegate).
 -->
 ```
 
