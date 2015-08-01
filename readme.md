@@ -3,6 +3,7 @@
 
 __Homepage:__ <http://www.jcomponent.org>
 
+- Current stable version: `v2.1.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - supports two way bindings
