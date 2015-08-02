@@ -4,8 +4,8 @@
 - Current version: `v2.1.0` (stable)
 - `>= jQuery +1.7`
 - `>= IE9`
-- supports two way bindings
 - similar functionality like directives in Angular.js
+- supports two way data-binding
 - supports validation
 - supports nested components
 - works with any template engine
