@@ -18,8 +18,8 @@
 __YOU MUST SEE:__
 
 - [__jComponent full SPA example with the source-code__](http://example.jcomponent.org/)
-- [jRouting - HTML 5 routing via History API](https://github.com/petersirka/jRouting)
 - [Tangular - A template engine like Angular.js](https://github.com/petersirka/Tangular)
+- [jRouting - HTML 5 routing via History API](https://github.com/petersirka/jRouting)
 
 ***
 
