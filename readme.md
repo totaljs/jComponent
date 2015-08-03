@@ -902,7 +902,7 @@ $(document).on('components', function(count) {
 
 ## Special cases
 
-### Copy data-component-path to nested components
+### Copy "data-component-path" to nested component
 
 __Usage__:
 
@@ -910,10 +910,13 @@ __Usage__:
 <div data-component-url="/templates/grid.html" data-component-path="grid.datasource"></div>
 ```
 
-__Component__:
+__Component__ `/templates/grid.html`:
 
 ```html
-<!-- The library copies "data-component-path" and replaces "$" in new template for the path. -->
+<!--
+    The library copies "data-component-path" and replaces "$" in
+    a new template.
+-->
 <div data-component="grid" data-component="$"></div>
 
 <script>
