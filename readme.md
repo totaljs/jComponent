@@ -836,6 +836,11 @@ BLOCKED();
 
 EVALUATE(path, expression);
 // Alias for $.components.evaluate();
+
+NOTMODIFIED(path, value);
+if (NOTMODIFIED('model', model)) // Example
+    return;
+// Method checks whether the value was not modified.
 ```
 
 ## Operations

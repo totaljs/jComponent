@@ -42,7 +42,7 @@ $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v2.1.0';
+$.components.version = 'v2.1.1';
 $.components.$localstorage = 'jcomponent';
 $.components.$version = '';
 $.components.$language = '';
@@ -2597,6 +2597,14 @@ function CACHE(key, value, expire) {
 
 function NOTIFY() {
 	return $.components.notify.apply($.components, arguments);
+}
+
+function NOTMODIFIED(path, value) {
+	var hash = $components_hash(JSON.stringify(value));
+	if ($cmanager.cache[path] === hash)
+		return true;
+	$cmanager.cache[path] = hash;
+	return false;
 }
 
 function FIND(value) {
