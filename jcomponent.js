@@ -2600,6 +2600,8 @@ function NOTIFY() {
 }
 
 function NOTMODIFIED(path, value) {
+	if (value === undefined)
+		value = $.components.GET(path);
 	var hash = $components_hash(JSON.stringify(value));
 	if ($cmanager.cache[path] === hash)
 		return true;

@@ -837,10 +837,12 @@ BLOCKED();
 EVALUATE(path, expression);
 // Alias for $.components.evaluate();
 
-NOTMODIFIED(path, value);
-if (NOTMODIFIED('model', model)) // Example
-    return;
-// Method checks whether the value was not modified.
+NOTMODIFIED(path, [value]);
+if (NOTMODIFIED('model', newvalue)) return; // Example
+if (NOTMODIFIED('model')) return; // Example
+// Method checks whether the value was not modified. If the value is not defined as argument,
+// then the method reads the value from the scope. The method creates hash from the value for
+// further usage.
 ```
 
 ## Operations
