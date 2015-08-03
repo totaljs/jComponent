@@ -23,8 +23,8 @@ __YOU MUST SEE:__
 
 ***
 
-- __Homepage:__ <http://www.jcomponent.org>            
-- __Full SPA example:__ <http://example.jcomponent.org> 
+- __Homepage:__ <http://www.jcomponent.org>
+- __Full SPA example:__ <http://example.jcomponent.org>
 
 ***
 
@@ -82,7 +82,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
 ```html
 <element data-component="" />
-<!-- 
+<!--
     Must contain a component name. If the value of this attribute is empty then jComponent
     writes only raw output according binding path attribute.
 -->
@@ -192,7 +192,7 @@ COMPONENT('my-component-name', function() {
 ```javascript
 COMPONENT('my-component-name', function() {
     var instance = this;
-    
+
     instance.name;
     // This property contains the component name, e.g. my-component-name.
     // If you use multiple // same components then this value will be same like other.
@@ -208,7 +208,7 @@ COMPONENT('my-component-name', function() {
     instance.type;
     // This property contains the component type from `data-component-type` attribute.
     // Default: ""
-    
+
     instance.template;
     // This property contains the current `String` template. You can change the value
     // of this property for anything. This property can contain URL address and the
@@ -237,7 +237,7 @@ COMPONENT('my-component-name', function() {
     instance.make = function(template) {
         // This delegate is executed when the component is creating an own instance.
         // Is executed once.
-        
+
         // if instance.prerender is not defined then the template will be {String}
         // (only when the template will be defined).
         this.template = Tangular.compile(template);
@@ -285,7 +285,7 @@ COMPONENT('my-component-name', function() {
         // who  === 3 : reset
         // who  === 4 : update
         // who  === 5 : set
-        
+
         instance.element.toggleClass('error', instance.isInvalid());
     };
 
@@ -335,7 +335,7 @@ COMPONENT('my-component-name', function() {
 
     instance.setPath(path);
     // This method sets a new path for this component.
-    
+
 
     instance.remove();
     // Removes current instance of this component.
@@ -371,7 +371,7 @@ COMPONENT('my-component-name', function() {
 
     instance.html([value]);
     // Gets or Sets inner HTML in the component element.
-    
+
 
     instance.dirty([boolean]);
     // Gets or Sets the dirty state. Only for inputs, textareas and selects.
@@ -379,7 +379,7 @@ COMPONENT('my-component-name', function() {
 
     instance.valid([boolean]);
     // Gets or Sets the validation state.
-    
+
 
     instance.change([boolean]);
     // Contains `instance.dirty()` and `instance.valid()` together.
@@ -417,7 +417,7 @@ COMPONENT('my-component-name', function() {
     instance.parser(function(value) { // example
         var dt = value.split('.');
         return new Date(parseInt(dt[2]), parseInt(dt[1] - 1), parserInt(dt[0]));
-    });    
+    });
     // Appends a new parser. The parser parses the value from the `input`, `textarea`
     // or `selectfor`. E.g. date. Works only with components which contain
     // `<input data-component-bind`, `<textarea data-component-bind` or
@@ -768,7 +768,7 @@ $.components.on('component', function(component) {
 
 $.components.on('#data-component-id', function(component) {
     // New component with `data-component-id` attribute is ready to use.
-}); 
+});
 
 $.components.on('@data-componnet', function(component) {
     // New component with `data-component` attribute is ready to use.
@@ -883,7 +883,7 @@ CONTROLLER('users', function(patcher) {
     // Output: users.datasource
 
     this.page = 1;
-    
+
     console.log(patcher('{name}.datasource and {name}.{page}'));
     // Output: users.datasource and users.1
 });
@@ -899,6 +899,33 @@ $(document).on('components', function(count) {
     // New components are ready.
 });
 ```
+
+## Special cases
+
+### Copy data-component-path to nested components
+
+__Usage__:
+
+```html
+<div data-component-url="/templates/grid.html" data-component-path="grid.datasource"></div>
+```
+
+__Component__:
+
+```html
+<!-- The library copies "data-component-path" and replaces "$" in new template for the path. -->
+<div data-component="grid" data-component="$"></div>
+
+<script>
+    COMPONENT('grid', function() {
+        this.make = function() {
+            // It will be "grid.datasource"
+            console.log(self.path);
+        };
+    });
+</script>
+```
+
 
 ## Contact
 
