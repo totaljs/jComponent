@@ -30,7 +30,7 @@ __YOU MUST SEE:__
 
 ## Library
 
-jComponent offers 3 libraries for developement rich web applications:
+jComponent offers 3 libraries for development rich web applications:
 
 - `jcomponent.min.js` contains only jComponent library
 - `jcta.min.js` contains jComponent library and [Tangular template engine](https://github.com/petersirka/Tangular)
@@ -169,7 +169,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
 ## Component definition
 
-The definition of the component must be defined in JavaScript. You can define the component in some HTML template (in `<script` tag) or in your own JavaScript libraries.
+The definition of the component must be defined in JavaScript. You can define the component in some HTML template (in `<script>` tag) or in your own JavaScript libraries.
 
 __Simple example__:
 
@@ -845,7 +845,7 @@ if (NOTMODIFIED('model', model)) // Example
 
 ## Operations
 
-Operations are preddefined functions. The operation can be executed automatically in some component attribute e.g. `data-component-init="#operation-name"`.
+Operations are predefined functions. The operation can be executed automatically in some component attribute e.g. `data-component-init="#operation-name"`.
 
 ```javascript
 OPERATION(name, fn);
@@ -877,7 +877,7 @@ console.log(GET('#now')());
 
 ## Controllers
 
-Controllers don't know any special features. Thier implementation is very simple:
+Controllers don't know any special features. Their implementation is very simple:
 
 ```javascript
 CONTROLLER('users', function(patcher) {
