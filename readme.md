@@ -917,7 +917,7 @@ __Component__ `/templates/grid.html`:
     The library copies "data-component-path" and replaces "$" in
     a new template.
 -->
-<div data-component="grid" data-component="$"></div>
+<div data-component="grid" data-component-path="$"></div>
 
 <script>
     COMPONENT('grid', function() {
