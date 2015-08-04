@@ -42,7 +42,7 @@ $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v2.1.1';
+$.components.version = 'v2.1.2';
 $.components.$localstorage = 'jcomponent';
 $.components.$version = '';
 $.components.$language = '';
@@ -2599,10 +2599,14 @@ function NOTIFY() {
 	return $.components.notify.apply($.components, arguments);
 }
 
-function NOTMODIFIED(path, value) {
-	if (value === undefined)
+function NOTMODIFIED(path, value, fields) {
+	if (!value)
 		value = $.components.GET(path);
-	var hash = $components_hash(JSON.stringify(value));
+
+	if (fields)
+		path = path.concat('#', fields);
+
+	var hash = $components_hash(JSON.stringify(value, fields));
 	if ($cmanager.cache[path] === hash)
 		return true;
 	$cmanager.cache[path] = hash;
