@@ -1535,8 +1535,8 @@ function Component(name) {
 	this.$dirty = true;
 	this.$valid = true;
 	this.$validate = false;
-	this.$parser;
-	this.$formatter;
+	this.$parser = new Array(0);
+	this.$formatter = new Array(0);
 	this.$skip = false;
 	this.$ready = false;
 	this.$path;
@@ -2322,8 +2322,13 @@ ComponentManager.prototype.cleaner = function() {
 		if (!component)
 			break;
 
-		if (!component.attr(COM_ATTR_R))
+		if (!component.attr(COM_ATTR_R)) {
+			if (component.$parser && !$component.$parser)
+				delete component.$parser;
+			if (component.$formatter && !$component.$formatter)
+				delete component.$formatter;
 			continue;
+		}
 
 		component.element.remove();
 		component.element = null;
