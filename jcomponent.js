@@ -42,7 +42,7 @@ $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v2.1.2';
+$.components.version = 'v2.1.3';
 $.components.$localstorage = 'jcomponent';
 $.components.$version = '';
 $.components.$language = '';
@@ -1535,8 +1535,8 @@ function Component(name) {
 	this.$dirty = true;
 	this.$valid = true;
 	this.$validate = false;
-	this.$parser = [];
-	this.$formatter = [];
+	this.$parser;
+	this.$formatter;
 	this.$skip = false;
 	this.$ready = false;
 	this.$path;
@@ -1775,17 +1775,51 @@ Component.prototype.on = function(name, path, fn, init) {
 	return this;
 };
 
-Component.prototype.formatter = function(value, g) {
-	var a = g ? $.components.$formatter : this.$formatter;
-	for (var i = 0, length = a.length; i < length; i++)
-		value = a[i].call(this, this.path, value, this.type);
+Component.prototype.formatter = function(value) {
+
+	if (typeof(value) === 'function') {
+		if (!this.$formatter)
+			this.$formatter = [];
+		this.$formatter.push(value);
+		return this;
+	}
+
+	var a = this.$formatter;
+	if (a && a.length) {
+		for (var i = 0, length = a.length; i < length; i++)
+			value = a[i].call(this, this.path, value, this.type);
+	}
+
+	a = $.components.$formatter;
+	if (a && a.length) {
+		for (var i = 0, length = a.length; i < length; i++)
+			value = a[i].call(this, this.path, value, this.type);
+	}
+
 	return value;
 };
 
-Component.prototype.parser = function(value, g) {
-	var a = g ? $.components.$parser : this.$parser;
-	for (var i = 0, length = a.length; i < length; i++)
-		value = a[i].call(this, this.path, value, this.type);
+Component.prototype.parser = function(value) {
+
+	if (typeof(value) === 'function') {
+		if (!this.$parser)
+			this.$parser = [];
+		this.$parser.push(value);
+		return this;
+	}
+
+	var a = this.$parser;
+	if (a && a.length) {
+		for (var i = 0, length = a.length; i < length; i++)
+			value = a[i].call(this, this.path, value, this.type);
+	}
+
+	a = $.components.$parser;
+	if (a && a.length) {
+		for (var i = 0, length = a.length; i < length; i++)
+			value = a[i].call(this, this.path, value, this.type);
+	}
+
 	return value;
 };
 
@@ -2351,8 +2385,6 @@ COMPONENT('', function() {
 		if (!this.element.attr(COM_ATTR_B))
 			this.element.attr(COM_ATTR_B, this.path);
 
-		this.$parser.push.apply(this.$parser, $.components.$parser);
-		this.$formatter.push.apply(this.$formatter, $.components.$formatter);
 		this.element.$component = this;
 	};
 });
