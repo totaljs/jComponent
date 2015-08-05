@@ -2323,9 +2323,9 @@ ComponentManager.prototype.cleaner = function() {
 			break;
 
 		if (!component.attr(COM_ATTR_R)) {
-			if (component.$parser && !$component.$parser)
+			if (component.$parser && !component.$parser.length)
 				delete component.$parser;
-			if (component.$formatter && !$component.$formatter)
+			if (component.$formatter && !component.$formatter.length)
 				delete component.$formatter;
 			continue;
 		}
