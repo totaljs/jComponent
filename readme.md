@@ -374,12 +374,19 @@ COMPONENT('my-component-name', function() {
     // Gets or Sets inner HTML in the component element.
 
 
-    instance.dirty([boolean]);
-    // Gets or Sets the dirty state. Only for inputs, textareas and selects.
+    instance.dirty([boolean], [noEMIT]);
+    // Gets or Sets the dirty state. Only for inputs, textareas and selects. `noEMIT` (default: false) attribute
+    // cancels instance.state().
 
 
-    instance.valid([boolean]);
-    // Gets or Sets the validation state.
+    instance.valid([boolean], [noEMIT]);
+    // Gets or Sets the validation state. `noEMIT` (default: false) attribute
+    // cancels instance.state().
+
+
+    instance.reset([noEMIT]);
+    // Resets `instance.dirty(false)` and `instance.valid(false)`. `noEMIT` (default: false) attribute
+    // cancels instance.state().
 
 
     instance.change([boolean]);

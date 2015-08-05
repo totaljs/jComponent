@@ -1724,6 +1724,12 @@ Component.prototype.dirty = function(value, noEmit) {
 	return this;
 };
 
+Component.prototype.reset = function(noEmit) {
+	this.dirty(false, noEmit);
+	this.valid(false, noEmit);
+	return this;
+};
+
 Component.prototype.remove = function(noClear) {
 
 	if (this.destroy)
@@ -2637,8 +2643,12 @@ function NOTIFY() {
 }
 
 function NOTMODIFIED(path, value, fields) {
-	if (!value)
+
+	if (value === undefined)
 		value = $.components.GET(path);
+
+	if (value === undefined)
+		value = null;
 
 	if (fields)
 		path = path.concat('#', fields);
@@ -2710,6 +2720,8 @@ function BLOCKED(name, timeout, callback) {
 }
 
 function $components_hash(s) {
+	if (!s)
+		return 0;
 	var hash = 0, i, char;
 	if (s.length === 0)
 		return hash;
