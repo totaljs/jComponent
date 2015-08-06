@@ -42,7 +42,7 @@ $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v2.2.0-1 (RC)';
+$.components.version = 'v2.2.0-2 (RC)';
 $.components.$localstorage = 'jcomponent';
 $.components.$version = '';
 $.components.$language = '';
@@ -787,8 +787,14 @@ $.components.emit = function(name) {
 	for (var i = 1, length = arguments.length; i < length; i++)
 		args.push(arguments[i]);
 
-	for (var i = 0, length = e.length; i < length; i++)
-		e[i].fn.apply(e[i].context, args);
+	for (var i = 0, length = e.length; i < length; i++) {
+		var context = e[i].context;
+		if (context !== undefined) {
+			if (context === null || context.$removed)
+				continue;
+		}
+		e[i].fn.apply(context, args);
+	}
 
 	return true;
 };
