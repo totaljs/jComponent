@@ -42,7 +42,7 @@ $.components.defaults.delay = 300;
 $.components.defaults.keypress = true;
 $.components.defaults.localstorage = true;
 $.components.debug = false;
-$.components.version = 'v2.1.3';
+$.components.version = 'v2.2.0-1 (RC)';
 $.components.$localstorage = 'jcomponent';
 $.components.$version = '';
 $.components.$language = '';
@@ -601,6 +601,12 @@ function $components_ready() {
 			$.components.emit('ready');
 		}
 
+		if ($cmanager.timeoutcleaner)
+			clearTimeout($cmanager.timeoutcleaner);
+		$cmanager.timeoutcleaner = setTimeout(function() {
+			$cmanager.cleaner();
+		}, 1000);
+
 		$cmanager.isCompiling = false;
 
 		if (!$cmanager.ready)
@@ -611,8 +617,7 @@ function $components_ready() {
 			arr[i](count);
 
 		delete $cmanager.ready;
-
-	}, 100);
+	}, 300);
 }
 
 $.components.watch = function(path, fn, init) {
@@ -817,6 +822,9 @@ $.components.valid = function(path, value, notifyPath) {
 
 	fn(function(obj) {
 
+		if (obj.disabled)
+			return;
+
 		if (isExcept && except.indexOf(obj.path) !== -1)
 			return;
 
@@ -880,6 +888,9 @@ $.components.dirty = function(path, value, notifyPath) {
 	var fn = notifyPath ? $.components.eachPath : $.components.each;
 
 	fn(function(obj) {
+
+		if (obj.disabled)
+			return;
 
 		if (isExcept && except.indexOf(obj.path) !== -1)
 			return;
@@ -945,7 +956,7 @@ $.components.update = function(path, reset) {
 
 	$.components.each(function(component) {
 
-		if (!component.path)
+		if (!component.path || component.disabled)
 			return;
 
 		for (var i = 0; i < AL; i++) {
@@ -1012,7 +1023,7 @@ $.components.notify = function() {
 
 	$.components.each(function(component) {
 
-		if (!component.path)
+		if (!component.path || component.disabled)
 			return;
 
 		var is = false;
@@ -1099,7 +1110,7 @@ $.components.set = function(path, value, type) {
 
 	$.components.each(function(component) {
 
-		if (!component.path)
+		if (!component.path || component.disabled)
 			return;
 
 		for (var i = 0; i < AL; i++) {
@@ -1224,6 +1235,9 @@ $.components.validate = function(path, except) {
 
 	$.components.each(function(obj) {
 
+		if (obj.disabled)
+			return;
+
 		if (except && except.indexOf(obj.path) !== -1)
 			return;
 
@@ -1330,6 +1344,8 @@ $.components.reset = function(path, timeout) {
 
 	var arr = [];
 	$.components.each(function(obj) {
+		if (obj.disabled)
+			return;
 		if (obj.state)
 			arr.push(obj);
 		obj.$dirty = true;
@@ -1545,6 +1561,7 @@ function Component(name) {
 	this.path;
 	this.type;
 	this.id;
+	this.disabled = false;
 
 	this.make;
 	this.done;
@@ -1619,6 +1636,18 @@ function Component(name) {
 	});
 }
 
+Component.prototype.noValid = function(val) {
+	this.$valid_disabled = val;
+	this.$valid = val;
+	return this;
+};
+
+Component.prototype.noDirty = function(val) {
+	this.$dirty_disabled = val;
+	this.$dirty = val;
+	return this;
+};
+
 Component.prototype.setPath = function(path) {
 	var fixed = null;
 
@@ -1644,6 +1673,10 @@ Component.prototype.html = function(value) {
 	if (value === undefined)
 		return this.element.html();
 	return this.element.html(value);
+};
+
+Component.prototype.find = function(selector) {
+	return this.element.find(selector);
 };
 
 Component.prototype.isInvalid = function() {
@@ -1679,8 +1712,12 @@ Component.prototype.invalid = function() {
 };
 
 Component.prototype.valid = function(value, noEmit) {
+
 	if (value === undefined)
 		return this.$valid;
+
+	if (this.$valid_disabled)
+		return this;
 
 	this.$valid = value;
 	this.$validate = false;
@@ -1711,6 +1748,9 @@ Component.prototype.dirty = function(value, noEmit) {
 
 	if (value === undefined)
 		return this.$dirty;
+
+	if (this.$dirty_disabled)
+		return this;
 
 	this.$dirty = value;
 	$cmanager.clear('dirty');
@@ -2299,7 +2339,7 @@ ComponentManager.prototype.cleaner = function() {
 				if (item.context === undefined)
 					continue;
 
-				if (item.context === null || (item.context.element && item.context.element.closest(document.documentElement)))
+				if (item.context === null || (item.context.element && item.context.element.closest(document.documentElement).length))
 					continue;
 
 				if (item.context && item.context.element)
@@ -2322,27 +2362,37 @@ ComponentManager.prototype.cleaner = function() {
 	}
 
 	var index = 0;
-	while (true) {
+	var length = $cmanager.components.length;
+
+	while (index < length) {
 		var component = $cmanager.components[index++];
 
-		if (!component)
-			break;
-
-		if (!component.attr(COM_ATTR_R)) {
-			if (component.$parser && !component.$parser.length)
-				delete component.$parser;
-			if (component.$formatter && !component.$formatter.length)
-				delete component.$formatter;
+		if (!component) {
+			index--;
+			$cmanager.components.splice(index, 1);
+			length = $cmanager.components.length;
 			continue;
 		}
 
+		if (component.element.closest(document.documentElement).length) {
+			if (!component.attr(COM_ATTR_R)) {
+				if (component.$parser && !component.$parser.length)
+					delete component.$parser;
+				if (component.$formatter && !component.$formatter.length)
+					delete component.$formatter;
+				continue;
+			}
+		}
+
+		index--;
 		component.element.remove();
 		component.element = null;
+		component.$removed = true;
 		component.path = null;
 		component.setter = null;
 		component.getter = null;
-		$cmanager.components.splice(index - 1, 1);
-		index = -1;
+		$cmanager.components.splice(index, 1);
+		length = $cmanager.components.length;
 	}
 
 	var now = Date.now();
@@ -2401,11 +2451,8 @@ COMPONENT('', function() {
 });
 
 setInterval(function() {
-	$cmanager.cleaner();
-}, 1000 * 60);
-
-setInterval(function() {
 	$cmanager.temp = {};
+	$cmanager.cleaner();
 }, (1000 * 60) * 5);
 
 $.components.compile();
@@ -2540,10 +2587,6 @@ $(document).ready(function() {
 	setTimeout(function() {
 		$.components.compile();
 	}, 2);
-
-	setTimeout(function() {
-		$cmanager.cleaner();
-	}, 3000);
 });
 
 function $components_keypress(self, old, e) {

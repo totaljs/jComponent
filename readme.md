@@ -368,10 +368,17 @@ COMPONENT('my-component-name', function() {
 
     instance.attr(name, [value]);
     // Gets or Sets an attribute in the component element.
+    // jQuery.attr();
 
 
     instance.html([value]);
     // Gets or Sets inner HTML in the component element.
+    // jQuery.html();
+
+
+    instance.find(selectors);
+    // Finds some content in the component element.
+    // jQuery.find();
 
 
     instance.dirty([boolean], [noEMIT]);
@@ -379,9 +386,17 @@ COMPONENT('my-component-name', function() {
     // cancels instance.state().
 
 
+    instance.noDrity();
+    // Disables setting "dirty" state within all components.
+
+
     instance.valid([boolean], [noEMIT]);
     // Gets or Sets the validation state. `noEMIT` (default: false) attribute
     // cancels instance.state().
+
+
+    instance.noValid();
+    // Disables own validation within all components.
 
 
     instance.reset([noEMIT]);
