@@ -1029,10 +1029,10 @@ COM; // shortcut for $.components
 MAN; // shortcut for the Component Manager
 
 // jcta.min.js:
-Tangular; // shortuct for Tangular
+Tangular; // shortcut for Tangular
 
 // jctajr.min.js:
-jRouting; // shortuct for jRouting
+jRouting; // shortcut for jRouting
 ```
 
 ## Contact
