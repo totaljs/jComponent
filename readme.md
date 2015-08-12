@@ -41,6 +41,10 @@ If you want to use jComponent on your presentation website - use `jcomponent.min
 
 The component doesn't know scopes. Only the one scope with the components work is the browser `window.` scope. So each path in the form of `some.path.to.something` is automatically routed to `window.some.path.to.something`. The library automatically creates values according the binding path.
 
+__IMPORTANT__:
+
+`jcta.min.js` and `jctajr.min.js` contain `Date.prototype.format(format)`, `Number.prototype.format(decimals, [separator], [separatorDecimal])` and helper for Tangular `format` for date/number formatting e.g. `{{ date | format('dd.MM.yyyy')` or `{{ price | format(2) }} EUR`.
+
 ***
 
 ## HTML definition
