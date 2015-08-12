@@ -1022,11 +1022,17 @@ arr.async({ counter: 0 }, function(err, response) {
 });
 ```
 
-## Reserverd keywords
+## Reserved keywords
 
 ```javascript
 COM; // shortcut for $.components
 MAN; // shortcut for the Component Manager
+
+// jcta.min.js:
+Tangular; // shortuct for Tangular
+
+// jctajr.min.js:
+jRouting; // shortuct for jRouting
 ```
 
 ## Contact
