@@ -1,4 +1,4 @@
-var $cmanager = new ComponentManager();
+var MAN = new ComponentManager();
 var COM_DATA_BIND_SELECTOR = 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
 var COM_ATTR = '[data-component]';
 var COM_ATTR_U = 'data-component-url';
@@ -14,18 +14,19 @@ $.fn.component = function() {
 	return this.data(COM_ATTR);
 };
 
-$.components = function(container) {
-	if ($cmanager.isCompiling)
-		return $.components;
-	return $.components.compile(container);
+// Because of file size
+window.COM = $.components = function(container) {
+	if (MAN.isCompiling)
+		return COM;
+	return COM.compile(container);
 };
 
-$.components.evaluate = function(path, expression) {
+COM.evaluate = function(path, expression) {
 	var key = 'eval' + expression;
-	var exp = $cmanager.cache[key];
-	var val = $.components.get(path);
+	var exp = MAN.cache[key];
+	var val = COM.get(path);
 
-	if ($.components.debug)
+	if (COM.debug)
 		console.log('%c$.components.evaluate(' + path + ')', 'color:gray');
 
 	if (exp !== undefined)
@@ -33,32 +34,32 @@ $.components.evaluate = function(path, expression) {
 	if (expression.indexOf('return') === -1)
 		expression = 'return ' + expression;
 	exp = new Function('value', 'path', expression);
-	$cmanager.cache[key] = exp;
+	MAN.cache[key] = exp;
 	return exp.call(val, val, path);
 };
 
-$.components.defaults = {};
-$.components.defaults.delay = 300;
-$.components.defaults.keypress = true;
-$.components.defaults.localstorage = true;
-$.components.debug = false;
-$.components.version = 'v2.2.0-2 (RC)';
-$.components.$localstorage = 'jcomponent';
-$.components.$version = '';
-$.components.$language = '';
-$.components.$formatter = [];
-$.components.$parser = [];
+COM.defaults = {};
+COM.defaults.delay = 300;
+COM.defaults.keypress = true;
+COM.defaults.localstorage = true;
+COM.debug = false;
+COM.version = 'v2.2.0-3 (RC)';
+COM.$localstorage = 'jcomponent';
+COM.$version = '';
+COM.$language = '';
+COM.$formatter = [];
+COM.$parser = [];
 
-$.components.compile = function(container) {
+COM.compile = function(container) {
 
-	$cmanager.isCompiling = true;
-	$.components.$inject();
+	MAN.isCompiling = true;
+	COM.$inject();
 
-	if ($cmanager.pending.length > 0) {
-		$cmanager.pending.push(function() {
-			$.components.compile(container);
+	if (MAN.pending.length > 0) {
+		MAN.pending.push(function() {
+			COM.compile(container);
 		});
-		return $.components;
+		return COM;
 	}
 
 	var els = container ? container.find(COM_ATTR) : $(COM_ATTR);
@@ -74,7 +75,7 @@ $.components.compile = function(container) {
 		if (el.data(COM_ATTR) || el.attr(COM_ATTR_R))
 			return;
 
-		var component = $cmanager.register[name || ''];
+		var component = MAN.register[name || ''];
 		if (!component)
 			return;
 
@@ -140,30 +141,30 @@ $.components.compile = function(container) {
 	});
 
 	if (skip) {
-		$.components.compile();
+		COM.compile();
 		return;
 	}
 
 	if (container !== undefined) {
-		$cmanager.next();
+		MAN.next();
 		return;
 	}
 
-	if ($cmanager.toggle.length === 0) {
-		$cmanager.next();
+	if (MAN.toggle.length === 0) {
+		MAN.next();
 		return;
 	}
 
-	component_async($cmanager.toggle, function(item, next) {
+	component_async(MAN.toggle, function(item, next) {
 		for (var i = 0, length = item.toggle.length; i < length; i++)
 			item.element.toggleClass(item.toggle[i]);
 		next();
 	}, function() {
-		$cmanager.next();
+		MAN.next();
 	});
 };
 
-$.components.$inject = function() {
+COM.$inject = function() {
 
 	var els = $(COM_ATTR_URL);
 	var arr = [];
@@ -196,10 +197,10 @@ $.components.$inject = function() {
 			}
 
 			if (item.toggle.length > 0 && item.toggle[0] !== '')
-				$cmanager.toggle.push(item);
+				MAN.toggle.push(item);
 
 			if (item.cb && !item.element.attr('data-component')) {
-				var cb = $cmanager.get(item.cb);
+				var cb = MAN.get(item.cb);
 				if (typeof(cb) === 'function')
 					cb(item.element);
 			}
@@ -209,14 +210,14 @@ $.components.$inject = function() {
 		});
 
 	}, function() {
-		$cmanager.clear('valid', 'dirty');
+		MAN.clear('valid', 'dirty');
 		if (count === 0)
 			return;
-		$.components.compile();
+		COM.compile();
 	});
 };
 
-$.components.inject = function(url, target, callback) {
+COM.inject = function(url, target, callback) {
 
 	if (typeof(target) === 'function') {
 		timeout = callback;
@@ -263,15 +264,15 @@ $.components.inject = function(url, target, callback) {
 	}
 
 	$(target).load($components_url(url), function() {
-		$.components.compile();
+		COM.compile();
 		if (callback)
 			callback();
 	});
 
-	return $.components;
+	return COM;
 };
 
-$.components.parseQuery = function(value) {
+COM.parseQuery = function(value) {
 
 	if (!value)
 		value = window.location.search;
@@ -301,7 +302,7 @@ $.components.parseQuery = function(value) {
 	return obj;
 };
 
-$.components.POST = function(url, data, callback, timeout, error) {
+COM.POST = function(url, data, callback, timeout, error) {
 
 	if (!url)
 		url = window.location.pathname;
@@ -319,26 +320,26 @@ $.components.POST = function(url, data, callback, timeout, error) {
 
 	setTimeout(function() {
 
-		if ($.components.debug)
+		if (COM.debug)
 			console.log('%c$.components.POST(' + url + ')', 'color:magenta');
 
 		$.ajax($components_url(url), { type: 'POST', data: JSON.stringify(data), success: function(r) {
 			if (typeof(callback) === 'string')
-				return $cmanager.remap(callback, r);
+				return MAN.remap(callback, r);
 			if (callback)
 				callback(r);
 		}, error: function(req, status, r) {
-			$.components.emit('error', r, req.status, url);
+			COM.emit('error', r, req.status, url);
 			if (typeof(error) === 'string')
-				return $cmanager.remap(error, r);
+				return MAN.remap(error, r);
 			if (error)
 				error(r, req.status, status);
 		}, contentType: 'application/json' });
 	}, timeout || 0);
-	return $.components;
+	return COM;
 };
 
-$.components.PUT = function(url, data, callback, timeout, error) {
+COM.PUT = function(url, data, callback, timeout, error) {
 
 	if (!url)
 		url = window.location.pathname;
@@ -356,49 +357,49 @@ $.components.PUT = function(url, data, callback, timeout, error) {
 
 	setTimeout(function() {
 
-		if ($.components.debug)
+		if (COM.debug)
 			console.log('%c$.components.PUT(' + url + ')', 'color:magenta');
 
 		$.ajax($components_url(url), { type: 'PUT', data: JSON.stringify(data), success: function(r) {
 			if (typeof(callback) === 'string')
-				return $cmanager.remap(callback, r);
+				return MAN.remap(callback, r);
 			if (callback)
 				callback(r);
 		}, error: function(req, status, r) {
-			$.components.emit('error', r, req.status, url);
+			COM.emit('error', r, req.status, url);
 			if (typeof(error) === 'string')
-				return $cmanager.remap(error, r);
+				return MAN.remap(error, r);
 			if (error)
 				error(r, req.status, status);
 		}, contentType: 'application/json' });
 	}, timeout || 0);
-	return $.components;
+	return COM;
 };
 
-$.components.TEMPLATE = function(url, callback, prepare) {
+COM.TEMPLATE = function(url, callback, prepare) {
 
-	if ($cmanager.cache[url]) {
+	if (MAN.cache[url]) {
 
 		if (typeof(callback) === 'string')
-			SET(callback, $cmanager.cache[url]);
+			SET(callback, MAN.cache[url]);
 		else
-			callback($cmanager.cache[url]);
+			callback(MAN.cache[url]);
 
-		return $.components;
+		return COM;
 	}
 
-	$.components.GET(url, {}, function(response) {
-		var value = $cmanager.cache[url] = prepare ? prepare(response) : response;
+	COM.GET(url, {}, function(response) {
+		var value = MAN.cache[url] = prepare ? prepare(response) : response;
 		if (typeof(callback) === 'string')
 			SET(callback, value);
 		else
 			callback(value);
 	});
 
-	return $.components;
+	return COM;
 };
 
-$.components.GET = function(url, data, callback, timeout, error) {
+COM.GET = function(url, data, callback, timeout, error) {
 
 	if (!url)
 		url = window.location.pathname;
@@ -416,7 +417,7 @@ $.components.GET = function(url, data, callback, timeout, error) {
 
 	setTimeout(function() {
 
-		if ($.components.debug)
+		if (COM.debug)
 			console.log('%c$.components.GET(' + url + ')', 'color:magenta');
 
 		if (data)
@@ -424,21 +425,21 @@ $.components.GET = function(url, data, callback, timeout, error) {
 
 		$.ajax($components_url(url), { type: 'GET', success: function(r) {
 			if (typeof(callback) === 'string')
-				return $cmanager.remap(callback, r);
+				return MAN.remap(callback, r);
 			if (callback)
 				callback(r);
 		}, error: function(req, status, r) {
-			$.components.emit('error', r, req.status, url);
+			COM.emit('error', r, req.status, url);
 			if (typeof(error) === 'string')
-				return $cmanager.remap(error, r);
+				return MAN.remap(error, r);
 			if (error)
 				error(r, req.status, status);
 		}});
 	}, timeout || 0);
-	return $.components;
+	return COM;
 };
 
-$.components.DELETE = function(url, data, callback, timeout, error) {
+COM.DELETE = function(url, data, callback, timeout, error) {
 
 	if (!url)
 		url = window.location.pathname;
@@ -456,28 +457,28 @@ $.components.DELETE = function(url, data, callback, timeout, error) {
 
 	setTimeout(function() {
 
-		if ($.components.debug)
+		if (COM.debug)
 			console.log('%c$.components.DELETE(' + url + ')', 'color:magenta');
 
 		$.ajax($components_url(url), { type: 'DELETE', data: JSON.stringify(data), success: function(r) {
 			if (typeof(callback) === 'string')
-				return $cmanager.remap(callback, r);
+				return MAN.remap(callback, r);
 			if (callback)
 				callback(r);
 		}, error: function(req, status, r) {
-			$.components.emit('error', r, req.status, url);
+			COM.emit('error', r, req.status, url);
 			if (typeof(error) === 'string')
-				return $cmanager.remap(error, r);
+				return MAN.remap(error, r);
 			if (error)
 				error(r, req.status, status);
 			else
 				throw new Error(r);
 		}, contentType: 'application/json' });
 	}, timeout || 0);
-	return $.components;
+	return COM;
 };
 
-$.components.GETCACHE = function(url, data, callback, expire, timeout, clear) {
+COM.GETCACHE = function(url, data, callback, expire, timeout, clear) {
 
 	if (typeof(timeout) === 'boolean') {
 		var tmp = clear;
@@ -485,27 +486,27 @@ $.components.GETCACHE = function(url, data, callback, expire, timeout, clear) {
 		timeout = tmp;
 	}
 
-	var value = clear ? undefined : $cmanager.cacherest('GET', url, data);
+	var value = clear ? undefined : MAN.cacherest('GET', url, data);
 	if (value !== undefined) {
 		if (typeof(callback) === 'string')
-			$cmanager.remap(callback, value);
+			MAN.remap(callback, value);
 		else
 			callback(value);
-		return $.components;
+		return COM;
 	}
 
-	$.components.GET(url, data, function(r) {
-		$cmanager.cacherest('GET', url, data, r, expire);
+	COM.GET(url, data, function(r) {
+		MAN.cacherest('GET', url, data, r, expire);
 		if (typeof(callback) === 'string')
-			$cmanager.remap(callback, r);
+			MAN.remap(callback, r);
 		else
 			callback(r);
 	}, timeout);
 
-	return $.components;
+	return COM;
 };
 
-$.components.POSTCACHE = function(url, data, callback, expire, timeout, clear) {
+COM.POSTCACHE = function(url, data, callback, expire, timeout, clear) {
 
 	if (typeof(timeout) === 'boolean') {
 		var tmp = clear;
@@ -513,66 +514,66 @@ $.components.POSTCACHE = function(url, data, callback, expire, timeout, clear) {
 		timeout = tmp;
 	}
 
-	var value = clear ? undefined : $cmanager.cacherest('POST', url, data);
+	var value = clear ? undefined : MAN.cacherest('POST', url, data);
 	if (value !== undefined) {
 		if (typeof(callback) === 'string')
-			$cmanager.remap(callback, value);
+			MAN.remap(callback, value);
 		else
 			callback(value);
-		return $.components;
+		return COM;
 	}
 
-	$.components.POST(url, data, function(r) {
-		$cmanager.cacherest('POST', url, data, r, expire);
+	COM.POST(url, data, function(r) {
+		MAN.cacherest('POST', url, data, r, expire);
 		if (typeof(callback) === 'string')
-			$cmanager.remap(callback, r);
+			MAN.remap(callback, r);
 		else
 			callback(r);
 	}, timeout);
 
-	return $.components;
+	return COM;
 };
 
-$.components.cache = function(key, value, expire) {
-	return $cmanager.cachestorage(key, value, expire);
+COM.cache = function(key, value, expire) {
+	return MAN.cachestorage(key, value, expire);
 };
 
-$.components.removeCache = function(key, isSearching) {
+COM.removeCache = function(key, isSearching) {
 	if (isSearching) {
-		for (var m in $cmanager.storage) {
+		for (var m in MAN.storage) {
 			if (m.indexOf(key) !== -1)
-				delete $cmanager.storage[key];
+				delete MAN.storage[key];
 		}
 	} else {
-		delete $cmanager.storage[key];
+		delete MAN.storage[key];
 	}
 	$components_save();
-	return $.components;
+	return COM;
 };
 
-$.components.REMOVECACHE = function(method, url, data) {
+COM.REMOVECACHE = function(method, url, data) {
 	data = JSON.stringify(data);
 	var key = $components_hash(method + '#' + url.replace(/\//g, '') + data).toString();
-	delete $cmanager.storage[key];
+	delete MAN.storage[key];
 	$components_save();
-	return $.components;
+	return COM;
 };
 
-$.components.ready = function(fn) {
-	if ($cmanager.ready)
-		$cmanager.ready.push(fn);
-	return $.components;
+COM.ready = function(fn) {
+	if (MAN.ready)
+		MAN.ready.push(fn);
+	return COM;
 };
 
 function $components_url(url) {
 	var index = url.indexOf('?');
 	var builder = [];
 
-	if ($.components.$version)
-		builder.push('version=' + encodeURIComponent($.components.$version));
+	if (COM.$version)
+		builder.push('version=' + encodeURIComponent(COM.$version));
 
-	if ($.components.$language)
-		builder.push('language=' + encodeURIComponent($.components.$language));
+	if (COM.$language)
+		builder.push('language=' + encodeURIComponent(COM.$language));
 
 	if (builder.length === 0)
 		return url;
@@ -586,54 +587,54 @@ function $components_url(url) {
 }
 
 function $components_ready() {
-	clearTimeout($cmanager.timeout);
-	$cmanager.timeout = setTimeout(function() {
+	clearTimeout(MAN.timeout);
+	MAN.timeout = setTimeout(function() {
 
-		$cmanager.initialize();
+		MAN.initialize();
 
-		var count = $cmanager.components.length;
+		var count = MAN.components.length;
 		$(document).trigger('components', [count]);
 
-		if (!$cmanager.isReady) {
-			$cmanager.clear('valid', 'dirty');
-			$cmanager.isReady = true;
-			$.components.emit('init');
-			$.components.emit('ready');
+		if (!MAN.isReady) {
+			MAN.clear('valid', 'dirty');
+			MAN.isReady = true;
+			COM.emit('init');
+			COM.emit('ready');
 		}
 
-		if ($cmanager.timeoutcleaner)
-			clearTimeout($cmanager.timeoutcleaner);
-		$cmanager.timeoutcleaner = setTimeout(function() {
-			$cmanager.cleaner();
+		if (MAN.timeoutcleaner)
+			clearTimeout(MAN.timeoutcleaner);
+		MAN.timeoutcleaner = setTimeout(function() {
+			MAN.cleaner();
 		}, 1000);
 
-		$cmanager.isCompiling = false;
+		MAN.isCompiling = false;
 
-		if (!$cmanager.ready)
+		if (!MAN.ready)
 			return;
 
-		var arr = $cmanager.ready;
+		var arr = MAN.ready;
 		for (var i = 0, length = arr.length; i < length; i++)
 			arr[i](count);
 
-		delete $cmanager.ready;
+		delete MAN.ready;
 	}, 300);
 }
 
-$.components.watch = function(path, fn, init) {
-	$.components.on('watch', path, fn);
+COM.watch = function(path, fn, init) {
+	COM.on('watch', path, fn);
 
 	if (!init)
-		return $.components;
+		return COM;
 
 	setTimeout(function() {
-		fn.call($.components, path, $cmanager.get(path));
+		fn.call(COM, path, MAN.get(path));
 	}, 5);
 
-	return $.components;
+	return COM;
 };
 
-$.components.on = function(name, path, fn, init) {
+COM.on = function(name, path, fn, init) {
 
 	if (typeof(path) === 'function') {
 		fn = path;
@@ -641,7 +642,7 @@ $.components.on = function(name, path, fn, init) {
 	} else
 		path = path.replace('.*', '');
 
-	if ($.components.debug)
+	if (COM.debug)
 		console.log('%c$.components.on(' + name + (path ? ', ' + path : '') + ')', 'color:blue');
 
 	var fixed = null;
@@ -650,18 +651,18 @@ $.components.on = function(name, path, fn, init) {
 		fixed = path;
 	}
 
-	if (!$cmanager.events[path]) {
-		$cmanager.events[path] = {};
-		$cmanager.events[path][name] = [];
-	} else if (!$cmanager.events[path][name])
-		$cmanager.events[path][name] = [];
+	if (!MAN.events[path]) {
+		MAN.events[path] = {};
+		MAN.events[path][name] = [];
+	} else if (!MAN.events[path][name])
+		MAN.events[path][name] = [];
 
-	$cmanager.events[path][name].push({ fn: fn, id: this._id, path: fixed });
+	MAN.events[path][name].push({ fn: fn, id: this._id, path: fixed });
 
 	if (!init)
-		return $.components;
-	fn.call($.components, path, $cmanager.get(path));
-	return $.components;
+		return COM;
+	fn.call(COM, path, MAN.get(path));
+	return COM;
 };
 
 function component_init(el, obj) {
@@ -669,7 +670,7 @@ function component_init(el, obj) {
 	var type = el.get(0).tagName;
 	var collection;
 
-	if ($.components.debug)
+	if (COM.debug)
 		console.log('%c$.components.init: ' + obj.name + ' (' + (obj.id || obj._id) + ')', 'color:green');
 
 	// autobind
@@ -684,15 +685,15 @@ function component_init(el, obj) {
 			this.$component = obj;
 	});
 
-	$cmanager.components.push(obj);
-	$cmanager.init.push(obj);
-	$.components.compile(el);
+	MAN.components.push(obj);
+	MAN.init.push(obj);
+	COM.compile(el);
 	$components_ready();
 }
 
-$.components.$emit2 = function(name, path, args) {
+COM.$emit2 = function(name, path, args) {
 
-	var e = $cmanager.events[path];
+	var e = MAN.events[path];
 	if (!e)
 		return false;
 
@@ -709,7 +710,7 @@ $.components.$emit2 = function(name, path, args) {
 	return true;
 };
 
-$.components.$emitonly = function(name, paths, type, path) {
+COM.$emitonly = function(name, paths, type, path) {
 
 	var unique = {};
 	var keys = Object.keys(paths);
@@ -723,17 +724,17 @@ $.components.$emitonly = function(name, paths, type, path) {
 		}
 	}
 
-	$.components.$emit2(name, '*', [path, unique[path]]);
+	COM.$emit2(name, '*', [path, unique[path]]);
 
 	Object.keys(unique).forEach(function(key) {
-		// OLDER: $.components.$emit2(name, key, [key, unique[key]]);
-		$.components.$emit2(name, key, [path, unique[key]]);
+		// OLDER: COM.$emit2(name, key, [key, unique[key]]);
+		COM.$emit2(name, key, [path, unique[key]]);
 	});
 
 	return this;
 };
 
-$.components.$emit = function(name, path) {
+COM.$emit = function(name, path) {
 
 	if (!path)
 		return;
@@ -744,7 +745,7 @@ $.components.$emit = function(name, path) {
 	for (var i = name === 'watch' ? 1 : 2, length = arguments.length; i < length; i++)
 		args.push(arguments[i]);
 
-	$.components.$emit2(name, '*', args);
+	COM.$emit2(name, '*', args);
 
 	var p = '';
 	for (var i = 0, length = arr.length; i < length; i++) {
@@ -762,23 +763,23 @@ $.components.$emit = function(name, path) {
 
 		p += (i > 0 ? '.' : '');
 
-		args[1] = $.components.get(p + k);
-		$.components.$emit2(name, p + k, args);
+		args[1] = COM.get(p + k);
+		COM.$emit2(name, p + k, args);
 		if (k !== a)
-			$.components.$emit2(name, p + a, args);
+			COM.$emit2(name, p + a, args);
 		p += k;
 	}
 
 	return true;
 };
 
-$.components.emit = function(name) {
+COM.emit = function(name) {
 
-	var e = $cmanager.events[''];
+	var e = MAN.events[''];
 	if (!e)
 		return false;
 
-	e = $cmanager.events[''][name];
+	e = MAN.events[''][name];
 	if (!e)
 		return false;
 
@@ -799,13 +800,13 @@ $.components.emit = function(name) {
 	return true;
 };
 
-$.components.change = function(path, value) {
+COM.change = function(path, value) {
 	if (value === undefined)
-		return !$.components.dirty(path);
-	return !$.components.dirty(path, !value);
+		return !COM.dirty(path);
+	return !COM.dirty(path, !value);
 };
 
-$.components.valid = function(path, value, notifyPath) {
+COM.valid = function(path, value, notifyPath) {
 
 	var isExcept = value instanceof Array;
 	var key = 'valid' + path + (isExcept ? '>' + value.join('|') : '');
@@ -816,15 +817,15 @@ $.components.valid = function(path, value, notifyPath) {
 		value = undefined;
 	}
 
-	if (typeof(value) !== 'boolean' && $cmanager.cache[key] !== undefined)
-		return $cmanager.cache[key];
+	if (typeof(value) !== 'boolean' && MAN.cache[key] !== undefined)
+		return MAN.cache[key];
 
-	if ($.components.debug)
+	if (COM.debug)
 		console.log('%c$.components.valid(' + path + ')', 'color:orange');
 
 	var valid = true;
 	var arr = value !== undefined ? [] : null;
-	var fn = notifyPath ? $.components.eachPath : $.components.each;
+	var fn = notifyPath ? COM.eachPath : COM.each;
 
 	fn(function(obj) {
 
@@ -866,13 +867,13 @@ $.components.valid = function(path, value, notifyPath) {
 
 	}, path);
 
-	$cmanager.clear('valid');
-	$cmanager.cache[key] = valid;
-	$.components.state(arr, 1, 1);
+	MAN.clear('valid');
+	MAN.cache[key] = valid;
+	COM.state(arr, 1, 1);
 	return valid;
 };
 
-$.components.dirty = function(path, value, notifyPath) {
+COM.dirty = function(path, value, notifyPath) {
 
 	var isExcept = value instanceof Array;
 	var key = 'dirty' + path + (isExcept ? '>' + value.join('|') : '');
@@ -883,15 +884,15 @@ $.components.dirty = function(path, value, notifyPath) {
 		value = undefined;
 	}
 
-	if (typeof(value) !== 'boolean' && $cmanager.cache[key] !== undefined)
-		return $cmanager.cache[key];
+	if (typeof(value) !== 'boolean' && MAN.cache[key] !== undefined)
+		return MAN.cache[key];
 
-	if ($.components.debug)
+	if (COM.debug)
 		console.log('%c$.components.dirty(' + path + ')', 'color:orange');
 
 	var dirty = true;
 	var arr = value !== undefined ? [] : null;
-	var fn = notifyPath ? $.components.eachPath : $.components.each;
+	var fn = notifyPath ? COM.eachPath : COM.each;
 
 	fn(function(obj) {
 
@@ -931,15 +932,15 @@ $.components.dirty = function(path, value, notifyPath) {
 
 	}, path);
 
-	$cmanager.clear('dirty');
-	$cmanager.cache[key] = dirty;
-	$.components.state(arr, 2, 2);
+	MAN.clear('dirty');
+	MAN.cache[key] = dirty;
+	COM.state(arr, 2, 2);
 	return dirty;
 };
 
 // 1 === by developer
 // 2 === by input
-$.components.update = function(path, reset) {
+COM.update = function(path, reset) {
 	var is = path.charCodeAt(0) === 33;
 	if (is)
 		path = path.substring(1);
@@ -947,20 +948,20 @@ $.components.update = function(path, reset) {
 	path = path.replace('.*', '');
 
 	if (!path)
-		return $.components;
+		return COM;
 
 	var length;
 	var state = [];
 	var was = false;
 	var updates = {};
 
-	if ($.components.debug)
+	if (COM.debug)
 		console.log('%c$.components.update(' + (is ? '!' : '') + path + ')', 'color:red');
 
 	var A = path.split('.');
 	var AL = A.length;
 
-	$.components.each(function(component) {
+	COM.each(function(component) {
 
 		if (!component.path || component.disabled)
 			return;
@@ -999,12 +1000,12 @@ $.components.update = function(path, reset) {
 	}, is ? path : undefined, undefined, is);
 
 	if (reset) {
-		$cmanager.clear('dirty');
-		$cmanager.clear('valid');
+		MAN.clear('dirty');
+		MAN.clear('valid');
 	}
 
 	if (!updates[path])
-		updates[path] = $.components.get(path);
+		updates[path] = COM.get(path);
 
 	for (var i = 0, length = state.length; i < length; i++)
 		state[i].state(1, 4);
@@ -1012,22 +1013,22 @@ $.components.update = function(path, reset) {
 	// watches
 	length = path.length;
 
-	Object.keys($cmanager.events).forEach(function(key) {
+	Object.keys(MAN.events).forEach(function(key) {
 		if (key.substring(0, length) !== path)
 			return;
-		updates[key] = $.components.get(key);
+		updates[key] = COM.get(key);
 	});
 
-	$.components.$emitonly('watch', updates, 1, path);
-	return $.components;
+	COM.$emitonly('watch', updates, 1, path);
+	return COM;
 };
 
-$.components.notify = function() {
+COM.notify = function() {
 
 	var arg = arguments;
 	var length = arguments.length;
 
-	$.components.each(function(component) {
+	COM.each(function(component) {
 
 		if (!component.path || component.disabled)
 			return;
@@ -1047,7 +1048,7 @@ $.components.notify = function() {
 		component.setter(component.get(), component.path);
 	});
 
-	Object.keys($cmanager.events).forEach(function(key) {
+	Object.keys(MAN.events).forEach(function(key) {
 
 		var is = false;
 		for (var i = 0; i < length; i++) {
@@ -1060,25 +1061,25 @@ $.components.notify = function() {
 		if (!is)
 			return;
 
-		$.components.$emit2('watch', key, [key, $.components.get(key)]);
+		COM.$emit2('watch', key, [key, COM.get(key)]);
 	});
 
-	return $.components;
+	return COM;
 };
 
-$.components.extend = function(path, value, type) {
-	var val = $.components.get(path);
+COM.extend = function(path, value, type) {
+	var val = COM.get(path);
 	if (val === null || val === undefined)
 		val = {};
-	if ($.components.debug)
+	if (COM.debug)
 		console.log('%c$.components.extend(' + path + ')', 'color:silver');
-	$.components.set(path, $.extend(val, value), type);
-	return $.components;
+	COM.set(path, $.extend(val, value), type);
+	return COM;
 };
 
 // 1 === by developer
 // 2 === by input
-$.components.set = function(path, value, type) {
+COM.set = function(path, value, type) {
 
 	var is = path.charCodeAt(0) === 33;
 	if (is)
@@ -1086,26 +1087,26 @@ $.components.set = function(path, value, type) {
 
 	if (path.charCodeAt(0) === 43) {
 		path = path.substring(1);
-		return $.components.push(path, value, type);
+		return COM.push(path, value, type);
 	}
 
 	if (!path)
-		return $.components;
+		return COM;
 
 	var isUpdate = (typeof(value) === 'object' && !(value instanceof Array) && value !== null && value !== undefined);
 	var reset = type === true;
 	if (reset)
 		type = 1;
 
-	if ($.components.debug && !isUpdate)
+	if (COM.debug && !isUpdate)
 		console.log('%c$.components.set(' + path + ')', 'color:red');
 
-	$cmanager.set(path, value);
+	MAN.set(path, value);
 
 	if (isUpdate)
-		return $.components.update(path, reset);
+		return COM.update(path, reset);
 
-	var result = $cmanager.get(path);
+	var result = MAN.get(path);
 	var state = [];
 
 	if (type === undefined)
@@ -1114,7 +1115,7 @@ $.components.set = function(path, value, type) {
 	var A = path.split('.');
 	var AL = A.length;
 
-	$.components.each(function(component) {
+	COM.each(function(component) {
 
 		if (!component.path || component.disabled)
 			return;
@@ -1132,7 +1133,7 @@ $.components.set = function(path, value, type) {
 				component.setter(result, path, type);
 		} else {
 			if (component.setter)
-				component.setter($.components.get(component.path), path, type);
+				component.setter(COM.get(component.path), path, type);
 		}
 
 		component.$ready = true;
@@ -1152,23 +1153,23 @@ $.components.set = function(path, value, type) {
 	}, path, true, is);
 
 	if (reset) {
-		$cmanager.clear('dirty');
-		$cmanager.clear('valid');
+		MAN.clear('dirty');
+		MAN.clear('valid');
 	}
 
 	for (var i = 0, length = state.length; i < length; i++)
 		state[i].state(type, 5);
 
-	$.components.$emit('watch', path, undefined, type, is);
-	return $.components;
+	COM.$emit('watch', path, undefined, type, is);
+	return COM;
 };
 
-$.components.push = function(path, value, type) {
+COM.push = function(path, value, type) {
 
-	if ($.components.debug)
+	if (COM.debug)
 		console.log('%c$.components.push(' + path + ')', 'color:silver');
 
-	var arr = $.components.get(path);
+	var arr = COM.get(path);
 	var n = false;
 
 	if (!(arr instanceof Array)) {
@@ -1188,25 +1189,25 @@ $.components.push = function(path, value, type) {
 		arr.push(value);
 
 	if (n) {
-		$.components.set(path, arr, type);
+		COM.set(path, arr, type);
 	} else if (is)
-		$.components.update(path, type);
+		COM.update(path, type);
 
 	return self;
 };
 
-$.components.clean = function() {
-	$cmanager.cleaner();
-	return $.components;
+COM.clean = function() {
+	MAN.cleaner();
+	return COM;
 }
 
-$.components.get = function(path) {
-	if ($.components.debug)
+COM.get = function(path) {
+	if (COM.debug)
 		console.log('%c$.components.get(' + path + ')', 'color:gray');
-	return $cmanager.get(path);
+	return MAN.get(path);
 };
 
-$.components.remove = function(path) {
+COM.remove = function(path) {
 
 	if (path instanceof jQuery) {
 		path.find(COM_ATTR).attr(COM_ATTR_R, 'true').each(function() {
@@ -1222,24 +1223,24 @@ $.components.remove = function(path) {
 		if (com)
 			com.$removed = true;
 
-		$cmanager.cleaner();
-		return $.components;
+		MAN.cleaner();
+		return COM;
 	}
 
-	$cmanager.clear();
-	$.components.each(function(obj) {
+	MAN.clear();
+	COM.each(function(obj) {
 		obj.remove(true);
 	}, path);
-	$cmanager.cleaner();
-	return $.components;
+	MAN.cleaner();
+	return COM;
 };
 
-$.components.validate = function(path, except) {
+COM.validate = function(path, except) {
 
 	var arr = [];
 	var valid = true;
 
-	$.components.each(function(obj) {
+	COM.each(function(obj) {
 
 		if (obj.disabled)
 			return;
@@ -1253,20 +1254,20 @@ $.components.validate = function(path, except) {
 		obj.$validate = true;
 
 		if (obj.validate) {
-			obj.$valid = obj.validate($cmanager.get(obj.path));
+			obj.$valid = obj.validate(MAN.get(obj.path));
 			if (!obj.$valid)
 				valid = false;
 		}
 
 	}, path);
 
-	$cmanager.clear('valid');
-	$.components.state(arr, 1, 1);
-	$.components.$emit('validate', path);
+	MAN.clear('valid');
+	COM.state(arr, 1, 1);
+	COM.$emit('validate', path);
 	return valid;
 };
 
-$.components.errors = function(path, except) {
+COM.errors = function(path, except) {
 
 	if (path instanceof Array) {
 		except = path;
@@ -1274,7 +1275,7 @@ $.components.errors = function(path, except) {
 	}
 
 	var arr = [];
-	$.components.each(function(obj) {
+	COM.each(function(obj) {
 		if (except && except.indexOf(obj.path) !== -1)
 			return;
 		if (obj.$valid === false)
@@ -1283,37 +1284,37 @@ $.components.errors = function(path, except) {
 	return arr;
 };
 
-$.components.can = function(path, except) {
-	return !$.components.dirty(path, except) && $.components.valid(path, except);
+COM.can = function(path, except) {
+	return !COM.dirty(path, except) && COM.valid(path, except);
 };
 
-$.components.disable = function(path, except) {
-	return $.components.dirty(path, except) || !$.components.valid(path, except);
+COM.disable = function(path, except) {
+	return COM.dirty(path, except) || !COM.valid(path, except);
 };
 
-$.components.invalid = function(path) {
-	var com = $.components;
+COM.invalid = function(path) {
+	var com = COM;
 	com.dirty(path, false);
 	com.valid(path, false, true);
 	return com;
 };
 
-$.components.blocked = function(name, timeout, callback) {
+COM.blocked = function(name, timeout, callback) {
 	var key = name;
-	var item = $cmanager.cacheblocked[key];
+	var item = MAN.cacheblocked[key];
 	var now = Date.now();
 
-	if ($.components.debug)
+	if (COM.debug)
 		console.log('%c$.components.blocked(' + name + ')', 'color:silver');
 
 	if (item > now)
 		return true;
 
-	var local = $.components.defaults.localstorage && timeout > 10000;
-	$cmanager.cacheblocked[key] = now + timeout;
+	var local = COM.defaults.localstorage && timeout > 10000;
+	MAN.cacheblocked[key] = now + timeout;
 
 	if (local)
-		localStorage.setItem($.components.$localstorage + '.blocked', JSON.stringify($cmanager.cacheblocked));
+		localStorage.setItem(COM.$localstorage + '.blocked', JSON.stringify(MAN.cacheblocked));
 
 	if (callback)
 		callback();
@@ -1327,7 +1328,7 @@ $.components.blocked = function(name, timeout, callback) {
 // 3. reset
 // 4. update
 // 5. set
-$.components.state = function(arr, type, who) {
+COM.state = function(arr, type, who) {
 	if (!arr || arr.length === 0)
 		return;
 	setTimeout(function() {
@@ -1336,20 +1337,20 @@ $.components.state = function(arr, type, who) {
 	}, 2);
 };
 
-$.components.reset = function(path, timeout) {
+COM.reset = function(path, timeout) {
 
 	if (timeout > 0) {
 		setTimeout(function() {
-			$.components.reset(path);
+			COM.reset(path);
 		}, timeout);
-		return $.components;
+		return COM;
 	}
 
-	if ($.components.debug)
+	if (COM.debug)
 		console.log('%c$.components.reset(' + path + ')', 'color:orange');
 
 	var arr = [];
-	$.components.each(function(obj) {
+	COM.each(function(obj) {
 		if (obj.disabled)
 			return;
 		if (obj.state)
@@ -1362,13 +1363,13 @@ $.components.reset = function(path, timeout) {
 
 	}, path);
 
-	$cmanager.clear('valid', 'dirty');
-	$.components.state(arr, 1, 3);
-	$.components.$emit('reset', path);
-	return $.components;
+	MAN.clear('valid', 'dirty');
+	COM.state(arr, 1, 3);
+	COM.$emit('reset', path);
+	return COM;
 };
 
-$.components.findByName = function(name, path, callback) {
+COM.findByName = function(name, path, callback) {
 
 	if (typeof(path) === 'function') {
 		callback = path;
@@ -1378,7 +1379,7 @@ $.components.findByName = function(name, path, callback) {
 	var isCallback = typeof(callback) === 'function';
 	var com;
 
-	$.components.each(function(component) {
+	COM.each(function(component) {
 
 		if (component.name !== name)
 			return;
@@ -1393,10 +1394,10 @@ $.components.findByName = function(name, path, callback) {
 
 	}, path);
 
-	return isCallback ? $.components : com;
+	return isCallback ? COM : com;
 };
 
-$.components.findByPath = function(path, callback) {
+COM.findByPath = function(path, callback) {
 
 	if (typeof(path) === 'function') {
 		callback = path;
@@ -1406,7 +1407,7 @@ $.components.findByPath = function(path, callback) {
 	var isCallback = typeof(callback) === 'function';
 	var com;
 
-	$.components.each(function(component) {
+	COM.each(function(component) {
 
 		if (isCallback) {
 			callback(component);
@@ -1418,10 +1419,10 @@ $.components.findByPath = function(path, callback) {
 
 	}, path);
 
-	return isCallback ? $.components : com;
+	return isCallback ? COM : com;
 };
 
-$.components.findById = function(id, path, callback) {
+COM.findById = function(id, path, callback) {
 
 	if (typeof(path) === 'function') {
 		callback = path;
@@ -1431,7 +1432,7 @@ $.components.findById = function(id, path, callback) {
 	var isCallback = typeof(callback) === 'function';
 	var com;
 
-	$.components.each(function(component) {
+	COM.each(function(component) {
 
 		if (component.id !== id)
 			return;
@@ -1446,22 +1447,22 @@ $.components.findById = function(id, path, callback) {
 
 	}, path);
 
-	return isCallback ? $.components : com;
+	return isCallback ? COM : com;
 };
 
-$.components.schema = function(name, declaration, callback) {
+COM.schema = function(name, declaration, callback) {
 
 	if (!declaration)
-		return $.extend(true, {}, $cmanager.schemas[name]);
+		return $.extend(true, {}, MAN.schemas[name]);
 
 	if (typeof(declaration) === 'object') {
-		$cmanager.schemas[name] = declaration;
+		MAN.schemas[name] = declaration;
 		return declaration;
 	}
 
 	if (typeof(declaration) === 'function') {
 		var f = declaration();
-		$cmanager.schemas[name] = f;
+		MAN.schemas[name] = f;
 		return f;
 	}
 
@@ -1473,7 +1474,7 @@ $.components.schema = function(name, declaration, callback) {
 
 	if ((a === '"' && b === '"') || (a === '[' && b === ']') || (a === '{' && b === '}')) {
 		var d = JSON.parse(declaration);
-		$cmanager.schemas[name] = d;
+		MAN.schemas[name] = d;
 		if (callback)
 			callback(d)
 		return d;
@@ -1483,20 +1484,20 @@ $.components.schema = function(name, declaration, callback) {
 	$.get($components_url(declaration), function(d) {
 		if (typeof(d) === 'string')
 			d = JSON.parse(d);
-		$cmanager.schemas[name] = d;
+		MAN.schemas[name] = d;
 		if (callback)
 			callback(d);
 	});
 };
 
-$.components.each = function(fn, path, watch, fix) {
+COM.each = function(fn, path, watch, fix) {
 	var isAsterix = path ? path.lastIndexOf('*') !== -1 : false;
 	if (isAsterix)
 		path = path.replace('.*', '').replace('*', '');
 
 	var index = 0;
-	for (var i = 0, length = $cmanager.components.length; i < length; i++) {
-		var component = $cmanager.components[i];
+	for (var i = 0, length = MAN.components.length; i < length; i++) {
+		var component = MAN.components[i];
 		if (component.$removed)
 			continue;
 
@@ -1522,19 +1523,19 @@ $.components.each = function(fn, path, watch, fix) {
 
 		var stop = fn(component, index++, isAsterix);
 		if (stop === true)
-			return $.components;
+			return COM;
 	}
-	return $.components;
+	return COM;
 };
 
-$.components.eachPath = function(fn, path) {
+COM.eachPath = function(fn, path) {
 
 	var isAsterix = path ? path.lastIndexOf('*') !== -1 : false;
 	if (isAsterix)
 		path = path.replace('.*', '').replace('*', '');
 	var index = 0;
-	for (var i = 0, length = $cmanager.components.length; i < length; i++) {
-		var component = $cmanager.components[i];
+	for (var i = 0, length = MAN.components.length; i < length; i++) {
+		var component = MAN.components[i];
 		if (component.$removed || !component.path)
 			continue;
 
@@ -1548,7 +1549,7 @@ $.components.eachPath = function(fn, path) {
 			fn(component, index++, false);
 	}
 
-	return $.components;
+	return COM;
 };
 
 function Component(name) {
@@ -1728,7 +1729,7 @@ Component.prototype.valid = function(value, noEmit) {
 	this.$valid = value;
 	this.$validate = false;
 
-	$cmanager.clear('valid');
+	MAN.clear('valid');
 
 	if (noEmit)
 		return this;
@@ -1759,7 +1760,7 @@ Component.prototype.dirty = function(value, noEmit) {
 		return this;
 
 	this.$dirty = value;
-	$cmanager.clear('dirty');
+	MAN.clear('dirty');
 
 	if (noEmit)
 		return this;
@@ -1786,15 +1787,15 @@ Component.prototype.remove = function(noClear) {
 	this.element.attr(COM_ATTR_R, 'true');
 
 	if (!noClear)
-		$cmanager.clear();
+		MAN.clear();
 
-	$.components.$removed = true;
-	$.components.$emit('destroy', this.name, this.element.attr(COM_ATTR_P));
+	COM.$removed = true;
+	COM.$emit('destroy', this.name, this.element.attr(COM_ATTR_P));
 
 	if (!noClear)
-		$cmanager.cleaner();
+		MAN.cleaner();
 	else
-		$cmanager.refresh();
+		MAN.refresh();
 };
 
 Component.prototype.on = function(name, path, fn, init) {
@@ -1812,18 +1813,18 @@ Component.prototype.on = function(name, path, fn, init) {
 		fixed = path;
 	}
 
-	if (!$cmanager.events[path]) {
-		$cmanager.events[path] = {};
-		$cmanager.events[path][name] = [];
-	} else if (!$cmanager.events[path][name])
-		$cmanager.events[path][name] = [];
+	if (!MAN.events[path]) {
+		MAN.events[path] = {};
+		MAN.events[path][name] = [];
+	} else if (!MAN.events[path][name])
+		MAN.events[path][name] = [];
 
-	$cmanager.events[path][name].push({ fn: fn, context: this, id: this._id, path: fixed });
+	MAN.events[path][name].push({ fn: fn, context: this, id: this._id, path: fixed });
 
 	if (!init)
-		return $.components;
+		return COM;
 
-	fn.call($.components, path, $cmanager.get(path));
+	fn.call(COM, path, MAN.get(path));
 	return this;
 };
 
@@ -1842,7 +1843,7 @@ Component.prototype.formatter = function(value) {
 			value = a[i].call(this, this.path, value, this.type);
 	}
 
-	a = $.components.$formatter;
+	a = COM.$formatter;
 	if (a && a.length) {
 		for (var i = 0, length = a.length; i < length; i++)
 			value = a[i].call(this, this.path, value, this.type);
@@ -1866,7 +1867,7 @@ Component.prototype.parser = function(value) {
 			value = a[i].call(this, this.path, value, this.type);
 	}
 
-	a = $.components.$parser;
+	a = COM.$parser;
 	if (a && a.length) {
 		for (var i = 0, length = a.length; i < length; i++)
 			value = a[i].call(this, this.path, value, this.type);
@@ -1876,13 +1877,13 @@ Component.prototype.parser = function(value) {
 };
 
 Component.prototype.emit = function() {
-	$.components.emit.apply($.components, arguments);
+	COM.emit.apply(COM, arguments);
 };
 
 Component.prototype.evaluate = function(path, expression) {
 	if (!expression)
 		path = self.path;
-	return $.components.evaluate(path, expression);
+	return COM.evaluate(path, expression);
 };
 
 Component.prototype.get = function(path) {
@@ -1890,13 +1891,13 @@ Component.prototype.get = function(path) {
 		path = this.path;
 	if (!path)
 		return;
-	if ($.components.debug)
+	if (COM.debug)
 		console.log('%c$.components.get(' + path + ')', 'color:gray');
-	return $cmanager.get(path);
+	return MAN.get(path);
 };
 
 Component.prototype.update = function(path, reset) {
-	$.components.update(path || this.path, reset);
+	COM.update(path || this.path, reset);
 };
 
 Component.prototype.set = function(path, value, type) {
@@ -1911,7 +1912,7 @@ Component.prototype.set = function(path, value, type) {
 	if (!path)
 		return self;
 
-	$.components.set(path, value, type);
+	COM.set(path, value, type);
 	return self;
 };
 
@@ -1927,7 +1928,7 @@ Component.prototype.inc = function(path, value) {
 	if (!path)
 		return self;
 
-	$.components.inc(path, value);
+	COM.inc(path, value);
 	return self;
 };
 
@@ -1943,7 +1944,7 @@ Component.prototype.extend = function(path, value, type) {
 	if (!path)
 		return self;
 
-	$.components.extend(path, value, type);
+	COM.extend(path, value, type);
 	return self;
 };
 
@@ -1958,7 +1959,7 @@ Component.prototype.push = function(path, value, type) {
 	if (!path)
 		return self;
 
-	$.components.push(path, value, type, self);
+	COM.push(path, value, type, self);
 };
 
 function component(type, declaration) {
@@ -1975,7 +1976,7 @@ function COMPONENT(type, declaration) {
 		return obj;
 	};
 
-	$cmanager.register[type] = fn;
+	MAN.register[type] = fn;
 }
 
 function component_async(arr, fn, done) {
@@ -2016,11 +2017,11 @@ function ComponentManager() {
 
 ComponentManager.prototype.cacherest = function(method, url, params, value, expire) {
 
-	if (params && !params.version && $.components.$version)
-		params.version = $.components.$version;
+	if (params && !params.version && COM.$version)
+		params.version = COM.$version;
 
-	if (params && !params.language && $.components.$language)
-		params.language = $.components.$language;
+	if (params && !params.language && COM.$language)
+		params.language = COM.$language;
 
 	params = JSON.stringify(params);
 	var key = $components_hash(method + '#' + url.replace(/\//g, '') + params).toString();
@@ -2031,7 +2032,7 @@ ComponentManager.prototype.cachestorage = function(key, value, expire) {
 
 	var now = Date.now();
 
-	if ($.components.debug)
+	if (COM.debug)
 		console.log('%c$.components.cache.' + (value === undefined ? 'get' : 'set') + '(' + key + ')', 'color:silver');
 
 	if (value !== undefined) {
@@ -2049,7 +2050,7 @@ ComponentManager.prototype.initialize = function() {
 	var item = this.init.pop();
 
 	if (item === undefined) {
-		$.components.compile();
+		COM.compile();
 		return this;
 	}
 
@@ -2063,10 +2064,10 @@ ComponentManager.prototype.initialize = function() {
 ComponentManager.prototype.remap = function(path, value) {
 	var index = path.indexOf('->');
 	if (index === -1)
-		return $.components.set(path, value);
+		return COM.set(path, value);
 	var o = path.substring(0, index).trim();
 	var n = path.substring(index + 2).trim();
-	$.components.set(n, value[o]);
+	COM.set(n, value[o]);
 	return this;
 };
 
@@ -2099,7 +2100,7 @@ ComponentManager.prototype.prepare = function(obj) {
 
 	if (obj.$init) {
 		setTimeout(function() {
-			if ($cmanager.isOperation(obj.$init)) {
+			if (MAN.isOperation(obj.$init)) {
 				var op = OPERATION(obj.$init);
 				if (op)
 					op.call(obj, obj);
@@ -2108,7 +2109,7 @@ ComponentManager.prototype.prepare = function(obj) {
 				delete obj.$init;
 				return;
 			}
-			var fn = $.components.get(obj.$init);
+			var fn = COM.get(obj.$init);
 			if (typeof(fn) === 'function')
 				fn.call(obj, obj);
 			delete obj.$init;
@@ -2126,10 +2127,10 @@ ComponentManager.prototype.prepare = function(obj) {
 	}
 
 	if (obj.id)
-		$.components.emit('#' + obj.id, obj);
+		COM.emit('#' + obj.id, obj);
 
-	$.components.emit('@' + obj.name, obj);
-	$.components.emit('component', obj);
+	COM.emit('@' + obj.name, obj);
+	COM.emit('component', obj);
 	return this;
 };
 
@@ -2285,15 +2286,15 @@ ComponentManager.prototype.set = function(path, value) {
 		break;
 	}
 
-	var fn = (new Function('w', 'a', 'b', builder.join(';') + ';var v=typeof(a) === \'function\' ? a($cmanager.get(b)) : a;w.' + path.replace(/\'/, '\'') + '=v;return v'));
+	var fn = (new Function('w', 'a', 'b', builder.join(';') + ';var v=typeof(a) === \'function\' ? a(MAN.get(b)) : a;w.' + path.replace(/\'/, '\'') + '=v;return v'));
 	self.cache[cachekey] = fn;
 	fn(window, value, path);
 	return self;
 };
 
-$.components.inc = function(path, value) {
+COM.inc = function(path, value) {
 
-	var current = $.components.get(path);
+	var current = COM.get(path);
 	if (!current) {
 		current = 0;
 	} else if (typeof(current) !== 'number') {
@@ -2303,7 +2304,7 @@ $.components.inc = function(path, value) {
 	}
 
 	current += value;
-	$.components.set(path, value, type);
+	COM.set(path, value, type);
 	return self;
 };
 
@@ -2368,15 +2369,15 @@ ComponentManager.prototype.cleaner = function() {
 	}
 
 	var index = 0;
-	var length = $cmanager.components.length;
+	var length = MAN.components.length;
 
 	while (index < length) {
-		var component = $cmanager.components[index++];
+		var component = MAN.components[index++];
 
 		if (!component) {
 			index--;
-			$cmanager.components.splice(index, 1);
-			length = $cmanager.components.length;
+			MAN.components.splice(index, 1);
+			length = MAN.components.length;
 			continue;
 		}
 
@@ -2397,8 +2398,8 @@ ComponentManager.prototype.cleaner = function() {
 		component.path = null;
 		component.setter = null;
 		component.getter = null;
-		$cmanager.components.splice(index, 1);
-		length = $cmanager.components.length;
+		MAN.components.splice(index, 1);
+		length = MAN.components.length;
 	}
 
 	var now = Date.now();
@@ -2412,8 +2413,8 @@ ComponentManager.prototype.cleaner = function() {
 		is2 = true;
 	}
 
-	if ($.components.defaults.localstorage && is2)
-		localStorage.setItem($.components.$localstorage + '.blocked', JSON.stringify(self.cacheblocked));
+	if (COM.defaults.localstorage && is2)
+		localStorage.setItem(COM.$localstorage + '.blocked', JSON.stringify(self.cacheblocked));
 
 	for (var key in self.storage) {
 		var item = self.storage[key];
@@ -2457,24 +2458,24 @@ COMPONENT('', function() {
 });
 
 setInterval(function() {
-	$cmanager.temp = {};
-	$cmanager.cleaner();
+	MAN.temp = {};
+	MAN.cleaner();
 }, (1000 * 60) * 5);
 
-$.components.compile();
+COM.compile();
 $(document).ready(function() {
 
-	if ($.components.defaults.localstorage) {
-		var cache = localStorage.getItem($.components.$localstorage + '.cache');
+	if (COM.defaults.localstorage) {
+		var cache = localStorage.getItem(COM.$localstorage + '.cache');
 		if (cache && typeof(cache) === 'string') {
 			try {
-				$cmanager.storage = JSON.parse(cache);
+				MAN.storage = JSON.parse(cache);
 			} catch (e) {}
 		}
-		cache = localStorage.getItem($.components.$localstorage + '.blocked');
+		cache = localStorage.getItem(COM.$localstorage + '.blocked');
 		if (cache && typeof(cache) === 'string') {
 			try {
-				$cmanager.cacheblocked = JSON.parse(cache);
+				MAN.cacheblocked = JSON.parse(cache);
 			} catch (e) {}
 		}
 	}
@@ -2569,7 +2570,7 @@ $(document).ready(function() {
 			if (v)
 				self.$nokeypress = v === 'false';
 			else
-				self.$nokeypress = $.components.defaults.keypress === false;
+				self.$nokeypress = COM.defaults.keypress === false;
 		}
 
 		var delay = self.$delay;
@@ -2579,7 +2580,7 @@ $(document).ready(function() {
 			if (delay === 0)
 				delay = 1;
 		} else if (delay === 0)
-			delay = $.components.defaults.delay;
+			delay = COM.defaults.delay;
 
 		if (e.type === 'focusout')
 			delay = 0;
@@ -2591,7 +2592,7 @@ $(document).ready(function() {
 	});
 
 	setTimeout(function() {
-		$.components.compile();
+		COM.compile();
 	}, 2);
 });
 
@@ -2627,74 +2628,74 @@ function $components_keypress(self, old, e) {
 }
 
 function $components_save() {
-	if ($.components.defaults.localstorage)
-		localStorage.setItem($.components.$localstorage + '.cache', JSON.stringify($cmanager.storage));
+	if (COM.defaults.localstorage)
+		localStorage.setItem(COM.$localstorage + '.cache', JSON.stringify(MAN.storage));
 }
 
 function SET(path, value, timeout, reset) {
 	if (typeof(timeout) === 'boolean')
-		return $.components.set(path, value, timeout);
+		return COM.set(path, value, timeout);
 	if (!timeout)
-		return $.components.set(path, value, reset);
+		return COM.set(path, value, reset);
 	setTimeout(function() {
-		$.components.set(path, value, reset);
+		COM.set(path, value, reset);
 	}, timeout);
 }
 
 function INC(path, value, timeout, reset) {
 	if (typeof(timeout) === 'boolean')
-		return $.components.inc(path, value, timeout);
+		return COM.inc(path, value, timeout);
 	if (!timeout)
-		return $.components.inc(path, value, reset);
+		return COM.inc(path, value, reset);
 	setTimeout(function() {
-		$.components.inc(path, value, reset);
+		COM.inc(path, value, reset);
 	}, timeout);
 }
 
 function EXTEND(path, value, timeout, reset) {
 	if (typeof(timeout) === 'boolean')
-		return $.components.extend(path, value, timeout);
+		return COM.extend(path, value, timeout);
 	if (!timeout)
-		return $.components.extend(path, value, reset);
+		return COM.extend(path, value, reset);
 	setTimeout(function() {
-		$.components.extend(path, value, reset);
+		COM.extend(path, value, reset);
 	}, timeout);
 }
 
 function PUSH(path, value, timeout, reset) {
 	if (typeof(timeout) === 'boolean')
-		return $.components.push(path, value, timeout);
+		return COM.push(path, value, timeout);
 	if (!timeout)
-		return $.components.push(path, value, reset);
+		return COM.push(path, value, reset);
 	setTimeout(function() {
-		$.components.push(path, value, reset);
+		COM.push(path, value, reset);
 	}, timeout);
 }
 
 function RESET(path, timeout) {
-	return $.components.reset(path, timeout);
+	return COM.reset(path, timeout);
 }
 
 function WATCH(path, callback, init) {
-	return $.components.on('watch', path, callback, init);
+	return COM.on('watch', path, callback, init);
 }
 
 function GET(path) {
-	return $.components.get(path);
+	return COM.get(path);
 }
 
 function CACHE(key, value, expire) {
-	return $.components.cache(key, value, expire);
+	return COM.cache(key, value, expire);
 }
 
 function NOTIFY() {
-	return $.components.notify.apply($.components, arguments);
+	return COM.notify.apply(COM, arguments);
 }
 
 function NOTMODIFIED(path, value, fields) {
 
 	if (value === undefined)
-		value = $.components.GET(path);
+		value = COM.GET(path);
 
 	if (value === undefined)
 		value = null;
@@ -2703,69 +2704,69 @@ function NOTMODIFIED(path, value, fields) {
 		path = path.concat('#', fields);
 
 	var hash = $components_hash(JSON.stringify(value, fields));
-	if ($cmanager.cache[path] === hash)
+	if (MAN.cache[path] === hash)
 		return true;
-	$cmanager.cache[path] = hash;
+	MAN.cache[path] = hash;
 	return false;
 }
 
 function FIND(value) {
 	if (value.charCodeAt(0) === 35)
-		return $.components.findById(value.substring(1));
-	return $.components.findByName(value);
+		return COM.findById(value.substring(1));
+	return COM.findByName(value);
 }
 
 function UPDATE(path, timeout, reset) {
 	if (typeof(timeout) === 'boolean')
-		return $.components.update(path, timeout);
+		return COM.update(path, timeout);
 	if (!timeout)
-		return $.components.update(path, reset);
+		return COM.update(path, reset);
 	setTimeout(function() {
-		$.components.update(path, reset);
+		COM.update(path, reset);
 	}, timeout);
 }
 
 function CHANGE(path, value) {
-	return $.components.change(path, value);
+	return COM.change(path, value);
 }
 
 function INJECT(url, target, callback, timeout) {
-	return $.components.inject(url, target, callback, timeout);
+	return COM.inject(url, target, callback, timeout);
 }
 
 function SCHEMA(name, declaration, callback) {
-	return $.components.schema(name, declaration, callback);
+	return COM.schema(name, declaration, callback);
 }
 
 function OPERATION(name, fn) {
 	if (!fn) {
 		if (name.charCodeAt(0) === 35)
-			return $cmanager.operations[name.substring(1)];
-		return $cmanager.operations[name];
+			return MAN.operations[name.substring(1)];
+		return MAN.operations[name];
 	}
-	$cmanager.operations[name] = fn;
+	MAN.operations[name] = fn;
 	return fn;
 }
 
 function ON(name, path, fn, init) {
-	$.components.on(name, path, fn, init);
+	COM.on(name, path, fn, init);
 }
 
 function EVALUATE(path, expression) {
-	return $.components.evaluate(path, expression);
+	return COM.evaluate(path, expression);
 }
 
 function STYLE(value) {
-	clearTimeout($cmanager.timeoutStyles);
-	$cmanager.styles.push(value);
-	$cmanager.timeoutStyles = setTimeout(function() {
-		$('<style type="text/css">' + $cmanager.styles.join('') + '</style>').appendTo('head');
-		$cmanager.styles = [];
+	clearTimeout(MAN.timeoutStyles);
+	MAN.styles.push(value);
+	MAN.timeoutStyles = setTimeout(function() {
+		$('<style type="text/css">' + MAN.styles.join('') + '</style>').appendTo('head');
+		MAN.styles = [];
 	}, 50);
 }
 
 function BLOCKED(name, timeout, callback) {
-	return $.components.blocked(name, timeout, callback);
+	return COM.blocked(name, timeout, callback);
 }
 
 function $components_hash(s) {

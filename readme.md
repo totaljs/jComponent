@@ -963,6 +963,12 @@ __Component__ `/templates/grid.html`:
 </script>
 ```
 
+## Reserverd keywords
+
+```javascript
+COM; // shortcut for $.components
+MAN; // shortcut for the Component Manager
+```
 
 ## Contact
 
