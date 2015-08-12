@@ -963,6 +963,65 @@ __Component__ `/templates/grid.html`:
 </script>
 ```
 
+## Tools
+
+### Async
+
+__Simple usage__:
+
+```javascript
+var arr = [];
+
+arr.push(function(err, next) {
+    console.log('FN 1');
+    next();
+});
+
+arr.push(function(err, next) {
+    setTimeout(function() {
+        console.log('FN 2');
+        next();
+    }, 1000);
+});
+
+// arr.async([context], [callback(err, response)]);
+// context is by default: empty plain object.
+arr.async();
+```
+
+__Advanced usage__:
+
+```javascript
+var arr = [];
+
+arr.push(function(err, next) {
+    this.counter++;
+    next();
+});
+
+arr.push(function(err, next) {
+    this.counter++;
+    next('Some error message.');
+});
+
+arr.push(function(err, next) {
+    setTimeout(function() {
+        this.counter++;
+        next();
+    }, 1000);
+});
+
+// arr.async([context], [callback(err, response)]);
+// context is by default: empty plain object.
+arr.async({ counter: 0 }, function(err, response) {
+    if (err)
+        console.log(err);
+    console.log(response);
+    // or
+    // console.log(this);
+});
+```
+
 ## Reserverd keywords
 
 ```javascript

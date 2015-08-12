@@ -43,7 +43,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v2.2.0-3 (RC)';
+COM.version = 'v2.2.0-4 (RC)';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -2798,3 +2798,37 @@ function CONTROLLER() {
 	};
 	callback.call(obj, replacer, obj);
 }
+
+Array.prototype.async = function(context, callback) {
+
+	if (typeof(context) === 'function') {
+		var tmp = callback;
+		callback = context;
+		context = tmp;
+	}
+
+	if (!context)
+		context = {};
+
+	var arr = this;
+	var index = 0;
+	var err;
+
+	var c = function(e) {
+		if (e) {
+			if (!err) err = [];
+			err.push(e);
+		}
+		var fn = arr[index++];
+
+		if (fn === undefined) {
+			if (callback)
+				callback.call(context, err, context);
+			return;
+		}
+
+		fn.call(context, err, c);
+	};
+
+	c();
+};
