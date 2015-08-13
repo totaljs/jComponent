@@ -1,4 +1,4 @@
-var MAN = new ComponentManager();
+var MAN = $cmanager = new ComponentManager();
 var COM_DATA_BIND_SELECTOR = 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
 var COM_ATTR = '[data-component]';
 var COM_ATTR_U = 'data-component-url';
@@ -43,7 +43,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v2.2.0-4 (RC)';
+COM.version = 'v2.2.0-5 (RC)';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
