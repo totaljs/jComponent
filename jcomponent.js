@@ -43,12 +43,23 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v2.2.0-5 (RC)';
+COM.version = 'v2.2.0-6 (RC)';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
-COM.$formatter = [];
-COM.$parser = [];
+COM.$formatter = new Array(0);
+COM.$parser = new Array(0);
+COM.$parser.push(function(path, value, type) {
+	if (type === 'number' || type === 'currency' || type === 'float') {
+		if (typeof(value) === 'string')
+			value = value.replace(/\s/g, '').replace(/,/g, '.');
+		var v = parseFloat(value);
+		if (isNaN(v))
+			v = null;
+		return v;
+	}
+	return value;
+});
 
 COM.compile = function(container) {
 
@@ -945,7 +956,7 @@ COM.update = function(path, reset) {
 	if (is)
 		path = path.substring(1);
 
-	path = path.replace('.*', '');
+	path = path.replace('.*', '.');
 
 	if (!path)
 		return COM;
@@ -1493,7 +1504,7 @@ COM.schema = function(name, declaration, callback) {
 COM.each = function(fn, path, watch, fix) {
 	var isAsterix = path ? path.lastIndexOf('*') !== -1 : false;
 	if (isAsterix)
-		path = path.replace('.*', '').replace('*', '');
+		path = path.replace('.*', '.');
 
 	var index = 0;
 	for (var i = 0, length = MAN.components.length; i < length; i++) {
@@ -1532,7 +1543,8 @@ COM.eachPath = function(fn, path) {
 
 	var isAsterix = path ? path.lastIndexOf('*') !== -1 : false;
 	if (isAsterix)
-		path = path.replace('.*', '').replace('*', '');
+		path = path.replace('.*', '');
+
 	var index = 0;
 	for (var i = 0, length = MAN.components.length; i < length; i++) {
 		var component = MAN.components[i];
@@ -1627,20 +1639,6 @@ function Component(name) {
 			this.value = value;
 		});
 	};
-
-	this.$parser.push(function(path, value, type) {
-
-		if (type === 'number' || type === 'currency' || type === 'float') {
-			if (typeof(value) === 'string')
-				value = value.replace(/\s/g, '').replace(/,/g, '.');
-			var v = parseFloat(value);
-			if (isNaN(v))
-				v = null;
-			return v;
-		}
-
-		return value;
-	});
 }
 
 Component.prototype.noValid = function(val) {
