@@ -817,7 +817,7 @@ COM.change = function(path, value) {
 	return !COM.dirty(path, !value);
 };
 
-COM.valid = function(path, value, notifyPath) {
+COM.valid = function(path, value) {
 
 	var isExcept = value instanceof Array;
 	var key = 'valid' + path + (isExcept ? '>' + value.join('|') : '');
@@ -832,13 +832,12 @@ COM.valid = function(path, value, notifyPath) {
 		return MAN.cache[key];
 
 	if (COM.debug)
-		console.log('%c$.components.valid(' + path + ')', 'color:orange');
+		console.log('%c$.components.valid(' + path + (value !== undefined ? ', ' + value : '') + ')', 'color:orange');
 
 	var valid = true;
 	var arr = value !== undefined ? [] : null;
-	var fn = notifyPath ? COM.eachPath : COM.each;
 
-	fn(function(obj) {
+	COM.each(function(obj, index, isAsterix) {
 
 		if (obj.disabled)
 			return;
@@ -852,23 +851,10 @@ COM.valid = function(path, value, notifyPath) {
 			return;
 		}
 
-		var isState = true;
-		var isUpdate = true;
-
-		if (notifyPath) {
-			var isAsterix = obj.path.substring(obj.path.length - 1) !== -1;
-			if (!isAsterix)
-				isState = obj.path === path;
-			isUpdate = obj.path === path;
-		} else {
-			isUpdate = true;
-			isState = true;
-		}
-
-		if (isState && obj.state)
+		if (obj.state)
 			arr.push(obj);
 
-		if (isUpdate) {
+		if (isAsterix || obj.path === path) {
 			obj.$valid = value;
 			obj.$validate = false;
 		}
@@ -876,7 +862,7 @@ COM.valid = function(path, value, notifyPath) {
 		if (obj.$valid === false)
 			valid = false;
 
-	}, path);
+	}, path, true);
 
 	MAN.clear('valid');
 	MAN.cache[key] = valid;
@@ -884,7 +870,7 @@ COM.valid = function(path, value, notifyPath) {
 	return valid;
 };
 
-COM.dirty = function(path, value, notifyPath) {
+COM.dirty = function(path, value) {
 
 	var isExcept = value instanceof Array;
 	var key = 'dirty' + path + (isExcept ? '>' + value.join('|') : '');
@@ -899,13 +885,12 @@ COM.dirty = function(path, value, notifyPath) {
 		return MAN.cache[key];
 
 	if (COM.debug)
-		console.log('%c$.components.dirty(' + path + ')', 'color:orange');
+		console.log('%c$.components.dirty(' + path + (value !== undefined ? ', ' + value : '') + ')', 'color:orange');
 
 	var dirty = true;
 	var arr = value !== undefined ? [] : null;
-	var fn = notifyPath ? COM.eachPath : COM.each;
 
-	fn(function(obj) {
+	COM.each(function(obj, index, isAsterix) {
 
 		if (obj.disabled)
 			return;
@@ -919,29 +904,16 @@ COM.dirty = function(path, value, notifyPath) {
 			return;
 		}
 
-		var isState = true;
-		var isUpdate = true;
-
-		if (notifyPath) {
-			var isAsterix = obj.path.substring(obj.path.length - 1) !== -1;
-			if (!isAsterix)
-				isState = obj.path === path;
-			isUpdate = obj.path === path;
-		} else {
-			isUpdate = true;
-			isState = true;
-		}
-
-		if (isState && obj.state)
+		if (obj.state)
 			arr.push(obj);
 
-		if (isUpdate)
+		if (isAsterix || obj.path === path)
 			obj.$dirty = value;
 
 		if (obj.$dirty === false)
 			dirty = false;
 
-	}, path);
+	}, path, true);
 
 	MAN.clear('dirty');
 	MAN.cache[key] = dirty;
@@ -1504,9 +1476,17 @@ COM.schema = function(name, declaration, callback) {
 COM.each = function(fn, path, watch, fix) {
 	var isAsterix = path ? path.lastIndexOf('*') !== -1 : false;
 	if (isAsterix)
-		path = path.replace('.*', '.');
+		path = path.replace('.*', '');
+
+	var $path;
+
+	if (!path)
+		$path = new Array(0);
+	else
+	 	$path = path.split('.');
 
 	var index = 0;
+
 	for (var i = 0, length = MAN.components.length; i < length; i++) {
 		var component = MAN.components[i];
 		if (component.$removed)
@@ -1519,12 +1499,14 @@ COM.each = function(fn, path, watch, fix) {
 			if (!component.path)
 				continue;
 			if (isAsterix) {
-				if (component.path.indexOf(path) !== 0)
+				var a = COM_P_COMPARE($path, component.$$path, 0, path, component.path);
+				if (!a)
 					continue;
 			} else {
 				if (path !== component.path) {
 					if (watch) {
-						if (path.indexOf(component.path) === -1)
+						var a = COM_P_COMPARE($path, component.$$path, 2, path, component.path);
+						if (!a)
 							continue;
 					} else
 						continue;
@@ -1539,30 +1521,62 @@ COM.each = function(fn, path, watch, fix) {
 	return COM;
 };
 
-COM.eachPath = function(fn, path) {
+function COM_P_COMPARE(a, b, type, ak, bk) {
 
-	var isAsterix = path ? path.lastIndexOf('*') !== -1 : false;
-	if (isAsterix)
-		path = path.replace('.*', '');
+	// type 0 === wildcard
+	// type 1 === fix path
+	// type 2 === in path
 
-	var index = 0;
-	for (var i = 0, length = MAN.components.length; i < length; i++) {
-		var component = MAN.components[i];
-		if (component.$removed || !component.path)
-			continue;
+	var key = type + '=' + ak + '=' + bk;
+	var r = MAN.temp[key];
+	if (r !== undefined)
+		return r;
 
-		if (isAsterix) {
-			if (path.indexOf(component.path) !== 0 || component.path.indexOf(path))
-				fn(component, index++, true);
-			continue;
+	if (type === 0) {
+
+		for (var i = 0, length = a.length; i < length; i++) {
+			if (b[i] === undefined)
+				continue;
+			if (a[i] !== b[i]) {
+				MAN.temp[key] = false;
+				return false;
+			}
 		}
 
-		if (path.indexOf(component.path) === 0)
-			fn(component, index++, false);
+		MAN.temp[key] = true;
+		return true;
 	}
 
-	return COM;
-};
+	if (type === 1) {
+		if (a.length !== b.length)
+			return false;
+		for (var i = 0, length = b.length; i < length; i++) {
+			if (a[i] !== b[i]) {
+				MAN.temp[key] = false;
+				return false;
+			}
+		}
+		MAN.temp[key] = true;
+		return true;
+	}
+
+	if (type === 2) {
+
+		if (a.length < b.length)
+			return false;
+
+		for (var i = 0, length = a.length; i < length; i++) {
+			if (b[i] === undefined)
+				continue;
+			if (a[i] !== b[i]) {
+				MAN.temp[key] = false;
+				return false;
+			}
+		}
+		MAN.temp[key] = true;
+		return true;
+	}
+}
 
 function Component(name) {
 

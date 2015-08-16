@@ -631,18 +631,18 @@ $.components.inject(url, [target], [callback])
 // Injects content (with components) into the `target` (by default: `document.body`).
 
 
-$.components.dirty(path, [value], [notifyPath]);
+$.components.dirty(path, [value]);
 $.components.dirty('model.isDirty'); // Example: Checker.
 $.components.dirty('model.isDirty', false); // Example: Setter.
-// Checks or sets a dirty value. `notifyPath` executes Component.state() delegate.
+// Checks or sets a dirty value.
 // Returns {Boolean}.
 // Supports wildcard path, e.g. `model.*`.
 
 
-$.components.valid(path, [value], [notifyPath]);
+$.components.valid(path, [value]);
 $.components.valid('model.isValid'); // Example: Checker.
 $.components.valid('model.isValid', false); // Example: Setter.
-// Checks or sets a valid value. `notifyPath` executes Component.state() delegate.
+// Checks or sets a valid value.
 // Returns {Boolean}.
 // Supports wildcard path, e.g. `model.*`.
 
