@@ -141,7 +141,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
     This attribute can be used with `data-component-path`: the library automatically
     rewrites `$` char in all attributes [data-component-path] of all injected components
-    according to current `data-component-path`.
+    according to `data-component-path`.
 -->
 
 <element data-component-bind="" />
