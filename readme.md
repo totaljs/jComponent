@@ -734,6 +734,13 @@ $.components.GET('/api/', { name: 'jComponent' }, function(response, err) { cons
 // Sends data as `JSON` format to server - GET method.
 
 
+$.components.UPLOAD(url, formdata, [callback or path], [sleep], [progress(percentage, speed, remaining) or path], [error(response, status, type) or path]);
+$.components.UPLOAD('/api/', formdata, 'form.response'); // Example
+$.components.UPLOAD('/api/', formdata, 'response.success-->form.response'); // Example with remapping.
+$.components.UPLOAD('/api/', formdata, function(response, err) { console.log(response); }); // Example
+// Uploads formdata and receive `JSON` from the server.
+
+
 $.components.TEMPLATE(url, callback(template), [prepare(template)]);
 // Downloads the HTML content and caches it per session. This method is adapted for multiple
 // executing. The content is downloaded only once. `prepare` argument is optional

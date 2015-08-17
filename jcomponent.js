@@ -43,7 +43,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v2.2.0-8 (RC)';
+COM.version = 'v2.2.0-9 (RC)';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -311,6 +311,75 @@ COM.parseQuery = function(value) {
 		obj[key].push(val);
 	}
 	return obj;
+};
+
+COM.UPLOAD = function(url, data, callback, timeout, progress, error) {
+
+	if (!url)
+		url = window.location.pathname;
+
+	if (typeof(callback) === 'number') {
+		timeout = callback;
+		callback = undefined;
+	}
+
+	if (typeof(timeout) !== 'number') {
+		var tmp = progress;
+		error = progress;
+		progress = timeout;
+		timeout = tmp;
+	}
+
+	setTimeout(function() {
+
+		if (COM.debug)
+			console.log('%c$.components.UPLOAD(' + url + ')', 'color:magenta');
+
+		var xhr = new XMLHttpRequest();
+
+		xhr.addEventListener('load', function () {
+
+			var r = this.responseText;
+			try {
+				r = JSON.parse(r);
+			} catch (e) {}
+
+			if (this.status === 200) {
+				if (typeof(callback) === 'string')
+					return MAN.remap(callback, r);
+				if (callback)
+					callback(r);
+				return;
+			}
+
+			COM.emit('error', r, this.status, url);
+
+			if (typeof(error) === 'string')
+				return MAN.remap(error, r);
+
+			if (error)
+				error(r, this.status);
+			else if (typeof(callback) === 'function')
+				callback(undefined, r, this.status);
+
+		}, false);
+
+		xhr.upload.addEventListener('upload-progress', function (evt) {
+			if (!progress)
+				return;
+			var percentage = 0;
+			if (evt.lengthComputable)
+				percentage = Math.round(evt.loaded * 100 / evt.total);
+			if (typeof(progress) === 'string')
+				return MAN.remap(progress, percentage);
+			progress(percentage, evt.transferSpeed, evt.timeRemaining);
+		});
+
+		xhr.open('POST', url);
+		xhr.send(data);
+	}, timeout || 0);
+
+	return COM;
 };
 
 COM.POST = function(url, data, callback, timeout, error) {
@@ -1533,7 +1602,7 @@ COM.each = function(fn, path, watch, fix) {
 	if (!path)
 		$path = new Array(0);
 	else
-	 	$path = path.split('.');
+		$path = path.split('.');
 
 	var index = 0;
 
