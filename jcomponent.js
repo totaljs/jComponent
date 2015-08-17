@@ -364,7 +364,7 @@ COM.UPLOAD = function(url, data, callback, timeout, progress, error) {
 
 		}, false);
 
-		xhr.upload.addEventListener('upload-progress', function (evt) {
+		xhr.upload.onprogress = function (evt) {
 			if (!progress)
 				return;
 			var percentage = 0;
@@ -373,7 +373,7 @@ COM.UPLOAD = function(url, data, callback, timeout, progress, error) {
 			if (typeof(progress) === 'string')
 				return MAN.remap(progress, percentage);
 			progress(percentage, evt.transferSpeed, evt.timeRemaining);
-		});
+		};
 
 		xhr.open('POST', url);
 		xhr.send(data);
