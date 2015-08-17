@@ -1356,13 +1356,22 @@ COM.reset = function(path, timeout) {
 
 COM.findByName = function(name, path, callback) {
 
-	if (typeof(path) === 'function') {
+	var tp = typeof(path);
+	if (tp === 'function' || tp === 'boolean') {
 		callback = path;
 		path = undefined;
 	}
 
-	var isCallback = typeof(callback) === 'function';
+	var tc = typeof(callback);
+	var isCallback = tc === 'function';
+	var isMany = tc === 'boolean';
+
 	var com;
+
+	if (isMany) {
+		callback = undefined;
+		com = [];
+	}
 
 	COM.each(function(component) {
 
@@ -1374,9 +1383,12 @@ COM.findByName = function(name, path, callback) {
 			return;
 		}
 
-		com = component;
-		return true; // stop
+		if (!isMany) {
+			com = component;
+			return true; // stop
+		}
 
+		com.push(component);
 	}, path);
 
 	return isCallback ? COM : com;
@@ -1384,13 +1396,22 @@ COM.findByName = function(name, path, callback) {
 
 COM.findByPath = function(path, callback) {
 
-	if (typeof(path) === 'function') {
+	var tp = typeof(path);
+	if (tp === 'function' || tp === 'boolean') {
 		callback = path;
 		path = undefined;
 	}
 
-	var isCallback = typeof(callback) === 'function';
+	var tc = typeof(callback);
+	var isCallback = tc === 'function';
+	var isMany = tc === 'boolean';
+
 	var com;
+
+	if (isMany) {
+		callback = undefined;
+		com = [];
+	}
 
 	COM.each(function(component) {
 
@@ -1399,8 +1420,12 @@ COM.findByPath = function(path, callback) {
 			return;
 		}
 
-		com = component;
-		return true; // stop
+		if (!isMany) {
+			com = component;
+			return true; // stop
+		}
+
+		com.push(component);
 
 	}, path);
 
@@ -1409,13 +1434,22 @@ COM.findByPath = function(path, callback) {
 
 COM.findById = function(id, path, callback) {
 
-	if (typeof(path) === 'function') {
+	var tp = typeof(path);
+	if (tp === 'function' || tp === 'boolean') {
 		callback = path;
 		path = undefined;
 	}
 
-	var isCallback = typeof(callback) === 'function';
+	var tc = typeof(callback);
+	var isCallback = tc === 'function';
+	var isMany = tc === 'boolean';
+
 	var com;
+
+	if (isMany) {
+		callback = undefined;
+		com = [];
+	}
 
 	COM.each(function(component) {
 
@@ -1427,8 +1461,12 @@ COM.findById = function(id, path, callback) {
 			return;
 		}
 
-		com = component;
-		return true; // stop
+		if (!isMany) {
+			com = component;
+			return true; // stop
+		}
+
+		com.push(component);
 
 	}, path);
 
@@ -1669,7 +1707,7 @@ Component.prototype.noDirty = function(val) {
 	if (val === undefined)
 		val = true;
 	this.$dirty_disabled = val;
-	this.$dirty = val;
+	this.$dirty = val ? false : true;
 	return this;
 };
 
@@ -2734,10 +2772,21 @@ function NOTMODIFIED(path, value, fields) {
 	return false;
 }
 
-function FIND(value) {
+function FIND(value, many) {
+
+	var path;
+	var index = value.indexOf('[');
+
+	if (index !== -1) {
+		path = value.substring(index + 1, value.length - 1);
+		value = value.substring(0, index);
+	}
+
+	if (value.charCodeAt(0) === 46)
+		return COM.findByPath(value.substring(1), path, many);
 	if (value.charCodeAt(0) === 35)
-		return COM.findById(value.substring(1));
-	return COM.findByName(value);
+		return COM.findById(value.substring(1), path, many);
+	return COM.findByName(value, path, many);
 }
 
 function UPDATE(path, timeout, reset) {

@@ -589,21 +589,27 @@ $.components.get('some.model.tags'); // Example
 
 
 $.components.findByName(name, [path], [fn(component)]);
+$.components.findByName(name, [path], [returnArray]);
 $.components.findByName('my-component'); // Example: Returns only one component
+$.components.findByName('my-component', true); // Example: Returns array with multiple components
 $.components.findByName('my-component', function(component) { console.log(component); });  // Example: Crawls all components
 $.components.findByName('my-component', 'model.*', function(component) { console.log(component); }); // Example: Crawls all components according the path
 // Finds components by `data-component` attribute.
 
 
 $.components.findById(name, [path], [fn(component)]);
+$.components.findById(name, [path], [returnArray]);
 $.components.findById('my-component'); // Example: Returns only one component
+$.components.findById('my-component', true); // Example: Returns array with multiple components
 $.components.findById('my-component', function(component) { console.log(component); }); // Example: Crawls all components
 $.components.findById('my-component', 'model.*', function(component) { console.log(component); });  // Example: Crawls all components according the path
 // Finds components by `data-component-id` attribute.
 
 
 $.components.findByPath([path], [fn(component)]);
+$.components.findByPath([path], [returnArray]);
 $.components.findByPath('some.model'); // Example: Returns only one component
+$.components.findByPath('some.model', true); // Example: Returns array with multiple components
 $.components.findByPath('some.model', function(component) { console.log(component); });  // Example: Crawls all components
 // Finds components by `data-component-id` attribute.
 
@@ -847,9 +853,12 @@ STYLE(style);
 STYLE('.hidden { display: none; }'); // Example
 // Creates inline style.
 
-FIND(value);
+FIND(value, [returnArray]);
 FIND('data-component') // Example: Returns one component.
+FIND('data-component[data-component-path]') // Example: Returns one component.
 FIND('#data-component–id') // Example: Returns one component.
+FIND('.data-component-path') // Example: Returns one component.
+FIND('#data-component–id[data-component-path]') // Example: Returns one component.
 // Finds the components. When the value starts with `#` then the library will be
 // search components according the `data-component-id`;
 
