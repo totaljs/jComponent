@@ -345,6 +345,8 @@ COM.POST = function(url, data, callback, timeout, error) {
 				return MAN.remap(error, r);
 			if (error)
 				error(r, req.status, status);
+			else if (typeof(callback) === 'function')
+				callback(undefined, r, req.status);
 		}, contentType: 'application/json' });
 	}, timeout || 0);
 	return COM;
@@ -382,6 +384,8 @@ COM.PUT = function(url, data, callback, timeout, error) {
 				return MAN.remap(error, r);
 			if (error)
 				error(r, req.status, status);
+			else if (typeof(callback) === 'function')
+				callback(undefined, r, req.status);
 		}, contentType: 'application/json' });
 	}, timeout || 0);
 	return COM;
@@ -445,6 +449,8 @@ COM.GET = function(url, data, callback, timeout, error) {
 				return MAN.remap(error, r);
 			if (error)
 				error(r, req.status, status);
+			else if (typeof(callback) === 'function')
+				callback(undefined, r, req.status);
 		}});
 	}, timeout || 0);
 	return COM;
@@ -482,8 +488,8 @@ COM.DELETE = function(url, data, callback, timeout, error) {
 				return MAN.remap(error, r);
 			if (error)
 				error(r, req.status, status);
-			else
-				throw new Error(r);
+			else if (typeof(callback) === 'function')
+				callback(undefined, r, req.status);
 		}, contentType: 'application/json' });
 	}, timeout || 0);
 	return COM;
@@ -506,7 +512,9 @@ COM.GETCACHE = function(url, data, callback, expire, timeout, clear) {
 		return COM;
 	}
 
-	COM.GET(url, data, function(r) {
+	COM.GET(url, data, function(r, err) {
+		if (r === undefined)
+			r = err;
 		MAN.cacherest('GET', url, data, r, expire);
 		if (typeof(callback) === 'string')
 			MAN.remap(callback, r);
@@ -534,7 +542,9 @@ COM.POSTCACHE = function(url, data, callback, expire, timeout, clear) {
 		return COM;
 	}
 
-	COM.POST(url, data, function(r) {
+	COM.POST(url, data, function(r, err) {
+		if (r === undefined)
+			r = err;
 		MAN.cacherest('POST', url, data, r, expire);
 		if (typeof(callback) === 'string')
 			MAN.remap(callback, r);

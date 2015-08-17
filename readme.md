@@ -709,28 +709,28 @@ $.components.parseQuery(); // Example: Returns parsed values from the current UR
 $.components.POST(url, data, [callback or path], [sleep], [error(response, status, type) or path]);
 $.components.POST('/api/', { name: 'jComponent' }, 'form.response'); // Example
 $.components.POST('/api/', { name: 'jComponent' }, 'response.success-->form.response'); // Example with remapping.
-$.components.POST('/api/', { name: 'jComponent' }, function(response) { console.log(response); }); // Example
+$.components.POST('/api/', { name: 'jComponent' }, function(response, err) { console.log(response); }); // Example
 // Sends data as `JSON` format to server - POST method.
 
 
 $.components.PUT(url, data, [callback or path], [sleep], [error(response, status, type) or path]);
 $.components.PUT('/api/', { name: 'jComponent' }, 'form.response'); // Example
 $.components.PUT('/api/', { name: 'jComponent' }, 'response.success-->form.response'); // Example with remapping.
-$.components.PUT('/api/', { name: 'jComponent' }, function(response) { console.log(response); }); // Example
+$.components.PUT('/api/', { name: 'jComponent' }, function(response, err) { console.log(response); }); // Example
 // Sends data as `JSON` format to server - PUT method.
 
 
 $.components.DELETE(url, data, [callback or path], [sleep], [error(response, status, type) or path]);
 $.components.DELETE('/api/', { name: 'jComponent' }, 'form.response'); // Example
 $.components.DELETE('/api/', { name: 'jComponent' }, 'response.success-->form.response'); // Example with remapping.
-$.components.DELETE('/api/', { name: 'jComponent' }, function(response) { console.log(response); }); // Example
+$.components.DELETE('/api/', { name: 'jComponent' }, function(response, err) { console.log(response); }); // Example
 // Sends data as `JSON` format to server - DELETE method.
 
 
 $.components.GET(url, data, [callback or path], [sleep], [error(response, status, type) or path]);
 $.components.GET('/api/', { name: 'jComponent' }, 'form.response'); // Example
 $.components.GET('/api/', { name: 'jComponent' }, 'response.success-->form.response'); // Example with remapping.
-$.components.GET('/api/', { name: 'jComponent' }, function(response) { console.log(response); }); // Example
+$.components.GET('/api/', { name: 'jComponent' }, function(response, err) { console.log(response); }); // Example
 // Sends data as `JSON` format to server - GET method.
 
 
