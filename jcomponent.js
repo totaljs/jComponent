@@ -1,4 +1,4 @@
-var MAN = $cmanager = new ComponentManager();
+var MAN = $cmanager = new CMAN();
 var COM_DATA_BIND_SELECTOR = 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
 var COM_ATTR = '[data-component]';
 var COM_ATTR_U = 'data-component-url';
@@ -43,7 +43,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v2.2.0-6 (RC)';
+COM.version = 'v2.2.0-8 (RC)';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -601,6 +601,7 @@ function $components_ready() {
 	clearTimeout(MAN.timeout);
 	MAN.timeout = setTimeout(function() {
 
+		MAN.refresh();
 		MAN.initialize();
 
 		var count = MAN.components.length;
@@ -615,6 +616,7 @@ function $components_ready() {
 
 		if (MAN.timeoutcleaner)
 			clearTimeout(MAN.timeoutcleaner);
+
 		MAN.timeoutcleaner = setTimeout(function() {
 			MAN.cleaner();
 		}, 1000);
@@ -839,7 +841,7 @@ COM.valid = function(path, value) {
 
 	COM.each(function(obj, index, isAsterix) {
 
-		if (obj.disabled)
+		if (obj.disabled || obj.$valid_disabled)
 			return;
 
 		if (isExcept && except.indexOf(obj.path) !== -1)
@@ -892,7 +894,7 @@ COM.dirty = function(path, value) {
 
 	COM.each(function(obj, index, isAsterix) {
 
-		if (obj.disabled)
+		if (obj.disabled || obj.$dirty_disabled)
 			return;
 
 		if (isExcept && except.indexOf(obj.path) !== -1)
@@ -1656,18 +1658,22 @@ function Component(name) {
 }
 
 Component.prototype.noValid = function(val) {
+	if (val === undefined)
+		val = true;
 	this.$valid_disabled = val;
 	this.$valid = val;
 	return this;
 };
 
 Component.prototype.noDirty = function(val) {
+	if (val === undefined)
+		val = true;
 	this.$dirty_disabled = val;
 	this.$dirty = val;
 	return this;
 };
 
-Component.prototype.setPath = function(path) {
+Component.prototype.setPath = function(path, init) {
 	var fixed = null;
 
 	if (path.charCodeAt(0) === 33) {
@@ -1678,6 +1684,10 @@ Component.prototype.setPath = function(path) {
 	this.path = path;
 	this.$path = fixed;
 	this.$$path = path.split('.');
+
+	if (!init && MAN.isReady)
+		MAN.refresh();
+
 	return this;
 };
 
@@ -1806,8 +1816,8 @@ Component.prototype.remove = function(noClear) {
 
 	if (!noClear)
 		MAN.cleaner();
-	else
-		MAN.refresh();
+
+	return true;
 };
 
 Component.prototype.on = function(name, path, fn, init) {
@@ -1983,7 +1993,7 @@ function COMPONENT(type, declaration) {
 	var fn = function(el) {
 		var obj = new Component(type);
 		obj.element = el;
-		obj.setPath(el.attr(COM_ATTR_P) || obj._id);
+		obj.setPath(el.attr(COM_ATTR_P) || obj._id, true);
 		declaration.call(obj);
 		return obj;
 	};
@@ -2005,7 +2015,7 @@ function component_async(arr, fn, done) {
 	});
 }
 
-function ComponentManager() {
+function CMAN() {
 	this.isReady = false;
 	this.isCompiling = false;
 	this.init = [];
@@ -2027,7 +2037,7 @@ function ComponentManager() {
 	this.operations = {};
 }
 
-ComponentManager.prototype.cacherest = function(method, url, params, value, expire) {
+CMAN.prototype.cacherest = function(method, url, params, value, expire) {
 
 	if (params && !params.version && COM.$version)
 		params.version = COM.$version;
@@ -2040,7 +2050,7 @@ ComponentManager.prototype.cacherest = function(method, url, params, value, expi
 	return this.cachestorage(key, value, expire);
 };
 
-ComponentManager.prototype.cachestorage = function(key, value, expire) {
+CMAN.prototype.cachestorage = function(key, value, expire) {
 
 	var now = Date.now();
 
@@ -2058,7 +2068,7 @@ ComponentManager.prototype.cachestorage = function(key, value, expire) {
 		return item.value;
 };
 
-ComponentManager.prototype.initialize = function() {
+CMAN.prototype.initialize = function() {
 	var item = this.init.pop();
 
 	if (item === undefined) {
@@ -2073,7 +2083,7 @@ ComponentManager.prototype.initialize = function() {
 	return this;
 };
 
-ComponentManager.prototype.remap = function(path, value) {
+CMAN.prototype.remap = function(path, value) {
 	var index = path.indexOf('->');
 	if (index === -1)
 		return COM.set(path, value);
@@ -2083,7 +2093,7 @@ ComponentManager.prototype.remap = function(path, value) {
 	return this;
 };
 
-ComponentManager.prototype.prepare = function(obj) {
+CMAN.prototype.prepare = function(obj) {
 
 	if (!obj)
 		return this;
@@ -2146,7 +2156,7 @@ ComponentManager.prototype.prepare = function(obj) {
 	return this;
 };
 
-ComponentManager.prototype.next = function() {
+CMAN.prototype.next = function() {
 	var next = this.pending.shift();
 	if (next === undefined) {
 		if (this.isReady)
@@ -2159,9 +2169,9 @@ ComponentManager.prototype.next = function() {
 /**
  * Clear cache
  * @param {String} name
- * @return {ComponentManager}
+ * @return {CMAN}
  */
-ComponentManager.prototype.clear = function() {
+CMAN.prototype.clear = function() {
 
 	var self = this;
 
@@ -2190,26 +2200,7 @@ ComponentManager.prototype.clear = function() {
 	return self;
 };
 
-/**
- * Refresh component instances
- * @return {ComponentManager}
- */
-ComponentManager.prototype.refresh = function() {
-
-	var self = this;
-	self.components = [];
-
-	$(COM_ATTR).each(function() {
-		var component = $(this).data(COM_ATTR);
-		if (!component || !component.element)
-			return;
-		self.components.push(component);
-	});
-
-	return self;
-};
-
-ComponentManager.prototype.isArray = function(path) {
+CMAN.prototype.isArray = function(path) {
 	var index = path.lastIndexOf('[');
 	if (index === -1)
 		return false;
@@ -2219,7 +2210,7 @@ ComponentManager.prototype.isArray = function(path) {
 	return true;
 };
 
-ComponentManager.prototype.isOperation = function(name) {
+CMAN.prototype.isOperation = function(name) {
 	if (name.charCodeAt(0) === 35)
 		return true;
 	return false;
@@ -2229,7 +2220,7 @@ ComponentManager.prototype.isOperation = function(name) {
  * @param {String} path
  * @return {Object}
  */
-ComponentManager.prototype.get = function(path) {
+CMAN.prototype.get = function(path) {
 	if (path.charCodeAt(0) === 35) {
 		var op = OPERATION(path);
 		if (op)
@@ -2263,7 +2254,7 @@ ComponentManager.prototype.get = function(path) {
  * @param {String} path
  * @param {Object} value
  */
-ComponentManager.prototype.set = function(path, value) {
+CMAN.prototype.set = function(path, value) {
 	if (path.charCodeAt(0) === 35) {
 		var op = OPERATION(path);
 		if (op)
@@ -2320,15 +2311,33 @@ COM.inc = function(path, value) {
 	return self;
 };
 
+CMAN.prototype.refresh = function() {
+	var self = this;
+	clearTimeout(self.$refresh);
+	self.$refresh = setTimeout(function() {
+		// order by paths
+		self.components.sort(function(a, b) {
+			var al = a.path.length;
+			var bl = b.path.length;
+			if (al > bl)
+				return -1;
+			if (al === bl)
+				return a.path.localeCompare(b.path);
+			return 1;
+		});
+	}, 200);
+	return self;
+};
+
 /**
  * Event cleaner
- * @return {ComponentManager}
+ * @return {CMAN}
  */
-ComponentManager.prototype.cleaner = function() {
+CMAN.prototype.cleaner = function() {
 
 	var self = this;
 	var aks = Object.keys(self.events);
-	var is = false;
+	var is = true;
 
 	for (var a = 0, al = aks.length; a < al; a++) {
 
@@ -2412,6 +2421,7 @@ ComponentManager.prototype.cleaner = function() {
 		component.getter = null;
 		MAN.components.splice(index, 1);
 		length = MAN.components.length;
+		is = true;
 	}
 
 	var now = Date.now();
@@ -2449,7 +2459,9 @@ ComponentManager.prototype.cleaner = function() {
  * Default component
  */
 COMPONENT('', function() {
-
+	this.noValid();
+	this.noDirty();
+	this.getter = null;
 	this.make = function() {
 		var type = this.element.get(0).tagName;
 

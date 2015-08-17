@@ -138,6 +138,10 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     The library downloads a full HTML template with the component and its JavaScript
     declaration. The content will be inserted into the current element and then will
     be evaluated.
+
+    This attribute can be used with `data-component-path`: the library automatically
+    rewrites `$` char in all attributes [data-component-path] of all injected components
+    according to current `data-component-path`.
 -->
 
 <element data-component-bind="" />
@@ -385,18 +389,8 @@ COMPONENT('my-component-name', function() {
     // jQuery.find();
 
 
-    instance.dirty([boolean], [noEMIT]);
-    // Gets or Sets the dirty state. Only for inputs, textareas and selects. `noEMIT` (default: false) attribute
-    // cancels instance.state().
-
-
     instance.noDrity();
     // Disables setting "dirty" state within all components.
-
-
-    instance.valid([boolean], [noEMIT]);
-    // Gets or Sets the validation state. `noEMIT` (default: false) attribute
-    // cancels instance.state().
 
 
     instance.noValid();
@@ -628,7 +622,8 @@ $.components.remove(jquery_element);
 
 
 $.components.inject(url, [target], [callback])
-// Injects content (with components) into the `target` (by default: `document.body`).
+// Injects some HTML content (with components) into the `target` (by default: `document.body`)
+// or injects scripts (.js) and styles (.css) into the `<head>`.
 
 
 $.components.dirty(path, [value]);
