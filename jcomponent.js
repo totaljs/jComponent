@@ -920,11 +920,14 @@ COM.valid = function(path, value) {
 
 	COM.each(function(obj, index, isAsterix) {
 
-		if (obj.disabled || obj.$valid_disabled)
-			return;
-
 		if (isExcept && except.indexOf(obj.path) !== -1)
 			return;
+
+		if (obj.disabled || obj.$valid_disabled) {
+			if (arr && obj.state)
+				arr.push(obj);
+			return;
+		}
 
 		if (value === undefined) {
 			if (obj.$valid === false)
@@ -935,10 +938,13 @@ COM.valid = function(path, value) {
 		if (obj.state)
 			arr.push(obj);
 
-		if (isAsterix || obj.path === path) {
+		if (!onlyComponent) {
+			if (isAsterix || obj.path === path) {
+				obj.$valid = value;
+				obj.$validate = false;
+			}
+		} else if (onlyComponent._id === obj._id)
 			obj.$valid = value;
-			obj.$validate = false;
-		}
 
 		if (obj.$valid === false)
 			valid = false;
@@ -951,7 +957,7 @@ COM.valid = function(path, value) {
 	return valid;
 };
 
-COM.dirty = function(path, value) {
+COM.dirty = function(path, value, onlyComponent, skipEmitState) {
 
 	var isExcept = value instanceof Array;
 	var key = 'dirty' + path + (isExcept ? '>' + value.join('|') : '');
@@ -973,11 +979,14 @@ COM.dirty = function(path, value) {
 
 	COM.each(function(obj, index, isAsterix) {
 
-		if (obj.disabled || obj.$dirty_disabled)
-			return;
-
 		if (isExcept && except.indexOf(obj.path) !== -1)
 			return;
+
+		if (obj.disabled || obj.$dirty_disabled) {
+			if (arr && obj.state)
+				arr.push(obj);
+			return;
+		}
 
 		if (value === undefined) {
 			if (obj.$dirty === false)
@@ -988,8 +997,11 @@ COM.dirty = function(path, value) {
 		if (obj.state)
 			arr.push(obj);
 
-		if (isAsterix || obj.path === path)
-			obj.$dirty = value;
+		if (!onlyComponent) {
+			if (isAsterix || obj.path === path)
+				obj.$dirty = value;
+		} else if (onlyComponent._id === obj._id)
+				obj.$dirty = value;
 
 		if (obj.$dirty === false)
 			dirty = false;
@@ -998,7 +1010,11 @@ COM.dirty = function(path, value) {
 
 	MAN.clear('dirty');
 	MAN.cache[key] = dirty;
-	COM.state(arr, 2, 2);
+
+	// For double hitting component.state() --> look into COM.invalid()
+	if (!skipEmitState)
+		COM.state(arr, 1, 2);
+
 	return dirty;
 };
 
@@ -1046,12 +1062,18 @@ COM.update = function(path, reset) {
 		component.$ready = true;
 
 		if (reset === true) {
-			component.$dirty = true;
-			component.$valid = true;
-			component.$validate = false;
-			if (component.validate)
-				component.$valid = component.validate(result);
-		} else if (component.validate)
+
+			if (!component.$dirty_disabled)
+				component.$dirty = true;
+
+			if (!component.$valid_disabled) {
+				component.$valid = true;
+				component.$validate = false;
+				if (component.validate)
+					component.$valid = component.validate(result);
+			}
+
+		} else if (component.validate && !component.$valid_disabled)
 			component.valid(component.validate(result), true);
 
 		if (component.state)
@@ -1063,10 +1085,8 @@ COM.update = function(path, reset) {
 		updates[component.path] = result;
 	}, is ? path : undefined, undefined, is);
 
-	if (reset) {
-		MAN.clear('dirty');
-		MAN.clear('valid');
-	}
+	if (reset)
+		MAN.clear('dirty', 'valid');
 
 	if (!updates[path])
 		updates[path] = COM.get(path);
@@ -1206,20 +1226,21 @@ COM.set = function(path, value, type) {
 			state.push(component);
 
 		if (reset) {
-			component.$dirty = true;
-			component.$valid = true;
-			component.$validate = false;
-			if (component.validate)
-				component.$valid = component.validate(result);
-		} else if (component.validate)
+			if (!component.$dirty_disabled)
+				component.$dirty = true;
+			if (!component.$valid_disabled) {
+				component.$valid = true;
+				component.$validate = false;
+				if (component.validate)
+					component.$valid = component.validate(result);
+			}
+		} else if (component.validate && !component.$valid_disabled)
 			component.valid(component.validate(result), true);
 
 	}, path, true, is);
 
-	if (reset) {
-		MAN.clear('dirty');
-		MAN.clear('valid');
-	}
+	if (reset)
+		MAN.clear('dirty', 'valid');
 
 	for (var i = 0, length = state.length; i < length; i++)
 		state[i].state(type, 5);
@@ -1315,6 +1336,9 @@ COM.validate = function(path, except) {
 		if (obj.state)
 			arr.push(obj);
 
+		if (obj.$valid_disabled)
+			return;
+
 		obj.$validate = true;
 
 		if (obj.validate) {
@@ -1342,7 +1366,7 @@ COM.errors = function(path, except) {
 	COM.each(function(obj) {
 		if (except && except.indexOf(obj.path) !== -1)
 			return;
-		if (obj.$valid === false)
+		if (obj.$valid === false && !obj.$valid_disabled)
 			arr.push(obj);
 	}, path);
 	return arr;
@@ -1356,9 +1380,9 @@ COM.disable = function(path, except) {
 	return COM.dirty(path, except) || !COM.valid(path, except);
 };
 
-COM.invalid = function(path) {
-	COM.dirty(path, false);
-	COM.valid(path, false, true);
+COM.invalid = function(path, onlyComponent) {
+	COM.dirty(path, false, onlyComponent, true);
+	COM.valid(path, false, onlyComponent);
 	return COM;
 };
 
@@ -1400,7 +1424,7 @@ COM.state = function(arr, type, who) {
 	}, 2);
 };
 
-COM.reset = function(path, timeout) {
+COM.reset = function(path, timeout, onlyComponent) {
 
 	if (timeout > 0) {
 		setTimeout(function() {
@@ -1413,16 +1437,27 @@ COM.reset = function(path, timeout) {
 		console.log('%c$.components.reset(' + path + ')', 'color:orange');
 
 	var arr = [];
+
 	COM.each(function(obj) {
+
 		if (obj.disabled)
 			return;
+
 		if (obj.state)
 			arr.push(obj);
-		obj.$dirty = true;
-		obj.$valid = true;
-		obj.$validate = false;
-		if (obj.validate)
-			obj.$valid = obj.validate(obj.get());
+
+		if (onlyComponent && onlyComponent._id !== obj._id)
+			return;
+
+		if (!obj.$dirty_disabled)
+			obj.$dirty = true;
+
+		if (!$obj.$valid_disabled) {
+			obj.$valid = true;
+			obj.$validate = false;
+			if (obj.validate)
+				obj.$valid = obj.validate(obj.get());
+		}
 
 	}, path);
 
@@ -1857,7 +1892,7 @@ Component.prototype.watch = function(path, fn, init) {
 };
 
 Component.prototype.invalid = function() {
-	return COM.invalid(self.path);
+	return COM.invalid(this.path, this);
 };
 
 Component.prototype.valid = function(value, noEmit) {
@@ -1890,7 +1925,7 @@ Component.prototype.style = function(value) {
 Component.prototype.change = function(value) {
 	if (value === undefined)
 		value = true;
-	COM.dirty(self.path, value);
+	COM.change(this.path, value, this);
 	return this;
 };
 
@@ -1914,9 +1949,8 @@ Component.prototype.dirty = function(value, noEmit) {
 	return this;
 };
 
-Component.prototype.reset = function(noEmit) {
-	this.dirty(false, noEmit);
-	this.valid(false, noEmit);
+Component.prototype.reset = function() {
+	COM.reset(this.path, 0, this);
 	return this;
 };
 
@@ -2025,7 +2059,7 @@ Component.prototype.emit = function() {
 
 Component.prototype.evaluate = function(path, expression) {
 	if (!expression)
-		path = self.path;
+		path = this.path;
 	return COM.evaluate(path, expression);
 };
 
@@ -2229,7 +2263,7 @@ CMAN.prototype.prepare = function(obj) {
 		}
 	}
 
-	if (obj.validate)
+	if (obj.validate && !obj.$valid_disabled)
 		obj.$valid = obj.validate(obj.get(), true);
 
 	if (obj.done) {
@@ -2866,7 +2900,7 @@ function FIND(value, many) {
 	}
 
 	if (value.charCodeAt(0) === 46)
-		return COM.findByPath(value.substring(1), path, many);
+		return COM.findByPath(value.substring(1), many);
 	if (value.charCodeAt(0) === 35)
 		return COM.findById(value.substring(1), path, many);
 	return COM.findByName(value, path, many);

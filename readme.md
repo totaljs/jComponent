@@ -402,9 +402,8 @@ COMPONENT('my-component-name', function() {
     // Disables own validation within all components.
 
 
-    instance.reset([noEMIT]);
-    // Resets `instance.dirty(false)` and `instance.valid(false)`. `noEMIT` (default: false) attribute
-    // cancels instance.state().
+    instance.reset();
+    // Resets `instance.dirty(false)` and `instance.valid(false)`.
 
 
     instance.change([boolean]);
