@@ -394,12 +394,17 @@ COMPONENT('my-component-name', function() {
     // jQuery.find();
 
 
-    instance.noDrity();
+    instance.noDirty();
     // Disables setting "dirty" state within all components.
 
 
     instance.noValid();
     // Disables own validation within all components.
+
+
+    instance.readonly();
+    // Is combination: component.noDirty(), component.noValid() and component.getter = null.
+    // Any special function.
 
 
     instance.reset();

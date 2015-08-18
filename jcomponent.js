@@ -1808,6 +1808,13 @@ function Component(name) {
 	};
 }
 
+Component.prototype.readonly = function() {
+	this.noDirty();
+	this.noValid();
+	this.getter = null;
+	return this;
+};
+
 Component.prototype.noValid = function(val) {
 	if (val === undefined)
 		val = true;
