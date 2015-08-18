@@ -43,7 +43,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v2.2.0-9 (RC)';
+COM.version = 'v2.2.0-10 (RC)';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -1357,10 +1357,9 @@ COM.disable = function(path, except) {
 };
 
 COM.invalid = function(path) {
-	var com = COM;
-	com.dirty(path, false);
-	com.valid(path, false, true);
-	return com;
+	COM.dirty(path, false);
+	COM.valid(path, false, true);
+	return COM;
 };
 
 COM.blocked = function(name, timeout, callback) {
@@ -1821,6 +1820,10 @@ Component.prototype.html = function(value) {
 	return this.element.html(value);
 };
 
+Component.prototype.append = function(value) {
+	return this.element.append(value);
+};
+
 Component.prototype.find = function(selector) {
 	return this.element.find(selector);
 };
@@ -1854,7 +1857,7 @@ Component.prototype.watch = function(path, fn, init) {
 };
 
 Component.prototype.invalid = function() {
-	return this.valid(false).dirty(false);
+	return COM.invalid(self.path);
 };
 
 Component.prototype.valid = function(value, noEmit) {
@@ -1886,8 +1889,9 @@ Component.prototype.style = function(value) {
 
 Component.prototype.change = function(value) {
 	if (value === undefined)
-		return !this.dirty();
-	return this.dirty(!value);
+		value = true;
+	COM.dirty(self.path, value);
+	return this;
 };
 
 Component.prototype.dirty = function(value, noEmit) {

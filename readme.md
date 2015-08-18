@@ -384,6 +384,11 @@ COMPONENT('my-component-name', function() {
     // jQuery.html();
 
 
+    instance.append(value);
+    // Appends a content into the inner HTML in the component element.
+    // jQuery.append();
+
+
     instance.find(selectors);
     // Finds some content in the component element.
     // jQuery.find();
@@ -403,7 +408,7 @@ COMPONENT('my-component-name', function() {
 
 
     instance.change([boolean]);
-    // Contains `instance.dirty()` and `instance.valid()` together.
+    // Contains `instance.dirty()` and automatically refresh all watchers.
     // This method means: the content of this element is `changed` or `unchanged`.
 
 
