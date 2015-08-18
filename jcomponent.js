@@ -1963,9 +1963,6 @@ Component.prototype.reset = function() {
 
 Component.prototype.remove = function(noClear) {
 
-	if (this.destroy)
-		this.destroy();
-
 	this.element.removeData(COM_ATTR);
 	this.element.find(COM_ATTR).attr(COM_ATTR_R, 'true');
 	this.element.attr(COM_ATTR_R, 'true');
@@ -1974,7 +1971,6 @@ Component.prototype.remove = function(noClear) {
 		MAN.clear();
 
 	COM.$removed = true;
-	COM.$emit('destroy', this.name, this.element.attr(COM_ATTR_P));
 
 	if (!noClear)
 		MAN.cleaner();
@@ -2575,6 +2571,10 @@ CMAN.prototype.cleaner = function() {
 		}
 
 		index--;
+
+		COM.$emit('destroy', component.name, component);
+		if (component.destroy)
+			component.destroy();
 		component.element.remove();
 		component.element = null;
 		component.$removed = true;

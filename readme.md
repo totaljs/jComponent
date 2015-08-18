@@ -814,8 +814,12 @@ $.components.on('#data-component-id', function(component) {
     // New component with `data-component-id` attribute is ready to use.
 });
 
-$.components.on('@data-componnet', function(component) {
+$.components.on('@data-component', function(component) {
     // New component with `data-component` attribute is ready to use.
+});
+
+$.components.on('destroy', function(name, component) {
+    // Is emitted before is some component destroyed.
 });
 ```
 
