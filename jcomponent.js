@@ -43,7 +43,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v2.2.0-10 (RC)';
+COM.version = 'v2.2.0-11 (RC)';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -1452,7 +1452,7 @@ COM.reset = function(path, timeout, onlyComponent) {
 		if (!obj.$dirty_disabled)
 			obj.$dirty = true;
 
-		if (!$obj.$valid_disabled) {
+		if (!obj.$valid_disabled) {
 			obj.$valid = true;
 			obj.$validate = false;
 			if (obj.validate)
