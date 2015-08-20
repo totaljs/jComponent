@@ -43,7 +43,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v2.2.0-11 (RC)';
+COM.version = 'v2.2.0-12 (RC)';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -1812,6 +1812,7 @@ Component.prototype.readonly = function() {
 	this.noDirty();
 	this.noValid();
 	this.getter = null;
+	this.setter = null;
 	return this;
 };
 

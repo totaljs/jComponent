@@ -403,7 +403,7 @@ COMPONENT('my-component-name', function() {
 
 
     instance.readonly();
-    // Is combination: component.noDirty(), component.noValid() and component.getter = null
+    // Is combination: component.noDirty(), component.noValid(), component.getter and component.setter sets to `null`
     // and it's meant as read-only data from the model.
 
 
