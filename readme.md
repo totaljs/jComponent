@@ -1,7 +1,7 @@
 [![MIT License][license-image]][license-url]
 # jQuery component library
 
-- Current version: `v2.1.0` (stable)
+- Current version: `v2.2.0` (stable)
 - `>= jQuery +1.7`
 - `>= IE9`
 - similar functionality like directives in Angular.js
