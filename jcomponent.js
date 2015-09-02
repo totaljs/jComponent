@@ -2466,7 +2466,7 @@ COM.inc = function(path, value, type) {
 	}
 
 	current += value;
-	COM.set(path, value, type);
+	COM.set(path, current, type);
 	return self;
 };
 
