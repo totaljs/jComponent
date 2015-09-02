@@ -43,7 +43,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v2.2.0';
+COM.version = 'v2.2.1';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -2454,7 +2454,7 @@ CMAN.prototype.set = function(path, value) {
 	return self;
 };
 
-COM.inc = function(path, value) {
+COM.inc = function(path, value, type) {
 
 	var current = COM.get(path);
 	if (!current) {
