@@ -76,6 +76,12 @@ COM.compile = function(container) {
 
 	var els = container ? container.find(COM_ATTR) : $(COM_ATTR);
 	var skip = false;
+
+	if (els.length === 0 && !container) {
+		$components_ready();
+		return;
+	}
+
 	els.each(function() {
 
 		if (skip)
