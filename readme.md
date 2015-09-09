@@ -1,7 +1,7 @@
 [![MIT License][license-image]][license-url]
 # jQuery component library
 
-- Current version: `v2.2.1` (stable)
+- Current version: `v3.0.0` (beta)
 - `>= jQuery +1.7`
 - `>= IE9`
 - similar functionality like directives in Angular.js
@@ -128,6 +128,14 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     library automatically downloads the content and sends it to the component (into
     the `make` delegate).
 -->
+
+<element data-component-dependencies="" />
+<!--
+    Can contain multiple [path] or [component-id] or [component-name] divider with comma ",".
+    This feature is only for broadcasting. Look to: BROADCAST() or component.broadcast();
+    E.g. data-component-dependencies="#component-id, .some.path, component-name"
+-->
+
 ```
 
 ## Special HTML attributes
@@ -225,6 +233,14 @@ COMPONENT('my-component-name', function() {
 
     instance.element;
     // The HTML element of this component.
+
+    instance.dependencies;
+    // String Array. Can contain multiple [path] or [component-id] or [component-name].
+    // Only for broadcasting.
+
+    instance.caller;
+    // This property contains the brodcast caller (e.g. other component)
+    // Works only with broadcasting.
 });
 ```
 
@@ -426,6 +442,14 @@ COMPONENT('my-component-name', function() {
 
     instance.emit(event_name, [arg1], [arg2])
     // Emits event for all components.
+
+
+    instance.broadcast('say')('hello');
+    instance.broadcast('set')('new value for all dependencies');
+    instance.broadcast(method_name);
+    // This method executes [method_name] in all dependencies and
+    // returns function for additional arguments. You can get a caller object
+    // in the called components via `component.caller`.
 
 
     instance.evaluate([path], expression);
@@ -770,6 +794,13 @@ $.components.POSTCACHE(url, data, [callback or path], [expire], [sleep], [clear]
 
 $.components.REMOVECACHE(method, url, data);
 // Deletes cache (GETCACHE, POSTCACHE).
+
+
+$.components.broadcast('.some-path, #some-component-id, some-component-name')('say')('hello');
+$.components.broadcast('.some-path, #some-component-id, some-component-name')('set')('new value');
+$.components.broadcast(['.path', '#id', 'name'], 'set')('new value');
+$.components.broadcast(selector, method_name, [caller]);
+// Executes the method in all components by selector.
 
 
 $.components.schema(name, [declaration]);

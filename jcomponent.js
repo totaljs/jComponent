@@ -4,6 +4,7 @@ var COM_ATTR = '[data-component]';
 var COM_ATTR_U = 'data-component-url';
 var COM_ATTR_URL = '[' + COM_ATTR_U + ']';
 var COM_ATTR_B = 'data-component-bind';
+var COM_ATTR_D = 'data-component-dependencies';
 var COM_ATTR_P = 'data-component-path';
 var COM_ATTR_T = 'data-component-template';
 var COM_ATTR_I = 'data-component-init';
@@ -43,7 +44,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v2.2.1';
+COM.version = 'v3.0.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -95,6 +96,15 @@ COM.compile = function(container) {
 		obj.$init = el.attr(COM_ATTR_I) || null;
 		obj.type = el.attr('data-component-type') || '';
 		obj.id = el.attr('data-component-id') || obj._id;
+		obj.dependencies = new Array(0);
+
+		var dep = (el.attr('data-component-dependencies') || '').split(',');
+
+		for (var i = 0, length = dep.length; i < length; i++) {
+			var d = dep[i].trim();
+			if (d)
+				obj.dependencies.push(d);
+		}
 
 		// A reference to implementation
 		el.data(COM_ATTR, obj);
@@ -221,7 +231,7 @@ COM.$inject = function() {
 		});
 
 	}, function() {
-		MAN.clear('valid', 'dirty');
+		MAN.clear('valid', 'dirty', 'broadcast');
 		if (count === 0)
 			return;
 		COM.compile();
@@ -687,7 +697,7 @@ function $components_ready() {
 		$(document).trigger('components', [count]);
 
 		if (!MAN.isReady) {
-			MAN.clear('valid', 'dirty');
+			MAN.clear('valid', 'dirty', 'broadcast');
 			MAN.isReady = true;
 			COM.emit('init');
 			COM.emit('ready');
@@ -1424,6 +1434,10 @@ COM.state = function(arr, type, who) {
 	}, 2);
 };
 
+COM.broadcast = function(selector, name, caller) {
+	return BROADCAST(selector, name, caller);
+};
+
 COM.reset = function(path, timeout, onlyComponent) {
 
 	if (timeout > 0) {
@@ -1731,7 +1745,7 @@ function COM_P_COMPARE(a, b, type, ak, bk) {
 	}
 }
 
-function Component(name) {
+function COMP(name) {
 
 	this._id = 'component' + Math.floor(Math.random() * 100000);
 	this.$dirty = true;
@@ -1748,12 +1762,14 @@ function Component(name) {
 	this.type;
 	this.id;
 	this.disabled = false;
+	this.caller;
 
 	this.make;
 	this.done;
 	this.prerender;
 	this.destroy;
 	this.state;
+	this.dependencies;
 
 	this.validate;
 
@@ -1808,7 +1824,7 @@ function Component(name) {
 	};
 }
 
-Component.prototype.readonly = function() {
+COMP.prototype.readonly = function() {
 	this.noDirty();
 	this.noValid();
 	this.getter = null;
@@ -1816,7 +1832,11 @@ Component.prototype.readonly = function() {
 	return this;
 };
 
-Component.prototype.noValid = function(val) {
+COMP.prototype.broadcast = function(name) {
+	return BROADCAST(this.dependencies, name, this);
+};
+
+COMP.prototype.noValid = function(val) {
 	if (val === undefined)
 		val = true;
 	this.$valid_disabled = val;
@@ -1824,7 +1844,7 @@ Component.prototype.noValid = function(val) {
 	return this;
 };
 
-Component.prototype.noDirty = function(val) {
+COMP.prototype.noDirty = function(val) {
 	if (val === undefined)
 		val = true;
 	this.$dirty_disabled = val;
@@ -1832,7 +1852,7 @@ Component.prototype.noDirty = function(val) {
 	return this;
 };
 
-Component.prototype.setPath = function(path, init) {
+COMP.prototype.setPath = function(path, init) {
 	var fixed = null;
 
 	if (path.charCodeAt(0) === 33) {
@@ -1850,35 +1870,35 @@ Component.prototype.setPath = function(path, init) {
 	return this;
 };
 
-Component.prototype.attr = function(name, value) {
+COMP.prototype.attr = function(name, value) {
 	if (value === undefined)
 		return this.element.attr(name);
 	this.element.attr(name, value);
 	return this;
 };
 
-Component.prototype.html = function(value) {
+COMP.prototype.html = function(value) {
 	if (value === undefined)
 		return this.element.html();
 	return this.element.html(value);
 };
 
-Component.prototype.append = function(value) {
+COMP.prototype.append = function(value) {
 	return this.element.append(value);
 };
 
-Component.prototype.find = function(selector) {
+COMP.prototype.find = function(selector) {
 	return this.element.find(selector);
 };
 
-Component.prototype.isInvalid = function() {
+COMP.prototype.isInvalid = function() {
 	var is = !this.$valid;
 	if (is && !this.$validate)
 		is = !this.$dirty;
 	return is;
 };
 
-Component.prototype.watch = function(path, fn, init) {
+COMP.prototype.watch = function(path, fn, init) {
 
 	var self = this;
 
@@ -1899,11 +1919,11 @@ Component.prototype.watch = function(path, fn, init) {
 	return self;
 };
 
-Component.prototype.invalid = function() {
+COMP.prototype.invalid = function() {
 	return COM.invalid(this.path, this);
 };
 
-Component.prototype.valid = function(value, noEmit) {
+COMP.prototype.valid = function(value, noEmit) {
 
 	if (value === undefined)
 		return this.$valid;
@@ -1925,19 +1945,19 @@ Component.prototype.valid = function(value, noEmit) {
 	return this;
 };
 
-Component.prototype.style = function(value) {
+COMP.prototype.style = function(value) {
 	STYLE(value);
 	return this;
 };
 
-Component.prototype.change = function(value) {
+COMP.prototype.change = function(value) {
 	if (value === undefined)
 		value = true;
 	COM.change(this.path, value, this);
 	return this;
 };
 
-Component.prototype.dirty = function(value, noEmit) {
+COMP.prototype.dirty = function(value, noEmit) {
 
 	if (value === undefined)
 		return this.$dirty;
@@ -1957,12 +1977,12 @@ Component.prototype.dirty = function(value, noEmit) {
 	return this;
 };
 
-Component.prototype.reset = function() {
+COMP.prototype.reset = function() {
 	COM.reset(this.path, 0, this);
 	return this;
 };
 
-Component.prototype.remove = function(noClear) {
+COMP.prototype.remove = function(noClear) {
 
 	this.element.removeData(COM_ATTR);
 	this.element.find(COM_ATTR).attr(COM_ATTR_R, 'true');
@@ -1979,7 +1999,7 @@ Component.prototype.remove = function(noClear) {
 	return true;
 };
 
-Component.prototype.on = function(name, path, fn, init) {
+COMP.prototype.on = function(name, path, fn, init) {
 
 	if (typeof(path) === 'function') {
 		init = fn;
@@ -2009,7 +2029,7 @@ Component.prototype.on = function(name, path, fn, init) {
 	return this;
 };
 
-Component.prototype.formatter = function(value) {
+COMP.prototype.formatter = function(value) {
 
 	if (typeof(value) === 'function') {
 		if (!this.$formatter)
@@ -2033,7 +2053,7 @@ Component.prototype.formatter = function(value) {
 	return value;
 };
 
-Component.prototype.parser = function(value) {
+COMP.prototype.parser = function(value) {
 
 	if (typeof(value) === 'function') {
 		if (!this.$parser)
@@ -2057,17 +2077,17 @@ Component.prototype.parser = function(value) {
 	return value;
 };
 
-Component.prototype.emit = function() {
+COMP.prototype.emit = function() {
 	COM.emit.apply(COM, arguments);
 };
 
-Component.prototype.evaluate = function(path, expression) {
+COMP.prototype.evaluate = function(path, expression) {
 	if (!expression)
 		path = this.path;
 	return COM.evaluate(path, expression);
 };
 
-Component.prototype.get = function(path) {
+COMP.prototype.get = function(path) {
 	if (!path)
 		path = this.path;
 	if (!path)
@@ -2077,11 +2097,11 @@ Component.prototype.get = function(path) {
 	return MAN.get(path);
 };
 
-Component.prototype.update = function(path, reset) {
+COMP.prototype.update = function(path, reset) {
 	COM.update(path || this.path, reset);
 };
 
-Component.prototype.set = function(path, value, type) {
+COMP.prototype.set = function(path, value, type) {
 
 	var self = this;
 
@@ -2097,7 +2117,7 @@ Component.prototype.set = function(path, value, type) {
 	return self;
 };
 
-Component.prototype.inc = function(path, value) {
+COMP.prototype.inc = function(path, value) {
 
 	var self = this;
 
@@ -2113,7 +2133,7 @@ Component.prototype.inc = function(path, value) {
 	return self;
 };
 
-Component.prototype.extend = function(path, value, type) {
+COMP.prototype.extend = function(path, value, type) {
 
 	var self = this;
 
@@ -2129,7 +2149,7 @@ Component.prototype.extend = function(path, value, type) {
 	return self;
 };
 
-Component.prototype.push = function(path, value, type) {
+COMP.prototype.push = function(path, value, type) {
 	var self = this;
 
 	if (value === undefined) {
@@ -2910,8 +2930,55 @@ function FIND(value, many) {
 	if (value.charCodeAt(0) === 46)
 		return COM.findByPath(value.substring(1), many);
 	if (value.charCodeAt(0) === 35)
-		return COM.findById(value.substring(1), path, many);
+		return COM.findById(value.substring(1), path, many)
 	return COM.findByName(value, path, many);
+}
+
+function BROADCAST(selector, name, caller) {
+
+	var key = 'broadcast.';
+
+	if (typeof(selector) === 'string') {
+		key += selector;
+		if (MAN.cache[key])
+			return $BROADCAST_EVAL(components, name, caller);
+		selector = selector.split(',');
+	} else {
+		key += selector.join(',');
+		if (MAN.cache[key])
+			return $BROADCAST_EVAL(components, name, caller);
+	}
+
+	var components = [];
+
+	for (var i = 0, length = selector.length; i < length; i++) {
+		var item = selector[i].trim();
+		var com = FIND(item);
+		if (!com)
+			continue;
+		components.push(com);
+	}
+
+	MAN.cache[key] = components;
+	return $BROADCAST_EVAL(components, name, caller);
+}
+
+function $BROADCAST_EVAL(components, name, caller) {
+
+	if (!caller)
+		caller = null;
+
+	return function() {
+		var arg = arguments;
+		for (var i = 0, length = components.length; i < length; i++) {
+			var component = components[i];
+			if (typeof(component[name]) !== 'function')
+				continue;
+			component.caller = caller;
+			component[name].apply(component[name], arg);
+			component.caller = null;
+		}
+	};
 }
 
 function UPDATE(path, timeout, reset) {
