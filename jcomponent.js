@@ -44,7 +44,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v3.0.0';
+COM.version = 'v3.0.0-1';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -2170,7 +2170,7 @@ function component(type, declaration) {
 function COMPONENT(type, declaration) {
 
 	var fn = function(el) {
-		var obj = new Component(type);
+		var obj = new COMP(type);
 		obj.element = el;
 		obj.setPath(el.attr(COM_ATTR_P) || obj._id, true);
 		declaration.call(obj);
@@ -2936,17 +2936,17 @@ function FIND(value, many) {
 
 function BROADCAST(selector, name, caller) {
 
-	var key = 'broadcast.';
+	var key = 'broadcast=';
 
 	if (typeof(selector) === 'string') {
 		key += selector;
 		if (MAN.cache[key])
-			return $BROADCAST_EVAL(components, name, caller);
+			return $BROADCAST_EVAL(MAN.cache[key], name, caller);
 		selector = selector.split(',');
 	} else {
 		key += selector.join(',');
 		if (MAN.cache[key])
-			return $BROADCAST_EVAL(components, name, caller);
+			return $BROADCAST_EVAL(MAN.cache[key], name, caller);
 	}
 
 	var components = [];
