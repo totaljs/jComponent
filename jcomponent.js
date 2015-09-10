@@ -44,7 +44,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v3.0.0-1';
+COM.version = 'v3.0.0-2';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -1177,6 +1177,105 @@ COM.extend = function(path, value, type) {
 	return COM;
 };
 
+COM.nested = function(element, selector, type, value) {
+
+	element = $(element);
+
+	if (selector === '*') {
+		selector = null;
+	} else if (!(selector instanceof Array)) {
+		selector = selector.split(',');
+		var nested = [];
+		for (var i = 0, length = selector.length; i < length; i++) {
+			var item = selector[i].trim();
+			if (item)
+				nested.push(item);
+		}
+
+		if (nested.length === 0)
+			selector = null;
+		else
+			selector = nested;
+	}
+
+	var isEach = typeof(type) === 'function';
+
+	if (!isEach) {
+		switch (type) {
+			case 'path':
+			case 'template':
+			case 'dependencies':
+			case 'class':
+			case 'url':
+			case 'type':
+			case 'init':
+			case 'bind':
+			case 'keypress':
+			case 'keypress-delay':
+			case 'keypress-only':
+				type = 'data-component-' + type;
+				break;
+			case 'delay':
+			case 'only':
+				type = 'data-component-keypress-' + type;
+				break;
+		}
+	}
+
+	var self = this;
+
+	if (!selector) {
+		element.find('[data-component]').each(function() {
+			var el = $(this);
+			var com = el.component();
+
+			if (isEach) {
+				type(el, com);
+				return;
+			}
+
+			el.attr(type, value);
+
+			if (com && type === COM_ATTR_P)
+				com.setPath(value);
+
+		});
+		return self;
+	}
+
+	element.find('[data-component]').each(function() {
+		var el = $(this);
+		var id = el.attr('data-component-id');
+		var pat = el.attr(COM_ATTR_P);
+		var name = el.attr('data-component');
+		for (var i = 0, length = selector.length; i < length; i++) {
+			var item = selector[i];
+			var is = false;
+			if (item.charCodeAt(0) === 46)
+				is = item.substring(1) === pat;
+			else if (item.charCodeAt(0) === 35)
+				is = item.substring(1) === id;
+			else
+				is = item === name;
+
+			if (!is)
+				continue;
+
+			var com = el.component();
+			if (isEach) {
+				type(el, com);
+				return;
+			}
+
+			el.attr(type, value);
+			if (com && type === COM_ATTR_P)
+				com.setPath(value);
+		}
+	});
+
+	return self;
+};
+
 // 1 === by developer
 // 2 === by input
 COM.set = function(path, value, type) {
@@ -1829,6 +1928,11 @@ function COMP(name) {
 		});
 	};
 }
+
+COMP.prototype.nested = function(selector, type, value) {
+	COM.nested(this.element, selector, type, value);
+	return this;
+};
 
 COMP.prototype.readonly = function() {
 	this.noDirty();

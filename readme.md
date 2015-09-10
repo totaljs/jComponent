@@ -478,6 +478,14 @@ COMPONENT('my-component-name', function() {
     // `<select data-component-bind`.
 
 
+    instnace.nested(selector, type or fn, [value]);
+    instnace.nested('*', 'path', 'common.success'); // Example: Sets into the all nested components new path
+    instnace.nested('component-name,#component-id,component-path', 'path', 'common.success'); // Example: Sets into the all nested components new path
+    instnace.nested(['component-name', '#component-id', 'component-path'], 'path', 'common.success'); // Example: Sets into the all nested components new path
+    instnace.nested('*', function(element, component)); // Passes each component
+    // Sets the value by [type] to nested components. Type can be [path, id, url, template, class, etc.]
+    // selector can string divided via comma.
+
     instance.watch([path], function(path, value));
     instance.watch(function(path, value) { // example
         // watch for changes
@@ -679,6 +687,15 @@ $.components.valid('model.isValid', false); // Example: Setter.
 // Checks or sets a valid value.
 // Returns {Boolean}.
 // Supports wildcard path, e.g. `model.*`.
+
+
+$.components.nested(element, selector, type or fn, [value]);
+$.components.nested(element, '*', 'path', 'common.success'); // Example: Sets into the all nested components new path
+$.components.nested(element, 'component-name,#component-id,component-path', 'path', 'common.success'); // Example: Sets into the all nested components new path
+$.components.nested(element, ['component-name', '#component-id', 'component-path'], 'path', 'common.success'); // Example: Sets into the all nested components new path
+$.components.nested(element, '*', function(element, component)); // Passes each component
+// Sets the value by [type] to nested components. Type can be [path, id, url, template, class, etc.]
+// selector can string divided via comma.
 
 
 $.components.can(path, [except_paths_arr]);
