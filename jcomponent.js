@@ -2114,7 +2114,7 @@ COMP.prototype.on = function(name, path, fn, init) {
 	if (typeof(path) === 'function') {
 		init = fn;
 		fn = path;
-		path = this.path;
+		path = '';
 	} else
 		path = path.replace('.*', '');
 
