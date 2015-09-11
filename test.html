@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PAGE TITLE</title>
+    <meta name="description" content="PAGE DESCRIPTION" />
+    <meta name="keywords" content="PAGE KEYWORDS" />
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=11" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="all,follow" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="jcomponent.js"></script>
+</head>
+<body>
+
+	<div data-component="a">
+		<div data-component="b" data-component-path="?.articles">
+			<div data-component="c" data-component-path="?.gallery"></div>
+		</div>
+	</div>
+
+
+	<script>
+		SET('obj.name', 'peter');
+
+		COMPONENT('a', function() {
+
+			this.make = function() {
+				this.nested('*', 'path', this.path);
+			};
+
+			this.setter = function() {
+				console.log('---> a', this.path);
+			};
+		});
+
+		COMPONENT('b', function() {
+			this.setter = function() {
+				console.log('---> b', this.path);
+			};
+		});
+
+		COMPONENT('c', function() {
+			this.setter = function() {
+				console.log('---> c', this.path);
+			};
+		});
+
+	</script>
+
+</body>
+</html>

@@ -478,13 +478,14 @@ COMPONENT('my-component-name', function() {
     // `<select data-component-bind`.
 
 
-    instnace.nested(selector, type or fn, [value]);
-    instnace.nested('*', 'path', 'common.success'); // Example: Sets into the all nested components new path
-    instnace.nested('component-name,#component-id,component-path', 'path', 'common.success'); // Example: Sets into the all nested components new path
-    instnace.nested(['component-name', '#component-id', 'component-path'], 'path', 'common.success'); // Example: Sets into the all nested components new path
-    instnace.nested('*', function(element, component)); // Passes each component
+    instance.nested(selector, type or fn, [value]);
+    instance.nested('*', 'path', 'common.success'); // Example: Sets into the all nested components new path
+    instance.nested('component-name,#component-id,component-path', 'path', 'common.success'); // Example: Sets into the all nested components new path
+    instance.nested(['component-name', '#component-id', 'component-path'], 'path', 'common.success'); // Example: Sets into the all nested components new path
+    instance.nested('*', function(element, component)); // Passes each component
     // Sets the value by [type] to nested components. Type can be [path, id, url, template, class, etc.]
-    // selector can string divided via comma.
+    // selector can string divided via comma. IMPORTANT: if the type is "path" then this method
+    // replaces "?" in all "data-component-path" paths for a new value.
 
     instance.watch([path], function(path, value));
     instance.watch(function(path, value) { // example

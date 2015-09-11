@@ -44,7 +44,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v3.0.0-2';
+COM.version = 'v3.0.0-3';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -1223,6 +1223,11 @@ COM.nested = function(element, selector, type, value) {
 	}
 
 	var self = this;
+	var replacer = function(current, value) {
+		if (current.indexOf('?') !== -1)
+			return current.replace('?', value);
+		return value;
+	};
 
 	if (!selector) {
 		element.find('[data-component]').each(function() {
@@ -1234,10 +1239,9 @@ COM.nested = function(element, selector, type, value) {
 				return;
 			}
 
-			el.attr(type, value);
-
+			el.attr(type, type === COM_ATTR_P ? replacer(el.attr(type), value) : value);
 			if (com && type === COM_ATTR_P)
-				com.setPath(value);
+				com.setPath(com.path, replacer(value));
 
 		});
 		return self;
@@ -1267,9 +1271,9 @@ COM.nested = function(element, selector, type, value) {
 				return;
 			}
 
-			el.attr(type, value);
+			el.attr(type, type === COM_ATTR_P ? replacer(el.attr(type), value) : value);
 			if (com && type === COM_ATTR_P)
-				com.setPath(value);
+				com.setPath(com.path, replacer(value));
 		}
 	});
 
@@ -2524,6 +2528,10 @@ CMAN.prototype.get = function(path) {
 	if (self.temp[cachekey])
 		return self.temp[cachekey](window);
 
+	// @TODO: Exception?
+	if (path.indexOf('?') !== -1)
+		return;
+
 	var arr = path.split('.');
 	var builder = [];
 	var p = '';
@@ -2558,6 +2566,12 @@ CMAN.prototype.set = function(path, value) {
 	if (self.temp[cachekey])
 		return self.cache[cachekey](window, value);
 
+	// @TODO: Exception?
+	if (path.indexOf('?') !== -1) {
+		path = '';
+		return self;
+	}
+
 	var arr = path.split('.');
 	var builder = [];
 	var p = '';
@@ -2565,8 +2579,9 @@ CMAN.prototype.set = function(path, value) {
 	for (var i = 0, length = arr.length; i < length; i++) {
 		p += (p !== '' ? '.' : '') + arr[i];
 		var type = self.isArray(arr[i]) ? '[]' : '{}';
+
 		if (i !== length - 1) {
-			builder.push('if(typeof(w.' + p + ')!=="object")w.' + p + '=' + type);
+			builder.push('if(typeof(w.' + p + ')!=="object"||w.' + p + '===null)w.' + p + '=' + type);
 			continue;
 		}
 
