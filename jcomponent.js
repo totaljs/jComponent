@@ -1224,7 +1224,7 @@ COM.nested = function(element, selector, type, value) {
 
 	var self = this;
 	var replacer = function(current, value) {
-		if (current.indexOf('?') !== -1)
+		if (current && current.indexOf('?') !== -1)
 			return current.replace('?', value);
 		return value;
 	};
@@ -1241,7 +1241,7 @@ COM.nested = function(element, selector, type, value) {
 
 			el.attr(type, type === COM_ATTR_P ? replacer(el.attr(type), value) : value);
 			if (com && type === COM_ATTR_P)
-				com.setPath(com.path, replacer(value));
+				com.setPath(replacer(com.path, value));
 
 		});
 		return self;
@@ -1273,7 +1273,7 @@ COM.nested = function(element, selector, type, value) {
 
 			el.attr(type, type === COM_ATTR_P ? replacer(el.attr(type), value) : value);
 			if (com && type === COM_ATTR_P)
-				com.setPath(com.path, replacer(value));
+				com.setPath(replacer(com.path, value));
 		}
 	});
 
