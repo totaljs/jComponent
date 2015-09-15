@@ -44,7 +44,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v3.0.0-3';
+COM.version = 'v3.0.0-4';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -1145,7 +1145,7 @@ COM.notify = function() {
 		if (!is)
 			return;
 
-		component.setter(component.get(), component.path);
+		component.setter(component.get(), component.path, 1);
 	});
 
 	Object.keys(MAN.events).forEach(function(key) {
@@ -1886,10 +1886,11 @@ function COMP(name) {
 		value = this.parser(value);
 		if (type === 2)
 			this.$skip = true;
-		if (value === this.get()) {
-			if (type !== 2 || older !== null)
-				return this;
-		}
+
+		// @TODO: this can make a problem
+		// if ((type !== 2 || older !== null) && value === this.get())
+		//	return this;
+
 		this.set(this.path, value, type);
 		return this;
 	};
@@ -2396,7 +2397,7 @@ CMAN.prototype.prepare = function(obj) {
 
 	if (obj.setter) {
 		if (!obj.$ready) {
-			obj.setter(value, obj.path);
+			obj.setter(value, obj.path, 0);
 			obj.$ready = true;
 		}
 	}
@@ -2956,7 +2957,7 @@ function $components_keypress(self, old, e) {
 	self.$cleanupmemory = setTimeout(function() {
 		delete self.$value2;
 		delete self.$value;
-	}, 300); // 5 minutes
+	}, 60000 * 5); // 5 minutes
 }
 
 function $components_save() {
