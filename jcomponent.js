@@ -44,7 +44,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v3.0.0-4';
+COM.version = 'v3.0.0-5';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -1089,6 +1089,11 @@ COM.update = function(path, reset) {
 					component.$valid = component.validate(result);
 			}
 
+			component.element.find(COM_DATA_BIND_SELECTOR).each(function() {
+				delete this.$value;
+				delete this.$value2;
+			});
+
 		} else if (component.validate && !component.$valid_disabled)
 			component.valid(component.validate(result), true);
 
@@ -1353,6 +1358,12 @@ COM.set = function(path, value, type) {
 				if (component.validate)
 					component.$valid = component.validate(result);
 			}
+
+			component.element.find(COM_DATA_BIND_SELECTOR).each(function() {
+				delete this.$value;
+				delete this.$value2;
+			});
+
 		} else if (component.validate && !component.$valid_disabled)
 			component.valid(component.validate(result), true);
 
@@ -1571,6 +1582,11 @@ COM.reset = function(path, timeout, onlyComponent) {
 
 		if (onlyComponent && onlyComponent._id !== obj._id)
 			return;
+
+		obj.element.find(COM_DATA_BIND_SELECTOR).each(function() {
+			delete this.$value;
+			delete this.$value2;
+		});
 
 		if (!obj.$dirty_disabled)
 			obj.$dirty = true;
@@ -1883,13 +1899,16 @@ function COMP(name) {
 	this.validate;
 
 	this.getter = function(value, type, older) {
+
 		value = this.parser(value);
+
 		if (type === 2)
 			this.$skip = true;
 
-		// @TODO: this can make a problem
-		// if ((type !== 2 || older !== null) && value === this.get())
-		//	return this;
+		if ((type !== 2 || older !== null) && value === this.get()) {
+		 	COM.validate(this.path);
+			return this;
+		}
 
 		this.set(this.path, value, type);
 		return this;
