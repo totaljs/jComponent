@@ -44,7 +44,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v3.0.0-5';
+COM.version = 'v3.0.0-6';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -914,7 +914,7 @@ COM.change = function(path, value) {
 	return !COM.dirty(path, !value);
 };
 
-COM.valid = function(path, value) {
+COM.valid = function(path, value, onlyComponent) {
 
 	var isExcept = value instanceof Array;
 	var key = 'valid' + path + (isExcept ? '>' + value.join('|') : '');
@@ -2302,6 +2302,9 @@ function component(type, declaration) {
 }
 
 function COMPONENT(type, declaration) {
+
+	if (MAN.register[type])
+		return;
 
 	var fn = function(el) {
 		var obj = new COMP(type);
