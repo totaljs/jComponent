@@ -769,7 +769,7 @@ COM.on = function(name, path, fn, init) {
 
 	if (!init)
 		return COM;
-	fn.call(COM, path, MAN.get(path));
+	fn.call(COM, path, MAN.get(path), true);
 	return COM;
 };
 
@@ -849,8 +849,9 @@ COM.$emit = function(name, path) {
 
 	var arr = path.split('.');
 	var args = [];
+	var length = name === 'watch' ? 3 : arguments.length;
 
-	for (var i = name === 'watch' ? 1 : 2, length = arguments.length; i < length; i++)
+	for (var i = name === 'watch' ? 1 : 2; i < length; i++)
 		args.push(arguments[i]);
 
 	COM.$emit2(name, '*', args);
@@ -2047,11 +2048,12 @@ COMP.prototype.watch = function(path, fn, init) {
 	}
 
 	self.on('watch', path, fn);
+
 	if (!init)
 		return self;
 
 	setTimeout(function() {
-		fn.call(self, path, self.get(), true);
+		fn.call(self, path, self.get(path), true);
 	}, 5);
 
 	return self;

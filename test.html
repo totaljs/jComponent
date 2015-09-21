@@ -13,16 +13,12 @@
     <script src="jcomponent.js"></script>
 </head>
 <body>
-
-	<div data-component="a">
-		<div data-component="b" data-component-path="?.articles">
-			<div data-component="c" data-component-path="?.gallery"></div>
-		</div>
-	</div>
-
+	<div data-component="c" data-component-path="obj.name"></div>
 
 	<script>
+		console.log('1');
 		SET('obj.name', 'peter');
+		console.log('2');
 
 		COMPONENT('a', function() {
 
@@ -44,6 +40,11 @@
 		COMPONENT('c', function() {
 			this.setter = function() {
 				console.log('---> c', this.path);
+			};
+			this.done = function() {
+				this.watch('obj.name', function(name, value) {
+					console.log(name, value);
+				}, true);
 			};
 		});
 
