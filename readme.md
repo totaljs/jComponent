@@ -495,7 +495,7 @@ COMPONENT('my-component-name', function() {
     instance.watch(function(path, value) { // example
         // watch for changes
     });
-    instance.watch('some.other.path', function(path, value) { // example
+    instance.watch('some.other.path', function(path, value, isInit) { // example
         // watch for changes
     });
     // This delegate watches all changes according the model.
@@ -522,14 +522,14 @@ COMPONENT('my-component-name', function() {
 
     // WATCHING
     // Watchs all changes
-    instance.on('watch', '*', function(path, value) {
+    instance.on('watch', '*', function(path, value, isInit) {
 
     });
 
     // Watchs all changes
-    instance.on('watch', 'model.user.name', function(path, value) {
+    instance.on('watch', 'model.user.name', function(path, value, isInit) {
 
-    });
+    }, true); // true === evaluates now, isInit will be true
 
     // OTHER
     // Custom events

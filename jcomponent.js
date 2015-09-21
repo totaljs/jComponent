@@ -736,7 +736,7 @@ COM.watch = function(path, fn, init) {
 		return COM;
 
 	setTimeout(function() {
-		fn.call(COM, path, MAN.get(path));
+		fn.call(COM, path, MAN.get(path), true);
 	}, 5);
 
 	return COM;
@@ -2051,7 +2051,7 @@ COMP.prototype.watch = function(path, fn, init) {
 		return self;
 
 	setTimeout(function() {
-		fn.call(self, path, self.get());
+		fn.call(self, path, self.get(), true);
 	}, 5);
 
 	return self;
@@ -3053,7 +3053,7 @@ function NOTIFY() {
 function NOTMODIFIED(path, value, fields) {
 
 	if (value === undefined)
-		value = COM.GET(path);
+		value = COM.get(path);
 
 	if (value === undefined)
 		value = null;
