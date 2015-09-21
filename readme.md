@@ -374,6 +374,10 @@ COMPONENT('my-component-name', function() {
     // Sets the value into the model.
 
 
+    instance.update();
+    // Updates current value.
+
+
     instance.inc(value);
     instance.inc(1); // example
     // Increments the value in the model.

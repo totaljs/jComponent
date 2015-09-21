@@ -44,7 +44,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v3.0.0-6';
+COM.version = 'v3.0.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -1037,12 +1037,12 @@ COM.dirty = function(path, value, onlyComponent, skipEmitState) {
 // 1 === by developer
 // 2 === by input
 COM.update = function(path, reset) {
+
 	var is = path.charCodeAt(0) === 33;
 	if (is)
 		path = path.substring(1);
 
 	path = path.replace('.*', '.');
-
 	if (!path)
 		return COM;
 
@@ -1288,7 +1288,6 @@ COM.nested = function(element, selector, type, value) {
 // 1 === by developer
 // 2 === by input
 COM.set = function(path, value, type) {
-
 	var is = path.charCodeAt(0) === 33;
 	if (is)
 		path = path.substring(1);
@@ -1952,6 +1951,11 @@ function COMP(name) {
 		});
 	};
 }
+
+COMP.prototype.update = function() {
+	this.set(this.get());
+	return this;
+};
 
 COMP.prototype.nested = function(selector, type, value) {
 	COM.nested(this.element, selector, type, value);
@@ -2623,7 +2627,6 @@ CMAN.prototype.set = function(path, value) {
 };
 
 COM.inc = function(path, value, type) {
-
 	var current = COM.get(path);
 	if (!current) {
 		current = 0;
