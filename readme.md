@@ -1,7 +1,7 @@
 [![MIT License][license-image]][license-url]
 # jQuery component library
 
-- Current version: `v2.2.1` (stable)
+- Current version: `v3.0.0` (beta)
 - `>= jQuery +1.7`
 - `>= IE9`
 - similar functionality like directives in Angular.js
@@ -128,6 +128,14 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     library automatically downloads the content and sends it to the component (into
     the `make` delegate).
 -->
+
+<element data-component-dependencies="" />
+<!--
+    Can contain multiple [path] or [component-id] or [component-name] divider with comma ",".
+    This feature is only for broadcasting. Look to: BROADCAST() or component.broadcast();
+    E.g. data-component-dependencies="#component-id, .some.path, component-name"
+-->
+
 ```
 
 ## Special HTML attributes
@@ -225,6 +233,14 @@ COMPONENT('my-component-name', function() {
 
     instance.element;
     // The HTML element of this component.
+
+    instance.dependencies;
+    // String Array. Can contain multiple [path] or [component-id] or [component-name].
+    // Only for broadcasting.
+
+    instance.caller;
+    // This property contains the brodcast caller (e.g. other component)
+    // Works only with broadcasting.
 });
 ```
 
@@ -358,6 +374,10 @@ COMPONENT('my-component-name', function() {
     // Sets the value into the model.
 
 
+    instance.update();
+    // Updates current value.
+
+
     instance.inc(value);
     instance.inc(1); // example
     // Increments the value in the model.
@@ -428,6 +448,14 @@ COMPONENT('my-component-name', function() {
     // Emits event for all components.
 
 
+    instance.broadcast('say')('hello');
+    instance.broadcast('set')('new value for all dependencies');
+    instance.broadcast(method_name);
+    // This method executes [method_name] in all dependencies and
+    // returns function for additional arguments. You can get a caller object
+    // in the called components via `component.caller`.
+
+
     instance.evaluate([path], expression);
     console.log(instance.evaluate('value.age > 18')); // example
     console.log(instance.evaluate('some.path', 'value === "Peter"')); // example
@@ -454,11 +482,20 @@ COMPONENT('my-component-name', function() {
     // `<select data-component-bind`.
 
 
+    instance.nested(selector, type or fn, [value]);
+    instance.nested('*', 'path', 'common.success'); // Example: Sets into the all nested components new path
+    instance.nested('component-name,#component-id,component-path', 'path', 'common.success'); // Example: Sets into the all nested components new path
+    instance.nested(['component-name', '#component-id', 'component-path'], 'path', 'common.success'); // Example: Sets into the all nested components new path
+    instance.nested('*', function(element, component)); // Passes each component
+    // Sets the value by [type] to nested components. Type can be [path, id, url, template, class, etc.]
+    // selector can string divided via comma. IMPORTANT: if the type is "path" then this method
+    // replaces "?" in all "data-component-path" paths for a new value.
+
     instance.watch([path], function(path, value));
     instance.watch(function(path, value) { // example
         // watch for changes
     });
-    instance.watch('some.other.path', function(path, value) { // example
+    instance.watch('some.other.path', function(path, value, isInit) { // example
         // watch for changes
     });
     // This delegate watches all changes according the model.
@@ -485,14 +522,14 @@ COMPONENT('my-component-name', function() {
 
     // WATCHING
     // Watchs all changes
-    instance.on('watch', '*', function(path, value) {
+    instance.on('watch', '*', function(path, value, isInit) {
 
     });
 
     // Watchs all changes
-    instance.on('watch', 'model.user.name', function(path, value) {
+    instance.on('watch', 'model.user.name', function(path, value, isInit) {
 
-    });
+    }, true); // true === evaluates now, isInit will be true
 
     // OTHER
     // Custom events
@@ -657,6 +694,15 @@ $.components.valid('model.isValid', false); // Example: Setter.
 // Supports wildcard path, e.g. `model.*`.
 
 
+$.components.nested(element, selector, type or fn, [value]);
+$.components.nested(element, '*', 'path', 'common.success'); // Example: Sets into the all nested components new path
+$.components.nested(element, 'component-name,#component-id,component-path', 'path', 'common.success'); // Example: Sets into the all nested components new path
+$.components.nested(element, ['component-name', '#component-id', 'component-path'], 'path', 'common.success'); // Example: Sets into the all nested components new path
+$.components.nested(element, '*', function(element, component)); // Passes each component
+// Sets the value by [type] to nested components. Type can be [path, id, url, template, class, etc.]
+// selector can string divided via comma.
+
+
 $.components.can(path, [except_paths_arr]);
 // Combines the dirty and valid method together (e.g. for enabling of buttons)
 // Returns {Boolean}.
@@ -770,6 +816,13 @@ $.components.POSTCACHE(url, data, [callback or path], [expire], [sleep], [clear]
 
 $.components.REMOVECACHE(method, url, data);
 // Deletes cache (GETCACHE, POSTCACHE).
+
+
+$.components.broadcast('.some-path, #some-component-id, some-component-name')('say')('hello');
+$.components.broadcast('.some-path, #some-component-id, some-component-name')('set')('new value');
+$.components.broadcast(['.path', '#id', 'name'], 'set')('new value');
+$.components.broadcast(selector, method_name, [caller]);
+// Executes the method in all components by selector.
 
 
 $.components.schema(name, [declaration]);
