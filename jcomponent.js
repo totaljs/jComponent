@@ -735,10 +735,7 @@ COM.watch = function(path, fn, init) {
 	if (!init)
 		return COM;
 
-	setTimeout(function() {
-		fn.call(COM, path, MAN.get(path), true);
-	}, 5);
-
+	fn.call(COM, path, MAN.get(path), true);
 	return COM;
 };
 
@@ -2052,10 +2049,7 @@ COMP.prototype.watch = function(path, fn, init) {
 	if (!init)
 		return self;
 
-	setTimeout(function() {
-		fn.call(self, path, self.get(path), true);
-	}, 5);
-
+	fn.call(self, path, self.get(path), true);
 	return self;
 };
 
@@ -2425,8 +2419,8 @@ CMAN.prototype.prepare = function(obj) {
 
 	if (obj.setter) {
 		if (!obj.$ready) {
-			obj.setter(value, obj.path, 0);
 			obj.$ready = true;
+			obj.setter(value, obj.path, 0);
 		}
 	}
 
@@ -2457,7 +2451,7 @@ CMAN.prototype.prepare = function(obj) {
 			if (typeof(fn) === 'function')
 				fn.call(obj, obj);
 			delete obj.$init;
-		}, 2);
+		}, 5);
 	}
 
 	el.trigger('component');
