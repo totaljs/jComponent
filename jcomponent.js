@@ -44,7 +44,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v3.0.0';
+COM.version = 'v3.0.1';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -1878,6 +1878,7 @@ function COMP(name) {
 	this.$skip = false;
 	this.$ready = false;
 	this.$path;
+	this.trim = true;
 
 	this.name = name;
 	this.path;
@@ -1906,6 +1907,9 @@ function COMP(name) {
 		 	COM.validate(this.path);
 			return this;
 		}
+
+		if (this.trim && typeof(value) === 'string')
+			value = value.trim();
 
 		this.set(this.path, value, type);
 		return this;
