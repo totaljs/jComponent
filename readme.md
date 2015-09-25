@@ -1,7 +1,7 @@
 [![MIT License][license-image]][license-url]
 # jQuery component library
 
-- Current version: `v3.0.0`
+- Current version: `v3.0.1`
 - `>= jQuery +1.7`
 - `>= IE9`
 - similar functionality like directives in Angular.js
@@ -241,6 +241,10 @@ COMPONENT('my-component-name', function() {
     instance.caller;
     // This property contains the brodcast caller (e.g. other component)
     // Works only with broadcasting.
+
+    instance.trim;
+    // This property affects trimming of string values and works only with [data-component-bind]
+    // and default `.instance.setter`. Default value: true.
 });
 ```
 
@@ -463,7 +467,7 @@ COMPONENT('my-component-name', function() {
 
 
     instance.formatter(fn);
-    instance.formatter(function(value) { // example
+    instance.formatter(function(path, value, type) { // example
         return value.format('dd.MM.yyyy');
     });
     // Appends a new formatter. The formatter formats the model value for the render.
@@ -472,7 +476,7 @@ COMPONENT('my-component-name', function() {
 
 
     instance.parser(fn);
-    instance.parser(function(value) { // example
+    instance.parser(function(path, value, type) { // example
         var dt = value.split('.');
         return new Date(parseInt(dt[2]), parseInt(dt[1] - 1), parserInt(dt[0]));
     });
