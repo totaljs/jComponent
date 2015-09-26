@@ -11,7 +11,7 @@ var COM_ATTR_I = 'data-component-init';
 var COM_ATTR_R = 'data-component-removed';
 var COM_ATTR_C = 'data-component-class';
 var COM_ATTR_S = 'data-component-scope';
-var REG_EMAIL = /^[a-zA-Z0-9-_.+]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$/;
+var REG_EMAIL = /^[a-z0-9-_.+]+@[a-z0-9.-]+\.[a-z]{2,6}$/i;
 var REG_FORMAT = /\{\d+\}/g;
 
 $.fn.component = function() {
