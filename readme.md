@@ -1,7 +1,7 @@
 [![MIT License][license-image]][license-url]
 # jQuery component library
 
-- Current version: `v3.0.1`
+- Current version: `v3.1.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - similar functionality like directives in Angular.js
@@ -1045,6 +1045,48 @@ __Component__ `/templates/grid.html`:
 ```
 
 ## Tools
+
+### Helpers
+
+```javascript
+// String.prototype.padLeft(max, char);
+// String.prototype.padRight(max, char);
+// String.prototype.isEmail()
+// String.prototype.parseNumber([default]) --> default 0
+// String.prototype.parseFloat([default]) --> default 0
+
+
+// String.prototype.format(format, arg1, arg2, arg3, ...);
+var string = 'My name is {0} and I am {1} years old.'.format('Peter', 31);
+
+
+// Date.prototype.format(format);
+var date = new Date().format('dd.MM.yyyy HH:mm');
+
+
+// Number.prototype.format(decimals, [thousand_delimiter], [decimal_delimiter])
+var number = 1000000;
+var format = number.format(2);
+// 1 000 000.00
+format = number.format(2, '.', ',');
+// 1.000.000,00
+format = number.format(0);
+// 1 000 000
+
+// Array.prototype.trim();
+var a = ['', 'A', 'B', '', 'C'].trim();
+// ['A', 'B', 'C'];
+
+
+// Array.prototype.findIndex(fn);
+// Array.prototype.findIndex(name, value);
+var b = [{ name: 'Peter' }, { name: 'Jana' }];
+var index1 = b.findIndex('name', 'Jana');
+var index2 = b.findIndex(function(obj) {
+    if (obj.name === 'Jana')
+        return true;
+});
+```
 
 ### Async
 

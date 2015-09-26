@@ -10,6 +10,8 @@ var COM_ATTR_T = 'data-component-template';
 var COM_ATTR_I = 'data-component-init';
 var COM_ATTR_R = 'data-component-removed';
 var COM_ATTR_C = 'data-component-class';
+var REG_EMAIL = /^[a-zA-Z0-9-_.+]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$/;
+var REG_FORMAT = /\{\d+\}/g;
 
 $.fn.component = function() {
 	return this.data(COM_ATTR);
@@ -44,7 +46,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v3.0.1';
+COM.version = 'v3.1.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -3247,4 +3249,140 @@ Array.prototype.async = function(context, callback) {
 	};
 
 	c();
+};
+
+String.prototype.isEmail = function() {
+	var str = this;
+	if (str.length <= 4)
+		return false;
+	return REG_EMAIL.test(str);
+};
+
+String.prototype.parseInt = function(def) {
+	var str = this.trim();
+	var num = +str;
+	if (isNaN(num))
+		return def || 0;
+	return num;
+};
+
+String.prototype.parseFloat = function(def) {
+	var str = this.trim();
+	if (str.indexOf(',') !== -1)
+		str = str.replace(',', '.');
+	var num = +str;
+	if (isNaN(num))
+		return def || 0;
+	return num;
+};
+
+Array.prototype.trim = function() {
+	var self = this;
+	var output = [];
+	for (var i = 0, length = self.length; i < length; i++) {
+		if (typeof(self[i]) === STRING)
+			self[i] = self[i].trim();
+		if (self[i])
+			output.push(self[i]);
+	}
+	return output;
+};
+
+Array.prototype.findIndex = function(cb, value) {
+
+	var self = this;
+	var isFN = typeof(cb) === 'function';
+	var isV = value !== undefined;
+
+	for (var i = 0, length = self.length; i < length; i++) {
+		if (isFN) {
+			if (cb.call(self, self[i], i))
+				return i;
+			continue;
+		}
+		if (isV) {
+			if (self[i][cb] === value)
+				return i;
+			continue;
+		}
+		if (self[i] === cb)
+			return i;
+	}
+	return -1;
+};
+
+Date.prototype.format || (Date.prototype.format = function(t) {
+    var e = this, r = !1;
+    if (t && 33 === t.charCodeAt(0) && (r = !0, t = t.substring(1)), void 0 === t || null === t || '' === t) return e.getFullYear() + '-' + (e.getMonth() + 1).toString().padLeft(2, '0') + '-' + e.getDate().toString().padLeft(2, '0') + 'T' + e.getHours().toString().padLeft(2, '0') + ':' + e.getMinutes().toString().padLeft(2, '0') + ':' + e.getSeconds().toString().padLeft(2, '0') + ':' + e.getMilliseconds().toString();
+    var n = e.getHours();
+    return r && n >= 12 && (n -= 12), t.replace(/yyyy|yy|MM|M|dd|d|HH|H|hh|h|mm|m|ss|s|a/g, function(t) {
+        switch (t) {
+            case 'yyyy':
+                return e.getFullYear();
+            case 'yy':
+                return e.getYear();
+            case 'MM':
+                return (e.getMonth() + 1).toString().padLeft(2, '0');
+            case 'M':
+                return e.getMonth() + 1;
+            case 'dd':
+                return e.getDate().toString().padLeft(2, '0');
+            case 'd':
+                return e.getDate();
+            case 'HH':
+            case 'hh':
+                return n.toString().padLeft(2, '0');
+            case 'H':
+            case 'h':
+                return e.getHours();
+            case 'mm':
+                return e.getMinutes().toString().padLeft(2, '0');
+            case 'm':
+                return e.getMinutes();
+            case 'ss':
+                return e.getSeconds().toString().padLeft(2, '0');
+            case 's':
+                return e.getSeconds();
+            case 'a':
+                var r = 'AM';
+                return e.getHours() >= 12 && (r = 'PM'), r
+        }
+    });
+});
+
+Number.prototype.format || (Number.prototype.format = function(t, e, r) {
+    var n = this,
+        a = n.toString(),
+        o = "",
+        g = "",
+        i = 45 === a.charCodeAt(0) ? '-' : '';
+    i && (a = a.substring(1));
+    var s = a.indexOf('.');
+    if (typeof t === 'string') {
+        var u = e;
+        e = t, t = u
+    }
+    void 0 === e && (e = ' '), -1 !== s && (o = a.substring(s + 1), a = a.substring(0, s)), s = -1;
+    for (var p = a.length - 1; p >= 0; p--) s++, s > 0 && s % 3 === 0 && (g = e + g), g = a.substring(p, p + 1) + g;
+    return (t || o.length) && (o = o.length > t ? o.substring(0, t) : o.padRight(t, '0')), o.length && void 0 === r && (r = '.' === e ? ',' : '.'), i + g + (o.length ? r + o : '');
+});
+
+String.prototype.padLeft || (String.prototype.padLeft = function(t, e) {
+    var r = this.toString();
+    return Array(Math.max(0, t - r.length + 1)).join(e || '0') + r;
+});
+
+String.prototype.padRight || (String.prototype.padRight = function(t, e) {
+    var r = this.toString();
+    return r + Array(Math.max(0, t - r.length + 1)).join(e || '0')
+});
+
+String.prototype.format = function() {
+	var arg = arguments;
+	return this.replace(REG_FORMAT, function(text) {
+		var value = arg[+text.substring(1, text.length - 1)];
+		if (value === null || value === undefined)
+			value = '';
+		return value;
+	});
 };
