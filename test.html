@@ -13,15 +13,25 @@
     <script src="jcomponent.js"></script>
 </head>
 <body>
-	<div data-component="c" data-component-path="obj.name"></div>
+
+	<div data-component-scope="orders" data-component-init="OK">
+		<div data-component="c" data-component-path="obj.name" data-component-init="NO"></div>
+	</div>
+	<div data-component-scope="users">
+		<div data-component="c" data-component-path="obj.users"></div>
+	</div>
 
 	<script>
-		console.log('1');
-		SET('obj.name', 'peter');
-		console.log('2');
+
+		function OK() {
+			console.log('READY');
+		}
+
+		function NO() {
+			console.log('READY COMPONENT');
+		}
 
 		COMPONENT('a', function() {
-
 			this.make = function() {
 				this.nested('*', 'path', this.path);
 			};
@@ -38,13 +48,18 @@
 		});
 
 		COMPONENT('c', function() {
-			this.setter = function() {
-				console.log('---> c', this.path);
+
+			var self = this;
+
+			this.make = function() {
+				setTimeout(function() {
+					self.element.append('<div data-component="a" data-component-path="obj.age"></div>');
+					COMPILE();
+				}, 2000);
 			};
-			this.done = function() {
-				this.watch('obj.name', function(name, value) {
-					console.log(name, value);
-				}, true);
+
+			this.setter = function(value) {
+				console.log('---> c', this.path);
 			};
 		});
 

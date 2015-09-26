@@ -10,6 +10,7 @@ var COM_ATTR_T = 'data-component-template';
 var COM_ATTR_I = 'data-component-init';
 var COM_ATTR_R = 'data-component-removed';
 var COM_ATTR_C = 'data-component-class';
+var COM_ATTR_S = 'data-component-scope';
 var REG_EMAIL = /^[a-zA-Z0-9-_.+]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$/;
 var REG_FORMAT = /\{\d+\}/g;
 
@@ -84,6 +85,9 @@ COM.compile = function(container) {
 		return;
 	}
 
+	var scopes = $('[' + COM_ATTR_S + ']');
+	var scopes_length = scopes.length;
+
 	els.each(function() {
 
 		if (skip)
@@ -106,7 +110,17 @@ COM.compile = function(container) {
 		obj.id = el.attr('data-component-id') || obj._id;
 		obj.dependencies = new Array(0);
 
-		var dep = (el.attr('data-component-dependencies') || '').split(',');
+		if (scopes_length && obj.path && obj.path.charCodeAt(0) !== 33) {
+			for (var i = 0; i < scopes_length; i++) {
+				if (!$.contains(scopes[i], this))
+					continue;
+				var p = scopes[i].getAttribute(COM_ATTR_P) || scopes[i].getAttribute(COM_ATTR_S);
+				obj.setPath(p + '.' + obj.path);
+				obj.scope = scopes[i];
+			}
+		}
+
+		var dep = (el.attr(COM_ATTR_D) || '').split(',');
 
 		for (var i = 0, length = dep.length; i < length; i++) {
 			var d = dep[i].trim();
@@ -246,13 +260,16 @@ COM.$inject = function() {
 	});
 };
 
-COM.inject = function(url, target, callback) {
+COM.inject = COM.import = function(url, target, callback) {
 
 	if (typeof(target) === 'function') {
 		timeout = callback;
 		callback = target;
 		target = 'body';
 	}
+
+	if (target.getPath)
+		target = target.element;
 
 	if (!target)
 		target = 'body';
@@ -728,6 +745,36 @@ function $components_ready() {
 			arr[i](count);
 
 		delete MAN.ready;
+
+		$('[' + COM_ATTR_S + ']').each(function() {
+			var scope = $(this);
+
+			// Applies classes
+			var cls = scope.attr(COM_ATTR_C);
+			if (cls) {
+				cls = cls.split(' ');
+				for (var i = 0, length = cls.length; i < length; i++)
+					scope.toggleClass(cls[i]);
+			}
+
+			var path = this.getAttribute(COM_ATTR_I);
+			if (!path)
+				return;
+
+			if (MAN.isOperation(path)) {
+				var op = OPERATION(path);
+				if (op)
+					op.call(scope, scope);
+				else if (console)
+					console.warn('Operation ' + path + ' not found.');
+			} else {
+				var fn = GET(path);
+				if (typeof(fn) === 'function')
+					fn.call(scope, scope);
+			}
+
+		});
+
 	}, 300);
 }
 
@@ -1971,6 +2018,8 @@ COMP.prototype.readonly = function() {
 	this.noValid();
 	this.getter = null;
 	this.setter = null;
+	this.$parser = null;
+	this.$formatter = null;
 	return this;
 };
 
@@ -3149,7 +3198,11 @@ function CHANGE(path, value) {
 }
 
 function INJECT(url, target, callback, timeout) {
-	return COM.inject(url, target, callback, timeout);
+	return COM.import(url, target, callback, timeout);
+}
+
+function IMPORT(url, target, callback, timeout) {
+	return COM.import(url, target, callback, timeout);
 }
 
 function SCHEMA(name, declaration, callback) {
@@ -3200,6 +3253,10 @@ function $components_hash(s) {
 		hash |= 0; // Convert to 32bit integer
 	}
 	return hash;
+}
+
+function COMPILE() {
+	$.components();
 }
 
 function CONTROLLER() {

@@ -136,6 +136,21 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     E.g. data-component-dependencies="#component-id, .some.path, component-name"
 -->
 
+<element data-component-scope="" />
+<!--
+    Scope attribute updates in all nested components `data-component-path` about the scope value.
+    With the scope works `data-component-init` and `data-component-class`.
+    
+    ::: E.g.:
+    <element data-component-scope="users">
+        <element data-component="textbox" data-component="form.name" />
+    </element>
+
+    ::: Result:
+    <element data-component-scope="users">
+        <element data-component="textbox" data-component="users.form.name" />
+    </element>
+-->
 ```
 
 ## Special HTML attributes
@@ -677,9 +692,9 @@ $.components.remove(jquery_element);
 // Removes all components according the binding path.
 
 
-$.components.inject(url, [target], [callback])
-// Injects some HTML content (with components) into the `target` (by default: `document.body`)
-// or injects scripts (.js) and styles (.css) into the `<head>`.
+$.components.import(url, [target], [callback])
+// Imports some HTML content (with components) into the `target` (by default: `document.body`)
+// or can import scripts (.js) or styles (.css).
 
 
 $.components.dirty(path, [value]);
@@ -883,11 +898,14 @@ $.components.on('destroy', function(name, component) {
 ## Shortcuts methods
 
 ```js
+COMPILE();
+// Alias for $.components()
+
 GET();
 // Alias for $.components.get();
 
-INJECT();
-// Alias for $.components.inject();
+IMPORT();
+// Alias for $.components.import();
 
 RESET();
 // Alias for $.components.reset();
