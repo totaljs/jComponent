@@ -138,17 +138,28 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
 <element data-component-scope="" />
 <!--
-    Scope attribute updates in all nested components `data-component-path` about the scope value.
+    A scope attribute updates the `data-component-path` in all nested components.
     With the scope works `data-component-init` and `data-component-class`.
-    
+    If the scope value `data-component-scope` is `?` then the `data-component-path`
+    is generated automatically.
+
     ::: E.g.:
     <element data-component-scope="users">
         <element data-component="textbox" data-component="form.name" />
     </element>
 
-    ::: Result:
+    <element data-component-scope="?">
+        <element data-component="textbox" data-component="form.name" />
+    </element>
+
+
+    ::: Result for imagination:
     <element data-component-scope="users">
         <element data-component="textbox" data-component="users.form.name" />
+    </element>
+
+    <element data-component-scope="scope343983">
+        <element data-component="textbox" data-component="scope343983.form.name" />
     </element>
 -->
 ```

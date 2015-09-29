@@ -47,7 +47,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v3.1.0';
+COM.version = 'v3.1.1';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -114,7 +114,13 @@ COM.compile = function(container) {
 			for (var i = 0; i < scopes_length; i++) {
 				if (!$.contains(scopes[i], this))
 					continue;
-				var p = scopes[i].getAttribute(COM_ATTR_P) || scopes[i].getAttribute(COM_ATTR_S);
+
+				var p = scopes[i].getAttribute(COM_ATTR_S);
+				if (!p || p === '?') {
+					p = 'scope' + (Math.floor(Math.random() * 100000) + 1000);
+					scopes[i].setAttribute(COM_ATTR_S, p);
+				}
+
 				obj.setPath(p + '.' + obj.path);
 				obj.scope = scopes[i];
 			}
