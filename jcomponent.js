@@ -110,11 +110,13 @@ COM.compile = function(container) {
 		obj.id = el.attr('data-component-id') || obj._id;
 		obj.dependencies = new Array(0);
 
-		if (scopes_length && obj.path && obj.path.charCodeAt(0) !== 33) {
+		if (!obj.$noscope)
+			obj.$noscope = el.attr('data-component-noscope') === 'true';
+
+		if (!obj.$noscope && scopes_length && obj.path && obj.path.charCodeAt(0) !== 33) {
 			for (var i = 0; i < scopes_length; i++) {
 				if (!$.contains(scopes[i], this))
 					continue;
-
 				var p = scopes[i].getAttribute(COM_ATTR_S);
 				if (!p || p === '?') {
 					p = 'scope' + (Math.floor(Math.random() * 100000) + 1000);
@@ -2016,6 +2018,11 @@ COMP.prototype.update = function() {
 
 COMP.prototype.nested = function(selector, type, value) {
 	COM.nested(this.element, selector, type, value);
+	return this;
+};
+
+COMP.prototype.noscope = function(value) {
+	this.$noscope = value === undefined ? true : value === true;
 	return this;
 };
 

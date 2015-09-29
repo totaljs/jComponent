@@ -152,6 +152,11 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
         <element data-component="textbox" data-component="form.name" />
     </element>
 
+    <element data-component-scope="?">
+        <!-- disables scope manually -->
+        <element data-component="textbox" data-component="form.name" data-component-noscope="true" />
+    </element>
+
 
     ::: Result for imagination:
     <element data-component-scope="users">
@@ -160,6 +165,10 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
     <element data-component-scope="scope343983">
         <element data-component="textbox" data-component="scope343983.form.name" />
+    </element>
+
+    <element data-component-scope="scope584948">
+        <element data-component="textbox" data-component="form.name" data-component-noscope="true" />
     </element>
 -->
 ```
@@ -472,6 +481,10 @@ COMPONENT('my-component-name', function() {
 
     instance.invalid();
     // The component will be invalid.
+
+
+    instance.noscope();
+    // Disables scoping paths `data-component-scope`.
 
 
     instance.emit(event_name, [arg1], [arg2])
