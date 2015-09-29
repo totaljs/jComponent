@@ -153,7 +153,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     </element>
 
     <element data-component-scope="?">
-        <!-- disables scope manually -->
+        disables scope manually
         <element data-component="textbox" data-component="form.name" data-component-noscope="true" />
     </element>
 
