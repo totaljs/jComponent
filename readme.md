@@ -1074,6 +1074,11 @@ $('#my-component').component();
 $(document).on('components', function(count) {
     // New components are ready.
 });
+
+// Gets all components in an element
+$(document).components(function(component, index) {
+    console.log(component);
+});
 ```
 
 ## Special cases

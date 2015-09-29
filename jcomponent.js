@@ -19,6 +19,12 @@ $.fn.component = function() {
 	return this.data(COM_ATTR);
 };
 
+$.fn.components = function(fn) {
+	this.find(COM_ATTR).each(function(index) {
+		fn($(this).data(COM_ATTR), index);
+	});
+};
+
 // Because of file size
 window.COM = $.components = function(container) {
 	if (MAN.isCompiling)
