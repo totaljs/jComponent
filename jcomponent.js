@@ -20,9 +20,11 @@ $.fn.component = function() {
 };
 
 $.fn.components = function(fn) {
-	this.find(COM_ATTR).each(function(index) {
+	var all = this.find(COM_ATTR);
+	all.each(function(index) {
 		fn($(this).data(COM_ATTR), index);
 	});
+	return all;
 };
 
 // Because of file size
