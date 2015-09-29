@@ -24,7 +24,7 @@ $.fn.components = function(fn) {
 	all.each(function(index) {
 		var com = $(this).data(COM_ATTR);
 		if (com && com.$ready && !com.$removed)
-			fn(com, index);
+			fn.call(com, index);
 	});
 	return all;
 };
