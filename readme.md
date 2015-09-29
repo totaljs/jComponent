@@ -171,6 +171,25 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
         <element data-component="textbox" data-component="form.name" data-component-noscope="true" />
     </element>
 -->
+
+<element data-component-value="" />
+<!--
+    This is an initial value for the component or scope. Value is evaluated as JavaScript.
+
+    ::: E.g.
+    <element data-component-scope="?" data-component-value="{ name: 'jComponent', tags: ['node.js', 'jComponent', 'total.js'] }">
+    ...
+    </element>
+
+    <element data-component="some-component-string" data-component-value="'String value'">
+    ...
+    </element>
+
+    <element data-component="some-component-number" data-component-value="10">
+    ...
+    </element>
+
+-->
 ```
 
 ## Special HTML attributes

@@ -15,11 +15,11 @@
 <body>
 
 	<div data-component-scope="orders" data-component-init="OK">
-		<div data-component="c" data-component-path="obj.name" data-component-init="NO"></div>
+		<div data-component="c" data-component-path="name" data-component-init="NO"></div>
 	</div>
-	<div data-component-scope="?">
-		<div data-component="c" data-component-path="obj.users"></div>
-		<div data-component="c" data-component-path="obj.users" data-component-noscope="true"></div>
+	<div data-component-scope="?" data-component-value="{ users: ['Peter'] }">
+		<div data-component="c" data-component-path="users"></div>
+		<div data-component="c" data-component-path="users" data-component-noscope="true"></div>
 	</div>
 
 	<script>
@@ -60,7 +60,7 @@
 			};
 
 			this.setter = function(value) {
-				console.log('---> c', this.path);
+				console.log('---> c', this.path, value);
 			};
 		});
 

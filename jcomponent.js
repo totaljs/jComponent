@@ -8,6 +8,7 @@ var COM_ATTR_D = 'data-component-dependencies';
 var COM_ATTR_P = 'data-component-path';
 var COM_ATTR_T = 'data-component-template';
 var COM_ATTR_I = 'data-component-init';
+var COM_ATTR_V = 'data-component-value';
 var COM_ATTR_R = 'data-component-removed';
 var COM_ATTR_C = 'data-component-class';
 var COM_ATTR_S = 'data-component-scope';
@@ -47,7 +48,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v3.1.1';
+COM.version = 'v3.2.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -115,12 +116,22 @@ COM.compile = function(container) {
 
 		if (!obj.$noscope && scopes_length && obj.path && obj.path.charCodeAt(0) !== 33) {
 			for (var i = 0; i < scopes_length; i++) {
+
 				if (!$.contains(scopes[i], this))
 					continue;
+
 				var p = scopes[i].getAttribute(COM_ATTR_S);
+
 				if (!p || p === '?') {
 					p = 'scope' + (Math.floor(Math.random() * 100000) + 1000);
 					scopes[i].setAttribute(COM_ATTR_S, p);
+				}
+
+				if (!scopes[i].$processed) {
+					scopes[i].$processed = true;
+					var tmp = scopes[i].getAttribute(COM_ATTR_V);
+					if (tmp)
+						MAN.set(p, new Function('return ' + tmp)());
 				}
 
 				obj.setPath(p + '.' + obj.path);
@@ -2488,6 +2499,13 @@ CMAN.prototype.prepare = function(obj) {
 	if (obj.setter) {
 		if (!obj.$ready) {
 			obj.$ready = true;
+
+			if (value === undefined) {
+				var tmp = obj.attr(COM_ATTR_V);
+				if (tmp)
+					value = new Function('return ' + tmp)();
+			}
+
 			obj.setter(value, obj.path, 0);
 		}
 	}
