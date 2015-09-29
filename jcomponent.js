@@ -22,7 +22,9 @@ $.fn.component = function() {
 $.fn.components = function(fn) {
 	var all = this.find(COM_ATTR);
 	all.each(function(index) {
-		fn($(this).data(COM_ATTR), index);
+		var com = $(this).data(COM_ATTR);
+		if (com && com.$ready && !com.$removed)
+			fn(com, index);
 	});
 	return all;
 };
