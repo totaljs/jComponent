@@ -707,7 +707,7 @@ COM.removeCache = function(key, isSearching) {
 
 COM.REMOVECACHE = function(method, url, data) {
 	data = JSON.stringify(data);
-	var key = $components_hash(method + '#' + url.replace(/\//g, '') + data).toString();
+	var key = HASH(method + '#' + url.replace(/\//g, '') + data).toString();
 	delete MAN.storage[key];
 	$components_save();
 	return COM;
@@ -2451,7 +2451,7 @@ CMAN.prototype.cacherest = function(method, url, params, value, expire) {
 		params.language = COM.$language;
 
 	params = JSON.stringify(params);
-	var key = $components_hash(method + '#' + url.replace(/\//g, '') + params).toString();
+	var key = HASH(method + '#' + url.replace(/\//g, '') + params).toString();
 	return this.cachestorage(key, value, expire);
 };
 
@@ -3153,7 +3153,7 @@ function NOTMODIFIED(path, value, fields) {
 	if (fields)
 		path = path.concat('#', fields);
 
-	var hash = $components_hash(JSON.stringify(value, fields));
+	var hash = HASH(JSON.stringify(value, fields));
 	if (MAN.cache[path] === hash)
 		return true;
 	MAN.cache[path] = hash;
@@ -3281,9 +3281,11 @@ function BLOCKED(name, timeout, callback) {
 	return COM.blocked(name, timeout, callback);
 }
 
-function $components_hash(s) {
+function HASH(s) {
 	if (!s)
 		return 0;
+	if (typeof(s) !== 'string')
+		s = JSON.stringify(s);
 	var hash = 0, i, char;
 	if (s.length === 0)
 		return hash;

@@ -984,6 +984,9 @@ ON();
 WATCH();
 // Alias for $.components.on('watch', ...);
 
+HASH(value)
+// Creates a hash from the value.
+
 CHANGE();
 // Alias for $.components.change();
 
