@@ -2440,6 +2440,7 @@ function CMAN() {
 	this.timeoutStyles;
 	this.styles = [];
 	this.operations = {};
+	this.controllers = {};
 }
 
 CMAN.prototype.cacherest = function(method, url, params, value, expire) {
@@ -3304,6 +3305,10 @@ function COMPILE() {
 
 function CONTROLLER() {
 	var callback = arguments[arguments.length - 1];
+
+	if (typeof(callback) !== 'function')
+		return MAN.controllers[arguments[0]];
+
 	var obj = {};
 	obj.name = arguments[0];
 	var replacer = function(path) {
@@ -3314,7 +3319,11 @@ function CONTROLLER() {
 			return obj[text.substring(1, text.length - 1)];
 		});
 	};
-	callback.call(obj, replacer, obj);
+	MAN.controllers[obj.name] = obj;
+	return function(arg) {
+		callback.call(obj, replacer, arg);
+		return obj;
+	};
 }
 
 Array.prototype.async = function(context, callback) {

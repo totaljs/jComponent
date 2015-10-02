@@ -1054,9 +1054,12 @@ console.log(GET('#now')());
 Controllers don't know any special features. Their implementation is very simple:
 
 ```javascript
-CONTROLLER('users', function(patcher) {
+// CONTROLLER returns initialization function.
+var controller = CONTROLLER('users', function(patcher, arg) {
+
     // "this" === controller
     // "patcher" argument can replace only paths
+    // "arg" additional init argument
 
     console.log(patcher('{name}.datasource'));
     // Output: users.datasource
@@ -1065,8 +1068,20 @@ CONTROLLER('users', function(patcher) {
 
     console.log(patcher('{name}.datasource and {name}.{page}'));
     // Output: users.datasource and users.1
+    
+    this.getName = function() {
+        return 'jComponent';
+    };
 });
+
+// Init controller
+// Executes its declaration
+controller('ADDITIONAL ARGUMENT');
+
+// Get controller object
+console.log(CONTROLLER('users').getName());
 ```
+
 
 ## jQuery
 
