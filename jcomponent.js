@@ -765,18 +765,13 @@ function $components_ready() {
 		}, 1000);
 
 		MAN.isCompiling = false;
-
-		if (!MAN.ready)
-			return;
-
-		var arr = MAN.ready;
-		for (var i = 0, length = arr.length; i < length; i++)
-			arr[i](count);
-
-		delete MAN.ready;
-
 		$('[' + COM_ATTR_S + ']').each(function() {
+
+			if (this.$ready)
+				return;
+
 			var scope = $(this);
+			this.$ready = true;
 
 			// Applies classes
 			var cls = scope.attr(COM_ATTR_C);
@@ -784,6 +779,13 @@ function $components_ready() {
 				cls = cls.split(' ');
 				for (var i = 0, length = cls.length; i < length; i++)
 					scope.toggleClass(cls[i]);
+			}
+
+			var controller = this.getAttribute('data-component-controller');
+			if (controller) {
+				var ctrl = CONTROLLER(controller);
+				if (ctrl)
+					ctrl.$init(undefined, this.getAttribute(COM_ATTR_S));
 			}
 
 			var path = this.getAttribute(COM_ATTR_I);
@@ -801,9 +803,16 @@ function $components_ready() {
 				if (typeof(fn) === 'function')
 					fn.call(scope, scope);
 			}
-
 		});
 
+		if (!MAN.ready)
+			return;
+
+		var arr = MAN.ready;
+		for (var i = 0, length = arr.length; i < length; i++)
+			arr[i](count);
+
+		delete MAN.ready;
 	}, 300);
 }
 
@@ -3269,6 +3278,12 @@ function EVALUATE(path, expression) {
 	return COM.evaluate(path, expression);
 }
 
+function MAKE(callback) {
+	var obj = {};
+	callback.call(obj, obj);
+	return obj;
+}
+
 function STYLE(value) {
 	clearTimeout(MAN.timeoutStyles);
 	MAN.styles.push(value);
@@ -3310,17 +3325,29 @@ function CONTROLLER() {
 		return MAN.controllers[arguments[0]];
 
 	var obj = {};
-	obj.name = arguments[0];
+	obj.name = obj.path = arguments[0];
 	var replacer = function(path) {
+
 		var arg = arguments;
-		return path.replace(/\{\d+\}/g, function(text) {
+		var is = false;
+
+		path = path.replace(/\{\d+\}/g, function(text) {
+			is = true;
 			return arg[parseInt(text.substring(1, text.length - 1)) + 1];
 		}).replace(/\{\w+\}/g, function(text) {
+			is = true;
 			return obj[text.substring(1, text.length - 1)];
 		});
+
+		if (is)
+			return path;
+		return obj.path + '.' + path;
 	};
 	MAN.controllers[obj.name] = obj;
-	return function(arg) {
+	return obj.$init = function(arg, path) {
+		delete obj.$init;
+		if (path)
+			obj.path = path;
 		callback.call(obj, replacer, arg);
 		return obj;
 	};

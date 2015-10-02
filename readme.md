@@ -1082,6 +1082,35 @@ controller('ADDITIONAL ARGUMENT');
 console.log(CONTROLLER('users').getName());
 ```
 
+### Additional usage
+
+```html
+<div data-component-scope="users" data-component-controller="users-controller">
+    ... SOME CONTENT ...
+</div>
+
+<script>
+
+    CONTROLLER('users-controller', function(patcher, arg) {
+        
+        // this.path --> scope attribute value
+        // this.name --> controller name
+
+        console.log(patcher('grid'));
+        // OUTPUT: users.grid
+
+        console.log(patcher('{name}.grid'));
+        // OUTPUT: users-controller.grid
+
+        console.log(patcher('{path}.grid'));
+        // OUTPUT: users.grid
+
+        console.log('SCOPE EXECUTES THIS CONTROLLER');
+    });
+
+</script>
+```
+
 
 ## jQuery
 
