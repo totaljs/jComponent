@@ -639,24 +639,26 @@ COM.GETCACHE = function(url, data, callback, expire, timeout, clear) {
 		timeout = tmp;
 	}
 
-	var value = clear ? undefined : MAN.cacherest('GET', url, data);
-	if (value !== undefined) {
-		if (typeof(callback) === 'string')
-			MAN.remap(callback, value);
-		else
-			callback(value);
-		return COM;
-	}
+	setTimeout(function() {
+		var value = clear ? undefined : MAN.cacherest('GET', url, data);
+		if (value !== undefined) {
+			if (typeof(callback) === 'string')
+				MAN.remap(callback, value);
+			else
+				callback(value);
+			return COM;
+		}
 
-	COM.GET(url, data, function(r, err) {
-		if (r === undefined)
-			r = err;
-		MAN.cacherest('GET', url, data, r, expire);
-		if (typeof(callback) === 'string')
-			MAN.remap(callback, r);
-		else
-			callback(r);
-	}, timeout);
+		COM.GET(url, data, function(r, err) {
+			if (r === undefined)
+				r = err;
+			MAN.cacherest('GET', url, data, r, expire);
+			if (typeof(callback) === 'string')
+				MAN.remap(callback, r);
+			else
+				callback(r);
+		});
+	}, timeout || 1);
 
 	return COM;
 };
@@ -669,24 +671,26 @@ COM.POSTCACHE = function(url, data, callback, expire, timeout, clear) {
 		timeout = tmp;
 	}
 
-	var value = clear ? undefined : MAN.cacherest('POST', url, data);
-	if (value !== undefined) {
-		if (typeof(callback) === 'string')
-			MAN.remap(callback, value);
-		else
-			callback(value);
-		return COM;
-	}
+	setTimeout(function() {
+		var value = clear ? undefined : MAN.cacherest('POST', url, data);
+		if (value !== undefined) {
+			if (typeof(callback) === 'string')
+				MAN.remap(callback, value);
+			else
+				callback(value);
+			return COM;
+		}
 
-	COM.POST(url, data, function(r, err) {
-		if (r === undefined)
-			r = err;
-		MAN.cacherest('POST', url, data, r, expire);
-		if (typeof(callback) === 'string')
-			MAN.remap(callback, r);
-		else
-			callback(r);
-	}, timeout);
+		COM.POST(url, data, function(r, err) {
+			if (r === undefined)
+				r = err;
+			MAN.cacherest('POST', url, data, r, expire);
+			if (typeof(callback) === 'string')
+				MAN.remap(callback, r);
+			else
+				callback(r);
+		});
+	}, timeout || 1);
 
 	return COM;
 };
