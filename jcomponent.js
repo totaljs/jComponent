@@ -788,7 +788,7 @@ function $components_ready() {
 			if (controller) {
 				var ctrl = CONTROLLER(controller);
 				if (ctrl)
-					ctrl.$init(undefined, this.getAttribute(COM_ATTR_S));
+					ctrl.$init(undefined, this.getAttribute(COM_ATTR_S), scope);
 			}
 
 			var path = this.getAttribute(COM_ATTR_I);
@@ -3347,10 +3347,11 @@ function CONTROLLER() {
 		return obj.path + '.' + path;
 	};
 	MAN.controllers[obj.name] = obj;
-	return obj.$init = function(arg, path) {
+	return obj.$init = function(arg, path, element) {
 		delete obj.$init;
 		if (path)
 			obj.path = path;
+		obj.element = element;
 		callback.call(obj, replacer, arg);
 		return obj;
 	};

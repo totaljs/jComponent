@@ -1095,8 +1095,9 @@ console.log(CONTROLLER('users').getName());
 
     CONTROLLER('users-controller', function(patcher, arg) {
         
-        // this.path --> scope attribute value
-        // this.name --> controller name
+        // this.path    --> scope attribute value
+        // this.element --> scope element (jQuery object)
+        // this.name    --> controller name
 
         console.log(patcher('grid'));
         // OUTPUT: users.grid
