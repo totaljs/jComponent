@@ -289,7 +289,10 @@ COM.$inject = function() {
 	});
 };
 
-COM.inject = COM.import = function(url, target, callback) {
+COM.inject = COM.import = function(url, target, callback, insert) {
+
+	if (insert === undefined)
+		insert = true;
 
 	if (typeof(target) === 'function') {
 		timeout = callback;
@@ -331,9 +334,9 @@ COM.inject = COM.import = function(url, target, callback) {
 		return;
 	}
 
-	if (target === 'body') {
+	if (insert) {
 		var random = Math.floor(Math.random() * 100000);
-		var id = 'data-component-injector="' + random +'"';
+		var id = 'data-component-import="' + random +'"';
 		$(target).append('<div ' + id + '></div>');
 		target = $(target).find('> div[' + id + ']');
 	}

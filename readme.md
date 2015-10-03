@@ -735,9 +735,11 @@ $.components.remove(jquery_element);
 // Removes all components according the binding path.
 
 
-$.components.import(url, [target], [callback])
+$.components.import(url, [target], [callback], [insert])
 // Imports some HTML content (with components) into the `target` (by default: `document.body`)
-// or can import scripts (.js) or styles (.css).
+// or can import scripts (.js) or styles (.css). `insert` arguments (default: true) wraps
+// new content into the <div data-component-import="RANDOM_NUMBER" element otherwise replaces
+// content of target element. 
 
 
 $.components.dirty(path, [value]);
