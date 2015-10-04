@@ -144,7 +144,11 @@ COM.compile = function(container) {
 						MAN.set(p, new Function('return ' + tmp)());
 				}
 
-				obj.setPath(p + '.' + obj.path);
+				if (obj.path === '?')
+					obj.setPath(p);
+				else
+					obj.setPath(p + '.' + obj.path);
+
 				obj.scope = scopes[i];
 			}
 		}
@@ -1146,7 +1150,17 @@ COM.update = function(path, reset) {
 	if (COM.debug)
 		console.log('%c$.components.update(' + (is ? '!' : '') + path + ')', 'color:red');
 
-	var A = path.split('.');
+	// Array prevention
+	var index = path.lastIndexOf('[');
+	var search = path;
+	var isArray = false;
+
+	if (index !== -1) {
+		isArray = true;
+		search = search.substring(0, index);
+	}
+
+	var A = search.split('.');
 	var AL = A.length;
 
 	COM.each(function(component) {
@@ -1163,7 +1177,6 @@ COM.update = function(path, reset) {
 			return;
 
 		var result = component.get();
-
 		if (component.setter)
 			component.setter(result, path, 1);
 
