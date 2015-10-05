@@ -124,7 +124,8 @@ COM.compile = function(container) {
 		if (!obj.$noscope)
 			obj.$noscope = el.attr('data-component-noscope') === 'true';
 
-		if (!obj.$noscope && scopes_length && obj.path && obj.path.charCodeAt(0) !== 33) {
+		var code = obj.path ? obj.path.charCodeAt(0) : 0;
+		if (!obj.$noscope && scopes_length && obj.path && code !== 33 && code !== 35) {
 			for (var i = 0; i < scopes_length; i++) {
 
 				if (!$.contains(scopes[i], this))
