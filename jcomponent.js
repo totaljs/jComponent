@@ -112,7 +112,7 @@ COM.compile = function(container) {
 
 		var component = MAN.register[name || ''];
 		if (!component) {
-			console.warn('Component "' + name + '" does not exist.');
+			console.warn('Component ' + name + ' does not exist.');
 			return;
 		}
 
@@ -2945,9 +2945,11 @@ setInterval(function() {
 	MAN.cleaner();
 }, (1000 * 60) * 5);
 
-COM.compile();
-$(document).ready(function() {
+setTimeout(function() {
+	COM.compile();
+}, 1);
 
+$(document).ready(function() {
 	if (COM.defaults.localstorage) {
 		var cache = localStorage.getItem(COM.$localstorage + '.cache');
 		if (cache && typeof(cache) === 'string') {
