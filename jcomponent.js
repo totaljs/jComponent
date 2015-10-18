@@ -111,8 +111,10 @@ COM.compile = function(container) {
 			return;
 
 		var component = MAN.register[name || ''];
-		if (!component)
+		if (!component) {
+			console.warn('Component "' + name + '" does not exist.');
 			return;
+		}
 
 		var obj = component(el);
 
