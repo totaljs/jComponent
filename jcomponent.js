@@ -58,7 +58,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v3.2.0';
+COM.version = 'v3.2.1';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -2006,9 +2006,10 @@ function COMP(name) {
 
 	this.validate;
 
-	this.getter = function(value, type, older) {
+	this.getter = function(value, type, older, parsed) {
 
-		value = this.parser(value);
+		if (!parsed)
+			value = this.parser(value);
 
 		if (type === 2)
 			this.$skip = true;
@@ -3094,7 +3095,8 @@ function $components_keypress(self, old, e) {
 		// because validation
 		setTimeout(function() {
 			self.$value2 = self.value;
-			self.$component.getter(self.value, 2, old);
+			self.$component.getter(self.$value_parsed, 2, old, true);
+			delete self.$value_parsed;
 		}, 5);
 	}
 
@@ -3103,7 +3105,8 @@ function $components_keypress(self, old, e) {
 
 	self.$skip = true;
 	self.$component.$skip = false;
-	self.$component.setter(self.value, self.$component.path, 2);
+	self.$value_parsed = self.$component.parser(self.value);
+	self.$component.setter(self.$value_parsed, self.$component.path, 2);
 	self.$value = self.value;
 	clearTimeout(self.$cleanupmemory);
 	self.$cleanupmemory = setTimeout(function() {
