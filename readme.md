@@ -1,7 +1,7 @@
 [![MIT License][license-image]][license-url]
 # jQuery component library
 
-- Current version: `v3.1.0`
+- Current version: `v3.3.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - similar functionality like directives in Angular.js
@@ -280,6 +280,10 @@ COMPONENT('my-component-name', function() {
 COMPONENT('my-component-name', function() {
     var instance = this;
 
+    instance.global;
+    // Returns {Object}. The global object is the shared object for all instances
+    // of this component.
+
     instance.name;
     // This property contains the component name, e.g. my-component-name.
     // If you use multiple // same components then this value will be same like other.
@@ -324,6 +328,10 @@ COMPONENT('my-component-name', function() {
 COMPONENT('my-component-name', function() {
 
     var instance = this;
+    
+    instance.init = function() {
+        // Is executed onetime for all same components.
+    };
 
     instance.prerender = function(template) {
         // A prerender delegate is executed when the `data-component-template` attribute

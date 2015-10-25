@@ -59,7 +59,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v3.2.2';
+COM.version = 'v3.3.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -120,20 +120,30 @@ COM.compile = function(container) {
 				return;
 			}
 
-			if (MAN.imports[x])
+			if (MAN.imports[x] === 1)
 				return;
 
-			MAN.imports[x] = true;
+			if (MAN.imports[x] === 2) {
+				console.warn('Component ' + name + ' does not exist.');
+				return;
+			}
 
+			MAN.imports[x] = 1;
 			IMPORT(x, function() {
-				delete MAN.imports[x];
-				COM.compile();
+				MAN.imports[x] = 2;
 			});
-
 			return;
 		}
 
 		var obj = component(el);
+
+		if (obj.init) {
+			if (!MAN.initalizers[name]) {
+				MAN.initalizers[name] = true;
+				obj.init();
+			}
+			delete obj.init;
+		}
 
 		obj.$init = el.attr(COM_ATTR_I) || null;
 		obj.type = el.attr('data-component-type') || '';
@@ -324,7 +334,7 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 		target = 'body';
 	}
 
-	if (target.getPath)
+	if (target && target.getPath)
 		target = target.element;
 
 	if (!target)
@@ -2442,8 +2452,11 @@ function COMPONENT(type, declaration) {
 	if (MAN.register[type])
 		return;
 
+	var shared = {};
+
 	var fn = function(el) {
 		var obj = new COMP(type);
+		obj.global = shared;
 		obj.element = el;
 		obj.setPath(el.attr(COM_ATTR_P) || obj._id, true);
 		declaration.call(obj);
@@ -2489,6 +2502,7 @@ function CMAN() {
 	this.styles = [];
 	this.operations = {};
 	this.controllers = {};
+	this.initalizers = {};
 }
 
 CMAN.prototype.cacherest = function(method, url, params, value, expire) {
