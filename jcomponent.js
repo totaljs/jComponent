@@ -872,6 +872,7 @@ function component_init(el, obj) {
 
 	var type = el.get(0).tagName;
 	var collection;
+
 	// autobind
 	if (type === 'INPUT' || type === 'SELECT' || type === 'TEXTAREA') {
 		obj.$input = true;
@@ -926,8 +927,7 @@ COM.$emitonly = function(name, paths, type, path) {
 	COM.$emit2(name, '*', [path, unique[path], type]);
 
 	Object.keys(unique).forEach(function(key) {
-		// OLDER: COM.$emit2(name, key, [key, unique[key]]);
-		COM.$emit2(name, key, [path, unique[key]]);
+		COM.$emit2(name, key, [path, unique[key], type]);
 	});
 
 	return this;
@@ -1125,7 +1125,7 @@ COM.dirty = function(path, value, onlyComponent, skipEmitState) {
 
 // 1 === by developer
 // 2 === by input
-COM.update = function(path, reset) {
+COM.update = function(path, reset, type) {
 
 	var is = path.charCodeAt(0) === 33;
 	if (is)
@@ -1150,6 +1150,9 @@ COM.update = function(path, reset) {
 		search = search.substring(0, index);
 	}
 
+	if (type === undefined)
+		type = 1; // developer
+
 	var A = search.split('.');
 	var AL = A.length;
 
@@ -1168,7 +1171,7 @@ COM.update = function(path, reset) {
 
 		var result = component.get();
 		if (component.setter)
-			component.setter(result, path, 1);
+			component.setter(result, path, type);
 
 		component.$ready = true;
 
@@ -1219,7 +1222,7 @@ COM.update = function(path, reset) {
 		updates[key] = COM.get(key);
 	});
 
-	COM.$emitonly('watch', updates, 1, path);
+	COM.$emitonly('watch', updates, type, path);
 	return COM;
 };
 
@@ -1398,10 +1401,10 @@ COM.set = function(path, value, type) {
 	if (reset)
 		type = 1;
 
-	MAN.set(path, value);
+	MAN.set(path, value, type);
 
 	if (isUpdate)
-		return COM.update(path, reset);
+		return COM.update(path, reset, type);
 
 	var result = MAN.get(path);
 	var state = [];
@@ -2036,7 +2039,7 @@ function COMP(name) {
 }
 
 COMP.prototype.update = function() {
-	this.set(this.get());
+	this.set(this.path, this.get(), 1);
 	return this;
 };
 
@@ -2319,8 +2322,8 @@ COMP.prototype.get = function(path) {
 	return MAN.get(path);
 };
 
-COMP.prototype.update = function(path, reset) {
-	COM.update(path || this.path, reset);
+COMP.prototype.update = function(path, reset, type) {
+	COM.update(path || this.path, reset, type);
 };
 
 COMP.prototype.set = function(path, value, type) {
