@@ -41,10 +41,6 @@ COM.evaluate = function(path, expression) {
 	var key = 'eval' + expression;
 	var exp = MAN.cache[key];
 	var val = COM.get(path);
-
-	if (COM.debug)
-		console.log('%c$.components.evaluate(' + path + ')', 'color:gray');
-
 	if (exp !== undefined)
 		return exp.call(val, val, path);
 	if (expression.indexOf('return') === -1)
@@ -58,7 +54,6 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.debug = false;
 COM.version = 'v3.3.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
@@ -432,12 +427,7 @@ COM.UPLOAD = function(url, data, callback, timeout, progress, error) {
 	}
 
 	setTimeout(function() {
-
-		if (COM.debug)
-			console.log('%c$.components.UPLOAD(' + url + ')', 'color:magenta');
-
 		var xhr = new XMLHttpRequest();
-
 		xhr.addEventListener('load', function () {
 
 			var r = this.responseText;
@@ -500,10 +490,6 @@ COM.POST = function(url, data, callback, timeout, error) {
 	}
 
 	setTimeout(function() {
-
-		if (COM.debug)
-			console.log('%c$.components.POST(' + url + ')', 'color:magenta');
-
 		$.ajax($components_url(url), { type: 'POST', data: JSON.stringify(data), success: function(r) {
 			if (typeof(callback) === 'string')
 				return MAN.remap(callback, r);
@@ -539,10 +525,6 @@ COM.PUT = function(url, data, callback, timeout, error) {
 	}
 
 	setTimeout(function() {
-
-		if (COM.debug)
-			console.log('%c$.components.PUT(' + url + ')', 'color:magenta');
-
 		$.ajax($components_url(url), { type: 'PUT', data: JSON.stringify(data), success: function(r) {
 			if (typeof(callback) === 'string')
 				return MAN.remap(callback, r);
@@ -601,10 +583,6 @@ COM.GET = function(url, data, callback, timeout, error) {
 	}
 
 	setTimeout(function() {
-
-		if (COM.debug)
-			console.log('%c$.components.GET(' + url + ')', 'color:magenta');
-
 		if (data)
 			url += '?' + jQuery.param(data);
 
@@ -643,10 +621,6 @@ COM.DELETE = function(url, data, callback, timeout, error) {
 	}
 
 	setTimeout(function() {
-
-		if (COM.debug)
-			console.log('%c$.components.DELETE(' + url + ')', 'color:magenta');
-
 		$.ajax($components_url(url), { type: 'DELETE', data: JSON.stringify(data), success: function(r) {
 			if (typeof(callback) === 'string')
 				return MAN.remap(callback, r);
@@ -863,7 +837,7 @@ COM.watch = function(path, fn, init) {
 	if (!init)
 		return COM;
 
-	fn.call(COM, path, MAN.get(path), true);
+	fn.call(COM, path, MAN.get(path), 0);
 	return COM;
 };
 
@@ -874,10 +848,6 @@ COM.on = function(name, path, fn, init) {
 		path = '';
 	} else
 		path = path.replace('.*', '');
-
-	if (COM.debug)
-		console.log('%c$.components.on(' + name + (path ? ', ' + path : '') + ')', 'color:blue');
-
 	var fixed = null;
 	if (path.charCodeAt(0) === 33) {
 		path = path.substring(1);
@@ -902,10 +872,6 @@ function component_init(el, obj) {
 
 	var type = el.get(0).tagName;
 	var collection;
-
-	if (COM.debug)
-		console.log('%c$.components.init: ' + obj.name + ' (' + (obj.id || obj._id) + ')', 'color:green');
-
 	// autobind
 	if (type === 'INPUT' || type === 'SELECT' || type === 'TEXTAREA') {
 		obj.$input = true;
@@ -957,7 +923,7 @@ COM.$emitonly = function(name, paths, type, path) {
 		}
 	}
 
-	COM.$emit2(name, '*', [path, unique[path]]);
+	COM.$emit2(name, '*', [path, unique[path], type]);
 
 	Object.keys(unique).forEach(function(key) {
 		// OLDER: COM.$emit2(name, key, [key, unique[key]]);
@@ -978,6 +944,9 @@ COM.$emit = function(name, path) {
 
 	for (var i = name === 'watch' ? 1 : 2; i < length; i++)
 		args.push(arguments[i]);
+
+	if (name === 'watch')
+		args.push(arguments[3]);
 
 	COM.$emit2(name, '*', args);
 
@@ -1054,9 +1023,6 @@ COM.valid = function(path, value, onlyComponent) {
 	if (typeof(value) !== 'boolean' && MAN.cache[key] !== undefined)
 		return MAN.cache[key];
 
-	if (COM.debug)
-		console.log('%c$.components.valid(' + path + (value !== undefined ? ', ' + value : '') + ')', 'color:orange');
-
 	var valid = true;
 	var arr = value !== undefined ? [] : null;
 
@@ -1112,9 +1078,6 @@ COM.dirty = function(path, value, onlyComponent, skipEmitState) {
 
 	if (typeof(value) !== 'boolean' && MAN.cache[key] !== undefined)
 		return MAN.cache[key];
-
-	if (COM.debug)
-		console.log('%c$.components.dirty(' + path + (value !== undefined ? ', ' + value : '') + ')', 'color:orange');
 
 	var dirty = true;
 	var arr = value !== undefined ? [] : null;
@@ -1176,9 +1139,6 @@ COM.update = function(path, reset) {
 	var state = [];
 	var was = false;
 	var updates = {};
-
-	if (COM.debug)
-		console.log('%c$.components.update(' + (is ? '!' : '') + path + ')', 'color:red');
 
 	// Array prevention
 	var index = path.lastIndexOf('[');
@@ -1311,8 +1271,6 @@ COM.extend = function(path, value, type) {
 	var val = COM.get(path);
 	if (val === null || val === undefined)
 		val = {};
-	if (COM.debug)
-		console.log('%c$.components.extend(' + path + ')', 'color:silver');
 	COM.set(path, $.extend(val, value), type);
 	return COM;
 };
@@ -1440,9 +1398,6 @@ COM.set = function(path, value, type) {
 	if (reset)
 		type = 1;
 
-	if (COM.debug && !isUpdate)
-		console.log('%c$.components.set(' + path + ')', 'color:red');
-
 	MAN.set(path, value);
 
 	if (isUpdate)
@@ -1515,9 +1470,6 @@ COM.set = function(path, value, type) {
 
 COM.push = function(path, value, type) {
 
-	if (COM.debug)
-		console.log('%c$.components.push(' + path + ')', 'color:silver');
-
 	var arr = COM.get(path);
 	var n = false;
 
@@ -1551,8 +1503,6 @@ COM.clean = function() {
 }
 
 COM.get = function(path) {
-	if (COM.debug)
-		console.log('%c$.components.get(' + path + ')', 'color:gray');
 	return MAN.get(path);
 };
 
@@ -1655,9 +1605,6 @@ COM.blocked = function(name, timeout, callback) {
 	var item = MAN.cacheblocked[key];
 	var now = Date.now();
 
-	if (COM.debug)
-		console.log('%c$.components.blocked(' + name + ')', 'color:silver');
-
 	if (item > now)
 		return true;
 
@@ -1700,9 +1647,6 @@ COM.reset = function(path, timeout, onlyComponent) {
 		}, timeout);
 		return COM;
 	}
-
-	if (COM.debug)
-		console.log('%c$.components.reset(' + path + ')', 'color:orange');
 
 	var arr = [];
 
@@ -2197,7 +2141,7 @@ COMP.prototype.watch = function(path, fn, init) {
 	if (!init)
 		return self;
 
-	fn.call(self, path, self.get(path), true);
+	fn.call(self, path, self.get(path), 0);
 	return self;
 };
 
@@ -2372,8 +2316,6 @@ COMP.prototype.get = function(path) {
 		path = this.path;
 	if (!path)
 		return;
-	if (COM.debug)
-		console.log('%c$.components.get(' + path + ')', 'color:gray');
 	return MAN.get(path);
 };
 
@@ -2521,10 +2463,6 @@ CMAN.prototype.cacherest = function(method, url, params, value, expire) {
 CMAN.prototype.cachestorage = function(key, value, expire) {
 
 	var now = Date.now();
-
-	if (COM.debug)
-		console.log('%c$.components.cache.' + (value === undefined ? 'get' : 'set') + '(' + key + ')', 'color:silver');
-
 	if (value !== undefined) {
 		this.storage[key] = { expire: now + expire, value: value };
 		$components_save();
@@ -2601,8 +2539,6 @@ CMAN.prototype.prepare = function(obj) {
 				var op = OPERATION(obj.$init);
 				if (op)
 					op.call(obj, obj);
-				else if (console)
-					console.warn('Operation ' + obj.$init + ' not found.');
 				delete obj.$init;
 				return;
 			}
@@ -2700,8 +2636,6 @@ CMAN.prototype.get = function(path) {
 		var op = OPERATION(path);
 		if (op)
 			return op;
-		else if (console)
-			console.warn('Operation ' + path.substring(1) + ' not found.');
 		return function(){};
 	}
 

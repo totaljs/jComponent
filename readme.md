@@ -577,12 +577,17 @@ COMPONENT('my-component-name', function() {
     // selector can string divided via comma. IMPORTANT: if the type is "path" then this method
     // replaces "?" in all "data-component-path" paths for a new value.
 
-    instance.watch([path], function(path, value));
-    instance.watch(function(path, value) { // example
+    instance.watch([path], function(path, value, type));
+    instance.watch(function(path, value, type) { // example
+        // type === 0 : init
+        // type === 1 : by developer
+        // type === 2 : by input        
         // watch for changes
     });
-    instance.watch('some.other.path', function(path, value, isInit) { // example
-        // watch for changes
+    instance.watch('some.other.path', function(path, value, type) { // example
+        // type === 0 : init
+        // type === 1 : by developer
+        // type === 2 : by input
     });
     // This delegate watches all changes according the model.
 });
@@ -608,14 +613,19 @@ COMPONENT('my-component-name', function() {
 
     // WATCHING
     // Watchs all changes
-    instance.on('watch', '*', function(path, value, isInit) {
-
+    instance.on('watch', '*', function(path, value, type) {
+        // type === 0 : init
+        // type === 1 : by developer
+        // type === 2 : by input
     });
 
     // Watchs all changes
-    instance.on('watch', 'model.user.name', function(path, value, isInit) {
+    instance.on('watch', 'model.user.name', function(path, value, type) {
+        // type === 0 : init
+        // type === 1 : by developer
+        // type === 2 : by input
 
-    }, true); // true === evaluates now, isInit will be true
+    }, true); // true === evaluates now
 
     // OTHER
     // Custom events
@@ -635,9 +645,6 @@ COMPONENT('my-component-name', function() {
 ```javascript
 $.components.version;
 // {Number} returns the current version of jComponent.
-
-$.components.debug;
-// {Boolean} enables web browser console logging, default `false`.
 
 $.components.defaults.delay;
 // {Number} sets the delay for keypress real-time binding, default `300`.
@@ -943,7 +950,10 @@ $.components.ready(function(count) { console.log('Components ready:', count); })
 ## Events
 
 ```js
-$.components.on('watch', 'path.*', function(path, value) {
+$.components.on('watch', 'path.*', function(path, value, type) {
+    // type === 0 : init
+    // type === 1 : by developer
+    // type === 2 : by input
     // Watchs all changes according the path.
 });
 
