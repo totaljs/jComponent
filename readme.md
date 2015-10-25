@@ -116,6 +116,22 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     `class` according this attribute. It's not required.
 -->
 
+<element data-component-import="" />
+<!--
+    Must contain a valid URL address and the element must contatin data-component="" attribute. This attribute download HTML or JS content and evaluates its. E.g. jComponent downloads
+    the content only one but the content can be used in many components.
+
+    E.g.:
+
+    // First component
+    <div data-component="editor" data-component-import="/editor.html"></div>
+
+    // Second component
+    <p data-component="editor" data-component-import="/editor.html"></p>
+
+    // etc..
+-->
+
 <element data-component-init="" />
 <!--
     It's not required and must contain name of function which is executed when the
@@ -738,7 +754,7 @@ $.components.remove(jquery_element);
 $.components.import(url, [target], [callback], [insert])
 // Imports some HTML content (with components) into the `target` (by default: `document.body`)
 // or can import scripts (.js) or styles (.css). `insert` arguments (default: true) wraps
-// new content into the <div data-component-import="RANDOM_NUMBER" element otherwise replaces
+// new content into the <div data-component-imported="RANDOM_NUMBER" element otherwise replaces
 // content of target element. 
 
 

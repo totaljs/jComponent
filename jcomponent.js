@@ -12,6 +12,7 @@ var COM_ATTR_V = 'data-component-value';
 var COM_ATTR_R = 'data-component-removed';
 var COM_ATTR_C = 'data-component-class';
 var COM_ATTR_S = 'data-component-scope';
+var COM_ATTR_X = 'data-component-import';
 var REG_EMAIL = /^[a-z0-9-_.+]+@[a-z0-9.-]+\.[a-z]{2,6}$/i;
 var REG_FORMAT = /\{\d+\}/g;
 
@@ -112,7 +113,23 @@ COM.compile = function(container) {
 
 		var component = MAN.register[name || ''];
 		if (!component) {
-			console.warn('Component ' + name + ' does not exist.');
+
+			var x = el.attr(COM_ATTR_X);
+			if (!x) {
+				console.warn('Component ' + name + ' does not exist.');
+				return;
+			}
+
+			if (MAN.imports[x])
+				return;
+
+			MAN.imports[x] = true;
+
+			IMPORT(x, function() {
+				delete MAN.imports[x];
+				COM.compile();
+			});
+
 			return;
 		}
 
@@ -343,7 +360,7 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 
 	if (insert) {
 		var random = Math.floor(Math.random() * 100000);
-		var id = 'data-component-import="' + random +'"';
+		var id = 'data-component-imported="' + random +'"';
 		$(target).append('<div ' + id + '></div>');
 		target = $(target).find('> div[' + id + ']');
 	}
@@ -2467,6 +2484,7 @@ function CMAN() {
 	this.events = {};
 	this.timeout;
 	this.pending = [];
+	this.imports = {};
 	this.timeoutStyles;
 	this.styles = [];
 	this.operations = {};
