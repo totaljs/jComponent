@@ -58,7 +58,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.debug = false;
-COM.version = 'v3.2.1';
+COM.version = 'v3.2.2';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -2006,10 +2006,9 @@ function COMP(name) {
 
 	this.validate;
 
-	this.getter = function(value, type, older, parsed) {
+	this.getter = function(value, type, older) {
 
-		if (!parsed)
-			value = this.parser(value);
+		value = this.parser(value);
 
 		if (type === 2)
 			this.$skip = true;
@@ -2317,7 +2316,6 @@ COMP.prototype.parser = function(value) {
 		this.$parser.push(value);
 		return this;
 	}
-
 	var a = this.$parser;
 	if (a && a.length) {
 		for (var i = 0, length = a.length; i < length; i++)
@@ -2329,7 +2327,6 @@ COMP.prototype.parser = function(value) {
 		for (var i = 0, length = a.length; i < length; i++)
 			value = a[i].call(this, this.path, value, this.type);
 	}
-
 	return value;
 };
 
@@ -2985,7 +2982,7 @@ $(document).ready(function() {
 		if (e.type === 'focusin' || (e.type === 'change' && !special))
 			return;
 
-		if (!self.$component || self.$component.$removed || !self.$component.getter || !self.$component.setter)
+		if (!self.$component || self.$component.$removed || !self.$component.getter)
 			return;
 
 		// Tab
@@ -3089,30 +3086,18 @@ function $components_keypress(self, old, e) {
 
 	clearTimeout(self.$timeout);
 	self.$timeout = null;
-	self.$component.dirty(false, true);
 
 	if (self.value !== self.$value2) {
-		// because validation
-		setTimeout(function() {
-			self.$value2 = self.value;
-			self.$component.getter(self.$value_parsed, 2, old, true);
-			delete self.$value_parsed;
-		}, 5);
+		self.$component.dirty(false, true);
+		self.$component.getter(self.value, 2, old);
+		self.value2 = self.value;
 	}
 
-	if (!self.$only && e.type === 'keydown' && e.keyCode !== 13)
-		return;
-
-	self.$skip = true;
-	self.$component.$skip = false;
-	self.$value_parsed = self.$component.parser(self.value);
-	self.$component.setter(self.$value_parsed, self.$component.path, 2);
-	self.$value = self.value;
 	clearTimeout(self.$cleanupmemory);
 	self.$cleanupmemory = setTimeout(function() {
 		delete self.$value2;
 		delete self.$value;
-	}, 60000 * 5); // 5 minutes
+	}, 60000 * 5);
 }
 
 function $components_save() {
@@ -3550,4 +3535,93 @@ String.prototype.format = function() {
 			value = '';
 		return value;
 	});
+};
+
+String.prototype.parseDate = function() {
+	var self = this.trim();
+
+	if (!self)
+		return null;
+
+	var arr = self.indexOf(' ') === -1 ? self.split('T') : self.split(' ');
+	var index = arr[0].indexOf(':');
+	var length = arr[0].length;
+
+	if (index !== -1) {
+		var tmp = arr[1];
+		arr[1] = arr[0];
+		arr[0] = tmp;
+	}
+
+	if (arr[0] === undefined)
+		arr[0] = '';
+
+	var noTime = arr[1] === undefined ? true : arr[1].length === 0;
+
+	for (var i = 0; i < length; i++) {
+		var c = arr[0].charCodeAt(i);
+		if (c > 47 && c < 58)
+			continue;
+		if (c === 45 || c === 46)
+			continue;
+		if (noTime)
+			return new Date(self);
+	}
+
+	if (arr[1] === undefined)
+		arr[1] = '00:00:00';
+
+	var firstDay = arr[0].indexOf('-') === -1;
+
+	var date = (arr[0] || '').split(firstDay ? '.' : '-');
+	var time = (arr[1] || '').split(':');
+	var parsed = [];
+
+	if (date.length < 4 && time.length < 2)
+		return new Date(self);
+
+	index = (time[2] || '').indexOf('.');
+
+	// milliseconds
+	if (index !== -1) {
+		time[3] = time[2].substring(index + 1);
+		time[2] = time[2].substring(0, index);
+	} else
+		time[3] = '0';
+
+	parsed.push(+date[firstDay ? 2 : 0]); // year
+	parsed.push(+date[1]); // month
+	parsed.push(+date[firstDay ? 0 : 2]); // day
+	parsed.push(+time[0]); // hours
+	parsed.push(+time[1]); // minutes
+	parsed.push(+time[2]); // seconds
+	parsed.push(+time[3]); // miliseconds
+
+	var def = new Date();
+
+	for (var i = 0, length = parsed.length; i < length; i++) {
+		if (isNaN(parsed[i]))
+			parsed[i] = 0;
+
+		var value = parsed[i];
+		if (value !== 0)
+			continue;
+
+		switch (i) {
+			case 0:
+				if (value <= 0)
+					parsed[i] = def.getFullYear();
+				break;
+			case 1:
+				if (value <= 0)
+					parsed[i] = def.getMonth() + 1;
+				break;
+			case 2:
+				if (value <= 0)
+					parsed[i] = def.getDate();
+				break;
+		}
+	}
+
+	return new Date(parsed[0], parsed[1] - 1, parsed[2], parsed[3], parsed[4], parsed[5]);
 };

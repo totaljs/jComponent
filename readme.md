@@ -1170,11 +1170,10 @@ __Component__ `/templates/grid.html`:
 // String.prototype.isEmail()
 // String.prototype.parseNumber([default]) --> default 0
 // String.prototype.parseFloat([default]) --> default 0
-
+// String.prototype.parseDate()
 
 // String.prototype.format(format, arg1, arg2, arg3, ...);
 var string = 'My name is {0} and I am {1} years old.'.format('Peter', 31);
-
 
 // Date.prototype.format(format);
 var date = new Date().format('dd.MM.yyyy HH:mm');
