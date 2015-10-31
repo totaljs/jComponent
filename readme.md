@@ -1,7 +1,7 @@
 [![MIT License][license-image]][license-url]
 # jQuery component library
 
-- Current version: `v3.3.0`
+- Current version: `v3.4.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - similar functionality like directives in Angular.js
@@ -1235,6 +1235,40 @@ var index2 = b.findIndex(function(obj) {
     if (obj.name === 'Jana')
         return true;
 });
+```
+
+### Tangular Helpers
+
+__Date formatting__:
+
+```html
+{{ created | format('yyyy-MM-dd') }}   :: {{ FIELD | format(DATE_TIME_FORMAT) }}
+{{ created | format('!yyyy-MM-dd') }}  :: "!" converts date to half day hours format (12 hours per day)
+
+YY/YYYY - year
+M/MM    - month
+d/dd    - day
+
+h/hh    - hours
+m/mm    - minutes
+s/ss    - seconds
+a       - AM/PM
+```
+
+__Number formatting__:
+
+```html
+<!-- price = 1234.567 -->
+{{ price | format(2) }} :: {{ FIELD | format(DECIMALS, [SEPARATOR], SEPARATOR_DECIMALS) }}
+<!-- OUTPUT: 1 234.56 -->
+
+<!-- price = 1234.567 -->
+{{ price | format(2, ',', '.') }}
+<!-- OUTPUT: 1,234.56 -->
+
+<!-- price = 1234.567 -->
+{{ price | format(2, ',') }}
+<!-- OUTPUT: 1 234,56 -->
 ```
 
 ### Async

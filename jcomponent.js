@@ -54,7 +54,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v3.3.0';
+COM.version = 'v3.4.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -2935,7 +2935,7 @@ $(document).ready(function() {
 		}
 	}
 
-	$(document).on('change keypress keydown blur focus', 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]', function(e) {
+	$(document).on('change keypress keydown blur', 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]', function(e) {
 
 		var self = this;
 
@@ -2948,10 +2948,10 @@ $(document).ready(function() {
 
 		var special = self.type === 'checkbox' || self.type === 'radio' || self.tagName === 'SELECT';
 
-		if ((e.type === 'focusin' || e.type === 'focusout') && special)
+		if (e.type === 'focusout' && special)
 			return;
 
-		if (e.type === 'focusin' || (e.type === 'change' && !special))
+		if (e.type === 'change' && !special)
 			return;
 
 		if (!self.$component || self.$component.$removed || !self.$component.getter)
@@ -3060,7 +3060,8 @@ function $components_keypress(self, old, e) {
 	self.$timeout = null;
 
 	if (self.value !== self.$value2) {
-		self.$component.dirty(false, true);
+		if (e.keyCode !== 9)
+			self.$component.dirty(false, true);
 		self.$component.getter(self.value, 2, old);
 		self.value2 = self.value;
 	}
@@ -3511,9 +3512,18 @@ String.prototype.format = function() {
 
 String.prototype.parseDate = function() {
 	var self = this.trim();
-
 	if (!self)
 		return null;
+
+	var lc = self.charCodeAt(self.length - 1);
+
+	// Classic date
+	if (lc === 41)
+		return new Date(self);
+
+	// JSON format
+	if (lc === 90)
+		return new Date(Date.parse(self));
 
 	var arr = self.indexOf(' ') === -1 ? self.split('T') : self.split(' ');
 	var index = arr[0].indexOf(':');
