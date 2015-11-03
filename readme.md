@@ -1,7 +1,7 @@
 [![MIT License][license-image]][license-url]
 # jQuery component library
 
-- Current version: `v3.4.0`
+- Current version: `v3.5.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - similar functionality like directives in Angular.js
@@ -1083,6 +1083,35 @@ console.log(OPERATION('now')());
 
 GET('#get.users')({}, 'db.users');
 console.log(GET('#now')());
+```
+
+## Waiter
+
+Waiter waits for a `checker` argument and if the checker value returns `true` then evaluates  callback function. Time
+
+```javascript
+WAIT(checker, callback, [interval])
+// @checker Function or String
+// @callback(again) Function (again(sleep) --> is a function and sets new watcher for same condition)
+// @interval Number default: 500
+
+WAIT(function() {
+    return window.d3 !== undefined;
+}, function(again) {
+    console.log('OK, D3.js loaded');
+
+    // Re-calls this WAIT again with the sleep time
+    // again(1000);
+});
+
+// is same as
+
+WAIT('d3', function(again) {
+    console.log('OK, D3.js loaded');
+
+    // Re-calls this WAIT again with the sleep time
+    // again(1000);
+});
 ```
 
 ## Controllers

@@ -16,6 +16,12 @@ var COM_ATTR_X = 'data-component-import';
 var REG_EMAIL = /^[a-z0-9-_.+]+@[a-z0-9.-]+\.[a-z]{2,6}$/i;
 var REG_FORMAT = /\{\d+\}/g;
 
+if (typeof(window.setImmediate) === 'undefined') {
+	window.setImmediate = function(cb) {
+		setTimeout(cb, 1);
+	};
+}
+
 $.fn.component = function() {
 	return this.data(COM_ATTR);
 };
@@ -54,7 +60,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v3.4.0';
+COM.version = 'v3.5.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -2451,6 +2457,7 @@ function CMAN() {
 	this.operations = {};
 	this.controllers = {};
 	this.initalizers = {};
+	this.waits = {};
 }
 
 CMAN.prototype.cacherest = function(method, url, params, value, expire) {
@@ -3298,6 +3305,41 @@ function HASH(s) {
 		hash |= 0; // Convert to 32bit integer
 	}
 	return hash;
+}
+
+function WAIT(fn, callback, interval) {
+	var key = ((Math.random() * 10000) >> 0).toString(16);
+
+	if (typeof(callback) === 'number') {
+		var tmp = interval;
+		interval = callback;
+		callback = tmp;
+	}
+
+	var is = typeof(fn) === 'string';
+
+	MAN.waits[key] = setInterval(function() {
+
+		if (is) {
+			var result = MAN.get(fn);
+			if (result === undefined || result === null)
+				return;
+		} else if (!fn())
+			return;
+
+		clearInterval(MAN.waits[key]);
+		delete MAN.waits[key];
+
+		if (!callback)
+			return;
+
+		callback(function(sleep) {
+			setTimeout(function() {
+				WATCH(fn, callback, interval);
+			}, sleep || 1);
+		});
+
+	}, interval || 500);
 }
 
 function COMPILE() {
