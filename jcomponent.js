@@ -347,31 +347,34 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 	else
 		extension = '';
 
+	var d = document;
+	var random = Math.floor(Math.random() * 100000);
+	var attr = attr;
+
 	if (extension === '.js') {
 		var script = d.createElement('script');
 		script.type = 'text/javascript';
 		script.async = true;
-		script.onload = function(){
-			if (callback)
-				callback();
-		};
-		script.src = Url;
-		document.getElementsByTagName('head')[0].appendChild(script);
+		script.setAttribute(attr, id);
+		if (callback)
+			script.onload = callback;
+		script.src = url;
+		d.getElementsByTagName('head')[0].appendChild(script);
 		return;
 	}
 
 	if (extension === '.css') {
-		var style = document.createElement('link');
+		var style = d.createElement('link');
 		style.type = 'text/css';
 		style.rel = 'stylesheet';
-		style.href = 'style.css';
-		document.getElementsByTagName('head')[0].appendChild(style);
+		style.setAttribute(attr, id);
+		style.href = url;
+		d.getElementsByTagName('head')[0].appendChild(style);
 		return;
 	}
 
 	if (insert) {
-		var random = Math.floor(Math.random() * 100000);
-		var id = 'data-component-imported="' + random +'"';
+		var id = attr + '="' + random +'"';
 		$(target).append('<div ' + id + '></div>');
 		target = $(target).find('> div[' + id + ']');
 	}
