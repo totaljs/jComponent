@@ -348,14 +348,10 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 		extension = '';
 
 	var d = document;
-	var random = Math.floor(Math.random() * 100000);
-	var attr = attr;
-
 	if (extension === '.js') {
 		var script = d.createElement('script');
 		script.type = 'text/javascript';
 		script.async = true;
-		script.setAttribute(attr, id);
 		if (callback)
 			script.onload = callback;
 		script.src = url;
@@ -367,14 +363,13 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 		var style = d.createElement('link');
 		style.type = 'text/css';
 		style.rel = 'stylesheet';
-		style.setAttribute(attr, id);
 		style.href = url;
 		d.getElementsByTagName('head')[0].appendChild(style);
 		return;
 	}
 
 	if (insert) {
-		var id = attr + '="' + random +'"';
+		var id = 'data-component-imported="' + ((Math.random() * 100000) >> 0) +'"';
 		$(target).append('<div ' + id + '></div>');
 		target = $(target).find('> div[' + id + ']');
 	}
