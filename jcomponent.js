@@ -60,7 +60,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v3.5.0';
+COM.version = 'v3.5.1';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -1987,7 +1987,7 @@ function COMP(name) {
 
 	this.validate;
 
-	this.getter = function(value, type, older) {
+	this.getter = function(value, type, older, skip) {
 
 		value = this.parser(value);
 
@@ -2001,6 +2001,9 @@ function COMP(name) {
 
 		if (this.trim && typeof(value) === 'string')
 			value = value.trim();
+
+		if (skip)
+			this.$skip = false;
 
 		this.set(this.path, value, type);
 		return this;
@@ -3067,7 +3070,7 @@ function $components_keypress(self, old, e) {
 	if (self.value !== self.$value2) {
 		if (e.keyCode !== 9)
 			self.$component.dirty(false, true);
-		self.$component.getter(self.value, 2, old);
+		self.$component.getter(self.value, 2, old, e.type === 'focusout' || e.keyCode === 13);
 		self.value2 = self.value;
 	}
 
