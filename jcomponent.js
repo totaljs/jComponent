@@ -2325,8 +2325,12 @@ COMP.prototype.emit = function() {
 };
 
 COMP.prototype.evaluate = function(path, expression, nopath) {
-	if (!expression)
+
+	if (!expression) {
+		expression = path;
 		path = this.path;
+	}
+
 	return COM.evaluate(path, expression, nopath);
 };
 
