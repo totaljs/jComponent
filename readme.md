@@ -542,11 +542,14 @@ COMPONENT('my-component-name', function() {
     // in the called components via `component.caller`.
 
 
-    instance.evaluate([path], expression);
+    instance.evaluate([path], expression, [path_is_value]);
     console.log(instance.evaluate('value.age > 18')); // example
     console.log(instance.evaluate('some.path', 'value === "Peter"')); // example
     // Evalutes string expression. Default path is the component path.
 
+    console.log(instance.evaluate('Peter', 'value === "Peter"'), true); // example
+    console.log(instance.evaluate(true, 'value === true'), true); // example
+    
 
     instance.formatter(fn);
     instance.formatter(function(path, value, type) { // example
@@ -928,8 +931,9 @@ $.components.schema('user'); // Example: Getter.
 // Creates or Gets (new object instance) the schema.
 
 
-$.components.evaluate(path, expression);
-$.components.evaluate('model.age', 'value > 20 && value < 20'); // Example.
+$.components.evaluate(path, expression, [path_is_value]);
+$.components.evaluate('model.age', 'value > 20 && value < 30'); // Example
+$.components.evaluate(25, 'value > 20 && value < 30', true); // Example
 // Evaluates the expression. The value in the expression is value according the path.
 
 
@@ -1042,7 +1046,7 @@ FIND('#data-component–id[data-component-path]') // Example: Returns one compon
 BLOCKED();
 // Alias for $.components.blocked();
 
-EVALUATE(path, expression);
+EVALUATE(path, expression, [path_is_value]);
 // Alias for $.components.evaluate();
 
 NOTMODIFIED(path, [value], [fields]);

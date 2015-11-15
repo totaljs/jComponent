@@ -43,10 +43,16 @@ window.COM = $.components = function(container) {
 	return COM.compile(container);
 };
 
-COM.evaluate = function(path, expression) {
+COM.evaluate = function(path, expression, nopath) {
 	var key = 'eval' + expression;
 	var exp = MAN.cache[key];
-	var val = COM.get(path);
+	var val;
+
+	if (nopath)
+		val = path;
+	else
+		val = COM.get(path);
+
 	if (exp !== undefined)
 		return exp.call(val, val, path);
 	if (expression.indexOf('return') === -1)
@@ -2318,10 +2324,10 @@ COMP.prototype.emit = function() {
 	COM.emit.apply(COM, arguments);
 };
 
-COMP.prototype.evaluate = function(path, expression) {
+COMP.prototype.evaluate = function(path, expression, nopath) {
 	if (!expression)
 		path = this.path;
-	return COM.evaluate(path, expression);
+	return COM.evaluate(path, expression, nopath);
 };
 
 COMP.prototype.get = function(path) {
@@ -3268,8 +3274,8 @@ function ON(name, path, fn, init) {
 	COM.on(name, path, fn, init);
 }
 
-function EVALUATE(path, expression) {
-	return COM.evaluate(path, expression);
+function EVALUATE(path, expression, nopath) {
+	return COM.evaluate(path, expression, nopath);
 }
 
 function MAKE(callback) {
