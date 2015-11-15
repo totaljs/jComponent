@@ -66,7 +66,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v3.5.1';
+COM.version = 'v3.5.2';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -2935,9 +2935,9 @@ setInterval(function() {
 
 setTimeout(function() {
 	COM.compile();
-}, 1);
+}, 10);
 
-$(document).ready(function() {
+setTimeout(function() {
 	if (COM.defaults.localstorage) {
 		var cache = localStorage.getItem(COM.$localstorage + '.cache');
 		if (cache && typeof(cache) === 'string') {
@@ -2952,7 +2952,9 @@ $(document).ready(function() {
 			} catch (e) {}
 		}
 	}
+}, 5);
 
+$(document).ready(function() {
 	$(document).on('change keypress keydown blur', 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]', function(e) {
 
 		var self = this;
