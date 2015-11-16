@@ -1,6 +1,7 @@
-[![MIT License][license-image]][license-url]
+[![MIT License][license-image]][license-url][![Gitter chat](https://badges.gitter.im/totaljs/framework.png)](https://gitter.im/petersirka/jComponent)
 # jQuery component library
 
+- [Gitter - Chat for GitHub](https://gitter.im/petersirka/jComponent)
 - Current version: `v3.5.0`
 - `>= jQuery +1.7`
 - `>= IE9`
