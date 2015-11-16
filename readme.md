@@ -1,4 +1,4 @@
-[![MIT License][license-image]][license-url][![Gitter chat](https://badges.gitter.im/totaljs/framework.png)](https://gitter.im/petersirka/jComponent)
+[![MIT License][license-image]][license-url] [![Gitter chat](https://badges.gitter.im/totaljs/framework.png)](https://gitter.im/petersirka/jComponent)
 # jQuery component library
 
 - [Gitter - Chat for GitHub](https://gitter.im/petersirka/jComponent)
