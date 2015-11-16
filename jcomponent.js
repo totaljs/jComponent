@@ -2471,7 +2471,7 @@ function CMAN() {
 	this.waits = {};
 }
 
-CMAN.prototype.cacherest = function(method, url, params, value, expire) {
+MAN.cacherest = function(method, url, params, value, expire) {
 
 	if (params && !params.version && COM.$version)
 		params.version = COM.$version;
@@ -2484,7 +2484,7 @@ CMAN.prototype.cacherest = function(method, url, params, value, expire) {
 	return this.cachestorage(key, value, expire);
 };
 
-CMAN.prototype.cachestorage = function(key, value, expire) {
+MAN.cachestorage = function(key, value, expire) {
 
 	var now = Date.now();
 	if (value !== undefined) {
@@ -2498,7 +2498,7 @@ CMAN.prototype.cachestorage = function(key, value, expire) {
 		return item.value;
 };
 
-CMAN.prototype.initialize = function() {
+MAN.initialize = function() {
 	var item = this.init.pop();
 
 	if (item === undefined) {
@@ -2513,7 +2513,7 @@ CMAN.prototype.initialize = function() {
 	return this;
 };
 
-CMAN.prototype.remap = function(path, value) {
+MAN.remap = function(path, value) {
 	var index = path.indexOf('->');
 	if (index === -1)
 		return COM.set(path, value);
@@ -2523,7 +2523,7 @@ CMAN.prototype.remap = function(path, value) {
 	return this;
 };
 
-CMAN.prototype.prepare = function(obj) {
+MAN.prepare = function(obj) {
 
 	if (!obj)
 		return this;
@@ -2591,7 +2591,7 @@ CMAN.prototype.prepare = function(obj) {
 	return this;
 };
 
-CMAN.prototype.next = function() {
+MAN.next = function() {
 	var next = this.pending.shift();
 	if (next === undefined) {
 		if (this.isReady)
@@ -2606,7 +2606,7 @@ CMAN.prototype.next = function() {
  * @param {String} name
  * @return {CMAN}
  */
-CMAN.prototype.clear = function() {
+MAN.clear = function() {
 
 	var self = this;
 
@@ -2635,7 +2635,7 @@ CMAN.prototype.clear = function() {
 	return self;
 };
 
-CMAN.prototype.isArray = function(path) {
+MAN.isArray = function(path) {
 	var index = path.lastIndexOf('[');
 	if (index === -1)
 		return false;
@@ -2645,7 +2645,7 @@ CMAN.prototype.isArray = function(path) {
 	return true;
 };
 
-CMAN.prototype.isOperation = function(name) {
+MAN.isOperation = function(name) {
 	if (name.charCodeAt(0) === 35)
 		return true;
 	return false;
@@ -2655,7 +2655,7 @@ CMAN.prototype.isOperation = function(name) {
  * @param {String} path
  * @return {Object}
  */
-CMAN.prototype.get = function(path) {
+MAN.get = function(path) {
 	if (path.charCodeAt(0) === 35) {
 		var op = OPERATION(path);
 		if (op)
@@ -2691,7 +2691,7 @@ CMAN.prototype.get = function(path) {
  * @param {String} path
  * @param {Object} value
  */
-CMAN.prototype.set = function(path, value) {
+MAN.set = function(path, value) {
 	if (path.charCodeAt(0) === 35) {
 		var op = OPERATION(path);
 		if (op)
@@ -2754,7 +2754,7 @@ COM.inc = function(path, value, type) {
 	return self;
 };
 
-CMAN.prototype.refresh = function() {
+MAN.refresh = function() {
 	var self = this;
 	clearTimeout(self.$refresh);
 	self.$refresh = setTimeout(function() {
@@ -2776,7 +2776,7 @@ CMAN.prototype.refresh = function() {
  * Event cleaner
  * @return {CMAN}
  */
-CMAN.prototype.cleaner = function() {
+MAN.cleaner = function() {
 
 	var self = this;
 	var aks = Object.keys(self.events);
@@ -2902,6 +2902,25 @@ CMAN.prototype.cleaner = function() {
 	return self;
 };
 
+MAN.$$ = function() {
+	delete MAN.$load;
+	if (COM.defaults.localstorage) {
+		var cache = localStorage.getItem(COM.$localstorage + '.cache');
+		if (cache && typeof(cache) === 'string') {
+			try {
+				MAN.storage = JSON.parse(cache);
+			} catch (e) {}
+		}
+		cache = localStorage.getItem(COM.$localstorage + '.blocked');
+		if (cache && typeof(cache) === 'string') {
+			try {
+				MAN.cacheblocked = JSON.parse(cache);
+			} catch (e) {}
+		}
+	}
+	COM.compile();
+};
+
 /**
  * Default component
  */
@@ -2933,28 +2952,15 @@ setInterval(function() {
 	MAN.cleaner();
 }, (1000 * 60) * 5);
 
-setTimeout(function() {
-	COM.compile();
-}, 10);
-
-setTimeout(function() {
-	if (COM.defaults.localstorage) {
-		var cache = localStorage.getItem(COM.$localstorage + '.cache');
-		if (cache && typeof(cache) === 'string') {
-			try {
-				MAN.storage = JSON.parse(cache);
-			} catch (e) {}
-		}
-		cache = localStorage.getItem(COM.$localstorage + '.blocked');
-		if (cache && typeof(cache) === 'string') {
-			try {
-				MAN.cacheblocked = JSON.parse(cache);
-			} catch (e) {}
-		}
-	}
-}, 5);
+MAN.$load = setTimeout(MAN.$$, 2);
 
 $(document).ready(function() {
+
+	if (MAN.$load) {
+		clearTimeout(MAN.$load);
+		MAN.$$();
+	}
+
 	$(document).on('change keypress keydown blur', 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]', function(e) {
 
 		var self = this;
