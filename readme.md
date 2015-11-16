@@ -1,6 +1,8 @@
 [![MIT License][license-image]][license-url]
 # jQuery component library
 
+[![Join the chat at https://gitter.im/petersirka/jComponent](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/petersirka/jComponent?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 - Current version: `v3.5.0`
 - `>= jQuery +1.7`
 - `>= IE9`
