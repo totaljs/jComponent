@@ -1334,17 +1334,17 @@ __Advanced usage__:
 ```javascript
 var arr = [];
 
-arr.push(function(err, next) {
+arr.push(function(err, next, index) {
     this.counter++;
     next();
 });
 
-arr.push(function(err, next) {
+arr.push(function(err, next, index) {
     this.counter++;
     next('Some error message.');
 });
 
-arr.push(function(err, next) {
+arr.push(function(err, next, index) {
     setTimeout(function() {
         this.counter++;
         next();
