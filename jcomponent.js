@@ -66,7 +66,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v3.5.3';
+COM.version = 'v3.5.4';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -1915,6 +1915,7 @@ function COM_P_COMPARE(a, b, type, ak, bk) {
 
 	var key = type + '=' + ak + '=' + bk;
 	var r = MAN.temp[key];
+
 	if (r !== undefined)
 		return r;
 
@@ -1948,8 +1949,10 @@ function COM_P_COMPARE(a, b, type, ak, bk) {
 
 	if (type === 2) {
 
-		if (a.length < b.length)
+		if (a.length > b.length) {
+			MAN.temp[key] = false;
 			return false;
+		}
 
 		for (var i = 0, length = a.length; i < length; i++) {
 			if (b[i] === undefined)
