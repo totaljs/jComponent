@@ -1948,12 +1948,6 @@ function COM_P_COMPARE(a, b, type, ak, bk) {
 	}
 
 	if (type === 2) {
-
-		if (a.length > b.length) {
-			MAN.temp[key] = false;
-			return false;
-		}
-
 		for (var i = 0, length = a.length; i < length; i++) {
 			if (b[i] === undefined)
 				continue;
