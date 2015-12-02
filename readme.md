@@ -2,7 +2,7 @@
 # jQuery component library
 
 - [Gitter - Chat for GitHub](https://gitter.im/petersirka/jComponent)
-- Current version: `v3.5.2`
+- Current version: `v3.5.5`
 - `>= jQuery +1.7`
 - `>= IE9`
 - similar functionality like directives in Angular.js
@@ -1180,6 +1180,19 @@ console.log(CONTROLLER('users').getName());
     });
 
 </script>
+
+<!-- OR -->
+<!-- WITHOUT CONTROLLER -->
+
+<div data-component-scope="?" data-component-init="init_function">
+    ... SOME CONTENT ...
+</div>
+
+<script>
+    function init_function(path, scope) {
+
+    }
+</script>
 ```
 
 
@@ -1324,9 +1337,19 @@ arr.push(function(err, next) {
     }, 1000);
 });
 
-// arr.async([context], [callback(err, response)]);
+// Array.prototype.async([context], [callback(err, response)]);
 // context is by default: empty plain object.
 arr.async();
+
+// Second another example
+var items = [0, 1, 2, 3, 4];
+
+// Array.prototype.forAsync(fn_each, [callback]);
+items.forAsync(function(item, next) {
+    console.log(item);
+    setTimeout(next, 100);
+});
+
 ```
 
 __Advanced usage__:

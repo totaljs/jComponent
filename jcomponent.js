@@ -66,7 +66,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v3.5.4';
+COM.version = 'v3.5.5';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -820,13 +820,13 @@ function $components_ready() {
 			if (MAN.isOperation(path)) {
 				var op = OPERATION(path);
 				if (op)
-					op.call(scope, scope);
+					op.call(scope, this.getAttribute(COM_ATTR_S), scope);
 				else if (console)
 					console.warn('Operation ' + path + ' not found.');
 			} else {
 				var fn = GET(path);
 				if (typeof(fn) === 'function')
-					fn.call(scope, scope);
+					fn.call(scope, this.getAttribute(COM_ATTR_S), scope);
 			}
 		});
 
@@ -3397,6 +3397,25 @@ function CONTROLLER() {
 		return obj;
 	};
 }
+
+Array.prototype.forAsync = function(fn, callback) {
+	if (fn.index === undefined)
+		fn.index = 0;
+	var self = this;
+	var item = self[fn.index++];
+
+	if (item === undefined) {
+		if (callback)
+			callback();
+		return self;
+	}
+
+	fn.call(self, item, function() {
+		self.forAsync(fn, callback);
+	});
+
+	return self;
+};
 
 Array.prototype.async = function(context, callback) {
 
