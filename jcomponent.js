@@ -506,13 +506,14 @@ COM.POST = function(url, data, callback, timeout, error) {
 			if (callback)
 				callback(r);
 		}, error: function(req, status, r) {
-			COM.emit('error', r, req.status, url);
+			status = status + ': ' + r;
+			COM.emit('error', r, status, url);
 			if (typeof(error) === 'string')
 				return MAN.remap(error, r);
 			if (error)
-				error(r, req.status, status);
+				error(r, status, url);
 			else if (typeof(callback) === 'function')
-				callback(undefined, r, req.status);
+				callback(undefined, status, url);
 		}, contentType: 'application/json' });
 	}, timeout || 0);
 	return COM;
@@ -541,13 +542,14 @@ COM.PUT = function(url, data, callback, timeout, error) {
 			if (callback)
 				callback(r);
 		}, error: function(req, status, r) {
-			COM.emit('error', r, req.status, url);
+			status = status + ': ' + r;
+			COM.emit('error', r, status, url);
 			if (typeof(error) === 'string')
 				return MAN.remap(error, r);
 			if (error)
-				error(r, req.status, status);
+				error(r, status, url);
 			else if (typeof(callback) === 'function')
-				callback(undefined, r, req.status);
+				callback(undefined, status, url);
 		}, contentType: 'application/json' });
 	}, timeout || 0);
 	return COM;
@@ -602,13 +604,14 @@ COM.GET = function(url, data, callback, timeout, error) {
 			if (callback)
 				callback(r);
 		}, error: function(req, status, r) {
-			COM.emit('error', r, req.status, url);
+			status = status + ': ' + r;
+			COM.emit('error', r, status, url);
 			if (typeof(error) === 'string')
 				return MAN.remap(error, r);
 			if (error)
-				error(r, req.status, status);
+				error(r, status, url);
 			else if (typeof(callback) === 'function')
-				callback(undefined, r, req.status);
+				callback(undefined, status, url);
 		}});
 	}, timeout || 0);
 	return COM;
@@ -637,13 +640,14 @@ COM.DELETE = function(url, data, callback, timeout, error) {
 			if (callback)
 				callback(r);
 		}, error: function(req, status, r) {
-			COM.emit('error', r, req.status, url);
+			status = status + ': ' + r;
+			COM.emit('error', r, status, url);
 			if (typeof(error) === 'string')
 				return MAN.remap(error, r);
 			if (error)
-				error(r, req.status, status);
+				error(r, status, url);
 			else if (typeof(callback) === 'function')
-				callback(undefined, r, req.status);
+				callback(undefined, status, url);
 		}, contentType: 'application/json' });
 	}, timeout || 0);
 	return COM;
