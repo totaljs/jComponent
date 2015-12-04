@@ -3520,7 +3520,7 @@ Date.prototype.format || (Date.prototype.format = function(t) {
     var e = this, r = !1;
     if (t && 33 === t.charCodeAt(0) && (r = !0, t = t.substring(1)), void 0 === t || null === t || '' === t) return e.getFullYear() + '-' + (e.getMonth() + 1).toString().padLeft(2, '0') + '-' + e.getDate().toString().padLeft(2, '0') + 'T' + e.getHours().toString().padLeft(2, '0') + ':' + e.getMinutes().toString().padLeft(2, '0') + ':' + e.getSeconds().toString().padLeft(2, '0') + ':' + e.getMilliseconds().toString();
     var n = e.getHours();
-    return r && n >= 12 && (n -= 12), t.replace(/yyyy|yy|MM|M|dd|d|HH|H|hh|h|mm|m|ss|s|a/g, function(t) {
+    return r && n >= 12 && (n -= 12), t.replace(/yyyy|yy|MM|M|dd|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g, function(t) {
         switch (t) {
             case 'yyyy':
                 return e.getFullYear();
@@ -3548,6 +3548,15 @@ Date.prototype.format || (Date.prototype.format = function(t) {
                 return e.getSeconds().toString().padLeft(2, '0');
             case 's':
                 return e.getSeconds();
+			case 'w':
+			case 'ww':
+				var tmp = new Date(+e);
+				tmp.setHours(0, 0, 0);
+				tmp.setDate(tmp.getDate() + 4 - (tmp.getDay() || 7));
+				tmp = Math.ceil((((tmp - new Date(tmp.getFullYear(), 0, 1)) / 8.64e7) + 1) / 7);
+				if (key === 'ww')
+					return tmp.toString().padLeft(2, '0');
+				return tmp;
             case 'a':
                 var r = 'AM';
                 return e.getHours() >= 12 && (r = 'PM'), r
