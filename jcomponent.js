@@ -66,7 +66,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v3.5.5';
+COM.version = 'v3.5.6';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -123,7 +123,10 @@ COM.compile = function(container) {
 
 			var x = el.attr(COM_ATTR_X);
 			if (!x) {
-				console.warn('Component ' + name + ' does not exist.');
+				if (!initalizers['NE_' + name]) {
+					initalizers['NE_' + name] = true;
+					console.warn('Component ' + name + ' does not exist.');
+				}
 				return;
 			}
 
@@ -131,7 +134,10 @@ COM.compile = function(container) {
 				return;
 
 			if (MAN.imports[x] === 2) {
-				console.warn('Component ' + name + ' does not exist.');
+				if (!initalizers['NE_' + name]) {
+					initalizers['NE_' + name] = true;
+					console.warn('Component ' + name + ' does not exist.');
+				}
 				return;
 			}
 
