@@ -123,8 +123,8 @@ COM.compile = function(container) {
 
 			var x = el.attr(COM_ATTR_X);
 			if (!x) {
-				if (!initalizers['NE_' + name]) {
-					initalizers['NE_' + name] = true;
+				if (!MAN.initalizers['NE_' + name]) {
+					MAN.initalizers['NE_' + name] = true;
 					console.warn('Component ' + name + ' does not exist.');
 				}
 				return;
@@ -134,8 +134,8 @@ COM.compile = function(container) {
 				return;
 
 			if (MAN.imports[x] === 2) {
-				if (!initalizers['NE_' + name]) {
-					initalizers['NE_' + name] = true;
+				if (!MAN.initalizers['NE_' + name]) {
+					MAN.initalizers['NE_' + name] = true;
 					console.warn('Component ' + name + ' does not exist.');
 				}
 				return;
