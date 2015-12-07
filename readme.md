@@ -158,7 +158,8 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     A scope attribute updates the `data-component-path` in all nested components.
     With the scope works `data-component-init` and `data-component-class`.
     If the scope value `data-component-scope` is `?` then the `data-component-path`
-    is generated automatically.
+    is generated automatically. IMPORTANT: in this element MUST CONTAIN some jComponents,
+    otherwise the scope won't be initialized.
 
     ::: E.g.:
     <element data-component-scope="users">
@@ -1160,6 +1161,10 @@ console.log(CONTROLLER('users').getName());
 
 ```html
 <div data-component-scope="users" data-component-controller="users-controller">
+    <!--
+        IMPORTANT: in this element MUST CONTAIN some jComponents, otherwise the scope
+        won't be initialized.
+    -->
     ... SOME CONTENT ...
 </div>
 
@@ -1189,6 +1194,10 @@ console.log(CONTROLLER('users').getName());
 <!-- WITHOUT CONTROLLER -->
 
 <div data-component-scope="?" data-component-init="init_function">
+    <!--
+        IMPORTANT: in this element MUST CONTAIN some jComponents, otherwise the scope
+        won't be initialized.
+    -->
     ... SOME CONTENT ...
 </div>
 
