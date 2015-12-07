@@ -125,7 +125,7 @@ COM.compile = function(container) {
 			if (!x) {
 				if (!MAN.initalizers['NE_' + name]) {
 					MAN.initalizers['NE_' + name] = true;
-					console.warn('Component ' + name + ' does not exist.');
+					console.warn('The component "' + name + '" does not exist.');
 				}
 				return;
 			}
@@ -136,7 +136,7 @@ COM.compile = function(container) {
 			if (MAN.imports[x] === 2) {
 				if (!MAN.initalizers['NE_' + name]) {
 					MAN.initalizers['NE_' + name] = true;
-					console.warn('Component ' + name + ' does not exist.');
+					console.warn('The component "' + name + '" does not exist.');
 				}
 				return;
 			}
@@ -832,7 +832,7 @@ function $components_ready() {
 				if (op)
 					op.call(scope, this.getAttribute(COM_ATTR_S), scope);
 				else if (console)
-					console.warn('Operation ' + path + ' not found.');
+					console.warn('The operation ' + path + ' not found.');
 			} else {
 				var fn = GET(path);
 				if (typeof(fn) === 'function')
@@ -2704,7 +2704,7 @@ MAN.set = function(path, value) {
 		if (op)
 			op(value, path);
 		else if (console)
-			console.warn('Operation ' + path + ' not found.');
+			console.warn('The operation ' + path + ' not found.');
 		return self;
 	}
 	var cachekey = '+' + path;
