@@ -66,7 +66,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v3.5.6';
+COM.version = 'v3.6.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -118,13 +118,20 @@ COM.compile = function(container) {
 		if (el.data(COM_ATTR) || el.attr(COM_ATTR_R))
 			return;
 
+		if (MAN.initializers['$ST_' + name]) {
+			// singleton
+			el.attr(COM_ATTR_R, true);
+			el.remove();
+			return;
+		}
+
 		var component = MAN.register[name || ''];
 		if (!component) {
 
 			var x = el.attr(COM_ATTR_X);
 			if (!x) {
-				if (!MAN.initalizers['NE_' + name]) {
-					MAN.initalizers['NE_' + name] = true;
+				if (!MAN.initializers['$NE_' + name]) {
+					MAN.initializers['$NE_' + name] = true;
 					console.warn('The component "' + name + '" does not exist.');
 				}
 				return;
@@ -134,8 +141,8 @@ COM.compile = function(container) {
 				return;
 
 			if (MAN.imports[x] === 2) {
-				if (!MAN.initalizers['NE_' + name]) {
-					MAN.initalizers['NE_' + name] = true;
+				if (!MAN.initializers['$NE_' + name]) {
+					MAN.initializers['$NE_' + name] = true;
 					console.warn('The component "' + name + '" does not exist.');
 				}
 				return;
@@ -151,12 +158,15 @@ COM.compile = function(container) {
 		var obj = component(el);
 
 		if (obj.init) {
-			if (!MAN.initalizers[name]) {
-				MAN.initalizers[name] = true;
+			if (!MAN.initializers[name]) {
+				MAN.initializers[name] = true;
 				obj.init();
 			}
 			delete obj.init;
 		}
+
+		if (obj.singleton)
+			MAN.initializers['$ST_' + name] = true;
 
 		obj.$init = el.attr(COM_ATTR_I) || null;
 		obj.type = el.attr('data-component-type') || '';
@@ -329,7 +339,7 @@ COM.$inject = function() {
 		});
 
 	}, function() {
-		MAN.clear('valid', 'dirty', 'broadcast');
+		MAN.clear('valid', 'dirty', 'broadcast', 'find');
 		if (count === 0)
 			return;
 		COM.compile();
@@ -786,7 +796,7 @@ function $components_ready() {
 		$(document).trigger('components', [count]);
 
 		if (!MAN.isReady) {
-			MAN.clear('valid', 'dirty', 'broadcast');
+			MAN.clear('valid', 'dirty', 'broadcast', 'find');
 			MAN.isReady = true;
 			COM.emit('init');
 			COM.emit('ready');
@@ -2474,7 +2484,7 @@ function CMAN() {
 	this.styles = [];
 	this.operations = {};
 	this.controllers = {};
-	this.initalizers = {};
+	this.initializers = {};
 	this.waits = {};
 }
 
@@ -2878,6 +2888,8 @@ MAN.cleaner = function() {
 		is = true;
 	}
 
+	MAN.clear('find');
+
 	var now = Date.now();
 	var is2 = false;
 	var is3 = false;
@@ -3183,9 +3195,10 @@ function NOTMODIFIED(path, value, fields) {
 		path = path.concat('#', fields);
 
 	var hash = HASH(JSON.stringify(value, fields));
-	if (MAN.cache[path] === hash)
+	var key = 'notmodified.' + path;
+	if (MAN.cache[key] === hash)
 		return true;
-	MAN.cache[path] = hash;
+	MAN.cache[key] = hash;
 	return false;
 }
 
@@ -3199,11 +3212,26 @@ function FIND(value, many) {
 		value = value.substring(0, index);
 	}
 
-	if (value.charCodeAt(0) === 46)
-		return COM.findByPath(value.substring(1), many);
-	if (value.charCodeAt(0) === 35)
-		return COM.findById(value.substring(1), path, many)
-	return COM.findByName(value, path, many);
+	var key = 'find.' + value + '.' + (many ? 0 : 1);
+	var output = MAN.cache[key];
+	if (output)
+		return output;
+
+	if (value.charCodeAt(0) === 46) {
+		output = COM.findByPath(value.substring(1), many);
+		MAN.cache[key] = output;
+		return output;
+	}
+
+	if (value.charCodeAt(0) === 35) {
+		output = COM.findById(value.substring(1), path, many);
+		MAN.cache[key] = output;
+		return output;
+	}
+
+	output = COM.findByName(value, path, many);
+	MAN.cache[key] = output;
+	return output;
 }
 
 function BROADCAST(selector, name, caller) {
