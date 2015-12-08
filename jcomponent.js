@@ -3748,16 +3748,16 @@ Array.prototype.scalar = function(type, key) {
 				output = val;
 		} else {
 			if (!output) {
-				output = {};
-				output.min = val;
-				output.max = val;
+				output = new Array(2);
+				output[0] = val;
+				output[1] = val;
 			}
 		}
 
 		switch (type) {
 			case 'range':
-				output.min = Math.min(output.min, val);
-				output.max = Math.max(output.max, val);
+				output[0] = Math.min(output[0], val);
+				output[1] = Math.max(output[1], val);
 				break;
 			case 'min':
 				output = Math.min(output, val);
