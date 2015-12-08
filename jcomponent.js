@@ -3550,7 +3550,7 @@ Array.prototype.findIndex = function(cb, value) {
 	return -1;
 };
 
-Date.prototype.format || (Date.prototype.format = function(t) {
+Date.prototype.format = function(t) {
     var e = this, r = !1;
     if (t && 33 === t.charCodeAt(0) && (r = !0, t = t.substring(1)), void 0 === t || null === t || '' === t) return e.getFullYear() + '-' + (e.getMonth() + 1).toString().padLeft(2, '0') + '-' + e.getDate().toString().padLeft(2, '0') + 'T' + e.getHours().toString().padLeft(2, '0') + ':' + e.getMinutes().toString().padLeft(2, '0') + ':' + e.getSeconds().toString().padLeft(2, '0') + ':' + e.getMilliseconds().toString();
     var n = e.getHours();
@@ -3596,9 +3596,9 @@ Date.prototype.format || (Date.prototype.format = function(t) {
                 return e.getHours() >= 12 && (r = 'PM'), r
         }
     });
-});
+};
 
-Number.prototype.format || (Number.prototype.format = function(t, e, r) {
+Number.prototype.format = function(t, e, r) {
     var n = this,
         a = n.toString(),
         o = "",
@@ -3613,17 +3613,17 @@ Number.prototype.format || (Number.prototype.format = function(t, e, r) {
     void 0 === e && (e = ' '), -1 !== s && (o = a.substring(s + 1), a = a.substring(0, s)), s = -1;
     for (var p = a.length - 1; p >= 0; p--) s++, s > 0 && s % 3 === 0 && (g = e + g), g = a.substring(p, p + 1) + g;
     return (t || o.length) && (o = o.length > t ? o.substring(0, t) : o.padRight(t, '0')), o.length && void 0 === r && (r = '.' === e ? ',' : '.'), i + g + (o.length ? r + o : '');
-});
+};
 
-String.prototype.padLeft || (String.prototype.padLeft = function(t, e) {
+String.prototype.padLeft = function(t, e) {
     var r = this.toString();
     return Array(Math.max(0, t - r.length + 1)).join(e || '0') + r;
-});
+};
 
-String.prototype.padRight || (String.prototype.padRight = function(t, e) {
+String.prototype.padRight = function(t, e) {
     var r = this.toString();
     return r + Array(Math.max(0, t - r.length + 1)).join(e || '0')
-});
+};
 
 String.prototype.format = function() {
 	var arg = arguments;
@@ -3732,3 +3732,49 @@ String.prototype.parseDate = function() {
 
 	return new Date(parsed[0], parsed[1] - 1, parsed[2], parsed[3], parsed[4], parsed[5]);
 };
+
+Array.prototype.scalar = function(type, key) {
+
+	var output;
+
+	for (var i = 0, length = this.length; i < length; i++) {
+		var val = key ? this[i][key] : this[i];
+
+		if (typeof(val) === 'string')
+			val = parseFloat(val);
+
+		if (type !== 'range') {
+			if (!output)
+				output = val;
+		} else {
+			if (!output) {
+				output = {};
+				output.min = val;
+				output.max = val;
+			}
+		}
+
+		switch (type) {
+			case 'range':
+				output.min = Math.min(output.min, val);
+				output.max = Math.max(output.max, val);
+				break;
+			case 'min':
+				output = Math.min(output, val);
+				break;
+			case 'max':
+				output = Math.max(output, val);
+				break;
+		}
+	}
+
+	return output;
+};
+
+function FN(key, fn) {
+	return function(d) {
+		if (key)
+			return fn ? fn(d[key]) : d[key];
+		return fn ? fn(d) : d;
+	};
+}
