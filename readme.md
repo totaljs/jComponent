@@ -1283,26 +1283,11 @@ format = number.format(2, '.', ',');
 format = number.format(0);
 // 1 000 000
 
+
 // Array.prototype.trim();
 var a = ['', 'A', 'B', '', 'C'].trim();
 // ['A', 'B', 'C'];
 
-
-// Array.protoype.scalar(type, [key]);
-// IMPORTANT: works with date/time
-var a = [1, 2, 3, 4, 5];
-console.log(a.scalar('max'));
-console.log(a.scalar('min'));
-console.log(a.scalar('avg'));
-console.log(a.scalar('sum'));
-console.log(a.scalar('range')); // Array [min, max]
-
-var b = [{ age: 20 }, { age: 23 }, { age: 19 }, { age: 34 }];
-console.log(a.scalar('max', 'age'));
-console.log(a.scalar('min', 'age'));
-console.log(a.scalar('avg', 'age'));
-console.log(a.scalar('sum', 'age'));
-console.log(a.scalar('range', 'age')); // Array [min, max]
 
 // Array.prototype.findIndex(fn);
 // Array.prototype.findIndex(name, value);

@@ -3736,6 +3736,7 @@ String.prototype.parseDate = function() {
 	return new Date(parsed[0], parsed[1] - 1, parsed[2], parsed[3], parsed[4], parsed[5]);
 };
 
+/*
 Array.prototype.scalar = function(type, key) {
 
 	var output;
@@ -3800,6 +3801,7 @@ Array.prototype.scalar = function(type, key) {
 
 	return output;
 };
+*/
 
 function FN(exp) {
 	var index = exp.indexOf('=>');
