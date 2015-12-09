@@ -321,11 +321,7 @@ COMPONENT('my-component-name', function() {
     instance.trim;
     // This property affects trimming of string values and works only with [data-component-bind]
     // and default `.instance.setter`. Default value: true.
-    
-    instance.singleton;
-    // This property guarantees only one instance of the component. Other instances wont' be
-    // initialized and their elements will be removed from the DOM. Default value: false.
-});
+    });
 ```
 
 ### Delegates
@@ -534,6 +530,11 @@ COMPONENT('my-component-name', function() {
 
     instance.noscope();
     // Disables scoping paths `data-component-scope`.
+
+
+    instance.singleton();
+    // This method guarantees only one instance of the component. Other instances wont' be
+    // initialized and their elements will be removed from the DOM.
 
 
     instance.emit(event_name, [arg1], [arg2])
@@ -1288,14 +1289,19 @@ var a = ['', 'A', 'B', '', 'C'].trim();
 
 
 // Array.protoype.scalar(type, [key]);
+// IMPORTANT: works with date/time
 var a = [1, 2, 3, 4, 5];
 console.log(a.scalar('max'));
 console.log(a.scalar('min'));
+console.log(a.scalar('avg'));
+console.log(a.scalar('sum'));
 console.log(a.scalar('range')); // Array [min, max]
 
 var b = [{ age: 20 }, { age: 23 }, { age: 19 }, { age: 34 }];
 console.log(a.scalar('max', 'age'));
 console.log(a.scalar('min', 'age'));
+console.log(a.scalar('avg', 'age'));
+console.log(a.scalar('sum', 'age'));
 console.log(a.scalar('range', 'age')); // Array [min, max]
 
 // Array.prototype.findIndex(fn);
@@ -1306,6 +1312,22 @@ var index2 = b.findIndex(function(obj) {
     if (obj.name === 'Jana')
         return true;
 });
+```
+
+### Arrow function as string
+
+```javascript
+var fn = FN('a => a + 1');
+console.log(fn(1)); // –-> output: 2
+
+var fn = FN('(a, b) => a + b');
+console.log(fn(5, 5)); // –-> output: 10
+
+var fn = FN('(a, b) => { return a + b }');
+console.log(fn(5, 5)); // –-> output: 10
+
+var fn = FN('() => 100');
+console.log(fn()); // –-> output: 100
 ```
 
 ### Tangular Helpers

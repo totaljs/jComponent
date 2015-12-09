@@ -165,9 +165,6 @@ COM.compile = function(container) {
 			delete obj.init;
 		}
 
-		if (obj.singleton)
-			MAN.initializers['$ST_' + name] = true;
-
 		obj.$init = el.attr(COM_ATTR_I) || null;
 		obj.type = el.attr('data-component-type') || '';
 		obj.id = el.attr('data-component-id') || obj._id;
@@ -2086,6 +2083,12 @@ COMP.prototype.noscope = function(value) {
 	return this;
 };
 
+COMP.prototype.singleton = function() {
+	var self = this;
+	MAN.initializers['$ST_' + self.name] = true;
+	return self;
+};
+
 COMP.prototype.readonly = function() {
 	this.noDirty();
 	this.noValid();
@@ -3736,12 +3739,27 @@ String.prototype.parseDate = function() {
 Array.prototype.scalar = function(type, key) {
 
 	var output;
+	var isDate = false;
+	var isAvg = type === 'avg' || type === 'average';
 
 	for (var i = 0, length = this.length; i < length; i++) {
 		var val = key ? this[i][key] : this[i];
 
 		if (typeof(val) === 'string')
-			val = parseFloat(val);
+			val = val.parseFloat();
+
+		if (val instanceof Date) {
+			isDate = true;
+			val = val.getTime();
+		}
+
+		if (type === 'sum' || isAvg) {
+			if (!output)
+				output = val;
+			else
+				output += val;
+			continue;
+		}
 
 		if (type !== 'range') {
 			if (!output)
@@ -3768,13 +3786,48 @@ Array.prototype.scalar = function(type, key) {
 		}
 	}
 
+	if (isAvg) {
+		output = output / this.length;
+		return isDate ? new Date(output) : output;
+	}
+
+	if (isDate) {
+		if (typeof(output) === 'number')
+			return new Date(output);
+		output[0] = new Date(output[0]);
+		output[1] = new Date(output[1]);
+	}
+
 	return output;
 };
 
-function FN(key, fn) {
-	return function(d) {
-		if (key)
-			return fn ? fn(d[key]) : d[key];
-		return fn ? fn(d) : d;
-	};
+function FN(exp) {
+	var index = exp.indexOf('=>');
+	var arg = exp.substring(0, index).trim();
+	var val = exp.substring(index + 2).trim();
+	var is = false;
+
+	arg = arg.replace(/\(|\)|\s/g, '').trim();
+	if (arg)
+		arg = arg.split(',');
+
+	if (val.charCodeAt(0) === 123) {
+		is = true;
+		val = val.substring(1, val.length - 1).trim();
+	}
+
+	var output = (is ? '' : 'return ') + val;
+	switch (arg.length) {
+		case 1:
+			return new Function(arg[0], output);
+		case 2:
+			return new Function(arg[0], arg[1], output);
+		case 3:
+			return new Function(arg[0], arg[1], arg[2], output);
+		case 4:
+			return new Function(arg[0], arg[1], arg[2], arg[3], output);
+		case 0:
+		default:
+			return new Function(output);
+	}
 }
