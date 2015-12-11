@@ -3439,7 +3439,7 @@ function CONTROLLER() {
 	};
 }
 
-Array.prototype.forAsync = function(fn, callback) {
+Array.prototype.waitFor = function(fn, callback) {
 	if (fn.index === undefined)
 		fn.index = 0;
 	var self = this;
@@ -3452,7 +3452,7 @@ Array.prototype.forAsync = function(fn, callback) {
 	}
 
 	fn.call(self, item, function() {
-		self.forAsync(fn, callback);
+		self.waitFor(fn, callback);
 	});
 
 	return self;

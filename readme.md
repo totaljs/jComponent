@@ -1375,8 +1375,8 @@ arr.async();
 // Second another example
 var items = [0, 1, 2, 3, 4];
 
-// Array.prototype.forAsync(fn_each, [callback]);
-items.forAsync(function(item, next) {
+// Array.prototype.waitFor(fn_each, [callback]);
+items.waitFor(function(item, next) {
     console.log(item);
     setTimeout(next, 100);
 });
