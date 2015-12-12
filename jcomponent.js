@@ -66,7 +66,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v3.6.0';
+COM.version = 'v3.6.1';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -1158,24 +1158,27 @@ COM.update = function(path, reset, type) {
 	if (is)
 		path = path.substring(1);
 
-	path = path.replace('.*', '.');
+	path = path.replace(/\.\*$/, '');
+
 	if (!path)
 		return COM;
 
-	var length;
 	var state = [];
 	var was = false;
 	var updates = {};
 
 	// Array prevention
-	var index = path.lastIndexOf('[');
 	var search = path;
-	var isArray = false;
 
+	/*
+	var index = path.lastIndexOf('[');
+	var isArray = false;
 	if (index !== -1) {
 		isArray = true;
-		search = search.substring(0, index);
+		if (!is)
+			search = search.replace(/\[\d+\]/g, '');
 	}
+	*/
 
 	if (type === undefined)
 		type = 1; // developer
@@ -3833,3 +3836,4 @@ function FN(exp) {
 			return new Function(output);
 	}
 }
+
