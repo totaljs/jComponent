@@ -15,7 +15,7 @@ var COM_ATTR_S = 'data-component-scope';
 var COM_ATTR_X = 'data-component-import';
 var REG_EMAIL = /^[a-z0-9-_.+]+@[a-z0-9.-]+\.[a-z]{2,6}$/i;
 var REG_FORMAT = /\{\d+\}/g;
-var isMOBILE = 'ontouchstart' in window || navigator.maxTouchPoints;
+var isMOBILE = ('ontouchstart' in window || navigator.maxTouchPoints) ? true : false;
 
 if (typeof(window.setImmediate) === 'undefined') {
 	window.setImmediate = function(cb) {
