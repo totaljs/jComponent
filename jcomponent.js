@@ -15,6 +15,7 @@ var COM_ATTR_S = 'data-component-scope';
 var COM_ATTR_X = 'data-component-import';
 var REG_EMAIL = /^[a-z0-9-_.+]+@[a-z0-9.-]+\.[a-z]{2,6}$/i;
 var REG_FORMAT = /\{\d+\}/g;
+var isMOBILE = 'ontouchstart' in window || navigator.maxTouchPoints;
 
 if (typeof(window.setImmediate) === 'undefined') {
 	window.setImmediate = function(cb) {
@@ -3445,6 +3446,7 @@ function CONTROLLER() {
 Array.prototype.waitFor = function(fn, callback) {
 	if (fn.index === undefined)
 		fn.index = 0;
+	var index = fn.index;
 	var self = this;
 	var item = self[fn.index++];
 
@@ -3456,7 +3458,7 @@ Array.prototype.waitFor = function(fn, callback) {
 
 	fn.call(self, item, function() {
 		self.waitFor(fn, callback);
-	});
+	}, index);
 
 	return self;
 };
@@ -3836,4 +3838,3 @@ function FN(exp) {
 			return new Function(output);
 	}
 }
-

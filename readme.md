@@ -1260,6 +1260,9 @@ __Component__ `/templates/grid.html`:
 ### Helpers
 
 ```javascript
+// isMOBILE == {Boolean} is a global variable and detects mobile device.
+console.log(isMOBILE);
+
 // String.prototype.padLeft(max, char);
 // String.prototype.padRight(max, char);
 // String.prototype.isEmail()
