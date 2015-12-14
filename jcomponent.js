@@ -1726,12 +1726,15 @@ COM.findByName = function(name, path, callback) {
 		path = undefined;
 	}
 
-	if (!MAN.register[name])
-		return;
-
 	var tc = typeof(callback);
 	var isCallback = tc === 'function';
 	var isMany = tc === 'boolean';
+
+	if (!MAN.register[name]) {
+		if (isMany)
+			return [];
+		return;
+	}
 
 	var com;
 
