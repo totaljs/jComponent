@@ -1300,6 +1300,10 @@ var index2 = b.findIndex(function(obj) {
     if (obj.name === 'Jana')
         return true;
 });
+
+// Array.prototype.findItem(fn);
+// Array.prototype.findItem(name, value);
+// is same as Array.findIndex but returns item/element or undefined
 ```
 
 ### Arrow function as string

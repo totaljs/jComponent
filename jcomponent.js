@@ -90,7 +90,7 @@ COM.compile = function(container) {
 	MAN.isCompiling = true;
 	COM.$inject();
 
-	if (MAN.pending.length > 0) {
+	if (MAN.pending.length) {
 		MAN.pending.push(function() {
 			COM.compile(container);
 		});
@@ -323,7 +323,7 @@ COM.$inject = function() {
 				});
 			}
 
-			if (item.toggle.length > 0 && item.toggle[0] !== '')
+			if (item.toggle.length && item.toggle[0])
 				MAN.toggle.push(item);
 
 			if (item.cb && !item.element.attr('data-component')) {
@@ -992,7 +992,7 @@ COM.$emit = function(name, path) {
 			a = a.substring(0, beg);
 		}
 
-		p += (i > 0 ? '.' : '');
+		p += (i ? '.' : '');
 
 		args[1] = COM.get(p + k);
 		COM.$emit2(name, p + k, args);
@@ -1515,7 +1515,7 @@ COM.push = function(path, value, type) {
 	var is = true;
 
 	if (value instanceof Array) {
-		if (value.length > 0)
+		if (value.length)
 			arr.push.apply(arr, value);
 		else
 			is = false;
@@ -2053,7 +2053,7 @@ function COMP(name) {
 		selector.each(function() {
 
 			var path = this.$component.path;
-			if (path && path.length > 0 && path !== self.path)
+			if (path && path.length && path !== self.path)
 				return;
 
 			if (this.type === 'checkbox') {
@@ -3559,6 +3559,13 @@ Array.prototype.findIndex = function(cb, value) {
 			return i;
 	}
 	return -1;
+};
+
+Array.prototype.findItem = function(cb, value) {
+	var index = this.findIndex(cb, value);
+	if (index === -1)
+		return;
+	return this[index];
 };
 
 Date.prototype.format = function(t) {
