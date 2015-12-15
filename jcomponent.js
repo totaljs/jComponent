@@ -3568,6 +3568,33 @@ Array.prototype.findItem = function(cb, value) {
 	return this[index];
 };
 
+Array.prototype.remove = function(cb, value) {
+
+	var self = this;
+	var arr = [];
+	var isFN = typeof(cb) === 'function';
+	var isV = value !== undefined;
+
+	for (var i = 0, length = self.length; i < length; i++) {
+
+		if (isFN) {
+			if (!cb.call(self, self[i], i))
+				arr.push(self[i]);
+			continue;
+		}
+
+		if (isV) {
+			if (self[i][cb] !== value)
+				arr.push(self[i]);
+			continue;
+		}
+
+		if (self[i] !== cb)
+			arr.push(self[i]);
+	}
+	return arr;
+};
+
 Date.prototype.format = function(t) {
     var e = this, r = !1;
     if (t && 33 === t.charCodeAt(0) && (r = !0, t = t.substring(1)), void 0 === t || null === t || '' === t) return e.getFullYear() + '-' + (e.getMonth() + 1).toString().padLeft(2, '0') + '-' + e.getDate().toString().padLeft(2, '0') + 'T' + e.getHours().toString().padLeft(2, '0') + ':' + e.getMinutes().toString().padLeft(2, '0') + ':' + e.getSeconds().toString().padLeft(2, '0') + ':' + e.getMilliseconds().toString();

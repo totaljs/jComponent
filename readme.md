@@ -1304,6 +1304,10 @@ var index2 = b.findIndex(function(obj) {
 // Array.prototype.findItem(fn);
 // Array.prototype.findItem(name, value);
 // is same as Array.findIndex but returns item/element or undefined
+
+// Array.prototype.remove(fn);
+// Array.prototype.remove(name, value);
+// is same as Array.findIndex but removes values
 ```
 
 ### Arrow function as string
