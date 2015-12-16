@@ -44,6 +44,13 @@ window.COM = $.components = function(container) {
 	return COM.compile(container);
 };
 
+COM.clean = function(timeout) {
+	setTimeout(function() {
+		MAN.cleaner();
+	}, timeout || 10);
+	return COM;
+};
+
 COM.evaluate = function(path, expression, nopath) {
 	var key = 'eval' + expression;
 	var exp = MAN.cache[key];
@@ -2075,7 +2082,7 @@ function COMP(name) {
 	};
 }
 
-COMP.prototype.update = function() {
+COMP.prototype.update = COMP.prototype.refresh = function() {
 	this.set(this.path, this.get(), 1);
 	return this;
 };

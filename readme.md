@@ -459,6 +459,7 @@ COMPONENT('my-component-name', function() {
 
 
     instance.update();
+    instance.refresh();
     // Updates current value.
 
 
@@ -956,6 +957,10 @@ if ($.components.blocked('submitted', 1000)) { // Example.
 $.components.ready(fn);
 $.components.ready(function(count) { console.log('Components ready:', count); }); // Example.
 // Are the components ready? Has a similar functionality like $.ready().
+
+$.components.clean([timeout]);
+// Cleans all unnecessary components.
+// IMPORTANT: The cleaner is started each 5 minutes.
 ```
 
 ## Events
