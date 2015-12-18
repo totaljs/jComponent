@@ -901,7 +901,6 @@ $.components.UPLOAD('/api/', formdata, 'response.success-->form.response'); // E
 $.components.UPLOAD('/api/', formdata, function(response, err) { console.log(response); }); // Example
 // Uploads formdata and receive `JSON` from the server.
 
-
 $.components.TEMPLATE(url, callback(template), [prepare(template)]);
 // Downloads the HTML content and caches it per session. This method is adapted for multiple
 // executing. The content is downloaded only once. `prepare` argument is optional
@@ -922,6 +921,14 @@ $.components.POSTCACHE(url, data, [callback or path], [expire], [sleep], [clear]
 
 $.components.REMOVECACHE(method, url, data);
 // Deletes cache (GETCACHE, POSTCACHE).
+
+
+// +v3.7.0
+// AJAX calls
+$.components.AJAX('METHOD URL', data, [callback or path], [sleep], , [error(response, status, type) or path]);
+// Is same as GET(), POST(), PUT(), DELETE()
+$.components.AJAXCACHE('METHOD URL', data, [callback or path], [expire], [sleep], [clear]);
+// Is same as POSTCACHE, GETCACHE and now supports PUT, DELETE
 
 
 $.components.broadcast('.some-path, #some-component-id, some-component-name')('say')('hello');
@@ -1067,6 +1074,11 @@ if (NOTMODIFIED('model')) return; // Example
 // Method checks whether the value was not modified. If the value is not defined as argument,
 // then the method reads the value from the scope. The method creates hash from the value for
 // further usage. The "fields" argument can contain only string array value.
+
+// +v3.7.0
+AJAX('METHOD URL', data, [callback or path], [sleep], , [error(response, status, type) or path]);
+AJAXCACHE('METHOD URL', data, [callback or path], [expire], [sleep], [clear]);
+// Aliases for $.components.AJAX(), $.components.AJAXCACHE()
 ```
 
 ## Operations

@@ -74,7 +74,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v3.6.1';
+COM.version = 'v3.7.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -413,7 +413,7 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 COM.parseQuery = function(value) {
 
 	if (!value)
-		value = window.location.search;
+		value = location.search;
 
 	if (!value)
 		return {};
@@ -443,7 +443,7 @@ COM.parseQuery = function(value) {
 COM.UPLOAD = function(url, data, callback, timeout, progress, error) {
 
 	if (!url)
-		url = window.location.pathname;
+		url = location.pathname;
 
 	if (typeof(callback) === 'number') {
 		timeout = callback;
@@ -505,75 +505,11 @@ COM.UPLOAD = function(url, data, callback, timeout, progress, error) {
 };
 
 COM.POST = function(url, data, callback, timeout, error) {
-
-	if (!url)
-		url = window.location.pathname;
-
-	if (typeof(callback) === 'number') {
-		timeout = callback;
-		callback = undefined;
-	}
-
-	if (typeof(timeout) !== 'number') {
-		var tmp = error;
-		error = timeout;
-		timeout = tmp;
-	}
-
-	setTimeout(function() {
-		$.ajax($components_url(url), { type: 'POST', data: JSON.stringify(data), success: function(r) {
-			if (typeof(callback) === 'string')
-				return MAN.remap(callback, r);
-			if (callback)
-				callback(r);
-		}, error: function(req, status, r) {
-			status = status + ': ' + r;
-			COM.emit('error', r, status, url);
-			if (typeof(error) === 'string')
-				return MAN.remap(error, r);
-			if (error)
-				error(r, status, url);
-			else if (typeof(callback) === 'function')
-				callback(undefined, status, url);
-		}, contentType: 'application/json' });
-	}, timeout || 0);
-	return COM;
+	return COM.AJAX('POST ' + url, data, callback, timeout, error);
 };
 
 COM.PUT = function(url, data, callback, timeout, error) {
-
-	if (!url)
-		url = window.location.pathname;
-
-	if (typeof(callback) === 'number') {
-		timeout = callback;
-		callback = undefined;
-	}
-
-	if (typeof(timeout) !== 'number') {
-		var tmp = error;
-		error = timeout;
-		timeout = tmp;
-	}
-
-	setTimeout(function() {
-		$.ajax($components_url(url), { type: 'PUT', data: JSON.stringify(data), success: function(r) {
-			if (typeof(callback) === 'string')
-				return MAN.remap(callback, r);
-			if (callback)
-				callback(r);
-		}, error: function(req, status, r) {
-			status = status + ': ' + r;
-			COM.emit('error', r, status, url);
-			if (typeof(error) === 'string')
-				return MAN.remap(error, r);
-			if (error)
-				error(r, status, url);
-			else if (typeof(callback) === 'function')
-				callback(undefined, status, url);
-		}, contentType: 'application/json' });
-	}, timeout || 0);
-	return COM;
+	return COM.AJAX('PUT ' + url, data, callback, timeout, error);
 };
 
 COM.TEMPLATE = function(url, callback, prepare) {
@@ -600,67 +536,72 @@ COM.TEMPLATE = function(url, callback, prepare) {
 };
 
 COM.GET = function(url, data, callback, timeout, error) {
-
-	if (!url)
-		url = window.location.pathname;
-
-	if (typeof(callback) === 'number') {
-		timeout = callback;
-		callback = undefined;
-	}
-
-	if (typeof(timeout) !== 'number') {
-		var tmp = error;
-		error = timeout;
-		timeout = tmp;
-	}
-
-	setTimeout(function() {
-		if (data)
-			url += '?' + jQuery.param(data);
-
-		$.ajax($components_url(url), { type: 'GET', success: function(r) {
-			if (typeof(callback) === 'string')
-				return MAN.remap(callback, r);
-			if (callback)
-				callback(r);
-		}, error: function(req, status, r) {
-			status = status + ': ' + r;
-			COM.emit('error', r, status, url);
-			if (typeof(error) === 'string')
-				return MAN.remap(error, r);
-			if (error)
-				error(r, status, url);
-			else if (typeof(callback) === 'function')
-				callback(undefined, status, url);
-		}});
-	}, timeout || 0);
-	return COM;
+	return COM.AJAX('GET ' + url, data, callback, timeout, error);
 };
 
 COM.DELETE = function(url, data, callback, timeout, error) {
+	return COM.AJAX('DELETE ' + url, data, callback, timeout, error);
+};
 
-	if (!url)
-		url = window.location.pathname;
+COM.GETCACHE = function(url, data, callback, expire, timeout, clear) {
+	return COM.AJAX('GET ' + url, data, callback, expire, timeout, clear);
+};
 
-	if (typeof(callback) === 'number') {
+COM.POSTCACHE = function(url, data, callback, expire, timeout, clear) {
+	return COM.AJAX('POST ' + url, data, callback, expire, timeout, clear);
+};
+
+COM.AJAX = function(url, data, callback, timeout, error) {
+
+	if (typeof(url) === 'function') {
+		error = timeout;
 		timeout = callback;
-		callback = undefined;
+		callback = data;
+		data = url;
+		url = location.pathname;
 	}
 
-	if (typeof(timeout) !== 'number') {
-		var tmp = error;
+	if (typeof(data) === 'function') {
 		error = timeout;
+		timeout = callback;
+		callback = data;
+		data = undefined;
+	}
+
+	if (typeof(timeout) === 'boolean') {
+		var tmp = clear;
+		clear = timeout;
 		timeout = tmp;
 	}
 
+	var index = url.indexOf(' ');
+	if (index === -1)
+		return COM;
+
+	var method = url.substring(0, index).toUpperCase();
+	url = url.substring(index).trim();
+
 	setTimeout(function() {
-		$.ajax($components_url(url), { type: 'DELETE', data: JSON.stringify(data), success: function(r) {
+
+		if (method === 'GET' && data)
+			url += '?' + jQuery.param(data);
+
+		var options = {};
+		options.type = method;
+
+		if (method !== 'GET') {
+			options.contentType = 'application/json';
+			options.data = JSON.stringify(data);
+		}
+
+		options.success = function(r) {
 			if (typeof(callback) === 'string')
 				return MAN.remap(callback, r);
 			if (callback)
 				callback(r);
-		}, error: function(req, status, r) {
+		};
+
+		options.error = function(req, status, r) {
 			status = status + ': ' + r;
 			COM.emit('error', r, status, url);
 			if (typeof(error) === 'string')
@@ -669,12 +610,31 @@ COM.DELETE = function(url, data, callback, timeout, error) {
 				error(r, status, url);
 			else if (typeof(callback) === 'function')
 				callback(undefined, status, url);
-		}, contentType: 'application/json' });
+		};
+
+		$.ajax($components_url(url), options);
 	}, timeout || 0);
+
 	return COM;
 };
 
-COM.GETCACHE = function(url, data, callback, expire, timeout, clear) {
+COM.AJAXCACHE = function(url, data, callback, expire, timeout, clear) {
+
+	if (typeof(url) === 'function') {
+		error = timeout;
+		timeout = callback;
+		callback = data;
+		data = url;
+		url = location.pathname;
+	}
+
+	if (typeof(data) === 'function') {
+		clear = timeout;
+		timeout = expire;
+		expire = callback;
+		callback = data;
+		data = undefined;
+	}
 
 	if (typeof(timeout) === 'boolean') {
 		var tmp = clear;
@@ -682,61 +642,36 @@ COM.GETCACHE = function(url, data, callback, expire, timeout, clear) {
 		timeout = tmp;
 	}
 
+	var index = url.indexOf(' ');
+	if (index === -1)
+		return COM;
+
+	var method = url.substring(0, index).toUpperCase();
+	var uri = url.substring(index).trim();
+
 	setTimeout(function() {
-		var value = clear ? undefined : MAN.cacherest('GET', url, data);
+		var value = clear ? undefined : MAN.cacherest(method, uri, data);
 		if (value !== undefined) {
 			if (typeof(callback) === 'string')
 				MAN.remap(callback, value);
 			else
-				callback(value);
+				callback(value, true);
 			return COM;
 		}
 
-		COM.GET(url, data, function(r, err) {
+		COM.AJAX(url, data, function(r, err) {
 			if (r === undefined)
 				r = err;
-			MAN.cacherest('GET', url, data, r, expire);
+			MAN.cacherest(method, uri, data, r, expire);
 			if (typeof(callback) === 'string')
 				MAN.remap(callback, r);
 			else
-				callback(r);
+				callback(r, false);
 		});
 	}, timeout || 1);
 
 	return COM;
-};
-
-COM.POSTCACHE = function(url, data, callback, expire, timeout, clear) {
-
-	if (typeof(timeout) === 'boolean') {
-		var tmp = clear;
-		clear = timeout;
-		timeout = tmp;
-	}
-
-	setTimeout(function() {
-		var value = clear ? undefined : MAN.cacherest('POST', url, data);
-		if (value !== undefined) {
-			if (typeof(callback) === 'string')
-				MAN.remap(callback, value);
-			else
-				callback(value);
-			return COM;
-		}
-
-		COM.POST(url, data, function(r, err) {
-			if (r === undefined)
-				r = err;
-			MAN.cacherest('POST', url, data, r, expire);
-			if (typeof(callback) === 'string')
-				MAN.remap(callback, r);
-			else
-				callback(r);
-		});
-	}, timeout || 1);
-
-	return COM;
-};
+}
 
 COM.cache = function(key, value, expire) {
 	return MAN.cachestorage(key, value, expire);
@@ -756,6 +691,14 @@ COM.removeCache = function(key, isSearching) {
 };
 
 COM.REMOVECACHE = function(method, url, data) {
+
+	var index = method.indexOf(' ');
+	if (index !== -1) {
+		data = url;
+		url = method.substring(index).trim();
+		method = method.substring(0, index);
+	}
+
 	data = JSON.stringify(data);
 	var key = HASH(method + '#' + url.replace(/\//g, '') + data).toString();
 	delete MAN.storage[key];
@@ -3186,6 +3129,14 @@ function RESET(path, timeout) {
 
 function WATCH(path, callback, init) {
 	return COM.on('watch', path, callback, init);
+}
+
+function AJAX() {
+	return COM.AJAX.apply(COM, arguments);
+}
+
+function AJAXCACHE() {
+	return COM.AJAXCACHE.apply(COM, arguments);
 }
 
 function GET(path) {
