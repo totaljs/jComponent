@@ -910,25 +910,28 @@ $.components.TEMPLATE(url, callback(template), [prepare(template)]);
 $.components.GETCACHE(url, data, [callback or path], [expire], [sleep], [clear]);
 // Sends data and caches the response. `expire` in milliseconds, `sleep` in milliseconds and
 // `clear` argument can replace the cache with a new content. Data are stored into
-// the `localStorage` according `$.components.defaults.localstorage`.
+// the `localStorage` according `$.components.defaults.localstorage`. If the callback is the
+// function then the second argument will be `fromCache {Boolean}`.
 
 
 $.components.POSTCACHE(url, data, [callback or path], [expire], [sleep], [clear]);
 // Sends data and caches the response. `expire` in milliseconds, `sleep` in milliseconds and
 // `clear` argument can replace the cache with a new content. Data are stored into
-// the `localStorage` according `$.components.defaults.localstorage`.
+// the `localStorage` according `$.components.defaults.localstorage`. If the callback is the
+// function then the second argument will be `fromCache {Boolean}`.
 
 
 $.components.REMOVECACHE(method, url, data);
-// Deletes cache (GETCACHE, POSTCACHE).
+// Deletes cache (GETCACHE, POSTCACHE or AJAXCACHE).
 
 
 // +v3.7.0
 // AJAX calls
 $.components.AJAX('METHOD URL', data, [callback or path], [sleep], , [error(response, status, type) or path]);
-// Is same as GET(), POST(), PUT(), DELETE()
+// Is same as GET(), POST(), PUT(), DELETE().
 $.components.AJAXCACHE('METHOD URL', data, [callback or path], [expire], [sleep], [clear]);
-// Is same as POSTCACHE, GETCACHE and now supports PUT, DELETE
+// Is same as POSTCACHE, GETCACHE and now supports PUT, DELETE. If the callback is the
+// function then the second argument will be `fromCache {Boolean}`.
 
 
 $.components.broadcast('.some-path, #some-component-id, some-component-name')('say')('hello');
@@ -1079,6 +1082,11 @@ if (NOTMODIFIED('model')) return; // Example
 AJAX('METHOD URL', data, [callback or path], [sleep], , [error(response, status, type) or path]);
 AJAXCACHE('METHOD URL', data, [callback or path], [expire], [sleep], [clear]);
 // Aliases for $.components.AJAX(), $.components.AJAXCACHE()
+
+// +v3.7.0
+PING('METHOD URL', [interval], [callback or path]);
+// Ping pings some URL in interval (default: 30000 (30 seconds)).
+// The function returns setInterval identificator.
 ```
 
 ## Operations

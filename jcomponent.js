@@ -3131,6 +3131,45 @@ function WATCH(path, callback, init) {
 	return COM.on('watch', path, callback, init);
 }
 
+function PING(url, timeout, callback) {
+
+	if (typeof(timeout) === 'function') {
+		var tmp = callback;
+		callback = timeout;
+		timeout = tmp;
+	}
+
+	var index = url.indexOf(' ');
+	var method = 'GET';
+
+	if (index !== -1) {
+		method = url.substring(0, index).toUpperCase();
+		url = url.substring(index).trim();
+	}
+
+	var options = {};
+	var uri = $components_url(url);
+	options.type = method;
+
+	options.success = function(r) {
+		if (typeof(callback) === 'string')
+			return MAN.remap(callback, r);
+		if (callback)
+			callback(r);
+	};
+
+	options.error = function(req, status, r) {
+		status = status + ': ' + r;
+		COM.emit('error', r, status, url);
+		if (typeof(callback) === 'function')
+			callback(undefined, status, url);
+	};
+
+	return setInterval(function() {
+		$.ajax(uri, options);
+	}, timeout || 30000);
+}
+
 function AJAX() {
 	return COM.AJAX.apply(COM, arguments);
 }
