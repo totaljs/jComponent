@@ -3150,6 +3150,7 @@ function PING(url, timeout, callback) {
 	var options = {};
 	var uri = $components_url(url);
 	options.type = method;
+	options.headers = { 'X-Ping': '1' };
 
 	options.success = function(r) {
 		if (typeof(callback) === 'string')

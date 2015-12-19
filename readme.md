@@ -1087,6 +1087,7 @@ AJAXCACHE('METHOD URL', data, [callback or path], [expire], [sleep], [clear]);
 PING('METHOD URL', [interval], [callback or path]);
 // Ping pings some URL in interval (default: 30000 (30 seconds)).
 // The function returns setInterval identificator.
+// A ping request contains custom header `X-Ping`: 1
 ```
 
 ## Operations
