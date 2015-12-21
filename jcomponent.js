@@ -544,11 +544,11 @@ COM.DELETE = function(url, data, callback, timeout, error) {
 };
 
 COM.GETCACHE = function(url, data, callback, expire, timeout, clear) {
-	return COM.AJAX('GET ' + url, data, callback, expire, timeout, clear);
+	return COM.AJAXCACHE('GET ' + url, data, callback, expire, timeout, clear);
 };
 
 COM.POSTCACHE = function(url, data, callback, expire, timeout, clear) {
-	return COM.AJAX('POST ' + url, data, callback, expire, timeout, clear);
+	return COM.AJAXCACHE('POST ' + url, data, callback, expire, timeout, clear);
 };
 
 COM.AJAX = function(url, data, callback, timeout, error) {
