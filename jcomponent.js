@@ -612,6 +612,13 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 				callback(undefined, status, url);
 		};
 
+		if (navigator.onLine !== undefined) {
+			if (!navigator.onLine) {
+				options.error(null, 503, 'You cannot access into the internet (offline).');
+				return;
+			}
+		}
+
 		$.ajax($components_url(url), options);
 	}, timeout || 0);
 
@@ -3132,6 +3139,11 @@ function WATCH(path, callback, init) {
 }
 
 function PING(url, timeout, callback) {
+
+	if (navigator.onLine !== undefined) {
+		if (!navigator.onLine)
+			return;
+	}
 
 	if (typeof(timeout) === 'function') {
 		var tmp = callback;
