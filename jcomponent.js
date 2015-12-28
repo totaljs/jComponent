@@ -74,7 +74,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v3.7.0';
+COM.version = 'v3.7.1';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -3222,7 +3222,7 @@ function NOTMODIFIED(path, value, fields) {
 	return false;
 }
 
-function FIND(value, many) {
+function FIND(value, many, noCache) {
 
 	var path;
 	var index = value.indexOf('[');
@@ -3232,25 +3232,33 @@ function FIND(value, many) {
 		value = value.substring(0, index);
 	}
 
-	var key = 'find.' + value + '.' + (many ? 0 : 1);
-	var output = MAN.cache[key];
-	if (output)
-		return output;
+	var key;
+	var output;
+
+	if (!noCache) {
+		key = 'find.' + value + '.' + (many ? 0 : 1);
+		output = MAN.cache[key];
+		if (output)
+			return output;
+	}
 
 	if (value.charCodeAt(0) === 46) {
 		output = COM.findByPath(value.substring(1), many);
-		MAN.cache[key] = output;
+		if (!noCache)
+			MAN.cache[key] = output;
 		return output;
 	}
 
 	if (value.charCodeAt(0) === 35) {
 		output = COM.findById(value.substring(1), path, many);
-		MAN.cache[key] = output;
+		if (!noCache)
+			MAN.cache[key] = output;
 		return output;
 	}
 
 	output = COM.findByName(value, path, many);
-	MAN.cache[key] = output;
+	if (!noCache)
+		MAN.cache[key] = output;
 	return output;
 }
 
@@ -3273,7 +3281,7 @@ function BROADCAST(selector, name, caller) {
 
 	for (var i = 0, length = selector.length; i < length; i++) {
 		var item = selector[i].trim();
-		var com = FIND(item);
+		var com = FIND(item, false, true);
 		if (!com)
 			continue;
 		components.push(com);
@@ -3788,7 +3796,6 @@ String.prototype.parseDate = function() {
 	return new Date(parsed[0], parsed[1] - 1, parsed[2], parsed[3], parsed[4], parsed[5]);
 };
 
-/*
 Array.prototype.scalar = function(type, key) {
 
 	var output;
@@ -3853,7 +3860,6 @@ Array.prototype.scalar = function(type, key) {
 
 	return output;
 };
-*/
 
 function FN(exp) {
 	var index = exp.indexOf('=>');
