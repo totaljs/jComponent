@@ -3926,6 +3926,13 @@ Array.prototype.scalar = function(type, key) {
 			val = val.getTime();
 		}
 
+		if (type === 'median') {
+			if (!output)
+				output = [];
+			output.push(val);
+			continue;
+		}
+
 		if (type === 'sum' || isAvg) {
 			if (!output)
 				output = val;
@@ -3962,6 +3969,14 @@ Array.prototype.scalar = function(type, key) {
 	if (isAvg) {
 		output = output / this.length;
 		return isDate ? new Date(output) : output;
+	}
+
+	if (type === 'median') {
+		output.sort(function(a, b) {
+			return a - b;
+		});
+		var half = Math.floor(output.length / 2);
+		output = output.length % 2 ? output[half] : (output[half - 1] + output[half]) / 2.0;
 	}
 
 	if (isDate) {

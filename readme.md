@@ -1338,7 +1338,8 @@ var a = ['', 'A', 'B', '', 'C'].trim();
 
 
 // Array.prototype.findIndex(fn);
-// Array.prototype.findIndex(name, value);
+// or
+// Array.prototype.findIndex(property, value);
 var b = [{ name: 'Peter' }, { name: 'Jana' }];
 var index1 = b.findIndex('name', 'Jana');
 var index2 = b.findIndex(function(obj) {
@@ -1347,12 +1348,31 @@ var index2 = b.findIndex(function(obj) {
 });
 
 // Array.prototype.findItem(fn);
-// Array.prototype.findItem(name, value);
-// is same as Array.findIndex but returns item/element or undefined
+// or
+// Array.prototype.findItem(property, value);
 
 // Array.prototype.remove(fn);
-// Array.prototype.remove(name, value);
-// is same as Array.findIndex but removes values
+// or
+// Array.prototype.remove(property, value);
+
+// Array.prototype.scalar(type);
+// or
+// Array.prototype.scalar(type, property);
+var arr = [0, 3, 4, 5, 6];
+console.log(arr.scalar('max'));
+console.log(arr.scalar('min'));
+console.log(arr.scalar('sum'));
+console.log(arr.scalar('avg'));
+console.log(arr.scalar('range')); // { min: Number, max: Number }
+console.log(arr.scalar('median'));
+
+arr = [{ age: 30 }, { age: 25 }, { age: 40 }, { age: 18 }];
+console.log(arr.scalar('max', 'age'));
+console.log(arr.scalar('min', 'age'));
+console.log(arr.scalar('sum', 'age'));
+console.log(arr.scalar('avg', 'age'));
+console.log(arr.scalar('range', 'age')); // { min: Number, max: Number }
+console.log(arr.scalar('median', 'age'));
 ```
 
 ### Arrow function as string
