@@ -192,7 +192,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
 <element data-component-value="" />
 <!--
-    This is an initial value for the component or scope. Value is evaluated as JavaScript.
+    This is an initial value (NEW: and default value) for the component or scope. Value is evaluated as JavaScript.
 
     ::: E.g.
     <element data-component-scope="?" data-component-value="{ name: 'jComponent', tags: ['node.js', 'jComponent', 'total.js'] }">
@@ -207,6 +207,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     ...
     </element>
 
+    Look into `DEFAULT()`, `component.default()` or `$.components.default()` functions.
 -->
 ```
 
@@ -388,6 +389,7 @@ COMPONENT('my-component-name', function() {
         // type === 0 : init
         // type === 1 : by developer
         // type === 2 : by input
+        // type === 2 : by default
 
         // who  === 1 : valid
         // who  === 2 : dirty
@@ -416,6 +418,7 @@ COMPONENT('my-component-name', function() {
         // 0 : init
         // 1 : by developer
         // 2 : by input
+        // 3 : default
 
         // Example:
         instance.element.html(JSON.stringify(value));
@@ -515,6 +518,11 @@ COMPONENT('my-component-name', function() {
     instance.reset();
     // Resets `instance.dirty(false)` and `instance.valid(false)`.
 
+    
+    instance.default([reset]);
+    // Sets a default value from [data-component-value]. [reset] attribute
+    // resets the component state (default: true).
+
 
     instance.change([boolean]);
     // Contains `instance.dirty()` and automatically refresh all watchers.
@@ -544,11 +552,12 @@ COMPONENT('my-component-name', function() {
 
     instance.broadcast('say')('hello');
     instance.broadcast('set')('new value for all dependencies');
-    instance.broadcast(method_name);
+    instance.broadcast('*', 'set')('new value for all nested components');
+    instance.broadcast([selector], method_name);
     // This method executes [method_name] in all dependencies and
     // returns function for additional arguments. You can get a caller object
     // in the called components via `component.caller`.
-
+    
 
     instance.evaluate([path], expression, [path_is_value]);
     console.log(instance.evaluate('value.age > 18')); // example
@@ -592,13 +601,15 @@ COMPONENT('my-component-name', function() {
     instance.watch(function(path, value, type) { // example
         // type === 0 : init
         // type === 1 : by developer
-        // type === 2 : by input        
+        // type === 2 : by input
+        // type === 3 : by default
         // watch for changes
     });
     instance.watch('some.other.path', function(path, value, type) { // example
         // type === 0 : init
         // type === 1 : by developer
         // type === 2 : by input
+        // type === 3 : by default
     });
     // This delegate watches all changes according the model.
 });
@@ -628,6 +639,7 @@ COMPONENT('my-component-name', function() {
         // type === 0 : init
         // type === 1 : by developer
         // type === 2 : by input
+        // type === 3 : by default
     });
 
     // Watchs all changes
@@ -635,7 +647,7 @@ COMPONENT('my-component-name', function() {
         // type === 0 : init
         // type === 1 : by developer
         // type === 2 : by input
-
+        // type === 3 : by default
     }, true); // true === evaluates now
 
     // OTHER
@@ -938,7 +950,9 @@ $.components.broadcast('.some-path, #some-component-id, some-component-name')('s
 $.components.broadcast('.some-path, #some-component-id, some-component-name')('set')('new value');
 $.components.broadcast(['.path', '#id', 'name'], 'set')('new value');
 $.components.broadcast(selector, method_name, [caller]);
-// Executes the method in all components by selector.
+// Executes the method in all components by selector. [selector] can be jQuery
+// element or jComponent --> then the method searchs all nested components.
+// IMPORTANT: selector can be jQuery element or jComponent.
 
 
 $.components.schema(name, [declaration]);
@@ -980,6 +994,7 @@ $.components.on('watch', 'path.*', function(path, value, type) {
     // type === 0 : init
     // type === 1 : by developer
     // type === 2 : by input
+    // type === 3 : by default
     // Watchs all changes according the path.
 });
 
@@ -1039,6 +1054,10 @@ UPDATE(path, [sleep], [reset]);
 
 NOTIFY(path1, path2, ...);
 // Notifies components setter according the path (only fixed path).
+
+DEFAULT(path, [timeout], [reset]);
+// The method sets to all components start with the path an initial value from
+// [data-component-value] attribute.
 
 ON();
 // Alias for $.components.on();

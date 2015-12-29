@@ -74,7 +74,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v3.7.1';
+COM.version = 'v3.8.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -107,7 +107,7 @@ COM.compile = function(container) {
 	var els = container ? container.find(COM_ATTR) : $(COM_ATTR);
 	var skip = false;
 
-	if (els.length === 0 && !container) {
+	if (!els.length && !container) {
 		$components_ready();
 		return;
 	}
@@ -198,8 +198,11 @@ COM.compile = function(container) {
 				if (!scopes[i].$processed) {
 					scopes[i].$processed = true;
 					var tmp = scopes[i].getAttribute(COM_ATTR_V);
-					if (tmp)
-						MAN.set(p, new Function('return ' + tmp)());
+					if (tmp) {
+						var fn = new Function('return ' + tmp);
+						MAN.defaults['#' + HASH(p)] = fn; // store by path (DEFAULT() --> can reset scope object)
+						MAN.set(p, fn());
+					}
 				}
 
 				if (obj.path === '?')
@@ -284,7 +287,7 @@ COM.compile = function(container) {
 		return;
 	}
 
-	if (MAN.toggle.length === 0) {
+	if (!MAN.toggle.length) {
 		MAN.next();
 		return;
 	}
@@ -312,7 +315,7 @@ COM.$inject = function() {
 		arr.push({ element: el, cb: el.attr(COM_ATTR_I), path: el.attr(COM_ATTR_P), url: el.attr(COM_ATTR_U), toggle: (el.attr(COM_ATTR_C) || '').split(' ') });
 	});
 
-	if (arr.length === 0)
+	if (!arr.length)
 		return;
 
 	component_async(arr, function(item, next) {
@@ -729,7 +732,7 @@ function $components_url(url) {
 	if (COM.$language)
 		builder.push('language=' + encodeURIComponent(COM.$language));
 
-	if (builder.length === 0)
+	if (!builder.length)
 		return url;
 
 	if (index !== -1)
@@ -1281,10 +1284,10 @@ COM.nested = function(element, selector, type, value) {
 				nested.push(item);
 		}
 
-		if (nested.length === 0)
-			selector = null;
-		else
+		if (nested.length)
 			selector = nested;
+		else
+			selector = null;
 	}
 
 	var isEach = typeof(type) === 'function';
@@ -1618,7 +1621,7 @@ COM.blocked = function(name, timeout, callback) {
 // 4. update
 // 5. set
 COM.state = function(arr, type, who) {
-	if (!arr || arr.length === 0)
+	if (!arr || !arr.length)
 		return;
 	setTimeout(function() {
 		for (var i = 0, length = arr.length; i < length; i++)
@@ -1628,6 +1631,76 @@ COM.state = function(arr, type, who) {
 
 COM.broadcast = function(selector, name, caller) {
 	return BROADCAST(selector, name, caller);
+};
+
+COM.default = function(path, timeout, onlyComponent, reset) {
+
+	if (timeout > 0) {
+		setTimeout(function() {
+			COM.default(path, 0, onlyComponent, reset);
+		}, timeout);
+		return COM;
+	}
+
+	if (typeof(onlyComponent) === 'boolean') {
+		reset = onlyComponent;
+		onlyComponent = null;
+	}
+
+	if (reset === undefined)
+		reset = true;
+
+	// Reset scope
+	var key = path.replace(/\.\*$/, '');
+	var fn = MAN.defaults['#' + HASH(key)];
+	if (fn)
+		MAN.set(key, fn());
+
+	var arr = [];
+
+	COM.each(function(obj) {
+
+		if (obj.disabled)
+			return;
+
+		if (obj.state)
+			arr.push(obj);
+
+		if (onlyComponent && onlyComponent._id !== obj._id)
+			return;
+
+		if (obj.$default && obj.path)
+			obj.set(obj.path, obj.$default(), 3);
+
+		if (!reset)
+			return;
+
+		obj.element.find(COM_DATA_BIND_SELECTOR).each(function() {
+			delete this.$value;
+			delete this.$value2;
+		});
+
+		if (!obj.$dirty_disabled)
+			obj.$dirty = true;
+
+		if (!obj.$valid_disabled) {
+			obj.$valid = true;
+			obj.$validate = false;
+			if (obj.validate)
+				obj.$valid = obj.validate(obj.get());
+		}
+
+	}, path);
+
+	COM.$emit('default', path);
+
+	if (!reset)
+		return COM;
+
+	MAN.clear('valid', 'dirty');
+	COM.state(arr, 3, 3);
+	COM.$emit('reset', path);
+	return COM;
 };
 
 COM.reset = function(path, timeout, onlyComponent) {
@@ -2063,8 +2136,15 @@ COMP.prototype.readonly = function() {
 	return this;
 };
 
-COMP.prototype.broadcast = function(name) {
-	return BROADCAST(this.dependencies, name, this);
+COMP.prototype.broadcast = function(selector, name) {
+
+	if (name === undefined) {
+		name = selector;
+		selector = this.dependencies;
+	} else if (selector === '*')
+		selector = this;
+
+	return BROADCAST(selector, name, this);
 };
 
 COMP.prototype.noValid = function(val) {
@@ -2208,6 +2288,11 @@ COMP.prototype.dirty = function(value, noEmit) {
 
 COMP.prototype.reset = function() {
 	COM.reset(this.path, 0, this);
+	return this;
+};
+
+COMP.prototype.default = function(reset) {
+	COM.reset(this.path, 0, this, reset);
 	return this;
 };
 
@@ -2453,6 +2538,7 @@ function CMAN() {
 	this.controllers = {};
 	this.initializers = {};
 	this.waits = {};
+	this.defaults = {};
 }
 
 MAN.cacherest = function(method, url, params, value, expire) {
@@ -2514,15 +2600,20 @@ MAN.prepare = function(obj) {
 
 	var value = obj.get();
 	var el = obj.element;
+	var tmp;
 
 	if (obj.setter) {
 		if (!obj.$ready) {
 			obj.$ready = true;
 
 			if (value === undefined) {
-				var tmp = obj.attr(COM_ATTR_V);
-				if (tmp)
-					value = new Function('return ' + tmp)();
+				tmp = obj.attr(COM_ATTR_V);
+				if (tmp) {
+					if (!MAN.defaults[tmp])
+						MAN.defaults[tmp] = new Function('return ' + tmp);
+					obj.$default = MAN.defaults[tmp];
+					value = obj.$default();
+				}
 			}
 
 			obj.setter(value, obj.path, 0);
@@ -2594,7 +2685,7 @@ MAN.clear = function() {
 
 	var self = this;
 
-	if (arguments.length === 0) {
+	if (!arguments.length) {
 		self.cache = {};
 		return self;
 	}
@@ -2804,9 +2895,9 @@ MAN.cleaner = function() {
 				item.context = null;
 				self.events[ak][bk].splice(index - 1, 1);
 
-				if (self.events[ak][bk].length === 0) {
+				if (!self.events[ak][bk].length) {
 					delete self.events[ak][bk];
-					if (Object.keys(self.events[ak]).length === 0)
+					if (!Object.keys(self.events[ak]).length)
 						delete self.events[ak];
 				}
 
@@ -3134,6 +3225,10 @@ function RESET(path, timeout) {
 	return COM.reset(path, timeout);
 }
 
+function DEFAULT(path, timeout, reset) {
+	return COM.default(path, timeout, null, reset);
+}
+
 function WATCH(path, callback, init) {
 	return COM.on('watch', path, callback, init);
 }
@@ -3264,6 +3359,24 @@ function FIND(value, many, noCache) {
 
 function BROADCAST(selector, name, caller) {
 
+	if (typeof(selector) === 'object') {
+
+		if (selector.element)
+			selector = selector.element;
+		else
+			selector = $(selector);
+
+		var components = [];
+
+		selector.find(COM_ATTR).each(function() {
+			var com = $(this).data(COM_ATTR);
+			if (com)
+				components.push(com);
+		});
+
+		return $BROADCAST_EVAL(components, name, caller);
+	}
+
 	var key = 'broadcast=';
 
 	if (typeof(selector) === 'string') {
@@ -3281,10 +3394,10 @@ function BROADCAST(selector, name, caller) {
 
 	for (var i = 0, length = selector.length; i < length; i++) {
 		var item = selector[i].trim();
-		var com = FIND(item, false, true);
+		var com = FIND(item, true, true);
 		if (!com)
 			continue;
-		components.push(com);
+		components.push.apply(components, com);
 	}
 
 	MAN.cache[key] = components;
@@ -3378,7 +3491,7 @@ function HASH(s) {
 	if (typeof(s) !== 'string')
 		s = JSON.stringify(s);
 	var hash = 0, i, char;
-	if (s.length === 0)
+	if (!s.length)
 		return hash;
 	var l = s.length;
 	for (i = 0; i < l; i++) {
