@@ -2292,7 +2292,7 @@ COMP.prototype.reset = function() {
 };
 
 COMP.prototype.default = function(reset) {
-	COM.reset(this.path, 0, this, reset);
+	COM.default(this.path, 0, this, reset);
 	return this;
 };
 
