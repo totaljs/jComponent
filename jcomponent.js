@@ -74,7 +74,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v3.8.1';
+COM.version = 'v3.8.2';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -2614,6 +2614,7 @@ MAN.prepare = function(obj) {
 						MAN.defaults[tmp] = new Function('return ' + tmp);
 					obj.$default = MAN.defaults[tmp];
 					value = obj.$default();
+					MAN.set(obj.path, value);
 				}
 			}
 
