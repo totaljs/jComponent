@@ -74,7 +74,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v3.8.2';
+COM.version = 'v3.9.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -2291,6 +2291,13 @@ COMP.prototype.reset = function() {
 	return this;
 };
 
+COMP.prototype.setDefault = function(value) {
+	this.$default = function() {
+		return value;
+	};
+	return this;
+};
+
 COMP.prototype.default = function(reset) {
 	COM.default(this.path, 0, this, reset);
 	return this;
@@ -3319,7 +3326,32 @@ function NOTMODIFIED(path, value, fields) {
 	return false;
 }
 
-function FIND(value, many, noCache) {
+function FIND(value, many, noCache, callback) {
+
+	var isWaiting = false;
+
+	if (typeof(many) === 'function') {
+		isWaiting = true;
+		callback = many;
+		many = undefined;
+		noCache = undefined;
+	} else if (typeof(noCache) === 'function') {
+		isWaiting = true;
+		callback = noCache;
+		noCache = undefined;
+	}
+
+	if (isWaiting) {
+		WAIT(function() {
+			var val = FIND(value, many, noCache);
+			if (val instanceof Array)
+				return val.length > 0;
+			return val ? true : false;
+		}, function() {
+			callback(FIND(value, many));
+		});
+		return;
+	}
 
 	var path;
 	var index = value.indexOf('[');

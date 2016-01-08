@@ -1057,7 +1057,7 @@ NOTIFY(path1, path2, ...);
 
 DEFAULT(path, [timeout], [reset]);
 // The method sets to all components start with the path an initial value from
-// [data-component-value] attribute.
+// [data-component-value] attribute. [reset] by default: `true`.
 
 ON();
 // Alias for $.components.on();
@@ -1083,6 +1083,14 @@ FIND('.data-component-path') // Example: Returns one component.
 FIND('#data-component–id[data-component-path]') // Example: Returns one component.
 // Finds the components. When the value starts with `#` then the library will be
 // search components according the `data-component-id`;
+
+// +3.9.0
+// FIND WAITING FOR
+// The component might not exist.
+// The method waits for it.
+FIND('data-component', function(component) {
+    console.log(component);
+});
 
 BLOCKED();
 // Alias for $.components.blocked();
