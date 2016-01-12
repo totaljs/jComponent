@@ -642,8 +642,9 @@ COM.AJAXCACHE = function(url, data, callback, expire, timeout, clear) {
 
 	var td = typeof(data);
 	if (td === 'function' || td === 'string') {
-		error = timeout;
-		timeout = callback;
+		clear = timeout;
+		timeout = expire;
+		expire = callback;
 		callback = data;
 		data = undefined;
 	}
