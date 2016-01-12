@@ -564,7 +564,8 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 		url = location.pathname;
 	}
 
-	if (typeof(data) === 'function') {
+	var td = typeof(data);
+	if (td === 'function' || td === 'string') {
 		error = timeout;
 		timeout = callback;
 		callback = data;
@@ -622,6 +623,7 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 			}
 		}
 
+
 		$.ajax($components_url(url), options);
 	}, timeout || 0);
 
@@ -638,10 +640,10 @@ COM.AJAXCACHE = function(url, data, callback, expire, timeout, clear) {
 		url = location.pathname;
 	}
 
-	if (typeof(data) === 'function') {
-		clear = timeout;
-		timeout = expire;
-		expire = callback;
+	var td = typeof(data);
+	if (td === 'function' || td === 'string') {
+		error = timeout;
+		timeout = callback;
 		callback = data;
 		data = undefined;
 	}
