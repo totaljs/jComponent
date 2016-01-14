@@ -2493,9 +2493,6 @@ function component(type, declaration) {
 
 function COMPONENT(type, declaration) {
 
-	if (MAN.register[type])
-		return;
-
 	var shared = {};
 
 	var fn = function(el) {
