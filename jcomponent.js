@@ -3230,6 +3230,10 @@ function PUSH(path, value, timeout, reset) {
 	}, timeout);
 }
 
+function INVALID(path) {
+	$.components.invalid(path);
+}
+
 function RESET(path, timeout) {
 	return COM.reset(path, timeout);
 }

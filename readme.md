@@ -1092,8 +1092,11 @@ FIND('data-component', function(component) {
     console.log(component);
 });
 
-BLOCKED();
+BLOCKED(name, timeout, [callback]);
 // Alias for $.components.blocked();
+
+INVALID(path);
+// Alias for $.components.invalid();
 
 EVALUATE(path, expression, [path_is_value]);
 // Alias for $.components.evaluate();
