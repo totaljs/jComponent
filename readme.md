@@ -744,7 +744,7 @@ $.components.extend('some.model', { age: 30, name: 'Peter' }); // Example
 // the state (dirty, validation), default: `false`.
 
 
-$.components.get(path);
+$.components.get(path, [scope]); // default scope is `window`
 $.components.get('some.model.age'); // Example
 $.components.get('some.model.tags'); // Example
 // Gets the value from the model.
@@ -877,6 +877,10 @@ $.components.emit(name, [arg1], [arg2]);
 $.components.parseQuery([querystring]);
 $.components.parseQuery(); // Example: Returns parsed values from the current URL address.
 // Parsers query string (from URL address) and returns {Object}.
+
+
+$.components.parseCookie();
+// Parsers `document.cookie` and returns {Object}.
 
 
 $.components.POST(url, data, [callback or path], [sleep], [error(response, status, type) or path]);

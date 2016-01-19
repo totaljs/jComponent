@@ -413,6 +413,21 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 	return COM;
 };
 
+COM.parseCookie = COM.parseCookies = function() {
+	var arr = document.cookie.split(';');
+	var obj = {};
+
+	for (var i = 0, length = arr.length; i < length; i++) {
+		var line = arr[i].trim();
+		var index = line.indexOf('=');
+		if (index === -1)
+			continue;
+		obj[line.substring(0, index)] = decodeURIComponent(line.substring(index + 1));
+	}
+
+	return obj;
+};
+
 COM.parseQuery = function(value) {
 
 	if (!value)
@@ -1499,8 +1514,8 @@ COM.clean = function() {
 	return COM;
 }
 
-COM.get = function(path) {
-	return MAN.get(path);
+COM.get = function(path, scope) {
+	return MAN.get(path, scope);
 };
 
 COM.remove = function(path) {
@@ -2739,7 +2754,7 @@ MAN.isOperation = function(name) {
  * @param {String} path
  * @return {Object}
  */
-MAN.get = function(path) {
+MAN.get = function(path, scope) {
 	if (path.charCodeAt(0) === 35) {
 		var op = OPERATION(path);
 		if (op)
@@ -2750,7 +2765,7 @@ MAN.get = function(path) {
 	var cachekey = '=' + path;
 	var self = this;
 	if (self.temp[cachekey])
-		return self.temp[cachekey](window);
+		return self.temp[cachekey](scope || window);
 
 	// @TODO: Exception?
 	if (path.indexOf('?') !== -1)
@@ -2761,13 +2776,17 @@ MAN.get = function(path) {
 	var p = '';
 
 	for (var i = 0, length = arr.length - 1; i < length; i++) {
+		var tmp = arr[i];
+		var index = tmp.lastIndexOf('[');
+		if (index !== -1)
+			builder.push('if(!w.' + (p ? p + '.' : '') + tmp.substring(0, index) + ')return');
 		p += (p !== '' ? '.' : '') + arr[i];
 		builder.push('if(!w.' + p + ')return');
 	}
 
 	var fn = (new Function('w', builder.join(';') + ';return w.' + path.replace(/\'/, '\'')));
 	self.temp[cachekey] = fn;
-	return fn(window);
+	return fn(scope || window);
 };
 
 /**
@@ -3299,8 +3318,8 @@ function AJAXCACHE() {
 	return COM.AJAXCACHE.apply(COM, arguments);
 }
 
-function GET(path) {
-	return COM.get(path);
+function GET(path, scope) {
+	return COM.get(path, scope);
 }
 
 function CACHE(key, value, expire) {
