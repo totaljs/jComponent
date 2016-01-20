@@ -949,6 +949,9 @@ $.components.AJAXCACHE('METHOD URL', data, [callback or path], [expire], [sleep]
 // Is same as POSTCACHE, GETCACHE and now supports PUT, DELETE. If the callback is the
 // function then the second argument will be `fromCache {Boolean}`.
 
+// +v3.9.1 supports CORS with credentials
+// CORS by default is enabled if the URL starts with `http://` or `https://` and credentials are
+// added when the METHOD contains `!`, e.g. `!GET https://www.google.com`.
 
 $.components.broadcast('.some-path, #some-component-id, some-component-name')('say')('hello');
 $.components.broadcast('.some-path, #some-component-id, some-component-name')('set')('new value');
