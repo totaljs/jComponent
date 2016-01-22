@@ -3727,7 +3727,7 @@ Array.prototype.trim = function() {
 	var self = this;
 	var output = [];
 	for (var i = 0, length = self.length; i < length; i++) {
-		if (typeof(self[i]) === STRING)
+		if (typeof(self[i]) === 'string')
 			self[i] = self[i].trim();
 		if (self[i])
 			output.push(self[i]);
