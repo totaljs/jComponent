@@ -1548,14 +1548,17 @@ arr.async({ counter: 0 }, function(err, response) {
 ## Reserved keywords
 
 ```javascript
-COM; // shortcut for $.components
-MAN; // shortcut for the Component Manager
+jC;       // shortcut for $.components
+COM;      // shortcut for $.components
+MAN;      // shortcut for the Component Manager
 
 // jcta.min.js:
 Tangular; // shortcut for Tangular
+Ta;       // shortcut for Tangular
 
 // jctajr.min.js:
 jRouting; // shortcut for jRouting
+jR;       // shortcut for jRouting
 ```
 
 ## Contact

@@ -38,7 +38,7 @@ $.fn.components = function(fn) {
 };
 
 // Because of file size
-window.COM = $.components = function(container) {
+window.COM = window.jC = $.components = function(container) {
 	if (MAN.isCompiling)
 		return COM;
 	return COM.compile(container);
@@ -74,7 +74,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v3.9.1';
+COM.version = 'v3.9.2';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
