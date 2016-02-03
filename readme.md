@@ -2,7 +2,7 @@
 # jQuery component library
 
 - [Gitter - Chat for GitHub](https://gitter.im/petersirka/jComponent)
-- Current version: `v3.8.2`
+- Current version: `v3.9.2`
 - `>= jQuery +1.7`
 - `>= IE9`
 - similar functionality like directives in Angular.js
@@ -322,7 +322,7 @@ COMPONENT('my-component-name', function() {
     instance.trim;
     // This property affects trimming of string values and works only with [data-component-bind]
     // and default `.instance.setter`. Default value: true.
-    });
+});
 ```
 
 ### Delegates
@@ -530,7 +530,7 @@ COMPONENT('my-component-name', function() {
 
 
     instance.isInvalid();
-    // Returns `{Booelan}` if the component is not valid.
+    // Returns `{Booelan}` returns `fasle` if the component is not valid.
 
 
     instance.invalid();
