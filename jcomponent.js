@@ -74,7 +74,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v3.9.2';
+COM.version = 'v3.9.3';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -127,7 +127,6 @@ COM.compile = function(container) {
 			return;
 
 		if (MAN.initializers['$ST_' + name]) {
-			// singleton
 			el.attr(COM_ATTR_R, true);
 			el.remove();
 			return;
@@ -180,6 +179,9 @@ COM.compile = function(container) {
 
 		if (!obj.$noscope)
 			obj.$noscope = el.attr('data-component-noscope') === 'true';
+
+		if (el.attr('data-component-singleton') === 'true')
+			MAN.initializers['$ST_' + name] = true;
 
 		var code = obj.path ? obj.path.charCodeAt(0) : 0;
 		if (!obj.$noscope && scopes_length && obj.path && code !== 33 && code !== 35) {
@@ -242,10 +244,22 @@ COM.compile = function(container) {
 			};
 
 			var c = template.substring(0, 1);
-			if (c === '.' || c === '#' || c === '[')
+			if (c === '.' || c === '#' || c === '[') {
 				fn($(c).html());
-			else
-				$.get($components_url(template), fn);
+				return;
+			}
+
+			var k = 'TE' + HASH(template);
+			var a = MAN.temp[k];
+			if (a) {
+				fn(a);
+				return;
+			}
+
+			$.get($components_url(template), function(response) {
+				MAN.temp[k] = response;
+				fn(response);
+			});
 			return;
 		}
 

@@ -2,7 +2,7 @@
 # jQuery component library
 
 - [Gitter - Chat for GitHub](https://gitter.im/petersirka/jComponent)
-- Current version: `v3.8.2`
+- Current version: `v3.9.3`
 - `>= jQuery +1.7`
 - `>= IE9`
 - similar functionality like directives in Angular.js
@@ -40,11 +40,7 @@ jComponent offers 3 libraries for development rich web applications:
 
 If you want to use jComponent on your presentation website - use `jcomponent.min.js` only. If you create some rich web application, then use `jcta.min.js` because contains template engine and for __SPA__ use `jctajr.min.js` because contains template engine and HTML 5 history API.
 
-The component doesn't know scopes. Only the one scope with the components work is the browser `window.` scope. So each path in the form of `some.path.to.something` is automatically routed to `window.some.path.to.something`. The library automatically creates values according the binding path.
-
-__IMPORTANT__:
-
-`jcta.min.js` and `jctajr.min.js` contain `Date.prototype.format(format)`, `Number.prototype.format(decimals, [separator], [separatorDecimal])` and helper for Tangular `format` for date/number formatting e.g. `{{ date | format('dd.MM.yyyy')` or `{{ price | format(2) }} EUR`.
+The components work is the browser `window.` scope. So each path in the form of `some.path.to.something` is automatically routed into `window.some.path.to.something`. The library automatically creates values according the binding path.
 
 ***
 
@@ -96,14 +92,14 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 <element data-component-path="" />
 <!--
     It's not required. The attribute contains the binding path for binding values between
-    component and model, e.g. `form.name` (is binded to `window.form.name`) or
+    the component and a model, e.g. `form.name` (is binded to `window.form.name`) or
     `user.age` (is binded to `window.user.age`).
 -->
 
 <element data-component-type="" />
 <!--
-    It's not required. The attribute can contain a type of the component. You must define
-    own types e.g. `number`, `currency` or `date`.
+    It's not required. The attribute can contain a type of the component and you must define
+    own types manually e.g. `date`. jComponent internally supports `number` and `currency` type, so each string value is automatically converted into the `Number`.
 -->
 
 <element data-component-id="" />
@@ -120,7 +116,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 <element data-component-import="" />
 <!--
     Must contain a valid URL address and the element must contatin data-component="" attribute. This attribute download HTML or JS content and evaluates its. E.g. jComponent downloads
-    the content only one but the content can be used in many components.
+    the content !!! only onetime !!! but the content can be used in many components.
 
     E.g.:
 
@@ -135,15 +131,16 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
 <element data-component-init="" />
 <!--
-    It's not required and must contain name of function which is executed when the
+    It's not required and must contain name of the function which is executed when the
     component is ready. `function init(component) {}`.
 -->
 
 <element data-component-template="" />
 <!--
-    It's not required and can contain only URL address to component template. The
+    It's not required and can contain only URL address to the component template. The
     library automatically downloads the content and sends it to the component (into
-    the `make` delegate).
+    the `make` delegate). IMPORTANT: uf the value starts with `.` or `#` or contains `[` then
+    jComponent uses DOM selector and the HTML of the selector will be the template.
 -->
 
 <element data-component-dependencies="" />
@@ -158,7 +155,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     A scope attribute updates the `data-component-path` in all nested components.
     With the scope works `data-component-init` and `data-component-class`.
     If the scope value `data-component-scope` is `?` then the `data-component-path`
-    is generated automatically. IMPORTANT: in this element MUST CONTAIN some jComponents,
+    is generated automatically. IMPORTANT: this element MUST CONTAIN some jComponents,
     otherwise the scope won't be initialized.
 
     ::: E.g.:
@@ -190,6 +187,11 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     </element>
 -->
 
+<element data-component-noscope="true" />
+<!--
+    Disables main scope for this component.
+-->
+
 <element data-component-value="" />
 <!--
     This is an initial value (NEW: and default value) for the component or scope. Value is evaluated as JavaScript.
@@ -208,6 +210,18 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     </element>
 
     Look into `DEFAULT()`, `component.default()` or `$.components.default()` functions.
+-->
+
+<element data-component-controller="CONTROLLER_NAME">
+<!--
+   +v3.9.0 - automatically calls the controller initialization. Look into the
+   controller section in this manual.
+-->
+
+<element data-component-singleton="true" />
+<!--
+   +v3.9.3 - sets the current component as singleton. Singleton can be set manually in
+   the component instance like this: `instance.singleton()`.
 -->
 ```
 
@@ -1018,7 +1032,7 @@ $.components.on('@data-component', function(component) {
 });
 
 $.components.on('destroy', function(name, component) {
-    // Is emitted before is some component destroyed.
+    // Is emitted before is a component destroyed.
 });
 ```
 
@@ -1165,7 +1179,7 @@ if (err)
 
 ## Operations
 
-Operations are predefined functions. The operation can be executed automatically in some component attribute e.g. `data-component-init="#operation-name"`.
+Operations are predefined functions. The operation can be executed automatically in the component attribute e.g. `data-component-init="#operation-name"`.
 
 ```javascript
 OPERATION(name, fn);
