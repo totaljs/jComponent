@@ -3,7 +3,6 @@ var COM_DATA_BIND_SELECTOR = 'input[data-component-bind],textarea[data-component
 var COM_ATTR = '[data-component]';
 var COM_ATTR_U = 'data-component-url';
 var COM_ATTR_URL = '[' + COM_ATTR_U + ']';
-var COM_ATTR_B = 'data-component-bind';
 var COM_ATTR_D = 'data-component-dependencies';
 var COM_ATTR_P = 'data-component-path';
 var COM_ATTR_T = 'data-component-template';
@@ -3053,26 +3052,19 @@ MAN.$$ = function() {
  * Default component
  */
 COMPONENT('', function() {
-	this.noValid();
-	this.noDirty();
-	this.getter = null;
-	this.make = function() {
-		var type = this.element.get(0).tagName;
-
-		if (type !== 'INPUT' && type !== 'SELECT' && type !== 'TEXTAREA') {
-			this.getter = null;
-			this.setter = function(value) {
-				value = this.formatter(value, true);
-				this.element.html(value);
-			};
-			return;
-		}
-
-		if (!this.element.attr(COM_ATTR_B))
-			this.element.attr(COM_ATTR_B, this.path);
-
-		this.element.$component = this;
-	};
+	var self = this;
+	var type = self.element.get(0).tagName;
+	if (type !== 'INPUT' && type !== 'SELECT' && type !== 'TEXTAREA') {
+		self.readonly();
+		self.setter = function(value) {
+			value = self.formatter(value, true);
+			self.element.html(value);
+		};
+	} else {
+		if (!self.element.attr(COM_ATTR_B))
+			self.element.attr(COM_ATTR_B, '');
+		self.element.$component = self;
+	}
 });
 
 setInterval(function() {
@@ -3089,7 +3081,7 @@ $(document).ready(function() {
 		MAN.$$();
 	}
 
-	$(document).on('change keypress keydown blur', 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]', function(e) {
+	$(document).on('change keypress keydown blur', COM_DATA_BIND_SELECTOR, function(e) {
 
 		var self = this;
 
