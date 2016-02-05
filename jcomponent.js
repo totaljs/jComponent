@@ -3061,8 +3061,16 @@ COMPONENT('', function() {
 			self.element.html(value);
 		};
 	} else {
-		if (!self.element.attr(COM_ATTR_B))
-			self.element.attr(COM_ATTR_B, '');
+		var a = 'data-component-bind';
+		if (!self.element.attr(a))
+			self.element.attr(a, '1');
+		if (self.element.attr('required')) {
+			self.validate = function(value, is) {
+				if (is)
+					return true;
+				return value ? true : false;
+			};
+		}
 		self.element.$component = self;
 	}
 });
