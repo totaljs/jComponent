@@ -336,7 +336,7 @@ COMPONENT('my-component-name', function() {
     instance.trim;
     // This property affects trimming of string values and works only with [data-component-bind]
     // and default `.instance.setter`. Default value: true.
-    });
+});
 ```
 
 ### Delegates
@@ -544,7 +544,7 @@ COMPONENT('my-component-name', function() {
 
 
     instance.isInvalid();
-    // Returns `{Booelan}` if the component is not valid.
+    // Returns `{Booelan}` returns `fasle` if the component is not valid.
 
 
     instance.invalid();
