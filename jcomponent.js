@@ -73,7 +73,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v3.9.3';
+COM.version = 'v4.0.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -819,9 +819,13 @@ function $components_ready() {
 			// Applies classes
 			var cls = scope.attr(COM_ATTR_C);
 			if (cls) {
-				cls = cls.split(' ');
-				for (var i = 0, length = cls.length; i < length; i++)
-					scope.toggleClass(cls[i]);
+				(function(cls) {
+					cls = cls.split(' ');
+					setTimeout(function() {
+						for (var i = 0, length = cls.length; i < length; i++)
+							scope.toggleClass(cls[i]);
+					}, 5);
+				})(cls);
 			}
 
 			var controller = this.getAttribute('data-component-controller');
@@ -2222,20 +2226,32 @@ COMP.prototype.setPath = function(path, init) {
 };
 
 COMP.prototype.attr = function(name, value) {
+	var el = this.element;
 	if (value === undefined)
-		return this.element.attr(name);
-	this.element.attr(name, value);
+		return el.attr(name);
+	el.attr(name, value);
 	return this;
 };
 
 COMP.prototype.html = function(value) {
+	var el = this.element;
+	var current = el.html();
+	if (value instanceof Array)
+		value = value.join('');
 	if (value === undefined)
-		return this.element.html();
-	return this.element.html(value);
+		return current;
+	if (value === current)
+		return el;
+	return el.empty().append(value);
 };
 
 COMP.prototype.append = function(value) {
-	return this.element.append(value);
+	var el = this.element;
+	if (value instanceof Array)
+		value = value.join('');
+	if (!value)
+		return el;
+	return el.append(value);
 };
 
 COMP.prototype.find = function(selector) {
@@ -2699,9 +2715,13 @@ MAN.prepare = function(obj) {
 
 	var cls = el.attr(COM_ATTR_C);
 	if (cls) {
-		cls = cls.split(' ');
-		for (var i = 0, length = cls.length; i < length; i++)
-			el.toggleClass(cls[i]);
+		(function(cls) {
+			setTimeout(function() {
+				cls = cls.split(' ');
+				for (var i = 0, length = cls.length; i < length; i++)
+					el.toggleClass(cls[i]);
+			}, 5);
+		})(cls)
 	}
 
 	if (obj.id)
