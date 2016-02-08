@@ -15,6 +15,7 @@
 - works with [Bootstrap](http://getbootstrap.com/), [Foundation](http://foundation.zurb.com/), [Pure](http://purecss.io/), [Material Design](http://www.getmdl.io/) and others
 - you can wrap thousands plugins of jQuery via jComponent
 - best of use with [www.totaljs.com - web application framework for node.js](http://www.totaljs.com)
+- [Changelog](https://github.com/petersirka/jComponent/blob/master/changes.txt)
 
 __YOU MUST SEE:__
 
