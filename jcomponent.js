@@ -3710,26 +3710,21 @@ Array.prototype.async = function(context, callback) {
 
 	var arr = this;
 	var index = 0;
-	var err;
 
-	var c = function(e) {
-		if (e) {
-			if (!err) err = [];
-			err.push(e);
-		}
+	var c = function() {
 
 		var fn = arr[index++];
-
 		if (fn === undefined) {
 			if (callback)
-				callback.call(context, err, context);
+				callback.call(context);
 			return;
 		}
 
-		fn.call(context, err, c, index - 1);
+		fn.call(context, c, index - 1);
 	};
 
 	c();
+	return this;
 };
 
 String.prototype.isEmail = function() {

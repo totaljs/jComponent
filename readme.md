@@ -1501,19 +1501,19 @@ __Simple usage__:
 ```javascript
 var arr = [];
 
-arr.push(function(err, next) {
+arr.push(function(next) {
     console.log('FN 1');
     next();
 });
 
-arr.push(function(err, next) {
+arr.push(function(next) {
     setTimeout(function() {
         console.log('FN 2');
         next();
     }, 1000);
 });
 
-// Array.prototype.async([context], [callback(err, response)]);
+// Array.prototype.async([context], [callback()]);
 // context is by default: empty plain object.
 arr.async();
 
