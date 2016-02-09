@@ -39,9 +39,9 @@ jComponent offers 3 libraries for development rich web applications:
 - `jcta.min.js` contains jComponent library and [Tangular template engine](https://github.com/petersirka/Tangular)
 - `jctajr.min.js` contains jComponent library, [Tangular template engine](https://github.com/petersirka/Tangular) and [jRouting](https://github.com/petersirka/jRouting)
 
-If you want to use jComponent on your presentation website - use `jcomponent.min.js` only. If you create some rich web application, then use `jcta.min.js` because contains template engine and for __SPA__ use `jctajr.min.js` because contains template engine and HTML 5 history API.
+If you want to use jComponent on your presentation website - use `jcomponent.min.js` only. If you create a rich web application, then use `jcta.min.js` because it contains template engine and for __SPA__ use `jctajr.min.js` because it contains template engine and HTML 5 history API.
 
-The components work is the browser `window.` scope. So each path in the form of `some.path.to.something` is automatically routed into `window.some.path.to.something`. The library automatically creates values according the binding path.
+The components work is the browser `window.` scope. So each path in the form of `path.to.something` is automatically routed into `window.path.to.something`. The library automatically creates values according the binding path.
 
 ***
 
@@ -148,7 +148,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 <!--
     Can contain multiple [path] or [component-id] or [component-name] divider with comma ",".
     This feature is only for broadcasting. Look to: BROADCAST() or component.broadcast();
-    E.g. data-component-dependencies="#component-id, .some.path, component-name"
+    E.g. data-component-dependencies="#component-id, .path.to.property, component-name"
 -->
 
 <element data-component-scope="" />
@@ -202,11 +202,11 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     ...
     </element>
 
-    <element data-component="some-component-string" data-component-value="'String value'">
+    <element data-component="a-component-string" data-component-value="'String value'">
     ...
     </element>
 
-    <element data-component="some-component-number" data-component-value="10">
+    <element data-component="a-component-number" data-component-value="10">
     ...
     </element>
 
@@ -243,7 +243,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 <element data-component-bind="" />
 <!--
     This attribute can be used only in `<input`, `<textarea` and `<select` tags. If the
-    component contains some said tag then the attribute ensures two way binding between
+    component contains a said tag then the attribute ensures two way binding between
     the input (in component) and the model. You don't need to declare `setter` and
     `getter` because the library to create it automatically. The value of this attribute
     is empty like this `data-component-bind=""`.
@@ -274,7 +274,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
 ## Component definition
 
-The definition of the component must be defined in JavaScript. You can define the component in some HTML template (in `<script>` tag) or in your own JavaScript libraries.
+The definition of the component must be defined in JavaScript. You can define the component in a HTML template (in `<script>` tag) or in your own JavaScript libraries.
 
 __Simple example__:
 
@@ -513,7 +513,7 @@ COMPONENT('my-component-name', function() {
 
 
     instance.find(selectors);
-    // Finds some content in the component element.
+    // Finds a content in the component element.
     // jQuery.find();
 
 
@@ -576,7 +576,7 @@ COMPONENT('my-component-name', function() {
 
     instance.evaluate([path], expression, [path_is_value]);
     console.log(instance.evaluate('value.age > 18')); // example
-    console.log(instance.evaluate('some.path', 'value === "Peter"')); // example
+    console.log(instance.evaluate('path.to.property', 'value === "Peter"')); // example
     // Evalutes string expression. Default path is the component path.
 
     console.log(instance.evaluate('Peter', 'value === "Peter"'), true); // example
@@ -620,7 +620,7 @@ COMPONENT('my-component-name', function() {
         // type === 3 : by default
         // watch for changes
     });
-    instance.watch('some.other.path', function(path, value, type) { // example
+    instance.watch('other.path.to.property', function(path, value, type) { // example
         // type === 0 : init
         // type === 1 : by developer
         // type === 2 : by input
@@ -667,12 +667,12 @@ COMPONENT('my-component-name', function() {
 
     // OTHER
     // Custom events
-    instance.on('some-event', function() {
+    instance.on('an-event', function() {
 
     });
 
     // Call custom event
-    instance.emit('some-event');
+    instance.emit('an-event');
 });
 ```
 
@@ -732,36 +732,36 @@ $.components();
 
 
 $.components.set(path, value, [reset]);
-$.components.set('some.model.name', 'Peter'); // Example: sets the value
-$.components.set('+some.model.tags', 'HTML'); // Example: appends the value into the array
-$.components.set('+some.model.tags', ['CSS', 'JavaScript']); // Example: appends the array into the array
+$.components.set('model.name', 'Peter'); // Example: sets the value
+$.components.set('+model.tags', 'HTML'); // Example: appends the value into the array
+$.components.set('+model.tags', ['CSS', 'JavaScript']); // Example: appends the array into the array
 // Sets the value into the model. `reset` argument resets the state
 // (dirty, validation), default: `false`.
 
 
 $.components.push(path, value, [reset]);
-$.components.push('some.model.tags', 'HTML'); // Example
-$.components.push('some.model.tags', ['CSS', 'JavaScript']); // Example
+$.components.push('model.tags', 'HTML'); // Example
+$.components.push('model.tags', ['CSS', 'JavaScript']); // Example
 // Pushs the value in the model, only for arrays. `reset` argument resets
 // the state (dirty, validation), default: `false`.
 
 
 $.components.inc(path, value, [reset]);
-$.components.inc('some.model.age', 10); // Example
-$.components.inc('some.model.price', -5); // Example
+$.components.inc('model.age', 10); // Example
+$.components.inc('model.price', -5); // Example
 // Increments the value in the model, only for numbers. `reset` argument
 // resets the state (dirty, validation), default: `false`.
 
 
 $.components.extend(path, value, [reset]);
-$.components.extend('some.model', { age: 30, name: 'Peter' }); // Example
+$.components.extend('model', { age: 30, name: 'Peter' }); // Example
 // Extends the value in the model, only for objects. `reset` argument resets
 // the state (dirty, validation), default: `false`.
 
 
 $.components.get(path, [scope]); // default scope is `window`
-$.components.get('some.model.age'); // Example
-$.components.get('some.model.tags'); // Example
+$.components.get('model.age'); // Example
+$.components.get('model.tags'); // Example
 // Gets the value from the model.
 
 
@@ -785,9 +785,9 @@ $.components.findById('my-component', 'model.*', function(component) { console.l
 
 $.components.findByPath([path], [fn(component)]);
 $.components.findByPath([path], [returnArray]);
-$.components.findByPath('some.model'); // Example: Returns only one component
-$.components.findByPath('some.model', true); // Example: Returns array with multiple components
-$.components.findByPath('some.model', function(component) { console.log(component); });  // Example: Crawls all components
+$.components.findByPath('model'); // Example: Returns only one component
+$.components.findByPath('model', true); // Example: Returns array with multiple components
+$.components.findByPath('model', function(component) { console.log(component); });  // Example: Crawls all components
 // Finds components by `data-component-id` attribute.
 
 
@@ -805,7 +805,7 @@ $.components.remove(jquery_element);
 
 
 $.components.import(url, [target], [callback], [insert])
-// Imports some HTML content (with components) into the `target` (by default: `document.body`)
+// Imports a HTML content (with components) into the `target` (by default: `document.body`)
 // or can import scripts (.js) or styles (.css). `insert` arguments (default: true) wraps
 // new content into the <div data-component-imported="RANDOM_NUMBER" element otherwise replaces
 // content of target element. 
@@ -968,9 +968,9 @@ $.components.AJAXCACHE('METHOD URL', data, [callback or path], [expire], [sleep]
 // CORS by default is enabled if the URL starts with `http://` or `https://` and credentials are
 // added when the METHOD contains `!`, e.g. `!GET https://www.google.com`.
 
-$.components.broadcast('.some-path, #some-component-id, some-component-name')('say')('hello');
-$.components.broadcast('.some-path, #some-component-id, some-component-name')('set')('new value');
-$.components.broadcast(['.path', '#id', 'name'], 'set')('new value');
+$.components.broadcast('.path.to.property, #a-component-id, a-component-name')('say')('hello');
+$.components.broadcast('.path.to.property, #a-component-id, a-component-name')('set')('new value');
+$.components.broadcast(['.path.to.property', '#id', 'name'], 'set')('new value');
 $.components.broadcast(selector, method_name, [caller]);
 // Executes the method in all components by selector. [selector] can be jQuery
 // element or jComponent --> then the method searchs all nested components.
@@ -1137,7 +1137,7 @@ AJAXCACHE('METHOD URL', data, [callback or path], [expire], [sleep], [clear]);
 
 // +v3.7.0
 PING('METHOD URL', [interval], [callback or path]);
-// Ping pings some URL in interval (default: 30000 (30 seconds)).
+// Ping pings an URL in the specific interval (default: 30000 (30 seconds)).
 // The function returns setInterval identificator.
 // A ping request contains custom header `X-Ping`: `CURRENT RELATIVE URL ADDRESS`
 
@@ -1167,13 +1167,13 @@ NOTVALID('NAME', function(value) {
 
 // Usage:
 // NOTVALID responds with the Error (if data are not valid) or {Boolean: false} (if data are valid)
-IF (NOTVALID('NAME', some_value))
+IF (NOTVALID('NAME', value))
     console.log('DATA ARE NOT VALID');
 
-IF (NOTVALID('NAME', some_value, false, 100))
+IF (NOTVALID('NAME', value, false, 100))
     console.log('DATA ARE NOT VALID');
 
-var err = NOTVALID('NAME', some_value);
+var err = NOTVALID('NAME', value);
 if (err)
     console.log(err);
 
@@ -1307,7 +1307,7 @@ console.log(CONTROLLER('users').getName());
         IMPORTANT: in this element MUST CONTAIN some jComponents, otherwise the scope
         won't be initialized.
     -->
-    ... SOME CONTENT ...
+    ... A CONTENT ...
 </div>
 
 <script>
@@ -1340,7 +1340,7 @@ console.log(CONTROLLER('users').getName());
         IMPORTANT: in this element MUST CONTAIN some jComponents, otherwise the scope
         won't be initialized.
     -->
-    ... SOME CONTENT ...
+    ... A CONTENT ...
 </div>
 
 <script>
