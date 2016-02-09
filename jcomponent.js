@@ -3175,8 +3175,9 @@ $(document).ready(function() {
 		if (!self.$component || self.$component.$removed || !self.$component.getter)
 			return;
 
-		// Tab
-		if (e.keyCode === 9)
+		// tab, alt, ctrl, shift, capslock
+		var code = e.keyCode;
+		if (e.metaKey || code === 9 || (code > 15 && code < 21) || (code > 36 && code < 41))
 			return;
 
 		// Backspace
