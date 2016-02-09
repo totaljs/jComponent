@@ -14,63 +14,30 @@
 </head>
 <body>
 
-	<div data-component-scope="orders" data-component-init="OK">
-		<div data-component="c" data-component-path="name" data-component-init="NO"></div>
+	<div><input type="text" data-component="" data-component-value="'@'" data-component-path="form.email #A" required="true" /></div>
+	<div>
+		<select data-component="" data-component-path="form.value #A" required="true" data-component-type="number">
+			<option value="1">1</option>
+			<option value="2">2</option>
+			<option value="1">Again 1</option>
+			<option value="3">3</option>
+		</select>
 	</div>
-	<div data-component-scope="?" data-component-value="{ users: ['Peter'] }">
-		<div data-component="c" data-component-path="users"></div>
-		<div data-component="c" data-component-path="users" data-component-noscope="true"></div>
-	</div>
-
-	<div><input type="text" data-component="" data-component-value="'@'" data-component-path="form.email" /></div>
 
 	<script>
-
 		var form = {};
+		form.value = 2;
 
-		function OK() {
-			console.log('READY');
-		}
+		MIDDLEWARE('A', function(next, value, path, type) {
+			console.log('MIDDLEWARE A', value, path);
+			if (typeof(value) === 'object') {
+				value.value = 3;
+				next();
+			} else
+				next(3);
 
-		function NO() {
-			console.log('READY COMPONENT');
-		}
-
-		COMPONENT('a', function() {
-			this.make = function() {
-				this.nested('*', 'path', this.path);
-			};
-
-			this.setter = function() {
-				console.log('---> a', this.path);
-			};
+			// next('petersirka@gmail.com');
 		});
-
-		COMPONENT('b', function() {
-			this.setter = function() {
-				console.log('---> b', this.path);
-			};
-		});
-
-		COMPONENT('c', function() {
-
-			var self = this;
-
-			this.make = function() {
-				setTimeout(function() {
-					self.element.append('<div data-component="a" data-component-path="obj.age"></div>');
-					COMPILE();
-				}, 2000);
-			};
-
-			this.setter = function(value) {
-				console.log('---> c', this.path, value);
-			};
-		});
-
-		WAIT('d3', function() {
-			console.log('d3 ready');
-		}, 1000);
 
 	</script>
 

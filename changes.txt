@@ -1,9 +1,13 @@
 ======= 4.0.0 (BETA)
 
+- added: (IMPORTANT) middleware
 - added: a small time delay for `data-component-class` attribute
 - added: `component.html()` changes the content when a new value is different than element content
 
 - updated: a default component supports validation for all controlls when they contain `required` attribute
 - updated: `data-component-template` downloads the template only one time (download cache for 5 minutes)
+- updated: Array.async(), removed error handling
+
+- removed: $cmanager property (alternative MAN)
 
 - improved: `component.html()`, `component.append()`

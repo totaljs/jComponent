@@ -1,4 +1,4 @@
-var MAN = $cmanager = new CMAN();
+var MAN = new CMAN();
 var COM_DATA_BIND_SELECTOR = 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
 var COM_ATTR = '[data-component]';
 var COM_ATTR_U = 'data-component-url';
@@ -617,6 +617,15 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 
 	url = url.substring(index).trim();
 
+	// middleware
+	index = url.indexOf(' #');
+	var middleware = '';
+
+	if (index !== -1) {
+		middleware = url.substring(index);
+		url = url.substring(0, index);
+	}
+
 	setTimeout(function() {
 
 		if (method === 'GET' && data)
@@ -633,8 +642,11 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 		options.success = function(r) {
 			if (typeof(callback) === 'string')
 				return MAN.remap(callback, r);
-			if (callback)
-				callback(r);
+			if (!callback)
+				return;
+			$MIDDLEWARE(middleware, r, 1, function(path, value) {
+				callback(value);
+			});
 		};
 
 		if (url.match(/http\:\/\/|https\:\/\//i)) {
@@ -1163,101 +1175,107 @@ COM.update = function(path, reset, type) {
 	if (is)
 		path = path.substring(1);
 
-	path = path.replace(/\.\*$/, '');
+	path = path.replace(/\.\*/, '');
 
-	if (!path)
-		return COM;
+	$MIDDLEWARE(path, undefined, type, function(path) {
 
-	var state = [];
-	var was = false;
-	var updates = {};
+		if (!path)
+			return COM;
 
-	// Array prevention
-	var search = path;
+		var state = [];
+		var was = false;
+		var updates = {};
 
-	/*
-	var index = path.lastIndexOf('[');
-	var isArray = false;
-	if (index !== -1) {
-		isArray = true;
-		if (!is)
-			search = search.replace(/\[\d+\]/g, '');
-	}
-	*/
+		// Array prevention
+		var search = path;
 
-	if (type === undefined)
-		type = 1; // developer
-
-	var A = search.split('.');
-	var AL = A.length;
-
-	COM.each(function(component) {
-
-		if (!component.path || component.disabled)
-			return;
-
-		for (var i = 0; i < AL; i++) {
-			if (component.$$path[i] && component.$$path[i] !== A[i])
-				return;
+		/*
+		var index = path.lastIndexOf('[');
+		var isArray = false;
+		if (index !== -1) {
+			isArray = true;
+			if (!is)
+				search = search.replace(/\[\d+\]/g, '');
 		}
+		*/
 
-		if (component.$path && component.$path !== path)
-			return;
+		if (type === undefined)
+			type = 1; // developer
 
-		var result = component.get();
-		if (component.setter)
-			component.setter(result, path, type);
+		var A = search.split('.');
+		var AL = A.length;
 
-		component.$ready = true;
+		COM.each(function(component) {
 
-		if (reset === true) {
+			if (!component.path || component.disabled)
+				return;
 
-			if (!component.$dirty_disabled)
-				component.$dirty = true;
-
-			if (!component.$valid_disabled) {
-				component.$valid = true;
-				component.$validate = false;
-				if (component.validate)
-					component.$valid = component.validate(result);
+			for (var i = 0; i < AL; i++) {
+				if (component.$$path[i] && component.$$path[i] !== A[i])
+					return;
 			}
 
-			component.element.find(COM_DATA_BIND_SELECTOR).each(function() {
-				delete this.$value;
-				delete this.$value2;
-			});
+			if (component.$path && component.$path !== path)
+				return;
 
-		} else if (component.validate && !component.$valid_disabled)
-			component.valid(component.validate(result), true);
+			var result = component.get();
+			if (component.setter) {
+				component.$skip = false;
+				component.setter(result, path, type);
+			}
 
-		if (component.state)
-			state.push(component);
+			component.$ready = true;
 
-		if (component.path === path)
-			was = true;
+			if (reset === true) {
 
-		updates[component.path] = result;
-	}, is ? path : undefined, undefined, is);
+				if (!component.$dirty_disabled)
+					component.$dirty = true;
 
-	if (reset)
-		MAN.clear('dirty', 'valid');
+				if (!component.$valid_disabled) {
+					component.$valid = true;
+					component.$validate = false;
+					if (component.validate)
+						component.$valid = component.validate(result);
+				}
 
-	if (!updates[path])
-		updates[path] = COM.get(path);
+				component.element.find(COM_DATA_BIND_SELECTOR).each(function() {
+					delete this.$value;
+					delete this.$value2;
+				});
 
-	for (var i = 0, length = state.length; i < length; i++)
-		state[i].state(1, 4);
+			} else if (component.validate && !component.$valid_disabled)
+				component.valid(component.validate(result), true);
 
-	// watches
-	length = path.length;
+			if (component.state)
+				state.push(component);
 
-	Object.keys(MAN.events).forEach(function(key) {
-		if (key.substring(0, length) !== path)
-			return;
-		updates[key] = COM.get(key);
+			if (component.path === path)
+				was = true;
+
+			updates[component.path] = result;
+		}, is ? path : undefined, undefined, is);
+
+		if (reset)
+			MAN.clear('dirty', 'valid');
+
+		if (!updates[path])
+			updates[path] = COM.get(path);
+
+		for (var i = 0, length = state.length; i < length; i++)
+			state[i].state(1, 4);
+
+		// watches
+		length = path.length;
+
+		Object.keys(MAN.events).forEach(function(key) {
+			if (key.substring(0, length) !== path)
+				return;
+			updates[key] = COM.get(key);
+		});
+
+		COM.$emitonly('watch', updates, type, path);
 	});
 
-	COM.$emitonly('watch', updates, type, path);
 	return COM;
 };
 
@@ -1418,91 +1436,102 @@ COM.nested = function(element, selector, type, value) {
 
 // 1 === by developer
 // 2 === by input
-COM.set = function(path, value, type) {
-	var is = path.charCodeAt(0) === 33;
-	if (is)
-		path = path.substring(1);
+COM.set = function(path, val, type) {
+	$MIDDLEWARE(path, val, type, function(path, value) {
+		var is = path.charCodeAt(0) === 33;
+		if (is)
+			path = path.substring(1);
 
-	if (path.charCodeAt(0) === 43) {
-		path = path.substring(1);
-		return COM.push(path, value, type);
-	}
+		if (path.charCodeAt(0) === 43) {
+			path = path.substring(1);
+			return COM.push(path, value, type);
+		}
 
-	if (!path)
-		return COM;
+		if (!path)
+			return COM;
 
-	var isUpdate = (typeof(value) === 'object' && !(value instanceof Array) && value !== null && value !== undefined);
-	var reset = type === true;
-	if (reset)
-		type = 1;
+		var isUpdate = (typeof(value) === 'object' && !(value instanceof Array) && value !== null && value !== undefined);
+		var reset = type === true;
+		if (reset)
+			type = 1;
 
-	MAN.set(path, value, type);
+		MAN.set(path, value, type);
 
-	if (isUpdate)
-		return COM.update(path, reset, type);
+		if (isUpdate)
+			return COM.update(path, reset, type);
 
-	var result = MAN.get(path);
-	var state = [];
+		// Is changed value by e.g. middleware?
+		// If yes the control/input will be redrawn
+		var isChanged = val !== value;
+		var result = MAN.get(path);
+		var state = [];
 
-	if (type === undefined)
-		type = 1;
+		if (type === undefined)
+			type = 1;
 
-	var A = path.split('.');
-	var AL = A.length;
+		var A = path.split('.');
+		var AL = A.length;
 
-	COM.each(function(component) {
+		COM.each(function(component) {
 
-		if (!component.path || component.disabled)
-			return;
-
-		for (var i = 0; i < AL; i++) {
-			if (component.$$path[i] && component.$$path[i] !== A[i])
+			if (!component.path || component.disabled)
 				return;
-		}
 
-		if (component.$path && component.$path !== path)
-			return;
-
-		if (component.path === path) {
-			if (component.setter)
-				component.setter(result, path, type);
-		} else {
-			if (component.setter)
-				component.setter(COM.get(component.path), path, type);
-		}
-
-		component.$ready = true;
-
-		if (component.state)
-			state.push(component);
-
-		if (reset) {
-			if (!component.$dirty_disabled)
-				component.$dirty = true;
-			if (!component.$valid_disabled) {
-				component.$valid = true;
-				component.$validate = false;
-				if (component.validate)
-					component.$valid = component.validate(result);
+			for (var i = 0; i < AL; i++) {
+				if (component.$$path[i] && component.$$path[i] !== A[i])
+					return;
 			}
 
-			component.element.find(COM_DATA_BIND_SELECTOR).each(function() {
-				delete this.$value;
-				delete this.$value2;
-			});
+			if (component.$path && component.$path !== path)
+				return;
 
-		} else if (component.validate && !component.$valid_disabled)
-			component.valid(component.validate(result), true);
+			if (component.path === path) {
+				if (component.setter) {
+					if (isChanged)
+						component.$skip = false;
+					component.setter(result, path, type);
+				}
+			} else {
+				if (component.setter) {
+					if (isChanged)
+						component.$skip = false;
+					component.setter(COM.get(component.path), path, type);
+				}
+			}
 
-	}, path, true, is);
+			component.$ready = true;
 
-	if (reset)
-		MAN.clear('dirty', 'valid');
+			if (component.state)
+				state.push(component);
 
-	for (var i = 0, length = state.length; i < length; i++)
-		state[i].state(type, 5);
+			if (reset) {
+				if (!component.$dirty_disabled)
+					component.$dirty = true;
+				if (!component.$valid_disabled) {
+					component.$valid = true;
+					component.$validate = false;
+					if (component.validate)
+						component.$valid = component.validate(result);
+				}
 
-	COM.$emit('watch', path, undefined, type, is);
+				component.element.find(COM_DATA_BIND_SELECTOR).each(function() {
+					delete this.$value;
+					delete this.$value2;
+				});
+
+			} else if (component.validate && !component.$valid_disabled)
+				component.valid(component.validate(result), true);
+
+		}, path, true, is);
+
+		if (reset)
+			MAN.clear('dirty', 'valid');
+
+		for (var i = 0, length = state.length; i < length; i++)
+			state[i].state(type, 5);
+
+		COM.$emit('watch', path, undefined, type, is);
+	});
 	return COM;
 };
 
@@ -2071,6 +2100,7 @@ function COMP(name) {
 	this.$ready = false;
 	this.$path;
 	this.trim = true;
+	this.middleware = ''; // internal
 
 	this.name = name;
 	this.path;
@@ -2095,7 +2125,8 @@ function COMP(name) {
 		if (type === 2)
 			this.$skip = true;
 
-		if ((type !== 2 || older !== null) && value === this.get()) {
+		// if ((type !== 2 || older !== null) && value === this.get()) {
+		if (type !== 2 || (older !== null && older !== undefined)) {
 		 	COM.validate(this.path);
 			return this;
 		}
@@ -2103,10 +2134,13 @@ function COMP(name) {
 		if (this.trim && typeof(value) === 'string')
 			value = value.trim();
 
+		if (value === this.get())
+			return this;
+
 		if (skip)
 			this.$skip = false;
 
-		this.set(this.path, value, type);
+		this.set(this.path + this.middleware, value, type);
 		return this;
 	};
 
@@ -2115,7 +2149,7 @@ function COMP(name) {
 		var self = this;
 
 		if (type === 2) {
-			if (self.$skip === true) {
+			if (self.$skip) {
 				self.$skip = false;
 				return self;
 			}
@@ -2214,6 +2248,13 @@ COMP.prototype.setPath = function(path, init) {
 		path = path.substring(1);
 		fixed = path;
 	}
+
+	var index = path.indexOf(' #');
+	if (index !== -1) {
+		this.middleware = path.substring(index);
+		path = path.substring(0, index);
+	} else
+		this.middleware = '';
 
 	this.path = path;
 	this.$path = fixed;
@@ -2600,6 +2641,7 @@ function CMAN() {
 	this.notvalid = {};
 	this.waits = {};
 	this.defaults = {};
+	this.middleware = {};
 }
 
 MAN.cacherest = function(method, url, params, value, expire) {
@@ -2645,12 +2687,14 @@ MAN.initialize = function() {
 };
 
 MAN.remap = function(path, value) {
-	var index = path.indexOf('->');
-	if (index === -1)
-		return COM.set(path, value);
-	var o = path.substring(0, index).trim();
-	var n = path.substring(index + 2).trim();
-	COM.set(n, value[o]);
+	$MIDDLEWARE(path, value, 1, function(path, value) {
+		var index = path.indexOf('->');
+		if (index === -1)
+			return COM.set(path, value);
+		var o = path.substring(0, index).trim();
+		var n = path.substring(index + 2).trim();
+		COM.set(n, value[o]);
+	});
 	return this;
 };
 
@@ -3678,19 +3722,23 @@ function CONTROLLER() {
 }
 
 Array.prototype.waitFor = function(fn, callback) {
+
 	if (fn.index === undefined)
 		fn.index = 0;
+
 	var index = fn.index;
 	var self = this;
 	var item = self[fn.index++];
 
 	if (item === undefined) {
 		if (callback)
-			callback();
+			callback(fn.value);
+		delete fn.value;
 		return self;
 	}
 
-	fn.call(self, item, function() {
+	fn.call(self, item, function(value) {
+		fn.value = value;
 		self.waitFor(fn, callback);
 	}, index);
 
@@ -4125,6 +4173,56 @@ function NOTVALID(name, value, error) {
 			fn.error(e, value);
 		return e;
 	}
+}
+
+function $MIDDLEWARE(path, value, type, callback) {
+
+	var index = path.indexOf(' #');
+
+	if (index === -1) {
+		callback(path, value);
+		return path;
+	}
+
+	var a = path.substring(0, index);
+	if (value === undefined)
+		value = COM.get(a);
+
+	MIDDLEWARE(path.substring(index + 1).trim().replace(/\#/g, '').split(' '), value, function(value) {
+		callback(a, value);
+	}, a);
+
+	return a;
+}
+
+function MIDDLEWARE(name, value, callback, path) {
+
+	if (!(name instanceof Array)) {
+		MAN.middleware[name] = value;
+		return;
+	}
+
+	if (typeof(callback) !== 'function') {
+		var tmp = callback;
+		callback = value;
+		value = tmp;
+	}
+
+	var context = {};
+	name.waitFor(function(name, next) {
+		var mid = MAN.middleware[name];
+
+		if (!mid) {
+			next = null;
+			throw new Error('Middleware "' + name + '" not found.');
+		}
+
+		mid.call(context, next, value, path);
+
+	}, function(val) {
+		if (callback)
+			callback.call(context, val !== undefined ? val : value, path);
+	});
 }
 
 function FN(exp) {

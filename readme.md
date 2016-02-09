@@ -2,7 +2,7 @@
 # jQuery component library
 
 - [Gitter - Chat for GitHub](https://gitter.im/petersirka/jComponent)
-- Current version: `v4.0.0`
+- Current version: `v4.0.0` (BETA)
 - `>= jQuery +1.7`
 - `>= IE9`
 - similar functionality like directives in Angular.js
@@ -1176,6 +1176,33 @@ IF (NOTVALID('NAME', some_value, false, 100))
 var err = NOTVALID('NAME', some_value);
 if (err)
     console.log(err);
+
+// +v4.0.0
+// Middleware
+
+// Registers MIDDLEWARE
+// MIDDLEWARE(name, fn(value, [path]));
+MIDDLEWARE('A-NAME', function(next, value, path) {
+    value.count++;
+    this.customvariable1 = true;
+    next();
+    // or for non-object values e.g. String, Number, Boolean
+    // next(NEW_VALUE);
+});
+
+MIDDLEWARE('B-NAME', function(next, value, path) {
+    value.count++;
+    this.customvariable2 = true;
+    // or for non-object values e.g. String, Number, Boolean
+    // next(NEW_VALUE);
+});
+
+// Executing middleware
+// MIDDLEWARE([String Array], [value], [callback])
+MIDDLEWARE(['A-NAME', 'B-NAME'], { count: 0 }, function(value, path) {
+    console.log(value);
+    console.log(this);
+});
 ```
 
 ## Operations
@@ -1501,12 +1528,12 @@ __Simple usage__:
 ```javascript
 var arr = [];
 
-arr.push(function(next) {
+arr.push(function(next, index) {
     console.log('FN 1');
     next();
 });
 
-arr.push(function(next) {
+arr.push(function(next, index) {
     setTimeout(function() {
         console.log('FN 2');
         next();
@@ -1521,7 +1548,7 @@ arr.async();
 var items = [0, 1, 2, 3, 4];
 
 // Array.prototype.waitFor(fn_each, [callback]);
-items.waitFor(function(item, next) {
+items.waitFor(function(item, next, index) {
     console.log(item);
     setTimeout(next, 100);
 });
@@ -1532,17 +1559,17 @@ __Advanced usage__:
 ```javascript
 var arr = [];
 
-arr.push(function(err, next, index) {
+arr.push(function(next, index) {
     this.counter++;
     next();
 });
 
-arr.push(function(err, next, index) {
+arr.push(function(next, index) {
     this.counter++;
-    next('Some error message.');
+    next();
 });
 
-arr.push(function(err, next, index) {
+arr.push(function(next, index) {
     setTimeout(function() {
         this.counter++;
         next();
@@ -1551,13 +1578,25 @@ arr.push(function(err, next, index) {
 
 // arr.async([context], [callback(err, response)]);
 // context is by default: empty plain object.
-arr.async({ counter: 0 }, function(err, response) {
-    if (err)
-        console.log(err);
+arr.async({ counter: 0 }, function(response) {
     console.log(response);
     // or
     // console.log(this);
 });
+```
+
+## +v4.0.0 Middleware everywhere
+
+- middleware for all setters
+
+```html
+<div data-component="your_component" data-component-path="path.to.property #MIDDLEWARE1 #MIDDLEWARE 2"></div>
+```
+
+```javascript
+AJAX('GET /api/users/ #MIDDLEWARE1 #MIDDLEWARE2 #MIDDLEWARE3', 'users');
+SET('path.to.property #MIDDLEWARE1 #MIDDLEWARE2', 'new value');
+UPDATE('path.to.property #MIDDLEWARE1 #MIDDLEWARE2');
 ```
 
 ## Reserved keywords
