@@ -506,6 +506,11 @@ COMPONENT('my-component-name', function() {
     // Gets or Sets inner HTML in the component element.
     // jQuery.html();
 
+    
+    instance.empty();
+    // Removes whole content.
+    // jQuery.empty();
+    
 
     instance.append(value);
     // Appends a content into the inner HTML in the component element.

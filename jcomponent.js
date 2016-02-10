@@ -2279,13 +2279,23 @@ COMP.prototype.attr = function(name, value) {
 COMP.prototype.html = function(value) {
 	var el = this.element;
 	var current = el.html();
-	if (value instanceof Array)
-		value = value.join('');
 	if (value === undefined)
 		return current;
+	if (value instanceof Array)
+		value = value.join('');
 	if (value === current)
 		return el;
-	return el.empty().append(value);
+	el.empty();
+	var type = typeof(value);
+	if (value || type === 'number' || type === 'boolean')
+		el.append(value);
+	return el;
+};
+
+COMP.prototype.empty = function() {
+	var el = this.element;
+	el.empty();
+	return el;
 };
 
 COMP.prototype.append = function(value) {
