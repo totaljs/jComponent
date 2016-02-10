@@ -230,8 +230,10 @@ COM.compile = function(container) {
 		if (template)
 			obj.template = template;
 
-		if (el.attr(COM_ATTR_U))
-			throw new Error('You cannot use [data-component-url] for the component: ' + obj.name + '[' + obj.path + ']. Instead of it you must use data-component-template.');
+		if (el.attr(COM_ATTR_U)) {
+			console.warn('You cannot use [data-component-url] for the component: ' + obj.name + '[' + obj.path + ']. Instead of it you must use data-component-template.');
+			return;
+		}
 
 		if (typeof(template) === 'string') {
 			var fn = function(data) {
@@ -4058,6 +4060,7 @@ Array.prototype.scalar = function(type, key) {
 	var output;
 	var isDate = false;
 	var isAvg = type === 'avg' || type === 'average';
+	var isDistinct = type === 'distinct';
 
 	for (var i = 0, length = this.length; i < length; i++) {
 		var val = key ? this[i][key] : this[i];
@@ -4068,6 +4071,14 @@ Array.prototype.scalar = function(type, key) {
 		if (val instanceof Date) {
 			isDate = true;
 			val = val.getTime();
+		}
+
+		if (isDistinct) {
+			if (!output)
+				output = [];
+			if (output.indexOf(val) === -1)
+				output.push(val);
+			continue;
 		}
 
 		if (type === 'median') {
@@ -4109,6 +4120,9 @@ Array.prototype.scalar = function(type, key) {
 				break;
 		}
 	}
+
+	if (isDistinct)
+		return output;
 
 	if (isAvg) {
 		output = output / this.length;
@@ -4214,12 +4228,12 @@ function MIDDLEWARE(name, value, callback, path) {
 		var mid = MAN.middleware[name];
 
 		if (!mid) {
-			next = null;
-			throw new Error('Middleware "' + name + '" not found.');
+			console.warn('Middleware "' + name + '" not found.');
+			next();
+			return;
 		}
 
 		mid.call(context, next, value, path);
-
 	}, function(val) {
 		if (callback)
 			callback.call(context, val !== undefined ? val : value, path);

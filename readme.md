@@ -592,6 +592,11 @@ COMPONENT('my-component-name', function() {
     // `<textarea data-component-bind` or `<select data-component-bind`.
 
 
+    instance.formatter(value);
+    instance.formatter('1023');
+    // Formats value trough all "formatters" (private and global)
+
+
     instance.parser(fn);
     instance.parser(function(path, value, type) { // example
         var dt = value.split('.');
@@ -601,6 +606,11 @@ COMPONENT('my-component-name', function() {
     // or `selectfor`. E.g. date. Works only with components which contain
     // `<input data-component-bind`, `<textarea data-component-bind` or
     // `<select data-component-bind`.
+
+
+    instance.parser(value);
+    instance.parser('1023');
+    // Parses value trough all "parsers" (private and global)
 
 
     instance.nested(selector, type or fn, [value]);
@@ -1461,6 +1471,7 @@ console.log(arr.scalar('sum'));
 console.log(arr.scalar('avg'));
 console.log(arr.scalar('range')); // { min: Number, max: Number }
 console.log(arr.scalar('median'));
+console.log(arr.scalar('distinct')); // +v4.0.0 returns Array with unique values
 
 arr = [{ age: 30 }, { age: 25 }, { age: 40 }, { age: 18 }];
 console.log(arr.scalar('max', 'age'));
@@ -1469,6 +1480,7 @@ console.log(arr.scalar('sum', 'age'));
 console.log(arr.scalar('avg', 'age'));
 console.log(arr.scalar('range', 'age')); // { min: Number, max: Number }
 console.log(arr.scalar('median', 'age'));
+console.log(arr.scalar('distinct', 'age')); // +v4.0.0 returns Array with unique values
 ```
 
 ### Arrow function as string
