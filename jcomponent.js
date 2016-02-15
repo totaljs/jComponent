@@ -435,7 +435,13 @@ COM.createURL = function(url, values) {
 		url = location.pathname + location.search;
 	}
 
-	var query = COM.parseQuery(url);
+	var index = url.indexOf('?');
+	var query;
+	if (index !== -1)
+		query = COM.parseQuery(url.substring(0, index));
+	else
+		query = {};
+
 	var keys = Object.keys(values);
 
 	for (var i = 0, length = keys.length; i < length; i++) {
@@ -443,9 +449,6 @@ COM.createURL = function(url, values) {
 		query[key] = values[key];
 	}
 
-	var index = url.indexOf('?');
-	if (index !== -1)
-		url = url.substring(0, index);
 	var val = $.param(query, true);
 	return url + (val ? '?' + val : '');
 };
