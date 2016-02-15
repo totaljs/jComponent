@@ -435,11 +435,12 @@ COM.createURL = function(url, values) {
 		url = location.pathname + location.search;
 	}
 
-	var index = url.indexOf('?');
 	var query;
-	if (index !== -1)
-		query = COM.parseQuery(url.substring(0, index));
-	else
+	var index = url.indexOf('?');
+	if (index !== -1) {
+		query = COM.parseQuery(url.substring(index + 1));
+		url = url.substring(0, index);
+	} else
 		query = {};
 
 	var keys = Object.keys(values);
