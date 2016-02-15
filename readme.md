@@ -904,13 +904,19 @@ $.components.emit(name, [arg1], [arg2]);
 // Triggers event within all components.
 
 
+$.components.parseCookie();
+// Parsers `document.cookie` and returns {Object}.
+
+
 $.components.parseQuery([querystring]);
 $.components.parseQuery(); // Example: Returns parsed values from the current URL address.
 // Parsers query string (from URL address) and returns {Object}.
 
 
-$.components.parseCookie();
-// Parsers `document.cookie` and returns {Object}.
+$.components.createURL([url], values);
+$.components.createURL({ sort: 1, pricefrom: 300 }); // append values into the current URL
+$.components.createURL('/api/query/?priceto=200', { sort: 1 }); // /api/query/?priceto=200&sort=1
+// +v4.0.0 Updates or creates URL from the current URL address and QueryString
 
 
 $.components.POST(url, data, [callback or path], [sleep], [error(response, status, type) or path]);

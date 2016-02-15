@@ -428,6 +428,28 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 	return COM;
 };
 
+COM.createURL = function(url, values) {
+
+	if (typeof(url) === 'object') {
+		values = url;
+		url = location.pathname + location.search;
+	}
+
+	var query = COM.parseQuery(url);
+	var keys = Object.keys(values);
+
+	for (var i = 0, length = keys.length; i < length; i++) {
+		var key = keys[i];
+		query[key] = values[key];
+	}
+
+	var index = url.indexOf('?');
+	if (index !== -1)
+		url = url.substring(0, index);
+	var val = $.param(query, true);
+	return url + (val ? '?' + val : '');
+};
+
 COM.parseCookie = COM.parseCookies = function() {
 	var arr = document.cookie.split(';');
 	var obj = {};
@@ -451,8 +473,9 @@ COM.parseQuery = function(value) {
 	if (!value)
 		return {};
 
-	if (value.substring(0, 1) === '?')
-		value = value.substring(1);
+	var index = value.indexOf('?');
+	if (index !== -1)
+		value = value.substring(index + 1);
 
 	var arr = value.split('&');
 	var obj = {};
