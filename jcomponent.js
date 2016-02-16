@@ -1686,7 +1686,7 @@ COM.can = function(path, except) {
 	return !COM.dirty(path, except) && COM.valid(path, except);
 };
 
-COM.disable = function(path, except) {
+COM.disabled = COM.disable = function(path, except) {
 	return COM.dirty(path, except) || !COM.valid(path, except);
 };
 

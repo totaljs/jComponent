@@ -858,7 +858,7 @@ $.components.can(path, [except_paths_arr]);
 // Supports wildcard path, e.g. `model.*`.
 
 
-$.components.disable(path, [except_paths_arr]);
+$.components.disabled(path, [except_paths_arr]);
 // Combines the dirty and valid method together (e.g. for disabling of buttons)
 // Opposite of $.components.can()
 // Supports wildcard path, e.g. `model.*`.
