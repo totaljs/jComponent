@@ -2156,7 +2156,7 @@ function COMP(name) {
 
 		// if ((type !== 2 || older !== null) && value === this.get()) {
 		if (type !== 2 || (older !== null && older !== undefined)) {
-		 	COM.validate(this.path);
+			COM.validate(this.path);
 			return this;
 		}
 
@@ -3910,37 +3910,37 @@ Array.prototype.remove = function(cb, value) {
 };
 
 Date.prototype.format = function(t) {
-    var e = this, r = !1;
-    if (t && 33 === t.charCodeAt(0) && (r = !0, t = t.substring(1)), void 0 === t || null === t || '' === t) return e.getFullYear() + '-' + (e.getMonth() + 1).toString().padLeft(2, '0') + '-' + e.getDate().toString().padLeft(2, '0') + 'T' + e.getHours().toString().padLeft(2, '0') + ':' + e.getMinutes().toString().padLeft(2, '0') + ':' + e.getSeconds().toString().padLeft(2, '0') + ':' + e.getMilliseconds().toString();
-    var n = e.getHours();
-    return r && n >= 12 && (n -= 12), t.replace(/yyyy|yy|MM|M|dd|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g, function(t) {
-        switch (t) {
-            case 'yyyy':
-                return e.getFullYear();
-            case 'yy':
-                return e.getYear();
-            case 'MM':
-                return (e.getMonth() + 1).toString().padLeft(2, '0');
-            case 'M':
-                return e.getMonth() + 1;
-            case 'dd':
-                return e.getDate().toString().padLeft(2, '0');
-            case 'd':
-                return e.getDate();
-            case 'HH':
-            case 'hh':
-                return n.toString().padLeft(2, '0');
-            case 'H':
-            case 'h':
-                return e.getHours();
-            case 'mm':
-                return e.getMinutes().toString().padLeft(2, '0');
-            case 'm':
-                return e.getMinutes();
-            case 'ss':
-                return e.getSeconds().toString().padLeft(2, '0');
-            case 's':
-                return e.getSeconds();
+	var e = this, r = !1;
+	if (t && 33 === t.charCodeAt(0) && (r = !0, t = t.substring(1)), void 0 === t || null === t || '' === t) return e.getFullYear() + '-' + (e.getMonth() + 1).toString().padLeft(2, '0') + '-' + e.getDate().toString().padLeft(2, '0') + 'T' + e.getHours().toString().padLeft(2, '0') + ':' + e.getMinutes().toString().padLeft(2, '0') + ':' + e.getSeconds().toString().padLeft(2, '0') + ':' + e.getMilliseconds().toString();
+	var n = e.getHours();
+	return r && n >= 12 && (n -= 12), t.replace(/yyyy|yy|MM|M|dd|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g, function(t) {
+		switch (t) {
+			case 'yyyy':
+				return e.getFullYear();
+			case 'yy':
+				return e.getYear();
+			case 'MM':
+				return (e.getMonth() + 1).toString().padLeft(2, '0');
+			case 'M':
+				return e.getMonth() + 1;
+			case 'dd':
+				return e.getDate().toString().padLeft(2, '0');
+			case 'd':
+				return e.getDate();
+			case 'HH':
+			case 'hh':
+				return n.toString().padLeft(2, '0');
+			case 'H':
+			case 'h':
+				return e.getHours();
+			case 'mm':
+				return e.getMinutes().toString().padLeft(2, '0');
+			case 'm':
+				return e.getMinutes();
+			case 'ss':
+				return e.getSeconds().toString().padLeft(2, '0');
+			case 's':
+				return e.getSeconds();
 			case 'w':
 			case 'ww':
 				var tmp = new Date(+e);
@@ -3950,38 +3950,67 @@ Date.prototype.format = function(t) {
 				if (key === 'ww')
 					return tmp.toString().padLeft(2, '0');
 				return tmp;
-            case 'a':
-                var r = 'AM';
-                return e.getHours() >= 12 && (r = 'PM'), r
-        }
-    });
+			case 'a':
+				var r = 'AM';
+				return e.getHours() >= 12 && (r = 'PM'), r
+		}
+	});
 };
 
-Number.prototype.format = function(t, e, r) {
-    var n = this,
-        a = n.toString(),
-        o = "",
-        g = "",
-        i = 45 === a.charCodeAt(0) ? '-' : '';
-    i && (a = a.substring(1));
-    var s = a.indexOf('.');
-    if (typeof t === 'string') {
-        var u = e;
-        e = t, t = u
-    }
-    void 0 === e && (e = ' '), -1 !== s && (o = a.substring(s + 1), a = a.substring(0, s)), s = -1;
-    for (var p = a.length - 1; p >= 0; p--) s++, s > 0 && s % 3 === 0 && (g = e + g), g = a.substring(p, p + 1) + g;
-    return (t || o.length) && (o = o.length > t ? o.substring(0, t) : o.padRight(t, '0')), o.length && void 0 === r && (r = '.' === e ? ',' : '.'), i + g + (o.length ? r + o : '');
+Number.prototype.format = function(decimals, separator, separatorDecimal) {
+	var self = this;
+	var num = self.toString();
+	var dec = '';
+	var output = '';
+	var minus = num.substring(0, 1) === '-' ? '-' : '';
+	if (minus)
+		num = num.substring(1);
+
+	var index = num.indexOf('.');
+
+	if (typeof(decimals) === 'string') {
+		var tmp = separator;
+		separator = decimals;
+		decimals = tmp;
+	}
+
+	if (separator === undefined)
+		separator = ' ';
+
+	if (index !== -1) {
+		dec = num.substring(index + 1);
+		num = num.substring(0, index);
+	}
+
+	index = -1;
+	for (var i = num.length - 1; i >= 0; i--) {
+		index++;
+		if (index > 0 && index % 3 === 0)
+			output = separator + output;
+		output = num[i] + output;
+	}
+
+	if (decimals || dec.length) {
+		if (dec.length > decimals)
+			dec = dec.substring(0, decimals);
+		else
+			dec = dec.padRight(decimals, '0');
+	}
+
+	if (dec.length && separatorDecimal === undefined)
+		separatorDecimal = separator === '.' ? ',' : '.';
+
+	return minus + output + (dec.length ? separatorDecimal + dec : '');
 };
 
 String.prototype.padLeft = function(t, e) {
-    var r = this.toString();
-    return Array(Math.max(0, t - r.length + 1)).join(e || '0') + r;
+	var r = this.toString();
+	return Array(Math.max(0, t - r.length + 1)).join(e || '0') + r;
 };
 
 String.prototype.padRight = function(t, e) {
-    var r = this.toString();
-    return r + Array(Math.max(0, t - r.length + 1)).join(e || '0')
+	var r = this.toString();
+	return r + Array(Math.max(0, t - r.length + 1)).join(e || '0')
 };
 
 String.prototype.format = function() {
