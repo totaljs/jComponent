@@ -16,7 +16,8 @@ var COM_ATTR_S = 'data-component-scope';
 var COM_ATTR_X = 'data-component-import';
 var REG_EMAIL = /^[a-z0-9-_.+]+@[a-z0-9.-]+\.[a-z]{2,6}$/i;
 var REG_FORMAT = /\{\d+\}/g;
-var isMOBILE = ('ontouchstart' in window || navigator.maxTouchPoints) ? true : false;
+
+window.isMOBILE = ('ontouchstart' in window || navigator.maxTouchPoints) ? true : false;
 
 if (typeof(window.setImmediate) === 'undefined') {
 	window.setImmediate = function(cb) {
@@ -30,12 +31,20 @@ $.fn.component = function() {
 
 $.fn.components = function(fn) {
 	var all = this.find(COM_ATTR);
+	var output;
 	all.each(function(index) {
 		var com = $(this).data(COM_ATTR);
-		if (com && com.$ready && !com.$removed)
-			fn.call(com, index);
+		if (com && com.$ready && !com.$removed) {
+			if (fn) {
+				fn.call(com, index);
+				return;
+			}
+			if (!output)
+				output = [];
+			output.push(com);
+		}
 	});
-	return all;
+	return fn ? all : output;
 };
 
 // Because of file size
@@ -140,7 +149,7 @@ COM.compile = function(container) {
 			if (!x) {
 				if (!MAN.initializers['$NE_' + name]) {
 					MAN.initializers['$NE_' + name] = true;
-					console.warn('The component "' + name + '" does not exist.');
+					// console.warn('The component "' + name + '" does not exist.');
 				}
 				return;
 			}
@@ -151,7 +160,7 @@ COM.compile = function(container) {
 			if (MAN.imports[x] === 2) {
 				if (!MAN.initializers['$NE_' + name]) {
 					MAN.initializers['$NE_' + name] = true;
-					console.warn('The component "' + name + '" does not exist.');
+					// console.warn('The component "' + name + '" does not exist.');
 				}
 				return;
 			}
@@ -371,6 +380,10 @@ COM.$inject = function() {
 	});
 };
 
+COM.components = function() {
+	return Object.keys(MAN.register).trim();
+};
+
 COM.inject = COM.import = function(url, target, callback, insert) {
 
 	if (insert === undefined)
@@ -388,30 +401,29 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 	if (!target)
 		target = 'body';
 
-	var extension = url.lastIndexOf('.');
-	if (extension !== -1)
-		extension = url.substring(extension).toLowerCase();
+	var ext = url.lastIndexOf('.');
+	if (ext !== -1)
+		ext = url.substring(ext).toLowerCase();
 	else
-		extension = '';
+		ext = '';
 
 	var d = document;
-	if (extension === '.js') {
-		var script = d.createElement('script');
-		script.type = 'text/javascript';
-		// script.async = true;
+	if (ext === '.js') {
+		var scr = d.createElement('script');
+		scr.type = 'text/javascript';
 		if (callback)
-			script.onload = callback;
-		script.src = url;
-		d.getElementsByTagName('head')[0].appendChild(script);
+			scr.onload = callback;
+		scr.src = url;
+		d.getElementsByTagName('head')[0].appendChild(scr);
 		return;
 	}
 
-	if (extension === '.css') {
-		var style = d.createElement('link');
-		style.type = 'text/css';
-		style.rel = 'stylesheet';
-		style.href = url;
-		d.getElementsByTagName('head')[0].appendChild(style);
+	if (ext === '.css') {
+		var stl = d.createElement('link');
+		stl.type = 'text/css';
+		stl.rel = 'stylesheet';
+		stl.href = url;
+		d.getElementsByTagName('head')[0].appendChild(stl);
 		return;
 	}
 
@@ -548,7 +560,7 @@ COM.UPLOAD = function(url, data, callback, timeout, progress, error) {
 
 		}, false);
 
-		xhr.upload.onprogress = function (evt) {
+		xhr.upload.onprogress = function(evt) {
 			if (!progress)
 				return;
 			var percentage = 0;
@@ -2626,7 +2638,7 @@ function component(type, declaration) {
 	return COMPONENT(type, declaration);
 }
 
-function COMPONENT(type, declaration) {
+window.COMPONENT = function(type, declaration) {
 
 	var shared = {};
 
@@ -2640,7 +2652,7 @@ function COMPONENT(type, declaration) {
 	};
 
 	MAN.register[type] = fn;
-}
+};
 
 function component_async(arr, fn, done) {
 
@@ -3341,7 +3353,7 @@ function $components_save() {
 		localStorage.setItem(COM.$localstorage + '.cache', JSON.stringify(MAN.storage));
 }
 
-function SET(path, value, timeout, reset) {
+window.SET = function(path, value, timeout, reset) {
 	if (typeof(timeout) === 'boolean')
 		return COM.set(path, value, timeout);
 	if (!timeout)
@@ -3349,9 +3361,9 @@ function SET(path, value, timeout, reset) {
 	setTimeout(function() {
 		COM.set(path, value, reset);
 	}, timeout);
-}
+};
 
-function INC(path, value, timeout, reset) {
+window.INC = function(path, value, timeout, reset) {
 	if (typeof(timeout) === 'boolean')
 		return COM.inc(path, value, timeout);
 	if (!timeout)
@@ -3359,9 +3371,9 @@ function INC(path, value, timeout, reset) {
 	setTimeout(function() {
 		COM.inc(path, value, reset);
 	}, timeout);
-}
+};
 
-function EXTEND(path, value, timeout, reset) {
+window.EXTEND = function(path, value, timeout, reset) {
 	if (typeof(timeout) === 'boolean')
 		return COM.extend(path, value, timeout);
 	if (!timeout)
@@ -3369,9 +3381,9 @@ function EXTEND(path, value, timeout, reset) {
 	setTimeout(function() {
 		COM.extend(path, value, reset);
 	}, timeout);
-}
+};
 
-function PUSH(path, value, timeout, reset) {
+window.PUSH = function(path, value, timeout, reset) {
 	if (typeof(timeout) === 'boolean')
 		return COM.push(path, value, timeout);
 	if (!timeout)
@@ -3379,25 +3391,25 @@ function PUSH(path, value, timeout, reset) {
 	setTimeout(function() {
 		COM.push(path, value, reset);
 	}, timeout);
-}
+};
 
-function INVALID(path) {
+window.INVALID = function(path) {
 	$.components.invalid(path);
-}
+};
 
-function RESET(path, timeout) {
+window.RESET = function(path, timeout) {
 	return COM.reset(path, timeout);
-}
+};
 
-function DEFAULT(path, timeout, reset) {
+window.DEFAULT = function(path, timeout, reset) {
 	return COM.default(path, timeout, null, reset);
-}
+};
 
-function WATCH(path, callback, init) {
+window.WATCH = function(path, callback, init) {
 	return COM.on('watch', path, callback, init);
-}
+};
 
-function PING(url, timeout, callback) {
+window.PING = function(url, timeout, callback) {
 
 	if (navigator.onLine !== undefined) {
 		if (!navigator.onLine)
@@ -3440,29 +3452,29 @@ function PING(url, timeout, callback) {
 	return setInterval(function() {
 		$.ajax(uri, options);
 	}, timeout || 30000);
-}
+};
 
-function AJAX() {
+window.AJAX = function() {
 	return COM.AJAX.apply(COM, arguments);
-}
+};
 
-function AJAXCACHE() {
+window.AJAXCACHE = function() {
 	return COM.AJAXCACHE.apply(COM, arguments);
 }
 
-function GET(path, scope) {
+window.GET = function(path, scope) {
 	return COM.get(path, scope);
-}
+};
 
-function CACHE(key, value, expire) {
+window.CACHE = function(key, value, expire) {
 	return COM.cache(key, value, expire);
-}
+};
 
-function NOTIFY() {
+window.NOTIFY = function() {
 	return COM.notify.apply(COM, arguments);
-}
+};
 
-function NOTMODIFIED(path, value, fields) {
+window.NOTMODIFIED = function(path, value, fields) {
 
 	if (value === undefined)
 		value = COM.get(path);
@@ -3479,9 +3491,9 @@ function NOTMODIFIED(path, value, fields) {
 		return true;
 	MAN.cache[key] = hash;
 	return false;
-}
+};
 
-function FIND(value, many, noCache, callback) {
+window.FIND = function(value, many, noCache, callback) {
 
 	var isWaiting = false;
 
@@ -3544,9 +3556,9 @@ function FIND(value, many, noCache, callback) {
 	if (!noCache)
 		MAN.cache[key] = output;
 	return output;
-}
+};
 
-function BROADCAST(selector, name, caller) {
+window.BROADCAST = function(selector, name, caller) {
 
 	if (typeof(selector) === 'object') {
 
@@ -3591,7 +3603,7 @@ function BROADCAST(selector, name, caller) {
 
 	MAN.cache[key] = components;
 	return $BROADCAST_EVAL(components, name, caller);
-}
+};
 
 function $BROADCAST_EVAL(components, name, caller) {
 
@@ -3611,7 +3623,7 @@ function $BROADCAST_EVAL(components, name, caller) {
 	};
 }
 
-function UPDATE(path, timeout, reset) {
+window.UPDATE = function(path, timeout, reset) {
 	if (typeof(timeout) === 'boolean')
 		return COM.update(path, timeout);
 	if (!timeout)
@@ -3619,25 +3631,25 @@ function UPDATE(path, timeout, reset) {
 	setTimeout(function() {
 		COM.update(path, reset);
 	}, timeout);
-}
+};
 
-function CHANGE(path, value) {
+window.CHANGE = function(path, value) {
 	return COM.change(path, value);
-}
+};
 
-function INJECT(url, target, callback, timeout) {
+window.INJECT = function(url, target, callback, timeout) {
 	return COM.import(url, target, callback, timeout);
-}
+};
 
-function IMPORT(url, target, callback, timeout) {
+window.IMPORT = function(url, target, callback, timeout) {
 	return COM.import(url, target, callback, timeout);
-}
+};
 
-function SCHEMA(name, declaration, callback) {
+window.SCHEMA = function(name, declaration, callback) {
 	return COM.schema(name, declaration, callback);
-}
+};
 
-function OPERATION(name, fn) {
+window.OPERATION = function(name, fn) {
 	if (!fn) {
 		if (name.charCodeAt(0) === 35)
 			return MAN.operations[name.substring(1)];
@@ -3645,36 +3657,36 @@ function OPERATION(name, fn) {
 	}
 	MAN.operations[name] = fn;
 	return fn;
-}
+};
 
-function ON(name, path, fn, init) {
+window.ON = function(name, path, fn, init) {
 	COM.on(name, path, fn, init);
-}
+};
 
-function EVALUATE(path, expression, nopath) {
+window.EVALUATE = function(path, expression, nopath) {
 	return COM.evaluate(path, expression, nopath);
-}
+};
 
-function MAKE(callback) {
+window.MAKE = function(callback) {
 	var obj = {};
 	callback.call(obj, obj);
 	return obj;
-}
+};
 
-function STYLE(value) {
+window.STYLE = function(value) {
 	clearTimeout(MAN.timeoutStyles);
 	MAN.styles.push(value);
 	MAN.timeoutStyles = setTimeout(function() {
 		$('<style type="text/css">' + MAN.styles.join('') + '</style>').appendTo('head');
 		MAN.styles = [];
 	}, 50);
-}
+};
 
-function BLOCKED(name, timeout, callback) {
+window.BLOCKED = function(name, timeout, callback) {
 	return COM.blocked(name, timeout, callback);
-}
+};
 
-function HASH(s) {
+window.HASH = function(s) {
 	if (!s)
 		return 0;
 	if (typeof(s) !== 'string')
@@ -3689,9 +3701,9 @@ function HASH(s) {
 		hash |= 0; // Convert to 32bit integer
 	}
 	return hash;
-}
+};
 
-function WAIT(fn, callback, interval) {
+window.WAIT = function(fn, callback, interval) {
 	var key = ((Math.random() * 10000) >> 0).toString(16);
 
 	if (typeof(callback) === 'number') {
@@ -3724,13 +3736,13 @@ function WAIT(fn, callback, interval) {
 		});
 
 	}, interval || 500);
-}
+};
 
-function COMPILE() {
+window.COMPILE = function() {
 	$.components();
-}
+};
 
-function CONTROLLER() {
+window.CONTROLLER = function() {
 	var callback = arguments[arguments.length - 1];
 
 	if (typeof(callback) !== 'function')
@@ -3764,7 +3776,7 @@ function CONTROLLER() {
 		callback.call(obj, replacer, arg);
 		return obj;
 	};
-}
+};
 
 Array.prototype.waitFor = function(fn, callback) {
 
@@ -4218,7 +4230,7 @@ Array.prototype.scalar = function(type, key) {
 	return output;
 };
 
-function NOTVALID(name, value, error) {
+window.NOTVALID = function(name, value, error) {
 
 	if (typeof(value) === 'function') {
 		var a = {};
@@ -4281,7 +4293,7 @@ function $MIDDLEWARE(path, value, type, callback) {
 	return a;
 }
 
-function MIDDLEWARE(name, value, callback, path) {
+window.MIDDLEWARE = function(name, value, callback, path) {
 
 	if (!(name instanceof Array)) {
 		MAN.middleware[name] = value;
@@ -4309,9 +4321,9 @@ function MIDDLEWARE(name, value, callback, path) {
 		if (callback)
 			callback.call(context, val !== undefined ? val : value, path);
 	});
-}
+};
 
-function FN(exp) {
+window.FN = function(exp) {
 	var index = exp.indexOf('=>');
 	var arg = exp.substring(0, index).trim();
 	var val = exp.substring(index + 2).trim();
@@ -4340,4 +4352,4 @@ function FN(exp) {
 		default:
 			return new Function(output);
 	}
-}
+};
