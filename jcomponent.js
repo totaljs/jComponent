@@ -1,4 +1,6 @@
 var MAN = new CMAN();
+if (!window.MAN)
+	window.MAN = MAN;
 var COM_DATA_BIND_SELECTOR = 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
 var COM_ATTR = '[data-component]';
 var COM_ATTR_U = 'data-component-url';
@@ -396,7 +398,7 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 	if (extension === '.js') {
 		var script = d.createElement('script');
 		script.type = 'text/javascript';
-		script.async = true;
+		// script.async = true;
 		if (callback)
 			script.onload = callback;
 		script.src = url;
