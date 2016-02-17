@@ -3218,7 +3218,7 @@ $(document).ready(function() {
 		var code = e.keyCode;
 		if (e.metaKey || code === 9 || (code > 15 && code < 21) || (code > 36 && code < 41)) {
 			// Past / Cut
-			if (code !== 86 || code !== 88)
+			if (code !== 86 && code !== 88)
 				return;
 		}
 
