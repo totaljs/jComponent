@@ -3216,8 +3216,11 @@ $(document).ready(function() {
 
 		// tab, alt, ctrl, shift, capslock
 		var code = e.keyCode;
-		if (e.metaKey || code === 9 || (code > 15 && code < 21) || (code > 36 && code < 41))
-			return;
+		if (e.metaKey || code === 9 || (code > 15 && code < 21) || (code > 36 && code < 41)) {
+			// Past / Cut
+			if (code !== 86 || code !== 88)
+				return;
+		}
 
 		// Backspace
 		if (e.keyCode === 8 && !self.value)
