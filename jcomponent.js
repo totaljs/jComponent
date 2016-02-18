@@ -902,6 +902,7 @@ function $components_ready() {
 	clearTimeout(MAN.timeout);
 	MAN.timeout = setTimeout(function() {
 
+		$MEDIAQUERY();
 		MAN.refresh();
 		MAN.initialize();
 
@@ -2756,6 +2757,7 @@ function CMAN() {
 	this.defaults = {};
 	this.middleware = {};
 	this.others = {};
+	// this.mediaquery;
 }
 
 MAN.cacherest = function(method, url, params, value, expire) {
@@ -3727,6 +3729,10 @@ WAIT(function() {
 			MAN.$$();
 		}
 
+		$(window).on('resize', $MEDIAQUERY);
+		$(window).on('orientationchange', $MEDIAQUERY);
+		$MEDIAQUERY();
+
 		$(document).on('change keypress keydown blur', COM_DATA_BIND_SELECTOR, function(e) {
 
 			var self = this;
@@ -4364,6 +4370,141 @@ window.NOTVALID = function(name, value, error) {
 		return e;
 	}
 }
+
+window.MEDIAQUERY = function(query, element, fn) {
+
+	if (typeof(query) === 'number') {
+		MAN.mediaquery.remove('id', query);
+		return true;
+	}
+
+	if (typeof(element) === 'function') {
+		fn = element;
+		element = null;
+	}
+
+	if (!MAN.mediaquery)
+		MAN.mediaquery = [];
+
+	var arr = query.match(/(max-width|min-width|max-device-width|min-device-width|max-height|min-height|max-device-height|height|width):(\s)\d+(px|em|in)?/gi);
+	var obj = {};
+
+	var num = function(val) {
+		var n = parseInt(val.match(/\d+/), 10);
+		if (val.match(/\d+(em)/))
+			return n * 16;
+		if (val.match(/\d+(in)/))
+			return (n * 0.010416667) >> 0;
+		return n;
+	};
+
+	if (arr) {
+		for (var i = 0, length = arr.length; i < length; i++) {
+			var item = arr[i];
+			var index = item.indexOf(':');
+			switch (item.substring(0, index).toLowerCase().trim()) {
+				case 'min-width':
+				case 'min-device-width':
+				case 'width':
+					obj.minW = num(item);
+					break;
+				case 'max-width':
+				case 'max-device-width':
+				case 'width':
+					obj.maxW = num(item);
+					break;
+				case 'min-height':
+				case 'min-device-height':
+				case 'height':
+					obj.minH = num(item);
+					break;
+				case 'max-height':
+				case 'max-device-height':
+				case 'height':
+					obj.maxH = num(item);
+					break;
+			}
+		}
+	}
+
+	arr = query.match(/orientation:(\s)(landscape|portrait)/gi);
+	if (arr) {
+		for (var i = 0, length = arr.length; i < length; i++) {
+			var item = arr[i];
+			if (item.toLowerCase().indexOf('portrait') !== -1)
+				obj.orientation = 'portrait';
+			else
+				obj.orientation = 'landscape';
+		}
+	}
+
+	obj.id = (Math.random() * 10000000) >> 0;
+	obj.fn = fn;
+
+	if (element)
+		obj.element = element;
+
+	MAN.mediaquery.push(obj);
+	return obj.id;
+}
+
+function $MEDIAQUERY() {
+
+	if (!MAN.mediaquery || !MAN.mediaquery.length)
+		return;
+
+	var orientation = window.orientation ? Math.abs(window.orientation) === 90 ? 'landscape' : 'portrait' : '';
+
+	var $w = $(window);
+	var w = $w.width();
+	var h = $w.height();
+
+	for (var i = 0, length = MAN.mediaquery.length; i < length; i++) {
+		var mq = MAN.mediaquery[i];
+		var cw = w;
+		var ch = h;
+
+		if (mq.element) {
+			cw = mq.element.width();
+			ch = mq.element.height();
+		}
+
+		if (mq.orientation) {
+			if (!orientation && mq.orientation !== 'portrait')
+				continue;
+			else if (orientation !== mq.orientation)
+				continue;
+		}
+
+		if (mq.minW && mq.minW >= cw)
+			continue;
+		if (mq.maxW && mq.maxW <= cw)
+			continue;
+		if (mq.minH && mq.minH >= ch)
+			continue;
+		if (mq.maxH && mq.maxH <= ch)
+			continue;
+
+		if (mq.oldW === cw && mq.oldH !== ch) {
+			// changed height
+			if (!mq.maxH && !mq.minH)
+				continue;
+		}
+
+		if (mq.oldH === ch && mq.oldW !== cw) {
+			// changed width
+			if (!mq.maxW && !mq.minW)
+				continue;
+		}
+
+		if (mq.oldW === cw && mq.oldH === ch)
+			continue;
+
+		mq.oldW = cw;
+		mq.oldH = ch;
+		mq.fn(cw, ch, mq.id);
+	}
+};
 
 function $MIDDLEWARE(path, value, type, callback) {
 

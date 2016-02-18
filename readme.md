@@ -1236,6 +1236,29 @@ MIDDLEWARE(['A-NAME', 'B-NAME'], { count: 0 }, function(value, path) {
 });
 ```
 
+## Simple Media Query Evaluator
+
+```javascript
+// MEDIAQUERY(query, [element], fn)
+// "element" by default is window
+// IMPORTANT: mediaquery are applied when is the window resized or when is the orientation changed
+MEDIAQUERY('(min-width: 500px) and (max-width: 1024px)', function(w, h, id) {
+    // new size
+});
+```
+
+__Remove media query evaluator__:
+
+```javascript
+// MEDIAQUERY() returns ID (Number)
+var id = MEDIAQUERY('(min-width: 500px) and (max-width: 1024px)', function(w, h, id) {
+    // new size
+});
+
+// Remove media query listener: "id" must be number
+MEDIAQUERY(id);
+```
+
 ## Operations
 
 Operations are predefined functions. The operation can be executed automatically in the component attribute e.g. `data-component-init="#operation-name"`.
