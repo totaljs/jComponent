@@ -3200,7 +3200,8 @@ MAN.$$ = function() {
 			} catch (e) {}
 		}
 	}
-	COM.compile();
+	if (window.jQuery)
+		COM.compile();
 };
 
 /**
