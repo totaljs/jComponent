@@ -25,30 +25,8 @@ if (typeof(window.setImmediate) === 'undefined') {
 	};
 }
 
-$.fn.component = function() {
-	return this.data(COM_ATTR);
-};
-
-$.fn.components = function(fn) {
-	var all = this.find(COM_ATTR);
-	var output;
-	all.each(function(index) {
-		var com = $(this).data(COM_ATTR);
-		if (com && com.$ready && !com.$removed) {
-			if (fn) {
-				fn.call(com, index);
-				return;
-			}
-			if (!output)
-				output = [];
-			output.push(com);
-		}
-	});
-	return fn ? all : output;
-};
-
 // Because of file size
-window.COM = window.jC = $.components = function(container) {
+window.COM = window.jC = function(container) {
 	if (MAN.isCompiling)
 		return COM;
 	return COM.compile(container);
@@ -3192,162 +3170,6 @@ COMPONENT('', function() {
 	}
 });
 
-setInterval(function() {
-	MAN.temp = {};
-	MAN.cleaner();
-}, (1000 * 60) * 5);
-
-MAN.$load = setTimeout(MAN.$$, 2);
-
-$(document).ready(function() {
-
-	if (MAN.$load) {
-		clearTimeout(MAN.$load);
-		MAN.$$();
-	}
-
-	$(document).on('change keypress keydown blur', COM_DATA_BIND_SELECTOR, function(e) {
-
-		var self = this;
-
-		if (e.type === 'keypress') {
-			// IE 9+ PROBLEM
-			if (self.tagName !== 'TEXTAREA' && e.keyCode === 13)
-				return false;
-			return;
-		}
-
-		var special = self.type === 'checkbox' || self.type === 'radio' || self.tagName === 'SELECT';
-
-		if (e.type === 'focusout' && special)
-			return;
-
-		if (e.type === 'change' && !special)
-			return;
-
-		if (!self.$component || self.$component.$removed || !self.$component.getter)
-			return;
-
-		// tab, alt, ctrl, shift, capslock
-		var code = e.keyCode;
-		if (e.metaKey || code === 9 || (code > 15 && code < 21) || (code > 36 && code < 41)) {
-			// Past / Cut
-			if (code !== 86 && code !== 88)
-				return;
-		}
-
-		// Backspace
-		if (e.keyCode === 8 && !self.value)
-			return;
-
-		if (self.$skip && e.type === 'focusout') {
-			$components_keypress(self, self.$value, e);
-			return;
-		}
-
-		var old = self.$value;
-		var value;
-
-		// cleans old value
-		self.$value = null;
-
-		if (self.type === 'checkbox' || self.type === 'radio') {
-			if (e.type === 'keydown')
-				return;
-			var value = self.checked;
-			self.$component.dirty(false, true);
-			self.$component.getter(value, 2);
-			self.$component.$skip = false;
-			return;
-		}
-
-		if (self.tagName === 'SELECT') {
-			if (e.type === 'keydown')
-				return;
-			var selected = self[self.selectedIndex];
-			value = selected.value;
-			self.$component.dirty(false, true);
-			self.$component.getter(value, 2);
-			self.$component.$skip = false;
-			return;
-		}
-
-		if (self.$delay === undefined)
-			self.$delay = parseInt(self.getAttribute('data-component-keypress-delay') || '0');
-
-		if (self.$only === undefined)
-			self.$only = self.getAttribute('data-component-keypress-only') === 'true';
-
-		if (self.$only && (e.type === 'focusout' || e.type === 'change'))
-			return;
-
-		if (e.type === 'keydown' && (e.keyCode === undefined || e.keyCode === 9))
-			return;
-
-		if (e.keyCode < 41 && e.keyCode !== 8 && e.keyCode !== 32) {
-			if (e.keyCode !== 13)
-				return;
-			if (e.tagName !== 'TEXTAREA') {
-				self.$value = self.value;
-				clearTimeout(self.$timeout);
-				$components_keypress(self, old, e);
-				return;
-			}
-		}
-
-		if (self.$nokeypress === undefined) {
-			var v = self.getAttribute('data-component-keypress');
-			if (v)
-				self.$nokeypress = v === 'false';
-			else
-				self.$nokeypress = COM.defaults.keypress === false;
-		}
-
-		var delay = self.$delay;
-		if (self.$nokeypress) {
-			if (e.type === 'keydown' || e.type === 'focusout')
-				return;
-			if (delay === 0)
-				delay = 1;
-		} else if (delay === 0)
-			delay = COM.defaults.delay;
-
-		if (e.type === 'focusout')
-			delay = 0;
-
-		clearTimeout(self.$timeout);
-		self.$timeout = setTimeout(function() {
-			$components_keypress(self, old, e);
-		}, delay);
-	});
-
-	setTimeout(function() {
-		COM.compile();
-	}, 2);
-});
-
-function $components_keypress(self, old, e) {
-
-	if (self.value === old)
-		return;
-
-	clearTimeout(self.$timeout);
-	self.$timeout = null;
-
-	if (self.value !== self.$value2) {
-		if (e.keyCode !== 9)
-			self.$component.dirty(false, true);
-		self.$component.getter(self.value, 2, old, e.type === 'focusout' || e.keyCode === 13);
-		self.value2 = self.value;
-	}
-
-	clearTimeout(self.$cleanupmemory);
-	self.$cleanupmemory = setTimeout(function() {
-		delete self.$value2;
-		delete self.$value;
-	}, 60000 * 5);
-}
-
 function $components_save() {
 	if (COM.defaults.localstorage)
 		localStorage.setItem(COM.$localstorage + '.cache', JSON.stringify(MAN.storage));
@@ -3777,6 +3599,192 @@ window.CONTROLLER = function() {
 		return obj;
 	};
 };
+
+MAN.$load = setTimeout(MAN.$$, 2);
+
+// Waits for jQuery
+WAIT(function() {
+	return window.jQuery ? true : false;
+}, function() {
+
+	setInterval(function() {
+		MAN.temp = {};
+		MAN.cleaner();
+	}, (1000 * 60) * 5);
+
+	$.fn.component = function() {
+		return this.data(COM_ATTR);
+	};
+
+	$.fn.components = function(fn) {
+		var all = this.find(COM_ATTR);
+		var output;
+		all.each(function(index) {
+			var com = $(this).data(COM_ATTR);
+			if (com && com.$ready && !com.$removed) {
+				if (fn) {
+					fn.call(com, index);
+					return;
+				}
+				if (!output)
+					output = [];
+				output.push(com);
+			}
+		});
+		return fn ? all : output;
+	};
+
+	$.components = window.COM || window.jC;
+
+	$(document).ready(function() {
+
+		if (MAN.$load) {
+			clearTimeout(MAN.$load);
+			MAN.$$();
+		}
+
+		$(document).on('change keypress keydown blur', COM_DATA_BIND_SELECTOR, function(e) {
+
+			var self = this;
+
+			if (e.type === 'keypress') {
+				// IE 9+ PROBLEM
+				if (self.tagName !== 'TEXTAREA' && e.keyCode === 13)
+					return false;
+				return;
+			}
+
+			var special = self.type === 'checkbox' || self.type === 'radio' || self.tagName === 'SELECT';
+
+			if (e.type === 'focusout' && special)
+				return;
+
+			if (e.type === 'change' && !special)
+				return;
+
+			if (!self.$component || self.$component.$removed || !self.$component.getter)
+				return;
+
+			// tab, alt, ctrl, shift, capslock
+			var code = e.keyCode;
+			if (e.metaKey || code === 9 || (code > 15 && code < 21) || (code > 36 && code < 41)) {
+				// Past / Cut
+				if (code !== 86 && code !== 88)
+					return;
+			}
+
+			// Backspace
+			if (e.keyCode === 8 && !self.value)
+				return;
+
+			if (self.$skip && e.type === 'focusout') {
+				$components_keypress(self, self.$value, e);
+				return;
+			}
+
+			var old = self.$value;
+			var value;
+
+			// cleans old value
+			self.$value = null;
+
+			if (self.type === 'checkbox' || self.type === 'radio') {
+				if (e.type === 'keydown')
+					return;
+				var value = self.checked;
+				self.$component.dirty(false, true);
+				self.$component.getter(value, 2);
+				self.$component.$skip = false;
+				return;
+			}
+
+			if (self.tagName === 'SELECT') {
+				if (e.type === 'keydown')
+					return;
+				var selected = self[self.selectedIndex];
+				value = selected.value;
+				self.$component.dirty(false, true);
+				self.$component.getter(value, 2);
+				self.$component.$skip = false;
+				return;
+			}
+
+			if (self.$delay === undefined)
+				self.$delay = parseInt(self.getAttribute('data-component-keypress-delay') || '0');
+
+			if (self.$only === undefined)
+				self.$only = self.getAttribute('data-component-keypress-only') === 'true';
+
+			if (self.$only && (e.type === 'focusout' || e.type === 'change'))
+				return;
+
+			if (e.type === 'keydown' && (e.keyCode === undefined || e.keyCode === 9))
+				return;
+
+			if (e.keyCode < 41 && e.keyCode !== 8 && e.keyCode !== 32) {
+				if (e.keyCode !== 13)
+					return;
+				if (e.tagName !== 'TEXTAREA') {
+					self.$value = self.value;
+					clearTimeout(self.$timeout);
+					$components_keypress(self, old, e);
+					return;
+				}
+			}
+
+			if (self.$nokeypress === undefined) {
+				var v = self.getAttribute('data-component-keypress');
+				if (v)
+					self.$nokeypress = v === 'false';
+				else
+					self.$nokeypress = COM.defaults.keypress === false;
+			}
+
+			var delay = self.$delay;
+			if (self.$nokeypress) {
+				if (e.type === 'keydown' || e.type === 'focusout')
+					return;
+				if (delay === 0)
+					delay = 1;
+			} else if (delay === 0)
+				delay = COM.defaults.delay;
+
+			if (e.type === 'focusout')
+				delay = 0;
+
+			clearTimeout(self.$timeout);
+			self.$timeout = setTimeout(function() {
+				$components_keypress(self, old, e);
+			}, delay);
+		});
+
+		setTimeout(function() {
+			COM.compile();
+		}, 2);
+	});
+}, 100);
+
+function $components_keypress(self, old, e) {
+
+	if (self.value === old)
+		return;
+
+	clearTimeout(self.$timeout);
+	self.$timeout = null;
+
+	if (self.value !== self.$value2) {
+		if (e.keyCode !== 9)
+			self.$component.dirty(false, true);
+		self.$component.getter(self.value, 2, old, e.type === 'focusout' || e.keyCode === 13);
+		self.value2 = self.value;
+	}
+
+	clearTimeout(self.$cleanupmemory);
+	self.$cleanupmemory = setTimeout(function() {
+		delete self.$value2;
+		delete self.$value;
+	}, 60000 * 5);
+}
 
 Array.prototype.waitFor = function(fn, callback) {
 

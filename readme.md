@@ -43,6 +43,8 @@ If you want to use jComponent on your presentation website - use `jcomponent.min
 
 The components work is the browser `window.` scope. So each path in the form of `path.to.something` is automatically routed into `window.path.to.something`. The library automatically creates values according the binding path.
 
+The library can be loaded with `async` attribute.
+
 ***
 
 ## HTML definition
