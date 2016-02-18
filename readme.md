@@ -718,8 +718,7 @@ $.components.$language;
 // {String} appends the value to each URL address `?language=$language`
 // called via jComponent, default: "".
 
-$.components.$parser;
-$.components.$parser.push(function(path, value, type) { // Example
+$.components.parser(function(path, value, type) { // Example
     // this === component
     // type === [data-component-type]
     if (path === 'model.created') {
@@ -728,17 +727,23 @@ $.components.$parser.push(function(path, value, type) { // Example
     }
     return value;
 });
-// {Array of Functions} contains all global parsers.
 
-$.components.$formatter;
-$.components.$formatter.push(function(path, value, type) { // Example
+var value = $.components.parser('a-value', 'my.custom.path', 'number');
+// value will be contain parsed `a-value`
+// jComponent executes all parser functions to a value
+
+$.components.formatter(function(path, value, type) { // Example
     // this === component
     // type === [data-component-type]
     if (path === 'model.created')
         return value.format('dd.MM.yyyy');
     return value;
 });
-// {Array of Functions} contains all global formatters.
+
+var value = $.components.formatter('a-value', 'my.custom.path', 'number');
+// value will be contain formatted `a-value`
+// jComponent executes all formatter functions to a value
+
 ```
 
 ### Methods
@@ -1624,6 +1629,34 @@ SET('path.to.property #MIDDLEWARE1 #MIDDLEWARE2', 'new value');
 UPDATE('path.to.property #MIDDLEWARE1 #MIDDLEWARE2');
 ```
 
+## +v4.0.0 Async loading components
+
+```html
+<script async src="jquery.min.js"></script>
+<script async src="jctajr.min.js"></script>
+<script async src="ui.js"></script>
+```
+
+```javascript
+if (!window.jComponent)
+    window.jComponent = [];
+
+// jComponent executes each function automatically in `window.jComponent` when the jComponent library is ready
+window.jComponent.push(function() {
+
+    // This context will be executed when the jComponent library is ready
+    
+    COMPONENT('label', function() {
+        // ... 
+    });
+
+    COMPONENT('textbox', function() {
+        // ... 
+    });
+
+});
+```
+
 ## Reserved keywords
 
 ```javascript
@@ -1638,6 +1671,9 @@ Ta;       // shortcut for Tangular
 // jctajr.min.js:
 jRouting; // shortcut for jRouting
 jR;       // shortcut for jRouting
+
+// Special {Array} of {Function}
+window.jComponent   // for async loading scripts
 ```
 
 ## Contact

@@ -80,7 +80,53 @@ COM.$parser.push(function(path, value, type) {
 	return value;
 });
 
+COM.formatter = function(value, path, type) {
+
+	if (typeof(value) === 'function') {
+		if (!COM.$formatter)
+			COM.$formatter = [];
+		COM.$formatter.push(value);
+		return COM;
+	}
+
+	var a = COM.$formatter;
+	if (a && a.length) {
+		for (var i = 0, length = a.length; i < length; i++)
+			value = a[i].call(COM, path, value, type);
+	}
+
+	return value;
+};
+
+COM.parser = function(value, path, type) {
+
+	if (typeof(value) === 'function') {
+		if (!COM.$parser)
+			COM.$parser = [];
+		COM.$parser.push(value);
+		return this;
+	}
+
+	var a = COM.$parser;
+	if (a && a.length) {
+		for (var i = 0, length = a.length; i < length; i++)
+			value = a[i].call(COM, path, value, type);
+	}
+	return value;
+};
+
 COM.compile = function(container) {
+
+	var jcw = window.jComponent;
+
+	if (jcw && jcw.length) {
+		while (true) {
+			var fn = jcw.shift();
+			if (fn === undefined)
+				break;
+			fn();
+		}
+	}
 
 	MAN.isCompiling = true;
 	COM.$inject();
@@ -389,8 +435,17 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 	if (ext === '.js') {
 		var scr = d.createElement('script');
 		scr.type = 'text/javascript';
-		if (callback)
-			scr.onload = callback;
+		scr.async = true;
+		scr.onload = function() {
+			if (callback)
+				callback();
+			if (!window.jQuery)
+				return;
+			setTimeout(function() {
+				COM.compile();
+			}, 500);
+		};
+
 		scr.src = url;
 		d.getElementsByTagName('head')[0].appendChild(scr);
 		return;
@@ -402,19 +457,24 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 		stl.rel = 'stylesheet';
 		stl.href = url;
 		d.getElementsByTagName('head')[0].appendChild(stl);
+		if (callback)
+			setTimeout(callback, 200);
 		return;
 	}
 
-	if (insert) {
-		var id = 'data-component-imported="' + ((Math.random() * 100000) >> 0) +'"';
-		$(target).append('<div ' + id + '></div>');
-		target = $(target).find('> div[' + id + ']');
-	}
-
-	$(target).load($components_url(url), function() {
-		COM.compile();
-		if (callback)
-			callback();
+	WAIT(function() {
+		return window.jQuery ? true : false;
+	}, function() {
+		if (insert) {
+			var id = 'data-component-imported="' + ((Math.random() * 100000) >> 0) + '"';
+			$(target).append('<div ' + id + '></div>');
+			target = $(target).find('> div[' + id + ']');
+		}
+		$(target).load($components_url(url), function() {
+			COM.compile();
+			if (callback)
+				callback();
+		});
 	});
 
 	return COM;
