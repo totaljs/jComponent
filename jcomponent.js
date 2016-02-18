@@ -126,6 +126,8 @@ COM.compile = function(container) {
 				break;
 			fn();
 		}
+		if (window.jRouting)
+			window.jRouting.async();
 	}
 
 	MAN.isCompiling = true;
