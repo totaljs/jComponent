@@ -240,6 +240,8 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     This attribute can be used with `data-component-path`: the library automatically
     rewrites `$` char in all attributes [data-component-path] of all injected components
     according to `data-component-path`.
+
+    If the URL starts with `!` then the content will downloaded only one time.
 -->
 
 <element data-component-bind="" />
@@ -831,6 +833,7 @@ $.components.import(url, [target], [callback], [insert])
 // or can import scripts (.js) or styles (.css). `insert` arguments (default: true) wraps
 // new content into the <div data-component-imported="RANDOM_NUMBER" element otherwise replaces
 // content of target element. 
+// If the URL starts with `!` then the content will downloaded only one time.
 
 
 $.components.dirty(path, [value]);

@@ -361,8 +361,20 @@ COM.$inject = function() {
 		var el = $(this);
 		if (el.data(COM_ATTR_URL))
 			return;
+
 		el.data(COM_ATTR_URL, '1');
-		arr.push({ element: el, cb: el.attr(COM_ATTR_I), path: el.attr(COM_ATTR_P), url: el.attr(COM_ATTR_U), toggle: (el.attr(COM_ATTR_C) || '').split(' ') });
+
+		var url = el.attr(COM_ATTR_U);
+
+		// Unique
+		if (url.substring(0, 1) === '!') {
+			url = url.substring(1);
+			if (MAN.others[url])
+				return;
+			MAN.others[url] = true;
+		}
+
+		arr.push({ element: el, cb: el.attr(COM_ATTR_I), path: el.attr(COM_ATTR_P), url: url, toggle: (el.attr(COM_ATTR_C) || '').split(' ') });
 	});
 
 	if (!arr.length)
@@ -398,7 +410,7 @@ COM.$inject = function() {
 
 	}, function() {
 		MAN.clear('valid', 'dirty', 'broadcast', 'find');
-		if (count === 0)
+		if (!count)
 			return;
 		COM.compile();
 	});
@@ -409,6 +421,14 @@ COM.components = function() {
 };
 
 COM.inject = COM.import = function(url, target, callback, insert) {
+
+	// unique
+	if (url.substring(0, 1) === '!') {
+		url = url.substring(1);
+		if (MAN.others[url])
+			return;
+		MAN.others[url] = true;
+	}
 
 	if (insert === undefined)
 		insert = true;
@@ -2733,6 +2753,7 @@ function CMAN() {
 	this.waits = {};
 	this.defaults = {};
 	this.middleware = {};
+	this.others = {};
 }
 
 MAN.cacherest = function(method, url, params, value, expire) {
