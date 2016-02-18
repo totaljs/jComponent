@@ -1525,6 +1525,16 @@ console.log(arr.scalar('avg', 'age'));
 console.log(arr.scalar('range', 'age')); // { min: Number, max: Number }
 console.log(arr.scalar('median', 'age'));
 console.log(arr.scalar('distinct', 'age')); // +v4.0.0 returns Array with unique values
+
+
+// Array.prototype.compare(prop, array, [fields]);
+var arr1 = [{ id: 1, name: 'Peter', age: 31 }, { id: 2, name: 'Lucia', age: 34 }];
+var arr2 = [{ id: 1, name: 'Peter', age: 31 }, { id: 2, name: 'Anna', age: 34 }, { id: 3, name: 'Ivan', age: 26 }];
+
+console.log(arr1.compare('id', arr2));
+console.log(arr1.compare('id', arr2, ['age']));
+// Output: { change: Boolean, redraw: Boolean, append: [], remove: [], update: [] }
+// Arrays can contain: { oldIndex: Number, newIndex: Number, oldItem: Object, newItem: Object }
 ```
 
 ### Arrow function as string

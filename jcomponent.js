@@ -3621,6 +3621,23 @@ window.WAIT = function(fn, callback, interval) {
 	}
 
 	var is = typeof(fn) === 'string';
+	var run = false;
+
+	if (is) {
+		var result = MAN.get(fn);
+		if (result)
+			run = true;
+	} else if (fn())
+		run = true;
+
+	if (run) {
+		callback(function(sleep) {
+			setTimeout(function() {
+				WATCH(fn, callback, interval);
+			}, sleep || 1);
+		});
+		return;
+	}
 
 	MAN.waits[key] = setInterval(function() {
 
@@ -3898,6 +3915,62 @@ Array.prototype.waitFor = function(fn, callback) {
 	}, index);
 
 	return self;
+};
+
+Array.prototype.compare = function(id, b, fields) {
+	var a = this;
+	var update = [];
+	var append = [];
+	var remove = [];
+	var il = a.length;
+	var jl = b.length;
+
+	for (var i = 0; i < il; i++) {
+		var aa = a[i];
+		var is = false;
+
+		for (var j = 0; j < jl; j++) {
+			var bb = b[j];
+			if (bb[id] !== aa[id])
+				continue;
+			if (JSON.stringify(aa, fields) !== JSON.stringify(bb, fields))
+				update.push({ oldIndex: i, newIndex: j, oldItem: aa, newItem: bb });
+			is = true;
+			break;
+		}
+
+		if (!is)
+			remove.push({ oldIndex: i, newIndex: j, oldItem: aa, newItem: bb });
+	}
+
+	for (var i = 0; i < jl; i++) {
+		var aa = b[i];
+		var is = true;
+
+		for (var j = 0; j < il; j++) {
+			var bb = a[j];
+			if (bb[id] === aa[id]) {
+				is = false;
+				break;
+			}
+		}
+
+		if (!is)
+			continue;
+		append.push({ oldIndex: null, newIndex: i, oldItem: null, newItem: aa });
+	}
+
+	var pr = (remove.length / il) * 100;
+	var pu = (update.length / il) * 100;
+
+	var redraw = pr > 60 || pu > 60;
+	return {
+		change: append.length || remove.length || update.length ? true : false,
+		redraw: redraw,
+		append: append,
+		remove: remove,
+		update: update
+	};
 };
 
 Array.prototype.async = function(context, callback) {
