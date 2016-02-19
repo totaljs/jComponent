@@ -1535,6 +1535,15 @@ console.log(arr1.compare('id', arr2));
 console.log(arr1.compare('id', arr2, ['age']));
 // Output: { change: Boolean, redraw: Boolean, append: [], remove: [], update: [] }
 // Arrays can contain: { oldIndex: Number, newIndex: Number, oldItem: Object, newItem: Object }
+
+
+// Array.prototype.attr([name], value)
+// Creates attributes
+// `undefined` and `null` values are skipped
+var attrs = [];
+attrs.attr('maxlength', 30);
+attrs.attr('readonly');
+console.log(attrs.join(' '));
 ```
 
 ### Arrow function as string

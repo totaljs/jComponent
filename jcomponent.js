@@ -1366,7 +1366,7 @@ COM.update = function(path, reset, type) {
 			updates[path] = COM.get(path);
 
 		for (var i = 0, length = state.length; i < length; i++)
-			state[i].state(1, 4);
+			state[i].$state(1, 4);
 
 		// watches
 		length = path.length;
@@ -1632,7 +1632,7 @@ COM.set = function(path, val, type) {
 			MAN.clear('dirty', 'valid');
 
 		for (var i = 0, length = state.length; i < length; i++)
-			state[i].state(type, 5);
+			state[i].$state(type, 5);
 
 		COM.$emit('watch', path, undefined, type, is);
 	});
@@ -1798,11 +1798,11 @@ COM.blocked = function(name, timeout, callback) {
 // 4. update
 // 5. set
 COM.state = function(arr, type, who) {
-	if (!arr || !arr.length)
+		if (!arr || !arr.length)
 		return;
 	setTimeout(function() {
 		for (var i = 0, length = arr.length; i < length; i++)
-			arr[i].state(type, who);
+			arr[i].$state(type, who);
 	}, 2);
 };
 
@@ -2460,9 +2460,16 @@ COMP.prototype.valid = function(value, noEmit) {
 		return this;
 
 	if (this.state)
-		this.state(1, 1);
+		this.$state(1, 1);
 
 	return this;
+};
+
+COMP.prototype.$state = function(type, who) {
+	if (this.$oldstate)
+		return this;
+	this.$oldstate = type;
+	this.state(type, who);
 };
 
 COMP.prototype.style = function(value) {
@@ -2492,7 +2499,7 @@ COMP.prototype.dirty = function(value, noEmit) {
 		return this;
 
 	if (this.state)
-		this.state(2, 2);
+		this.$state(2, 2);
 
 	return this;
 };
@@ -2852,7 +2859,7 @@ MAN.prepare = function(obj) {
 	}
 
 	if (obj.state)
-		obj.state(0, 3);
+		obj.$state(0, 3);
 
 	if (obj.$init) {
 		setTimeout(function() {
@@ -4307,6 +4314,27 @@ String.prototype.parseDate = function() {
 	}
 
 	return new Date(parsed[0], parsed[1] - 1, parsed[2], parsed[3], parsed[4], parsed[5]);
+};
+
+Array.prototype.attr = function(name, value) {
+
+	if (arguments.length === 2) {
+		if (value === undefined || value === null)
+			return this;
+	} else if (value === undefined)
+		value = name.toString();
+
+	this.push(name + '="' + value.toString().replace(/[<>&"]/g, function(c) {
+		switch (c) {
+			case '&': return '&amp;'
+			case '<': return '&lt;'
+			case '>': return '&gt;'
+			case '"': return '&quot;'
+		}
+		return c;
+	}) + '"');
+
+	return this;
 };
 
 Array.prototype.scalar = function(type, key) {
