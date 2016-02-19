@@ -408,7 +408,7 @@ COMPONENT('my-component-name', function() {
         // type === 0 : init
         // type === 1 : by developer
         // type === 2 : by input
-        // type === 2 : by default
+        // type === 3 : by default
 
         // who  === 1 : valid
         // who  === 2 : dirty
@@ -480,9 +480,10 @@ COMPONENT('my-component-name', function() {
     // Sets the value into the model.
 
 
-    instance.update();
-    instance.refresh();
+    instance.update([updatePath]);
+    instance.refresh([updatePath]);
     // Updates current value.
+    // if "updatedPath" (default: false) then the library notifies all components which listen on the path. Otherwise the method performs "component.setter()" automatically.
 
 
     instance.inc(value);

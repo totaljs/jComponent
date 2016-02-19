@@ -1366,7 +1366,7 @@ COM.update = function(path, reset, type) {
 			updates[path] = COM.get(path);
 
 		for (var i = 0, length = state.length; i < length; i++)
-			state[i].$state(1, 4);
+			state[i].state(1, 4);
 
 		// watches
 		length = path.length;
@@ -1632,7 +1632,7 @@ COM.set = function(path, val, type) {
 			MAN.clear('dirty', 'valid');
 
 		for (var i = 0, length = state.length; i < length; i++)
-			state[i].$state(type, 5);
+			state[i].state(type, 5);
 
 		COM.$emit('watch', path, undefined, type, is);
 	});
@@ -1802,7 +1802,7 @@ COM.state = function(arr, type, who) {
 		return;
 	setTimeout(function() {
 		for (var i = 0, length = arr.length; i < length; i++)
-			arr[i].$state(type, who);
+			arr[i].state(type, who);
 	}, 2);
 };
 
@@ -2222,7 +2222,7 @@ function COMP(name) {
 
 	this.validate;
 
-	this.getter = function(value, type, older, skip) {
+	this.getter = function(value, type, older, skip, dirty) {
 
 		value = this.parser(value);
 
@@ -2238,8 +2238,11 @@ function COMP(name) {
 		if (this.trim && typeof(value) === 'string')
 			value = value.trim();
 
-		if (value === this.get())
+		if (value === this.get()) {
+			if (dirty)
+				COM.validate(this.path);
 			return this;
+		}
 
 		if (skip)
 			this.$skip = false;
@@ -2287,9 +2290,13 @@ function COMP(name) {
 	};
 }
 
-COMP.prototype.update = COMP.prototype.refresh = function() {
-	this.set(this.path, this.get(), 1);
-	return this;
+COMP.prototype.update = COMP.prototype.refresh = function(notify) {
+	var self = this;
+	if (notify)
+		self.set(self.get());
+	else if (self.setter)
+		self.setter(self.get(), self.path, 1);
+	return self;
 };
 
 COMP.prototype.nested = function(selector, type, value) {
@@ -2460,16 +2467,9 @@ COMP.prototype.valid = function(value, noEmit) {
 		return this;
 
 	if (this.state)
-		this.$state(1, 1);
+		this.state(1, 1);
 
 	return this;
-};
-
-COMP.prototype.$state = function(type, who) {
-	if (this.$oldstate)
-		return this;
-	this.$oldstate = type;
-	this.state(type, who);
 };
 
 COMP.prototype.style = function(value) {
@@ -2499,7 +2499,7 @@ COMP.prototype.dirty = function(value, noEmit) {
 		return this;
 
 	if (this.state)
-		this.$state(2, 2);
+		this.state(2, 2);
 
 	return this;
 };
@@ -2634,10 +2634,6 @@ COMP.prototype.get = function(path) {
 	if (!path)
 		return;
 	return MAN.get(path);
-};
-
-COMP.prototype.update = function(path, reset, type) {
-	COM.update(path || this.path, reset, type);
 };
 
 COMP.prototype.set = function(path, value, type) {
@@ -2859,7 +2855,7 @@ MAN.prepare = function(obj) {
 	}
 
 	if (obj.state)
-		obj.$state(0, 3);
+		obj.state(0, 3);
 
 	if (obj.$init) {
 		setTimeout(function() {
@@ -3782,7 +3778,7 @@ WAIT(function() {
 			// tab, alt, ctrl, shift, capslock
 			var code = e.keyCode;
 			if (e.metaKey || code === 9 || (code > 15 && code < 21) || (code > 36 && code < 41)) {
-				// Past / Cut
+				// Paste / Cut
 				if (code !== 86 && code !== 88)
 					return;
 			}
@@ -3887,9 +3883,15 @@ function $components_keypress(self, old, e) {
 	self.$timeout = null;
 
 	if (self.value !== self.$value2) {
-		if (e.keyCode !== 9)
+		var dirty = false;
+
+		if (e.keyCode !== 9) {
+			if (self.$component.$dirty)
+				dirty = true;
 			self.$component.dirty(false, true);
-		self.$component.getter(self.value, 2, old, e.type === 'focusout' || e.keyCode === 13);
+		}
+
+		self.$component.getter(self.value, 2, old, e.type === 'focusout' || e.keyCode === 13, dirty);
 		self.value2 = self.value;
 	}
 
