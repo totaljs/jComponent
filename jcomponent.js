@@ -4154,6 +4154,29 @@ Date.prototype.format = function(t) {
 	});
 };
 
+Number.prototype.pluralize = function(zero, one, few, other) {
+
+	var num = this;
+	var value = '';
+
+	if (num == 0)
+		value = zero || '';
+	else if (num == 1)
+		value = one || '';
+	else if (num > 1 && num < 5)
+		value = few || '';
+	else
+		value = other;
+
+	var beg = value.indexOf('#');
+	if (beg === -1)
+		return value;
+
+	var end = value.lastIndexOf('#');
+	var format = value.substring(beg, end + 1);
+	return num.format(format) + value.replace(format, '');
+};
+
 Number.prototype.format = function(decimals, separator, separatorDecimal) {
 	var self = this;
 	var num = self.toString();
@@ -4339,9 +4362,9 @@ Array.prototype.attr = function(name, value) {
 	return this;
 };
 
-Array.prototype.scalar = function(type, key) {
+Array.prototype.scalar = function(type, key, def) {
 
-	var output;
+	var output = def;
 	var isDate = false;
 	var isAvg = type === 'avg' || type === 'average';
 	var isDistinct = type === 'distinct';

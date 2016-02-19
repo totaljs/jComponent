@@ -1482,6 +1482,11 @@ format = number.format(2, '.', ',');
 format = number.format(0);
 // 1 000 000
 
+// Number.prototype.pluralize(zero, one, few, other)
+console.log(number.pluralize('beers', 'beer', 'beers', 'beers'));
+console.log(number.pluralize('beers #', 'beer #', 'beers #', 'beers #'));
+// The method replaces "#" for number.
+
 
 // Array.prototype.trim();
 var a = ['', 'A', 'B', '', 'C'].trim();
@@ -1508,7 +1513,7 @@ var index2 = b.findIndex(function(obj) {
 
 // Array.prototype.scalar(type);
 // or
-// Array.prototype.scalar(type, property);
+// Array.prototype.scalar(type, property, [default_value]);
 var arr = [0, 3, 4, 5, 6];
 console.log(arr.scalar('max'));
 console.log(arr.scalar('min'));
