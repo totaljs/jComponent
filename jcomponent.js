@@ -3641,9 +3641,9 @@ window.WAIT = function(fn, callback, interval, timeout) {
 		run = true;
 
 	if (run) {
-		callback(function(sleep) {
+		callback(null, function(sleep) {
 			setTimeout(function() {
-				WATCH(fn, callback, interval);
+				WATCH(fn, callback, interval, timeout);
 			}, sleep || 1);
 		});
 		return;
