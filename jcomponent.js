@@ -3412,11 +3412,14 @@ window.FIND = function(value, many, noCache, callback) {
 		isWaiting = true;
 		callback = many;
 		many = undefined;
-		noCache = undefined;
+		// noCache = undefined;
+		// noCache can be timeout
 	} else if (typeof(noCache) === 'function') {
+		var tmp = callback;
 		isWaiting = true;
 		callback = noCache;
-		noCache = undefined;
+		noCache = tmp;
+		// noCache can be timeout
 	}
 
 	if (isWaiting) {
@@ -3425,9 +3428,12 @@ window.FIND = function(value, many, noCache, callback) {
 			if (val instanceof Array)
 				return val.length > 0;
 			return val ? true : false;
-		}, function() {
+		}, function(err) {
+			// timeout
+			if (err)
+				return;
 			callback(FIND(value, many));
-		});
+		}, 500, noCache);
 		return;
 	}
 
@@ -3614,8 +3620,9 @@ window.HASH = function(s) {
 	return hash;
 };
 
-window.WAIT = function(fn, callback, interval) {
+window.WAIT = function(fn, callback, interval, timeout) {
 	var key = ((Math.random() * 10000) >> 0).toString(16);
+	var tkey = timeout > 0 ? key + '_timeout' : 0;
 
 	if (typeof(callback) === 'number') {
 		var tmp = interval;
@@ -3642,6 +3649,15 @@ window.WAIT = function(fn, callback, interval) {
 		return;
 	}
 
+	if (tkey) {
+		MAN.waits[tkey] = setTimeout(function() {
+			clearInterval(MAN.waits[key]);
+			delete MAN.waits[tkey];
+			delete MAN.waits[key];
+			callback(new Error('Timeout.'));
+		}, timeout);
+	}
+
 	MAN.waits[key] = setInterval(function() {
 
 		if (is) {
@@ -3654,10 +3670,15 @@ window.WAIT = function(fn, callback, interval) {
 		clearInterval(MAN.waits[key]);
 		delete MAN.waits[key];
 
+		if (tkey) {
+			clearTimeout(MAN.waits[tkey]);
+			delete MAN.waits[tkey];
+		}
+
 		if (!callback)
 			return;
 
-		callback(function(sleep) {
+		callback(null, function(sleep) {
 			setTimeout(function() {
 				WATCH(fn, callback, interval);
 			}, sleep || 1);

@@ -1146,6 +1146,18 @@ FIND('data-component', function(component) {
     console.log(component);
 });
 
+FIND('data-component', true, function(component_array) {
+    console.log(component_array);
+});
+
+FIND('data-component', function(component) {
+    console.log(component);
+}, 5000); // +4.0.0 --> 5 seconds timeout
+
+FIND('data-component', true, function(component_array) {
+    console.log(component_array);
+}, 5000); // +4.0.0 --> 5 seconds timeout
+
 BLOCKED(name, timeout, [callback]);
 // Alias for $.components.blocked();
 
@@ -1297,14 +1309,16 @@ console.log(GET('#now')());
 Waiter waits for a `checker` argument and if the checker value returns `true` then evaluates  callback function. Time
 
 ```javascript
-WAIT(checker, callback, [interval])
+WAIT(checker, callback, [interval], [timeout])
 // @checker Function or String
 // @callback(again) Function (again(sleep) --> is a function and sets new watcher for same condition)
 // @interval Number default: 500
+// @timeout Number default: undefined
 
 WAIT(function() {
     return window.d3 !== undefined;
-}, function(again) {
+}, function(err, again) {
+    // err can be timeout
     console.log('OK, D3.js loaded');
 
     // Re-calls this WAIT again with the sleep time
