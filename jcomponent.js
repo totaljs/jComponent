@@ -369,10 +369,17 @@ COM.$inject = function() {
 		var url = el.attr(COM_ATTR_U);
 
 		// Unique
-		if (url.substring(0, 1) === '!') {
-			url = url.substring(1);
+		var once = url.substring(0, 5).toLowerCase() === 'once ';
+		if (url.substring(0, 1) === '!' || once) {
+
+			if (once)
+				url = url.substring(5);
+			else
+				url = url.substring(1);
+
 			if (MAN.others[url])
 				return;
+
 			MAN.others[url] = true;
 		}
 
@@ -425,8 +432,15 @@ COM.components = function() {
 COM.inject = COM.import = function(url, target, callback, insert) {
 
 	// unique
-	if (url.substring(0, 1) === '!') {
-		url = url.substring(1);
+	var first = url.substring(0, 1);
+	var once = url.substring(0, 5).toLowerCase() === 'once ';
+	if (first === '!' || once) {
+
+		if (once)
+			url = url.substring(5);
+		else
+			url = url.substring(1);
+
 		if (MAN.others[url])
 			return;
 		MAN.others[url] = true;
@@ -2807,7 +2821,7 @@ MAN.initialize = function() {
 
 MAN.remap = function(path, value) {
 	$MIDDLEWARE(path, value, 1, function(path, value) {
-		var index = path.indexOf('->');
+		var index = path.replace('-->', '->').indexOf('->');
 		if (index === -1)
 			return COM.set(path, value);
 		var o = path.substring(0, index).trim();

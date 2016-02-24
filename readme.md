@@ -241,7 +241,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     rewrites `$` char in all attributes [data-component-path] of all injected components
     according to `data-component-path`.
 
-    If the URL starts with `!` then the content will downloaded only one time.
+    If the URL starts with `ONCE http://...` then the content will downloaded only one time.
 -->
 
 <element data-component-bind="" />
@@ -834,7 +834,7 @@ $.components.import(url, [target], [callback], [insert])
 // or can import scripts (.js) or styles (.css). `insert` arguments (default: true) wraps
 // new content into the <div data-component-imported="RANDOM_NUMBER" element otherwise replaces
 // content of target element. 
-// If the URL starts with `!` then the content will downloaded only one time.
+// If the URL starts with `ONCE http://...` then the content will downloaded only one time.
 
 
 $.components.dirty(path, [value]);
@@ -930,34 +930,6 @@ $.components.createURL('/api/query/?priceto=200', { sort: 1 }); // /api/query/?p
 // +v4.0.0 Updates or creates URL from the current URL address and QueryString
 
 
-$.components.POST(url, data, [callback or path], [sleep], [error(response, status, type) or path]);
-$.components.POST('/api/', { name: 'jComponent' }, 'form.response'); // Example
-$.components.POST('/api/', { name: 'jComponent' }, 'response.success-->form.response'); // Example with remapping.
-$.components.POST('/api/', { name: 'jComponent' }, function(response, err) { console.log(response); }); // Example
-// Sends data as `JSON` format to server - POST method.
-
-
-$.components.PUT(url, data, [callback or path], [sleep], [error(response, status, type) or path]);
-$.components.PUT('/api/', { name: 'jComponent' }, 'form.response'); // Example
-$.components.PUT('/api/', { name: 'jComponent' }, 'response.success-->form.response'); // Example with remapping.
-$.components.PUT('/api/', { name: 'jComponent' }, function(response, err) { console.log(response); }); // Example
-// Sends data as `JSON` format to server - PUT method.
-
-
-$.components.DELETE(url, data, [callback or path], [sleep], [error(response, status, type) or path]);
-$.components.DELETE('/api/', { name: 'jComponent' }, 'form.response'); // Example
-$.components.DELETE('/api/', { name: 'jComponent' }, 'response.success-->form.response'); // Example with remapping.
-$.components.DELETE('/api/', { name: 'jComponent' }, function(response, err) { console.log(response); }); // Example
-// Sends data as `JSON` format to server - DELETE method.
-
-
-$.components.GET(url, data, [callback or path], [sleep], [error(response, status, type) or path]);
-$.components.GET('/api/', { name: 'jComponent' }, 'form.response'); // Example
-$.components.GET('/api/', { name: 'jComponent' }, 'response.success-->form.response'); // Example with remapping.
-$.components.GET('/api/', { name: 'jComponent' }, function(response, err) { console.log(response); }); // Example
-// Sends data as `JSON` format to server - GET method.
-
-
 $.components.UPLOAD(url, formdata, [callback or path], [sleep], [progress(percentage, speed, remaining) or path], [error(response, status, type) or path]);
 $.components.UPLOAD('/api/', formdata, 'form.response'); // Example
 $.components.UPLOAD('/api/', formdata, 'response.success-->form.response'); // Example with remapping.
@@ -970,23 +942,8 @@ $.components.TEMPLATE(url, callback(template), [prepare(template)]);
 // (and executed once), but if it's declared then must "return" template (e.g. compiled template).
 
 
-$.components.GETCACHE(url, data, [callback or path], [expire], [sleep], [clear]);
-// Sends data and caches the response. `expire` in milliseconds, `sleep` in milliseconds and
-// `clear` argument can replace the cache with a new content. Data are stored into
-// the `localStorage` according `$.components.defaults.localstorage`. If the callback is the
-// function then the second argument will be `fromCache {Boolean}`.
-
-
-$.components.POSTCACHE(url, data, [callback or path], [expire], [sleep], [clear]);
-// Sends data and caches the response. `expire` in milliseconds, `sleep` in milliseconds and
-// `clear` argument can replace the cache with a new content. Data are stored into
-// the `localStorage` according `$.components.defaults.localstorage`. If the callback is the
-// function then the second argument will be `fromCache {Boolean}`.
-
-
 $.components.REMOVECACHE(method, url, data);
 // Deletes cache (GETCACHE, POSTCACHE or AJAXCACHE).
-
 
 // +v3.7.0
 // AJAX calls
