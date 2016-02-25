@@ -3799,7 +3799,7 @@ WAIT(function() {
 				return;
 			}
 
-			var special = self.type === 'checkbox' || self.type === 'radio' || self.tagName === 'SELECT';
+			var special = self.type === 'checkbox' || self.type === 'radio';// || self.tagName === 'SELECT';
 
 			if (e.type === 'focusout' && special)
 				return;
@@ -3848,8 +3848,11 @@ WAIT(function() {
 					return;
 				var selected = self[self.selectedIndex];
 				value = selected.value;
+				var dirty = false;
+				if (self.$component.$dirty)
+					dirty = true;
 				self.$component.dirty(false, true);
-				self.$component.getter(value, 2);
+				self.$component.getter(value, 2, old, e.type === 'focusout', dirty);
 				self.$component.$skip = false;
 				return;
 			}
