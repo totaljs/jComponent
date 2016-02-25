@@ -1424,6 +1424,19 @@ __Component__ `/templates/grid.html`:
 
 ## Tools
 
+#### Cookies
+
+```javascript
+jC.cookies.get('cookie_name');
+
+jC.cookies.set('cookie_name', 'cookie_value', expiration);
+// {Number} expiration = method sets days for the expiration
+// {Date} expiration
+
+jC.cookies.rem('cookie_name');
+```
+
+
 ### Helpers
 
 ```javascript

@@ -80,6 +80,36 @@ COM.$parser.push(function(path, value, type) {
 	return value;
 });
 
+COM.cookies = {
+	get: function (name) {
+		var arr = document.cookie.split(';');
+		for (var i = 0; i < arr.length; i++) {
+			var c = arr[i];
+			if (c.charAt(0) === ' ')
+				c = c.substring(1);
+			var v = c.split('=');
+			if (v.length > 1) {
+				if (v[0] === name)
+					return v[1];
+			}
+		}
+		return '';
+	},
+	set: function (name, value, expire) {
+		var expires = '';
+		if (typeof (expire) === 'number') {
+			var date = new Date();
+			date.setTime(date.getTime() + (expire * 24 * 60 * 60 * 1000));
+			expires = '; expires=' + date.toGMTString();
+		} else if (expire instanceof Date)
+			expires = '; expires=' + expire.toGMTString();
+		document.cookie = name + '=' + value + expires + '; path=/';
+	},
+	rem: function (name) {
+		this.set(name, '', -1);
+	}
+};
+
 COM.formatter = function(value, path, type) {
 
 	if (typeof(value) === 'function') {
