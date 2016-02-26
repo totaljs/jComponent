@@ -1206,6 +1206,14 @@ MIDDLEWARE(['A-NAME', 'B-NAME'], { count: 0 }, function(value, path) {
 });
 ```
 
+## Device Width
+
+```javascript
+WIDTH();
+console.log(WIDTH());
+// returns: xs, sm, md or lg
+```
+
 ## Simple Media Query Evaluator
 
 ```javascript
@@ -1213,7 +1221,25 @@ MIDDLEWARE(['A-NAME', 'B-NAME'], { count: 0 }, function(value, path) {
 // "element" by default is window
 // IMPORTANT: mediaquery are applied when is the window resized or when is the orientation changed
 MEDIAQUERY('(min-width: 500px) and (max-width: 1024px)', function(w, h, type, id) {
+    // type: xs, sm, md, lg
     // new size
+});
+
+MEDIAQUERY('xs', function(w, h, type, id) {
+    // "xs" extra small
+});
+
+
+MEDIAQUERY('sm', function(w, h, type, id) {
+    // "sm" small
+});
+
+MEDIAQUERY('md', function(w, h, type, id) {
+    // "md" medium
+});
+
+MEDIAQUERY('lg', function(w, h, type, id) {
+    // "lg" large
 });
 ```
 

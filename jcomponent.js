@@ -4565,6 +4565,28 @@ window.NOTVALID = function(name, value, error) {
 	}
 }
 
+window.WIDTH = function(element) {
+
+	if (!element)
+		element = $(window);
+
+	var w = element.width();
+
+	if (w >= 992 && w <= 1200)
+		return 'md';
+
+	if (w >= 768 && w <= 992)
+		return 'sm';
+
+	if (w > 1200)
+		return 'lg';
+
+	if (w <= 768)
+		return 'xs';
+
+	return '';
+};
+
 window.MEDIAQUERY = function(query, element, fn) {
 
 	if (typeof(query) === 'number') {
@@ -4712,7 +4734,7 @@ function $MEDIAQUERY() {
 		if (cw >= 992 && cw <= 1200)
 			type = 'md';
 		else if (cw >= 768 && cw <= 992)
-			type ='sm';
+			type = 'sm';
 		else if (cw > 1200)
 			type = 'lg';
 		else if (cw <= 768)
