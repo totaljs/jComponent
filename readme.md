@@ -1212,7 +1212,7 @@ MIDDLEWARE(['A-NAME', 'B-NAME'], { count: 0 }, function(value, path) {
 // MEDIAQUERY(query, [element], fn)
 // "element" by default is window
 // IMPORTANT: mediaquery are applied when is the window resized or when is the orientation changed
-MEDIAQUERY('(min-width: 500px) and (max-width: 1024px)', function(w, h, id) {
+MEDIAQUERY('(min-width: 500px) and (max-width: 1024px)', function(w, h, type, id) {
     // new size
 });
 ```
@@ -1221,7 +1221,8 @@ __Remove media query evaluator__:
 
 ```javascript
 // MEDIAQUERY() returns ID (Number)
-var id = MEDIAQUERY('(min-width: 500px) and (max-width: 1024px)', function(w, h, id) {
+var id = MEDIAQUERY('(min-width: 500px) and (max-width: 1024px)', function(w, h, type, id) {
+    // type: xs, sm, md, lg
     // new size
 });
 

@@ -4580,6 +4580,18 @@ window.MEDIAQUERY = function(query, element, fn) {
 	if (!MAN.mediaquery)
 		MAN.mediaquery = [];
 
+	query = query.toLowerCase();
+	var type;
+
+	if (query === 'md')
+		query = 'min-width: 992px and max-width: 1200px';
+	else if (query === 'lg')
+		query = 'min-width: 1200px';
+	else if (query === 'xs')
+		query = 'max-width: 768px';
+	else if (query === 'sm')
+		query = 'min-width: 768px and max-width: 992px';
+
 	var arr = query.match(/(max-width|min-width|max-device-width|min-device-width|max-height|min-height|max-device-height|height|width):(\s)\d+(px|em|in)?/gi);
 	var obj = {};
 
@@ -4634,6 +4646,7 @@ window.MEDIAQUERY = function(query, element, fn) {
 
 	obj.id = (Math.random() * 10000000) >> 0;
 	obj.fn = fn;
+	obj.type = type;
 
 	if (element)
 		obj.element = element;
@@ -4694,9 +4707,20 @@ function $MEDIAQUERY() {
 		if (mq.oldW === cw && mq.oldH === ch)
 			continue;
 
+		var type;
+
+		if (cw >= 992 && cw <= 1200)
+			type = 'md';
+		else if (cw >= 768 && cw <= 992)
+			type ='sm';
+		else if (cw > 1200)
+			type = 'lg';
+		else if (cw <= 768)
+			type = 'xs';
+
 		mq.oldW = cw;
 		mq.oldH = ch;
-		mq.fn(cw, ch, mq.id);
+		mq.fn(cw, ch, type, mq.id);
 	}
 };
 
