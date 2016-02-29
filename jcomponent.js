@@ -3834,7 +3834,7 @@ WAIT(function() {
 			if (e.type === 'focusout' && special)
 				return;
 
-			if (e.type === 'change' && !special)
+			if (e.type === 'change' && (!special && self.tagName !== 'SELECT'))
 				return;
 
 			if (!self.$component || self.$component.$removed || !self.$component.getter)
