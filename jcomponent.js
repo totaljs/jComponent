@@ -3476,7 +3476,8 @@ window.FIND = function(value, many, noCache, callback) {
 			// timeout
 			if (err)
 				return;
-			callback(FIND(value, many));
+			var val = FIND(value, many);
+			callback.call(val ? val : window, val);
 		}, 500, noCache);
 		return;
 	}
