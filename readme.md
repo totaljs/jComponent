@@ -1319,6 +1319,53 @@ WAIT('d3', function(again) {
 });
 ```
 
+Waiter waits for a `checker` argument and if the checker value returns `true` then evaluates  callback function. Time
+
+```javascript
+WAIT(checker, callback, [interval], [timeout])
+// @checker Function or String
+// @callback(again) Function (again(sleep) --> is a function and sets new watcher for same condition)
+// @interval Number default: 500
+// @timeout Number default: undefined
+
+WAIT(function() {
+    return window.d3 !== undefined;
+}, function(err, again) {
+    // err can be timeout
+    console.log('OK, D3.js loaded');
+
+    // Re-calls this WAIT again with the sleep time
+    // again(1000);
+});
+
+// is same as
+
+WAIT('d3', function(again) {
+    console.log('OK, D3.js loaded');
+
+    // Re-calls this WAIT again with the sleep time
+    // again(1000);
+});
+```
+
+## Keypress
+
+`+v4.0.0` The method `KEYPRESS` is a great feature for e.g. filters. When a user types a fulltext search then you can create delay between sending data and user interaction. 
+
+```javascript
+// KEYPRESS(fn, [timeout]);
+// default timeout: 300
+
+var count = 0;
+var interval = setInterval(function() {
+    if (count++ > 100)    
+        clearInterval(interval);
+    KEYPRESS(function() {
+        console.log('When count will be great then 100');
+    });
+}, 100);
+```
+
 ## Controllers
 
 Controllers don't know any special features. Their implementation is very simple:
@@ -1470,6 +1517,14 @@ jC.cookies.rem('cookie_name');
 // isMOBILE == {Boolean} is a global variable and detects mobile device.
 console.log(isMOBILE);
 
+// +v4.0.0 String.prototype.removeDiacritics();
+var string = 'Peter Širka'.removeDiacritics();
+// --> Peter Sirka
+
+// +v4.0.0 String.prototype.slug();
+var string = 'Peter Širka'.slug();
+// --> peter-sirka
+
 // String.prototype.padLeft(max, char);
 // String.prototype.padRight(max, char);
 // String.prototype.isEmail()
@@ -1613,6 +1668,12 @@ __Number formatting__:
 <!-- price = 1234.567 -->
 {{ price | format(2, ',') }}
 <!-- OUTPUT: 1 234,56 -->
+```
+
+__Pluralize__
+
+```html
+{{ count | pluralize('no users', '# user', '# users', '#users') }}
 ```
 
 ### Async

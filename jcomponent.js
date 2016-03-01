@@ -16,6 +16,7 @@ var COM_ATTR_S = 'data-component-scope';
 var COM_ATTR_X = 'data-component-import';
 var REG_EMAIL = /^[a-z0-9-_.+]+@[a-z0-9.-]+\.[a-z]{2,6}$/i;
 var REG_FORMAT = /\{\d+\}/g;
+var COM_DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
 
 window.isMOBILE = ('ontouchstart' in window || navigator.maxTouchPoints) ? true : false;
 
@@ -3665,6 +3666,23 @@ window.HASH = function(s) {
 	return hash;
 };
 
+window.KEYPRESS = function(fn, timeout) {
+	if (typeof(timeout) === 'function') {
+		var tmp = fn;
+		fn = timeout;
+		timeout = tmp;
+	}
+	if (!timeout)
+		timeout = 300;
+	var str = fn.toString();
+	var beg = str.length - 20;
+	if (beg < 0)
+		beg = 0;
+	var tkey = HASH(str.substring(0, 20) + 'X' + str.substring(beg)) + '_keypress';
+	clearTimeout(MAN.waits[tkey]);
+	MAN.waits[tkey] = setTimeout(fn, timeout);
+};
+
 window.WAIT = function(fn, callback, interval, timeout) {
 	var key = ((Math.random() * 10000) >> 0).toString(16);
 	var tkey = timeout > 0 ? key + '_timeout' : 0;
@@ -4079,6 +4097,71 @@ Array.prototype.async = function(context, callback) {
 
 	c();
 	return this;
+};
+
+String.prototype.removeDiacritics = function() {
+	var buf = '';
+	for (var i = 0, length = this.length; i < length; i++) {
+		var c = this[i];
+		var code = c.charCodeAt(0);
+		var isUpper = false;
+
+		var r = COM_DIACRITICS[code];
+
+		if (r === undefined) {
+			code = c.toLowerCase().charCodeAt(0);
+			r = COM_DIACRITICS[code];
+			isUpper = true;
+		}
+
+		if (r === undefined) {
+			buf += c;
+			continue;
+		}
+
+		c = r;
+		if (isUpper)
+			c = c.toUpperCase();
+		buf += c;
+	}
+	return buf;
+};
+
+String.prototype.slug = function(max) {
+	max = max || 60;
+
+	var self = this.trim().toLowerCase().removeDiacritics();
+	var builder = '';
+	var length = self.length;
+
+	for (var i = 0; i < length; i++) {
+		var c = self.substring(i, i + 1);
+		var code = self.charCodeAt(i);
+
+		if (builder.length >= max)
+			break;
+
+		if (code > 31 && code < 48) {
+			if (builder.substring(builder.length - 1, builder.length) === '-')
+				continue;
+			builder += '-';
+			continue;
+		}
+
+		if (code > 47 && code < 58) {
+			builder += c;
+			continue;
+		}
+
+		if (code > 94 && code < 123) {
+			builder += c;
+			continue;
+		}
+	}
+	var l = builder.length - 1;
+	if (builder[l] === '-')
+		return builder.substring(0, l);
+	return builder;
 };
 
 String.prototype.isEmail = function() {
