@@ -4241,9 +4241,11 @@ Number.prototype.pluralize = function(zero, one, few, other) {
 	if (beg === -1)
 		return value;
 
-	var end = value.lastIndexOf('#');
-	var format = value.substring(beg, end + 1);
-	return num.format(format) + value.replace(format, '');
+	return value.replace(/\#{1,}/g, function(text) {
+		if (text === '##')
+			return num.format();
+		return num.toString();
+	});
 };
 
 Number.prototype.format = function(decimals, separator, separatorDecimal) {

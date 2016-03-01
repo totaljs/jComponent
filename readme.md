@@ -1496,7 +1496,9 @@ format = number.format(0);
 // Number.prototype.pluralize(zero, one, few, other)
 console.log(number.pluralize('beers', 'beer', 'beers', 'beers'));
 console.log(number.pluralize('beers #', 'beer #', 'beers #', 'beers #'));
+console.log(number.pluralize('beers ##', 'beer ##', 'beers ##', 'beers ##'));
 // The method replaces "#" for number.
+// The method replaces "##" for number and applied number.format().
 
 
 // Array.prototype.trim();
