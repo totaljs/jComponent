@@ -1583,6 +1583,13 @@ COM.nested = function(element, selector, type, value) {
 	return self;
 };
 
+COM.rewrite = function(path, val) {
+	$MIDDLEWARE(path, val, 1, function(path, value) {
+		MAN.set(path, value, 1);
+	});
+	return COM;
+};
+
 // 1 === by developer
 // 2 === by input
 COM.set = function(path, val, type) {
@@ -1705,12 +1712,12 @@ COM.push = function(path, value, type) {
 	else
 		arr.push(value);
 
-	if (n) {
+	if (n)
 		COM.set(path, arr, type);
-	} else if (is)
+	else if (is)
 		COM.update(path, type);
 
-	return self;
+	return COM;
 };
 
 COM.clean = function() {
@@ -1849,6 +1856,7 @@ COM.state = function(arr, type, who) {
 		for (var i = 0, length = arr.length; i < length; i++)
 			arr[i].state(type, who);
 	}, 2);
+	return COM;
 };
 
 COM.broadcast = function(selector, name, caller) {
@@ -2133,6 +2141,8 @@ COM.schema = function(name, declaration, callback) {
 		if (callback)
 			callback(d);
 	});
+
+	return COM;
 };
 
 COM.each = function(fn, path, watch, fix) {
@@ -3309,6 +3319,10 @@ function $components_save() {
 		localStorage.setItem(COM.$localstorage + '.cache', JSON.stringify(MAN.storage));
 }
 
+window.REWRITE = function(path, value) {
+	return COM.rewrite(path, value);
+};
+
 window.SET = function(path, value, timeout, reset) {
 	if (typeof(timeout) === 'boolean')
 		return COM.set(path, value, timeout);
@@ -3317,6 +3331,7 @@ window.SET = function(path, value, timeout, reset) {
 	setTimeout(function() {
 		COM.set(path, value, reset);
 	}, timeout);
+	return COM;
 };
 
 window.INC = function(path, value, timeout, reset) {
@@ -3327,6 +3342,7 @@ window.INC = function(path, value, timeout, reset) {
 	setTimeout(function() {
 		COM.inc(path, value, reset);
 	}, timeout);
+	return COM;
 };
 
 window.EXTEND = function(path, value, timeout, reset) {
@@ -3337,6 +3353,7 @@ window.EXTEND = function(path, value, timeout, reset) {
 	setTimeout(function() {
 		COM.extend(path, value, reset);
 	}, timeout);
+	return COM;
 };
 
 window.PUSH = function(path, value, timeout, reset) {
@@ -3347,10 +3364,11 @@ window.PUSH = function(path, value, timeout, reset) {
 	setTimeout(function() {
 		COM.push(path, value, reset);
 	}, timeout);
+	return COM;
 };
 
 window.INVALID = function(path) {
-	$.components.invalid(path);
+	return COM.invalid(path);
 };
 
 window.RESET = function(path, timeout) {
@@ -3626,6 +3644,10 @@ window.ON = function(name, path, fn, init) {
 	COM.on(name, path, fn, init);
 };
 
+window.EMIT = function() {
+	return COM.emit.apply(this, arguments);
+};
+
 window.EVALUATE = function(path, expression, nopath) {
 	return COM.evaluate(path, expression, nopath);
 };
@@ -3709,7 +3731,7 @@ window.WAIT = function(fn, callback, interval, timeout) {
 				WATCH(fn, callback, interval, timeout);
 			}, sleep || 1);
 		});
-		return;
+		return COM;
 	}
 
 	if (tkey) {
@@ -3748,10 +3770,13 @@ window.WAIT = function(fn, callback, interval, timeout) {
 		});
 
 	}, interval || 500);
+
+	return COM;
 };
 
 window.COMPILE = function() {
 	$.components();
+	return COM;
 };
 
 window.CONTROLLER = function() {

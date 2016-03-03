@@ -755,6 +755,10 @@ var value = $.components.formatter('a-value', 'my.custom.path', 'number');
 $.components();
 // Runs the compiler for new components. jComponent doesn't watch new elements in DOM.
 
+$.components.rewrite(path, value);
+$.components.rewrite('model.name', 'Peter');
+// +v4.0.0 Rewrites the value in the model without notification
+
 
 $.components.set(path, value, [reset]);
 $.components.set('model.name', 'Peter'); // Example: sets the value
@@ -1046,6 +1050,9 @@ SCHEMA();
 
 CACHE();
 // Alias for $.components.cache();
+
+REWRITE(path, value);
+// +v4.0.0 alias for $.components.rewrite();
 
 SET(path, value, [sleep], [reset]);
 // Sets the value into the model. `reset` argument resets the state
@@ -1752,6 +1759,7 @@ arr.async({ counter: 0 }, function(response) {
 AJAX('GET /api/users/ #MIDDLEWARE1 #MIDDLEWARE2 #MIDDLEWARE3', 'users');
 SET('path.to.property #MIDDLEWARE1 #MIDDLEWARE2', 'new value');
 UPDATE('path.to.property #MIDDLEWARE1 #MIDDLEWARE2');
+REWRITE('path.to.property #MIDDLEWARE1 #MIDDLEWARE2', 'new value');
 ```
 
 ## +v4.0.0 Async loading components
