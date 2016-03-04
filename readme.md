@@ -1236,7 +1236,6 @@ MEDIAQUERY('xs', function(w, h, type, id) {
     // "xs" extra small
 });
 
-
 MEDIAQUERY('sm', function(w, h, type, id) {
     // "sm" small
 });
@@ -1248,6 +1247,12 @@ MEDIAQUERY('md', function(w, h, type, id) {
 MEDIAQUERY('lg', function(w, h, type, id) {
     // "lg" large
 });
+
+MEDIAQUERY('xs, md, lg', function(w, h, type, id) {
+    // multiple queries
+});
+// IMPORTANT: MEDIAQUERY with multiple queries returns ARRAY with ID of all queries because
+// the method creates for each query own MediaQuery instance.
 ```
 
 __Remove media query evaluator__:

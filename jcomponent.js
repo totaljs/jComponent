@@ -4716,6 +4716,16 @@ window.MEDIAQUERY = function(query, element, fn) {
 	query = query.toLowerCase();
 	var type;
 
+	if (query.indexOf(',') !== -1) {
+		var ids = [];
+		query.split(',').forEach(function(q) {
+			q = q.trim();
+			if (q)
+				ids.push(window.MEDIAQUERY(q, element, fn));
+		});
+		return ids;
+	}
+
 	if (query === 'md')
 		query = 'min-width: 992px and max-width: 1200px';
 	else if (query === 'lg')
