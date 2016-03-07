@@ -777,7 +777,7 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 	setTimeout(function() {
 
 		if (method === 'GET' && data)
-			url += '?' + jQuery.param(data);
+			url += '?' + (typeof(data) === 'string' ? data : jQuery.param(data));
 
 		var options = {};
 		options.type = method;
