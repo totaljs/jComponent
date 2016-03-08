@@ -661,7 +661,7 @@ COM.UPLOAD = function(url, data, callback, timeout, progress, error) {
 			if (error)
 				error(r, this.status);
 			else if (typeof(callback) === 'function')
-				callback(undefined, r, this.status);
+				callback({}, r, this.status);
 
 		}, false);
 
@@ -811,7 +811,7 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 			if (error)
 				error(r, status, url);
 			else if (typeof(callback) === 'function')
-				callback(undefined, status, url);
+				callback({}, status, url);
 		};
 
 		if (navigator.onLine !== undefined) {
@@ -870,7 +870,7 @@ COM.AJAXCACHE = function(url, data, callback, expire, timeout, clear) {
 		}
 
 		COM.AJAX(url, data, function(r, err) {
-			if (r === undefined)
+			if (err)
 				r = err;
 			MAN.cacherest(method, uri, data, r, expire);
 			if (typeof(callback) === 'string')

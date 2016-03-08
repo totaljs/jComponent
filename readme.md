@@ -938,7 +938,8 @@ $.components.UPLOAD(url, formdata, [callback or path], [sleep], [progress(percen
 $.components.UPLOAD('/api/', formdata, 'form.response'); // Example
 $.components.UPLOAD('/api/', formdata, 'response.success-->form.response'); // Example with remapping.
 $.components.UPLOAD('/api/', formdata, function(response, err) { console.log(response); }); // Example
-// Uploads formdata and receive `JSON` from the server.
+// Uploads formdata and receive `JSON` from the server. When is throwed an error then
+// "response" is the empty object {}
 
 $.components.TEMPLATE(url, callback(template), [prepare(template)]);
 // Downloads the HTML content and caches it per session. This method is adapted for multiple
@@ -952,7 +953,8 @@ $.components.REMOVECACHE(method, url, data);
 // +v3.7.0
 // AJAX calls
 $.components.AJAX('METHOD URL', data, [callback or path], [sleep], , [error(response, status, type) or path]);
-// Is same as GET(), POST(), PUT(), DELETE().
+// Is same as GET(), POST(), PUT(), DELETE(). When is throwed an error then
+// "response" is the empty object {}
 $.components.AJAXCACHE('METHOD URL', data, [callback or path], [expire], [sleep], [clear]);
 // Is same as POSTCACHE, GETCACHE and now supports PUT, DELETE. If the callback is the
 // function then the second argument will be `fromCache {Boolean}`.
