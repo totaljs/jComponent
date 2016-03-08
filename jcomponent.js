@@ -4404,12 +4404,20 @@ Number.prototype.format = function(decimals, separator, separatorDecimal) {
 
 String.prototype.padLeft = function(t, e) {
 	var r = this.toString();
-	return Array(Math.max(0, t - r.length + 1)).join(e || '0') + r;
+	return Array(Math.max(0, t - r.length + 1)).join(e || ' ') + r;
 };
 
 String.prototype.padRight = function(t, e) {
 	var r = this.toString();
-	return r + Array(Math.max(0, t - r.length + 1)).join(e || '0')
+	return r + Array(Math.max(0, t - r.length + 1)).join(e || ' ');
+};
+
+Number.prototype.padLeft = function(t, e) {
+	return this.toString().padLeft(t, e || '0');
+};
+
+Number.prototype.padRight = function(t, e) {
+	return this.toString().padRight(t, e || '0');
 };
 
 String.prototype.format = function() {

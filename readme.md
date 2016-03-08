@@ -1551,6 +1551,8 @@ var string = 'My name is {0} and I am {1} years old.'.format('Peter', 31);
 var date = new Date().format('dd.MM.yyyy HH:mm');
 
 
+// Number.prototype.padLeft(max, char);
+// Number.prototype.padRight(max, char);
 // Number.prototype.format(decimals, [thousand_delimiter], [decimal_delimiter])
 var number = 1000000;
 var format = number.format(2);
