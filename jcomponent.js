@@ -3918,7 +3918,7 @@ WAIT(function() {
 			}
 
 			if (self.tagName === 'SELECT') {
-				if (e.type === 'keydown')
+				if (e.type === 'keydown' || self.selectedIndex === -1)
 					return;
 				var selected = self[self.selectedIndex];
 				value = selected.value;
