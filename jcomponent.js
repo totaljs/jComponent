@@ -788,11 +788,11 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 		}
 
 		options.success = function(r) {
-			if (typeof(callback) === 'string')
-				return MAN.remap(callback, r);
-			if (!callback)
-				return;
 			$MIDDLEWARE(middleware, r, 1, function(path, value) {
+				if (typeof(callback) === 'string')
+					return MAN.remap(callback, value);
+				if (!callback)
+					return;
 				callback(value);
 			});
 		};
