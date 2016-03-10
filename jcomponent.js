@@ -3284,7 +3284,7 @@ MAN.$$ = function() {
 		}
 	}
 	if (window.jQuery)
-		COM.compile();
+		setTimeout(COM.compile, 2);
 };
 
 /**
