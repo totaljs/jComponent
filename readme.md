@@ -532,6 +532,7 @@ COMPONENT('my-component-name', function() {
 
 
     instance.noValid();
+    instance.noValidate();
     // Disables own validation within all components.
 
 

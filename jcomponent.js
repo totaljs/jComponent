@@ -2391,7 +2391,7 @@ COMP.prototype.broadcast = function(selector, name) {
 	return BROADCAST(selector, name, this);
 };
 
-COMP.prototype.noValid = function(val) {
+COMP.prototype.noValid = COMP.prototype.noValidate = function(val) {
 	if (val === undefined)
 		val = true;
 	this.$valid_disabled = val;
