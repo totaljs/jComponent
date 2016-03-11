@@ -638,7 +638,7 @@ COM.UPLOAD = function(url, data, callback, timeout, progress, error) {
 
 	setTimeout(function() {
 		var xhr = new XMLHttpRequest();
-		xhr.addEventListener('load', function () {
+		xhr.addEventListener('load', function() {
 
 			var r = this.responseText;
 			try {
@@ -652,6 +652,9 @@ COM.UPLOAD = function(url, data, callback, timeout, progress, error) {
 					callback(r);
 				return;
 			}
+
+			if (!r)
+				r = this.status + ': ' + this.statusText;
 
 			COM.emit('error', r, this.status, url);
 
