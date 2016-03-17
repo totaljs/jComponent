@@ -3691,19 +3691,14 @@ window.HASH = function(s) {
 	return hash;
 };
 
-window.KEYPRESS = function(fn, timeout) {
-	if (typeof(timeout) === 'function') {
-		var tmp = fn;
-		fn = timeout;
-		timeout = tmp;
-	}
+window.KEYPRESS = function(fn, timeout, key) {
 	if (!timeout)
 		timeout = 300;
 	var str = fn.toString();
 	var beg = str.length - 20;
 	if (beg < 0)
 		beg = 0;
-	var tkey = HASH(str.substring(0, 20) + 'X' + str.substring(beg)) + '_keypress';
+	var tkey = key ? key : HASH(str.substring(0, 20) + 'X' + str.substring(beg)) + '_keypress';
 	clearTimeout(MAN.waits[tkey]);
 	MAN.waits[tkey] = setTimeout(fn, timeout);
 };
@@ -4897,6 +4892,10 @@ function $MIDDLEWARE(path, value, type, callback) {
 
 	return a;
 }
+
+window.UPLOAD = function(url, data, callback, timeout, progress, error) {
+	return COM.UPLOAD(url, data, callback, timeout, progress, error);
+};
 
 window.MIDDLEWARE = function(name, value, callback, path) {
 

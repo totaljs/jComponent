@@ -1146,6 +1146,9 @@ AJAX('METHOD URL', data, [callback or path], [sleep], , [error(response, status,
 AJAXCACHE('METHOD URL', data, [callback or path], [expire], [sleep], [clear]);
 // Aliases for $.components.AJAX(), $.components.AJAXCACHE()
 
+// +v4.0.0
+UPLOAD(url, formdata, [callback or path], [sleep], [progress(percentage, speed, remaining) or path], [error(response, status, type) or path]);
+
 // +v3.7.0
 PING('METHOD URL', [interval], [callback or path]);
 // Ping pings an URL in the specific interval (default: 30000 (30 seconds)).
@@ -1368,8 +1371,9 @@ WAIT('d3', function(again) {
 `+v4.0.0` The method `KEYPRESS` is a great feature for e.g. filters. When a user types a fulltext search then you can create delay between sending data and user interaction. 
 
 ```javascript
-// KEYPRESS(fn, [timeout]);
+// KEYPRESS(fn, [timeout], [key]);
 // default timeout: 300
+// default key: "fn".toString()
 
 var count = 0;
 var interval = setInterval(function() {
