@@ -2338,6 +2338,12 @@ function COMP(name) {
 			if (value === undefined || value === null)
 				value = '';
 
+			if (!value && !type) {
+				// Solved problem with Google Chrome autofill
+				if ($(this).val())
+					return;
+			}
+
 			if (this.type === 'select-one' || this.type === 'select') {
 				$(this).val(value);
 				return;
