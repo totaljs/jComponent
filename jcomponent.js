@@ -2329,8 +2329,10 @@ function COMP(name) {
 			if (path && path.length && path !== self.path)
 				return;
 
+			var tmp;
+
 			if (this.type === 'checkbox') {
-				var tmp = value !== null && value !== undefined ? value.toString().toLowerCase() : '';
+				tmp = value !== null && value !== undefined ? value.toString().toLowerCase() : '';
 				this.checked = tmp === 'true' || tmp === '1' || tmp === 'on';
 				return;
 			}
@@ -2340,8 +2342,12 @@ function COMP(name) {
 
 			if (!value && !type) {
 				// Solved problem with Google Chrome autofill
-				if ($(this).val())
+				tmp = $(this).val();
+				if (tmp) {
+					// bind value to model
+					MAN.set(path, tmp);
 					return;
+				}
 			}
 
 			if (this.type === 'select-one' || this.type === 'select') {
