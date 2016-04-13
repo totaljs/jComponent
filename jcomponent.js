@@ -744,16 +744,16 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 	}
 
 	var td = typeof(data);
-	if (td === 'function' || td === 'string') {
+	if (!callback && (td === 'function' || td === 'string')) {
 		error = timeout;
 		timeout = callback;
 		callback = data;
 		data = undefined;
 	}
 
-	if (typeof(timeout) === 'boolean') {
-		var tmp = clear;
-		clear = timeout;
+	if (typeof(timeout) === 'string') {
+		var tmp = error;
+		error = timeout;
 		timeout = tmp;
 	}
 
@@ -786,8 +786,12 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 		options.type = method;
 
 		if (method !== 'GET') {
-			options.contentType = 'application/json; charset=utf-8';
-			options.data = JSON.stringify(data);
+			if (typeof(data) === 'string') {
+				options.data = data;
+			} else {
+				options.contentType = 'application/json; charset=utf-8';
+				options.data = JSON.stringify(data);
+			}
 		}
 
 		options.success = function(r) {
@@ -841,7 +845,7 @@ COM.AJAXCACHE = function(url, data, callback, expire, timeout, clear) {
 	}
 
 	var td = typeof(data);
-	if (td === 'function' || td === 'string') {
+	if (!callback && (td === 'function' || td === 'string')) {
 		clear = timeout;
 		timeout = expire;
 		expire = callback;
@@ -4969,3 +4973,5 @@ window.FN = function(exp) {
 			return new Function(output);
 	}
 };
+
+window.NOOP = function(){};

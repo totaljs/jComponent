@@ -953,7 +953,7 @@ $.components.REMOVECACHE(method, url, data);
 
 // +v3.7.0
 // AJAX calls
-$.components.AJAX('METHOD URL', data, [callback or path], [sleep], , [error(response, status, type) or path]);
+$.components.AJAX('METHOD URL', data, [callback or path], [sleep], [error(response, status, type) or path]);
 // Is same as GET(), POST(), PUT(), DELETE(). When is throwed an error then
 // "response" is the empty object {}
 $.components.AJAXCACHE('METHOD URL', data, [callback or path], [expire], [sleep], [clear]);
