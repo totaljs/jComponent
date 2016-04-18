@@ -2291,7 +2291,6 @@ function COMP(name) {
 		if (type === 2)
 			this.$skip = true;
 
-		// if ((type !== 2 || older !== null) && value === this.get()) {
 		if (type !== 2 || (older !== null && older !== undefined)) {
 			COM.validate(this.path);
 			return this;
