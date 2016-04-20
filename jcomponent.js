@@ -884,7 +884,7 @@ COM.AJAXCACHE = function(url, data, callback, expire, timeout, clear) {
 	}
 
 	var td = typeof(data);
-	if (!callback && (td === 'function' || td === 'string')) {
+	if ((!callback || typeof(callback) === 'number') && (td === 'function' || td === 'string')) {
 		clear = timeout;
 		timeout = expire;
 		expire = callback;
@@ -1780,6 +1780,7 @@ COM.remove = function(path) {
 		if (com)
 			com.$removed = true;
 
+		clearTimeout(MAN.tic);
 		MAN.tic = setTimeout(function() {
 			MAN.cleaner();
 		}, 100);
@@ -1791,6 +1792,7 @@ COM.remove = function(path) {
 		obj.remove(true);
 	}, path);
 
+	clearTimeout(MAN.tic);
 	MAN.tic = setTimeout(function() {
 		MAN.cleaner();
 	}, 100);
@@ -2721,6 +2723,7 @@ COMP.prototype.remove = function(noClear) {
 	if (noClear)
 		return true;
 
+	clearTimeout(MAN.tic);
 	MAN.tic = setTimeout(function() {
 		MAN.cleaner();
 	}, 100);
