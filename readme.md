@@ -341,6 +341,14 @@ COMPONENT('my-component-name', function() {
     instance.trim;
     // This property affects trimming of string values and works only with [data-component-bind]
     // and default `.instance.setter`. Default value: true.
+
+    instance.usage = { init: 0, developer: 0, input: 0, default: 0 };
+    // Component last usage, the number is Date.now().
+    // The object has a prototype .convert(type)
+    // instance.usage.convert('minutes')
+    // instance.usage.convert('seconds')
+    // instance.usage.convert('hours')
+    // instance.usage.convert('minutes')
 });
 ```
 
@@ -1003,6 +1011,18 @@ $.components.ready(function(count) { console.log('Components ready:', count); })
 $.components.clean([timeout]);
 // Cleans all unnecessary components.
 // IMPORTANT: The cleaner is started each 5 minutes.
+
+$.components.usage(property, expire, [path], [callback]);
+$.components.usage('developer', '5 seconds');
+$.components.usage('input', '5 seconds', 'form.*');
+$.components.usage('init', '5 seconds', function(component) {
+    // All components initialized 5 seconds before
+    console.log(component.usage.convert('seconds'));
+});
+
+// Reads all components according their usage
+// @property is meaned as component.usage = { init: 0, developer: 0, input: 0, default: 0 };
+// Returns Array when is not defined callback.
 ```
 
 ## Events
@@ -1557,6 +1577,10 @@ var string = 'My name is {0} and I am {1} years old.'.format('Peter', 31);
 // Date.prototype.format(format);
 var date = new Date().format('dd.MM.yyyy HH:mm');
 
+// Date.prototype.add(value);
+var dateA = new Date().add('5 minutes'); // adds 5 minutes to the current date/time
+var dateB = new Date().add('-1 hour'); // substracts 1 hour from the current date/time
+// supports days, months, years, hours, minutes, seconds
 
 // Number.prototype.padLeft(max, char);
 // Number.prototype.padRight(max, char);

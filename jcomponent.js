@@ -34,7 +34,8 @@ window.COM = window.jC = function(container) {
 };
 
 COM.clean = function(timeout) {
-	setTimeout(function() {
+	cleantimeout(MAN.$cleantimeout);
+	MAN.$cleantimeout = setTimeout(function() {
 		MAN.cleaner();
 	}, timeout || 10);
 	return COM;
@@ -127,6 +128,44 @@ COM.formatter = function(value, path, type) {
 	}
 
 	return value;
+};
+
+COM.usage = function(name, expire, path, callback) {
+
+	var type = typeof(expire);
+	if (type === 'string')
+		expire = new Date().add('-' + expire);
+	else if (type === 'number')
+		expire = Date.now() - expire;
+
+	if (typeof(path) === 'function') {
+		callback = path;
+		path = undefined;
+	}
+
+	var arr = [];
+
+	if (path) {
+		COM.findByPath(path, function(c) {
+			if (c.usage[name] > expire)
+				return;
+			if (callback)
+				callback(c);
+			else
+				arr.push(c);
+		});
+	} else {
+		MAN.components.forEach(function(c) {
+			if (c.usage[name] > expire)
+				return;
+			if (callback)
+				callback(c);
+			else
+				arr.push(c);
+		});
+	}
+
+	return callback ? COM : arr;
 };
 
 COM.parser = function(value, path, type) {
@@ -1345,16 +1384,6 @@ COM.update = function(path, reset, type) {
 		// Array prevention
 		var search = path;
 
-		/*
-		var index = path.lastIndexOf('[');
-		var isArray = false;
-		if (index !== -1) {
-			isArray = true;
-			if (!is)
-				search = search.replace(/\[\d+\]/g, '');
-		}
-		*/
-
 		if (type === undefined)
 			type = 1; // developer
 
@@ -1378,6 +1407,7 @@ COM.update = function(path, reset, type) {
 			if (component.setter) {
 				component.$skip = false;
 				component.setter(result, path, type);
+				component.$interaction(type);
 			}
 
 			component.$ready = true;
@@ -1458,6 +1488,7 @@ COM.notify = function() {
 			return;
 
 		component.setter(component.get(), component.path, 1);
+		component.$interaction(1);
 	});
 
 	Object.keys(MAN.events).forEach(function(key) {
@@ -1653,12 +1684,14 @@ COM.set = function(path, val, type) {
 					if (isChanged)
 						component.$skip = false;
 					component.setter(result, path, type);
+					component.$interaction(type);
 				}
 			} else {
 				if (component.setter) {
 					if (isChanged)
 						component.$skip = false;
 					component.setter(COM.get(component.path), path, type);
+					component.$interaction(type);
 				}
 			}
 
@@ -1727,11 +1760,6 @@ COM.push = function(path, value, type) {
 	return COM;
 };
 
-COM.clean = function() {
-	MAN.cleaner();
-	return COM;
-}
-
 COM.get = function(path, scope) {
 	return MAN.get(path, scope);
 };
@@ -1752,7 +1780,9 @@ COM.remove = function(path) {
 		if (com)
 			com.$removed = true;
 
-		MAN.cleaner();
+		MAN.$cleantimeout = setTimeout(function() {
+			MAN.cleaner();
+		}, 100);
 		return COM;
 	}
 
@@ -1760,7 +1790,10 @@ COM.remove = function(path) {
 	COM.each(function(obj) {
 		obj.remove(true);
 	}, path);
-	MAN.cleaner();
+
+	MAN.$cleantimeout = setTimeout(function() {
+		MAN.cleaner();
+	}, 100);
 	return COM;
 };
 
@@ -2168,7 +2201,7 @@ COM.each = function(fn, path, watch, fix) {
 
 	for (var i = 0, length = MAN.components.length; i < length; i++) {
 		var component = MAN.components[i];
-		if (component.$removed)
+		if (!component || component.$removed)
 			continue;
 
 		if (fix && component.path !== path)
@@ -2254,9 +2287,62 @@ function COM_P_COMPARE(a, b, type, ak, bk) {
 	}
 }
 
+function COMUSAGE() {
+	this.init = 0;
+	this.developer = 0;
+	this.input = 0;
+	this.default = 0;
+}
+
+COMUSAGE.prototype.convert = function(type) {
+
+	var n = Date.now();
+	var output = {};
+
+	output.init = 0;
+	output.developer = 0;
+	output.input = 0;
+	output.default = 0;
+
+	switch (type.toLowerCase()) {
+		case 'minutes':
+		case 'minute':
+		case 'mm':
+		case 'm':
+			output.init = this.init === 0 ? 0 : ((n - this.init) / 60000) >> 0;
+			output.developer = this.developer === 0 ? 0 : ((n - this.developer) / 60000) >> 0;
+			output.input = this.input === 0 ? 0 : ((n - this.input) / 60000) >> 0;
+			output.default = this.default === 0 ? 0 : ((n - this.default) / 60000) >> 0;
+			return output;
+
+		case 'hours':
+		case 'hour':
+		case 'hh':
+		case 'h':
+			output.init = this.init === 0 ? 0 : (((n - this.init) / 60000) / 60) >> 0;
+			output.developer = this.developer === 0 ? 0 : (((n - this.developer) / 60000) / 60) >> 0;
+			output.input = this.input === 0 ? 0 : (((n - this.input) / 60000) / 60) >> 0;
+			output.default = this.default === 0 ? 0 : (((n - this.default) / 60000) / 60) >> 0;
+			return output;
+
+		case 'seconds':
+		case 'second':
+		case 'ss':
+		case 's':
+			output.init = this.init === 0 ? 0 : ((n - this.init) / 1000) >> 0;
+			output.developer = this.developer === 0 ? 0 : ((n - this.developer) / 1000) >> 0;
+			output.input = this.input === 0 ? 0 : ((n - this.input) / 1000) >> 0;
+			output.default = this.default === 0 ? 0 : ((n - this.default) / 1000) >> 0;
+			return output;
+	}
+
+	return this;
+};
+
 function COMP(name) {
 
 	this._id = 'component' + Math.floor(Math.random() * 100000);
+	this.usage = new COMUSAGE();
 	this.$dirty = true;
 	this.$valid = true;
 	this.$validate = false;
@@ -2281,7 +2367,6 @@ function COMP(name) {
 	this.destroy;
 	this.state;
 	this.dependencies;
-
 	this.validate;
 
 	this.getter = function(value, type, older, skip, dirty) {
@@ -2363,12 +2448,40 @@ function COMP(name) {
 	};
 }
 
+COMP.prototype.$interaction = function(type) {
+	// type === 0 : init
+	// type === 1 : by developer
+	// type === 2 : by input
+	// type === 3 : by default
+	var now = Date.now();
+
+	switch (type) {
+		case 0:
+			this.usage.init = now;
+			break;
+		case 1:
+			this.usage.developer = now;
+			break;
+		case 2:
+			this.usage.input = now;
+			break;
+		case 3:
+			this.usage.default = now;
+			break;
+	}
+
+	return this;
+};
+
 COMP.prototype.update = COMP.prototype.refresh = function(notify) {
 	var self = this;
 	if (notify)
 		self.set(self.get());
-	else if (self.setter)
-		self.setter(self.get(), self.path, 1);
+	else {
+		if (self.setter)
+			self.setter(self.get(), self.path, 1);
+		self.$interaction(type);
+	}
 	return self;
 };
 
@@ -2605,9 +2718,12 @@ COMP.prototype.remove = function(noClear) {
 
 	COM.$removed = true;
 
-	if (!noClear)
-		MAN.cleaner();
+	if (noClear)
+		return true;
 
+	MAN.$cleantimeout = setTimeout(function() {
+		MAN.cleaner();
+	}, 100);
 	return true;
 };
 
@@ -2806,6 +2922,7 @@ function component_async(arr, fn, done) {
 }
 
 function CMAN() {
+	this.$cleantimeout;
 	this.isReady = false;
 	this.isCompiling = false;
 	this.init = [];
@@ -2915,6 +3032,7 @@ MAN.prepare = function(obj) {
 			}
 
 			obj.setter(value, obj.path, 0);
+			obj.$interaction(0);
 		}
 	}
 
@@ -4294,6 +4412,66 @@ Array.prototype.remove = function(cb, value) {
 			arr.push(self[i]);
 	}
 	return arr;
+};
+
+Date.prototype.add = function(type, value) {
+
+	if (value === undefined) {
+		var arr = type.split(' ');
+		type = arr[1];
+		value = parseInt(arr[0]);
+	}
+
+	var self = this;
+	var dt = new Date(self.getTime());
+
+	switch(type) {
+		case 's':
+		case 'ss':
+		case 'sec':
+		case 'second':
+		case 'seconds':
+			dt.setSeconds(dt.getSeconds() + value);
+			return dt;
+		case 'm':
+		case 'mm':
+		case 'minute':
+		case 'min':
+		case 'minutes':
+			dt.setMinutes(dt.getMinutes() + value);
+			return dt;
+		case 'h':
+		case 'hh':
+		case 'hour':
+		case 'hours':
+			dt.setHours(dt.getHours() + value);
+			return dt;
+		case 'd':
+		case 'dd':
+		case 'day':
+		case 'days':
+			dt.setDate(dt.getDate() + value);
+			return dt;
+		case 'w':
+		case 'ww':
+		case 'week':
+		case 'weeks':
+			dt.setDate(dt.getDate() + (value * 7));
+			return dt;
+		case 'M':
+		case 'MM':
+		case 'month':
+		case 'months':
+			dt.setMonth(dt.getMonth() + value);
+			return dt;
+		case 'y':
+		case 'yyyy':
+		case 'year':
+		case 'years':
+			dt.setFullYear(dt.getFullYear() + value);
+			return dt;
+	}
+	return dt;
 };
 
 Date.prototype.format = function(t) {
