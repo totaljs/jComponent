@@ -34,8 +34,8 @@ window.COM = window.jC = function(container) {
 };
 
 COM.clean = function(timeout) {
-	cleantimeout(MAN.$cleantimeout);
-	MAN.$cleantimeout = setTimeout(function() {
+	cleantimeout(MAN.tic);
+	MAN.tic = setTimeout(function() {
 		MAN.cleaner();
 	}, timeout || 10);
 	return COM;
@@ -214,7 +214,7 @@ COM.compile = function(container) {
 	var skip = false;
 
 	if (!els.length && !container) {
-		$components_ready();
+		$jc_ready();
 		return;
 	}
 
@@ -348,7 +348,7 @@ COM.compile = function(container) {
 					data = prerender(data);
 				if (typeof(obj.make) === 'function')
 					obj.make(data);
-				component_init(el, obj);
+				$jc_init(el, obj);
 			};
 
 			var c = template.substring(0, 1);
@@ -364,7 +364,7 @@ COM.compile = function(container) {
 				return;
 			}
 
-			$.get($components_url(template), function(response) {
+			$.get($jc_url(template), function(response) {
 				MAN.temp[k] = response;
 				fn(response);
 			});
@@ -377,15 +377,15 @@ COM.compile = function(container) {
 				if (obj.prerender)
 					obj.make = obj.prerender(obj.make);
 				el.html(obj.make);
-				component_init(el, obj);
+				$jc_init(el, obj);
 				return;
 			}
 
-			$.get($components_url(obj.make), function(data) {
+			$.get($jc_url(obj.make), function(data) {
 				if (obj.prerender)
 					data = prerender(data);
 				el.html(data);
-				component_init(el, obj);
+				$jc_init(el, obj);
 			});
 
 			return;
@@ -396,7 +396,7 @@ COM.compile = function(container) {
 				skip = true;
 		}
 
-		component_init(el, obj);
+		$jc_init(el, obj);
 	});
 
 	if (skip) {
@@ -414,7 +414,7 @@ COM.compile = function(container) {
 		return;
 	}
 
-	component_async(MAN.toggle, function(item, next) {
+	$jc_async(MAN.toggle, function(item, next) {
 		for (var i = 0, length = item.toggle.length; i < length; i++)
 			item.element.toggleClass(item.toggle[i]);
 		next();
@@ -459,8 +459,8 @@ COM.$inject = function() {
 	if (!arr.length)
 		return;
 
-	component_async(arr, function(item, next) {
-		item.element.load($components_url(item.url), function() {
+	$jc_async(arr, function(item, next) {
+		item.element.load($jc_url(item.url), function() {
 
 			if (item.path) {
 				var com = item.element.find(COM_ATTR);
@@ -576,7 +576,7 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 			$(target).append('<div ' + id + '></div>');
 			target = $(target).find('> div[' + id + ']');
 		}
-		$(target).load($components_url(url), function() {
+		$(target).load($jc_url(url), function() {
 			COM.compile();
 			if (callback)
 				callback();
@@ -867,7 +867,7 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 			}
 		}
 
-		$.ajax($components_url(url), options);
+		$.ajax($jc_url(url), options);
 	}, timeout || 0);
 
 	return COM;
@@ -942,7 +942,7 @@ COM.removeCache = function(key, isSearching) {
 	} else {
 		delete MAN.storage[key];
 	}
-	$components_save();
+	$jc_save();
 	return COM;
 };
 
@@ -958,7 +958,7 @@ COM.REMOVECACHE = function(method, url, data) {
 	data = JSON.stringify(data);
 	var key = HASH(method + '#' + url.replace(/\//g, '') + data).toString();
 	delete MAN.storage[key];
-	$components_save();
+	$jc_save();
 	return COM;
 };
 
@@ -968,7 +968,7 @@ COM.ready = function(fn) {
 	return COM;
 };
 
-function $components_url(url) {
+function $jc_url(url) {
 	var index = url.indexOf('?');
 	var builder = [];
 
@@ -989,7 +989,7 @@ function $components_url(url) {
 	return url + builder.join('&');
 }
 
-function $components_ready() {
+function $jc_ready() {
 	clearTimeout(MAN.timeout);
 	MAN.timeout = setTimeout(function() {
 
@@ -1107,7 +1107,7 @@ COM.on = function(name, path, fn, init) {
 	return COM;
 };
 
-function component_init(el, obj) {
+function $jc_init(el, obj) {
 
 	var type = el.get(0).tagName;
 	var collection;
@@ -1127,7 +1127,7 @@ function component_init(el, obj) {
 	MAN.components.push(obj);
 	MAN.init.push(obj);
 	COM.compile(el);
-	$components_ready();
+	$jc_ready();
 }
 
 COM.$emit2 = function(name, path, args) {
@@ -1780,7 +1780,7 @@ COM.remove = function(path) {
 		if (com)
 			com.$removed = true;
 
-		MAN.$cleantimeout = setTimeout(function() {
+		MAN.tic = setTimeout(function() {
 			MAN.cleaner();
 		}, 100);
 		return COM;
@@ -1791,7 +1791,7 @@ COM.remove = function(path) {
 		obj.remove(true);
 	}, path);
 
-	MAN.$cleantimeout = setTimeout(function() {
+	MAN.tic = setTimeout(function() {
 		MAN.cleaner();
 	}, 100);
 	return COM;
@@ -2174,7 +2174,7 @@ COM.schema = function(name, declaration, callback) {
 	}
 
 	// url?
-	$.get($components_url(declaration), function(d) {
+	$.get($jc_url(declaration), function(d) {
 		if (typeof(d) === 'string')
 			d = JSON.parse(d);
 		MAN.schemas[name] = d;
@@ -2721,7 +2721,7 @@ COMP.prototype.remove = function(noClear) {
 	if (noClear)
 		return true;
 
-	MAN.$cleantimeout = setTimeout(function() {
+	MAN.tic = setTimeout(function() {
 		MAN.cleaner();
 	}, 100);
 	return true;
@@ -2907,7 +2907,7 @@ window.COMPONENT = function(type, declaration) {
 	MAN.register[type] = fn;
 };
 
-function component_async(arr, fn, done) {
+function $jc_async(arr, fn, done) {
 
 	var item = arr.shift();
 	if (item === undefined) {
@@ -2917,12 +2917,13 @@ function component_async(arr, fn, done) {
 	}
 
 	fn(item, function() {
-		component_async(arr, fn, done);
+		$jc_async(arr, fn, done);
 	});
 }
 
 function CMAN() {
-	this.$cleantimeout;
+	this.tic;
+	this.tis;
 	this.isReady = false;
 	this.isCompiling = false;
 	this.init = [];
@@ -2940,7 +2941,6 @@ function CMAN() {
 	this.timeout;
 	this.pending = [];
 	this.imports = {};
-	this.timeoutStyles;
 	this.styles = [];
 	this.operations = {};
 	this.controllers = {};
@@ -2971,7 +2971,7 @@ MAN.cachestorage = function(key, value, expire) {
 	var now = Date.now();
 	if (value !== undefined) {
 		this.storage[key] = { expire: now + expire, value: value };
-		$components_save();
+		$jc_save();
 		return;
 	}
 
@@ -3395,7 +3395,7 @@ MAN.cleaner = function() {
 	}
 
 	if (is3)
-		$components_save();
+		$jc_save();
 
 	if (is)
 		self.refresh();
@@ -3450,7 +3450,7 @@ COMPONENT('', function() {
 	}
 });
 
-function $components_save() {
+function $jc_save() {
 	if (COM.defaults.localstorage)
 		localStorage.setItem(COM.$localstorage + '.cache', JSON.stringify(MAN.storage));
 }
@@ -3541,7 +3541,7 @@ window.PING = function(url, timeout, callback) {
 	}
 
 	var options = {};
-	var uri = $components_url(url);
+	var uri = $jc_url(url);
 	options.type = method;
 	options.headers = { 'X-Ping': location.pathname };
 
@@ -3795,9 +3795,9 @@ window.MAKE = function(callback) {
 };
 
 window.STYLE = function(value) {
-	clearTimeout(MAN.timeoutStyles);
+	clearTimeout(MAN.tis);
 	MAN.styles.push(value);
-	MAN.timeoutStyles = setTimeout(function() {
+	MAN.tis = setTimeout(function() {
 		$('<style type="text/css">' + MAN.styles.join('') + '</style>').appendTo('head');
 		MAN.styles = [];
 	}, 50);
