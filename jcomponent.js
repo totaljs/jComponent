@@ -861,14 +861,24 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 		}
 
 		options.error = function(req, status, r) {
+
+			var body = req.responseText;
+			var headers = req.getAllResponseHeaders();
+
+			if (headers.indexOf('/json') !== -1) {
+				try {
+					body = JSON.parse(body);
+				} catch (e) {}
+			}
+
 			status = status + ': ' + r;
-			COM.emit('error', r, status, url, req.getAllResponseHeaders());
+			COM.emit('error', body, status, url, headers);
 			if (typeof(error) === 'string')
-				return MAN.remap(error, r);
+				return MAN.remap(error, body);
 			if (error)
-				error(r, status, url);
+				error(body, status, url);
 			else if (typeof(callback) === 'function')
-				callback({}, status, url, req.getAllResponseHeaders());
+				callback(body, status, url, headers);
 		};
 
 		if (navigator.onLine !== undefined) {
@@ -950,9 +960,8 @@ COM.removeCache = function(key, isSearching) {
 			if (m.indexOf(key) !== -1)
 				delete MAN.storage[key];
 		}
-	} else {
+	} else
 		delete MAN.storage[key];
-	}
 	$jc_save();
 	return COM;
 };
