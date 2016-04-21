@@ -1373,7 +1373,7 @@ COM.dirty = function(path, value, onlyComponent, skipEmitState) {
 	return dirty;
 };
 
-// 1 === by manually
+// 1 === manually
 // 2 === by input
 COM.update = function(path, reset, type) {
 
@@ -1639,7 +1639,7 @@ COM.rewrite = function(path, val) {
 	return COM;
 };
 
-// 1 === by manually
+// 1 === manually
 // 2 === by input
 COM.set = function(path, val, type) {
 	$MIDDLEWARE(path, val, type, function(path, value) {
@@ -2390,7 +2390,7 @@ function COMP(name) {
 
 COMP.prototype.$interaction = function(type) {
 	// type === 0 : init
-	// type === 1 : by manually
+	// type === 1 : manually
 	// type === 2 : by input
 	// type === 3 : by default
 	var now = Date.now();
