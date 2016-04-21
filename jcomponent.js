@@ -168,6 +168,17 @@ COM.usage = function(name, expire, path, callback) {
 	return callback ? COM : arr;
 };
 
+COM.schedule = function(selector, name, expire, callback) {
+	if (expire.substring(0, 1) !== '-')
+		expire = '-' + expire;
+	var arr = expire.split(' ');
+	var type = arr[1].toLowerCase().substring(0, 1);
+	if (type === 'y' || type === 'd')
+		type = 'h';
+	MAN.schedulers.push({ name: name, expire: expire, selector: selector, callback: callback, type: type });
+	return COM;
+};
+
 COM.parser = function(value, path, type) {
 
 	if (typeof(value) === 'function') {
@@ -833,13 +844,13 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 			}
 		}
 
-		options.success = function(r) {
+		options.success = function(r, o, req) {
 			$MIDDLEWARE(middleware, r, 1, function(path, value) {
 				if (typeof(callback) === 'string')
 					return MAN.remap(callback, value);
 				if (!callback)
 					return;
-				callback(value);
+				callback(value, undefined, req.getAllResponseHeaders());
 			});
 		};
 
@@ -851,13 +862,13 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 
 		options.error = function(req, status, r) {
 			status = status + ': ' + r;
-			COM.emit('error', r, status, url);
+			COM.emit('error', r, status, url, req.getAllResponseHeaders());
 			if (typeof(error) === 'string')
 				return MAN.remap(error, r);
 			if (error)
 				error(r, status, url);
 			else if (typeof(callback) === 'function')
-				callback({}, status, url);
+				callback({}, status, url, req.getAllResponseHeaders());
 		};
 
 		if (navigator.onLine !== undefined) {
@@ -1362,7 +1373,7 @@ COM.dirty = function(path, value, onlyComponent, skipEmitState) {
 	return dirty;
 };
 
-// 1 === by developer
+// 1 === by manually
 // 2 === by input
 COM.update = function(path, reset, type) {
 
@@ -1385,7 +1396,7 @@ COM.update = function(path, reset, type) {
 		var search = path;
 
 		if (type === undefined)
-			type = 1; // developer
+			type = 1; // manually
 
 		var A = search.split('.');
 		var AL = A.length;
@@ -1628,7 +1639,7 @@ COM.rewrite = function(path, val) {
 	return COM;
 };
 
-// 1 === by developer
+// 1 === by manually
 // 2 === by input
 COM.set = function(path, val, type) {
 	$MIDDLEWARE(path, val, type, function(path, value) {
@@ -2020,52 +2031,6 @@ COM.reset = function(path, timeout, onlyComponent) {
 	return COM;
 };
 
-COM.findByName = function(name, path, callback) {
-
-	var tp = typeof(path);
-	if (tp === 'function' || tp === 'boolean') {
-		callback = path;
-		path = undefined;
-	}
-
-	var tc = typeof(callback);
-	var isCallback = tc === 'function';
-	var isMany = tc === 'boolean';
-
-	if (!MAN.register[name]) {
-		if (isMany)
-			return [];
-		return;
-	}
-
-	var com;
-
-	if (isMany) {
-		callback = undefined;
-		com = [];
-	}
-
-	COM.each(function(component) {
-
-		if (component.name !== name)
-			return;
-
-		if (isCallback) {
-			callback(component);
-			return;
-		}
-
-		if (!isMany) {
-			com = component;
-			return true; // stop
-		}
-
-		com.push(component);
-	}, path);
-
-	return isCallback ? COM : com;
-};
-
 COM.findByPath = function(path, callback) {
 
 	var tp = typeof(path);
@@ -2104,7 +2069,15 @@ COM.findByPath = function(path, callback) {
 	return isCallback ? COM : com;
 };
 
+COM.findByName = function(name, path, callback) {
+	return COM.findByProperty('name', name, path, callback);
+};
+
 COM.findById = function(id, path, callback) {
+	return COM.findByProperty('id', id, path, callback);
+};
+
+COM.findByProperty = function(prop, value, path, callback) {
 
 	var tp = typeof(path);
 	if (tp === 'function' || tp === 'boolean') {
@@ -2125,7 +2098,7 @@ COM.findById = function(id, path, callback) {
 
 	COM.each(function(component) {
 
-		if (component.id !== id)
+		if (component[prop] !== value)
 			return;
 
 		if (isCallback) {
@@ -2139,52 +2112,9 @@ COM.findById = function(id, path, callback) {
 		}
 
 		com.push(component);
-
 	}, path);
 
 	return isCallback ? COM : com;
-};
-
-COM.schema = function(name, declaration, callback) {
-
-	if (!declaration)
-		return $.extend(true, {}, MAN.schemas[name]);
-
-	if (typeof(declaration) === 'object') {
-		MAN.schemas[name] = declaration;
-		return declaration;
-	}
-
-	if (typeof(declaration) === 'function') {
-		var f = declaration();
-		MAN.schemas[name] = f;
-		return f;
-	}
-
-	if (typeof(declaration) !== 'string')
-		return undefined;
-
-	var a = declaration.substring(0, 1);
-	var b = declaration.substring(declaration.length - 1);
-
-	if ((a === '"' && b === '"') || (a === '[' && b === ']') || (a === '{' && b === '}')) {
-		var d = JSON.parse(declaration);
-		MAN.schemas[name] = d;
-		if (callback)
-			callback(d)
-		return d;
-	}
-
-	// url?
-	$.get($jc_url(declaration), function(d) {
-		if (typeof(d) === 'string')
-			d = JSON.parse(d);
-		MAN.schemas[name] = d;
-		if (callback)
-			callback(d);
-	});
-
-	return COM;
 };
 
 COM.each = function(fn, path, watch, fix) {
@@ -2213,13 +2143,13 @@ COM.each = function(fn, path, watch, fix) {
 			if (!component.path)
 				continue;
 			if (isAsterix) {
-				var a = COM_P_COMPARE($path, component.$$path, 0, path, component.path);
+				var a = $jc_compare($path, component.$$path, 0, path, component.path);
 				if (!a)
 					continue;
 			} else {
 				if (path !== component.path) {
 					if (watch) {
-						var a = COM_P_COMPARE($path, component.$$path, 2, path, component.path);
+						var a = $jc_compare($path, component.$$path, 2, path, component.path);
 						if (!a)
 							continue;
 					} else
@@ -2235,7 +2165,7 @@ COM.each = function(fn, path, watch, fix) {
 	return COM;
 };
 
-function COM_P_COMPARE(a, b, type, ak, bk) {
+function $jc_compare(a, b, type, ak, bk) {
 
 	// type 0 === wildcard
 	// type 1 === fix path
@@ -2291,10 +2221,18 @@ function COM_P_COMPARE(a, b, type, ak, bk) {
 
 function COMUSAGE() {
 	this.init = 0;
-	this.developer = 0;
+	this.manually = 0;
 	this.input = 0;
 	this.default = 0;
 }
+
+COMUSAGE.prototype.compare = function(type, dt) {
+	if (typeof(dt) === 'string') {
+		if (dt.substring(0, 1) !== '-')
+			dt = new Date().add('-' + dt);
+	}
+	return this[type] < dt.getTime();
+};
 
 COMUSAGE.prototype.convert = function(type) {
 
@@ -2302,7 +2240,7 @@ COMUSAGE.prototype.convert = function(type) {
 	var output = {};
 
 	output.init = 0;
-	output.developer = 0;
+	output.manually = 0;
 	output.input = 0;
 	output.default = 0;
 
@@ -2312,7 +2250,7 @@ COMUSAGE.prototype.convert = function(type) {
 		case 'mm':
 		case 'm':
 			output.init = this.init === 0 ? 0 : ((n - this.init) / 60000) >> 0;
-			output.developer = this.developer === 0 ? 0 : ((n - this.developer) / 60000) >> 0;
+			output.manually = this.manually === 0 ? 0 : ((n - this.manually) / 60000) >> 0;
 			output.input = this.input === 0 ? 0 : ((n - this.input) / 60000) >> 0;
 			output.default = this.default === 0 ? 0 : ((n - this.default) / 60000) >> 0;
 			return output;
@@ -2322,7 +2260,7 @@ COMUSAGE.prototype.convert = function(type) {
 		case 'hh':
 		case 'h':
 			output.init = this.init === 0 ? 0 : (((n - this.init) / 60000) / 60) >> 0;
-			output.developer = this.developer === 0 ? 0 : (((n - this.developer) / 60000) / 60) >> 0;
+			output.manually = this.manually === 0 ? 0 : (((n - this.manually) / 60000) / 60) >> 0;
 			output.input = this.input === 0 ? 0 : (((n - this.input) / 60000) / 60) >> 0;
 			output.default = this.default === 0 ? 0 : (((n - this.default) / 60000) / 60) >> 0;
 			return output;
@@ -2332,7 +2270,7 @@ COMUSAGE.prototype.convert = function(type) {
 		case 'ss':
 		case 's':
 			output.init = this.init === 0 ? 0 : ((n - this.init) / 1000) >> 0;
-			output.developer = this.developer === 0 ? 0 : ((n - this.developer) / 1000) >> 0;
+			output.manually = this.manually === 0 ? 0 : ((n - this.manually) / 1000) >> 0;
 			output.input = this.input === 0 ? 0 : ((n - this.input) / 1000) >> 0;
 			output.default = this.default === 0 ? 0 : ((n - this.default) / 1000) >> 0;
 			return output;
@@ -2371,7 +2309,7 @@ function COMP(name) {
 	this.dependencies;
 	this.validate;
 
-	this.getter = function(value, type, older, skip, dirty) {
+	this.getter = function(value, type, dirty, older, skip) {
 
 		value = this.parser(value);
 
@@ -2452,7 +2390,7 @@ function COMP(name) {
 
 COMP.prototype.$interaction = function(type) {
 	// type === 0 : init
-	// type === 1 : by developer
+	// type === 1 : by manually
 	// type === 2 : by input
 	// type === 3 : by default
 	var now = Date.now();
@@ -2462,7 +2400,7 @@ COMP.prototype.$interaction = function(type) {
 			this.usage.init = now;
 			break;
 		case 1:
-			this.usage.developer = now;
+			this.usage.manually = now;
 			break;
 		case 2:
 			this.usage.input = now;
@@ -2482,7 +2420,7 @@ COMP.prototype.update = COMP.prototype.refresh = function(notify) {
 	else {
 		if (self.setter)
 			self.setter(self.get(), self.path, 1);
-		self.$interaction(type);
+		self.$interaction(1);
 	}
 	return self;
 };
@@ -2953,6 +2891,7 @@ function CMAN() {
 	this.defaults = {};
 	this.middleware = {};
 	this.others = {};
+	this.schedulers = [];
 	// this.mediaquery;
 }
 
@@ -3458,9 +3397,7 @@ function $jc_save() {
 		localStorage.setItem(COM.$localstorage + '.cache', JSON.stringify(MAN.storage));
 }
 
-window.REWRITE = function(path, value) {
-	return COM.rewrite(path, value);
-};
+window.REWRITE = COM.rewrite;
 
 window.SET = function(path, value, timeout, reset) {
 	if (typeof(timeout) === 'boolean')
@@ -3506,13 +3443,8 @@ window.PUSH = function(path, value, timeout, reset) {
 	return COM;
 };
 
-window.INVALID = function(path) {
-	return COM.invalid(path);
-};
-
-window.RESET = function(path, timeout) {
-	return COM.reset(path, timeout);
-};
+window.INVALID = COM.invalid;
+window.RESET = COM.reset;
 
 window.DEFAULT = function(path, timeout, reset) {
 	return COM.default(path, timeout, null, reset);
@@ -3567,26 +3499,11 @@ window.PING = function(url, timeout, callback) {
 	}, timeout || 30000);
 };
 
-window.AJAX = function() {
-	return COM.AJAX.apply(COM, arguments);
-};
-
-window.AJAXCACHE = function() {
-	return COM.AJAXCACHE.apply(COM, arguments);
-}
-
-window.GET = function(path, scope) {
-	return COM.get(path, scope);
-};
-
-window.CACHE = function(key, value, expire) {
-	return COM.cache(key, value, expire);
-};
-
-window.NOTIFY = function() {
-	return COM.notify.apply(COM, arguments);
-};
-
+window.AJAX = COM.AJAX;
+window.AJAXCACHE = COM.AJAXCACHE;
+window.GET = COM.get;
+window.CACHE = COM.cache;
+window.NOTIFY = COM.notify;
 window.NOTMODIFIED = function(path, value, fields) {
 
 	if (value === undefined)
@@ -3606,6 +3523,7 @@ window.NOTMODIFIED = function(path, value, fields) {
 	return false;
 };
 
+window.SCHEDULE = COM.schedule;
 window.FIND = function(value, many, noCache, callback) {
 
 	var isWaiting = false;
@@ -3753,21 +3671,8 @@ window.UPDATE = function(path, timeout, reset) {
 	}, timeout);
 };
 
-window.CHANGE = function(path, value) {
-	return COM.change(path, value);
-};
-
-window.INJECT = function(url, target, callback, timeout) {
-	return COM.import(url, target, callback, timeout);
-};
-
-window.IMPORT = function(url, target, callback, timeout) {
-	return COM.import(url, target, callback, timeout);
-};
-
-window.SCHEMA = function(name, declaration, callback) {
-	return COM.schema(name, declaration, callback);
-};
+window.CHANGE = COM.change;
+window.INJECT = window.IMPORT = COM.import;
 
 window.OPERATION = function(name, fn) {
 	if (!fn) {
@@ -3783,13 +3688,8 @@ window.ON = function(name, path, fn, init) {
 	COM.on(name, path, fn, init);
 };
 
-window.EMIT = function() {
-	return COM.emit.apply(this, arguments);
-};
-
-window.EVALUATE = function(path, expression, nopath) {
-	return COM.evaluate(path, expression, nopath);
-};
+window.EMIT = COM.emit;
+window.EVALUATE = COM.evaluate;
 
 window.MAKE = function(callback) {
 	var obj = {};
@@ -3961,6 +3861,33 @@ WAIT(function() {
 		MAN.cleaner();
 	}, (1000 * 60) * 5);
 
+	// scheduler
+	MAN.sc = 0;
+	setInterval(function() {
+		MAN.sc++;
+		for (var i = 0, length = MAN.schedulers.length; i < length; i++) {
+			var item = MAN.schedulers[i];
+
+			if (item.type === 'm') {
+				if (MAN.sc % 30 !== 0)
+					continue;
+			} else if (item.type === 'h') {
+				// 1800 seconds --> 30 minutes
+				// 1800 / 2 (seconds) --> 900
+				if (MAN.sc % 900 !== 0)
+					continue;
+			}
+
+			var dt = new Date().add(item.expire);
+			FIND(item.selector, true).forEach(function(component) {
+				if (!component)
+					return;
+				if (component.usage.compare(item.name, dt))
+					item.callback(component);
+			});
+		}
+	}, 2000);
+
 	$.fn.component = function() {
 		return this.data(COM_ATTR);
 	};
@@ -4031,7 +3958,7 @@ WAIT(function() {
 				return;
 
 			if (self.$skip && e.type === 'focusout') {
-				$components_keypress(self, self.$value, e);
+				$jc_keypress(self, self.$value, e);
 				return;
 			}
 
@@ -4060,7 +3987,7 @@ WAIT(function() {
 				if (self.$component.$dirty)
 					dirty = true;
 				self.$component.dirty(false, true);
-				self.$component.getter(value, 2, old, e.type === 'focusout', dirty);
+				self.$component.getter(value, 2, old, dirty, e.type === 'focusout');
 				self.$component.$skip = false;
 				return;
 			}
@@ -4083,7 +4010,7 @@ WAIT(function() {
 				if (e.tagName !== 'TEXTAREA') {
 					self.$value = self.value;
 					clearTimeout(self.$timeout);
-					$components_keypress(self, old, e);
+					$jc_keypress(self, old, e);
 					return;
 				}
 			}
@@ -4110,7 +4037,7 @@ WAIT(function() {
 
 			clearTimeout(self.$timeout);
 			self.$timeout = setTimeout(function() {
-				$components_keypress(self, old, e);
+				$jc_keypress(self, old, e);
 			}, delay);
 		});
 
@@ -4120,7 +4047,7 @@ WAIT(function() {
 	});
 }, 100);
 
-function $components_keypress(self, old, e) {
+function $jc_keypress(self, old, e) {
 
 	if (self.value === old)
 		return;
@@ -4137,7 +4064,7 @@ function $components_keypress(self, old, e) {
 			self.$component.dirty(false, true);
 		}
 
-		self.$component.getter(self.value, 2, old, e.type === 'focusout' || e.keyCode === 13, dirty);
+		self.$component.getter(self.value, 2, dirty, old, e.type === 'focusout' || e.keyCode === 13);
 		self.value2 = self.value;
 	}
 
@@ -4428,49 +4355,41 @@ Date.prototype.add = function(type, value) {
 	var self = this;
 	var dt = new Date(self.getTime());
 
-	switch(type) {
+	switch(type.substring(0, 3)) {
 		case 's':
 		case 'ss':
 		case 'sec':
-		case 'second':
-		case 'seconds':
 			dt.setSeconds(dt.getSeconds() + value);
 			return dt;
 		case 'm':
 		case 'mm':
-		case 'minute':
 		case 'min':
-		case 'minutes':
 			dt.setMinutes(dt.getMinutes() + value);
 			return dt;
 		case 'h':
 		case 'hh':
-		case 'hour':
-		case 'hours':
+		case 'hou':
 			dt.setHours(dt.getHours() + value);
 			return dt;
 		case 'd':
 		case 'dd':
 		case 'day':
-		case 'days':
 			dt.setDate(dt.getDate() + value);
 			return dt;
 		case 'w':
 		case 'ww':
-		case 'week':
-		case 'weeks':
+		case 'wee':
 			dt.setDate(dt.getDate() + (value * 7));
 			return dt;
 		case 'M':
 		case 'MM':
-		case 'month':
-		case 'months':
+		case 'mon':
 			dt.setMonth(dt.getMonth() + value);
 			return dt;
 		case 'y':
-		case 'yyyy':
-		case 'year':
-		case 'years':
+		case 'yy':
+		case 'yyy':
+		case 'yea':
 			dt.setFullYear(dt.getFullYear() + value);
 			return dt;
 	}

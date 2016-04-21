@@ -342,7 +342,7 @@ COMPONENT('my-component-name', function() {
     // This property affects trimming of string values and works only with [data-component-bind]
     // and default `.instance.setter`. Default value: true.
 
-    instance.usage = { init: 0, developer: 0, input: 0, default: 0 };
+    instance.usage = { init: 0, manually: 0, input: 0, default: 0 };
     // Component last usage, the number is Date.now().
     // The object has a prototype .convert(type)
     // instance.usage.convert('minutes')
@@ -414,7 +414,7 @@ COMPONENT('my-component-name', function() {
         // the `design` of the component according the value state.
 
         // type === 0 : init
-        // type === 1 : by developer
+        // type === 1 : by manually
         // type === 2 : by input
         // type === 3 : by default
 
@@ -443,7 +443,7 @@ COMPONENT('my-component-name', function() {
 
         // Argument: type
         // 0 : init
-        // 1 : by developer
+        // 1 : by manually
         // 2 : by input
         // 3 : default
 
@@ -644,14 +644,14 @@ COMPONENT('my-component-name', function() {
     instance.watch([path], function(path, value, type));
     instance.watch(function(path, value, type) { // example
         // type === 0 : init
-        // type === 1 : by developer
+        // type === 1 : by manually
         // type === 2 : by input
         // type === 3 : by default
         // watch for changes
     });
     instance.watch('other.path.to.property', function(path, value, type) { // example
         // type === 0 : init
-        // type === 1 : by developer
+        // type === 1 : by manually
         // type === 2 : by input
         // type === 3 : by default
     });
@@ -681,7 +681,7 @@ COMPONENT('my-component-name', function() {
     // Watchs all changes
     instance.on('watch', '*', function(path, value, type) {
         // type === 0 : init
-        // type === 1 : by developer
+        // type === 1 : by manually
         // type === 2 : by input
         // type === 3 : by default
     });
@@ -689,7 +689,7 @@ COMPONENT('my-component-name', function() {
     // Watchs all changes
     instance.on('watch', 'model.user.name', function(path, value, type) {
         // type === 0 : init
-        // type === 1 : by developer
+        // type === 1 : by manually
         // type === 2 : by input
         // type === 3 : by default
     }, true); // true === evaluates now
@@ -950,6 +950,7 @@ $.components.UPLOAD('/api/', formdata, function(response, err) { console.log(res
 // Uploads formdata and receive `JSON` from the server. When is throwed an error then
 // "response" is the empty object {}
 
+
 $.components.TEMPLATE(url, callback(template), [prepare(template)]);
 // Downloads the HTML content and caches it per session. This method is adapted for multiple
 // executing. The content is downloaded only once. `prepare` argument is optional
@@ -961,16 +962,17 @@ $.components.REMOVECACHE(method, url, data);
 
 // +v3.7.0
 // AJAX calls
-$.components.AJAX('METHOD URL', data, [callback or path], [sleep], [error(response, status, type) or path]);
+$.components.AJAX('METHOD URL', data, [callback(response, err, headers) or path], [sleep], [error(response, status, type, headers) or path]);
 // Is same as GET(), POST(), PUT(), DELETE(). When is throwed an error then
 // "response" is the empty object {}
-$.components.AJAXCACHE('METHOD URL', data, [callback or path], [expire], [sleep], [clear]);
+$.components.AJAXCACHE('METHOD URL', data, [callback(response, isFromCache) or path], [expire], [sleep], [clear]);
 // Is same as POSTCACHE, GETCACHE and now supports PUT, DELETE. If the callback is the
 // function then the second argument will be `fromCache {Boolean}`.
 
 // +v3.9.1 supports CORS with credentials
 // CORS by default is enabled if the URL starts with `http://` or `https://` and credentials are
 // added when the METHOD contains `!`, e.g. `!GET https://www.google.com`.
+
 
 $.components.broadcast('.path.to.property, #a-component-id, a-component-name')('say')('hello');
 $.components.broadcast('.path.to.property, #a-component-id, a-component-name')('set')('new value');
@@ -979,14 +981,6 @@ $.components.broadcast(selector, method_name, [caller]);
 // Executes the method in all components by selector. [selector] can be jQuery
 // element or jComponent --> then the method searchs all nested components.
 // IMPORTANT: selector can be jQuery element or jComponent.
-
-
-$.components.schema(name, [declaration]);
-$.components.schema('user', { name: '', age: 30, email: '@' }); // Example: Creating.
-$.components.schema('user', '{"name":"","age":20}'); // Example: Creating with JSON.
-$.components.schema('user', '/json/user.json'); // Example: Creating from URL address.
-$.components.schema('user'); // Example: Getter.
-// Creates or Gets (new object instance) the schema.
 
 
 $.components.evaluate(path, expression, [path_is_value]);
@@ -1013,7 +1007,7 @@ $.components.clean([timeout]);
 // IMPORTANT: The cleaner is started each 5 minutes.
 
 $.components.usage(property, expire, [path], [callback]);
-$.components.usage('developer', '5 seconds');
+$.components.usage('manually', '5 seconds');
 $.components.usage('input', '5 seconds', 'form.*');
 $.components.usage('init', '5 seconds', function(component) {
     // All components initialized 5 seconds before
@@ -1021,8 +1015,25 @@ $.components.usage('init', '5 seconds', function(component) {
 });
 
 // Reads all components according their usage
-// @property is meaned as component.usage = { init: 0, developer: 0, input: 0, default: 0 };
+// @property is meaned as component.usage = { init: 0, manually: 0, input: 0, default: 0 };
 // Returns Array when is not defined callback.
+
+
+$.components.schedule(selector, property, expire, callback);
+// Schedule executes timeout when is valid `selector` and `expire`.
+// Scheduler checks all tasks each 2 seconds (it has an internal optimalization for good performance).
+
+$.components.schedule('.find-by-path', 'input', '5 minutes', function(component) {
+    AJAX('GET /api/refresh/', component.path);
+});
+
+$.components.schedule('#find-by-id', 'manually', '3 seconds', function(component) {
+    AJAX('GET /api/refresh/', component.path);
+});
+
+$.components.schedule('find-by-name', 'init', '1 hour', function(component) {
+    AJAX('GET /api/refresh/', component.path);
+});
 ```
 
 ## Events
@@ -1030,7 +1041,7 @@ $.components.usage('init', '5 seconds', function(component) {
 ```js
 $.components.on('watch', 'path.*', function(path, value, type) {
     // type === 0 : init
-    // type === 1 : by developer
+    // type === 1 : by manually
     // type === 2 : by input
     // type === 3 : by default
     // Watchs all changes according the path.
@@ -1067,9 +1078,6 @@ IMPORT();
 
 RESET();
 // Alias for $.components.reset();
-
-SCHEMA();
-// Alias for $.components.schema();
 
 CACHE();
 // Alias for $.components.cache();
@@ -1237,6 +1245,10 @@ MIDDLEWARE(['A-NAME', 'B-NAME'], { count: 0 }, function(value, path) {
     console.log(value);
     console.log(this);
 });
+
+SCHEDULE();
+// Alias for $.components.schedule();
+// +v4.0.0
 ```
 
 ## Device Width
