@@ -414,7 +414,7 @@ COMPONENT('my-component-name', function() {
         // the `design` of the component according the value state.
 
         // type === 0 : init
-        // type === 1 : by manually
+        // type === 1 : manually
         // type === 2 : by input
         // type === 3 : by default
 
@@ -443,7 +443,7 @@ COMPONENT('my-component-name', function() {
 
         // Argument: type
         // 0 : init
-        // 1 : by manually
+        // 1 : manually
         // 2 : by input
         // 3 : default
 
@@ -644,14 +644,14 @@ COMPONENT('my-component-name', function() {
     instance.watch([path], function(path, value, type));
     instance.watch(function(path, value, type) { // example
         // type === 0 : init
-        // type === 1 : by manually
+        // type === 1 : manually
         // type === 2 : by input
         // type === 3 : by default
         // watch for changes
     });
     instance.watch('other.path.to.property', function(path, value, type) { // example
         // type === 0 : init
-        // type === 1 : by manually
+        // type === 1 : manually
         // type === 2 : by input
         // type === 3 : by default
     });
@@ -681,7 +681,7 @@ COMPONENT('my-component-name', function() {
     // Watchs all changes
     instance.on('watch', '*', function(path, value, type) {
         // type === 0 : init
-        // type === 1 : by manually
+        // type === 1 : manually
         // type === 2 : by input
         // type === 3 : by default
     });
@@ -689,7 +689,7 @@ COMPONENT('my-component-name', function() {
     // Watchs all changes
     instance.on('watch', 'model.user.name', function(path, value, type) {
         // type === 0 : init
-        // type === 1 : by manually
+        // type === 1 : manually
         // type === 2 : by input
         // type === 3 : by default
     }, true); // true === evaluates now
@@ -1041,7 +1041,7 @@ $.components.schedule('find-by-name', 'init', '1 hour', function(component) {
 ```js
 $.components.on('watch', 'path.*', function(path, value, type) {
     // type === 0 : init
-    // type === 1 : by manually
+    // type === 1 : manually
     // type === 2 : by input
     // type === 3 : by default
     // Watchs all changes according the path.
