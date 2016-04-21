@@ -342,7 +342,7 @@ COMPONENT('my-component-name', function() {
     // This property affects trimming of string values and works only with [data-component-bind]
     // and default `.instance.setter`. Default value: true.
 
-    instance.usage = { init: 0, manually: 0, input: 0, default: 0 };
+    instance.usage = { init: 0, manually: 0, input: 0, default: 0, custom: 0, valid: 0, dirty: 0 };
     // Component last usage, the number is Date.now().
     // The object has a prototype .convert(type)
     // instance.usage.convert('minutes')
@@ -578,6 +578,10 @@ COMPONENT('my-component-name', function() {
     instance.singleton();
     // This method guarantees only one instance of the component. Other instances wont' be
     // initialized and their elements will be removed from the DOM.
+
+
+    instance.used();
+    // Sets the current time into the `instance.usage.custom` property in this component.
 
 
     instance.emit(event_name, [arg1], [arg2])
@@ -1009,15 +1013,19 @@ $.components.clean([timeout]);
 $.components.usage(property, expire, [path], [callback]);
 $.components.usage('manually', '5 seconds');
 $.components.usage('input', '5 seconds', 'form.*');
+$.components.usage('custom', '5 seconds', 'form.*');
 $.components.usage('init', '5 seconds', function(component) {
     // All components initialized 5 seconds before
     console.log(component.usage.convert('seconds'));
 });
-
+// +v4.0.0
 // Reads all components according their usage
-// @property is meaned as component.usage = { init: 0, manually: 0, input: 0, default: 0 };
+// @property is meaned as component.usage = { init: 0, manually: 0, input: 0, default: 0, custom: 0, dirty: 0, valid: 0 };
 // Returns Array when is not defined callback.
 
+// +v4.0.0
+$.components.used(path);
+// Sets `instance.usage.custom` usage according to the path.
 
 $.components.schedule(selector, property, expire, callback);
 // Schedule executes timeout when is valid `selector` and `expire`.

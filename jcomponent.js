@@ -1259,6 +1259,13 @@ COM.change = function(path, value) {
 	return !COM.dirty(path, !value);
 };
 
+COM.used = function(path) {
+	COM.each(function(obj) {
+		obj.used();
+	}, path, true);
+	return COM;
+};
+
 COM.valid = function(path, value, onlyComponent) {
 
 	var isExcept = value instanceof Array;
@@ -1300,9 +1307,12 @@ COM.valid = function(path, value, onlyComponent) {
 			if (isAsterix || obj.path === path) {
 				obj.$valid = value;
 				obj.$validate = false;
+				obj.$interaction(102);
 			}
-		} else if (onlyComponent._id === obj._id)
+		} else if (onlyComponent._id === obj._id) {
 			obj.$valid = value;
+			obj.$interaction(102);
+		}
 
 		if (obj.$valid === false)
 			valid = false;
@@ -1353,10 +1363,14 @@ COM.dirty = function(path, value, onlyComponent, skipEmitState) {
 			arr.push(obj);
 
 		if (!onlyComponent) {
-			if (isAsterix || obj.path === path)
+			if (isAsterix || obj.path === path) {
 				obj.$dirty = value;
-		} else if (onlyComponent._id === obj._id)
-				obj.$dirty = value;
+				obj.$interaction(101);
+			}
+		} else if (onlyComponent._id === obj._id) {
+			obj.$dirty = value;
+			obj.$interaction(101);
+		}
 
 		if (obj.$dirty === false)
 			dirty = false;
@@ -1425,14 +1439,18 @@ COM.update = function(path, reset, type) {
 
 			if (reset === true) {
 
-				if (!component.$dirty_disabled)
+				if (!component.$dirty_disabled) {
 					component.$dirty = true;
+					component.$interaction(101);
+				}
 
 				if (!component.$valid_disabled) {
 					component.$valid = true;
 					component.$validate = false;
-					if (component.validate)
+					if (component.validate) {
 						component.$valid = component.validate(result);
+						component.$interaction(102);
+					}
 				}
 
 				component.element.find(COM_DATA_BIND_SELECTOR).each(function() {
@@ -1717,8 +1735,10 @@ COM.set = function(path, val, type) {
 				if (!component.$valid_disabled) {
 					component.$valid = true;
 					component.$validate = false;
-					if (component.validate)
+					if (component.validate) {
 						component.$valid = component.validate(result);
+						component.$interaction(102);
+					}
 				}
 
 				component.element.find(COM_DATA_BIND_SELECTOR).each(function() {
@@ -1833,6 +1853,7 @@ COM.validate = function(path, except) {
 
 		if (obj.validate) {
 			obj.$valid = obj.validate(MAN.get(obj.path));
+			obj.$interaction(102);
 			if (!obj.$valid)
 				valid = false;
 		}
@@ -1969,8 +1990,10 @@ COM.default = function(path, timeout, onlyComponent, reset) {
 		if (!obj.$valid_disabled) {
 			obj.$valid = true;
 			obj.$validate = false;
-			if (obj.validate)
+			if (obj.validate) {
 				obj.$valid = obj.validate(obj.get());
+				obj.$interaction(102);
+			}
 		}
 
 	}, path);
@@ -2013,14 +2036,18 @@ COM.reset = function(path, timeout, onlyComponent) {
 			delete this.$value2;
 		});
 
-		if (!obj.$dirty_disabled)
+		if (!obj.$dirty_disabled) {
 			obj.$dirty = true;
+			obj.$interaction(101);
+		}
 
 		if (!obj.$valid_disabled) {
 			obj.$valid = true;
 			obj.$validate = false;
-			if (obj.validate)
+			if (obj.validate) {
 				obj.$valid = obj.validate(obj.get());
+				obj.$interaction(102);
+			}
 		}
 
 	}, path);
@@ -2224,6 +2251,9 @@ function COMUSAGE() {
 	this.manually = 0;
 	this.input = 0;
 	this.default = 0;
+	this.custom = 0;
+	this.dirty = 0;
+	this.valid = 0;
 }
 
 COMUSAGE.prototype.compare = function(type, dt) {
@@ -2231,52 +2261,44 @@ COMUSAGE.prototype.compare = function(type, dt) {
 		if (dt.substring(0, 1) !== '-')
 			dt = new Date().add('-' + dt);
 	}
-	return this[type] < dt.getTime();
+	var val = this[type];
+	return val === 0 ? false : val < dt.getTime();
 };
 
 COMUSAGE.prototype.convert = function(type) {
 
 	var n = Date.now();
 	var output = {};
+	var num = 1;
 
-	output.init = 0;
-	output.manually = 0;
-	output.input = 0;
-	output.default = 0;
-
-	switch (type.toLowerCase()) {
-		case 'minutes':
-		case 'minute':
+	switch (type.toLowerCase().substring(0, 3)) {
+		case 'min':
 		case 'mm':
 		case 'm':
-			output.init = this.init === 0 ? 0 : ((n - this.init) / 60000) >> 0;
-			output.manually = this.manually === 0 ? 0 : ((n - this.manually) / 60000) >> 0;
-			output.input = this.input === 0 ? 0 : ((n - this.input) / 60000) >> 0;
-			output.default = this.default === 0 ? 0 : ((n - this.default) / 60000) >> 0;
-			return output;
+			num = 60000;
+			break;
 
-		case 'hours':
-		case 'hour':
+		case 'hou':
 		case 'hh':
 		case 'h':
-			output.init = this.init === 0 ? 0 : (((n - this.init) / 60000) / 60) >> 0;
-			output.manually = this.manually === 0 ? 0 : (((n - this.manually) / 60000) / 60) >> 0;
-			output.input = this.input === 0 ? 0 : (((n - this.input) / 60000) / 60) >> 0;
-			output.default = this.default === 0 ? 0 : (((n - this.default) / 60000) / 60) >> 0;
-			return output;
+			num = 360000;
+			break;
 
-		case 'seconds':
-		case 'second':
+		case 'sec':
 		case 'ss':
 		case 's':
-			output.init = this.init === 0 ? 0 : ((n - this.init) / 1000) >> 0;
-			output.manually = this.manually === 0 ? 0 : ((n - this.manually) / 1000) >> 0;
-			output.input = this.input === 0 ? 0 : ((n - this.input) / 1000) >> 0;
-			output.default = this.default === 0 ? 0 : ((n - this.default) / 1000) >> 0;
-			return output;
+			num = 1000;
+			break;
 	}
 
-	return this;
+	output.init = this.init === 0 ? 0 : ((n - this.init) / num) >> 0;
+	output.manually = this.manually === 0 ? 0 : ((n - this.manually) / num) >> 0;
+	output.input = this.input === 0 ? 0 : ((n - this.input) / num) >> 0;
+	output.default = this.default === 0 ? 0 : ((n - this.default) / num) >> 0;
+	output.custom = this.custom === 0 ? 0 : ((n - this.custom) / num) >> 0;
+	output.dirty = this.dirty === 0 ? 0 : ((n - this.dirty) / num) >> 0;
+	output.valid = this.valid === 0 ? 0 : ((n - this.valid) / num) >> 0;
+	return output;
 };
 
 function COMP(name) {
@@ -2393,6 +2415,9 @@ COMP.prototype.$interaction = function(type) {
 	// type === 1 : manually
 	// type === 2 : by input
 	// type === 3 : by default
+	// type === 100 : custom
+	// type === 101 : dirty
+	// type === 102 : valid
 	var now = Date.now();
 
 	switch (type) {
@@ -2407,6 +2432,15 @@ COMP.prototype.$interaction = function(type) {
 			break;
 		case 3:
 			this.usage.default = now;
+			break;
+		case 100:
+			this.usage.custom = now;
+			break;
+		case 101:
+			this.usage.dirty = now;
+			break;
+		case 102:
+			this.usage.valid = now;
 			break;
 	}
 
@@ -2586,6 +2620,7 @@ COMP.prototype.valid = function(value, noEmit) {
 
 	this.$valid = value;
 	this.$validate = false;
+	this.$interaction(102);
 
 	MAN.clear('valid');
 
@@ -2610,6 +2645,10 @@ COMP.prototype.change = function(value) {
 	return this;
 };
 
+COMP.prototype.used = function() {
+	return this.$interaction(100);
+};
+
 COMP.prototype.dirty = function(value, noEmit) {
 
 	if (value === undefined)
@@ -2619,6 +2658,7 @@ COMP.prototype.dirty = function(value, noEmit) {
 		return this;
 
 	this.$dirty = value;
+	this.$interaction(101);
 	MAN.clear('dirty');
 
 	if (noEmit)
