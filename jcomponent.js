@@ -4036,7 +4036,7 @@ WAIT(function() {
 				if (self.$component.$dirty)
 					dirty = true;
 				self.$component.dirty(false, true);
-				self.$component.getter(value, 2, old, dirty, e.type === 'focusout');
+				self.$component.getter(value, 2, dirty, old, e.type === 'focusout');
 				self.$component.$skip = false;
 				return;
 			}
