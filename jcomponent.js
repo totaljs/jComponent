@@ -5122,4 +5122,21 @@ window.FN = function(exp) {
 	}
 };
 
+window.SETTER = function(selector, name) {
+	var w = window;
+	var arg = [];
+
+	for (var i = 2; i < arguments.length; i++)
+		arg.push(arguments[i]);
+
+	FIND(selector, true).forEach(function(o) {
+		if (typeof(o[name]) === 'function')
+			o[name].apply(o, arg);
+		else
+			o[name] = arg[0];
+	});
+
+	return w.SETTER;
+};
+
 window.NOOP = function(){};

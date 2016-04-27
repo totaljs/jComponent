@@ -1257,6 +1257,12 @@ MIDDLEWARE(['A-NAME', 'B-NAME'], { count: 0 }, function(value, path) {
 SCHEDULE();
 // Alias for $.components.schedule();
 // +v4.0.0
+
+SETTER('#loading', 'hide', 1000);
+SETTER('textbox', 'set', 'NEW VALUE')('dropdown', 'set', 1)('checkbox', 'set', true);
+SETTER(selector, propORmethodName, [valueA], [valueB], [valueN]);
+// Returns SETTER.
+// +v4.0.0
 ```
 
 ## Device Width
