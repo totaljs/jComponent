@@ -2399,13 +2399,14 @@ function COMP(name) {
 			if (value === undefined || value === null)
 				value = '';
 
-			if (!value && !type) {
-				// Solved problem with Google Chrome autofill
-				tmp = $(this).val();
-				if (tmp) {
-					// bind value to model
-					MAN.set(path, tmp);
-					return;
+			if (!type) {
+				if (!value || (self.$default && self.$default() === value)) {
+					// Solved problem with Google Chrome autofill
+					tmp = this.value;
+					if (tmp) {
+						MAN.set(path, tmp);
+						return;
+					}
 				}
 			}
 
