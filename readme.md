@@ -1593,6 +1593,8 @@ var string = 'Peter Širka'.slug();
 // String.prototype.padLeft(max, char);
 // String.prototype.padRight(max, char);
 // String.prototype.isEmail()
+// String.prototype.isPhone()
+// String.prototype.isURL()
 // String.prototype.parseNumber([default]) --> default 0
 // String.prototype.parseFloat([default]) --> default 0
 // String.prototype.parseDate()
