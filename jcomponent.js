@@ -4448,7 +4448,7 @@ Date.prototype.add = function(type, value) {
 
 Date.prototype.format = function(t) {
 	var e = this, r = !1;
-	if (t && 33 === t.charCodeAt(0) && (r = !0, t = t.substring(1)), void 0 === t || null === t || '' === t) return e.getFullYear() + '-' + (e.getMonth() + 1).toString().padLeft(2, '0') + '-' + e.getDate().toString().padLeft(2, '0') + 'T' + e.getHours().toString().padLeft(2, '0') + ':' + e.getMinutes().toString().padLeft(2, '0') + ':' + e.getSeconds().toString().padLeft(2, '0') + ':' + e.getMilliseconds().toString();
+	if (t && 33 === t.charCodeAt(0) && (r = !0, t = t.substring(1)), void 0 === t || null === t || '' === t) return e.getFullYear() + '-' + (e.getMonth() + 1).toString().padLeft(2, '0') + '-' + e.getDate().toString().padLeft(2, '0') + 'T' + e.getHours().toString().padLeft(2, '0') + ':' + e.getMinutes().toString().padLeft(2, '0') + ':' + e.getSeconds().toString().padLeft(2, '0') + '.' + e.getMilliseconds().padLeft(3, '0').toString() + 'Z';
 	var n = e.getHours();
 	return r && n >= 12 && (n -= 12), t.replace(/yyyy|yy|MM|M|dd|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g, function(t) {
 		switch (t) {
