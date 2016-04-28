@@ -4455,7 +4455,7 @@ Date.prototype.format = function(t) {
 			case 'yyyy':
 				return e.getFullYear();
 			case 'yy':
-				return e.getYear();
+				return e.getYear().toString().substring(1);
 			case 'MM':
 				return (e.getMonth() + 1).toString().padLeft(2, '0');
 			case 'M':
