@@ -1495,9 +1495,8 @@ COM.update = function(path, reset, type) {
 		length = path.length;
 
 		Object.keys(MAN.events).forEach(function(key) {
-			if (key.substring(0, length) !== path)
-				return;
-			updates[key] = COM.get(key);
+			if (key === path || key.substring(0, length + 1) === path + '.')
+				updates[key] = COM.get(key);
 		});
 
 		COM.$emitonly('watch', updates, type, path);
