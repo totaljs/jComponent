@@ -1277,7 +1277,7 @@ console.log(WIDTH());
 
 ```javascript
 // MEDIAQUERY(query, [element], fn)
-// "element" by default is window
+// "element" optional, default: `window`
 // IMPORTANT: mediaquery are applied when is the window resized or when is the orientation changed
 MEDIAQUERY('(min-width: 500px) and (max-width: 1024px)', function(w, h, type, id) {
     // type: xs, sm, md, lg
