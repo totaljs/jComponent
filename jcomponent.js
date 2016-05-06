@@ -3986,7 +3986,7 @@ WAIT(function() {
 				return;
 			}
 
-			var special = self.type === 'checkbox' || self.type === 'radio';// || self.tagName === 'SELECT';
+			var special = self.type === 'checkbox' || self.type === 'radio' || self.type === 'range';// || self.tagName === 'SELECT';
 
 			if (e.type === 'focusout' && special)
 				return;
