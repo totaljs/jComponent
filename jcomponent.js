@@ -3075,8 +3075,10 @@ MAN.prepare = function(obj) {
 				}
 			}
 
-			obj.setter(value, obj.path, 0);
-			obj.$interaction(0);
+			$MIDDLEWARE(obj.middleware, value, 1, function(path, value) {
+				obj.setter(value, obj.path, 0);
+				obj.$interaction(0);
+			});
 		}
 	}
 
