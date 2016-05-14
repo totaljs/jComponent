@@ -1453,7 +1453,11 @@ COM.update = function(path, reset, type) {
 			var result = component.get();
 			if (component.setter) {
 				component.$skip = false;
-				component.setter(result, path, type);
+
+				$MIDDLEWARE(component.middleware, result, type, function(tmp, value) {
+					component.setter(value, path, type);
+				});
+
 				component.$interaction(type);
 			}
 
@@ -1734,14 +1738,18 @@ COM.set = function(path, val, type) {
 				if (component.setter) {
 					if (isChanged)
 						component.$skip = false;
-					component.setter(result, path, type);
+					$MIDDLEWARE(component.middleware, result, type, function(tmp, value) {
+						component.setter(value, path, type);
+					});
 					component.$interaction(type);
 				}
 			} else {
 				if (component.setter) {
 					if (isChanged)
 						component.$skip = false;
-					component.setter(COM.get(component.path), path, type);
+					$MIDDLEWARE(component.middleware, COM.get(component.path), type, function(tmp, value) {
+						component.setter(value, path, type);
+					});
 					component.$interaction(type);
 				}
 			}
