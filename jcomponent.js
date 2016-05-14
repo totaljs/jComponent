@@ -2252,7 +2252,7 @@ function $jc_compare(a, b, type, ak, bk, isarray) {
 		if (a.length !== b.length)
 			return false;
 		for (var i = 0, length = b.length; i < length; i++) {
-			if (a[i] !== b[i]) {
+			if (a[i] !== b[i].raw) {
 				MAN.temp[key] = false;
 				return false;
 			}
@@ -2265,7 +2265,7 @@ function $jc_compare(a, b, type, ak, bk, isarray) {
 		for (var i = 0, length = a.length; i < length; i++) {
 			if (b[i] === undefined)
 				continue;
-			if (a[i] !== b[i]) {
+			if (a[i] !== b[i].raw) {
 				MAN.temp[key] = false;
 				return false;
 			}
