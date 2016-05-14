@@ -2,7 +2,7 @@
 # jQuery component library
 
 - [Gitter - Chat for GitHub](https://gitter.im/petersirka/jComponent)
-- Current version: `v4.0.0` (BETA)
+- Current version: `v4.1.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - similar functionality like directives in Angular.js

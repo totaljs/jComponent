@@ -67,7 +67,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v4.0.0';
+COM.version = 'v4.1.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -1408,7 +1408,6 @@ COM.update = function(path, reset, type) {
 		path = path.substring(1);
 
 	path = path.replace(/\.\*/, '');
-
 	$MIDDLEWARE(path, undefined, type, function(path) {
 
 		if (!path)
@@ -1426,18 +1425,29 @@ COM.update = function(path, reset, type) {
 
 		var A = search.split('.');
 		var AL = A.length;
+		var isarr = path.indexOf('[') !== -1;
 
 		COM.each(function(component) {
 
 			if (!component.path || component.disabled)
 				return;
 
+			var isnot = true;
+
 			for (var i = 0; i < AL; i++) {
-				if (component.$$path[i] && component.$$path[i] !== A[i])
-					return;
+				var item = component.$$path[i];
+				if (isarr) {
+					if (item.raw !== A[i])
+						return;
+				} else {
+					if (item.path && item.path !== A[i])
+						return;
+					if (item.is)
+						isnot = false;
+				}
 			}
 
-			if (component.$path && component.$path !== path)
+			if (isnot && component.$path && component.$path !== path)
 				return;
 
 			var result = component.get();
@@ -1712,7 +1722,8 @@ COM.set = function(path, val, type) {
 				return;
 
 			for (var i = 0; i < AL; i++) {
-				if (component.$$path[i] && component.$$path[i] !== A[i])
+				var item = component.$$path[i];
+				if (item && item.raw !== A[i])
 					return;
 			}
 
@@ -2101,7 +2112,6 @@ COM.findByPath = function(path, callback) {
 		}
 
 		com.push(component);
-
 	}, path);
 
 	return isCallback ? COM : com;
@@ -2168,9 +2178,11 @@ COM.each = function(fn, path, watch, fix) {
 		$path = path.split('.');
 
 	var index = 0;
+	var is = path ? path.indexOf('[') !== -1 : false;
 
 	for (var i = 0, length = MAN.components.length; i < length; i++) {
 		var component = MAN.components[i];
+
 		if (!component || component.$removed)
 			continue;
 
@@ -2181,13 +2193,13 @@ COM.each = function(fn, path, watch, fix) {
 			if (!component.path)
 				continue;
 			if (isAsterix) {
-				var a = $jc_compare($path, component.$$path, 0, path, component.path);
+				var a = $jc_compare($path, component.$$path, 0, path, component.path, is);
 				if (!a)
 					continue;
 			} else {
 				if (path !== component.path) {
 					if (watch) {
-						var a = $jc_compare($path, component.$$path, 2, path, component.path);
+						var a = $jc_compare($path, component.$$path, 2, path, component.path, is);
 						if (!a)
 							continue;
 					} else
@@ -2203,7 +2215,7 @@ COM.each = function(fn, path, watch, fix) {
 	return COM;
 };
 
-function $jc_compare(a, b, type, ak, bk) {
+function $jc_compare(a, b, type, ak, bk, isarray) {
 
 	// type 0 === wildcard
 	// type 1 === fix path
@@ -2211,7 +2223,6 @@ function $jc_compare(a, b, type, ak, bk) {
 
 	var key = type + '=' + ak + '=' + bk;
 	var r = MAN.temp[key];
-
 	if (r !== undefined)
 		return r;
 
@@ -2220,9 +2231,16 @@ function $jc_compare(a, b, type, ak, bk) {
 		for (var i = 0, length = a.length; i < length; i++) {
 			if (b[i] === undefined)
 				continue;
-			if (a[i] !== b[i]) {
-				MAN.temp[key] = false;
-				return false;
+			if (isarray) {
+				if (a[i] !== b[i].raw) {
+					MAN.temp[key] = false;
+					return false;
+				}
+			} else {
+				if (a[i] !== b[i].path) {
+					MAN.temp[key] = false;
+					return false;
+				}
 			}
 		}
 
@@ -2476,6 +2494,26 @@ COMP.prototype.nested = function(selector, type, value) {
 	return this;
 };
 
+COMP.prototype.hidden = function(timeout, visible) {
+
+	if (typeof(timeout) === 'boolean') {
+		var tmp = visible;
+		visible = timeout;
+		timeout = tmp;
+	}
+
+	var el = this.element;
+	if (!timeout) {
+		el.toggleClass('hidden', visible);
+		return this;
+	}
+
+	setTimeout(function() {
+		el.toggleClass('hidden', visible);
+	}, timeout);
+	return this;
+};
+
 COMP.prototype.noscope = function(value) {
 	this.$noscope = value === undefined ? true : value === true;
 	return this;
@@ -2541,7 +2579,19 @@ COMP.prototype.setPath = function(path, init) {
 
 	this.path = path;
 	this.$path = fixed;
-	this.$$path = path.split('.');
+	var arr = path.split('.');
+	var pre = [];
+
+	for (var i = 0, length = arr.length; i < length; i++) {
+		var item = arr[i];
+		var raw = item;
+		index = item.indexOf('[');
+		if (index !== -1)
+			item = item.substring(0, index);
+		pre.push({ path: item, raw: raw, is: index !== -1 });
+	}
+
+	this.$$path = pre;
 
 	if (!init && MAN.isReady)
 		MAN.refresh();
@@ -3185,6 +3235,7 @@ MAN.get = function(path, scope) {
  * @param {Object} value
  */
 MAN.set = function(path, value) {
+
 	if (path.charCodeAt(0) === 35) {
 		var op = OPERATION(path);
 		if (op)
@@ -3193,11 +3244,12 @@ MAN.set = function(path, value) {
 			console.warn('The operation ' + path + ' not found.');
 		return self;
 	}
+
 	var cachekey = '+' + path;
 	var self = this;
 
-	if (self.temp[cachekey])
-		return self.cache[cachekey](window, value);
+	if (self.cache[cachekey])
+		return self.cache[cachekey](window, value, path);
 
 	// @TODO: Exception?
 	if (path.indexOf('?') !== -1) {
@@ -3251,8 +3303,11 @@ MAN.refresh = function() {
 	var self = this;
 	clearTimeout(self.$refresh);
 	self.$refresh = setTimeout(function() {
-		// order by paths
 		self.components.sort(function(a, b) {
+			if (a.$removed)
+				return 1;
+			if (b.$removed)
+				return -1;
 			var al = a.path.length;
 			var bl = b.path.length;
 			if (al > bl)
@@ -3338,7 +3393,10 @@ MAN.cleaner = function() {
 			continue;
 		}
 
-		if (component.element.closest(document.documentElement).length) {
+		if (component.$removed)
+			continue;
+
+		if (component.element && component.element.closest(document.documentElement).length) {
 			if (!component.attr(COM_ATTR_R)) {
 				if (component.$parser && !component.$parser.length)
 					delete component.$parser;
@@ -3348,17 +3406,21 @@ MAN.cleaner = function() {
 			}
 		}
 
-		index--;
+		COM.emit('destroy', component.name, component);
 
-		COM.$emit('destroy', component.name, component);
 		if (component.destroy)
 			component.destroy();
+
+		component.element.off();
+		component.element.find('*').off();
 		component.element.remove();
 		component.element = null;
 		component.$removed = true;
 		component.path = null;
 		component.setter = null;
 		component.getter = null;
+
+		index--;
 		MAN.components.splice(index, 1);
 		length = MAN.components.length;
 		is = true;
@@ -3610,13 +3672,12 @@ window.FIND = function(value, many, noCache, callback) {
 		return;
 	}
 
-	var path;
-	var index = value.indexOf('[');
-
-	if (index !== -1) {
-		path = value.substring(index + 1, value.length - 1);
-		value = value.substring(0, index);
-	}
+	// var path;
+	// var index = value.indexOf('[');
+	// if (index !== -1) {
+	// 	path = value.substring(index + 1, value.length - 1);
+	// 	value = value.substring(0, index);
+	// }
 
 	var key;
 	var output;
@@ -3636,13 +3697,13 @@ window.FIND = function(value, many, noCache, callback) {
 	}
 
 	if (value.charCodeAt(0) === 35) {
-		output = COM.findById(value.substring(1), path, many);
+		output = COM.findById(value.substring(1), undefined, many);
 		if (!noCache)
 			MAN.cache[key] = output;
 		return output;
 	}
 
-	output = COM.findByName(value, path, many);
+	output = COM.findByName(value, undefined, many);
 	if (!noCache)
 		MAN.cache[key] = output;
 	return output;
@@ -3860,7 +3921,7 @@ window.WAIT = function(fn, callback, interval, timeout) {
 	return COM;
 };
 
-window.COMPILE = function() {
+window.COMPILE = function(timeout) {
 	$.components();
 	return COM;
 };
