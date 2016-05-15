@@ -3029,7 +3029,7 @@ MAN.cachestorage = function(key, value, expire) {
 	if (value !== undefined) {
 		this.storage[key] = { expire: now + expire, value: value };
 		$jc_save();
-		return;
+		return value;
 	}
 
 	var item = this.storage[key];
