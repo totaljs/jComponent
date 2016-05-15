@@ -2504,16 +2504,20 @@ COMP.prototype.nested = function(selector, type, value) {
 
 COMP.prototype.toggle = function(cls, visible, timeout) {
 
+	var manual = false;
+
 	if (typeof(cls) !== 'string') {
 		timeout = visible;
 		visible = cls;
 		cls = 'hidden';
+		manual = true;
 	}
 
 	if (typeof(visible) === 'number') {
 		timeout = visible;
 		visible = undefined;
-	}
+	} else if (manual && visible !== undefined)
+		visible = !visible;
 
 	var el = this.element;
 	if (!timeout) {
