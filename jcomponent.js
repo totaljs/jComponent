@@ -2502,22 +2502,27 @@ COMP.prototype.nested = function(selector, type, value) {
 	return this;
 };
 
-COMP.prototype.hidden = function(timeout, visible) {
+COMP.prototype.toggle = function(cls, visible, timeout) {
 
-	if (typeof(timeout) === 'boolean') {
-		var tmp = visible;
-		visible = timeout;
-		timeout = tmp;
+	if (typeof(cls) !== 'string') {
+		timeout = visible;
+		visible = cls;
+		cls = 'hidden';
+	}
+
+	if (typeof(visible) === 'number') {
+		timeout = visible;
+		visible = undefined;
 	}
 
 	var el = this.element;
 	if (!timeout) {
-		el.toggleClass('hidden', visible);
+		el.toggleClass(cls, visible);
 		return this;
 	}
 
 	setTimeout(function() {
-		el.toggleClass('hidden', visible);
+		el.toggleClass(cls, visible);
 	}, timeout);
 	return this;
 };

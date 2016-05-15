@@ -530,6 +530,11 @@ COMPONENT('my-component-name', function() {
     // jQuery.append();
 
 
+    instance.toggle(className, [visible], [timeout]);
+    // Toggles a class name.
+    // jQuery.toggleClass();
+
+
     instance.find(selectors);
     // Finds a content in the component element.
     // jQuery.find();
