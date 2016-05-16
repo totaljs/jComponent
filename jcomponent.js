@@ -1436,6 +1436,8 @@ COM.update = function(path, reset, type) {
 
 			for (var i = 0; i < AL; i++) {
 				var item = component.$$path[i];
+				if (!item)
+					return;
 				if (isarr) {
 					if (item.raw !== A[i])
 						return;
@@ -2207,7 +2209,7 @@ COM.each = function(fn, path, watch, fix) {
 			} else {
 				if (path !== component.path) {
 					if (watch) {
-						var a = $jc_compare($path, component.$$path, 2, path, component.path, is);
+						var a = $jc_compare($path, component.$$path, 2, path, component.path || '', is);
 						if (!a)
 							continue;
 					} else
