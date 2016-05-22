@@ -2544,6 +2544,14 @@ COMP.prototype.singleton = function() {
 	return self;
 };
 
+COMP.prototype.blind = function() {
+	var self = this;
+	self.path = null;
+	self.$path = null;
+	self.$$path = null;
+	return self;
+};
+
 COMP.prototype.readonly = function() {
 	this.noDirty();
 	this.noValid();

@@ -585,6 +585,11 @@ COMPONENT('my-component-name', function() {
     // initialized and their elements will be removed from the DOM.
 
 
+    instance.blind();
+    // The component will disable path listening.
+    // +v4.1.0
+
+
     instance.used();
     // Sets the current time into the `instance.usage.custom` property in this component.
 
