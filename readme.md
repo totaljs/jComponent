@@ -1273,6 +1273,7 @@ SETTER(selector, propORmethodName, [valueA], [valueB], [valueN]);
 // and each implementation will be executed after another.
 // +v4.1.0
 WORKFLOW('name', function() {
+    // The function can have arguments
     console.log('1');
 });
 
