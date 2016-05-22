@@ -1268,6 +1268,31 @@ SETTER('textbox', 'set', 'NEW VALUE')('dropdown', 'set', 1)('checkbox', 'set', t
 SETTER(selector, propORmethodName, [valueA], [valueB], [valueN]);
 // Returns SETTER.
 // +v4.0.0
+
+// Registers a new workflow. Each workflow can have multiple implementation
+// and each implementation will be executed after another.
+// +v4.1.0
+WORKFLOW('name', function() {
+    console.log('1');
+});
+
+WORKFLOW('name', function() {
+    console.log('2');
+});
+
+WORKFLOW('name', function() {
+    console.log('3');
+});
+
+// executing
+WORKFLOW('name')();
+// Output:
+// 1
+// 2
+// 3
+
+WORKFLOW('undefiend')();
+// OUTPUT: nothing (without exception)
 ```
 
 ## Device Width

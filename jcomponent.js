@@ -4967,6 +4967,30 @@ window.WIDTH = function(element) {
 	return '';
 };
 
+window.WORKFLOW = function(name, fn) {
+
+	if (!fn) {
+		if (!MAN.workflows)
+			return NOOP;
+		var w = MAN.workflows[name];
+		if (!(w instanceof Array))
+			return NOOP;
+		return function() {
+			for (var i = 0, length = w.length; i < length; i++)
+				w[i].apply(this, arguments);
+		};
+	}
+
+	if (!MAN.workflows)
+		MAN.workflows = {};
+
+	var w = MAN.workflows[name];
+	if (w)
+		w.push(fn);
+	else
+		MAN.workflows[name] = [fn];
+};
+
 window.MEDIAQUERY = function(query, element, fn) {
 
 	if (typeof(query) === 'number') {
