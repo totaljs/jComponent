@@ -1037,9 +1037,10 @@ $.components.usage('init', '5 seconds', function(component) {
 $.components.used(path);
 // Sets `instance.usage.custom` usage according to the path.
 
-$.components.schedule(selector, property, expire, callback);
+$.components.schedule(selector, type, expire, callback);
 // Schedule executes timeout when is valid `selector` and `expire`.
 // Scheduler checks all tasks each 2 seconds (it has an internal optimalization for good performance).
+// types: `input` (affected by HTML inputs), `manually` (affected by developer), `init`
 
 $.components.schedule('.find-by-path', 'input', '5 minutes', function(component) {
     AJAX('GET /api/refresh/', component.path);
