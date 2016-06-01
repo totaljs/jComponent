@@ -1862,6 +1862,35 @@ COM.remove = function(path) {
 	return COM;
 };
 
+COM.schema = function(name, declaration) {
+
+	if (!declaration)
+		return $.extend(true, {}, MAN.schemas[name]);
+
+	if (typeof(declaration) === 'object') {
+		MAN.schemas[name] = declaration;
+		return declaration;
+	}
+
+	if (typeof(declaration) === 'function') {
+		var f = declaration();
+		MAN.schemas[name] = f;
+		return f;
+	}
+
+	if (typeof(declaration) !== 'string')
+		return undefined;
+
+	var a = declaration.substring(0, 1);
+	var b = declaration.substring(declaration.length - 1);
+
+	if ((a === '"' && b === '"') || (a === '[' && b === ']') || (a === '{' && b === '}')) {
+		var d = JSON.parse(declaration);
+		MAN.schemas[name] = d;
+		return d;
+	}
+};
+
 COM.validate = function(path, except) {
 
 	var arr = [];
@@ -3815,6 +3844,10 @@ window.UPDATE = function(path, timeout, reset) {
 
 window.CHANGE = COM.change;
 window.INJECT = window.IMPORT = COM.import;
+
+window.SCHEMA = function(name, declaration) {
+	return COM.schema(name, declaration);
+};
 
 window.OPERATION = function(name, fn) {
 	if (!fn) {
