@@ -2458,12 +2458,12 @@ function COMP(name) {
 			if (value === undefined || value === null)
 				value = '';
 
-			if (!type) {
+			if (!type && this.type !== 'select-one') {
 				if (!value || (self.$default && self.$default() === value)) {
 					// Solved problem with Google Chrome autofill
 					tmp = this.value;
 					if (tmp) {
-						MAN.set(path, tmp);
+						MAN.set(path, self.formatter(tmp));
 						return;
 					}
 				}
