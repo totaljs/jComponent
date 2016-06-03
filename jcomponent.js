@@ -4360,6 +4360,29 @@ Array.prototype.async = function(context, callback) {
 	return this;
 };
 
+Array.prototype.take = function(count) {
+	var arr = [];
+	var self = this;
+	var length = self.length;
+	for (var i = 0; i < length; i++) {
+		arr.push(self[i]);
+		if (arr.length >= count)
+			return arr;
+	}
+	return arr;
+};
+
+Array.prototype.skip = function(count) {
+	var arr = [];
+	var self = this;
+	var length = self.length;
+	for (var i = 0; i < length; i++) {
+		if (i >= count)
+			arr.push(self[i]);
+	}
+	return arr;
+};
+
 String.prototype.removeDiacritics = function() {
 	var buf = '';
 	for (var i = 0, length = this.length; i < length; i++) {
