@@ -1298,8 +1298,17 @@ WORKFLOW('name')();
 // 2
 // 3
 
-WORKFLOW('undefiend')();
+WORKFLOW('undefined')();
 // OUTPUT: nothing (without exception)
+
+
+// Creates a singleton instance.
+var obj = SINGLETON('name');
+obj.name = 'Peter';
+
+obj = SINGLETON('name');
+console.log(obj);
+// --> { name: 'Peter' }
 ```
 
 ## Device Width

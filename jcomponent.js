@@ -29,6 +29,10 @@ if (typeof(window.setImmediate) === 'undefined') {
 	};
 }
 
+window.SINGLETON = function(name) {
+	return MAN.singletons[name] || (MAN.singletons[name] = {});
+};
+
 // Because of file size
 window.COM = window.jC = function(container) {
 	if (MAN.isCompiling)
@@ -3050,6 +3054,7 @@ function CMAN() {
 	this.middleware = {};
 	this.others = {};
 	this.schedulers = [];
+	this.singletons = {};
 	// this.mediaquery;
 }
 
