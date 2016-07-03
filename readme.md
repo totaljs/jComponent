@@ -1625,6 +1625,12 @@ jC.cookies.rem('cookie_name');
 ### Helpers
 
 ```javascript
+// returns empty array (freezed)
+EMPTYARRAY;
+
+// returns empty object (freezed)
+EMPTYOBJECT;
+
 // isMOBILE == {Boolean} is a global variable and detects mobile device.
 console.log(isMOBILE);
 
