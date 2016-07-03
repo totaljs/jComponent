@@ -3367,9 +3367,9 @@ MAN.refresh = function() {
 	clearTimeout(self.$refresh);
 	self.$refresh = setTimeout(function() {
 		self.components.sort(function(a, b) {
-			if (a.$removed)
+			if (a.$removed || !a.path)
 				return 1;
-			if (b.$removed)
+			if (b.$removed || !b.path)
 				return -1;
 			var al = a.path.length;
 			var bl = b.path.length;
