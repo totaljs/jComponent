@@ -78,7 +78,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v4.1.0';
+COM.version = 'v4.2.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -1266,11 +1266,9 @@ COM.emit = function(name) {
 
 	for (var i = 0, length = e.length; i < length; i++) {
 		var context = e[i].context;
-		if (context !== undefined) {
-			if (context === null || context.$removed)
-				continue;
-		}
-		e[i].fn.apply(context, args);
+		if (context !== undefined && (context === null || context.$removed))
+			continue;
+		e[i].fn.apply(context || window, args);
 	}
 
 	return true;
@@ -1579,7 +1577,7 @@ COM.notify = function() {
 
 COM.extend = function(path, value, type) {
 	var val = COM.get(path);
-	if (val === null || val === undefined)
+	if (val == null)
 		val = {};
 	COM.set(path, $.extend(val, value), type);
 	return COM;
@@ -2461,12 +2459,12 @@ function COMP(name) {
 			var tmp;
 
 			if (this.type === 'checkbox') {
-				tmp = value !== null && value !== undefined ? value.toString().toLowerCase() : '';
+				tmp = value != null ? value.toString().toLowerCase() : '';
 				this.checked = tmp === 'true' || tmp === '1' || tmp === 'on';
 				return;
 			}
 
-			if (value === undefined || value === null)
+			if (value == null)
 				value = '';
 
 			if (!type && this.type !== 'select-one') {
@@ -3132,12 +3130,12 @@ MAN.prepare = function(obj) {
 		if (!obj.$ready) {
 			obj.$ready = true;
 
-			if (value === undefined) {
-				tmp = obj.attr(COM_ATTR_V);
-				if (tmp) {
-					if (!MAN.defaults[tmp])
-						MAN.defaults[tmp] = new Function('return ' + tmp);
-					obj.$default = MAN.defaults[tmp];
+			tmp = obj.attr(COM_ATTR_V);
+			if (tmp) {
+				if (!MAN.defaults[tmp])
+					MAN.defaults[tmp] = new Function('return ' + tmp);
+				obj.$default = MAN.defaults[tmp];
+				if (value === undefined) {
 					value = obj.$default();
 					MAN.set(obj.path, value);
 				}
@@ -3425,10 +3423,7 @@ MAN.cleaner = function() {
 				if (item === undefined)
 					break;
 
-				if (item.context === undefined)
-					continue;
-
-				if (item.context === null || (item.context.element && item.context.element.closest(document.documentElement).length))
+				if (item.context == null || (item.context.element && item.context.element.closest(document.documentElement).length))
 					continue;
 
 				if (item.context && item.context.element)
@@ -3968,7 +3963,7 @@ window.WAIT = function(fn, callback, interval, timeout) {
 
 		if (is) {
 			var result = MAN.get(fn);
-			if (result === undefined || result === null)
+			if (result == null)
 				return;
 		} else if (!fn())
 			return;
@@ -4761,7 +4756,7 @@ String.prototype.format = function() {
 	var arg = arguments;
 	return this.replace(REG_FORMAT, function(text) {
 		var value = arg[+text.substring(1, text.length - 1)];
-		if (value === null || value === undefined)
+		if (value == null)
 			value = '';
 		return value;
 	});
@@ -4868,7 +4863,7 @@ String.prototype.parseDate = function() {
 Array.prototype.attr = function(name, value) {
 
 	if (arguments.length === 2) {
-		if (value === undefined || value === null)
+		if (value == null)
 			return this;
 	} else if (value === undefined)
 		value = name.toString();
@@ -5009,7 +5004,7 @@ window.NOTVALID = function(name, value, error) {
 			response = new Error(response);
 		else if (response === false)
 			response = new Error('Unspecific Error Message');
-		else if (response === undefined || response === null || response === true)
+		else if (response == null || response === true)
 			response = false;
 		if (response && fn.error)
 			fn.error(response, value);
