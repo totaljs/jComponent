@@ -1083,7 +1083,7 @@ $.components.on('destroy', function(name, component) {
 });
 ```
 
-## Shortcuts methods
+## Additional methods / helpers
 
 ```js
 COMPILE();
