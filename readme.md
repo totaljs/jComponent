@@ -1429,35 +1429,6 @@ WAIT('d3', function(again) {
 });
 ```
 
-Waiter waits for a `checker` argument and if the checker value returns `true` then evaluates  callback function. Time
-
-```javascript
-WAIT(checker, callback, [interval], [timeout])
-// @checker Function or String
-// @callback(again) Function (again(sleep) --> is a function and sets new watcher for same condition)
-// @interval Number default: 500
-// @timeout Number default: undefined
-
-WAIT(function() {
-    return window.d3 !== undefined;
-}, function(err, again) {
-    // err can be timeout
-    console.log('OK, D3.js loaded');
-
-    // Re-calls this WAIT again with the sleep time
-    // again(1000);
-});
-
-// is same as
-
-WAIT('d3', function(again) {
-    console.log('OK, D3.js loaded');
-
-    // Re-calls this WAIT again with the sleep time
-    // again(1000);
-});
-```
-
 ## Keypress
 
 `+v4.0.0` The method `KEYPRESS` is a great feature for e.g. filters. When a user types a fulltext search then you can create delay between sending data and user interaction. 
