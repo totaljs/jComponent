@@ -2380,7 +2380,7 @@ COMUSAGE.prototype.convert = function(type) {
 
 function COMP(name) {
 
-	this._id = 'component' + Math.floor(Math.random() * 100000);
+	this._id = 'component' + (MAN.counter++);
 	this.usage = new COMUSAGE();
 	this.$dirty = true;
 	this.$valid = true;
@@ -3030,6 +3030,8 @@ function $jc_async(arr, fn, done) {
 }
 
 function CMAN() {
+	this.counter = 1;
+	this.mcounter = 1;
 	this.tic;
 	this.tis;
 	this.isReady = false;
@@ -5151,7 +5153,7 @@ window.MEDIAQUERY = function(query, element, fn) {
 		}
 	}
 
-	obj.id = (Math.random() * 10000000) >> 0;
+	obj.id = MAN.mcounter++;
 	obj.fn = fn;
 	obj.type = type;
 
