@@ -1901,6 +1901,7 @@ window.jComponent   // for async loading scripts
 ## Contact
 
 Peter Širka - www.petersirka.eu / <petersirka@gmail.com>
+Martin Smola (contributor) - <https://github.com/molda> / <smola.martin@gmail.com>
 
 [license-image]: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
 [license-url]: license.txt
