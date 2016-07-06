@@ -1898,10 +1898,10 @@ jR;       // shortcut for jRouting
 window.jComponent   // for async loading scripts
 ```
 
-## Contact
+## Authors + Contacts
 
-Peter Širka - www.petersirka.eu / <petersirka@gmail.com>
-Martin Smola (contributor) - <https://github.com/molda> / <smola.martin@gmail.com>
+- Peter Širka - www.petersirka.eu / <petersirka@gmail.com>
+- Martin Smola (contributor) - <https://github.com/molda> / <smola.martin@gmail.com>
 
 [license-image]: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
 [license-url]: license.txt
