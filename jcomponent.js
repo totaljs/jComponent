@@ -78,7 +78,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v4.2.0';
+COM.version = 'v4.3.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -112,14 +112,14 @@ COM.cookies = {
 		return '';
 	},
 	set: function (name, value, expire) {
-		var expires = '';
-		if (typeof (expire) === 'number') {
+		var type = typeof(expire)
+		if (type === 'number') {
 			var date = new Date();
 			date.setTime(date.getTime() + (expire * 24 * 60 * 60 * 1000));
-			expires = '; expires=' + date.toGMTString();
-		} else if (expire instanceof Date)
-			expires = '; expires=' + expire.toGMTString();
-		document.cookie = name + '=' + value + expires + '; path=/';
+			expire = date;
+		} else if (type === 'string')
+			expire = new Date(Date.now() + expire.parseExpire());
+		document.cookie = name + '=' + value + '; expires=' + expire.toGMTString() + '; path=/';
 	},
 	rem: function (name) {
 		this.set(name, '', -1);
@@ -3081,7 +3081,12 @@ MAN.cacherest = function(method, url, params, value, expire) {
 MAN.cachestorage = function(key, value, expire) {
 
 	var now = Date.now();
+
 	if (value !== undefined) {
+
+		if (typeof(expire) === 'string')
+			expire = expire.parseExpire();
+
 		this.storage[key] = { expire: now + expire, value: value };
 		$jc_save();
 		return value;
@@ -4390,6 +4395,61 @@ Array.prototype.skip = function(count) {
 			arr.push(self[i]);
 	}
 	return arr;
+};
+
+String.prototype.parseExpire = function() {
+
+	var str = this.split(' ');
+	var number = parseInt(str[0]);
+
+	if (isNaN(number))
+		return 0;
+
+	switch (str[1].trim().replace(/\./g, '')) {
+		case 'minutes':
+		case 'minute':
+		case 'min':
+		case 'mm':
+		case 'm':
+			return 60000 * number;
+		case 'hours':
+		case 'hour':
+		case 'HH':
+		case 'hh':
+		case 'h':
+		case 'H':
+			return (60000 * 60) * number;
+		case 'seconds':
+		case 'second':
+		case 'sec':
+		case 'ss':
+		case 's':
+			return 1000 * number;
+		case 'days':
+		case 'day':
+		case 'DD':
+		case 'dd':
+		case 'd':
+			return (60000 * 60 * 24) * number;
+		case 'months':
+		case 'month':
+		case 'MM':
+		case 'M':
+			return (60000 * 60 * 24 * 28) * number;
+		case 'weeks':
+		case 'week':
+		case 'W':
+		case 'w':
+			return (60000 * 60 * 24 * 7) * number;
+		case 'years':
+		case 'year':
+		case 'yyyy':
+		case 'yy':
+		case 'y':
+			return (60000 * 60 * 24 * 365) * number;
+		default:
+			return 0;
+	}
 };
 
 String.prototype.removeDiacritics = function() {

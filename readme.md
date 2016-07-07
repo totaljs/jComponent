@@ -2,7 +2,7 @@
 # jQuery component library
 
 - [Gitter - Chat for GitHub](https://gitter.im/petersirka/jComponent)
-- Current version: `v4.1.0`
+- Current version: `v4.3.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - similar functionality like directives in Angular.js
@@ -904,7 +904,7 @@ $.components.disabled(path, [except_paths_arr]);
 
 $.components.cache(key); // Example: Getter.
 $.components.cache(key, value, expire); // Example: Setter.
-// Gets or Sets the value from the cache. `Expire` in milliseconds.
+// Gets or Sets the value from the cache. `Expire` in milliseconds or can be a string `5 minutes`.
 // Returns {Object}.
 
 
@@ -1620,7 +1620,8 @@ var string = 'Peter Širka'.slug();
 // String.prototype.isURL()
 // String.prototype.parseNumber([default]) --> default 0
 // String.prototype.parseFloat([default]) --> default 0
-// String.prototype.parseDate()
+// String.prototype.parseDate()   --> returns Date
+// String.prototype.parseExpire() --> returns miliseconds
 
 // String.prototype.format(format, arg1, arg2, arg3, ...);
 var string = 'My name is {0} and I am {1} years old.'.format('Peter', 31);
