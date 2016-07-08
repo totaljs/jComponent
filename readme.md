@@ -163,30 +163,30 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
     ::: E.g.:
     <element data-component-scope="users">
-        <element data-component="textbox" data-component="form.name" />
+        <element data-component="textbox" data-component-path="form.name" />
     </element>
 
     <element data-component-scope="?">
-        <element data-component="textbox" data-component="form.name" />
+        <element data-component="textbox" data-component-path="form.name" />
     </element>
 
     <element data-component-scope="?">
         disables scope manually
-        <element data-component="textbox" data-component="form.name" data-component-noscope="true" />
+        <element data-component="textbox" data-component-path="form.name" data-component-noscope="true" />
     </element>
 
 
     ::: Result for imagination:
     <element data-component-scope="users">
-        <element data-component="textbox" data-component="users.form.name" />
+        <element data-component="textbox" data-component-path="users.form.name" />
     </element>
 
     <element data-component-scope="scope343983">
-        <element data-component="textbox" data-component="scope343983.form.name" />
+        <element data-component="textbox" data-component-path="scope343983.form.name" />
     </element>
 
     <element data-component-scope="scope584948">
-        <element data-component="textbox" data-component="form.name" data-component-noscope="true" />
+        <element data-component="textbox" data-component-path="form.name" data-component-noscope="true" />
     </element>
 -->
 
