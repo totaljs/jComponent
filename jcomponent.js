@@ -837,10 +837,10 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 	tmp = url.match(/\{.*?\}/g);
 
 	if (tmp) {
+		url = url.replace(tmp, '').replace(/\s{2,}/g, ' ');
 		tmp = (new Function('return ' + tmp))();
 		if (typeof(tmp) === 'object')
 			headers = tmp;
-		url = url.replace(tmp, '').replace(/\s{2,}/g, ' ');
 	}
 
 	url = url.substring(index).trim();
