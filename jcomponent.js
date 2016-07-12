@@ -78,7 +78,8 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.version = 'v4.3.0';
+COM.defaults.headers = {};
+COM.version = 'v4.4.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -808,6 +809,8 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 	}
 
 	var td = typeof(data);
+	var tmp;
+
 	if (!callback && (td === 'function' || td === 'string')) {
 		error = timeout;
 		timeout = callback;
@@ -816,7 +819,7 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 	}
 
 	if (typeof(timeout) === 'string') {
-		var tmp = error;
+		tmp = error;
 		error = timeout;
 		timeout = tmp;
 	}
@@ -829,6 +832,16 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 	var isCredentials = method.substring(0, 1) === '!';
 	if (isCredentials)
 		method = method.substring(1);
+
+	var headers = {};
+	tmp = url.match(/\{.*?\}/g);
+
+	if (tmp) {
+		tmp = (new Function('return ' + tmp))();
+		if (typeof(tmp) === 'object')
+			headers = tmp;
+		url = url.replace(tmp, '').replace(/\s{2,}/g, ' ');
+	}
 
 	url = url.substring(index).trim();
 
@@ -873,6 +886,8 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 			if (isCredentials)
 				options.xhrFields = { withCredentials: true };
 		}
+
+		options.headers = $.extend(headers, COM.defaults.headers);
 
 		options.error = function(req, status, r) {
 

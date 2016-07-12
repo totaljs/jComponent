@@ -736,6 +736,9 @@ $.components.defaults.keypress;
 $.components.defaults.localstorage;
 // {Boolean} enables / disables localstorage for cache mechanism, default `true`.
 
+$.components.defaults.headers;
+// {Object} can sets AJAX headers for all requests
+
 $.components.$version;
 // {String} appends the value to each URL address `?version=$version`
 // called via jComponent, default: "".
@@ -987,6 +990,8 @@ $.components.AJAXCACHE('METHOD URL', data, [callback(response, isFromCache) or p
 // CORS by default is enabled if the URL starts with `http://` or `https://` and credentials are
 // added when the METHOD contains `!`, e.g. `!GET https://www.google.com`.
 
+// +v4.4.0 supports custom headers
+// AJAX('GET /api/ { customheader1: "value1", customerheader2: "value2" }', ...);
 
 $.components.broadcast('.path.to.property, #a-component-id, a-component-name')('say')('hello');
 $.components.broadcast('.path.to.property, #a-component-id, a-component-name')('set')('new value');
