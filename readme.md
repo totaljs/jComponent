@@ -2,7 +2,7 @@
 # jQuery component library
 
 - [Gitter - Chat for GitHub](https://gitter.im/petersirka/jComponent)
-- Current version: `v4.3.0`
+- Current version: `v4.5.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - similar functionality like directives in Angular.js
@@ -975,7 +975,7 @@ $.components.TEMPLATE(url, callback(template), [prepare(template)]);
 
 
 $.components.REMOVECACHE(method, url, data);
-// Deletes cache (GETCACHE, POSTCACHE or AJAXCACHE).
+// Deletes cache (AJAXCACHE).
 
 // +v3.7.0
 // AJAX calls
@@ -1388,7 +1388,7 @@ OPERATION(name);
 ```javascript
 // CREATING
 OPERATION('get.users', function(filter, callback) {
-    $.components.GET('/api/users/', filter, callback);
+    AJAX('GET /api/users/', filter, callback);
 });
 
 OPERATION('now', function() {

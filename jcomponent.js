@@ -79,7 +79,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.defaults.headers = {};
-COM.version = 'v4.4.0';
+COM.version = 'v4.5.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -751,14 +751,6 @@ COM.UPLOAD = function(url, data, callback, timeout, progress, error) {
 	return COM;
 };
 
-COM.POST = function(url, data, callback, timeout, error) {
-	return COM.AJAX('POST ' + url, data, callback, timeout, error);
-};
-
-COM.PUT = function(url, data, callback, timeout, error) {
-	return COM.AJAX('PUT ' + url, data, callback, timeout, error);
-};
-
 COM.TEMPLATE = function(url, callback, prepare) {
 
 	if (MAN.cache[url]) {
@@ -780,22 +772,6 @@ COM.TEMPLATE = function(url, callback, prepare) {
 	});
 
 	return COM;
-};
-
-COM.GET = function(url, data, callback, timeout, error) {
-	return COM.AJAX('GET ' + url, data, callback, timeout, error);
-};
-
-COM.DELETE = function(url, data, callback, timeout, error) {
-	return COM.AJAX('DELETE ' + url, data, callback, timeout, error);
-};
-
-COM.GETCACHE = function(url, data, callback, expire, timeout, clear) {
-	return COM.AJAXCACHE('GET ' + url, data, callback, expire, timeout, clear);
-};
-
-COM.POSTCACHE = function(url, data, callback, expire, timeout, clear) {
-	return COM.AJAXCACHE('POST ' + url, data, callback, expire, timeout, clear);
 };
 
 COM.AJAX = function(url, data, callback, timeout, error) {
