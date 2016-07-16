@@ -484,8 +484,10 @@ COMPONENT('my-component-name', function() {
     // Gets the value from the model.
 
 
-    instance.set(value);
+    instance.set([path], value, [type]);
     // Sets the value into the model.
+    // path {String}: default: instance.path
+    // type {Number}: default 1
 
 
     instance.update([updatePath]);
@@ -494,20 +496,24 @@ COMPONENT('my-component-name', function() {
     // if "updatedPath" (default: false) then the library notifies all components which listen on the path. Otherwise the method performs "component.setter()" automatically.
 
 
-    instance.inc(value);
+    instance.inc([path], value, [type]);
     instance.inc(1); // example
     // Increments the value in the model.
+    // path {String}: default: instance.path
+    // type {Number}: default 1
 
 
-    instance.extend(value);
+    instance.extend([path], value, [type]);
     instance.extend({ price: 0, name: 'jComponent' }); // example
     // Extends the value in the model. Only for objects.
 
 
-    instance.push(value);
+    instance.push([path], value, [type]);
     instance.push(1); // example
     instance.push([1, 2, 3]); // example
     // Push the value (can be an Array) in the model. Only for arrays.
+    // path {String}: default: instance.path
+    // type {Number}: default 1
 
 
     instance.attr(name, [value]);

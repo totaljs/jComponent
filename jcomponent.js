@@ -79,7 +79,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.defaults.headers = {};
-COM.version = 'v4.5.0';
+COM.version = 'v4.6.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -2940,7 +2940,7 @@ COMP.prototype.set = function(path, value, type) {
 	return self;
 };
 
-COMP.prototype.inc = function(path, value) {
+COMP.prototype.inc = function(path, value, type) {
 
 	var self = this;
 
@@ -2952,7 +2952,7 @@ COMP.prototype.inc = function(path, value) {
 	if (!path)
 		return self;
 
-	COM.inc(path, value);
+	COM.inc(path, value, type);
 	return self;
 };
 
