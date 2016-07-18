@@ -886,13 +886,6 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 				callback(body, status, url, headers);
 		};
 
-		if (navigator.onLine !== undefined) {
-			if (!navigator.onLine) {
-				options.error(null, 503, 'You cannot access into the internet (offline).');
-				return;
-			}
-		}
-
 		$.ajax($jc_url(url), options);
 	}, timeout || 0);
 
@@ -4103,11 +4096,11 @@ WAIT(function() {
 		$(window).on('orientationchange', $MEDIAQUERY);
 		$MEDIAQUERY();
 
-		$(document).on('change keypress keydown blur', COM_DATA_BIND_SELECTOR, function(e) {
+		$(document).on('input change keypress keydown blur', COM_DATA_BIND_SELECTOR, function(e) {
 
 			var self = this;
 
-			if (e.type === 'keypress') {
+			if ((e.type === 'input' && self.type !== 'range') || (e.type === 'keypress')) {
 				// IE 9+ PROBLEM
 				if (self.tagName !== 'TEXTAREA' && e.keyCode === 13)
 					return false;
@@ -4116,13 +4109,7 @@ WAIT(function() {
 
 			var special = self.type === 'checkbox' || self.type === 'radio' || self.type === 'range';// || self.tagName === 'SELECT';
 
-			if (e.type === 'focusout' && special)
-				return;
-
-			if (e.type === 'change' && (!special && self.tagName !== 'SELECT'))
-				return;
-
-			if (!self.$component || self.$component.$removed || !self.$component.getter)
+			if ((e.type === 'focusout' && special) || (e.type === 'change' && (!special && self.tagName !== 'SELECT')) || (!self.$component || self.$component.$removed || !self.$component.getter))
 				return;
 
 			// tab, alt, ctrl, shift, capslock
