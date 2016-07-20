@@ -1213,42 +1213,6 @@ PING('METHOD URL', [interval], [callback or path]);
 // The function returns setInterval identificator.
 // A ping request contains custom header `X-Ping`: `CURRENT RELATIVE URL ADDRESS`
 
-// +v3.8.1
-// Data validation
-
-// Registers a NOTVALID block
-// NOTVALID(name, validator_fn, [error_fn]);
-NOTVALID('NAME', function(value, [additionalArgument1], [additionalArgument..N]) {
-    // This is a try method body
-    // this (context) === value
-    // Return {String} or {Error} or {false}  returns false
-    // Return {undefined} or {null} or {true} returns true 
-    return value !== null;
-});
-
-NOTVALID('NAME', function(value) {
-    // This is a try method body
-    // this (context) === value
-    // Return {String} or {Error} or {false}  returns false
-    // Return {undefined} or {null} or {true} returns true 
-    return value !== null;
-}, function(err, value) {
-    // err {String}   --> contains error message
-    // value {Object} --> current validated value
-});
-
-// Usage:
-// NOTVALID responds with the Error (if data are not valid) or {Boolean: false} (if data are valid)
-IF (NOTVALID('NAME', value))
-    console.log('DATA ARE NOT VALID');
-
-IF (NOTVALID('NAME', value, false, 100))
-    console.log('DATA ARE NOT VALID');
-
-var err = NOTVALID('NAME', value);
-if (err)
-    console.log(err);
-
 // +v4.0.0
 // Middleware
 

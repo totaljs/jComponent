@@ -79,7 +79,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.defaults.headers = {};
-COM.version = 'v4.6.0';
+COM.version = 'v4.7.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -3046,7 +3046,6 @@ function CMAN() {
 	this.operations = {};
 	this.controllers = {};
 	this.initializers = {};
-	this.notvalid = {};
 	this.waits = {};
 	this.defaults = {};
 	this.middleware = {};
@@ -5025,49 +5024,6 @@ Array.prototype.scalar = function(type, key, def) {
 
 	return output;
 };
-
-window.NOTVALID = function(name, value, error) {
-
-	if (typeof(value) === 'function') {
-		var a = {};
-		a = {};
-		a.fn = value;
-		a.error = error;
-		MAN.notvalid[name] = a;
-
-		// Immediately usage
-		return function() {
-			var arg = [name];
-			for (var i = 0; i < arguments.length; i++)
-				arg.push(arguments[i]);
-			return NOTVALID.apply(window, arg);
-		};
-	}
-
-	var fn = MAN.notvalid[name];
-	if (fn === undefined)
-		return new Error('NOTVALID "' + name + '" does not exist.');
-
-	var arg = [];
-	for (var i = 1; i < arguments.length; i++)
-		arg.push(arguments[i]);
-	try {
-		var response = fn.fn.apply(arguments[1], arg);
-		if (typeof(response) === 'string')
-			response = new Error(response);
-		else if (response === false)
-			response = new Error('Unspecific Error Message');
-		else if (response == null || response === true)
-			response = false;
-		if (response && fn.error)
-			fn.error(response, value);
-		return response;
-	} catch (e) {
-		if (fn.error)
-			fn.error(e, value);
-		return e;
-	}
-}
 
 window.WIDTH = function(element) {
 
