@@ -5330,4 +5330,18 @@ window.SETTER = function(selector, name) {
 	return w.SETTER;
 };
 
+window.EXEC = function(path) {
+	var w = window;
+	var arg = [];
+
+	for (var i = 1; i < arguments.length; i++)
+		arg.push(arguments[i]);
+
+	var fn = GET(path);
+	if (typeof(fn) === 'function')
+		fn.apply(w, arg);
+
+	return w.EXEC;
+};
+
 window.NOOP = function(){};
