@@ -3117,7 +3117,8 @@ MAN.prepare = function(obj) {
 	var tmp;
 
 	if (obj.setter) {
-		if (!obj.$ready) {
+		if (!obj.$prepared) {
+			obj.$prepared = true;
 			obj.$ready = true;
 
 			tmp = obj.attr(COM_ATTR_V);
