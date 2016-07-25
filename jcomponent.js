@@ -3115,9 +3115,11 @@ MAN.prepare = function(obj) {
 	var value = obj.get();
 	var el = obj.element;
 	var tmp;
+	var empty = value === undefined;
 
 	if (obj.setter) {
 		if (!obj.$prepared) {
+
 			obj.$prepared = true;
 			obj.$ready = true;
 
@@ -3126,16 +3128,18 @@ MAN.prepare = function(obj) {
 				if (!MAN.defaults[tmp])
 					MAN.defaults[tmp] = new Function('return ' + tmp);
 				obj.$default = MAN.defaults[tmp];
-				if (value === undefined) {
+				if (empty) {
 					value = obj.$default();
 					MAN.set(obj.path, value);
 				}
 			}
 
-			$MIDDLEWARE(obj.middleware, value, 1, function(path, value) {
-				obj.setter(value, obj.path, 0);
-				obj.$interaction(0);
-			});
+			if (empty) {
+				$MIDDLEWARE(obj.middleware, value, 1, function(path, value) {
+					obj.setter(value, obj.path, 0);
+					obj.$interaction(0);
+				});
+			}
 		}
 	}
 
