@@ -2485,15 +2485,19 @@ COMP.prototype.$interaction = function(type) {
 	switch (type) {
 		case 0:
 			this.usage.init = now;
+			this.$binded = true;
 			break;
 		case 1:
 			this.usage.manually = now;
+			this.$binded = true;
 			break;
 		case 2:
 			this.usage.input = now;
+			this.$binded = true;
 			break;
 		case 3:
 			this.usage.default = now;
+			this.$binded = true;
 			break;
 		case 100:
 			this.usage.custom = now;
@@ -3115,7 +3119,6 @@ MAN.prepare = function(obj) {
 	var value = obj.get();
 	var el = obj.element;
 	var tmp;
-	var empty = value === undefined;
 
 	if (obj.setter) {
 		if (!obj.$prepared) {
@@ -3128,18 +3131,20 @@ MAN.prepare = function(obj) {
 				if (!MAN.defaults[tmp])
 					MAN.defaults[tmp] = new Function('return ' + tmp);
 				obj.$default = MAN.defaults[tmp];
-				if (empty) {
+				if (value === undefined) {
 					value = obj.$default();
 					MAN.set(obj.path, value);
 				}
 			}
 
-			if (empty) {
+			if (!obj.$binded) {
+				obj.$binded = true;
 				$MIDDLEWARE(obj.middleware, value, 1, function(path, value) {
 					obj.setter(value, obj.path, 0);
 					obj.$interaction(0);
 				});
-			}
+			} else
+				obj.$interaction(0);
 		}
 	}
 
