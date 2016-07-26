@@ -2,7 +2,7 @@
 
 [![Support](https://www.totaljs.com/img/button-support.png)](https://www.totaljs.com/support/)
 
-# jQuery re-usable component library
+# jQuery reusable component library
 
 > __Download__: more than 70 jComponents for free for everyone. www.componentator.com
 
