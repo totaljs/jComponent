@@ -24,16 +24,16 @@
 
 __YOU MUST SEE:__
 
-- [__jComponent full SPA example with the source-code__](http://example.jcomponent.org/)
+- [__jComponent full SPA example with the source-code__](https://example.jcomponent.org/)
 - [Tangular - A template engine like Angular.js](https://github.com/petersirka/Tangular)
 - [jRouting - HTML 5 routing via History API](https://github.com/petersirka/jRouting)
 - [__Download the existing jComponents__](https://componentator.com)
 
 ***
 
-- __Homepage:__ <http://www.jcomponent.org>
-- __Full SPA example:__ <http://example.jcomponent.org>
-- __Download existing components__ <www.componentator.com>
+- __Homepage:__ <https://www.jcomponent.org>
+- __Full SPA example:__ <https://example.jcomponent.org>
+- __Download existing components__ <https://www.componentator.com>
 
 ***
 
