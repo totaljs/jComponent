@@ -1,8 +1,13 @@
 [![MIT License][license-image]][license-url] [![Gitter chat](https://badges.gitter.im/totaljs/framework.png)](https://gitter.im/petersirka/jComponent)
-# jQuery component library
+
+[![Support](https://www.totaljs.com/img/button-support.png)](https://www.totaljs.com/support/)
+
+# jQuery re-usable component library
+
+> __Download__: more than 70 jComponents for free for everyone. www.componentator.com
 
 - [Gitter - Chat for GitHub](https://gitter.im/petersirka/jComponent)
-- Current version: `v4.5.0`
+- Current version: `v4.7.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - similar functionality like directives in Angular.js
@@ -14,7 +19,7 @@
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
 - works with [Bootstrap](http://getbootstrap.com/), [Foundation](http://foundation.zurb.com/), [Pure](http://purecss.io/), [Material Design](http://www.getmdl.io/) and others
 - you can wrap thousands plugins of jQuery via jComponent
-- best of use with [www.totaljs.com - web application framework for node.js](http://www.totaljs.com)
+- best of use with [www.totaljs.com - web framework for Node.js](http://www.totaljs.com)
 - [Changelog](https://github.com/petersirka/jComponent/blob/master/changes.txt)
 
 __YOU MUST SEE:__
