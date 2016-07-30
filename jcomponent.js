@@ -530,6 +530,7 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 	// unique
 	var first = url.substring(0, 1);
 	var once = url.substring(0, 5).toLowerCase() === 'once ';
+
 	if (first === '!' || once) {
 
 		if (once)
@@ -537,8 +538,11 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 		else
 			url = url.substring(1);
 
-		if (MAN.others[url])
-			return;
+		if (MAN.others[url]) {
+			callback && setTimeout(callback, 200);
+			return COM;
+		}
+
 		MAN.others[url] = true;
 	}
 
@@ -569,8 +573,7 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 		scr.type = 'text/javascript';
 		scr.async = true;
 		scr.onload = function() {
-			if (callback)
-				callback();
+			callback && callback();
 			if (!window.jQuery)
 				return;
 			setTimeout(function() {
@@ -589,8 +592,7 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 		stl.rel = 'stylesheet';
 		stl.href = url;
 		d.getElementsByTagName('head')[0].appendChild(stl);
-		if (callback)
-			setTimeout(callback, 200);
+		callback && setTimeout(callback, 200);
 		return;
 	}
 
@@ -604,8 +606,7 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 		}
 		$(target).load($jc_url(url), function() {
 			COM.compile();
-			if (callback)
-				callback();
+			callback && callback();
 		});
 	});
 
@@ -3907,6 +3908,16 @@ window.HASH = function(s) {
 		hash |= 0; // Convert to 32bit integer
 	}
 	return hash;
+};
+
+window.GUID = function(size) {
+	if (!size)
+		size = 10;
+	var l = ((size / 24) >> 0) + 1;
+	var b = [];
+	for (var i = 0; i < l; i++)
+		b.push(Math.random().toString(36).substring(2));
+	return b.join('').substring(0, size);
 };
 
 window.KEYPRESS = function(fn, timeout, key) {

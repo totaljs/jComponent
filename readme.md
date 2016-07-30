@@ -1153,6 +1153,9 @@ WATCH();
 HASH(value)
 // Creates a hash from the value.
 
+GUID([size])
+// Creates random string value (default size: 10)
+
 CHANGE();
 // Alias for $.components.change();
 
