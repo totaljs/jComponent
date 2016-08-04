@@ -19,6 +19,8 @@ var REG_EMAIL = /^[a-zA-Z0-9-_.+]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i;
 var REG_FORMAT = /\{\d+\}/g;
 var REG_PHONE = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
 var REG_URL = /^(http|https):\/\/(?:(?:(?:[\w\.\-\+!$&'\(\)*\+,;=]|%[0-9a-f]{2})+:)*(?:[\w\.\-\+%!$&'\(\)*\+,;=]|%[0-9a-f]{2})+@)?(?:(?:[a-z0-9\-\.]|%[0-9a-f]{2})+|(?:\[(?:[0-9a-f]{0,4}:)*(?:[0-9a-f]{0,4})\]))(?::[0-9]+)?(?:[\/|\?](?:[\w#!:\.\?\+=&@!$'~*,;\/\(\)\[\]\-]|%[0-9a-f]{2})*)?$/i;
+var REG_NUM1 = /(\-|\+)?[0-9]+/;
+var REG_NUM2 = /(\-|\+)?[0-9\.\,]+/;
 var COM_DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
 
 window.isMOBILE = ('ontouchstart' in window || navigator.maxTouchPoints) ? true : false;
@@ -4538,20 +4540,23 @@ String.prototype.isURL = function() {
 
 String.prototype.parseInt = function(def) {
 	var str = this.trim();
-	var num = +str;
-	if (isNaN(num))
+	var val = str.match(REG_NUM1);
+	if (!val)
 		return def || 0;
-	return num;
+	val = +val[0];
+	return isNaN(val) ? def || 0 : val;
 };
 
 String.prototype.parseFloat = function(def) {
 	var str = this.trim();
-	if (str.indexOf(',') !== -1)
-		str = str.replace(',', '.');
-	var num = +str;
-	if (isNaN(num))
+	var val = str.match(REG_NUM2);
+	if (!val)
 		return def || 0;
-	return num;
+	val = val[0];
+	if (val.indexOf(',') !== -1)
+		val = val.replace(',', '.');
+	val = +val;
+	return isNaN(val) ? def || 0 : val;
 };
 
 Array.prototype.trim = function() {
