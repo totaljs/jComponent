@@ -478,7 +478,7 @@ COM.$inject = function() {
 			if (MAN.others[url])
 				return;
 
-			MAN.others[url] = true;
+			MAN.others[url] = 2;
 		}
 
 		arr.push({ element: el, cb: el.attr(COM_ATTR_I), path: el.attr(COM_ATTR_P), url: url, toggle: (el.attr(COM_ATTR_C) || '').split(' ') });
@@ -533,6 +533,15 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 	var first = url.substring(0, 1);
 	var once = url.substring(0, 5).toLowerCase() === 'once ';
 
+	if (insert === undefined)
+		insert = true;
+
+	if (typeof(target) === 'function') {
+		timeout = callback;
+		callback = target;
+		target = 'body';
+	}
+
 	if (first === '!' || once) {
 
 		if (once)
@@ -541,20 +550,25 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 			url = url.substring(1);
 
 		if (MAN.others[url]) {
-			callback && setTimeout(callback, 200);
+
+			if (!callback)
+				return COM;
+
+			if (MAN.others[url] === 2) {
+				callback();
+				return COM;
+			}
+
+			WAIT(function() {
+				return MAN.others[url] === 2;
+			}, function() {
+				callback();
+			});
+
 			return COM;
 		}
 
-		MAN.others[url] = true;
-	}
-
-	if (insert === undefined)
-		insert = true;
-
-	if (typeof(target) === 'function') {
-		timeout = callback;
-		callback = target;
-		target = 'body';
+		MAN.others[url] = 1;
 	}
 
 	if (target && target.getPath)
@@ -575,12 +589,13 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 		scr.type = 'text/javascript';
 		scr.async = true;
 		scr.onload = function() {
+			MAN.others[url] = 2;
 			callback && callback();
 			if (!window.jQuery)
 				return;
 			setTimeout(function() {
 				COM.compile();
-			}, 500);
+			}, 300);
 		};
 
 		scr.src = url;
@@ -594,6 +609,7 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 		stl.rel = 'stylesheet';
 		stl.href = url;
 		d.getElementsByTagName('head')[0].appendChild(stl);
+		MAN.others[url] = 2;
 		callback && setTimeout(callback, 200);
 		return;
 	}
@@ -601,6 +617,7 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 	WAIT(function() {
 		return window.jQuery ? true : false;
 	}, function() {
+		MAN.others[url] = 2;
 		if (insert) {
 			var id = 'data-component-imported="' + ((Math.random() * 100000) >> 0) + '"';
 			$(target).append('<div ' + id + '></div>');
