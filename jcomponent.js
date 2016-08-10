@@ -81,7 +81,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.defaults.headers = {};
-COM.version = 'v4.7.0';
+COM.version = 'v5.0.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -3007,6 +3007,16 @@ function component(type, declaration) {
 	return COMPONENT(type, declaration);
 }
 
+window.COMPONENT_EXTEND = function(type, declaration) {
+	if (!MAN.extends[type])
+		MAN.extends[type] = [];
+	MAN.extends[type].push(declaration);
+	MAN.components.forEach(function(m) {
+		if (!m.$removed || type === m.name)
+			declaration.apply(m, m);
+	});
+};
+
 window.COMPONENT = function(type, declaration) {
 
 	var shared = {};
@@ -3069,6 +3079,7 @@ function CMAN() {
 	this.others = {};
 	this.schedulers = [];
 	this.singletons = {};
+	this.extends = {};
 	// this.mediaquery;
 }
 
@@ -3208,6 +3219,14 @@ MAN.prepare = function(obj) {
 					el.toggleClass(cls[i]);
 			}, 5);
 		})(cls)
+	}
+
+	if (MAN.extends[obj.name]) {
+		setTimeout(function() {
+			MAN.extends[obj.name].forEach(function(fn) {
+				fn.call(obj, obj);
+			});
+		}, 20);
 	}
 
 	if (obj.id)
@@ -3892,12 +3911,6 @@ window.ON = function(name, path, fn, init) {
 
 window.EMIT = COM.emit;
 window.EVALUATE = COM.evaluate;
-
-window.MAKE = function(callback) {
-	var obj = {};
-	callback.call(obj, obj);
-	return obj;
-};
 
 window.STYLE = function(value) {
 	clearTimeout(MAN.tis);

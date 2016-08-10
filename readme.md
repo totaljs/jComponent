@@ -7,7 +7,7 @@
 > __Download__: more than 70 jComponents for free for everyone. www.componentator.com
 
 - [Gitter - Chat for GitHub](https://gitter.im/petersirka/jComponent)
-- Current version: `v4.7.0`
+- Current version: `v5.0.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - similar functionality like directives in Angular.js
@@ -1564,6 +1564,20 @@ __Component__ `/templates/grid.html`:
         };
     });
 </script>
+```
+
+## Extending components
+
+- __v5.0.0__ offers a great way how to extend existing components:
+
+```javascript
+COMPONENT_EXTEND('component-name', function(component) {
+    component.element.append('<div>EXTENDED 1</div>');
+});
+
+COMPONENT_EXTEND('component-name', function(component) {
+    component.element.append('<div>EXTENDED 2</div>');
+});
 ```
 
 ## Tools
