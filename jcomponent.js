@@ -6,7 +6,6 @@ var COM_ATTR = '[data-component]';
 var COM_A = 'data-component-';
 var COM_ATTR_U = COM_A + 'url';
 var COM_ATTR_URL = '[' + COM_ATTR_U + ']';
-var COM_ATTR_D = 'dependencies';
 var COM_ATTR_P = COM_A + 'path';
 var COM_ATTR_T = COM_A + 'template';
 var COM_ATTR_I = COM_A + 'init';
@@ -14,13 +13,6 @@ var COM_ATTR_V = COM_A + 'value';
 var COM_ATTR_R = COM_A + 'removed';
 var COM_ATTR_C = COM_A + 'class';
 var COM_ATTR_S = COM_A + 'scope';
-var COM_ATTR_X = COM_A + 'import';
-var REG_EMAIL = /^[a-zA-Z0-9-_.+]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i;
-var REG_FORMAT = /\{\d+\}/g;
-var REG_PHONE = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
-var REG_URL = /^(http|https):\/\/(?:(?:(?:[\w\.\-\+!$&'\(\)*\+,;=]|%[0-9a-f]{2})+:)*(?:[\w\.\-\+%!$&'\(\)*\+,;=]|%[0-9a-f]{2})+@)?(?:(?:[a-z0-9\-\.]|%[0-9a-f]{2})+|(?:\[(?:[0-9a-f]{0,4}:)*(?:[0-9a-f]{0,4})\]))(?::[0-9]+)?(?:[\/|\?](?:[\w#!:\.\?\+=&@!$'~*,;\/\(\)\[\]\-]|%[0-9a-f]{2})*)?$/i;
-var REG_NUM1 = /(\-|\+)?[0-9]+/;
-var REG_NUM2 = /(\-|\+)?[0-9\.\,]+/;
 var COM_DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
 
 window.isMOBILE = ('ontouchstart' in window || navigator.maxTouchPoints) ? true : false;
@@ -32,21 +24,13 @@ if (Object.freeze) {
 	Object.freeze(EMPTYARRAY);
 }
 
-if (typeof(window.setImmediate) === 'undefined') {
-	window.setImmediate = function(cb) {
-		setTimeout(cb, 1);
-	};
-}
-
 window.SINGLETON = function(name) {
 	return MAN.singletons[name] || (MAN.singletons[name] = {});
 };
 
 // Because of file size
 window.COM = window.jC = function(container) {
-	if (MAN.isCompiling)
-		return COM;
-	return COM.compile(container);
+	return MAN.isCompiling ? COM : COM.compile(container);
 };
 
 COM.clean = function(timeout) {
@@ -224,8 +208,7 @@ COM.compile = function(container) {
 				break;
 			fn();
 		}
-		if (window.jRouting)
-			window.jRouting.async();
+		window.jRouting && window.jRouting.async();
 	}
 
 	MAN.isCompiling = true;
@@ -269,7 +252,7 @@ COM.compile = function(container) {
 		var component = MAN.register[name || ''];
 		if (!component) {
 
-			var x = el.attr(COM_ATTR_X);
+			var x = el.attr(COM_A + 'import');
 			if (!x) {
 				if (!MAN.initializers['$NE_' + name]) {
 					MAN.initializers['$NE_' + name] = true;
@@ -350,7 +333,7 @@ COM.compile = function(container) {
 			}
 		}
 
-		var dep = (el.attr(COM_ATTR_D) || '').split(',');
+		var dep = (el.attr('dependencies') || '').split(',');
 
 		for (var i = 0, length = dep.length; i < length; i++) {
 			var d = dep[i].trim();
@@ -387,10 +370,8 @@ COM.compile = function(container) {
 
 			var k = 'TE' + HASH(template);
 			var a = MAN.temp[k];
-			if (a) {
-				fn(a);
-				return;
-			}
+			if (a)
+				return fn(a);
 
 			$.get($jc_url(template), function(response) {
 				MAN.temp[k] = response;
@@ -427,20 +408,14 @@ COM.compile = function(container) {
 		$jc_init(el, obj);
 	});
 
-	if (skip) {
-		COM.compile();
-		return;
-	}
+	if (skip)
+		return COM.compile();
 
-	if (container !== undefined) {
-		MAN.next();
-		return;
-	}
+	if (container !== undefined)
+		return MAN.next();
 
-	if (!MAN.toggle.length) {
-		MAN.next();
-		return;
-	}
+	if (!MAN.toggle.length)
+		return MAN.next();
 
 	$jc_async(MAN.toggle, function(item, next) {
 		for (var i = 0, length = item.toggle.length; i < length; i++)
@@ -517,9 +492,7 @@ COM.$inject = function() {
 
 	}, function() {
 		MAN.clear('valid', 'dirty', 'broadcast', 'find');
-		if (!count)
-			return;
-		COM.compile();
+		count && COM.compile();
 	});
 };
 
@@ -593,9 +566,7 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 			callback && callback();
 			if (!window.jQuery)
 				return;
-			setTimeout(function() {
-				COM.compile();
-			}, 300);
+			setTimeout(COM.compile, 300);
 		};
 
 		scr.src = url;
@@ -665,9 +636,8 @@ COM.parseCookie = COM.parseCookies = function() {
 	for (var i = 0, length = arr.length; i < length; i++) {
 		var line = arr[i].trim();
 		var index = line.indexOf('=');
-		if (index === -1)
-			continue;
-		obj[line.substring(0, index)] = decodeURIComponent(line.substring(index + 1));
+		if (index !== -1)
+			obj[line.substring(0, index)] = decodeURIComponent(line.substring(index + 1));
 	}
 
 	return obj;
@@ -733,9 +703,7 @@ COM.UPLOAD = function(url, data, callback, timeout, progress, error) {
 			if (this.status === 200) {
 				if (typeof(callback) === 'string')
 					return MAN.remap(callback, r);
-				if (callback)
-					callback(r);
-				return;
+				return callback && callback(r);
 			}
 
 			if (!r)
@@ -871,9 +839,7 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 			$MIDDLEWARE(middleware, r, 1, function(path, value) {
 				if (typeof(callback) === 'string')
 					return MAN.remap(callback, value);
-				if (!callback)
-					return;
-				callback(value, undefined, req.getAllResponseHeaders());
+				callback && callback(value, undefined, req.getAllResponseHeaders());
 			});
 		};
 
@@ -1092,8 +1058,7 @@ function $jc_ready() {
 					console.warn('The operation ' + path + ' not found.');
 			} else {
 				var fn = GET(path);
-				if (typeof(fn) === 'function')
-					fn.call(scope, this.getAttribute(COM_ATTR_S), scope);
+				typeof(fn) === 'function' && fn.call(scope, this.getAttribute(COM_ATTR_S), scope);
 			}
 		});
 
@@ -1245,8 +1210,7 @@ COM.$emit = function(name, path) {
 
 		args[1] = COM.get(p + k);
 		COM.$emit2(name, p + k, args);
-		if (k !== a)
-			COM.$emit2(name, p + a, args);
+		k !== a && COM.$emit2(name, p + a, args);
 		p += k;
 	}
 
@@ -1502,8 +1466,7 @@ COM.update = function(path, reset, type) {
 			} else if (component.validate && !component.$valid_disabled)
 				component.valid(component.validate(result), true);
 
-			if (component.state)
-				state.push(component);
+			component.state && state.push(component);
 
 			if (component.path === path)
 				was = true;
@@ -1598,8 +1561,7 @@ COM.nested = function(element, selector, type, value) {
 		var nested = [];
 		for (var i = 0, length = selector.length; i < length; i++) {
 			var item = selector[i].trim();
-			if (item)
-				nested.push(item);
+			item && nested.push(item);
 		}
 
 		if (nested.length)
@@ -1643,12 +1605,8 @@ COM.nested = function(element, selector, type, value) {
 		element.find('[data-component]').each(function() {
 			var el = $(this);
 			var com = el.component();
-
-			if (isEach) {
-				type(el, com);
-				return;
-			}
-
+			if (isEach)
+				return type(el, com);
 			el.attr(type, type === COM_ATTR_P ? replacer(el.attr(type), value) : value);
 			if (com && type === COM_ATTR_P)
 				com.setPath(replacer(com.path, value));
@@ -1676,10 +1634,8 @@ COM.nested = function(element, selector, type, value) {
 				continue;
 
 			var com = el.component();
-			if (isEach) {
-				type(el, com);
-				return;
-			}
+			if (isEach)
+				return type(el, com);
 
 			el.attr(type, type === COM_ATTR_P ? replacer(el.attr(type), value) : value);
 			if (com && type === COM_ATTR_P)
@@ -1911,10 +1867,7 @@ COM.validate = function(path, except) {
 
 	COM.each(function(obj) {
 
-		if (obj.disabled)
-			return;
-
-		if (except && except.indexOf(obj.path) !== -1)
+		if (obj.disabled || (except && except.indexOf(obj.path) !== -1))
 			return;
 
 		if (obj.state)
@@ -1982,12 +1935,8 @@ COM.blocked = function(name, timeout, callback) {
 	var local = COM.defaults.localstorage && timeout > 10000;
 	MAN.cacheblocked[key] = now + timeout;
 
-	if (local)
-		localStorage.setItem(COM.$localstorage + '.blocked', JSON.stringify(MAN.cacheblocked));
-
-	if (callback)
-		callback();
-
+	local && localStorage.setItem(COM.$localstorage + '.blocked', JSON.stringify(MAN.cacheblocked));
+	callback && callback();
 	return false;
 };
 
@@ -1998,7 +1947,7 @@ COM.blocked = function(name, timeout, callback) {
 // 4. update
 // 5. set
 COM.state = function(arr, type, who) {
-		if (!arr || !arr.length)
+	if (!arr || !arr.length)
 		return;
 	setTimeout(function() {
 		for (var i = 0, length = arr.length; i < length; i++)
@@ -2031,8 +1980,7 @@ COM.default = function(path, timeout, onlyComponent, reset) {
 	// Reset scope
 	var key = path.replace(/\.\*$/, '');
 	var fn = MAN.defaults['#' + HASH(key)];
-	if (fn)
-		MAN.set(key, fn());
+	fn && MAN.set(key, fn());
 
 	var arr = [];
 
@@ -2153,10 +2101,8 @@ COM.findByPath = function(path, callback) {
 
 	COM.each(function(component) {
 
-		if (isCallback) {
-			callback(component);
-			return;
-		}
+		if (isCallback)
+			return callback(component);
 
 		if (!isMany) {
 			com = component;
@@ -2201,10 +2147,8 @@ COM.findByProperty = function(prop, value, path, callback) {
 		if (component[prop] !== value)
 			return;
 
-		if (isCallback) {
-			callback(component);
-			return;
-		}
+		if (isCallback)
+			return callback(component);
 
 		if (!isMany) {
 			com = component;
@@ -2235,10 +2179,7 @@ COM.each = function(fn, path, watch, fix) {
 	for (var i = 0, length = MAN.components.length; i < length; i++) {
 		var component = MAN.components[i];
 
-		if (!component || component.$removed)
-			continue;
-
-		if (fix && component.path !== path)
+		if (!component || component.$removed || (fix && component.path !== path))
 			continue;
 
 		if (path) {
@@ -2338,10 +2279,8 @@ function COMUSAGE() {
 }
 
 COMUSAGE.prototype.compare = function(type, dt) {
-	if (typeof(dt) === 'string') {
-		if (dt.substring(0, 1) !== '-')
-			dt = new Date().add('-' + dt);
-	}
+	if (typeof(dt) === 'string' && dt.substring(0, 1) !== '-')
+		dt = new Date().add('-' + dt);
 	var val = this[type];
 	return val === 0 ? false : val < dt.getTime();
 };
@@ -2452,6 +2391,7 @@ function COMP(name) {
 		}
 
 		var selector = self.$input === true ? this.element : this.element.find(COM_DATA_BIND_SELECTOR);
+		var a = 'select-one'
 		value = self.formatter(value);
 
 		selector.each(function() {
@@ -2471,21 +2411,17 @@ function COMP(name) {
 			if (value == null)
 				value = '';
 
-			if (!type && this.type !== 'select-one') {
+			if (!type && this.type !== a) {
 				if (!value || (self.$default && self.$default() === value)) {
 					// Solved problem with Google Chrome autofill
 					tmp = this.value;
-					if (tmp) {
-						MAN.set(path, self.formatter(tmp));
-						return;
-					}
+					if (tmp)
+						return MAN.set(path, self.formatter(tmp));
 				}
 			}
 
-			if (this.type === 'select-one' || this.type === 'select') {
-				$(this).val(value);
-				return;
-			}
+			if (this.type === a || this.type === 'select')
+				return $(this).val(value);
 
 			this.value = value;
 		});
@@ -2538,8 +2474,7 @@ COMP.prototype.update = COMP.prototype.refresh = function(notify) {
 	if (notify)
 		self.set(self.get());
 	else {
-		if (self.setter)
-			self.setter(self.get(), self.path, 1);
+		self.setter && self.setter(self.get(), self.path, 1);
 		self.$interaction(1);
 	}
 	return self;
@@ -2665,10 +2600,7 @@ COMP.prototype.setPath = function(path, init) {
 	}
 
 	this.$$path = pre;
-
-	if (!init && MAN.isReady)
-		MAN.refresh();
-
+	!init && MAN.isReady && MAN.refresh();
 	return this;
 };
 
@@ -2828,8 +2760,7 @@ COMP.prototype.remove = function(noClear) {
 	this.element.find(COM_ATTR).attr(COM_ATTR_R, 'true');
 	this.element.attr(COM_ATTR_R, 'true');
 
-	if (!noClear)
-		MAN.clear();
+	!noClear && MAN.clear();
 
 	COM.$removed = true;
 
@@ -2936,9 +2867,8 @@ COMP.prototype.evaluate = function(path, expression, nopath) {
 COMP.prototype.get = function(path) {
 	if (!path)
 		path = this.path;
-	if (!path)
-		return;
-	return MAN.get(path);
+	if (path)
+		return MAN.get(path);
 };
 
 COMP.prototype.set = function(path, value, type) {
@@ -2950,10 +2880,9 @@ COMP.prototype.set = function(path, value, type) {
 		path = this.path;
 	}
 
-	if (!path)
-		return self;
+	if (path)
+		COM.set(path, value, type);
 
-	COM.set(path, value, type);
 	return self;
 };
 
@@ -2966,10 +2895,9 @@ COMP.prototype.inc = function(path, value, type) {
 		path = this.path;
 	}
 
-	if (!path)
-		return self;
+	if (path)
+		COM.inc(path, value, type);
 
-	COM.inc(path, value, type);
 	return self;
 };
 
@@ -2982,10 +2910,9 @@ COMP.prototype.extend = function(path, value, type) {
 		path = this.path;
 	}
 
-	if (!path)
-		return self;
+	if (path)
+		COM.extend(path, value, type);
 
-	COM.extend(path, value, type);
 	return self;
 };
 
@@ -2997,10 +2924,10 @@ COMP.prototype.push = function(path, value, type) {
 		path = this.path;
 	}
 
-	if (!path)
-		return self;
+	if (path)
+		COM.push(path, value, type, self);
 
-	COM.push(path, value, type, self);
+	return self;
 };
 
 function component(type, declaration) {
@@ -3036,11 +2963,8 @@ window.COMPONENT = function(type, declaration) {
 function $jc_async(arr, fn, done) {
 
 	var item = arr.shift();
-	if (item === undefined) {
-		if (done)
-			done();
-		return;
-	}
+	if (item == null)
+		return done && done();
 
 	fn(item, function() {
 		$jc_async(arr, fn, done);
@@ -3186,48 +3110,40 @@ MAN.prepare = function(obj) {
 	if (obj.validate && !obj.$valid_disabled)
 		obj.$valid = obj.validate(obj.get(), true);
 
-	if (obj.done) {
-		setTimeout(function() {
-			obj.done();
-		}, 20);
-	}
+	obj.done && setTimeout(function() {
+		obj.done();
+	}, 20);
 
-	if (obj.state)
-		obj.state(0, 3);
+	obj.state && obj.state(0, 3);
 
-	if (obj.$init) {
-		setTimeout(function() {
-			if (MAN.isOperation(obj.$init)) {
-				var op = OPERATION(obj.$init);
-				if (op)
-					op.call(obj, obj);
-				delete obj.$init;
-				return;
-			}
-			var fn = COM.get(obj.$init);
-			if (typeof(fn) === 'function')
-				fn.call(obj, obj);
+	obj.$init && setTimeout(function() {
+		if (MAN.isOperation(obj.$init)) {
+			var op = OPERATION(obj.$init);
+			if (op)
+				op.call(obj, obj);
 			delete obj.$init;
-		}, 5);
-	}
+			return;
+		}
+		var fn = COM.get(obj.$init);
+		if (typeof(fn) === 'function')
+			fn.call(obj, obj);
+		delete obj.$init;
+	}, 5);
 
 	el.trigger('component');
 	el.off('component');
 
 	var cls = el.attr(COM_ATTR_C);
-	if (cls) {
-		(function(cls) {
-			setTimeout(function() {
-				cls = cls.split(' ');
-				for (var i = 0, length = cls.length; i < length; i++)
-					el.toggleClass(cls[i]);
-			}, 5);
-		})(cls)
-	}
 
-	if (obj.id)
-		COM.emit('#' + obj.id, obj);
+	cls && (function(cls) {
+		setTimeout(function() {
+			cls = cls.split(' ');
+			for (var i = 0, length = cls.length; i < length; i++)
+				el.toggleClass(cls[i]);
+		}, 5);
+	})(cls)
 
+	obj.id && COM.emit('#' + obj.id, obj);
 	COM.emit('@' + obj.name, obj);
 	COM.emit('component', obj);
 	return this;
@@ -3282,15 +3198,11 @@ MAN.isArray = function(path) {
 	if (index === -1)
 		return false;
 	path = path.substring(index + 1, path.length - 1).substring(0, 1);
-	if (path === '"' || path === '\'')
-		return false;
-	return true;
+	return !(path === '"' || path === '\'');
 };
 
 MAN.isOperation = function(name) {
-	if (name.charCodeAt(0) === 35)
-		return true;
-	return false;
+	return name.charCodeAt(0) === 35;
 };
 /**
  * Get value from a model
@@ -3302,7 +3214,7 @@ MAN.get = function(path, scope) {
 		var op = OPERATION(path);
 		if (op)
 			return op;
-		return function(){};
+		return NOOP;
 	}
 
 	var cachekey = '=' + path;
@@ -3436,7 +3348,6 @@ MAN.cleaner = function() {
 	for (var a = 0, al = aks.length; a < al; a++) {
 
 		var ak = aks[a];
-
 		if (!self.events[ak])
 			continue;
 
@@ -3550,12 +3461,8 @@ MAN.cleaner = function() {
 		}
 	}
 
-	if (is3)
-		$jc_save();
-
-	if (is)
-		self.refresh();
-
+	is3 && $jc_save();
+	is && self.refresh();
 	return self;
 };
 
@@ -3575,8 +3482,7 @@ MAN.$$ = function() {
 			} catch (e) {}
 		}
 	}
-	if (window.jQuery)
-		setTimeout(COM.compile, 2);
+	window.jQuery && setTimeout(COM.compile, 2);
 };
 
 /**
@@ -3597,9 +3503,7 @@ COMPONENT('', function() {
 			self.element.attr(a, '1');
 		if (self.element.attr('required')) {
 			self.validate = function(value, is) {
-				if (is)
-					return true;
-				return value ? true : false;
+				return is ? true : value ? true : false;
 			};
 		}
 		self.element.$component = self;
@@ -3607,8 +3511,7 @@ COMPONENT('', function() {
 });
 
 function $jc_save() {
-	if (COM.defaults.localstorage)
-		localStorage.setItem(COM.$localstorage + '.cache', JSON.stringify(MAN.storage));
+	COM.defaults.localstorage && localStorage.setItem(COM.$localstorage + '.cache', JSON.stringify(MAN.storage));
 }
 
 window.REWRITE = COM.rewrite;
@@ -3670,10 +3573,8 @@ window.WATCH = function(path, callback, init) {
 
 window.PING = function(url, timeout, callback) {
 
-	if (navigator.onLine !== undefined) {
-		if (!navigator.onLine)
-			return;
-	}
+	if (navigator.onLine != null && !navigator.onLine)
+		return;
 
 	if (typeof(timeout) === 'function') {
 		var tmp = callback;
@@ -3697,15 +3598,13 @@ window.PING = function(url, timeout, callback) {
 	options.success = function(r) {
 		if (typeof(callback) === 'string')
 			return MAN.remap(callback, r);
-		if (callback)
-			callback(r);
+		callback && callback(r);
 	};
 
 	options.error = function(req, status, r) {
 		status = status + ': ' + r;
 		COM.emit('error', r, status, url);
-		if (typeof(callback) === 'function')
-			callback(undefined, status, url);
+		typeof(callback) === 'function' && callback(undefined, status, url);
 	};
 
 	return setInterval(function() {
@@ -3822,8 +3721,7 @@ window.BROADCAST = function(selector, name, caller) {
 
 		selector.find(COM_ATTR).each(function() {
 			var com = $(this).data(COM_ATTR);
-			if (com)
-				components.push(com);
+			com && components.push(com);
 		});
 
 		return $BROADCAST_EVAL(components, name, caller);
@@ -4101,10 +3999,7 @@ WAIT(function() {
 
 			var dt = new Date().add(item.expire);
 			FIND(item.selector, true).forEach(function(component) {
-				if (!component)
-					return;
-				if (component.usage.compare(item.name, dt))
-					item.callback(component);
+				component && component.usage.compare(item.name, dt) && item.callback(component);
 			});
 		}
 	}, 2000);
@@ -4119,10 +4014,8 @@ WAIT(function() {
 		all.each(function(index) {
 			var com = $(this).data(COM_ATTR);
 			if (com && com.$ready && !com.$removed) {
-				if (fn) {
-					fn.call(com, index);
-					return;
-				}
+				if (fn)
+					return fn.call(com, index);
 				if (!output)
 					output = [];
 				output.push(com);
@@ -4148,15 +4041,11 @@ WAIT(function() {
 
 			var self = this;
 
-			if ((e.type === 'input' && self.type !== 'range') || (e.type === 'keypress')) {
-				// IE 9+ PROBLEM
-				if (self.tagName !== 'TEXTAREA' && e.keyCode === 13)
-					return false;
-				return;
-			}
+			// IE 9+ PROBLEM
+			if ((e.type === 'input' && self.type !== 'range') || (e.type === 'keypress'))
+				return !(self.tagName !== 'TEXTAREA' && e.keyCode === 13)
 
 			var special = self.type === 'checkbox' || self.type === 'radio' || self.type === 'range';// || self.tagName === 'SELECT';
-
 			if ((e.type === 'focusout' && special) || (e.type === 'change' && (!special && self.tagName !== 'SELECT')) || (!self.$component || self.$component.$removed || !self.$component.getter))
 				return;
 
@@ -4242,9 +4131,9 @@ WAIT(function() {
 			if (self.$nokeypress) {
 				if (e.type === 'keydown' || e.type === 'focusout')
 					return;
-				if (delay === 0)
+				if (!delay)
 					delay = 1;
-			} else if (delay === 0)
+			} else if (!delay)
 				delay = COM.defaults.delay;
 
 			if (e.type === 'focusout')
@@ -4256,9 +4145,7 @@ WAIT(function() {
 			}, delay);
 		});
 
-		setTimeout(function() {
-			COM.compile();
-		}, 2);
+		setTimeout(COM.compile, 2);
 	});
 }, 100);
 
@@ -4299,9 +4186,8 @@ Array.prototype.waitFor = function(fn, callback) {
 	var self = this;
 	var item = self[fn.index++];
 
-	if (item === undefined) {
-		if (callback)
-			callback(fn.value);
+	if (!item) {
+		callback && callback(fn.value);
 		delete fn.value;
 		return self;
 	}
@@ -4336,8 +4222,7 @@ Array.prototype.compare = function(id, b, fields) {
 			break;
 		}
 
-		if (!is)
-			remove.push({ oldIndex: i, newIndex: j, oldItem: aa, newItem: bb });
+		!is && remove.push({ oldIndex: i, newIndex: j, oldItem: aa, newItem: bb });
 	}
 
 	for (var i = 0; i < jl; i++) {
@@ -4385,14 +4270,9 @@ Array.prototype.async = function(context, callback) {
 	var index = 0;
 
 	var c = function() {
-
 		var fn = arr[index++];
-		if (fn === undefined) {
-			if (callback)
-				callback.call(context);
-			return;
-		}
-
+		if (!fn)
+			return callback && callback.call(context);
 		fn.call(context, c, index - 1);
 	};
 
@@ -4521,9 +4401,8 @@ String.prototype.slug = function(max) {
 			break;
 
 		if (code > 31 && code < 48) {
-			if (builder.substring(builder.length - 1, builder.length) === '-')
-				continue;
-			builder += '-';
+			if (builder.substring(builder.length - 1, builder.length) !== '-')
+				builder += '-';
 			continue;
 		}
 
@@ -4545,28 +4424,25 @@ String.prototype.slug = function(max) {
 
 String.prototype.isEmail = function() {
 	var str = this;
-	if (str.length <= 4)
-		return false;
-	return REG_EMAIL.test(str);
+	var r = /^[a-zA-Z0-9-_.+]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i;
+	return str.length <= 4 ? false : r.test(str);
 };
 
 String.prototype.isPhone = function() {
 	var str = this;
-	if (str.length < 6)
-		return false;
-	return REG_PHONE.test(str);
+	var r = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
+	return str.length < 6 ? false : r.test(str);
 };
 
 String.prototype.isURL = function() {
 	var str = this;
-	if (str.length <= 7)
-		return false;
-	return REG_URL.test(str);
+	var r = /^(http|https):\/\/(?:(?:(?:[\w\.\-\+!$&'\(\)*\+,;=]|%[0-9a-f]{2})+:)*(?:[\w\.\-\+%!$&'\(\)*\+,;=]|%[0-9a-f]{2})+@)?(?:(?:[a-z0-9\-\.]|%[0-9a-f]{2})+|(?:\[(?:[0-9a-f]{0,4}:)*(?:[0-9a-f]{0,4})\]))(?::[0-9]+)?(?:[\/|\?](?:[\w#!:\.\?\+=&@!$'~*,;\/\(\)\[\]\-]|%[0-9a-f]{2})*)?$/i;
+	return str.length <= 7 ? false : r.test(str);
 };
 
 String.prototype.parseInt = function(def) {
 	var str = this.trim();
-	var val = str.match(REG_NUM1);
+	var val = str.match(/(\-|\+)?[0-9]+/);
 	if (!val)
 		return def || 0;
 	val = +val[0];
@@ -4575,7 +4451,7 @@ String.prototype.parseInt = function(def) {
 
 String.prototype.parseFloat = function(def) {
 	var str = this.trim();
-	var val = str.match(REG_NUM2);
+	var val = str.match(/(\-|\+)?[0-9\.\,]+/);
 	if (!val)
 		return def || 0;
 	val = val[0];
@@ -4845,7 +4721,7 @@ Number.prototype.padRight = function(t, e) {
 
 String.prototype.format = function() {
 	var arg = arguments;
-	return this.replace(REG_FORMAT, function(text) {
+	return this.replace(/\{\d+\}/g, function(text) {
 		var value = arg[+text.substring(1, text.length - 1)];
 		if (value == null)
 			value = '';
