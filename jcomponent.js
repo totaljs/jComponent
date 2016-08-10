@@ -3151,6 +3151,10 @@ MAN.prepare = function(obj) {
 	var el = obj.element;
 	var tmp;
 
+	MAN.extends[obj.name] && MAN.extends[obj.name].forEach(function(fn) {
+		fn.call(obj, obj);
+	});
+
 	if (obj.setter) {
 		if (!obj.$prepared) {
 
@@ -3219,14 +3223,6 @@ MAN.prepare = function(obj) {
 					el.toggleClass(cls[i]);
 			}, 5);
 		})(cls)
-	}
-
-	if (MAN.extends[obj.name]) {
-		setTimeout(function() {
-			MAN.extends[obj.name].forEach(function(fn) {
-				fn.call(obj, obj);
-			});
-		}, 20);
 	}
 
 	if (obj.id)
