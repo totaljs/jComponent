@@ -751,6 +751,13 @@ $.components.defaults.localstorage;
 $.components.defaults.headers;
 // {Object} can sets AJAX headers for all requests
 
+$.components.defaults.devices = {
+    xs: { max: 768 },
+    sm: { min: 768, max: 992 },
+    md: { min: 992, max: 1200 },
+    lg: { min: 1200 }
+};
+
 $.components.$version;
 // {String} appends the value to each URL address `?version=$version`
 // called via jComponent, default: "".

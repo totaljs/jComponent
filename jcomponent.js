@@ -65,6 +65,7 @@ COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.defaults.headers = {};
+COM.defaults.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
 COM.version = 'v5.0.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
@@ -4940,26 +4941,12 @@ Array.prototype.scalar = function(type, key, def) {
 	return output;
 };
 
-window.WIDTH = function(element) {
-
-	if (!element)
-		element = $(window);
-
-	var w = element.width();
-
-	if (w >= 992 && w <= 1200)
-		return 'md';
-
-	if (w >= 768 && w <= 992)
-		return 'sm';
-
-	if (w > 1200)
-		return 'lg';
-
-	if (w <= 768)
-		return 'xs';
-
-	return '';
+window.WIDTH = function(el) {
+	if (!el)
+		el = $(window);
+	var w = el.width();
+	var d = COM.defaults.devices;
+	return w >= d.md.min && w <= d.md.max ? 'md' : w >= d.sm.min && w <= d.sm.max ? 'sm' : w > d.lg.min ? 'lg' : w <= d.xs.max ? 'xs' : '';
 };
 
 window.WORKFLOW = function(name, fn) {
@@ -5008,31 +4995,28 @@ window.MEDIAQUERY = function(query, element, fn) {
 		var ids = [];
 		query.split(',').forEach(function(q) {
 			q = q.trim();
-			if (q)
-				ids.push(window.MEDIAQUERY(q, element, fn));
+			q && ids.push(window.MEDIAQUERY(q, element, fn));
 		});
 		return ids;
 	}
 
+	var d = COM.defaults.devices;
+
 	if (query === 'md')
-		query = 'min-width: 992px and max-width: 1200px';
+		query = 'min-width:{0}px and max-width:{1}px'.format(d.md.min, d.md.max);
 	else if (query === 'lg')
-		query = 'min-width: 1200px';
+		query = 'min-width:{0}px'.format(d.lg.min);
 	else if (query === 'xs')
-		query = 'max-width: 768px';
+		query = 'max-width:{0}px'.format(d.xs.max);
 	else if (query === 'sm')
-		query = 'min-width: 768px and max-width: 992px';
+		query = 'min-width:{0}px and max-width:{1}px'.format(d.sm.min, d.sm.max);
 
 	var arr = query.match(/(max-width|min-width|max-device-width|min-device-width|max-height|min-height|max-device-height|height|width):(\s)\d+(px|em|in)?/gi);
 	var obj = {};
 
 	var num = function(val) {
 		var n = parseInt(val.match(/\d+/), 10);
-		if (val.match(/\d+(em)/))
-			return n * 16;
-		if (val.match(/\d+(in)/))
-			return (n * 0.010416667) >> 0;
-		return n;
+		return val.match(/\d+(em)/) ? n * 16 : val.match(/\d+(in)/) ? (n * 0.010416667) >> 0 : n;
 	};
 
 	if (arr) {
@@ -5096,6 +5080,7 @@ function $MEDIAQUERY() {
 	var $w = $(window);
 	var w = $w.width();
 	var h = $w.height();
+	var d = COM.defaults.devices;
 
 	for (var i = 0, length = MAN.mediaquery.length; i < length; i++) {
 		var mq = MAN.mediaquery[i];
@@ -5140,13 +5125,13 @@ function $MEDIAQUERY() {
 
 		var type;
 
-		if (cw >= 992 && cw <= 1200)
+		if (cw >= d.md.min && cw <= d.md.max)
 			type = 'md';
-		else if (cw >= 768 && cw <= 992)
+		else if (cw >= d.sm.min && cw <= d.sm.max)
 			type = 'sm';
-		else if (cw > 1200)
+		else if (cw > d.lg.min)
 			type = 'lg';
-		else if (cw <= 768)
+		else if (cw <= d.xs.max)
 			type = 'xs';
 
 		mq.oldW = cw;
