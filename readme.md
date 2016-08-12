@@ -1,4 +1,4 @@
-[![MIT License][license-image]][license-url] [![Gitter chat](https://badges.gitter.im/totaljs/framework.png)](https://gitter.im/petersirka/jComponent)
+[![MIT License][license-image]][license-url] [![Gitter chat](https://badges.gitter.im/totaljs/framework.png)](https://gitter.im/totaljs/jComponent)
 
 [![Support](https://www.totaljs.com/img/button-support.png)](https://www.totaljs.com/support/) [![Donate](https://www.totaljs.com/img/button-donate.png)](https://www.totaljs.com/#make-a-donation)
 
@@ -6,27 +6,21 @@
 
 > __Download__: more than 70 jComponents for free for everyone. www.componentator.com
 
-- [Gitter - Chat for GitHub](https://gitter.im/petersirka/jComponent)
+- [Gitter - Chat for GitHub](https://gitter.im/totaljs/jComponent)
 - Current version: `v5.0.0`
 - `>= jQuery +1.7`
 - `>= IE9`
-- similar functionality like directives in Angular.js
-- supports two way data-binding
-- supports validation
-- supports nested components
-- works with any template engine
-- works with any mobile device
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
 - works with [Bootstrap](http://getbootstrap.com/), [Foundation](http://foundation.zurb.com/), [Pure](http://purecss.io/), [Material Design](http://www.getmdl.io/) and others
 - you can wrap thousands plugins of jQuery via jComponent
 - best of use with [www.totaljs.com - web framework for Node.js](http://www.totaljs.com)
-- [Changelog](https://github.com/petersirka/jComponent/blob/master/changes.txt)
+- [Download UI components](https://github.com/totaljs/components)
 
 __YOU MUST SEE:__
 
 - [__jComponent full SPA example with the source-code__](https://example.jcomponent.org/)
-- [Tangular - A template engine like Angular.js](https://github.com/petersirka/Tangular)
-- [jRouting - HTML 5 routing via History API](https://github.com/petersirka/jRouting)
+- [Tangular - A template engine like Angular.js](https://github.com/totaljs/Tangular)
+- [jRouting - HTML 5 routing via History API](https://github.com/totaljs/jRouting)
 - [__Download the existing jComponents__](https://componentator.com)
 
 ***
@@ -42,8 +36,8 @@ __YOU MUST SEE:__
 jComponent offers 3 libraries for development rich web applications:
 
 - `jcomponent.min.js` contains only jComponent library
-- `jcta.min.js` contains jComponent library and [Tangular template engine](https://github.com/petersirka/Tangular)
-- `jctajr.min.js` contains jComponent library, [Tangular template engine](https://github.com/petersirka/Tangular) and [jRouting](https://github.com/petersirka/jRouting)
+- `jcta.min.js` contains jComponent library and [Tangular template engine](https://github.com/totaljs/Tangular)
+- `jctajr.min.js` contains jComponent library, [Tangular template engine](https://github.com/totaljs/Tangular) and [jRouting](https://github.com/totaljs/jRouting)
 
 If you want to use jComponent on your presentation website - use `jcomponent.min.js` only. If you create a rich web application, then use `jcta.min.js` because it contains template engine and for __SPA__ use `jctajr.min.js` because it contains template engine and HTML 5 history API.
 
