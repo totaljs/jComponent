@@ -34,7 +34,7 @@ window.COM = window.jC = function(container) {
 };
 
 COM.clean = function(timeout) {
-	cleantimeout(MAN.tic);
+	clearTimeout(MAN.tic);
 	MAN.tic = setTimeout(function() {
 		MAN.cleaner();
 	}, timeout || 10);
