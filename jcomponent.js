@@ -5256,4 +5256,10 @@ window.EXEC = function(path) {
 	return w.EXEC;
 };
 
+window.MAKE = function(fn) {
+	var obj = {};
+	fn.call(obj, obj);
+	return obj;
+};
+
 window.NOOP = function(){};
