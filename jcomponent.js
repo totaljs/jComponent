@@ -2392,7 +2392,8 @@ function COMP(name) {
 		}
 
 		var selector = self.$input === true ? this.element : this.element.find(COM_DATA_BIND_SELECTOR);
-		var a = 'select-one'
+		var a = 'select-one';
+
 		value = self.formatter(value);
 
 		selector.each(function() {
@@ -2412,12 +2413,12 @@ function COMP(name) {
 			if (value == null)
 				value = '';
 
-			if (!type && this.type !== a) {
-				if (!value || (self.$default && self.$default() === value)) {
+			if (!type && this.type !== a && this.type !== 'range') {
+				if (this.value && (!value || (self.$default && self.$default() === value))) {
 					// Solved problem with Google Chrome autofill
 					tmp = this.value;
-					if (tmp)
-						return MAN.set(path, self.formatter(tmp));
+					tmp && MAN.set(path, self.formatter(tmp));
+					return;
 				}
 			}
 
