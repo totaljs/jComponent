@@ -1,6 +1,6 @@
 [![MIT License][license-image]][license-url] [![Gitter chat](https://badges.gitter.im/totaljs/framework.png)](https://gitter.im/totaljs/jComponent)
 
-[![Support](https://www.totaljs.com/img/button-support.png?v=2)](https://www.totaljs.com/support/) [![Donate](https://www.totaljs.com/img/button-donate.png)](https://www.totaljs.com/#make-a-donation)
+[![Support](https://www.totaljs.com/img/button-support.png?v=2)](https://www.totaljs.com/support/) 
 
 # jQuery reusable component library
 
