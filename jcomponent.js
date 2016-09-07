@@ -92,10 +92,8 @@ COM.cookies = {
 			if (c.charAt(0) === ' ')
 				c = c.substring(1);
 			var v = c.split('=');
-			if (v.length > 1) {
-				if (v[0] === name)
-					return v[1];
-			}
+			if (v.length > 1 && v[0] === name)
+				return v[1];
 		}
 		return '';
 	},
@@ -1936,7 +1934,12 @@ COM.blocked = function(name, timeout, callback) {
 	var local = COM.defaults.localstorage && timeout > 10000;
 	MAN.cacheblocked[key] = now + timeout;
 
-	local && localStorage.setItem(COM.$localstorage + '.blocked', JSON.stringify(MAN.cacheblocked));
+	try {
+		local && localStorage.setItem(COM.$localstorage + '.blocked', JSON.stringify(MAN.cacheblocked));
+	} catch (e) {
+		// private mode
+	};
+
 	callback && callback();
 	return false;
 };
@@ -3421,9 +3424,7 @@ MAN.cleaner = function() {
 
 		COM.emit('destroy', component.name, component);
 
-		if (component.destroy)
-			component.destroy();
-
+		component.destroy && component.destroy();
 		component.element.off();
 		component.element.find('*').off();
 		component.element.remove();
@@ -3452,8 +3453,13 @@ MAN.cleaner = function() {
 		is2 = true;
 	}
 
-	if (COM.defaults.localstorage && is2)
-		localStorage.setItem(COM.$localstorage + '.blocked', JSON.stringify(self.cacheblocked));
+	if (COM.defaults.localstorage && is2) {
+		try {
+			localStorage.setItem(COM.$localstorage + '.blocked', JSON.stringify(self.cacheblocked));
+		} catch(e) {
+			// private mode
+		}
+	}
 
 	for (var key in self.storage) {
 		var item = self.storage[key];
@@ -3513,7 +3519,11 @@ COMPONENT('', function() {
 });
 
 function $jc_save() {
-	COM.defaults.localstorage && localStorage.setItem(COM.$localstorage + '.cache', JSON.stringify(MAN.storage));
+	try {
+		COM.defaults.localstorage && localStorage.setItem(COM.$localstorage + '.cache', JSON.stringify(MAN.storage));
+	} catch(e) {
+		// private mode
+	};
 }
 
 window.REWRITE = COM.rewrite;
