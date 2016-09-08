@@ -1571,7 +1571,7 @@ COM.nested = function(element, selector, type, value) {
 
 	var isEach = typeof(type) === 'function';
 
-	if (!isEach) {
+	if (!isEach)
 		switch (type) {
 			case 'path':
 			case 'template':
@@ -1591,9 +1591,7 @@ COM.nested = function(element, selector, type, value) {
 				type = 'data-component-keypress-' + type;
 				break;
 		}
-	}
 
-	var self = this;
 	var replacer = function(current, value) {
 		if (current && current.indexOf('?') !== -1)
 			return current.replace('?', value);
@@ -1601,22 +1599,21 @@ COM.nested = function(element, selector, type, value) {
 	};
 
 	if (!selector) {
-		element.find('[data-component]').each(function() {
+		element.find(COM_ATTR).each(function() {
 			var el = $(this);
 			var com = el.component();
 			if (isEach)
 				return type(el, com);
 			el.attr(type, type === COM_ATTR_P ? replacer(el.attr(type), value) : value);
-			if (com && type === COM_ATTR_P)
-				com.setPath(replacer(com.path, value));
-
+			com && type === COM_ATTR_P && com.setPath(replacer(com.path, value));
 		});
-		return self;
+
+		return this;
 	}
 
-	element.find('[data-component]').each(function() {
+	element.find(COM_ATTR).each(function() {
 		var el = $(this);
-		var id = el.attr('data-component-id');
+		var id = el.attr(COM_A + 'id');
 		var pat = el.attr(COM_ATTR_P);
 		var name = el.attr('data-component');
 		for (var i = 0, length = selector.length; i < length; i++) {
@@ -1637,8 +1634,7 @@ COM.nested = function(element, selector, type, value) {
 				return type(el, com);
 
 			el.attr(type, type === COM_ATTR_P ? replacer(el.attr(type), value) : value);
-			if (com && type === COM_ATTR_P)
-				com.setPath(replacer(com.path, value));
+			com && type === COM_ATTR_P && com.setPath(replacer(com.path, value));
 		}
 	});
 
@@ -1725,9 +1721,7 @@ COM.set = function(path, val, type) {
 			}
 
 			component.$ready = true;
-
-			if (component.state)
-				state.push(component);
+			component.state && state.push(component);
 
 			if (reset) {
 				if (!component.$dirty_disabled)
@@ -1751,8 +1745,7 @@ COM.set = function(path, val, type) {
 
 		}, path, true, is);
 
-		if (reset)
-			MAN.clear('dirty', 'valid');
+		reset && MAN.clear('dirty', 'valid');
 
 		for (var i = 0, length = state.length; i < length; i++)
 			state[i].state(type, 5);
@@ -1804,8 +1797,7 @@ COM.remove = function(path) {
 				com.$removed = true;
 		});
 
-		if (path.attr(COM_ATTR_T))
-			path.attr(COM_ATTR_R, 'true');
+		path.attr(COM_ATTR_T) && path.attr(COM_ATTR_R, 'true');
 
 		var com = path.data('component');
 		if (com)
@@ -1869,8 +1861,7 @@ COM.validate = function(path, except) {
 		if (obj.disabled || (except && except.indexOf(obj.path) !== -1))
 			return;
 
-		if (obj.state)
-			arr.push(obj);
+		obj.state && arr.push(obj);
 
 		if (obj.$valid_disabled)
 			return;
@@ -1999,8 +1990,7 @@ COM.default = function(path, timeout, onlyComponent, reset) {
 		if (onlyComponent && onlyComponent._id !== obj._id)
 			return;
 
-		if (obj.$default && obj.path)
-			obj.set(obj.path, obj.$default(), 3);
+		obj.$default && obj.path && obj.set(obj.path, obj.$default(), 3);
 
 		if (!reset)
 			return;
@@ -2051,8 +2041,7 @@ COM.reset = function(path, timeout, onlyComponent) {
 		if (obj.disabled)
 			return;
 
-		if (obj.state)
-			arr.push(obj);
+		obj.state && arr.push(obj);
 
 		if (onlyComponent && onlyComponent._id !== obj._id)
 			return;
@@ -2371,8 +2360,7 @@ function COMP(name) {
 			value = value.trim();
 
 		if (value === this.get()) {
-			if (dirty)
-				COM.validate(this.path);
+			dirty && COM.validate(this.path);
 			return this;
 		}
 
@@ -2699,9 +2687,7 @@ COMP.prototype.valid = function(value, noEmit) {
 	if (noEmit)
 		return this;
 
-	if (this.state)
-		this.state(1, 1);
-
+	this.state && this.state(1, 1);
 	return this;
 };
 
@@ -2736,9 +2722,7 @@ COMP.prototype.dirty = function(value, noEmit) {
 	if (noEmit)
 		return this;
 
-	if (this.state)
-		this.state(2, 2);
-
+	this.state && this.state(2, 2);
 	return this;
 };
 
@@ -2857,6 +2841,7 @@ COMP.prototype.parser = function(value) {
 
 COMP.prototype.emit = function() {
 	COM.emit.apply(COM, arguments);
+	return COM;
 };
 
 COMP.prototype.evaluate = function(path, expression, nopath) {
@@ -2876,6 +2861,7 @@ COMP.prototype.get = function(path) {
 		return MAN.get(path);
 };
 
+
 COMP.prototype.set = function(path, value, type) {
 
 	var self = this;
@@ -2885,9 +2871,7 @@ COMP.prototype.set = function(path, value, type) {
 		path = this.path;
 	}
 
-	if (path)
-		COM.set(path, value, type);
-
+	path && COM.set(path, value, type);
 	return self;
 };
 
@@ -2900,9 +2884,7 @@ COMP.prototype.inc = function(path, value, type) {
 		path = this.path;
 	}
 
-	if (path)
-		COM.inc(path, value, type);
-
+	path && COM.inc(path, value, type);
 	return self;
 };
 
@@ -2915,9 +2897,7 @@ COMP.prototype.extend = function(path, value, type) {
 		path = this.path;
 	}
 
-	if (path)
-		COM.extend(path, value, type);
-
+	path && COM.extend(path, value, type);
 	return self;
 };
 
@@ -2929,9 +2909,7 @@ COMP.prototype.push = function(path, value, type) {
 		path = this.path;
 	}
 
-	if (path)
-		COM.push(path, value, type, self);
-
+	path && COM.push(path, value, type, self);
 	return self;
 };
 
@@ -3052,9 +3030,7 @@ MAN.initialize = function() {
 		return this;
 	}
 
-	if (!item.$removed)
-		this.prepare(item);
-
+	!item.$removed && this.prepare(item);
 	this.initialize();
 	return this;
 };
@@ -3377,9 +3353,7 @@ MAN.cleaner = function() {
 				if (item.context == null || (item.context.element && item.context.element.closest(document.documentElement).length))
 					continue;
 
-				if (item.context && item.context.element)
-					item.context.element.remove();
-
+				item.context && item.context.element && item.context.element.remove();
 				item.context.$removed = true;
 				item.context = null;
 				self.events[ak][bk].splice(index - 1, 1);
@@ -3757,9 +3731,7 @@ window.BROADCAST = function(selector, name, caller) {
 	for (var i = 0, length = selector.length; i < length; i++) {
 		var item = selector[i].trim();
 		var com = FIND(item, true, true);
-		if (!com)
-			continue;
-		components.push.apply(components, com);
+		com && components.push.apply(components, com);
 	}
 
 	MAN.cache[key] = components;
@@ -3925,10 +3897,7 @@ window.WAIT = function(fn, callback, interval, timeout) {
 			delete MAN.waits[tkey];
 		}
 
-		if (!callback)
-			return;
-
-		callback(null, function(sleep) {
+		callback && callback(null, function(sleep) {
 			setTimeout(function() {
 				WATCH(fn, callback, interval);
 			}, sleep || 1);
@@ -4323,6 +4292,8 @@ String.prototype.parseExpire = function() {
 	if (isNaN(number))
 		return 0;
 
+	var min = 60000 * 60;
+
 	switch (str[1].trim().replace(/\./g, '')) {
 		case 'minutes':
 		case 'minute':
@@ -4336,7 +4307,7 @@ String.prototype.parseExpire = function() {
 		case 'hh':
 		case 'h':
 		case 'H':
-			return (60000 * 60) * number;
+			return min * number;
 		case 'seconds':
 		case 'second':
 		case 'sec':
@@ -4348,23 +4319,23 @@ String.prototype.parseExpire = function() {
 		case 'DD':
 		case 'dd':
 		case 'd':
-			return (60000 * 60 * 24) * number;
+			return (min * 24) * number;
 		case 'months':
 		case 'month':
 		case 'MM':
 		case 'M':
-			return (60000 * 60 * 24 * 28) * number;
+			return (min * 24 * 28) * number;
 		case 'weeks':
 		case 'week':
 		case 'W':
 		case 'w':
-			return (60000 * 60 * 24 * 7) * number;
+			return (min * 24 * 7) * number;
 		case 'years':
 		case 'year':
 		case 'yyyy':
 		case 'yy':
 		case 'y':
-			return (60000 * 60 * 24 * 365) * number;
+			return (min * 24 * 365) * number;
 		default:
 			return 0;
 	}
@@ -4378,7 +4349,6 @@ String.prototype.removeDiacritics = function() {
 		var isUpper = false;
 
 		var r = COM_DIACRITICS[code];
-
 		if (r === undefined) {
 			code = c.toLowerCase().charCodeAt(0);
 			r = COM_DIACRITICS[code];
@@ -4479,8 +4449,7 @@ Array.prototype.trim = function() {
 	for (var i = 0, length = self.length; i < length; i++) {
 		if (typeof(self[i]) === 'string')
 			self[i] = self[i].trim();
-		if (self[i])
-			output.push(self[i]);
+		self[i] && output.push(self[i]);
 	}
 	return output;
 };
@@ -4525,19 +4494,16 @@ Array.prototype.remove = function(cb, value) {
 	for (var i = 0, length = self.length; i < length; i++) {
 
 		if (isFN) {
-			if (!cb.call(self, self[i], i))
-				arr.push(self[i]);
+			!cb.call(self, self[i], i) && arr.push(self[i]);
 			continue;
 		}
 
 		if (isV) {
-			if (self[i][cb] !== value)
-				arr.push(self[i]);
+			self[i][cb] !== value && arr.push(self[i]);
 			continue;
 		}
 
-		if (self[i] !== cb)
-			arr.push(self[i]);
+		self[i] !== cb && arr.push(self[i]);
 	}
 	return arr;
 };
@@ -4632,12 +4598,9 @@ Date.prototype.format = function(t) {
 				tmp.setHours(0, 0, 0);
 				tmp.setDate(tmp.getDate() + 4 - (tmp.getDay() || 7));
 				tmp = Math.ceil((((tmp - new Date(tmp.getFullYear(), 0, 1)) / 8.64e7) + 1) / 7);
-				if (key === 'ww')
-					return tmp.toString().padLeft(2, '0');
-				return tmp;
+				return key === 'ww' ? tmp.toString().padLeft(2, '0') : tmp;
 			case 'a':
-				var r = 'AM';
-				return e.getHours() >= 12 && (r = 'PM'), r
+				return e.getHours() >= 12 ? 'PM' : 'AM';
 		}
 	});
 };
@@ -4661,9 +4624,7 @@ Number.prototype.pluralize = function(zero, one, few, other) {
 		return value;
 
 	return value.replace(/\#{1,}/g, function(text) {
-		if (text === '##')
-			return num.format();
-		return num.toString();
+		return text === '##' ? num.format() : num.toString();
 	});
 };
 
@@ -4735,9 +4696,7 @@ String.prototype.format = function() {
 	var arg = arguments;
 	return this.replace(/\{\d+\}/g, function(text) {
 		var value = arg[+text.substring(1, text.length - 1)];
-		if (value == null)
-			value = '';
-		return value;
+		return value == null ? '' : value;
 	});
 };
 
@@ -4773,9 +4732,7 @@ String.prototype.parseDate = function() {
 
 	for (var i = 0; i < length; i++) {
 		var c = arr[0].charCodeAt(i);
-		if (c > 47 && c < 58)
-			continue;
-		if (c === 45 || c === 46)
+		if ((c > 47 && c < 58) || c === 45 || c === 46)
 			continue;
 		if (noTime)
 			return new Date(self);
@@ -4881,8 +4838,7 @@ Array.prototype.scalar = function(type, key, def) {
 		if (isDistinct) {
 			if (!output)
 				output = [];
-			if (output.indexOf(val) === -1)
-				output.push(val);
+			output.indexOf(val) === -1 && output.push(val);
 			continue;
 		}
 
@@ -4894,10 +4850,10 @@ Array.prototype.scalar = function(type, key, def) {
 		}
 
 		if (type === 'sum' || isAvg) {
-			if (!output)
-				output = val;
-			else
+			if (output)
 				output += val;
+			else
+				output = val;
 			continue;
 		}
 
@@ -5200,8 +5156,7 @@ window.MIDDLEWARE = function(name, value, callback, path) {
 
 		mid.call(context, next, value, path);
 	}, function(val) {
-		if (callback)
-			callback.call(context, val !== undefined ? val : value, path);
+		callback && callback.call(context, val !== undefined ? val : value, path);
 	});
 };
 
@@ -5261,9 +5216,7 @@ window.EXEC = function(path) {
 		arg.push(arguments[i]);
 
 	var fn = GET(path);
-	if (typeof(fn) === 'function')
-		fn.apply(w, arg);
-
+	typeof(fn) === 'function' && fn.apply(w, arg);
 	return w.EXEC;
 };
 
