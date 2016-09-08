@@ -66,7 +66,7 @@ COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.defaults.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 COM.defaults.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
-COM.version = 'v5.0.0';
+COM.version = 'v5.1.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -2408,7 +2408,7 @@ function COMP(name) {
 				if (this.value && (!value || (self.$default && self.$default() === value))) {
 					// Solved problem with Google Chrome autofill
 					tmp = this.value;
-					tmp && MAN.set(path, self.formatter(tmp));
+					tmp && MAN.set(path, self.parser(tmp));
 					return;
 				}
 			}
