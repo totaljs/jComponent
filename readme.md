@@ -760,6 +760,9 @@ $.components.$language;
 // {String} appends the value to each URL address `?language=$language`
 // called via jComponent, default: "".
 
+$.components.localstorage = 'jcomponent';
+// {String} is a prefix for all cache keys.
+
 $.components.parser(function(path, value, type) { // Example
     // this === component
     // type === [data-component-type]
@@ -986,6 +989,9 @@ $.components.TEMPLATE(url, callback(template), [prepare(template)]);
 // executing. The content is downloaded only once. `prepare` argument is optional
 // (and executed once), but if it's declared then must "return" template (e.g. compiled template).
 
+$.components.removeCache(key, fulltext);
+// Deletes cache according to the key. If @fulltext {Boolean} is `true` then the method removes
+// all items with their keys contain this key.
 
 $.components.REMOVECACHE(method, url, data);
 // Deletes cache (AJAXCACHE).
