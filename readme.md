@@ -1724,6 +1724,17 @@ var attrs = [];
 attrs.attr('maxlength', 30);
 attrs.attr('readonly');
 console.log(attrs.join(' '));
+
+
+// setTimeout2(key, function, timoeut)
+// Clears timeout according the "key" (if exists) argument and registers new.
+setTimeout2('refresh', function() {
+    console.log('500');
+}, 500);
+
+setTimeout2('refresh', function() {
+    console.log('3000');
+}, 3000);
 ```
 
 ### Arrow function as string

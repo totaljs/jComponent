@@ -18,6 +18,11 @@ var COM_DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',38
 window.isMOBILE = ('ontouchstart' in window || navigator.maxTouchPoints) ? true : false;
 window.EMPTYARRAY = [];
 window.EMPTYOBJECT = {};
+window.setTimeout2 = function(name, fn, timeout) {
+	var key = ':' + name;
+	MAN.others[key] && clearTimeout(MAN.others[key]);
+	return MAN.others[key] = setTimeout(fn, timeout);
+};
 
 if (Object.freeze) {
 	Object.freeze(EMPTYOBJECT);
@@ -66,7 +71,7 @@ COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.defaults.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 COM.defaults.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
-COM.version = 'v5.1.0';
+COM.version = 'v5.2.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
