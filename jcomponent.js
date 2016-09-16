@@ -1,6 +1,7 @@
 var MAN = new CMAN();
 if (!window.MAN)
 	window.MAN = MAN;
+
 var COM_DATA_BIND_SELECTOR = 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
 var COM_ATTR = '[data-component]';
 var COM_A = 'data-component-';
@@ -258,10 +259,8 @@ COM.compile = function(container) {
 
 			var x = el.attr(COM_A + 'import');
 			if (!x) {
-				if (!MAN.initializers['$NE_' + name]) {
+				if (!MAN.initializers['$NE_' + name])
 					MAN.initializers['$NE_' + name] = true;
-					// console.warn('The component "' + name + '" does not exist.');
-				}
 				return;
 			}
 
@@ -269,10 +268,8 @@ COM.compile = function(container) {
 				return;
 
 			if (MAN.imports[x] === 2) {
-				if (!MAN.initializers['$NE_' + name]) {
+				if (!MAN.initializers['$NE_' + name])
 					MAN.initializers['$NE_' + name] = true;
-					// console.warn('The component "' + name + '" does not exist.');
-				}
 				return;
 			}
 
@@ -353,7 +350,7 @@ COM.compile = function(container) {
 			obj.template = template;
 
 		if (el.attr(COM_ATTR_U)) {
-			console.warn('You cannot use [data-component-url] for the component: ' + obj.name + '[' + obj.path + ']. Instead of it you must use data-component-template.');
+			window.console && window.console.warn('You cannot use [data-component-url] for the component: ' + obj.name + '[' + obj.path + ']. Instead of it you must use data-component-template.');
 			return;
 		}
 
@@ -1058,8 +1055,8 @@ function $jc_ready() {
 				var op = OPERATION(path);
 				if (op)
 					op.call(scope, this.getAttribute(COM_ATTR_S), scope);
-				else if (console)
-					console.warn('The operation ' + path + ' not found.');
+				else if (window.console)
+					window.console.warn('The operation ' + path + ' not found.');
 			} else {
 				var fn = GET(path);
 				typeof(fn) === 'function' && fn.call(scope, this.getAttribute(COM_ATTR_S), scope);
@@ -2353,7 +2350,7 @@ function COMP(name) {
 
 		value = this.parser(value);
 
-		if (type === 2)
+		if (type === 2 && !skip)
 			this.$skip = true;
 
 		if (type !== 2 || (older !== null && older !== undefined)) {
@@ -2945,6 +2942,7 @@ window.COMPONENT = function(type, declaration) {
 		return obj;
 	};
 
+	MAN.register[type] && window.console && window.console.warn('Overwriting jComponent:', type);
 	MAN.register[type] = fn;
 };
 
@@ -3241,8 +3239,8 @@ MAN.set = function(path, value) {
 		var op = OPERATION(path);
 		if (op)
 			op(value, path);
-		else if (console)
-			console.warn('The operation ' + path + ' not found.');
+		else if (window.console)
+			window.console.warn('The operation ' + path + ' not found.');
 		return self;
 	}
 
@@ -5154,7 +5152,6 @@ window.MIDDLEWARE = function(name, value, callback, path) {
 		var mid = MAN.middleware[name];
 
 		if (!mid) {
-			console.warn('Middleware "' + name + '" not found.');
 			next();
 			return;
 		}
