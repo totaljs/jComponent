@@ -5152,6 +5152,7 @@ window.MIDDLEWARE = function(name, value, callback, path) {
 		var mid = MAN.middleware[name];
 
 		if (!mid) {
+			window.console && window.console.warn('Middleware "' + name + '" not found.');
 			next();
 			return;
 		}
