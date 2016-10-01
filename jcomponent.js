@@ -72,7 +72,7 @@ COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.defaults.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 COM.defaults.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
-COM.version = 'v5.2.0';
+COM.version = 'v5.2.1';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -83,9 +83,7 @@ COM.$parser.push(function(path, value, type) {
 		if (typeof(value) === 'string')
 			value = value.replace(/\s/g, '').replace(/,/g, '.');
 		var v = parseFloat(value);
-		if (isNaN(v))
-			v = null;
-		return v;
+		return isNaN(v) ? null : v;
 	}
 	return value;
 });
@@ -179,9 +177,7 @@ COM.schedule = function(selector, name, expire, callback) {
 		expire = '-' + expire;
 	var arr = expire.split(' ');
 	var type = arr[1].toLowerCase().substring(0, 1);
-	if (type === 'y' || type === 'd')
-		type = 'h';
-	MAN.schedulers.push({ name: name, expire: expire, selector: selector, callback: callback, type: type });
+	MAN.schedulers.push({ name: name, expire: expire, selector: selector, callback: callback, type: type === 'y' || type === 'd' ? 'h' : type });
 	return COM;
 };
 
@@ -199,6 +195,7 @@ COM.parser = function(value, path, type) {
 		for (var i = 0, length = a.length; i < length; i++)
 			value = a[i].call(COM, path, value, type);
 	}
+
 	return value;
 };
 
@@ -740,7 +737,7 @@ COM.UPLOAD = function(url, data, callback, timeout, progress, error) {
 	return COM;
 };
 
-COM.TEMPLATE = function(url, callback, prepare) {
+window.TEMPLATE = COM.TEMPLATE = function(url, callback, prepare) {
 
 	if (MAN.cache[url]) {
 
