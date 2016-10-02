@@ -72,7 +72,7 @@ COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.defaults.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 COM.defaults.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
-COM.version = 'v5.2.1';
+COM.version = 'v5.3.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -4365,11 +4365,13 @@ String.prototype.removeDiacritics = function() {
 		}
 
 		c = r;
-		if (isUpper)
-			c = c.toUpperCase();
-		buf += c;
+		buf += isUpper ? c.toUpperCase() : c;
 	}
 	return buf;
+};
+
+String.prototype.toSearch = function() {
+	return this.replace(/[^a-zA-Zá-žÁ-Ž\d\s:]/g, '').trim().replace(/\s{2,}/g, ' ').toLowerCase().removeDiacritics().replace(/y/g, 'i');
 };
 
 String.prototype.slug = function(max) {
@@ -4403,9 +4405,7 @@ String.prototype.slug = function(max) {
 		}
 	}
 	var l = builder.length - 1;
-	if (builder[l] === '-')
-		return builder.substring(0, l);
-	return builder;
+	return builder[l] === '-' ? builder.substring(0, l) : builder;
 };
 
 String.prototype.isEmail = function() {

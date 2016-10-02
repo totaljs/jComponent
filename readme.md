@@ -1631,6 +1631,7 @@ var string = 'Peter Širka'.slug();
 // String.prototype.parseFloat([default]) --> default 0
 // String.prototype.parseDate()   --> returns Date
 // String.prototype.parseExpire() --> returns miliseconds
+// String.prototype.toSearch()    --> returns string for fulltext search
 
 // String.prototype.format(format, arg1, arg2, arg3, ...);
 var string = 'My name is {0} and I am {1} years old.'.format('Peter', 31);
