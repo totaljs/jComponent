@@ -749,7 +749,11 @@ window.TEMPLATE = COM.TEMPLATE = function(url, callback, prepare) {
 		return COM;
 	}
 
-	AJAX('GET ' + url, function(response) {
+	AJAX('GET ' + url, function(response, err) {
+
+		if (err)
+			response = '';
+
 		var value = MAN.cache[url] = prepare ? prepare(response) : response;
 		if (typeof(callback) === 'string')
 			SET(callback, value);
