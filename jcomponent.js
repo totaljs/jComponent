@@ -542,7 +542,7 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 		MAN.others[url] = 1;
 	}
 
-	if (target && target.getPath)
+	if (target && target.setPath)
 		target = target.element;
 
 	if (!target)
