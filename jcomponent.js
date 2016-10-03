@@ -76,8 +76,8 @@ COM.version = 'v5.3.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
-COM.$formatter = new Array(0);
-COM.$parser = new Array(0);
+COM.$formatter = [];
+COM.$parser = [];
 COM.$parser.push(function(path, value, type) {
 	if (type === 'number' || type === 'currency' || type === 'float') {
 		if (typeof(value) === 'string')
@@ -290,7 +290,7 @@ COM.compile = function(container) {
 		obj.$init = el.attr(COM_ATTR_I) || null;
 		obj.type = el.attr('data-component-type') || '';
 		obj.id = el.attr('data-component-id') || obj._id;
-		obj.dependencies = new Array(0);
+		obj.dependencies = [];
 
 		if (!obj.$noscope)
 			obj.$noscope = el.attr('data-component-noscope') === 'true';
@@ -2165,7 +2165,7 @@ COM.each = function(fn, path, watch, fix) {
 	var $path;
 
 	if (!path)
-		$path = new Array(0);
+		$path = [];
 	else
 		$path = path.split('.');
 
@@ -2324,8 +2324,8 @@ function COMP(name) {
 	this.$dirty = true;
 	this.$valid = true;
 	this.$validate = false;
-	this.$parser = new Array(0);
-	this.$formatter = new Array(0);
+	this.$parser = [];
+	this.$formatter = [];
 	this.$skip = false;
 	this.$ready = false;
 	this.$path;
@@ -3912,7 +3912,7 @@ window.WAIT = function(fn, callback, interval, timeout) {
 	return COM;
 };
 
-window.COMPILE = function(timeout) {
+window.COMPILE = function() {
 	$.components();
 	return COM;
 };
@@ -4371,7 +4371,22 @@ String.prototype.removeDiacritics = function() {
 };
 
 String.prototype.toSearch = function() {
-	return this.replace(/[^a-zA-Zá-žÁ-Ž\d\s:]/g, '').trim().replace(/\s{2,}/g, ' ').toLowerCase().removeDiacritics().replace(/y/g, 'i');
+
+	var str = this.replace(/[^a-zA-Zá-žÁ-Ž\d\s:]/g, '').trim().toLowerCase().removeDiacritics();
+	var buf = [];
+	var prev = '';
+
+	for (var i = 0, length = str.length; i < length; i++) {
+		var c = str.substring(i, i + 1);
+		if (c === 'y')
+			c = 'i';
+		if (c === prev) {
+			prev = c;
+			buf.push(c);
+		}
+	}
+
+	return buf.join('');
 };
 
 String.prototype.slug = function(max) {
