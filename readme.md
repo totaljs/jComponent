@@ -1614,6 +1614,9 @@ EMPTYOBJECT;
 // isMOBILE == {Boolean} is a global variable and detects mobile device.
 console.log(isMOBILE);
 
+// isMOBILE == {Boolean} is a global variable and detects robot/crawler.
+console.log(isROBOT);
+
 // +v4.0.0 String.prototype.removeDiacritics();
 var string = 'Peter Širka'.removeDiacritics();
 // --> Peter Sirka

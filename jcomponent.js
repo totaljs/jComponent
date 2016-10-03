@@ -17,6 +17,7 @@ var COM_ATTR_S = COM_A + 'scope';
 var COM_DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
 
 window.isMOBILE = ('ontouchstart' in window || navigator.maxTouchPoints) ? true : false;
+window.isROBOT = navigator.userAgent ? (/search|agent|bot|crawler|spider/i).test(navigator.userAgent) : true;
 window.EMPTYARRAY = [];
 window.EMPTYOBJECT = {};
 window.setTimeout2 = function(name, fn, timeout) {
