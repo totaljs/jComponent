@@ -4380,7 +4380,7 @@ String.prototype.toSearch = function() {
 		var c = str.substring(i, i + 1);
 		if (c === 'y')
 			c = 'i';
-		if (c === prev) {
+		if (c !== prev) {
 			prev = c;
 			buf.push(c);
 		}
