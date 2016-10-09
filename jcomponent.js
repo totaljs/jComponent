@@ -4728,7 +4728,7 @@ String.prototype.format = function() {
 	var arg = arguments;
 	return this.replace(/\{\d+\}/g, function(text) {
 		var value = arg[+text.substring(1, text.length - 1)];
-		return value == null ? '' : value;
+		return value == null ? '' : value instanceof Array ? value.join('') : value;
 	});
 };
 
