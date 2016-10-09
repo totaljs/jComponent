@@ -5252,8 +5252,13 @@ window.EXEC = function(path) {
 	return w.EXEC;
 };
 
-window.MAKE = function(fn) {
-	var obj = {};
+window.MAKE = function(obj, fn) {
+
+	if (typeof(obj) === 'function') {
+		fn = obj;
+		obj = {};
+	}
+
 	fn.call(obj, obj);
 	return obj;
 };

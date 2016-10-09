@@ -1312,8 +1312,9 @@ obj = SINGLETON('name');
 console.log(obj);
 // --> { name: 'Peter' }
 
-// TRY(fn, [onErr])
 
+// TRY(fn, [onErr])
+// Creates safe scope
 TRY(function() {
     // safe scope
 });
@@ -1325,6 +1326,24 @@ TRY(function() {
 }, function(e) {
     // unhandled exception
 });
+
+
+// MAKE([obj], fn);
+// Creates object scope
+var someobject = MAKE(function(obj) {
+    this.name = 'Peter';
+    this.age = 33;
+    obj.great = true;
+});
+
+console.log(someobject); // { name: 'Peter', age: 33, great: true }
+
+MAKE(someobject, function(obj) {
+    this.name = 'jComponent';
+    obj.age = 100;
+});
+
+console.log(someobject); // { name: 'jComponent', age: 100, great: true }
 ```
 
 ## Device Width
