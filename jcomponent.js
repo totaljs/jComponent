@@ -26,6 +26,16 @@ window.setTimeout2 = function(name, fn, timeout) {
 	return MAN.others[key] = setTimeout(fn, timeout);
 };
 
+window.TRY = function(fn, err) {
+	try {
+		fn();
+		return true;
+	} catch (e) {
+		err && err(e);
+		return false;
+	}
+};
+
 if (Object.freeze) {
 	Object.freeze(EMPTYOBJECT);
 	Object.freeze(EMPTYARRAY);
@@ -73,7 +83,7 @@ COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.defaults.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 COM.defaults.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
-COM.version = 'v5.3.0';
+COM.version = 'v5.4.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -2371,6 +2381,7 @@ function COMP(name) {
 		if (skip)
 			this.$skip = false;
 
+		this.getter2 && this.getter2.apply(this, arguments);
 		this.set(this.path + this.middleware, value, type);
 		return this;
 	};
@@ -2386,11 +2397,12 @@ function COMP(name) {
 			}
 		}
 
+		this.setter2 && this.setter2.apply(this, arguments);
+
 		var selector = self.$input === true ? this.element : this.element.find(COM_DATA_BIND_SELECTOR);
 		var a = 'select-one';
 
 		value = self.formatter(value);
-
 		selector.each(function() {
 
 			var path = this.$component.path;

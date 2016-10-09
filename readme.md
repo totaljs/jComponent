@@ -451,6 +451,9 @@ COMPONENT('my-component-name', function() {
         instance.element.html(JSON.stringify(value));
     };
 
+    // This method is called when the component uses built-in `setter`
+    instance.setter2 = function(value, path, type) {
+    };
 
     instance.getter = function(value) {
         // The library executes this delegate when the `<input data-component-bind`,
@@ -462,6 +465,10 @@ COMPONENT('my-component-name', function() {
         // Sets a new value to the model according the binding path:
         instance.set(value);
     };
+
+    // This method is called when the component uses built-in `getter`
+    instance.getter2 = function(value, path, type) {
+    };    
 });
 ```
 
@@ -1304,6 +1311,20 @@ obj.name = 'Peter';
 obj = SINGLETON('name');
 console.log(obj);
 // --> { name: 'Peter' }
+
+// TRY(fn, [onErr])
+
+TRY(function() {
+    // safe scope
+});
+
+// OR
+
+TRY(function() {
+    // safe scope
+}, function(e) {
+    // unhandled exception
+});
 ```
 
 ## Device Width
