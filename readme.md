@@ -312,7 +312,7 @@ COMPONENT('my-component-name', function() {
 
     instance.path;
     // This property contains a binding path, it's read-only. The library
-    // according this path binds value between component and the scope / model.
+    // binds value between component and the scope / model according this path.
 
     instance.id;
     // This property contains the component identificator from 'data-component-id`
@@ -349,6 +349,9 @@ COMPONENT('my-component-name', function() {
     // instance.usage.convert('seconds')
     // instance.usage.convert('hours')
     // instance.usage.convert('minutes')
+    
+    instance.scope;
+    // The property contains data-component-scope element if exists.
 });
 ```
 
