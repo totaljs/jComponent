@@ -352,6 +352,9 @@ COMPONENT('my-component-name', function() {
     
     instance.scope;
     // The property contains data-component-scope element if exists.
+    
+    instance.pathscope;
+    // The property contains value of data-component-scope element if exists.
 });
 ```
 

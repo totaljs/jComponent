@@ -83,7 +83,8 @@ COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
 COM.defaults.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 COM.defaults.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
-COM.version = 'v5.4.0';
+COM.defaults.importcache = 'session';
+COM.version = 'v6.0.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -339,6 +340,7 @@ COM.compile = function(container) {
 					obj.setPath(p + '.' + obj.path);
 
 				obj.scope = scopes[i];
+				obj.pathscope = p;
 			}
 		}
 
@@ -471,32 +473,38 @@ COM.$inject = function() {
 		return;
 
 	$jc_async(arr, function(item, next) {
-		item.element.load($jc_url(item.url), function() {
+		var key = $jc_url(item.url);
+		AJAXCACHE('GET ' + key, null, function(response) {
+
+			key = '$import' + key;
+
+			if (MAN.cache[key])
+				response = MAN.removescripts(response);
+
+			// inject
+			item.element.html(response);
+			MAN.cache[key] = true;
 
 			if (item.path) {
 				var com = item.element.find(COM_ATTR);
 				com.each(function() {
 					var el = $(this);
 					$.each(this.attributes, function() {
-						if (!this.specified)
-							return;
-						el.attr(this.name, this.value.replace('$', item.path));
+						this.specified && el.attr(this.name, this.value.replace('$', item.path));
 					});
 				});
 			}
 
-			if (item.toggle.length && item.toggle[0])
-				MAN.toggle.push(item);
+			item.toggle.length && item.toggle[0] && MAN.toggle.push(item);
 
 			if (item.cb && !item.element.attr('data-component')) {
 				var cb = MAN.get(item.cb);
-				if (typeof(cb) === 'function')
-					cb(item.element);
+				typeof(cb) === 'function' && cb(item.element);
 			}
 
 			count++;
 			next();
-		});
+		}, COM.defaults.importcache);
 
 	}, function() {
 		MAN.clear('valid', 'dirty', 'broadcast', 'find');
@@ -572,9 +580,7 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 		scr.onload = function() {
 			MAN.others[url] = 2;
 			callback && callback();
-			if (!window.jQuery)
-				return;
-			setTimeout(COM.compile, 300);
+			window.jQuery && setTimeout(COM.compile, 300);
 		};
 
 		scr.src = url;
@@ -597,17 +603,30 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 		return window.jQuery ? true : false;
 	}, function() {
 		MAN.others[url] = 2;
+
 		if (insert) {
 			var id = 'data-component-imported="' + ((Math.random() * 100000) >> 0) + '"';
 			$(target).append('<div ' + id + '></div>');
 			target = $(target).find('> div[' + id + ']');
 		}
-		$(target).load($jc_url(url), function() {
-			COM.compile();
-			callback && callback();
-		});
-	});
 
+		key = $jc_url(url);
+		AJAXCACHE('GET ' + key, null, function(response) {
+
+			key = '$import' + key;
+			if (MAN.cache[key])
+				response = MAN.removescripts(response);
+
+			$(target).html(response);
+			MAN.cache[key] = true;
+
+			setTimeout(function() {
+				COM.compile();
+				callback && callback();
+			}, 10);
+
+		}, COM.defaults.importcache);
+	});
 	return COM;
 };
 
@@ -923,7 +942,7 @@ COM.AJAXCACHE = function(url, data, callback, expire, timeout, clear) {
 	var uri = url.substring(index).trim();
 
 	setTimeout(function() {
-		var value = clear ? undefined : MAN.cacherest(method, uri, data);
+		var value = clear ? undefined : MAN.cacherest(method, uri, data, undefined, expire);
 		if (value !== undefined) {
 			if (typeof(callback) === 'string')
 				MAN.remap(callback, value);
@@ -3016,6 +3035,7 @@ MAN.cacherest = function(method, url, params, value, expire) {
 
 	params = JSON.stringify(params);
 	var key = HASH(method + '#' + url.replace(/\//g, '') + params).toString();
+
 	return this.cachestorage(key, value, expire);
 };
 
@@ -3025,6 +3045,11 @@ MAN.cachestorage = function(key, value, expire) {
 
 	if (value !== undefined) {
 
+		if (expire === 'session') {
+			MAN.cache['$session' + key] = value;
+			return value;
+		}
+
 		if (typeof(expire) === 'string')
 			expire = expire.parseExpire();
 
@@ -3033,7 +3058,11 @@ MAN.cachestorage = function(key, value, expire) {
 		return value;
 	}
 
-	var item = this.storage[key];
+	var item = MAN.cache['$session' + key];
+	if (item)
+		return item;
+
+	item = this.storage[key];
 	if (item && item.expire > now)
 		return item.value;
 };
@@ -3061,6 +3090,14 @@ MAN.remap = function(path, value) {
 		COM.set(n, value[o]);
 	});
 	return this;
+};
+
+MAN.removescripts = function(str) {
+	return str.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, function(text) {
+		var index = text.indexOf('>');
+		var scr = text.substring(0, index + 1);
+		return scr === '<script>' || scr.indexOf('/javascript') !== -1 ? '' : text;
+	});
 };
 
 MAN.prepare = function(obj) {
