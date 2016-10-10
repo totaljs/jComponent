@@ -346,8 +346,7 @@ COM.compile = function(container) {
 
 		for (var i = 0, length = dep.length; i < length; i++) {
 			var d = dep[i].trim();
-			if (d)
-				obj.dependencies.push(d);
+			d && obj.dependencies.push(d);
 		}
 
 		// A reference to implementation
