@@ -1318,6 +1318,14 @@ obj = SINGLETON('name');
 console.log(obj);
 // --> { name: 'Peter' }
 
+// +v6.1.0
+var arr = SINGLETON('myarr', '[]');
+arr.push(1);
+arr.push(2);
+
+console.log(SINGLETON('myarr', '[]'));
+// [1, 2]
+
 
 // TRY(fn, [onErr])
 // Creates safe scope

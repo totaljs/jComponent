@@ -41,8 +41,8 @@ if (Object.freeze) {
 	Object.freeze(EMPTYARRAY);
 }
 
-window.SINGLETON = function(name) {
-	return MAN.singletons[name] || (MAN.singletons[name] = {});
+window.SINGLETON = function(name, def) {
+	return MAN.singletons[name] || (MAN.singletons[name] = (new Function('return ' + (def || '{}')))());
 };
 
 // Because of file size
@@ -84,7 +84,7 @@ COM.defaults.localstorage = true;
 COM.defaults.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 COM.defaults.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
 COM.defaults.importcache = 'session';
-COM.version = 'v6.0.0';
+COM.version = 'v6.1.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
