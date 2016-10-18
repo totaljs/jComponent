@@ -226,6 +226,11 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
    +v3.9.3 - sets the current component as singleton. Singleton can be set manually in
    the component instance like this: `instance.singleton()`.
 -->
+
+<element data-component-released="true" />
+<!--
+   +v7.0.0 - sets state of this current component as released.
+-->
 ```
 
 ## Special HTML attributes
@@ -458,6 +463,7 @@ COMPONENT('my-component-name', function() {
     };
 
     // This method is called when the component uses built-in `setter`
+    // +v6.0.0
     instance.setter2 = function(value, path, type) {
     };
 
@@ -473,8 +479,16 @@ COMPONENT('my-component-name', function() {
     };
 
     // This method is called when the component uses built-in `getter`
+    // +v6.0.0
     instance.getter2 = function(value, path, type) {
     };    
+
+    // This method is called when the component has modified `released` state
+    // +v6.0.0
+    instance.released = function(is) {
+        // is {Boolean} == Is released?
+    };
+
 });
 ```
 
@@ -689,6 +703,15 @@ COMPONENT('my-component-name', function() {
         // type === 3 : by default
     });
     // This delegate watches all changes according the model.
+    
+    
+    instance.release(true|false);
+    // This method releases this component and all nested components.
+    // +v7.0.0
+
+    instance.release();
+    // This method returns the current state: Is this component released or no?
+    // +v7.0.0
 });
 ```
 

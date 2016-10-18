@@ -5,6 +5,7 @@ if (!window.MAN)
 var COM_DATA_BIND_SELECTOR = 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
 var COM_ATTR = '[data-component]';
 var COM_A = 'data-component-';
+var COM_R = 'data-component-released';
 var COM_ATTR_U = COM_A + 'url';
 var COM_ATTR_URL = '[' + COM_ATTR_U + ']';
 var COM_ATTR_P = COM_A + 'path';
@@ -84,7 +85,7 @@ COM.defaults.localstorage = true;
 COM.defaults.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 COM.defaults.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
 COM.defaults.importcache = 'session';
-COM.version = 'v6.1.0';
+COM.version = 'v7.0.0';
 COM.$localstorage = 'jcomponent';
 COM.$version = '';
 COM.$language = '';
@@ -358,6 +359,9 @@ COM.compile = function(container) {
 		if (template)
 			obj.template = template;
 
+		if (el.attr(COM_R) === 'true')
+			obj.$released = true;
+
 		if (el.attr(COM_ATTR_U)) {
 			window.console && window.console.warn('You cannot use [data-component-url] for the component: ' + obj.name + '[' + obj.path + ']. Instead of it you must use data-component-template.');
 			return;
@@ -367,8 +371,7 @@ COM.compile = function(container) {
 			var fn = function(data) {
 				if (obj.prerender)
 					data = prerender(data);
-				if (typeof(obj.make) === 'function')
-					obj.make(data);
+				typeof(obj.make) === 'function' && obj.make(data);
 				$jc_init(el, obj);
 			};
 
@@ -410,10 +413,8 @@ COM.compile = function(container) {
 			return;
 		}
 
-		if (obj.make) {
-			if (obj.make())
-				skip = true;
-		}
+		if (obj.make && obj.make())
+			skip = true;
 
 		$jc_init(el, obj);
 	});
@@ -1007,11 +1008,8 @@ function $jc_url(url) {
 	var index = url.indexOf('?');
 	var builder = [];
 
-	if (COM.$version)
-		builder.push('version=' + encodeURIComponent(COM.$version));
-
-	if (COM.$language)
-		builder.push('language=' + encodeURIComponent(COM.$language));
+	COM.$version && builder.push('version=' + encodeURIComponent(COM.$version));
+	COM.$language && builder.push('language=' + encodeURIComponent(COM.$language));
 
 	if (!builder.length)
 		return url;
@@ -1042,8 +1040,7 @@ function $jc_ready() {
 			COM.emit('ready');
 		}
 
-		if (MAN.timeoutcleaner)
-			clearTimeout(MAN.timeoutcleaner);
+		MAN.timeoutcleaner && clearTimeout(MAN.timeoutcleaner);
 
 		MAN.timeoutcleaner = setTimeout(function() {
 			MAN.cleaner();
@@ -1106,11 +1103,7 @@ function $jc_ready() {
 
 COM.watch = function(path, fn, init) {
 	COM.on('watch', path, fn);
-
-	if (!init)
-		return COM;
-
-	fn.call(COM, path, MAN.get(path), 0);
+	init && fn.call(COM, path, MAN.get(path), 0);
 	return COM;
 };
 
@@ -1134,10 +1127,7 @@ COM.on = function(name, path, fn, init) {
 		MAN.events[path][name] = [];
 
 	MAN.events[path][name].push({ fn: fn, id: this._id, path: fixed });
-
-	if (!init)
-		return COM;
-	fn.call(COM, path, MAN.get(path), true);
+	init && fn.call(COM, path, MAN.get(path), true);
 	return COM;
 };
 
@@ -1158,6 +1148,7 @@ function $jc_init(el, obj) {
 			this.$component = obj;
 	});
 
+	obj.released && obj.released(obj.$released);
 	MAN.components.push(obj);
 	MAN.init.push(obj);
 	COM.compile(el);
@@ -1401,8 +1392,7 @@ COM.dirty = function(path, value, onlyComponent, skipEmitState) {
 	MAN.cache[key] = dirty;
 
 	// For double hitting component.state() --> look into COM.invalid()
-	if (!skipEmitState)
-		COM.state(arr, 1, 2);
+	!skipEmitState && COM.state(arr, 1, 2);
 
 	return dirty;
 };
@@ -1824,14 +1814,14 @@ COM.remove = function(path) {
 
 	if (path instanceof jQuery) {
 		path.find(COM_ATTR).attr(COM_ATTR_R, 'true').each(function() {
-			var com = $(this).data('component');
+			var com = $(this).data(COM_ATTR);
 			if (com)
 				com.$removed = true;
 		});
 
 		path.attr(COM_ATTR_T) && path.attr(COM_ATTR_R, 'true');
 
-		var com = path.data('component');
+		var com = path.data(COM_ATTR);
 		if (com)
 			com.$removed = true;
 
@@ -2360,6 +2350,7 @@ function COMP(name) {
 	this.$path;
 	this.trim = true;
 	this.middleware = ''; // internal
+	this.$released = false;
 
 	this.name = name;
 	this.path;
@@ -2375,6 +2366,32 @@ function COMP(name) {
 	this.state;
 	this.dependencies;
 	this.validate;
+	this.released;
+
+	this.release = function(value) {
+
+		var self = this;
+
+		if (value === undefined)
+			return self.$released;
+
+		self.element.find(COM_ATTR).each(function() {
+			var el = $(this);
+			el.attr(COM_R, value ? 'true' : 'false');
+			var com = el.data(COM_ATTR);
+			if (com && com.$released !== value) {
+				com.$released = value;
+				com.released && com.released(value, self);
+			}
+		});
+
+		if (self.$released !== value) {
+			self.$released = value;
+			self.released && this.released(value, self);
+		}
+
+		return value;
+	};
 
 	this.getter = function(value, type, dirty, older, skip) {
 
