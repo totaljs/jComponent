@@ -4777,6 +4777,86 @@ Number.prototype.padRight = function(t, e) {
 	return this.toString().padRight(t, e || '0');
 };
 
+Number.prototype.add = Number.prototype.inc = function(value, decimals) {
+
+	if (value == null)
+		return this;
+
+	if (typeof(value) === 'number')
+		return this + value;
+
+	var first = value.charCodeAt(0);
+	var is = false;
+
+	if (first < 48 || first > 57) {
+		is = true;
+		value = value.substring(1);
+	}
+
+	var length = value.length;
+	var isPercentage = false;
+	var num;
+
+	if (value[length - 1] === '%') {
+		value = value.substring(0, length - 1);
+		isPercentage = true;
+
+		if (is) {
+			var val = value.parseFloat();
+			switch (first) {
+				case 42:
+					num = this * ((this / 100) * val);
+					break;
+				case 43:
+					num = this + ((this / 100) * val);
+					break;
+				case 45:
+					num = this - ((this / 100) * val);
+					break;
+				case 47:
+					num = this / ((this / 100) * val);
+					break;
+			}
+			return decimals !== undefined ? num.floor(decimals) : num;
+		} else {
+			num = (this / 100) * value.parseFloat();
+			return decimals !== undefined ? num.floor(decimals) : num;
+		}
+
+	} else
+		num = value.parseFloat();
+
+	switch (first) {
+		case 42:
+			num = this * num;
+			break;
+		case 43:
+			num = this + num;
+			break;
+		case 45:
+			num = this - num;
+			break;
+		case 47:
+			num = this / num;
+			break;
+		case 47:
+			num = this / num;
+			break;
+		default:
+			num = this;
+			break;
+	}
+
+	if (decimals !== undefined)
+		return num.floor(decimals);
+
+	return num;
+};
+
+Number.prototype.floor = function(decimals) {
+	return Math.floor(this * Math.pow(10, decimals)) / Math.pow(10, decimals);
+};
+
 String.prototype.format = function() {
 	var arg = arguments;
 	return this.replace(/\{\d+\}/g, function(text) {
@@ -4879,6 +4959,11 @@ String.prototype.parseDate = function() {
 	}
 
 	return new Date(parsed[0], parsed[1] - 1, parsed[2], parsed[3], parsed[4], parsed[5]);
+};
+
+Array.prototype.last = function(def) {
+	var item = this[this.length - 1];
+	return item === undefined ? def : item;
 };
 
 Array.prototype.attr = function(name, value) {

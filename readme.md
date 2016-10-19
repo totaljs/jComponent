@@ -1724,6 +1724,13 @@ var dateA = new Date().add('5 minutes'); // adds 5 minutes to the current date/t
 var dateB = new Date().add('-1 hour'); // substracts 1 hour from the current date/time
 // supports days, months, years, hours, minutes, seconds
 
+// Number.prototype.inc(value);
+var number = 10;
+console.log(number.inc('10%'));  // --> 1
+console.log(number.inc('+10%')); // --> 11
+console.log(number.inc('+10')); //  --> 20
+console.log(number.inc('-10')); //  --> 0
+
 // Number.prototype.padLeft(max, char);
 // Number.prototype.padRight(max, char);
 // Number.prototype.format(decimals, [thousand_delimiter], [decimal_delimiter])
@@ -1796,6 +1803,12 @@ console.log(arr1.compare('id', arr2));
 console.log(arr1.compare('id', arr2, ['age']));
 // Output: { change: Boolean, redraw: Boolean, append: [], remove: [], update: [] }
 // Arrays can contain: { oldIndex: Number, newIndex: Number, oldItem: Object, newItem: Object }
+
+
+var arr = [0, 3, 4, 5, 6];
+console.log(arr.last()); // --> 6
+console.log([].last()); // --> undefined
+console.log([].last('NOTHING')); // --> "NOTHING"
 
 
 // Array.prototype.attr([name], value)
