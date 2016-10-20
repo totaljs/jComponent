@@ -1829,6 +1829,10 @@ setTimeout2('refresh', function() {
 setTimeout2('refresh', function() {
     console.log('3000');
 }, 3000);
+
+
+// clearTimeout2(key)
+clearTimeout2('refresh');
 ```
 
 ### Arrow function as string

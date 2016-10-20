@@ -27,6 +27,11 @@ window.setTimeout2 = function(name, fn, timeout) {
 	return MAN.others[key] = setTimeout(fn, timeout);
 };
 
+window.clearTimeout2 = function(name) {
+	var key = ':' + name;
+	MAN.others[key] && clearTimeout(MAN.others[key]);
+}
+
 window.TRY = function(fn, err) {
 	try {
 		fn();
