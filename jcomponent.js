@@ -4336,6 +4336,42 @@ Array.prototype.async = function(context, callback) {
 	return this;
 };
 
+Array.prototype.ticks = function(max, beg) {
+
+	var length = this.length;
+	if (length < max)
+		return this;
+
+	var each = Math.round(length / max);
+	var arr = [];
+	var count = 0;
+	var sum = 0;
+
+	if (beg) {
+		for (var i = 0; i < length; i++) {
+			if (sum++ % each === 0) {
+				count++;
+				arr.push(this[i]);
+			}
+
+			if (count === max)
+				break;
+		}
+	} else {
+		for (var i = length - 1; i > -1; i--) {
+			if (sum++ % each === 0) {
+				count++;
+				arr.push(this[i]);
+			}
+
+			if (count === max)
+				break;
+		}
+		arr.reverse();
+	}
+	return arr;
+};
+
 Array.prototype.take = function(count) {
 	var arr = [];
 	var self = this;

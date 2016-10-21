@@ -1805,10 +1805,20 @@ console.log(arr1.compare('id', arr2, ['age']));
 // Arrays can contain: { oldIndex: Number, newIndex: Number, oldItem: Object, newItem: Object }
 
 
+// Array.prototype.last([def])
+// +v7.0.0
 var arr = [0, 3, 4, 5, 6];
 console.log(arr.last()); // --> 6
 console.log([].last()); // --> undefined
 console.log([].last('NOTHING')); // --> "NOTHING"
+
+
+// Array.prototype.ticks(max, [begin])
+// +v7.0.0
+// The method can resize the large array to required size
+var arr = [1, 2, 3, 4, 5, 6 ];
+a.ticks(3); // [2, 4, 6]
+a.ticks(3, true); // [1, 3, 5]
 
 
 // Array.prototype.attr([name], value)
