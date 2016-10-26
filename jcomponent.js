@@ -264,7 +264,7 @@ COM.compile = function(container) {
 		var component = MAN.register[name || ''];
 		if (!component) {
 
-			var x = el.attr(COM_A + 'import');
+			var x = COMPATTR(el, 'import');
 			if (!x) {
 				if (!MAN.initializers['$NE_' + name])
 					MAN.initializers['$NE_' + name] = true;
