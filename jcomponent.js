@@ -2,20 +2,12 @@ var MAN = new CMAN();
 if (!window.MAN)
 	window.MAN = MAN;
 
-var COM_DATA_BIND_SELECTOR = 'input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
-var COM_ATTR = '[data-component]';
-var COM_A = 'data-component-';
-var COM_R = 'data-component-released';
-var COM_ATTR_U = COM_A + 'url';
-var COM_ATTR_URL = '[' + COM_ATTR_U + ']';
-var COM_ATTR_P = COM_A + 'path';
-var COM_ATTR_T = COM_A + 'template';
-var COM_ATTR_I = COM_A + 'init';
-var COM_ATTR_V = COM_A + 'value';
-var COM_ATTR_R = COM_A + 'removed';
-var COM_ATTR_C = COM_A + 'class';
-var COM_ATTR_S = COM_A + 'scope';
-var COM_DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
+var COMPATTR_B = 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind],input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
+var COMPATTR_C = '[data-jc],[data-component]';
+var COMPATTR_U = '[data-jc-url],[data-component-url]';
+var COMPATTR_S = '[data-jc-scope],[data-component-scope]';
+var COMPATTR_R = 'data-jc-removed';
+var DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
 
 window.isMOBILE = ('ontouchstart' in window || navigator.maxTouchPoints) ? true : false;
 window.isROBOT = navigator.userAgent ? (/search|agent|bot|crawler|spider/i).test(navigator.userAgent) : true;
@@ -90,8 +82,8 @@ COM.defaults.localstorage = true;
 COM.defaults.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 COM.defaults.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
 COM.defaults.importcache = 'session';
-COM.version = 'v7.0.0';
-COM.$localstorage = 'jcomponent';
+COM.version = 'v8.0.0';
+COM.$localstorage = 'jc';
 COM.$version = '';
 COM.$language = '';
 COM.$formatter = [];
@@ -241,7 +233,7 @@ COM.compile = function(container) {
 		return COM;
 	}
 
-	var els = container ? container.find(COM_ATTR) : $(COM_ATTR);
+	var els = container ? container.find(COMPATTR_C) : $(COMPATTR_C);
 	var skip = false;
 
 	if (!els.length && !container) {
@@ -249,7 +241,7 @@ COM.compile = function(container) {
 		return;
 	}
 
-	var scopes = $('[' + COM_ATTR_S + ']');
+	var scopes = $(COMPATTR_S);
 	var scopes_length = scopes.length;
 
 	els.each(function() {
@@ -258,13 +250,13 @@ COM.compile = function(container) {
 			return;
 
 		var el = $(this);
-		var name = el.attr('data-component');
+		var name = COMPATTR(el);
 
-		if (el.data(COM_ATTR) || el.attr(COM_ATTR_R))
+		if (el.data(COMPATTR_C) || el.attr(COMPATTR_R))
 			return;
 
 		if (MAN.initializers['$ST_' + name]) {
-			el.attr(COM_ATTR_R, true);
+			el.attr(COMPATTR_R, true);
 			el.remove();
 			return;
 		}
@@ -305,15 +297,15 @@ COM.compile = function(container) {
 			delete obj.init;
 		}
 
-		obj.$init = el.attr(COM_ATTR_I) || null;
-		obj.type = el.attr('data-component-type') || '';
-		obj.id = el.attr('data-component-id') || obj._id;
+		obj.$init = COMPATTR(el, 'init') || null;
+		obj.type = COMPATTR(el, 'type') || '';
+		obj.id = COMPATTR(el, 'id') || obj._id;
 		obj.dependencies = [];
 
 		if (!obj.$noscope)
-			obj.$noscope = el.attr('data-component-noscope') === 'true';
+			obj.$noscope = COMPATTR(el, 'noscope') === 'true';
 
-		if (el.attr('data-component-singleton') === 'true')
+		if (COMPATTR(el, 'singleton') === 'true')
 			MAN.initializers['$ST_' + name] = true;
 
 		var code = obj.path ? obj.path.charCodeAt(0) : 0;
@@ -323,16 +315,15 @@ COM.compile = function(container) {
 				if (!$.contains(scopes[i], this))
 					continue;
 
-				var p = scopes[i].getAttribute(COM_ATTR_S);
-
+				var p = COMPATTR(scopes[i], 'scope');
 				if (!p || p === '?') {
 					p = 'scope' + (Math.floor(Math.random() * 100000) + 1000);
-					scopes[i].setAttribute(COM_ATTR_S, p);
+					scopes[i].setAttribute('data-jc-scope', p);
 				}
 
 				if (!scopes[i].$processed) {
 					scopes[i].$processed = true;
-					var tmp = scopes[i].getAttribute(COM_ATTR_V);
+					var tmp = COMPATTR(scopes[i], 'value');
 					if (tmp) {
 						var fn = new Function('return ' + tmp);
 						MAN.defaults['#' + HASH(p)] = fn; // store by path (DEFAULT() --> can reset scope object)
@@ -350,7 +341,7 @@ COM.compile = function(container) {
 			}
 		}
 
-		var dep = (el.attr('dependencies') || '').split(',');
+		var dep = (COMPATTR(el, 'dependencies') || '').split(',');
 
 		for (var i = 0, length = dep.length; i < length; i++) {
 			var d = dep[i].trim();
@@ -358,17 +349,17 @@ COM.compile = function(container) {
 		}
 
 		// A reference to implementation
-		el.data(COM_ATTR, obj);
+		el.data(COMPATTR_C, obj);
 
-		var template = el.attr(COM_ATTR_T) || obj.template;
+		var template = COMPATTR(el, 'template') || obj.template;
 		if (template)
 			obj.template = template;
 
-		if (el.attr(COM_R) === 'true')
+		if (COMPATTR(el, 'released') === 'true')
 			obj.$released = true;
 
-		if (el.attr(COM_ATTR_U)) {
-			window.console && window.console.warn('You cannot use [data-component-url] for the component: ' + obj.name + '[' + obj.path + ']. Instead of it you must use data-component-template.');
+		if (COMPATTR(el, 'url')) {
+			window.console && window.console.warn('You cannot use [data-jc-url] for the component: ' + obj.name + '[' + obj.path + ']. Instead of it you must use data-jc-template.');
 			return;
 		}
 
@@ -427,10 +418,7 @@ COM.compile = function(container) {
 	if (skip)
 		return COM.compile();
 
-	if (container !== undefined)
-		return MAN.next();
-
-	if (!MAN.toggle.length)
+	if (container !== undefined || !MAN.toggle.length)
 		return MAN.next();
 
 	$jc_async(MAN.toggle, function(item, next) {
@@ -444,18 +432,18 @@ COM.compile = function(container) {
 
 COM.$inject = function() {
 
-	var els = $(COM_ATTR_URL);
+	var els = $(COMPATTR_U);
 	var arr = [];
 	var count = 0;
 
 	els.each(function() {
 		var el = $(this);
-		if (el.data(COM_ATTR_URL))
+		if (el.data(COMPATTR_U))
 			return;
 
-		el.data(COM_ATTR_URL, '1');
+		el.data(COMPATTR_U, '1');
 
-		var url = el.attr(COM_ATTR_U);
+		var url = COMPATTR(el, 'url');
 
 		// Unique
 		var once = url.substring(0, 5).toLowerCase() === 'once ';
@@ -472,7 +460,7 @@ COM.$inject = function() {
 			MAN.others[url] = 2;
 		}
 
-		arr.push({ element: el, cb: el.attr(COM_ATTR_I), path: el.attr(COM_ATTR_P), url: url, toggle: (el.attr(COM_ATTR_C) || '').split(' ') });
+		arr.push({ element: el, cb: COMPATTR(el, 'init'), path: COMPATTR(el, 'path'), url: url, toggle: (COMPATTR(el, 'class') || '').split(' ') });
 	});
 
 	if (!arr.length)
@@ -492,7 +480,7 @@ COM.$inject = function() {
 			MAN.cache[key] = true;
 
 			if (item.path) {
-				var com = item.element.find(COM_ATTR);
+				var com = item.element.find(COMPATTR_C);
 				com.each(function() {
 					var el = $(this);
 					$.each(this.attributes, function() {
@@ -503,7 +491,7 @@ COM.$inject = function() {
 
 			item.toggle.length && item.toggle[0] && MAN.toggle.push(item);
 
-			if (item.cb && !item.element.attr('data-component')) {
+			if (item.cb && !COMPATTR(item.element)) {
 				var cb = MAN.get(item.cb);
 				typeof(cb) === 'function' && cb(item.element);
 			}
@@ -611,7 +599,7 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 		MAN.others[url] = 2;
 
 		if (insert) {
-			var id = 'data-component-imported="' + ((Math.random() * 100000) >> 0) + '"';
+			var id = 'data-jc-imported="' + ((Math.random() * 100000) >> 0) + '"';
 			$(target).append('<div ' + id + '></div>');
 			target = $(target).find('> div[' + id + ']');
 		}
@@ -1052,7 +1040,7 @@ function $jc_ready() {
 		}, 1000);
 
 		MAN.isCompiling = false;
-		$('[' + COM_ATTR_S + ']').each(function() {
+		$(COMPATTR_S).each(function() {
 
 			if (this.$ready)
 				return;
@@ -1061,7 +1049,7 @@ function $jc_ready() {
 			this.$ready = true;
 
 			// Applies classes
-			var cls = scope.attr(COM_ATTR_C);
+			var cls = COMPATTR(scope, 'class');
 			if (cls) {
 				(function(cls) {
 					cls = cls.split(' ');
@@ -1072,26 +1060,25 @@ function $jc_ready() {
 				})(cls);
 			}
 
-			var controller = this.getAttribute('data-component-controller');
+			var controller = COMPATTR(this, 'controller');
 			if (controller) {
 				var ctrl = CONTROLLER(controller);
-				if (ctrl)
-					ctrl.$init(undefined, this.getAttribute(COM_ATTR_S), scope);
+				ctrl && ctrl.$init(undefined, COMPATTR(this, 'scope'), scope);
 			}
 
-			var path = this.getAttribute(COM_ATTR_I);
+			var path = COMPATTR(this, 'init');
 			if (!path)
 				return;
 
 			if (MAN.isOperation(path)) {
 				var op = OPERATION(path);
 				if (op)
-					op.call(scope, this.getAttribute(COM_ATTR_S), scope);
+					op.call(scope, COMPATTR(this, 'scope'), scope);
 				else if (window.console)
 					window.console.warn('The operation ' + path + ' not found.');
 			} else {
 				var fn = GET(path);
-				typeof(fn) === 'function' && fn.call(scope, this.getAttribute(COM_ATTR_S), scope);
+				typeof(fn) === 'function' && fn.call(scope, COMPATTR(this, 'scope'), scope);
 			}
 		});
 
@@ -1146,7 +1133,7 @@ function $jc_init(el, obj) {
 		obj.$input = true;
 		collection = obj.element;
 	} else
-		collection = el.find(COM_DATA_BIND_SELECTOR);
+		collection = el.find(COMPATTR_B);
 
 	collection.each(function() {
 		if (!this.$component)
@@ -1484,7 +1471,7 @@ COM.update = function(path, reset, type) {
 					}
 				}
 
-				component.element.find(COM_DATA_BIND_SELECTOR).each(function() {
+				component.element.find(COMPATTR_B).each(function() {
 					delete this.$value;
 					delete this.$value2;
 				});
@@ -1574,98 +1561,6 @@ COM.extend = function(path, value, type) {
 		val = {};
 	COM.set(path, $.extend(val, value), type);
 	return COM;
-};
-
-COM.nested = function(element, selector, type, value) {
-
-	element = $(element);
-
-	if (selector === '*') {
-		selector = null;
-	} else if (!(selector instanceof Array)) {
-		selector = selector.split(',');
-		var nested = [];
-		for (var i = 0, length = selector.length; i < length; i++) {
-			var item = selector[i].trim();
-			item && nested.push(item);
-		}
-
-		if (nested.length)
-			selector = nested;
-		else
-			selector = null;
-	}
-
-	var isEach = typeof(type) === 'function';
-
-	if (!isEach)
-		switch (type) {
-			case 'path':
-			case 'template':
-			case 'dependencies':
-			case 'class':
-			case 'url':
-			case 'type':
-			case 'init':
-			case 'bind':
-			case 'keypress':
-			case 'keypress-delay':
-			case 'keypress-only':
-				type = 'data-component-' + type;
-				break;
-			case 'delay':
-			case 'only':
-				type = 'data-component-keypress-' + type;
-				break;
-		}
-
-	var replacer = function(current, value) {
-		if (current && current.indexOf('?') !== -1)
-			return current.replace('?', value);
-		return value;
-	};
-
-	if (!selector) {
-		element.find(COM_ATTR).each(function() {
-			var el = $(this);
-			var com = el.component();
-			if (isEach)
-				return type(el, com);
-			el.attr(type, type === COM_ATTR_P ? replacer(el.attr(type), value) : value);
-			com && type === COM_ATTR_P && com.setPath(replacer(com.path, value));
-		});
-
-		return this;
-	}
-
-	element.find(COM_ATTR).each(function() {
-		var el = $(this);
-		var id = el.attr(COM_A + 'id');
-		var pat = el.attr(COM_ATTR_P);
-		var name = el.attr('data-component');
-		for (var i = 0, length = selector.length; i < length; i++) {
-			var item = selector[i];
-			var is = false;
-			if (item.charCodeAt(0) === 46)
-				is = item.substring(1) === pat;
-			else if (item.charCodeAt(0) === 35)
-				is = item.substring(1) === id;
-			else
-				is = item === name;
-
-			if (!is)
-				continue;
-
-			var com = el.component();
-			if (isEach)
-				return type(el, com);
-
-			el.attr(type, type === COM_ATTR_P ? replacer(el.attr(type), value) : value);
-			com && type === COM_ATTR_P && com.setPath(replacer(com.path, value));
-		}
-	});
-
-	return self;
 };
 
 COM.rewrite = function(path, val) {
@@ -1762,7 +1657,7 @@ COM.set = function(path, val, type) {
 					}
 				}
 
-				component.element.find(COM_DATA_BIND_SELECTOR).each(function() {
+				component.element.find(COMPATTR_B).each(function() {
 					delete this.$value;
 					delete this.$value2;
 				});
@@ -1818,15 +1713,15 @@ COM.get = function(path, scope) {
 COM.remove = function(path) {
 
 	if (path instanceof jQuery) {
-		path.find(COM_ATTR).attr(COM_ATTR_R, 'true').each(function() {
-			var com = $(this).data(COM_ATTR);
+		path.find(COMPATTR_C).attr(COMPATTR_R, 'true').each(function() {
+			var com = $(this).data(COMPATTR_C);
 			if (com)
 				com.$removed = true;
 		});
 
-		path.attr(COM_ATTR_T) && path.attr(COM_ATTR_R, 'true');
+		COMPATTR(path, 'template') && path.attr(COMPATTR_R, 'true');
 
-		var com = path.data(COM_ATTR);
+		var com = path.data(COMPATTR_C);
 		if (com)
 			com.$removed = true;
 
@@ -2022,7 +1917,7 @@ COM.default = function(path, timeout, onlyComponent, reset) {
 		if (!reset)
 			return;
 
-		obj.element.find(COM_DATA_BIND_SELECTOR).each(function() {
+		obj.element.find(COMPATTR_B).each(function() {
 			delete this.$value;
 			delete this.$value2;
 		});
@@ -2073,7 +1968,7 @@ COM.reset = function(path, timeout, onlyComponent) {
 		if (onlyComponent && onlyComponent._id !== obj._id)
 			return;
 
-		obj.element.find(COM_DATA_BIND_SELECTOR).each(function() {
+		obj.element.find(COMPATTR_B).each(function() {
 			delete this.$value;
 			delete this.$value2;
 		});
@@ -2380,10 +2275,10 @@ function COMP(name) {
 		if (value === undefined)
 			return self.$released;
 
-		self.element.find(COM_ATTR).each(function() {
+		self.element.find(COMPATTR_C).each(function() {
 			var el = $(this);
-			el.attr(COM_R, value ? 'true' : 'false');
-			var com = el.data(COM_ATTR);
+			el.attr('data-jc-released', value ? 'true' : 'false');
+			var com = el.data(COMPATTR_C);
 			if (com && com.$released !== value) {
 				com.$released = value;
 				com.released && com.released(value, self);
@@ -2439,7 +2334,7 @@ function COMP(name) {
 
 		this.setter2 && this.setter2.apply(this, arguments);
 
-		var selector = self.$input === true ? this.element : this.element.find(COM_DATA_BIND_SELECTOR);
+		var selector = self.$input === true ? this.element : this.element.find(COMPATTR_B);
 		var a = 'select-one';
 
 		value = self.formatter(value);
@@ -2476,6 +2371,16 @@ function COMP(name) {
 		});
 	};
 }
+
+COMP.prototype.nested = function() {
+	var arr = [];
+	this.find(COMPATTR_C).each(function() {
+		var el = $(this);
+		var com = el.data(COMPATTR_C);
+		com && !el.attr(COMPATTR_R) && arr.push(com);
+	});
+	return arr;
+};
 
 COMP.prototype.$interaction = function(type) {
 	// type === 0 : init
@@ -2527,11 +2432,6 @@ COMP.prototype.update = COMP.prototype.refresh = function(notify) {
 		self.$interaction(1);
 	}
 	return self;
-};
-
-COMP.prototype.nested = function(selector, type, value) {
-	COM.nested(this.element, selector, type, value);
-	return this;
 };
 
 COMP.prototype.toggle = function(cls, visible, timeout) {
@@ -2753,9 +2653,7 @@ COMP.prototype.style = function(value) {
 };
 
 COMP.prototype.change = function(value) {
-	if (value === undefined)
-		value = true;
-	COM.change(this.path, value, this);
+	COM.change(this.path, value === undefined ? true : value, this);
 	return this;
 };
 
@@ -2801,9 +2699,9 @@ COMP.prototype.default = function(reset) {
 
 COMP.prototype.remove = function(noClear) {
 
-	this.element.removeData(COM_ATTR);
-	this.element.find(COM_ATTR).attr(COM_ATTR_R, 'true');
-	this.element.attr(COM_ATTR_R, 'true');
+	this.element.removeData(COMPATTR_C);
+	this.element.find(COMPATTR_C).attr(COMPATTR_R, 'true');
+	this.element.attr(COMPATTR_R, 'true');
 
 	!noClear && MAN.clear();
 
@@ -2991,7 +2889,7 @@ window.COMPONENT = function(type, declaration) {
 		var obj = new COMP(type);
 		obj.global = shared;
 		obj.element = el;
-		obj.setPath(el.attr(COM_ATTR_P) || obj._id, true);
+		obj.setPath(COMPATTR(el, 'path') || obj._id, true);
 		declaration.call(obj);
 		return obj;
 	};
@@ -3141,7 +3039,7 @@ MAN.prepare = function(obj) {
 			obj.$prepared = true;
 			obj.$ready = true;
 
-			tmp = obj.attr(COM_ATTR_V);
+			tmp = COMPATTR(obj, 'value');
 			if (tmp) {
 				if (!MAN.defaults[tmp])
 					MAN.defaults[tmp] = new Function('return ' + tmp);
@@ -3189,7 +3087,7 @@ MAN.prepare = function(obj) {
 	el.trigger('component');
 	el.off('component');
 
-	var cls = el.attr(COM_ATTR_C);
+	var cls = COMPATTR(el, 'class');
 
 	cls && (function(cls) {
 		setTimeout(function() {
@@ -3462,7 +3360,7 @@ MAN.cleaner = function() {
 			continue;
 
 		if (component.element && component.element.closest(document.documentElement).length) {
-			if (!component.attr(COM_ATTR_R)) {
+			if (!component.attr(COMPATTR_R)) {
 				if (component.$parser && !component.$parser.length)
 					delete component.$parser;
 				if (component.$formatter && !component.$formatter.length)
@@ -3555,7 +3453,7 @@ COMPONENT('', function() {
 			self.element.html(value);
 		};
 	} else {
-		var a = 'data-component-bind';
+		var a = 'data-jc-bind';
 		if (!self.element.attr(a))
 			self.element.attr(a, '1');
 		if (self.element.attr('required')) {
@@ -3780,8 +3678,8 @@ window.BROADCAST = function(selector, name, caller) {
 
 		var components = [];
 
-		selector.find(COM_ATTR).each(function() {
-			var com = $(this).data(COM_ATTR);
+		selector.find(COMPATTR_C).each(function() {
+			var com = $(this).data(COMPATTR_C);
 			com && components.push(com);
 		});
 
@@ -4061,14 +3959,14 @@ WAIT(function() {
 	}, 2000);
 
 	$.fn.component = function() {
-		return this.data(COM_ATTR);
+		return this.data(COMPATTR_C);
 	};
 
 	$.fn.components = function(fn) {
-		var all = this.find(COM_ATTR);
+		var all = this.find(COMPATTR_C);
 		var output;
 		all.each(function(index) {
-			var com = $(this).data(COM_ATTR);
+			var com = $(this).data(COMPATTR_C);
 			if (com && com.$ready && !com.$removed) {
 				if (fn)
 					return fn.call(com, index);
@@ -4093,7 +3991,7 @@ WAIT(function() {
 		$(window).on('orientationchange', $MEDIAQUERY);
 		$MEDIAQUERY();
 
-		$(document).on('input change keypress keydown blur', COM_DATA_BIND_SELECTOR, function(e) {
+		$(document).on('input change keypress keydown blur', COMPATTR_B, function(e) {
 
 			var self = this;
 
@@ -4153,10 +4051,10 @@ WAIT(function() {
 			}
 
 			if (self.$delay === undefined)
-				self.$delay = parseInt(self.getAttribute('data-component-keypress-delay') || '0');
+				self.$delay = parseInt(COMPATTR(self, 'keypress-delay') || '0');
 
 			if (self.$only === undefined)
-				self.$only = self.getAttribute('data-component-keypress-only') === 'true';
+				self.$only = COMPATTR(self, 'keypress-only') === 'true';
 
 			if (self.$only && (e.type === 'focusout' || e.type === 'change'))
 				return;
@@ -4176,7 +4074,7 @@ WAIT(function() {
 			}
 
 			if (self.$nokeypress === undefined) {
-				var v = self.getAttribute('data-component-keypress');
+				var v = COMPATTR(self, 'keypress');
 				if (v)
 					self.$nokeypress = v === 'false';
 				else
@@ -4459,10 +4357,10 @@ String.prototype.removeDiacritics = function() {
 		var code = c.charCodeAt(0);
 		var isUpper = false;
 
-		var r = COM_DIACRITICS[code];
+		var r = DIACRITICS[code];
 		if (r === undefined) {
 			code = c.toLowerCase().charCodeAt(0);
-			r = COM_DIACRITICS[code];
+			r = DIACRITICS[code];
 			isUpper = true;
 		}
 
@@ -5248,6 +5146,11 @@ window.MEDIAQUERY = function(query, element, fn) {
 	return obj.id;
 }
 
+function COMPATTR(el, name) {
+	name = name ? '-' + name : '';
+	return el.getAttribute ? el.getAttribute('data-jc' + name) || el.getAttribute('data-component' + name) : el.attr('data-jc' + name) || el.attr('data-component' + name);
+}
+
 function $MEDIAQUERY() {
 
 	if (!MAN.mediaquery || !MAN.mediaquery.length)
@@ -5316,7 +5219,7 @@ function $MEDIAQUERY() {
 		mq.oldH = ch;
 		mq.fn(cw, ch, type, mq.id);
 	}
-};
+}
 
 function $MIDDLEWARE(path, value, type, callback) {
 
@@ -5359,13 +5262,13 @@ window.MIDDLEWARE = function(name, value, callback, path) {
 	name.waitFor(function(name, next) {
 		var mid = MAN.middleware[name];
 
-		if (!mid) {
-			window.console && window.console.warn('Middleware "' + name + '" not found.');
-			next();
+		if (mid) {
+			mid.call(context, next, value, path);
 			return;
 		}
 
-		mid.call(context, next, value, path);
+		window.console && window.console.warn('Middleware "' + name + '" not found.');
+		next();
 	}, function(val) {
 		callback && callback.call(context, val !== undefined ? val : value, path);
 	});

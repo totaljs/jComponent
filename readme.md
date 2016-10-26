@@ -7,7 +7,7 @@
 > __Download__: more than 70 jComponents for free for everyone. www.componentator.com
 
 - [Gitter - Chat for GitHub](https://gitter.im/totaljs/jComponent)
-- Current version: `v6.0.0`
+- Current version: `v8.0.0` (BETA VERSION)
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -16,7 +16,7 @@
 - best of use with [www.totaljs.com - web framework for Node.js](http://www.totaljs.com)
 - [Download UI components](https://github.com/totaljs/components)
 
-__YOU MUST SEE:__
+__YOU HAVE TO SEE:__
 
 - [__jComponent full SPA example with the source-code__](https://example.jcomponent.org/)
 - [Tangular - A template engine like Angular.js](https://github.com/totaljs/Tangular)
@@ -50,6 +50,8 @@ The library can be loaded with `async` attribute.
 ## HTML definition
 
 The library searches all components according `data-component` attribute which must contain a component name and [the component must be defined in JavaScript](#component).
+
+__IMPORTANT__: +v8.0.0 supports shorter names of attributes e.g. `data-jc=""` instead of `data-component=""` or `data-jc-path` instead of `data-component-path`.
 
 #### Simple declaration of the component
 
@@ -679,14 +681,9 @@ COMPONENT('my-component-name', function() {
     // Parses value trough all "parsers" (private and global)
 
 
-    instance.nested(selector, type or fn, [value]);
-    instance.nested('*', 'path', 'common.success'); // Example: Sets into the all nested components new path
-    instance.nested('component-name,#component-id,component-path', 'path', 'common.success'); // Example: Sets into the all nested components new path
-    instance.nested(['component-name', '#component-id', 'component-path'], 'path', 'common.success'); // Example: Sets into the all nested components new path
-    instance.nested('*', function(element, component)); // Passes each component
-    // Sets the value by [type] to nested components. Type can be [path, id, url, template, class, etc.]
-    // selector can string divided via comma. IMPORTANT: if the type is "path" then this method
-    // replaces "?" in all "data-component-path" paths for a new value.
+    instance.nested();
+    // Returns all nested jComponents as Array of Objects
+    
 
     instance.watch([path], function(path, value, type));
     instance.watch(function(path, value, type) { // example
