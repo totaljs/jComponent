@@ -2372,6 +2372,28 @@ function COMP(name) {
 	};
 }
 
+COMP.prototype.setOwner = function(el, clear) {
+	var self = this;
+	self.element.removeData(COMPATTR_C);
+	self.element.removeAttr('data-jc');
+	self.element.removeAttr('data-component');
+
+	if (clear || clear === undefined) {
+		self.element.off();
+		self.element.find('*').off();
+		self.element.find(COMPATTR_B).removeAttr('data-component-bind').removeAttr('data-jc-bind');
+	}
+
+	if (el.getAttribute)
+		el = $(el);
+
+	self.element = el;
+	el.attr('data-jc', self.name);
+	el.attr('data-jc-path', self.path);
+	el.data(COMPATTR_C, self);
+	return self;
+};
+
 COMP.prototype.nested = function() {
 	var arr = [];
 	this.find(COMPATTR_C).each(function() {
