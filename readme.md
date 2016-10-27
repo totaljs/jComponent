@@ -464,10 +464,12 @@ COMPONENT('my-component-name', function() {
         instance.element.html(JSON.stringify(value));
     };
 
+
     // This method is called when the component uses built-in `setter`
     // +v6.0.0
     instance.setter2 = function(value, path, type) {
     };
+
 
     instance.getter = function(value) {
         // The library executes this delegate when the `<input data-component-bind`,
@@ -480,10 +482,12 @@ COMPONENT('my-component-name', function() {
         instance.set(value);
     };
 
+
     // This method is called when the component uses built-in `getter`
     // +v6.0.0
     instance.getter2 = function(value, path, type) {
-    };    
+    };
+
 
     // This method is called when the component has modified `released` state
     // +v6.0.0
@@ -2010,7 +2014,7 @@ jC;       // shortcut for $.components
 COM;      // shortcut for $.components
 MAN;      // shortcut for the Component Manager
 
-// jcta.min.js:
+// jcta.min.js, jctajr.min.js:
 Tangular; // shortcut for Tangular
 Ta;       // shortcut for Tangular
 
@@ -2018,7 +2022,7 @@ Ta;       // shortcut for Tangular
 jRouting; // shortcut for jRouting
 jR;       // shortcut for jRouting
 
-// Special {Array} of {Function}
+// Special {Array} of {Functions}
 window.jComponent   // for async loading scripts
 ```
 

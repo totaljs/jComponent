@@ -30,8 +30,8 @@ window.TRY = function(fn, err) {
 		return true;
 	} catch (e) {
 		err && err(e);
-		return false;
 	}
+	return false;
 };
 
 if (Object.freeze) {
@@ -2372,28 +2372,6 @@ function COMP(name) {
 	};
 }
 
-COMP.prototype.setOwner = function(el, clear) {
-	var self = this;
-	self.element.removeData(COMPATTR_C);
-	self.element.removeAttr('data-jc');
-	self.element.removeAttr('data-component');
-
-	if (clear || clear === undefined) {
-		self.element.off();
-		self.element.find('*').off();
-		self.element.find(COMPATTR_B).removeAttr('data-component-bind').removeAttr('data-jc-bind');
-	}
-
-	if (el.getAttribute)
-		el = $(el);
-
-	self.element = el;
-	el.attr('data-jc', self.name);
-	el.attr('data-jc-path', self.path);
-	el.data(COMPATTR_C, self);
-	return self;
-};
-
 COMP.prototype.nested = function() {
 	var arr = [];
 	this.find(COMPATTR_C).each(function() {
@@ -2636,11 +2614,7 @@ COMP.prototype.watch = function(path, fn, init) {
 	}
 
 	self.on('watch', path, fn);
-
-	if (!init)
-		return self;
-
-	fn.call(self, path, self.get(path), 0);
+	init && fn.call(self, path, self.get(path), 0);
 	return self;
 };
 
@@ -2659,13 +2633,8 @@ COMP.prototype.valid = function(value, noEmit) {
 	this.$valid = value;
 	this.$validate = false;
 	this.$interaction(102);
-
 	MAN.clear('valid');
-
-	if (noEmit)
-		return this;
-
-	this.state && this.state(1, 1);
+	!noEmit && this.state && this.state(1, 1);
 	return this;
 };
 
@@ -2694,11 +2663,7 @@ COMP.prototype.dirty = function(value, noEmit) {
 	this.$dirty = value;
 	this.$interaction(101);
 	MAN.clear('dirty');
-
-	if (noEmit)
-		return this;
-
-	this.state && this.state(2, 2);
+	!noEmit && this.state && this.state(2, 2);
 	return this;
 };
 
@@ -2761,11 +2726,7 @@ COMP.prototype.on = function(name, path, fn, init) {
 		MAN.events[path][name] = [];
 
 	MAN.events[path][name].push({ fn: fn, context: this, id: this._id, path: fixed });
-
-	if (!init)
-		return COM;
-
-	fn.call(COM, path, MAN.get(path));
+	init && fn.call(COM, path, MAN.get(path));
 	return this;
 };
 
@@ -2836,7 +2797,6 @@ COMP.prototype.get = function(path) {
 	if (path)
 		return MAN.get(path);
 };
-
 
 COMP.prototype.set = function(path, value, type) {
 
