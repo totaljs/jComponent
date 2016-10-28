@@ -5338,7 +5338,7 @@ window.MAKE = function(obj, fn) {
 };
 
 window.CLONE = function(obj) {
-	return JSON.parse(JSON.stringfiy(obj));
+	return JSON.parse(JSON.stringify(obj));
 }
 
 window.NOOP = function(){};
