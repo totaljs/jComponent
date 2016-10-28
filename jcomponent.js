@@ -860,14 +860,6 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 			}
 		}
 
-		options.success = function(r, o, req) {
-			$MIDDLEWARE(middleware, r, 1, function(path, value) {
-				if (typeof(callback) === 'string')
-					return MAN.remap(callback, value);
-				callback && callback(value, undefined, req.getAllResponseHeaders());
-			});
-		};
-
 		if (url.match(/http\:\/\/|https\:\/\//i)) {
 			options.crossDomain = true;
 			if (isCredentials)
@@ -876,8 +868,25 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 
 		options.headers = $.extend(headers, COM.defaults.headers);
 
-		options.error = function(req, status, r) {
+		var key = HASH(url + JSON.stringify(options));
+		var ma = MAN.ajax[key];
+		if (ma) {
+			ma.jcabort = true;
+			ma.abort();
+			ma = undefined;
+		}
 
+		options.success = function(r, o, req) {
+			delete MAN.ajax[key];
+			$MIDDLEWARE(middleware, r, 1, function(path, value) {
+				if (typeof(callback) === 'string')
+					return MAN.remap(callback, value);
+				callback && callback(value, undefined, req.getAllResponseHeaders());
+			});
+		};
+
+		options.error = function(req, status, r) {
+			delete MAN.ajax[key];
 			var body = req.responseText;
 			var headers = req.getAllResponseHeaders();
 
@@ -897,7 +906,7 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 				callback(body, status, url, headers);
 		};
 
-		$.ajax($jc_url(url), options);
+		MAN.ajax[key] = $.ajax($jc_url(url), options);
 	}, timeout || 0);
 
 	return COM;
@@ -2924,6 +2933,7 @@ function CMAN() {
 	this.schedulers = [];
 	this.singletons = {};
 	this.extends = {};
+	this.ajax = {};
 	// this.mediaquery;
 }
 
@@ -5326,5 +5336,9 @@ window.MAKE = function(obj, fn) {
 	fn.call(obj, obj);
 	return obj;
 };
+
+window.CLONE = function(obj) {
+	return JSON.parse(JSON.stringfiy(obj));
+}
 
 window.NOOP = function(){};

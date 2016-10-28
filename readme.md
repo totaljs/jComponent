@@ -1380,6 +1380,11 @@ MAKE(someobject, function(obj) {
 });
 
 console.log(someobject); // { name: 'jComponent', age: 100, great: true }
+
+CLONE(someobject)
+// The method clones an object instance (deep)
+// returns a new instance
+// +v8.0.0
 ```
 
 ## Device Width
