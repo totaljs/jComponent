@@ -294,7 +294,7 @@ COM.compile = function(container) {
 				MAN.initializers[name] = true;
 				obj.init();
 			}
-			delete obj.init;
+			obj.init = undefined;
 		}
 
 		obj.$init = COMPATTR(el, 'init') || null;
@@ -1098,7 +1098,7 @@ function $jc_ready() {
 		for (var i = 0, length = arr.length; i < length; i++)
 			arr[i](count);
 
-		delete MAN.ready;
+		MAN.ready = undefined;
 	}, 300);
 }
 
@@ -1481,8 +1481,7 @@ COM.update = function(path, reset, type) {
 				}
 
 				component.element.find(COMPATTR_B).each(function() {
-					delete this.$value;
-					delete this.$value2;
+					this.$value = this.$value2 = undefined;
 				});
 
 			} else if (component.validate && !component.$valid_disabled)
@@ -1667,8 +1666,7 @@ COM.set = function(path, val, type) {
 				}
 
 				component.element.find(COMPATTR_B).each(function() {
-					delete this.$value;
-					delete this.$value2;
+					this.$value = this.$value2 = undefined;
 				});
 
 			} else if (component.validate && !component.$valid_disabled)
@@ -1927,8 +1925,7 @@ COM.default = function(path, timeout, onlyComponent, reset) {
 			return;
 
 		obj.element.find(COMPATTR_B).each(function() {
-			delete this.$value;
-			delete this.$value2;
+			this.$value = this.$value2 = undefined;
 		});
 
 		if (!obj.$dirty_disabled)
@@ -1978,8 +1975,7 @@ COM.reset = function(path, timeout, onlyComponent) {
 			return;
 
 		obj.element.find(COMPATTR_B).each(function() {
-			delete this.$value;
-			delete this.$value2;
+			this.$value2 = this.$value = undefined;
 		});
 
 		if (!obj.$dirty_disabled) {
@@ -3065,15 +3061,13 @@ MAN.prepare = function(obj) {
 	obj.$init && setTimeout(function() {
 		if (MAN.isOperation(obj.$init)) {
 			var op = OPERATION(obj.$init);
-			if (op)
-				op.call(obj, obj);
-			delete obj.$init;
+			op && op.call(obj, obj);
+			obj.$init = undefined;
 			return;
 		}
 		var fn = COM.get(obj.$init);
-		if (typeof(fn) === 'function')
-			fn.call(obj, obj);
-		delete obj.$init;
+		typeof(fn) === 'function' && fn.call(obj, obj);
+		obj.$init = undefined;
 	}, 5);
 
 	el.trigger('component');
@@ -3354,9 +3348,9 @@ MAN.cleaner = function() {
 		if (component.element && component.element.closest(document.documentElement).length) {
 			if (!component.attr(COMPATTR_R)) {
 				if (component.$parser && !component.$parser.length)
-					delete component.$parser;
+					component.$parser = undefined;
 				if (component.$formatter && !component.$formatter.length)
-					delete component.$formatter;
+					component.$formatter = undefined;
 				continue;
 			}
 		}
@@ -3905,7 +3899,7 @@ window.CONTROLLER = function() {
 	};
 	MAN.controllers[obj.name] = obj;
 	return obj.$init = function(arg, path, element) {
-		delete obj.$init;
+		obj.$init = undefined;
 		if (path)
 			obj.path = path;
 		obj.element = element;
@@ -4118,8 +4112,8 @@ function $jc_keypress(self, old, e) {
 
 	clearTimeout(self.$cleanupmemory);
 	self.$cleanupmemory = setTimeout(function() {
-		delete self.$value2;
-		delete self.$value;
+		self.$value2 = undefined;
+		self.$value = undefined;
 	}, 60000 * 5);
 }
 
@@ -4162,8 +4156,7 @@ Array.prototype.compare = function(id, b, fields) {
 			var bb = b[j];
 			if (bb[id] !== aa[id])
 				continue;
-			if (JSON.stringify(aa, fields) !== JSON.stringify(bb, fields))
-				update.push({ oldIndex: i, newIndex: j, oldItem: aa, newItem: bb });
+			JSON.stringify(aa, fields) !== JSON.stringify(bb, fields) && update.push({ oldIndex: i, newIndex: j, oldItem: aa, newItem: bb });
 			is = true;
 			break;
 		}
@@ -4183,18 +4176,15 @@ Array.prototype.compare = function(id, b, fields) {
 			}
 		}
 
-		if (!is)
-			continue;
-		append.push({ oldIndex: null, newIndex: i, oldItem: null, newItem: aa });
+		is && append.push({ oldIndex: null, newIndex: i, oldItem: null, newItem: aa });
 	}
 
 	var pr = (remove.length / il) * 100;
 	var pu = (update.length / il) * 100;
 
-	var redraw = pr > 60 || pu > 60;
 	return {
 		change: append.length || remove.length || update.length ? true : false,
-		redraw: redraw,
+		redraw: pr > 60 || pu > 60,
 		append: append,
 		remove: remove,
 		update: update
@@ -4217,9 +4207,10 @@ Array.prototype.async = function(context, callback) {
 
 	var c = function() {
 		var fn = arr[index++];
-		if (!fn)
+		if (fn)
+			fn.call(context, c, index - 1);
+		else
 			return callback && callback.call(context);
-		fn.call(context, c, index - 1);
 	};
 
 	c();
@@ -4278,10 +4269,8 @@ Array.prototype.skip = function(count) {
 	var arr = [];
 	var self = this;
 	var length = self.length;
-	for (var i = 0; i < length; i++) {
-		if (i >= count)
-			arr.push(self[i]);
-	}
+	for (var i = 0; i < length; i++)
+		i >= count && arr.push(self[i]);
 	return arr;
 };
 
@@ -4495,9 +4484,8 @@ Array.prototype.findIndex = function(cb, value) {
 
 Array.prototype.findItem = function(cb, value) {
 	var index = this.findIndex(cb, value);
-	if (index === -1)
-		return;
-	return this[index];
+	if (index !== -1)
+		return this[index];
 };
 
 Array.prototype.remove = function(cb, value) {
@@ -4778,10 +4766,7 @@ Number.prototype.add = Number.prototype.inc = function(value, decimals) {
 			break;
 	}
 
-	if (decimals !== undefined)
-		return num.floor(decimals);
-
-	return num;
+	return decimals !== undefined ? num.floor(decimals) : num;
 };
 
 Number.prototype.floor = function(decimals) {
