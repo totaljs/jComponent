@@ -327,7 +327,9 @@ COM.compile = function(container) {
 					if (tmp) {
 						var fn = new Function('return ' + tmp);
 						MAN.defaults['#' + HASH(p)] = fn; // store by path (DEFAULT() --> can reset scope object)
-						MAN.set(p, fn());
+						tmp = fn();
+						MAN.set(p, tmp);
+						COM.$emitwildcard(p, tmp, 1);
 					}
 				}
 
@@ -1103,6 +1105,13 @@ function $jc_ready() {
 }
 
 COM.watch = function(path, fn, init) {
+
+	if (typeof(path) === 'function') {
+		init = fn;
+		fn = path;
+		path = '*';
+	}
+
 	COM.on('watch', path, fn);
 	init && fn.call(COM, path, MAN.get(path), 0);
 	return COM;
@@ -1112,7 +1121,7 @@ COM.on = function(name, path, fn, init) {
 
 	if (typeof(path) === 'function') {
 		fn = path;
-		path = '';
+		path = name === 'watch' ? '*' : '';
 	} else
 		path = path.replace('.*', '');
 	var fixed = null;
@@ -1175,6 +1184,13 @@ COM.$emit2 = function(name, path, args) {
 	return true;
 };
 
+COM.$emitwildcard = function(path, value, type) {
+	MAN.const_emit2[0] = path;
+	MAN.const_emit2[1] = value;
+	MAN.const_emit2[2] = type;
+	COM.$emit2('watch', '*', MAN.const_emit2);
+};
+
 COM.$emitonly = function(name, paths, type, path) {
 
 	var unique = {};
@@ -1189,10 +1205,11 @@ COM.$emitonly = function(name, paths, type, path) {
 		}
 	}
 
-	COM.$emit2(name, '*', [path, unique[path], type]);
+	COM.$emitwildcard(path, unique[path], type);
 
 	Object.keys(unique).forEach(function(key) {
-		COM.$emit2(name, key, [path, unique[key], type]);
+		MAN.const_emit2[1] = unique[key];
+		COM.$emit2(name, key, MAN.const_emit2);
 	});
 
 	return this;
@@ -1205,15 +1222,21 @@ COM.$emit = function(name, path) {
 
 	var arr = path.split('.');
 	var args = [];
-	var length = name === 'watch' ? 3 : arguments.length;
+	var is = name === 'watch';
+	var length = is ? 3 : arguments.length;
 
-	for (var i = name === 'watch' ? 1 : 2; i < length; i++)
+	for (var i = is ? 1 : 2; i < length; i++)
 		args.push(arguments[i]);
 
-	if (name === 'watch')
+	if (is)
 		args.push(arguments[3]);
 
-	COM.$emit2(name, '*', args);
+	if (is) {
+		MAN.const_emit2[0] = path;
+		MAN.const_emit2[1] = COM.get(path);
+		MAN.const_emit2[2] = arguments[3];
+		COM.$emit2(name, '*', MAN.const_emit2);
+	}
 
 	var p = '';
 	for (var i = 0, length = arr.length; i < length; i++) {
@@ -1495,8 +1518,7 @@ COM.update = function(path, reset, type) {
 			updates[component.path] = result;
 		}, is ? path : undefined, undefined, is);
 
-		if (reset)
-			MAN.clear('dirty', 'valid');
+		reset && MAN.clear('dirty', 'valid');
 
 		if (!updates[path])
 			updates[path] = COM.get(path);
@@ -1544,6 +1566,7 @@ COM.notify = function() {
 		component.$interaction(1);
 	});
 
+
 	Object.keys(MAN.events).forEach(function(key) {
 
 		var is = false;
@@ -1557,7 +1580,9 @@ COM.notify = function() {
 		if (!is)
 			return;
 
-		COM.$emit2('watch', key, [key, COM.get(key)]);
+		MAN.const_notify[0] = key;
+		MAN.const_notify[1] = COM.get(key);
+		COM.$emit2('watch', key, MAN.const_notify);
 	});
 
 	return COM;
@@ -1574,6 +1599,7 @@ COM.extend = function(path, value, type) {
 COM.rewrite = function(path, val) {
 	$MIDDLEWARE(path, val, 1, function(path, value) {
 		MAN.set(path, value, 1);
+		COM.$emitwildcard(path, value, 1);
 	});
 	return COM;
 };
@@ -1904,7 +1930,13 @@ COM.default = function(path, timeout, onlyComponent, reset) {
 	// Reset scope
 	var key = path.replace(/\.\*$/, '');
 	var fn = MAN.defaults['#' + HASH(key)];
-	fn && MAN.set(key, fn());
+	var tmp;
+
+	if (fn) {
+		tmp = fn();
+		MAN.set(key, tmp);
+		COM.$emitwildcard(key, tmp, 3);
+	}
 
 	var arr = [];
 
@@ -2364,7 +2396,11 @@ function COMP(name) {
 				if (this.value && (!value || (self.$default && self.$default() === value))) {
 					// Solved problem with Google Chrome autofill
 					tmp = this.value;
-					tmp && MAN.set(path, self.parser(tmp));
+					if (tmp) {
+						tmp = self.parser(tmp);
+						MAN.set(path, tmp);
+						COM.$emitwildcard(path, tmp, 3);
+					}
 					return;
 				}
 			}
@@ -2897,6 +2933,8 @@ function $jc_async(arr, fn, done) {
 }
 
 function CMAN() {
+	this.const_emit2 = [null, null, null];
+	this.const_notify = [null, null];
 	this.counter = 1;
 	this.mcounter = 1;
 	this.tic;
@@ -3035,6 +3073,7 @@ MAN.prepare = function(obj) {
 				if (value === undefined) {
 					value = obj.$default();
 					MAN.set(obj.path, value);
+					COM.$emitwildcard(obj.path, value, 0);
 				}
 			}
 
