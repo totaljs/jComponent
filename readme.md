@@ -1255,6 +1255,11 @@ AJAX('METHOD URL', data, [callback or path], [sleep], , [error(response, status,
 AJAXCACHE('METHOD URL', data, [callback or path], [expire], [sleep], [clear]);
 // Aliases for $.components.AJAX(), $.components.AJAXCACHE()
 
+// +v8.0.0
+AJAXCACHEREVIEW('METHOD URL', data, [callback or path], [expire], [sleep], [clear]);
+// Aliases for $.components.AJAXCACHEREVIEW(). This method loads a content from the cache and
+// then performs AJAX() call again with a simple diff.
+
 // +v4.0.0
 UPLOAD(url, formdata, [callback or path], [sleep], [progress(percentage, speed, remaining) or path], [error(response, status, type) or path]);
 

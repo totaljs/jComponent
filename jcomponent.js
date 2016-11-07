@@ -914,7 +914,11 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 	return COM;
 };
 
-COM.AJAXCACHE = function(url, data, callback, expire, timeout, clear) {
+COM.AJAXCACHEREVIEW = function(url, data, callback, expire, timeout, clear) {
+	return AJAXCACHE(url, data, callback, expire, timeout, clear, true);
+};
+
+COM.AJAXCACHE = function(url, data, callback, expire, timeout, clear, review) {
 
 	if (typeof(url) === 'function') {
 		error = timeout;
@@ -949,10 +953,29 @@ COM.AJAXCACHE = function(url, data, callback, expire, timeout, clear) {
 	setTimeout(function() {
 		var value = clear ? undefined : MAN.cacherest(method, uri, data, undefined, expire);
 		if (value !== undefined) {
+
+			var diff = review ? JSON.stringify(value) : null;
+
 			if (typeof(callback) === 'string')
 				MAN.remap(callback, value);
 			else
 				callback(value, true);
+
+			if (!review)
+				return COM;
+
+			AJAX(url, data, function(r, err) {
+				if (err)
+					r = err;
+				// Is same?
+				if (diff !== JSON.stringify(r)) {
+					MAN.cacherest(method, uri, data, r, expire);
+					if (typeof(callback) === 'string')
+						MAN.remap(callback, r);
+					else
+						callback(r, false, true);
+				}
+			});
 			return COM;
 		}
 
@@ -3598,6 +3621,7 @@ window.PING = function(url, timeout, callback) {
 
 window.AJAX = COM.AJAX;
 window.AJAXCACHE = COM.AJAXCACHE;
+window.AJAXCACHEREVIEW = COM.AJAXCACHEREVIEW;
 window.GET = COM.get;
 window.CACHE = COM.cache;
 window.NOTIFY = COM.notify;
