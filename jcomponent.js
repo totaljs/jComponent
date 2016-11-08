@@ -3472,18 +3472,17 @@ MAN.cleaner = function() {
 MAN.$$ = function() {
 	delete MAN.$load;
 	if (COM.defaults.localstorage) {
-		var cache = localStorage.getItem(COM.$localstorage + '.cache');
-		if (cache && typeof(cache) === 'string') {
-			try {
+		var cache;
+		try {
+			cache = localStorage.getItem(COM.$localstorage + '.cache');
+			if (cache && typeof(cache) === 'string')
 				MAN.storage = JSON.parse(cache);
-			} catch (e) {}
-		}
-		cache = localStorage.getItem(COM.$localstorage + '.blocked');
-		if (cache && typeof(cache) === 'string') {
-			try {
+		} catch (e) {}
+		try {
+			cache = localStorage.getItem(COM.$localstorage + '.blocked');
+			if (cache && typeof(cache) === 'string')
 				MAN.cacheblocked = JSON.parse(cache);
-			} catch (e) {}
-		}
+		} catch (e) {}
 	}
 	window.jQuery && setTimeout(COM.compile, 2);
 };
