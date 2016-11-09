@@ -53,7 +53,7 @@ The library searches all components according `data-component` attribute which m
 
 __IMPORTANT__: +v8.0.0 supports shorter names of attributes e.g. `data-jc=""` instead of `data-component=""` or `data-jc-path` instead of `data-component-path`.
 
-__IMPORTANT__: +v8.0.0 supports declaring of multiple components like this `data-jc="component1,component2,component3`.
+__IMPORTANT__: +v8.0.0 supports declaring of multiple components like this `<div data-jc="component1,component2,component3" ...`.
 
 #### Simple declaration of the component
 
@@ -70,6 +70,9 @@ __IMPORTANT__: +v8.0.0 supports declaring of multiple components like this `data
 <table>
     <tbody data-jc="pricelist"></tbody>
 </table>
+
+<!-- OR multiple declaration of components +v8.0.0 -->
+<div data-jc="binder,exec"></div>
 ```
 
 ## Declaration with binding
