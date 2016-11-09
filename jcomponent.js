@@ -235,20 +235,22 @@ COM.compile = function(container) {
 
 	var els = container ? container.find(COMPATTR_C) : $(COMPATTR_C);
 	var skip = false;
+	var len = els.length;
 
-	if (!els.length && !container) {
+	if (!len && !container) {
 		$jc_ready();
 		return;
 	}
 
-	var scopes = $(COMPATTR_S);
+	var scopes = len ? $(COMPATTR_S) : EMPTYARRAY;
 	var scopes_length = scopes.length;
 
-	els.each(function() {
+	len && els.each(function() {
 
 		if (skip)
 			return;
 
+		var dom = this;
 		var el = $(this);
 		if (el.attr(COMPATTR_R) || el.data(COMPATTR_C))
 			return;
@@ -314,9 +316,10 @@ COM.compile = function(container) {
 
 			var code = obj.path ? obj.path.charCodeAt(0) : 0;
 			if (!obj.$noscope && scopes_length && obj.path && code !== 33 && code !== 35) {
+
 				for (var i = 0; i < scopes_length; i++) {
 
-					if (!$.contains(scopes[i], this))
+					if (!$.contains(scopes[i], dom))
 						continue;
 
 					var p = COMPATTR(scopes[i], 'scope');
@@ -337,11 +340,7 @@ COM.compile = function(container) {
 						}
 					}
 
-					if (obj.path === '?')
-						obj.setPath(p);
-					else
-						obj.setPath(p + '.' + obj.path);
-
+					obj.setPath(obj.path === '?' ? p : (p + '.' + obj.path));
 					obj.scope = scopes[i];
 					obj.pathscope = p;
 				}
