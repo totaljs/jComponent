@@ -53,6 +53,8 @@ The library searches all components according `data-component` attribute which m
 
 __IMPORTANT__: +v8.0.0 supports shorter names of attributes e.g. `data-jc=""` instead of `data-component=""` or `data-jc-path` instead of `data-component-path`.
 
+__IMPORTANT__: +v8.0.0 supports declaring of multiple components like this `data-jc="component1,component2,component3`.
+
 #### Simple declaration of the component
 
 ```html
@@ -62,11 +64,11 @@ __IMPORTANT__: +v8.0.0 supports shorter names of attributes e.g. `data-jc=""` in
 <b data-component="timer"></b>
 
 <!-- OR -->
-<span data-component="email-decoder">your(AT)mail(DOT)com</span>
+<span data-jc="email-decoder">your(AT)mail(DOT)com</span>
 
 <!-- OR -->
 <table>
-    <tbody data-component="pricelist"></tbody>
+    <tbody data-jc="pricelist"></tbody>
 </table>
 ```
 
@@ -362,6 +364,10 @@ COMPONENT('my-component-name', function() {
     
     instance.pathscope;
     // The property contains value of data-component-scope element if exists.
+    
+    instance.siblings;
+    // Returns {Boolean} and it indicates whether the element contains multiple
+    // declaration of components.
 });
 ```
 
@@ -1618,7 +1624,8 @@ console.log(CONTROLLER('users').getName());
 
 ```js
 $('#my-component').component();
-// Returns the component.
+// Returns the component (Object) or components (Array) when the element contains
+// multiple declaration of components.
 
 $(document).on('components', function(count) {
     // New components are ready.

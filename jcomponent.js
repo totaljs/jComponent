@@ -250,171 +250,177 @@ COM.compile = function(container) {
 			return;
 
 		var el = $(this);
-		var name = COMPATTR(el);
-
-		if (el.data(COMPATTR_C) || el.attr(COMPATTR_R))
+		if (el.attr(COMPATTR_R) || el.data(COMPATTR_C))
 			return;
 
+		var name = COMPATTR(el) || '';
 		if (MAN.initializers['$ST_' + name]) {
 			el.attr(COMPATTR_R, true);
 			el.remove();
 			return;
 		}
 
-		var component = MAN.register[name || ''];
-		if (!component) {
+		var instances = [];
+		var all = name.split(',');
 
-			var x = COMPATTR(el, 'import');
-			if (!x) {
-				if (!MAN.initializers['$NE_' + name])
-					MAN.initializers['$NE_' + name] = true;
-				return;
-			}
+		all.forEach(function(name) {
+			name = name.trim();
+			var component = MAN.register[name || ''];
+			if (!component) {
 
-			if (MAN.imports[x] === 1)
-				return;
-
-			if (MAN.imports[x] === 2) {
-				if (!MAN.initializers['$NE_' + name])
-					MAN.initializers['$NE_' + name] = true;
-				return;
-			}
-
-			MAN.imports[x] = 1;
-			IMPORT(x, function() {
-				MAN.imports[x] = 2;
-			});
-			return;
-		}
-
-		var obj = component(el);
-
-		if (obj.init) {
-			if (!MAN.initializers[name]) {
-				MAN.initializers[name] = true;
-				obj.init();
-			}
-			obj.init = undefined;
-		}
-
-		obj.$init = COMPATTR(el, 'init') || null;
-		obj.type = COMPATTR(el, 'type') || '';
-		obj.id = COMPATTR(el, 'id') || obj._id;
-		obj.dependencies = [];
-
-		if (!obj.$noscope)
-			obj.$noscope = COMPATTR(el, 'noscope') === 'true';
-
-		if (COMPATTR(el, 'singleton') === 'true')
-			MAN.initializers['$ST_' + name] = true;
-
-		var code = obj.path ? obj.path.charCodeAt(0) : 0;
-		if (!obj.$noscope && scopes_length && obj.path && code !== 33 && code !== 35) {
-			for (var i = 0; i < scopes_length; i++) {
-
-				if (!$.contains(scopes[i], this))
-					continue;
-
-				var p = COMPATTR(scopes[i], 'scope');
-				if (!p || p === '?') {
-					p = 'scope' + (Math.floor(Math.random() * 100000) + 1000);
-					scopes[i].setAttribute('data-jc-scope', p);
+				var x = COMPATTR(el, 'import');
+				if (!x) {
+					if (!MAN.initializers['$NE_' + name])
+						MAN.initializers['$NE_' + name] = true;
+					return;
 				}
 
-				if (!scopes[i].$processed) {
-					scopes[i].$processed = true;
-					var tmp = COMPATTR(scopes[i], 'value');
-					if (tmp) {
-						var fn = new Function('return ' + tmp);
-						MAN.defaults['#' + HASH(p)] = fn; // store by path (DEFAULT() --> can reset scope object)
-						tmp = fn();
-						MAN.set(p, tmp);
-						COM.$emitwildcard(p, tmp, 1);
+				if (MAN.imports[x] === 1)
+					return;
+
+				if (MAN.imports[x] === 2) {
+					if (!MAN.initializers['$NE_' + name])
+						MAN.initializers['$NE_' + name] = true;
+					return;
+				}
+
+				MAN.imports[x] = 1;
+				IMPORT(x, function() {
+					MAN.imports[x] = 2;
+				});
+				return;
+			}
+
+			var obj = component(el);
+			if (obj.init) {
+				if (!MAN.initializers[name]) {
+					MAN.initializers[name] = true;
+					obj.init();
+				}
+				obj.init = undefined;
+			}
+
+			obj.$init = COMPATTR(el, 'init') || null;
+			obj.type = COMPATTR(el, 'type') || '';
+			obj.id = COMPATTR(el, 'id') || obj._id;
+			obj.dependencies = [];
+			obj.siblings = all.length > 1;
+
+			if (!obj.$noscope)
+				obj.$noscope = COMPATTR(el, 'noscope') === 'true';
+
+			if (COMPATTR(el, 'singleton') === 'true')
+				MAN.initializers['$ST_' + name] = true;
+
+			var code = obj.path ? obj.path.charCodeAt(0) : 0;
+			if (!obj.$noscope && scopes_length && obj.path && code !== 33 && code !== 35) {
+				for (var i = 0; i < scopes_length; i++) {
+
+					if (!$.contains(scopes[i], this))
+						continue;
+
+					var p = COMPATTR(scopes[i], 'scope');
+					if (!p || p === '?') {
+						p = 'scope' + (Math.floor(Math.random() * 100000) + 1000);
+						scopes[i].setAttribute('data-jc-scope', p);
 					}
+
+					if (!scopes[i].$processed) {
+						scopes[i].$processed = true;
+						var tmp = COMPATTR(scopes[i], 'value');
+						if (tmp) {
+							var fn = new Function('return ' + tmp);
+							MAN.defaults['#' + HASH(p)] = fn; // store by path (DEFAULT() --> can reset scope object)
+							tmp = fn();
+							MAN.set(p, tmp);
+							COM.$emitwildcard(p, tmp, 1);
+						}
+					}
+
+					if (obj.path === '?')
+						obj.setPath(p);
+					else
+						obj.setPath(p + '.' + obj.path);
+
+					obj.scope = scopes[i];
+					obj.pathscope = p;
+				}
+			}
+
+			var dep = (COMPATTR(el, 'dependencies') || '').split(',');
+			for (var i = 0, length = dep.length; i < length; i++) {
+				var d = dep[i].trim();
+				d && obj.dependencies.push(d);
+			}
+
+			instances.push(obj);
+
+			var template = COMPATTR(el, 'template') || obj.template;
+			if (template)
+				obj.template = template;
+
+			if (COMPATTR(el, 'released') === 'true')
+				obj.$released = true;
+
+			if (COMPATTR(el, 'url')) {
+				window.console && window.console.warn('You cannot use [data-jc-url] for the component: ' + obj.name + '[' + obj.path + ']. Instead of it you must use data-jc-template.');
+				return;
+			}
+
+			if (typeof(template) === 'string') {
+				var fn = function(data) {
+					if (obj.prerender)
+						data = prerender(data);
+					typeof(obj.make) === 'function' && obj.make(data);
+					$jc_init(el, obj);
+				};
+
+				var c = template.substring(0, 1);
+				if (c === '.' || c === '#' || c === '[') {
+					fn($(c).html());
+					return;
 				}
 
-				if (obj.path === '?')
-					obj.setPath(p);
-				else
-					obj.setPath(p + '.' + obj.path);
+				var k = 'TE' + HASH(template);
+				var a = MAN.temp[k];
+				if (a)
+					return fn(a);
 
-				obj.scope = scopes[i];
-				obj.pathscope = p;
+				$.get($jc_url(template), function(response) {
+					MAN.temp[k] = response;
+					fn(response);
+				});
+				return;
 			}
-		}
 
-		var dep = (COMPATTR(el, 'dependencies') || '').split(',');
+			if (typeof(obj.make) === 'string') {
 
-		for (var i = 0, length = dep.length; i < length; i++) {
-			var d = dep[i].trim();
-			d && obj.dependencies.push(d);
-		}
+				if (obj.make.indexOf('<') !== -1) {
+					if (obj.prerender)
+						obj.make = obj.prerender(obj.make);
+					el.html(obj.make);
+					$jc_init(el, obj);
+					return;
+				}
+
+				$.get($jc_url(obj.make), function(data) {
+					if (obj.prerender)
+						data = prerender(data);
+					el.html(data);
+					$jc_init(el, obj);
+				});
+
+				return;
+			}
+
+			if (obj.make && obj.make())
+				skip = true;
+
+			$jc_init(el, obj);
+		});
 
 		// A reference to implementation
-		el.data(COMPATTR_C, obj);
-
-		var template = COMPATTR(el, 'template') || obj.template;
-		if (template)
-			obj.template = template;
-
-		if (COMPATTR(el, 'released') === 'true')
-			obj.$released = true;
-
-		if (COMPATTR(el, 'url')) {
-			window.console && window.console.warn('You cannot use [data-jc-url] for the component: ' + obj.name + '[' + obj.path + ']. Instead of it you must use data-jc-template.');
-			return;
-		}
-
-		if (typeof(template) === 'string') {
-			var fn = function(data) {
-				if (obj.prerender)
-					data = prerender(data);
-				typeof(obj.make) === 'function' && obj.make(data);
-				$jc_init(el, obj);
-			};
-
-			var c = template.substring(0, 1);
-			if (c === '.' || c === '#' || c === '[') {
-				fn($(c).html());
-				return;
-			}
-
-			var k = 'TE' + HASH(template);
-			var a = MAN.temp[k];
-			if (a)
-				return fn(a);
-
-			$.get($jc_url(template), function(response) {
-				MAN.temp[k] = response;
-				fn(response);
-			});
-			return;
-		}
-
-		if (typeof(obj.make) === 'string') {
-
-			if (obj.make.indexOf('<') !== -1) {
-				if (obj.prerender)
-					obj.make = obj.prerender(obj.make);
-				el.html(obj.make);
-				$jc_init(el, obj);
-				return;
-			}
-
-			$.get($jc_url(obj.make), function(data) {
-				if (obj.prerender)
-					data = prerender(data);
-				el.html(data);
-				$jc_init(el, obj);
-			});
-
-			return;
-		}
-
-		if (obj.make && obj.make())
-			skip = true;
-
-		$jc_init(el, obj);
+		el.data(COMPATTR_C, instances.length > 1 ? instances : instances[0]);
 	});
 
 	if (skip)
@@ -1771,15 +1777,27 @@ COM.remove = function(path) {
 	if (path instanceof jQuery) {
 		path.find(COMPATTR_C).attr(COMPATTR_R, 'true').each(function() {
 			var com = $(this).data(COMPATTR_C);
-			if (com)
-				com.$removed = true;
+			if (com) {
+				if (com instanceof Array) {
+					com.forEach(function(o) {
+						o.$removed = true;
+					});
+				} else
+					com.$removed = true;
+			}
 		});
 
 		COMPATTR(path, 'template') && path.attr(COMPATTR_R, 'true');
 
 		var com = path.data(COMPATTR_C);
-		if (com)
-			com.$removed = true;
+		if (com) {
+			if (com instanceof Array) {
+				com.forEach(function(o) {
+					o.$removed = true;
+				});
+			} else
+				com.$removed = true;
+		}
 
 		clearTimeout(MAN.tic);
 		MAN.tic = setTimeout(function() {
@@ -2331,17 +2349,25 @@ function COMP(name) {
 	this.release = function(value) {
 
 		var self = this;
-
-		if (value === undefined)
+		if (value === undefined || self.$removed)
 			return self.$released;
 
 		self.element.find(COMPATTR_C).each(function() {
 			var el = $(this);
 			el.attr('data-jc-released', value ? 'true' : 'false');
 			var com = el.data(COMPATTR_C);
-			if (com && com.$released !== value) {
-				com.$released = value;
-				com.released && com.released(value, self);
+			if (com) {
+				if (com instanceof Array) {
+					com.forEach(function(o) {
+						if (!o.$removed && o.$released !== value) {
+							com.$released = value;
+							com.released && com.released(value, self);
+						}
+					});
+				} else if (!com.$removed && com.$released !== value) {
+					com.$released = value;
+					com.released && com.released(value, self);
+				}
 			}
 		});
 
@@ -2356,7 +2382,6 @@ function COMP(name) {
 	this.getter = function(value, type, dirty, older, skip) {
 
 		value = this.parser(value);
-
 		if (type === 2 && !skip)
 			this.$skip = true;
 
@@ -2441,7 +2466,12 @@ COMP.prototype.nested = function() {
 	this.find(COMPATTR_C).each(function() {
 		var el = $(this);
 		var com = el.data(COMPATTR_C);
-		com && !el.attr(COMPATTR_R) && arr.push(com);
+		if (com && !el.attr(COMPATTR_R)) {
+			if (com instanceof Array)
+				arr.push.apply(arr, com);
+			else
+				arr.push(com);
+		}
 	});
 	return arr;
 };
@@ -3428,6 +3458,7 @@ MAN.cleaner = function() {
 		component.path = null;
 		component.setter = null;
 		component.getter = null;
+		component.make = null;
 
 		index--;
 		MAN.components.splice(index, 1);
@@ -3501,8 +3532,7 @@ COMPONENT('', function() {
 		};
 	} else {
 		var a = 'data-jc-bind';
-		if (!self.element.attr(a))
-			self.element.attr(a, '1');
+		!self.element.attr(a) && self.element.attr(a, '1');
 		if (self.element.attr('required')) {
 			self.validate = function(value, is) {
 				return is ? true : value ? true : false;
@@ -3603,8 +3633,9 @@ window.PING = function(url, timeout, callback) {
 
 	options.success = function(r) {
 		if (typeof(callback) === 'string')
-			return MAN.remap(callback, r);
-		callback && callback(r);
+			MAN.remap(callback, r);
+		else
+			callback && callback(r);
 	};
 
 	options.error = function(req, status, r) {
@@ -3728,7 +3759,12 @@ window.BROADCAST = function(selector, name, caller) {
 
 		selector.find(COMPATTR_C).each(function() {
 			var com = $(this).data(COMPATTR_C);
-			com && components.push(com);
+			if (com) {
+				if (com instanceof Array)
+					components.push.apply(components, com);
+				else
+					components.push(com);
+			}
 		});
 
 		return $BROADCAST_EVAL(components, name, caller);
@@ -3768,11 +3804,11 @@ function $BROADCAST_EVAL(components, name, caller) {
 		var arg = arguments;
 		for (var i = 0, length = components.length; i < length; i++) {
 			var component = components[i];
-			if (typeof(component[name]) !== 'function')
-				continue;
-			component.caller = caller;
-			component[name].apply(component[name], arg);
-			component.caller = null;
+			if (typeof(component[name]) !== 'function') {
+				component.caller = caller;
+				component[name].apply(component[name], arg);
+				component.caller = null;
+			}
 		}
 	};
 }
@@ -4015,12 +4051,24 @@ WAIT(function() {
 		var output;
 		all.each(function(index) {
 			var com = $(this).data(COMPATTR_C);
-			if (com && com.$ready && !com.$removed) {
-				if (fn)
-					return fn.call(com, index);
-				if (!output)
-					output = [];
-				output.push(com);
+			if (com) {
+				if (com instanceof Array) {
+					com.forEach(function(o) {
+						if (o && o.$ready && !o.$removed) {
+							if (fn)
+								return fn.call(o, index);
+							if (!output)
+								output = [];
+							output.push(o);
+						}
+					});
+				} else if (com && com.$ready && !com.$removed) {
+					if (fn)
+						return fn.call(com, index);
+					if (!output)
+						output = [];
+					output.push(com);
+				}
 			}
 		});
 		return fn ? all : output;
