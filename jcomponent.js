@@ -212,6 +212,13 @@ COM.parser = function(value, path, type) {
 COM.compile = function(container) {
 
 	if (MAN.isCompiling) {
+
+		if (MAN.compileAgain && container && MAN.compileContainer)
+			MAN.compileContainer = MAN.compileContainer.get(0) === container.get(0) ? container : undefined;
+		else
+			MAN.compileContainer = container;
+
+		MAN.compileContainer = container;
 		MAN.compileAgain = true;
 		return COM;
 	}
@@ -1155,7 +1162,10 @@ function $jc_ready() {
 
 		if (MAN.compileAgain) {
 			MAN.compileAgain = false;
-			setTimeout2('jc.compileAgain', COM.compile, 50);
+			setTimeout2('jc.compileAgain', function() {
+				COM.compile(MAN.compileContainer);
+				MAN.compileContainer = undefined;
+			}, 50);
 		}
 
 		if (!MAN.ready)
@@ -3112,7 +3122,7 @@ MAN.initialize = function() {
 	var item = this.init.pop();
 
 	if (item === undefined) {
-		COM.compile();
+		!MAN.isReady && COM.compile();
 		return this;
 	}
 
