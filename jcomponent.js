@@ -216,7 +216,7 @@ COM.compile = function(container) {
 	if (jcw && jcw.length) {
 		while (true) {
 			var fn = jcw.shift();
-			if (fn === undefined)
+			if (!fn)
 				break;
 			fn();
 		}
@@ -227,9 +227,11 @@ COM.compile = function(container) {
 	COM.$inject();
 
 	if (MAN.pending.length) {
-		MAN.pending.push(function() {
-			COM.compile(container);
-		});
+		(function(container) {
+			MAN.pending.push(function() {
+				COM.compile(container);
+			});
+		})(container);
 		return COM;
 	}
 
@@ -509,7 +511,7 @@ COM.$inject = function() {
 
 	}, function() {
 		MAN.clear('valid', 'dirty', 'broadcast', 'find');
-		count && COM.compile();
+		count && window.COMPILE();
 	});
 };
 
@@ -622,7 +624,7 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 			MAN.cache[key] = true;
 
 			setTimeout(function() {
-				COM.compile();
+				window.COMPILE();
 				callback && callback();
 			}, 10);
 
@@ -1189,7 +1191,7 @@ function $jc_init(el, obj) {
 	obj.released && obj.released(obj.$released);
 	MAN.components.push(obj);
 	MAN.init.push(obj);
-	COM.compile(el);
+	type !== 'BODY' && MAN.regexpcom.test(el.get(0).innerHTML) && COM.compile(el);
 	$jc_ready();
 }
 
@@ -3020,6 +3022,7 @@ function CMAN() {
 	this.singletons = {};
 	this.extends = {};
 	this.ajax = {};
+	this.regexpcom = /(data-jc|data-component)\=/;
 	// this.mediaquery;
 }
 

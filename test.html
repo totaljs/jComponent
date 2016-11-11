@@ -14,19 +14,32 @@
 </head>
 <body>
 
-	<div><input type="text" data-jc="" data-jc-value="'@'" data-jc-path="form.email #A" required="true" /></div>
-	<div>
-		<select data-jc="" data-jc-path="form.value #A" required="true" data-jc-type="number">
-			<option value="1">1</option>
-			<option value="2">2</option>
-			<option value="1">Again 1</option>
-			<option value="3">3</option>
-		</select>
+
+	<div data-jc="a,b">
+		<br />
+		<br />
+		<br />
+		<br />
 	</div>
+
 
 	<script>
 		var form = {};
 		form.value = 2;
+
+		COMPONENT('a', function() {
+			var self = this;
+			self.make = function() {
+				console.log('A');
+			};
+		});
+
+		COMPONENT('b', function() {
+			var self = this;
+			self.make = function() {
+				console.log('B');
+			};
+		});
 
 		MIDDLEWARE('A', function(next, value, path, type) {
 			console.log('MIDDLEWARE A', value, path);
