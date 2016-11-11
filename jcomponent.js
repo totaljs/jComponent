@@ -212,14 +212,7 @@ COM.parser = function(value, path, type) {
 COM.compile = function(container) {
 
 	if (MAN.isCompiling) {
-
-		if (MAN.compileAgain && container && MAN.compileContainer)
-			MAN.compileContainer = MAN.compileContainer.get(0) === container.get(0) ? container : undefined;
-		else
-			MAN.compileContainer = container;
-
-		MAN.compileContainer = container;
-		MAN.compileAgain = true;
+		MAN.recompile = true;
 		return COM;
 	}
 
@@ -249,7 +242,7 @@ COM.compile = function(container) {
 	var scopes = $(COMPATTR_S);
 	var scopes_length = scopes.length;
 
-	COM.crawler(container, function(name, dom, level) {
+	COM.crawler(container, function(name, dom) {
 
 		var el = $(dom);
 
@@ -432,17 +425,17 @@ COM.compile = function(container) {
 	});
 };
 
-COM.crawler = function(container, onComponent, level) {
+var COUNTER = 0;
 
-	var name;
+COM.crawler = function(container, onComponent, level) {
 
 	if (container)
 		container = $(container).get(0);
-	else {
+	else
 		container = document.body;
-		name = COMPATTR(container);
-		!container.$jc && name != null && onComponent(name, container, 0);
-	}
+
+	var name = COMPATTR(container);
+	!container.$jc && name != null && onComponent(name, container, 0);
 
 	var arr = container.childNodes;
 	var sub = [];
@@ -454,10 +447,10 @@ COM.crawler = function(container, onComponent, level) {
 
 	for (var i = 0, length = arr.length; i < length; i++) {
 		var el = arr[i];
-		if (!el)
-			continue;
-		el.tagName && el.childNodes.length && el.tagName !== 'SCRIPT' && sub.push(el);
-		!el.$jc && el.tagName && (el.hasAttribute('data-jc') || el.hasAttribute('data-component')) && onComponent(COMPATTR(el) || '', el, level);
+		if (el) {
+			el.tagName && el.childNodes.length && el.tagName !== 'SCRIPT' && MAN.regexpcom.test(el.innerHTML) && sub.push(el);
+			!el.$jc && el.tagName && (el.hasAttribute('data-jc') || el.hasAttribute('data-component')) && onComponent(COMPATTR(el) || '', el, level);
+		}
 	}
 
 	for (var i = 0, length = sub.length; i < length; i++) {
@@ -661,7 +654,7 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 			MAN.cache[key] = true;
 
 			setTimeout(function() {
-				response && MAN.regexpcom.test(response) && window.COMPILE(target);
+				response && MAN.regexpcom.test(response) && COM.compile(target);
 				callback && callback();
 			}, 10);
 
@@ -1070,8 +1063,7 @@ COM.REMOVECACHE = function(method, url, data) {
 };
 
 COM.ready = function(fn) {
-	if (MAN.ready)
-		MAN.ready.push(fn);
+	MAN.ready && MAN.ready.push(fn);
 	return COM;
 };
 
@@ -1112,12 +1104,12 @@ function $jc_ready() {
 		}
 
 		MAN.timeoutcleaner && clearTimeout(MAN.timeoutcleaner);
-
 		MAN.timeoutcleaner = setTimeout(function() {
 			MAN.cleaner();
 		}, 1000);
 
 		MAN.isCompiling = false;
+
 		$(COMPATTR_S).each(function() {
 
 			if (this.$ready)
@@ -1160,12 +1152,9 @@ function $jc_ready() {
 			}
 		});
 
-		if (MAN.compileAgain) {
-			MAN.compileAgain = false;
-			setTimeout2('jc.compileAgain', function() {
-				COM.compile(MAN.compileContainer);
-				MAN.compileContainer = undefined;
-			}, 50);
+		if (MAN.recompile) {
+			MAN.recompile = false;
+			COM.compile();
 		}
 
 		if (!MAN.ready)
@@ -1176,7 +1165,7 @@ function $jc_ready() {
 			arr[i](count);
 
 		MAN.ready = undefined;
-	}, 300);
+	}, 100);
 }
 
 COM.watch = function(path, fn, init) {
@@ -1218,7 +1207,8 @@ COM.on = function(name, path, fn, init) {
 
 function $jc_init(el, obj) {
 
-	var type = el.get(0).tagName;
+	var dom = el.get(0);
+	var type = dom.tagName;
 	var collection;
 
 	// autobind
@@ -3400,8 +3390,7 @@ COM.inc = function(path, value, type) {
 
 MAN.refresh = function() {
 	var self = this;
-	clearTimeout(self.$refresh);
-	self.$refresh = setTimeout(function() {
+	setTimeout2('M$refresh', function() {
 		self.components.sort(function(a, b) {
 			if (a.$removed || !a.path)
 				return 1;
@@ -4018,8 +4007,7 @@ window.WAIT = function(fn, callback, interval, timeout) {
 };
 
 window.COMPILE = function(container) {
-	COM.compile(container);
-	return COM;
+	return COM.compile(container);
 };
 
 window.CONTROLLER = function() {
@@ -4215,7 +4203,7 @@ WAIT(function() {
 					return;
 				if (e.tagName !== 'TEXTAREA') {
 					self.$value = self.value;
-					clearTimeout(self.$timeout);
+					clearTimeout2('M$timeout');
 					$jc_keypress(self, old, e);
 					return;
 				}
@@ -4241,8 +4229,7 @@ WAIT(function() {
 			if (e.type === 'focusout')
 				delay = 0;
 
-			clearTimeout(self.$timeout);
-			self.$timeout = setTimeout(function() {
+			setTimeout2('M$timeout', function() {
 				$jc_keypress(self, old, e);
 			}, delay);
 		});
@@ -4256,8 +4243,7 @@ function $jc_keypress(self, old, e) {
 	if (self.value === old)
 		return;
 
-	clearTimeout(self.$timeout);
-	self.$timeout = null;
+	clearTimeout2('M$timeout');
 
 	if (self.value !== self.$value2) {
 		var dirty = false;
@@ -4272,8 +4258,7 @@ function $jc_keypress(self, old, e) {
 		self.value2 = self.value;
 	}
 
-	clearTimeout(self.$cleanupmemory);
-	self.$cleanupmemory = setTimeout(function() {
+	setTimeout2('M$cleanup', function() {
 		self.$value2 = undefined;
 		self.$value = undefined;
 	}, 60000 * 5);
