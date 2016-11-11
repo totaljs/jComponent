@@ -45,7 +45,7 @@ window.SINGLETON = function(name, def) {
 
 // Because of file size
 window.COM = window.jC = function(container) {
-	return MAN.isCompiling ? COM : COM.compile(container);
+	return COM.compile(container);
 };
 
 COM.clean = function(timeout) {
@@ -211,8 +211,12 @@ COM.parser = function(value, path, type) {
 
 COM.compile = function(container) {
 
-	var jcw = window.jComponent;
+	if (MAN.isCompiling) {
+		MAN.compileAgain = true;
+		return COM;
+	}
 
+	var jcw = window.jComponent;
 	if (jcw && jcw.length) {
 		while (true) {
 			var fn = jcw.shift();
@@ -235,30 +239,15 @@ COM.compile = function(container) {
 		return COM;
 	}
 
-	var els = container ? container.find(COMPATTR_C) : $(COMPATTR_C);
-	var skip = false;
-	var len = els.length;
-
-	if (!len && !container) {
-		$jc_ready();
-		return;
-	}
-
-	var scopes = len ? $(COMPATTR_S) : EMPTYARRAY;
+	var scopes = $(COMPATTR_S);
 	var scopes_length = scopes.length;
 
-	len && els.each(function() {
+	COM.crawler(container, function(name, dom, level) {
 
-		if (skip)
-			return;
+		var el = $(dom);
 
-		var dom = this;
-		var el = $(this);
-		if (el.attr(COMPATTR_R) || el.data(COMPATTR_C))
-			return;
-
-		var name = COMPATTR(el) || '';
 		if (MAN.initializers['$ST_' + name]) {
+			dom.$jc = true;
 			el.attr(COMPATTR_R, true);
 			el.remove();
 			return;
@@ -309,6 +298,8 @@ COM.compile = function(container) {
 			obj.id = COMPATTR(el, 'id') || obj._id;
 			obj.dependencies = [];
 			obj.siblings = all.length > 1;
+
+			dom.$jc = true;
 
 			if (!obj.$noscope)
 				obj.$noscope = COMPATTR(el, 'noscope') === 'true';
@@ -414,18 +405,13 @@ COM.compile = function(container) {
 				return;
 			}
 
-			if (obj.make && obj.make())
-				skip = true;
-
+			obj.make && obj.make();
 			$jc_init(el, obj);
 		});
 
 		// A reference to implementation
 		el.data(COMPATTR_C, instances.length > 1 ? instances : instances[0]);
 	});
-
-	if (skip)
-		return COM.compile();
 
 	if (container !== undefined || !MAN.toggle.length)
 		return MAN.next();
@@ -437,6 +423,42 @@ COM.compile = function(container) {
 	}, function() {
 		MAN.next();
 	});
+};
+
+COM.crawler = function(container, onComponent, level) {
+
+	var name;
+
+	if (container)
+		container = $(container).get(0);
+	else {
+		container = document.body;
+		name = COMPATTR(container);
+		!container.$jc && name != null && onComponent(name, container, 0);
+	}
+
+	var arr = container.childNodes;
+	var sub = [];
+
+	if (level === undefined)
+		level = 0;
+	else
+		level++;
+
+	for (var i = 0, length = arr.length; i < length; i++) {
+		var el = arr[i];
+		if (!el)
+			continue;
+		el.tagName && el.childNodes.length && el.tagName !== 'SCRIPT' && sub.push(el);
+		!el.$jc && el.tagName && (el.hasAttribute('data-jc') || el.hasAttribute('data-component')) && onComponent(COMPATTR(el) || '', el, level);
+	}
+
+	for (var i = 0, length = sub.length; i < length; i++) {
+		el = sub[i];
+		el && COM.crawler(el, onComponent, level);
+	}
+
+	return COM;
 };
 
 COM.$inject = function() {
@@ -1122,6 +1144,11 @@ function $jc_ready() {
 				typeof(fn) === 'function' && fn.call(scope, COMPATTR(this, 'scope'), scope);
 			}
 		});
+
+		if (MAN.compileAgain) {
+			MAN.compileAgain = false;
+			setTimeout2('jc.compileAgain', COM.compile, 50);
+		}
 
 		if (!MAN.ready)
 			return;
