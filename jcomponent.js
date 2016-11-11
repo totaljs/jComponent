@@ -497,8 +497,12 @@ COM.$inject = function() {
 	if (!arr.length)
 		return;
 
+	var compile = false;
+
 	$jc_async(arr, function(item, next) {
 		var key = $jc_url(item.url);
+		var can = false;
+
 		AJAXCACHE('GET ' + key, null, function(response) {
 
 			key = '$import' + key;
@@ -506,11 +510,15 @@ COM.$inject = function() {
 			if (MAN.cache[key])
 				response = MAN.removescripts(response);
 
+			can = response && MAN.regexpcom.test(response);
+			if (can)
+				compile = true;
+
 			// inject
 			item.element.html(response);
 			MAN.cache[key] = true;
 
-			if (item.path) {
+			if (can && item.path) {
 				var com = item.element.find(COMPATTR_C);
 				com.each(function() {
 					var el = $(this);
@@ -533,7 +541,7 @@ COM.$inject = function() {
 
 	}, function() {
 		MAN.clear('valid', 'dirty', 'broadcast', 'find');
-		count && window.COMPILE();
+		count && compile && window.COMPILE();
 	});
 };
 
@@ -646,7 +654,7 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 			MAN.cache[key] = true;
 
 			setTimeout(function() {
-				window.COMPILE();
+				response && MAN.regexpcom.test(response) && window.COMPILE(target);
 				callback && callback();
 			}, 10);
 
@@ -2489,6 +2497,11 @@ function COMP(name) {
 	};
 }
 
+COMP.prototype.compile = function() {
+	COM.compile(this.element);
+	return this;
+};
+
 COMP.prototype.nested = function() {
 	var arr = [];
 	this.find(COMPATTR_C).each(function() {
@@ -3994,8 +4007,8 @@ window.WAIT = function(fn, callback, interval, timeout) {
 	return COM;
 };
 
-window.COMPILE = function() {
-	$.components();
+window.COMPILE = function(container) {
+	COM.compile(container);
 	return COM;
 };
 

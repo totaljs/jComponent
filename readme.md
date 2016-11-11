@@ -698,11 +698,10 @@ COMPONENT('my-component-name', function() {
     // +v8.0.0
     // Returns all nested jComponents as Array of Objects
     
-    
-    instance.setOwner(target, [clear]);
+
+    instance.compile();
     // +v8.0.0
-    // Sets a new owner (moves a component instance from the current element to a new).
-    // [clear] removes all events (default: true)
+    // Compiles nested uncompiled components
 
 
     instance.watch([path], function(path, value, type));
