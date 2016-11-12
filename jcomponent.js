@@ -2497,8 +2497,8 @@ function COMP(name) {
 	};
 }
 
-COMP.prototype.compile = function() {
-	COM.compile(this.element);
+COMP.prototype.compile = function(container) {
+	COM.compile(container || this.element);
 	return this;
 };
 
@@ -2723,11 +2723,8 @@ COMP.prototype.html = function(value) {
 		value = value.join('');
 	if (value === current)
 		return el;
-	el.empty();
 	var type = typeof(value);
-	if (value || type === 'number' || type === 'boolean')
-		el.append(value);
-	return el;
+	return value || type === 'number' || type === 'boolean' ? el.empty().append(value) : el;
 };
 
 COMP.prototype.empty = function() {
@@ -2740,9 +2737,7 @@ COMP.prototype.append = function(value) {
 	var el = this.element;
 	if (value instanceof Array)
 		value = value.join('');
-	if (!value)
-		return el;
-	return el.append(value);
+	return value ? el.append(value) : el;
 };
 
 COMP.prototype.find = function(selector) {
@@ -4782,11 +4777,7 @@ Number.prototype.pluralize = function(zero, one, few, other) {
 	else
 		value = other;
 
-	var beg = value.indexOf('#');
-	if (beg === -1)
-		return value;
-
-	return value.replace(/\#{1,}/g, function(text) {
+	return value.indexOf('#') === -1 ? value : value.replace(/\#{1,}/g, function(text) {
 		return text === '##' ? num.format() : num.toString();
 	});
 };
@@ -5483,6 +5474,6 @@ window.MAKE = function(obj, fn) {
 
 window.CLONE = function(obj) {
 	return JSON.parse(JSON.stringify(obj));
-}
+};
 
 window.NOOP = function(){};
