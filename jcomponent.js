@@ -2569,6 +2569,24 @@ COMP.prototype.update = COMP.prototype.refresh = function(notify) {
 	return self;
 };
 
+COMP.prototype.classes = function(cls) {
+	var arr = cls instanceof Array ? cls : cls.split(' ');
+	var add = '';
+	var rem = '';
+
+	for (var i = 0, length = arr.length; i < length; i++) {
+		var c = arr[i].substring(0, 1);
+		if (c === '-')
+			rem += (rem ? ' ' : '') + c.substring(1);
+		else
+			add += (add ? ' ' : '') + (c === '+' ? c.substring(1) : c);
+	}
+
+	add && self.element.addClass(add);
+	rem && self.element.removeClass(rem);
+	return self;
+};
+
 COMP.prototype.toggle = function(cls, visible, timeout) {
 
 	var manual = false;
@@ -3284,11 +3302,10 @@ MAN.isOperation = function(name) {
  * @return {Object}
  */
 MAN.get = function(path, scope) {
+
 	if (path.charCodeAt(0) === 35) {
 		var op = OPERATION(path);
-		if (op)
-			return op;
-		return NOOP;
+		return op ? op : NOOP;
 	}
 
 	var cachekey = '=' + path;
@@ -3890,7 +3907,7 @@ window.EVALUATE = COM.evaluate;
 
 window.STYLE = function(value) {
 	clearTimeout(MAN.tis);
-	MAN.styles.push(value);
+	MAN.styles.push(value instanceof Array ? value.join('\n') : value);
 	MAN.tis = setTimeout(function() {
 		$('<style type="text/css">' + MAN.styles.join('') + '</style>').appendTo('head');
 		MAN.styles = [];
@@ -4031,9 +4048,7 @@ window.CONTROLLER = function() {
 			return obj[text.substring(1, text.length - 1)];
 		});
 
-		if (is)
-			return path;
-		return obj.path + '.' + path;
+		return is ? path : obj.path + '.' + path;
 	};
 	MAN.controllers[obj.name] = obj;
 	return obj.$init = function(arg, path, element) {
@@ -4192,10 +4207,7 @@ WAIT(function() {
 			if (self.$only === undefined)
 				self.$only = COMPATTR(self, 'keypress-only') === 'true';
 
-			if (self.$only && (e.type === 'focusout' || e.type === 'change'))
-				return;
-
-			if (e.type === 'keydown' && (e.keyCode === undefined || e.keyCode === 9))
+			if ((self.$only && (e.type === 'focusout' || e.type === 'change')) || (e.type === 'keydown' && (e.keyCode === undefined || e.keyCode === 9)))
 				return;
 
 			if (e.keyCode < 41 && e.keyCode !== 8 && e.keyCode !== 32) {

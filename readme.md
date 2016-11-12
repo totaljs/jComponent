@@ -582,6 +582,12 @@ COMPONENT('my-component-name', function() {
     // Toggles a class name.
     // jQuery.toggleClass();
 
+    
+    instance.classes(string);
+    // Toggles classes "+classname" adds and "-classname" removes
+    // Example: instance.classes('+selected -hidden +animate');
+    // +v8.0.0
+
 
     instance.find(selectors);
     // Finds a content in the component element.
