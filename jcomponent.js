@@ -2577,14 +2577,14 @@ COMP.prototype.classes = function(cls) {
 	for (var i = 0, length = arr.length; i < length; i++) {
 		var c = arr[i].substring(0, 1);
 		if (c === '-')
-			rem += (rem ? ' ' : '') + c.substring(1);
+			rem += (rem ? ' ' : '') + arr[i].substring(1);
 		else
-			add += (add ? ' ' : '') + (c === '+' ? c.substring(1) : c);
+			add += (add ? ' ' : '') + (c === '+' ? arr[i].substring(1) : arr[i]);
 	}
 
-	add && self.element.addClass(add);
-	rem && self.element.removeClass(rem);
-	return self;
+	add && this.element.addClass(add);
+	rem && this.element.removeClass(rem);
+	return this;
 };
 
 COMP.prototype.toggle = function(cls, visible, timeout) {
