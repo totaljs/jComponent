@@ -976,6 +976,12 @@ $.components.cache(key, value, expire); // Example: Setter.
 // Returns {Object}.
 
 
+$.components.cachepath(path, expire);
+// +v8.0.0
+// The method creates watcher for `path` and stores values into the localStorage
+// Returns {Components}.
+
+
 $.components.validate([path], [except_paths_arr]);
 // Validates all values according the path.
 // Returns {Boolean}.
@@ -1173,6 +1179,10 @@ RESET();
 
 CACHE();
 // Alias for $.components.cache();
+
+CACHEPATH();
+// +v8.0.0
+// Alias for $.components.cacheapath();
 
 REWRITE(path, value);
 // +v4.0.0 alias for $.components.rewrite();

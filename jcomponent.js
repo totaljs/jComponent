@@ -1030,6 +1030,25 @@ COM.AJAXCACHE = function(url, data, callback, expire, timeout, clear, review) {
 	return COM;
 }
 
+COM.cachepath = function(path, expire) {
+	WATCH(path, function(p, value) {
+
+		var key = '$jcpath';
+		var obj = MAN.cachestorage(key);
+
+		if (obj)
+			obj[path] = value;
+		else {
+			obj = {};
+			obj[path] = value;
+		}
+
+		MAN.cachestorage(key, obj, expire);
+	});
+
+	return COM;
+};
+
 COM.cache = function(key, value, expire) {
 	return MAN.cachestorage(key, value, expire);
 };
@@ -3568,6 +3587,14 @@ MAN.$$ = function() {
 				MAN.cacheblocked = JSON.parse(cache);
 		} catch (e) {}
 	}
+
+	if (MAN.storage) {
+		var obj = MAN.storage['$jcpath'];
+		obj && Object.keys(obj.value).forEach(function(key) {
+			SET(key, obj.value[key], true);
+		});
+	}
+
 	window.jQuery && setTimeout(COM.compile, 2);
 };
 
@@ -3707,6 +3734,7 @@ window.AJAXCACHE = COM.AJAXCACHE;
 window.AJAXCACHEREVIEW = COM.AJAXCACHEREVIEW;
 window.GET = COM.get;
 window.CACHE = COM.cache;
+window.CACHEPATH = COM.cachepath;
 window.NOTIFY = COM.notify;
 window.NOTMODIFIED = function(path, value, fields) {
 
