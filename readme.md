@@ -810,6 +810,14 @@ $.components.defaults.devices = {
     lg: { min: 1200 }
 };
 
+$.components.defaults.jsontrim = true;
+// {Boolean} sets auto-trim in all AJAX operations (when is object serialized to JSON)
+// +v8.0.0
+
+$.components.defaults.jsondate = true;
+// {Boolean} sets auto-parser in all AJAX operations (when is JSON deserialized to Object)
+// +v8.0.0
+
 $.components.$version;
 // {String} appends the value to each URL address `?version=$version`
 // called via jComponent, default: "".
@@ -1414,6 +1422,20 @@ CLONE(someobject)
 // The method clones an object instance (deep)
 // returns a new instance
 // +v8.0.0
+
+
+STRINGIFY(obj, [trim]);
+// The method creates a JSON string from the object.
+// {trim} optional argument (default: true) removes empty fields of string
+// returns {String}
+// +v8.0.0
+
+
+PARSE(obj, [date]);
+// The method parses JSON string (safe) into the new object.
+// {date} optional argument (default: true) converts date fields to Date instance.
+// returns {Object} or {null} (when the value isn't a JSON)
+// +v8.0.0
 ```
 
 ## Device Width
@@ -1758,12 +1780,12 @@ var dateA = new Date().add('5 minutes'); // adds 5 minutes to the current date/t
 var dateB = new Date().add('-1 hour'); // substracts 1 hour from the current date/time
 // supports days, months, years, hours, minutes, seconds
 
-// Number.prototype.inc(value);
+// Number.prototype.add(value);
 var number = 10;
-console.log(number.inc('10%'));  // --> 1
-console.log(number.inc('+10%')); // --> 11
-console.log(number.inc('+10')); //  --> 20
-console.log(number.inc('-10')); //  --> 0
+console.log(number.add('10%'));  // --> 1
+console.log(number.add('+10%')); // --> 11
+console.log(number.add('+10')); //  --> 20
+console.log(number.add('-10')); //  --> 0
 
 // Number.prototype.padLeft(max, char);
 // Number.prototype.padRight(max, char);

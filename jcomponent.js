@@ -79,6 +79,8 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
+COM.defaults.jsontrim = true;
+COM.defaults.jsondate = true;
 COM.defaults.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 COM.defaults.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
 COM.defaults.importcache = 'session';
@@ -757,7 +759,7 @@ COM.UPLOAD = function(url, data, callback, timeout, progress, error) {
 
 			var r = this.responseText;
 			try {
-				r = JSON.parse(r);
+				r = PARSE(r, COM.defaults.jsondate);
 			} catch (e) {}
 
 			if (this.status === 200) {
@@ -895,7 +897,7 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 				options.data = data;
 			} else {
 				options.contentType = 'application/json; charset=utf-8';
-				options.data = JSON.stringify(data);
+				options.data = STRINGIFY(data, COM.defaults.jsontrim);
 			}
 		}
 
@@ -907,7 +909,7 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 
 		options.headers = $.extend(headers, COM.defaults.headers);
 
-		var key = HASH(url + JSON.stringify(options));
+		var key = HASH(url + STRINGIFY(options));
 		var ma = MAN.ajax[key];
 		if (ma) {
 			ma.jcabort = true;
@@ -931,7 +933,7 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 
 			if (headers.indexOf('/json') !== -1) {
 				try {
-					body = JSON.parse(body);
+					body = PARSE(body, COM.defaults.jsondate);
 				} catch (e) {}
 			}
 
@@ -991,7 +993,7 @@ COM.AJAXCACHE = function(url, data, callback, expire, timeout, clear, review) {
 		var value = clear ? undefined : MAN.cacherest(method, uri, data, undefined, expire);
 		if (value !== undefined) {
 
-			var diff = review ? JSON.stringify(value) : null;
+			var diff = review ? STRINGIFY(value, COM.defaults.jsontrim) : null;
 
 			if (typeof(callback) === 'string')
 				MAN.remap(callback, value);
@@ -1005,7 +1007,7 @@ COM.AJAXCACHE = function(url, data, callback, expire, timeout, clear, review) {
 				if (err)
 					r = err;
 				// Is same?
-				if (diff !== JSON.stringify(r)) {
+				if (diff !== STRINGIFY(r, COM.defaults.jsontrim)) {
 					MAN.cacherest(method, uri, data, r, expire);
 					if (typeof(callback) === 'string')
 						MAN.remap(callback, r);
@@ -1074,7 +1076,7 @@ COM.REMOVECACHE = function(method, url, data) {
 		method = method.substring(0, index);
 	}
 
-	data = JSON.stringify(data);
+	data = STRINGIFY(data, COM.defaults.jsontrim);
 	var key = HASH(method + '#' + url.replace(/\//g, '') + data).toString();
 	delete MAN.storage[key];
 	$jc_save();
@@ -1896,7 +1898,7 @@ COM.schema = function(name, declaration) {
 	var b = declaration.substring(declaration.length - 1);
 
 	if ((a === '"' && b === '"') || (a === '[' && b === ']') || (a === '{' && b === '}')) {
-		var d = JSON.parse(declaration);
+		var d = PARSE(declaration, COM.defaults.jsondate);
 		MAN.schemas[name] = d;
 		return d;
 	}
@@ -3106,7 +3108,7 @@ MAN.cacherest = function(method, url, params, value, expire) {
 	if (params && !params.language && COM.$language)
 		params.language = COM.$language;
 
-	params = JSON.stringify(params);
+	params = STRINGIFY(params, COM.defaults.jsontrim);
 	var key = HASH(method + '#' + url.replace(/\//g, '') + params).toString();
 
 	return this.cachestorage(key, value, expire);
@@ -3579,12 +3581,12 @@ MAN.$$ = function() {
 		try {
 			cache = localStorage.getItem(COM.$localstorage + '.cache');
 			if (cache && typeof(cache) === 'string')
-				MAN.storage = JSON.parse(cache);
+				MAN.storage = PARSE(cache);
 		} catch (e) {}
 		try {
 			cache = localStorage.getItem(COM.$localstorage + '.blocked');
 			if (cache && typeof(cache) === 'string')
-				MAN.cacheblocked = JSON.parse(cache);
+				MAN.cacheblocked = PARSE(cache);
 		} catch (e) {}
 	}
 
@@ -3747,7 +3749,7 @@ window.NOTMODIFIED = function(path, value, fields) {
 	if (fields)
 		path = path.concat('#', fields);
 
-	var hash = HASH(JSON.stringify(value, fields));
+	var hash = HASH(STRINGIFY(value, fields));
 	var key = 'notmodified.' + path;
 	if (MAN.cache[key] === hash)
 		return true;
@@ -3912,17 +3914,15 @@ window.SCHEMA = function(name, declaration) {
 };
 
 window.OPERATION = function(name, fn) {
-	if (!fn) {
-		if (name.charCodeAt(0) === 35)
-			return MAN.operations[name.substring(1)];
-		return MAN.operations[name];
-	}
-	MAN.operations[name] = fn;
+	if (fn)
+		MAN.operations[name] = fn;
+	else
+		fn = MAN.operations[name.charCodeAt(0) === 35 ? name.substring(1) : name];
 	return fn;
 };
 
 window.ON = function(name, path, fn, init) {
-	COM.on(name, path, fn, init);
+	return COM.on(name, path, fn, init);
 };
 
 window.EMIT = COM.emit;
@@ -3945,7 +3945,7 @@ window.HASH = function(s) {
 	if (!s)
 		return 0;
 	if (typeof(s) !== 'string')
-		s = JSON.stringify(s);
+		s = STRINGIFY(s);
 	var hash = 0, i, char;
 	if (!s.length)
 		return hash;
@@ -4338,7 +4338,7 @@ Array.prototype.compare = function(id, b, fields) {
 			var bb = b[j];
 			if (bb[id] !== aa[id])
 				continue;
-			JSON.stringify(aa, fields) !== JSON.stringify(bb, fields) && update.push({ oldIndex: i, newIndex: j, oldItem: aa, newItem: bb });
+			STRINGIFY(aa, fields) !== STRINGIFY(bb, fields) && update.push({ oldIndex: i, newIndex: j, oldItem: aa, newItem: bb });
 			is = true;
 			break;
 		}
@@ -4454,6 +4454,11 @@ Array.prototype.skip = function(count) {
 	for (var i = 0; i < length; i++)
 		i >= count && arr.push(self[i]);
 	return arr;
+};
+
+String.prototype.isJSONDate = function() {
+	var l = this.length - 1;
+	return l > 22 && l < 30 && this.charCodeAt(l) === 90 && this.charCodeAt(10) === 84 && this.charCodeAt(4) === 45 && this.charCodeAt(13) === 58 && this.charCodeAt(16) === 58;
 };
 
 String.prototype.parseExpire = function() {
@@ -4692,6 +4697,10 @@ Array.prototype.remove = function(cb, value) {
 		self[i] !== cb && arr.push(self[i]);
 	}
 	return arr;
+};
+
+Date.prototype.parseDate = function() {
+	return this;
 };
 
 Date.prototype.add = function(type, value) {
@@ -5501,7 +5510,31 @@ window.MAKE = function(obj, fn) {
 };
 
 window.CLONE = function(obj) {
-	return JSON.parse(JSON.stringify(obj));
+	return PARSE(JSON.stringify(obj));
+};
+
+window.STRINGIFY = function(obj, trim) {
+	if (trim === undefined)
+		trim = true;
+	return JSON.stringify(obj, null, function(key, value) {
+		if (trim && typeof(value) === 'string') {
+			var v = value.trim();
+			return v ? v : undefined;
+		}
+		return value;
+	});
+};
+
+window.PARSE = function(value, date) {
+
+	if (date === undefined)
+		date = true;
+
+	try {
+		return JSON.parse(value.toString('utf8'), function(key, value) { return typeof(value) === 'string' && date && value.isJSONDate() ? new Date(value) : value });
+	} catch (e) {
+		return null;
+	}
 };
 
 window.NOOP = function(){};
