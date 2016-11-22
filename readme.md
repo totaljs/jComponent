@@ -810,8 +810,9 @@ $.components.defaults.devices = {
     lg: { min: 1200 }
 };
 
-$.components.defaults.jsontrim = true;
-// {Boolean} sets auto-trim in all AJAX operations (when is object serialized to JSON)
+$.components.defaults.jsoncompress = true;
+// {Boolean} sets JSON compression (null, false and empty strings are removed)
+// in all AJAX operations (when an object is serializing to JSON)
 // +v8.0.0
 
 $.components.defaults.jsondate = true;

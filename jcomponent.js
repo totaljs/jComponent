@@ -79,7 +79,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
-COM.defaults.jsontrim = true;
+COM.defaults.jsoncompress = true;
 COM.defaults.jsondate = true;
 COM.defaults.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 COM.defaults.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
@@ -891,13 +891,14 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 
 		var options = {};
 		options.type = method;
+		options.converters = MAN.jsonconverter;
 
 		if (method !== 'GET') {
 			if (typeof(data) === 'string') {
 				options.data = data;
 			} else {
 				options.contentType = 'application/json; charset=utf-8';
-				options.data = STRINGIFY(data, COM.defaults.jsontrim);
+				options.data = STRINGIFY(data, COM.defaults.jsoncompress);
 			}
 		}
 
@@ -993,7 +994,7 @@ COM.AJAXCACHE = function(url, data, callback, expire, timeout, clear, review) {
 		var value = clear ? undefined : MAN.cacherest(method, uri, data, undefined, expire);
 		if (value !== undefined) {
 
-			var diff = review ? STRINGIFY(value, COM.defaults.jsontrim) : null;
+			var diff = review ? STRINGIFY(value, COM.defaults.jsoncompress) : null;
 
 			if (typeof(callback) === 'string')
 				MAN.remap(callback, value);
@@ -1007,7 +1008,7 @@ COM.AJAXCACHE = function(url, data, callback, expire, timeout, clear, review) {
 				if (err)
 					r = err;
 				// Is same?
-				if (diff !== STRINGIFY(r, COM.defaults.jsontrim)) {
+				if (diff !== STRINGIFY(r, COM.defaults.jsoncompress)) {
 					MAN.cacherest(method, uri, data, r, expire);
 					if (typeof(callback) === 'string')
 						MAN.remap(callback, r);
@@ -1076,7 +1077,7 @@ COM.REMOVECACHE = function(method, url, data) {
 		method = method.substring(0, index);
 	}
 
-	data = STRINGIFY(data, COM.defaults.jsontrim);
+	data = STRINGIFY(data, COM.defaults.jsoncompress);
 	var key = HASH(method + '#' + url.replace(/\//g, '') + data).toString();
 	delete MAN.storage[key];
 	$jc_save();
@@ -3097,6 +3098,11 @@ function CMAN() {
 	this.extends = {};
 	this.ajax = {};
 	this.regexpcom = /(data-jc|data-component)\=/;
+	this.jsonconverter = {
+		'text json': function (text) {
+			return PARSE(text);
+		}
+	};
 	// this.mediaquery;
 }
 
@@ -3108,7 +3114,7 @@ MAN.cacherest = function(method, url, params, value, expire) {
 	if (params && !params.language && COM.$language)
 		params.language = COM.$language;
 
-	params = STRINGIFY(params, COM.defaults.jsontrim);
+	params = STRINGIFY(params, COM.defaults.jsoncompress);
 	var key = HASH(method + '#' + url.replace(/\//g, '') + params).toString();
 
 	return this.cachestorage(key, value, expire);
@@ -5513,13 +5519,17 @@ window.CLONE = function(obj) {
 	return PARSE(JSON.stringify(obj));
 };
 
-window.STRINGIFY = function(obj, trim) {
-	if (trim === undefined)
-		trim = true;
-	return JSON.stringify(obj, null, function(key, value) {
-		if (trim && typeof(value) === 'string') {
-			var v = value.trim();
-			return v ? v : undefined;
+window.STRINGIFY = function(obj, compress) {
+	if (compress === undefined)
+		compress = COM.defaults.jsoncompress;
+	return JSON.stringify(obj, function(key, value) {
+		if (compress) {
+			var t = typeof(value);
+			if (t === 'string') {
+				value = value.trim();
+				return value ? value : undefined;
+			} else if (value === false || value == null)
+				return undefined;
 		}
 		return value;
 	});
@@ -5528,10 +5538,13 @@ window.STRINGIFY = function(obj, trim) {
 window.PARSE = function(value, date) {
 
 	if (date === undefined)
-		date = true;
+		date = COM.defaults.jsondate;
 
 	try {
-		return JSON.parse(value.toString('utf8'), function(key, value) { return typeof(value) === 'string' && date && value.isJSONDate() ? new Date(value) : value });
+		console.log(date);
+		return JSON.parse(value.toString('utf8'), function(key, value) {
+			return typeof(value) === 'string' && date && value.isJSONDate() ? new Date(value) : value;
+		});
 	} catch (e) {
 		return null;
 	}
