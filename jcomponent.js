@@ -79,6 +79,7 @@ COM.defaults = {};
 COM.defaults.delay = 300;
 COM.defaults.keypress = true;
 COM.defaults.localstorage = true;
+COM.defaults.jsoncompress = false;
 COM.defaults.jsondate = true;
 COM.defaults.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 COM.defaults.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
@@ -5519,7 +5520,21 @@ window.CLONE = function(obj) {
 };
 
 window.STRINGIFY = function(obj, compress) {
-	return JSON.stringify(obj);
+
+	if (compress === undefined)
+		compress = COM.defaults.jsoncompress;
+
+	return JSON.stringify(obj, function(key, value) {
+		if (compress === true) {
+			var t = typeof(value);
+			if (t === 'string') {
+				value = value.trim();
+				return value ? value : undefined;
+			} else if (value === false || value == null)
+				return undefined;
+		}
+		return value;
+	});
 };
 
 window.PARSE = function(value, date) {
