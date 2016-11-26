@@ -318,6 +318,9 @@ COM.compile = function(container) {
 						continue;
 
 					var p = COMPATTR(scopes[i], 'scope');
+
+					scopes[i].$initialized = true;
+
 					if (!p || p === '?') {
 						p = 'scope' + (Math.floor(Math.random() * 100000) + 1000);
 						scopes[i].setAttribute('data-jc-scope', p);
@@ -1134,7 +1137,7 @@ function $jc_ready() {
 
 		$(COMPATTR_S).each(function() {
 
-			if (this.$ready)
+			if (!this.$initialized || this.$ready)
 				return;
 
 			var scope = $(this);
