@@ -338,7 +338,7 @@ COM.compile = function(container) {
 						}
 					}
 
-					obj.setPath(obj.path === '?' ? p : (p + '.' + obj.path));
+					obj.setPath(obj.path === '?' ? p : (obj.path.indexOf('?') === -1 ? p + '.' + obj.path : obj.path.replace(/\?/g, p)));
 					obj.scope = scopes[i];
 					obj.pathscope = p;
 				}
