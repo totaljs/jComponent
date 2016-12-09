@@ -1131,6 +1131,15 @@ function $jc_ready() {
 		MAN.timeoutcleaner && clearTimeout(MAN.timeoutcleaner);
 		MAN.timeoutcleaner = setTimeout(function() {
 			MAN.cleaner();
+			MAN.autofill.splice(0).forEach(function(component) {
+				var el = component.element.find(COMPATTR_B).eq(0);
+				var val = el.val();
+				if (val) {
+					var tmp = component.parser(val);
+					component.set(tmp);
+					COM.$emitwildcard(component.path, tmp, 3);
+				}
+			});
 		}, 1000);
 
 		MAN.isCompiling = false;
@@ -2501,18 +2510,8 @@ function COMP(name) {
 			if (value == null)
 				value = '';
 
-			if (!type && this.type !== a && this.type !== 'range') {
-				if (this.value && (!value || (self.$default && self.$default() === value))) {
-					// Solved problem with Google Chrome autofill
-					tmp = this.value;
-					if (tmp) {
-						tmp = self.parser(tmp);
-						MAN.set(path, tmp);
-						COM.$emitwildcard(path, tmp, 3);
-					}
-					return;
-				}
-			}
+			if (!type && this.type !== a && this.type !== 'range' && (!value || (self.$default && self.$default() === value)))
+				MAN.autofill.push(this.$component);
 
 			if (this.type === a || this.type === 'select')
 				return $(this).val(value);
@@ -3065,6 +3064,7 @@ function $jc_async(arr, fn, done) {
 }
 
 function CMAN() {
+	this.autofill = [];
 	this.const_emit2 = [null, null, null];
 	this.const_notify = [null, null];
 	this.counter = 1;
@@ -3153,14 +3153,12 @@ MAN.cachestorage = function(key, value, expire) {
 
 MAN.initialize = function() {
 	var item = this.init.pop();
-
-	if (item === undefined) {
+	if (item === undefined)
 		!MAN.isReady && COM.compile();
-		return this;
+	else {
+		!item.$removed && this.prepare(item);
+		this.initialize();
 	}
-
-	!item.$removed && this.prepare(item);
-	this.initialize();
 	return this;
 };
 
