@@ -569,8 +569,8 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 		target = 'body';
 	}
 
-	var index = url.lastindexOf(' .');
-	var ext;
+	var index = url.lastIndexOf(' .');
+	var ext = '';
 
 	if (index !== -1) {
 		ext = url.substring(index).trim().toLowerCase();
@@ -613,11 +613,16 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 		target = 'body';
 
 	if (!ext) {
-		ext = url.lastIndexOf('.');
-		if (ext !== -1)
-			ext = url.substring(ext).toLowerCase();
-		else
-			ext = '';
+		index = url.lastIndexOf('?');
+		if (index !== -1) {
+			var index2 = url.lastIndexOf('.', index);
+			if (index2 !== -1)
+				ext = url.substring(index2, index).toLowerCase();
+		} else {
+			index = url.lastIndexOf('.');
+			if (index !== -1)
+				ext = url.substring(index).toLowerCase();
+		}
 	}
 
 	var d = document;
