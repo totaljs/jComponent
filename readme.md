@@ -948,6 +948,7 @@ $.components.import(url, [target], [callback], [insert])
 // new content into the <div data-component-imported="RANDOM_NUMBER" element otherwise replaces
 // content of target element. 
 // If the URL starts with `ONCE http://...` then the content will downloaded only one time.
+// +v8.0.0 supports re-type of extension `https://maps.googleapis.com/maps/api/js?key=KEY .js`
 
 
 $.components.dirty(path, [value]);

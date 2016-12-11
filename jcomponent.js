@@ -569,6 +569,14 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 		target = 'body';
 	}
 
+	var index = url.lastindexOf(' .');
+	var ext;
+
+	if (index !== -1) {
+		ext = url.substring(index).trim().toLowerCase();
+		url = url.substring(0, index).trim();
+	}
+
 	if (first === '!' || once) {
 
 		if (once)
@@ -604,11 +612,13 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 	if (!target)
 		target = 'body';
 
-	var ext = url.lastIndexOf('.');
-	if (ext !== -1)
-		ext = url.substring(ext).toLowerCase();
-	else
-		ext = '';
+	if (!ext) {
+		ext = url.lastIndexOf('.');
+		if (ext !== -1)
+			ext = url.substring(ext).toLowerCase();
+		else
+			ext = '';
+	}
 
 	var d = document;
 	if (ext === '.js') {
