@@ -667,8 +667,11 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 		AJAXCACHE('GET ' + key, null, function(response) {
 
 			key = '$import' + key;
+
 			if (MAN.cache[key])
 				response = MAN.removescripts(response);
+			else
+				response = MAN.importstyles(response, id);
 
 			$(target).html(response);
 			MAN.cache[key] = true;
@@ -3134,7 +3137,6 @@ MAN.cacherest = function(method, url, params, value, expire) {
 
 	params = STRINGIFY(params);
 	var key = HASH(method + '#' + url.replace(/\//g, '') + params).toString();
-
 	return this.cachestorage(key, value, expire);
 };
 
@@ -3189,11 +3191,19 @@ MAN.remap = function(path, value) {
 	return this;
 };
 
+MAN.importstyles = function(str, id) {
+	return str.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, function(text) {
+		text = text.replace('<style>', '<style type="text/css">').replace('<style', '<style ' + id);
+		$(text).appendTo('head');
+		return '';
+	});
+};
+
 MAN.removescripts = function(str) {
-	return str.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, function(text) {
+	return str.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, function(text) {
 		var index = text.indexOf('>');
 		var scr = text.substring(0, index + 1);
-		return scr === '<script>' || scr.indexOf('/javascript') !== -1 ? '' : text;
+		return scr.substring(0, 6) === '<style' || scr === '<script>' || scr.indexOf('/javascript"') !== -1 ? '' : text;
 	});
 };
 
@@ -3264,7 +3274,6 @@ MAN.prepare = function(obj) {
 	el.off('component');
 
 	var cls = COMPATTR(el, 'class');
-
 	cls && (function(cls) {
 		setTimeout(function() {
 			cls = cls.split(' ');
@@ -3362,8 +3371,7 @@ MAN.get = function(path, scope) {
 	for (var i = 0, length = arr.length - 1; i < length; i++) {
 		var tmp = arr[i];
 		var index = tmp.lastIndexOf('[');
-		if (index !== -1)
-			builder.push('if(!w.' + (p ? p + '.' : '') + tmp.substring(0, index) + ')return');
+		index !== -1 && builder.push('if(!w.' + (p ? p + '.' : '') + tmp.substring(0, index) + ')return');
 		p += (p !== '' ? '.' : '') + arr[i];
 		builder.push('if(!w.' + p + ')return');
 	}
@@ -3453,11 +3461,7 @@ MAN.refresh = function() {
 				return -1;
 			var al = a.path.length;
 			var bl = b.path.length;
-			if (al > bl)
-				return -1;
-			if (al === bl)
-				return a.path.localeCompare(b.path);
-			return 1;
+			return al > bl ? - 1 : al === bl ? a.path.localeCompare(b.path) : 1;
 		});
 	}, 200);
 	return self;
@@ -3659,8 +3663,8 @@ window.REWRITE = COM.rewrite;
 window.SET = function(path, value, timeout, reset) {
 	if (typeof(timeout) === 'boolean')
 		return COM.set(path, value, timeout);
-	if (!timeout)
-		return COM.set(path, value, reset);
+	if (!timeout || timeout < 5) // TYPE
+		return COM.set(path, value, timeout);
 	setTimeout(function() {
 		COM.set(path, value, reset);
 	}, timeout);
@@ -3670,8 +3674,8 @@ window.SET = function(path, value, timeout, reset) {
 window.INC = function(path, value, timeout, reset) {
 	if (typeof(timeout) === 'boolean')
 		return COM.inc(path, value, timeout);
-	if (!timeout)
-		return COM.inc(path, value, reset);
+	if (!timeout || timeout < 5)
+		return COM.inc(path, value, timeout);
 	setTimeout(function() {
 		COM.inc(path, value, reset);
 	}, timeout);
@@ -3681,8 +3685,8 @@ window.INC = function(path, value, timeout, reset) {
 window.EXTEND = function(path, value, timeout, reset) {
 	if (typeof(timeout) === 'boolean')
 		return COM.extend(path, value, timeout);
-	if (!timeout)
-		return COM.extend(path, value, reset);
+	if (!timeout || timeout < 5)
+		return COM.extend(path, value, timeout);
 	setTimeout(function() {
 		COM.extend(path, value, reset);
 	}, timeout);
@@ -3692,8 +3696,8 @@ window.EXTEND = function(path, value, timeout, reset) {
 window.PUSH = function(path, value, timeout, reset) {
 	if (typeof(timeout) === 'boolean')
 		return COM.push(path, value, timeout);
-	if (!timeout)
-		return COM.push(path, value, reset);
+	if (!timeout || timeout < 5)
+		return COM.push(path, value, timeout);
 	setTimeout(function() {
 		COM.push(path, value, reset);
 	}, timeout);

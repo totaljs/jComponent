@@ -949,6 +949,7 @@ $.components.import(url, [target], [callback], [insert])
 // content of target element. 
 // If the URL starts with `ONCE http://...` then the content will downloaded only one time.
 // +v8.0.0 supports re-type of extension `https://maps.googleapis.com/maps/api/js?key=KEY .js`
+// +v8.0.0 styles are inserted into the head
 
 
 $.components.dirty(path, [value]);
@@ -1214,7 +1215,7 @@ UPDATE(path, [sleep], [reset]);
 // (dirty and validation).
 
 NOTIFY(path1, path2, ...);
-// Notifies components setter according the path (only fixed path).
+// Notifies components setter according to the path (only fixed path).
 
 DEFAULT(path, [timeout], [reset]);
 // The method sets to all components start with the path an initial value from
