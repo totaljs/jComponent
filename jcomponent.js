@@ -243,10 +243,12 @@ COM.compile = function(container) {
 
 	var scopes = $(COMPATTR_S);
 	var scopes_length = scopes.length;
+	var has = false;
 
 	COM.crawler(container, function(name, dom) {
 
 		var el = $(dom);
+		has = true;
 
 		if (MAN.initializers['$ST_' + name]) {
 			dom.$jc = true;
@@ -417,6 +419,9 @@ COM.compile = function(container) {
 		// A reference to implementation
 		el.data(COMPATTR_C, instances.length > 1 ? instances : instances[0]);
 	});
+
+	if (!has)
+		MAN.isCompiling = false;
 
 	if (container !== undefined || !MAN.toggle.length)
 		return MAN.next();
