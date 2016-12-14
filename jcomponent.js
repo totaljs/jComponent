@@ -569,7 +569,6 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 		insert = true;
 
 	if (typeof(target) === 'function') {
-		timeout = callback;
 		callback = target;
 		target = 'body';
 	}
