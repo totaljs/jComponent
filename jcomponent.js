@@ -5567,7 +5567,7 @@ window.PARSE = function(value, date) {
 		date = COM.defaults.jsondate;
 
 	try {
-		return JSON.parse(value.toString('utf8'), function(key, value) {
+		return JSON.parse(value, function(key, value) {
 			return typeof(value) === 'string' && date && value.isJSONDate() ? new Date(value) : value;
 		});
 	} catch (e) {
