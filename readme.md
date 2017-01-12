@@ -7,7 +7,7 @@
 > __Download__: more than 70 jComponents for free for everyone. www.componentator.com
 
 - [Gitter - Chat for GitHub](https://gitter.im/totaljs/jComponent)
-- Current version: `v8.0.0`
+- Current version: `v9.0.0` (stable beta)
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -58,10 +58,10 @@ __IMPORTANT__: +v8.0.0 supports declaring of multiple components like this `<div
 #### Simple declaration of the component
 
 ```html
-<div data-component="textbox">Name</div>
+<div data-jc="textbox">Name</div>
 
 <!-- OR -->
-<b data-component="timer"></b>
+<b data-jc="timer"></b>
 
 <!-- OR -->
 <span data-jc="email-decoder">your(AT)mail(DOT)com</span>
@@ -77,13 +77,13 @@ __IMPORTANT__: +v8.0.0 supports declaring of multiple components like this `<div
 
 ## Declaration with binding
 
-Binding is represented as `data-component-path` attribute. jComponent has own buil-in mechanism for binding values to/from component (you can rewrite it).
+Binding is represented as `data-jc-path` attribute. jComponent has own buil-in mechanism for binding values to/from component (you can rewrite it).
 
 ```html
-<div data-component="textbox" data-component-path="contactform.name">Name</div>
+<div data-jc="textbox" data-jc-path="contactform.name">Name</div>
 
-<!-- empty "data-component" can write only raw output according binding path -->
-<div data-component="" data-component-path="contactform.name"></div>
+<!-- empty "data-jc" can write only raw output according binding path -->
+<div data-jc="" data-jc-path="contactform.name"></div>
 ```
 
 The value `contactform.name` is linked to `window.contactform.name` (`window` is meant as a browser window instance). The library automatically creates value in __window scope__ if the value doesn't exist.
@@ -93,59 +93,59 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 ## HTML attributes
 
 ```html
-<element data-component="" />
+<element data-jc="" />
 <!--
     Must contain a component name. If the value of this attribute is empty then jComponent
     writes only raw output according binding path attribute.
 -->
 
-<element data-component-path="" />
+<element data-jc-path="" />
 <!--
     It's not required. The attribute contains the binding path for binding values between
     the component and a model, e.g. `form.name` (is binded to `window.form.name`) or
     `user.age` (is binded to `window.user.age`).
 -->
 
-<element data-component-type="" />
+<element data-jc-type="" />
 <!--
     It's not required. The attribute can contain a type of the component and you must define
     own types manually e.g. `date`. jComponent internally supports `number` and `currency` type, so each string value is automatically converted into the `Number`.
 -->
 
-<element data-component-id="" />
+<element data-jc-id="" />
 <!--
     It's not required. This attribute is an identificator of the component for the searching.
 -->
 
-<element data-component-class="" />
+<element data-jc-class="" />
 <!--
     When is the component ready then the library automatically toggles the element
     `class` according this attribute. It's not required.
 -->
 
-<element data-component-import="" />
+<element data-jc-import="" />
 <!--
-    Must contain a valid URL address and the element must contatin data-component="" attribute. This attribute download HTML or JS content and evaluates its. E.g. jComponent downloads
+    Must contain a valid URL address and the element must contatin data-jc="" attribute. This attribute download HTML or JS content and evaluates its. E.g. jComponent downloads
     the content !!! only onetime !!! but the content can be used in many components.
 
     E.g.:
 
     // First component
-    <div data-component="editor" data-component-import="/editor.html"></div>
+    <div data-jc="editor" data-jc-import="/editor.html"></div>
 
     // Second component
-    <p data-component="editor" data-component-import="/editor.html"></p>
+    <p data-jc="editor" data-jc-import="/editor.html"></p>
 
     // etc..
 -->
 
-<element data-component-init="" />
+<element data-jc-init="" />
 <!--
     It's not required and must contain name of the function which is executed when the
     component is ready. `function init(component) {}`.
 -->
 
-<element data-component-template="" />
+<element data-jc-template="" />
 <!--
     It's not required and can contain only URL address to the component template. The
     library automatically downloads the content and sends it to the component (into
@@ -153,88 +153,88 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     jComponent uses DOM selector and the HTML of the selector will be the template.
 -->
 
-<element data-component-dependencies="" />
+<element data-jc-dependencies="" />
 <!--
     Can contain multiple [path] or [component-id] or [component-name] divider with comma ",".
     This feature is only for broadcasting. Look to: BROADCAST() or component.broadcast();
-    E.g. data-component-dependencies="#component-id, .path.to.property, component-name"
+    E.g. data-jc-dependencies="#component-id, .path.to.property, component-name"
 -->
 
-<element data-component-scope="" />
+<element data-jc-scope="" />
 <!--
-    A scope attribute updates the `data-component-path` in all nested components.
-    With the scope works `data-component-init` and `data-component-class`.
-    If the scope value `data-component-scope` is `?` then the `data-component-path`
+    A scope attribute updates the `data-jc-path` in all nested components.
+    With the scope works `data-jc-init` and `data-jc-class`.
+    If the scope value `data-jc-scope` is `?` then the `data-jc-path`
     is generated automatically. IMPORTANT: this element MUST CONTAIN some jComponents,
     otherwise the scope won't be initialized.
 
     ::: E.g.:
-    <element data-component-scope="users">
-        <element data-component="textbox" data-component-path="form.name" />
+    <element data-jc-scope="users">
+        <element data-jc="textbox" data-jc-path="form.name" />
     </element>
 
-    <element data-component-scope="?">
-        <element data-component="textbox" data-component-path="form.name" />
+    <element data-jc-scope="?">
+        <element data-jc="textbox" data-jc-path="form.name" />
     </element>
 
-    <element data-component-scope="?">
+    <element data-jc-scope="?">
         disables scope manually
-        <element data-component="textbox" data-component-path="form.name" data-component-noscope="true" />
+        <element data-jc="textbox" data-jc-path="form.name" data-jc-noscope="true" />
     </element>
 
 
     ::: Result for imagination:
-    <element data-component-scope="users">
-        <element data-component="textbox" data-component-path="users.form.name" />
+    <element data-jc-scope="users">
+        <element data-jc="textbox" data-jc-path="users.form.name" />
     </element>
 
-    <element data-component-scope="scope343983">
-        <element data-component="textbox" data-component-path="scope343983.form.name" />
+    <element data-jc-scope="scope343983">
+        <element data-jc="textbox" data-jc-path="scope343983.form.name" />
     </element>
 
-    <element data-component-scope="scope584948">
-        <element data-component="textbox" data-component-path="form.name" data-component-noscope="true" />
+    <element data-jc-scope="scope584948">
+        <element data-jc="textbox" data-jc-path="form.name" data-jc-noscope="true" />
     </element>
 -->
 
-<element data-component-noscope="true" />
+<element data-jc-noscope="true" />
 <!--
     Disables main scope for this component.
 -->
 
-<element data-component-value="" />
+<element data-jc-value="" />
 <!--
     This is an initial value (NEW: and default value) for the component or scope. Value is evaluated as JavaScript.
 
     ::: E.g.
-    <element data-component-scope="?" data-component-value="{ name: 'jComponent', tags: ['node.js', 'jComponent', 'total.js'] }">
+    <element data-jc-scope="?" data-jc-value="{ name: 'jComponent', tags: ['node.js', 'jComponent', 'total.js'] }">
     ...
     </element>
 
-    <element data-component="a-component-string" data-component-value="'String value'">
+    <element data-jc="a-component-string" data-jc-value="'String value'">
     ...
     </element>
 
-    <element data-component="a-component-number" data-component-value="10">
+    <element data-jc="a-component-number" data-jc-value="10">
     ...
     </element>
 
-    Look into `DEFAULT()`, `component.default()` or `$.components.default()` functions.
+    Look into `DEFAULT()`, `component.default()` or `jC.default()` functions.
 -->
 
-<element data-component-controller="CONTROLLER_NAME">
+<element data-jc-controller="CONTROLLER_NAME">
 <!--
    +v3.9.0 - automatically calls the controller initialization. Look into the
    controller section in this manual.
 -->
 
-<element data-component-singleton="true" />
+<element data-jc-singleton="true" />
 <!--
    +v3.9.3 - sets the current component as singleton. Singleton can be set manually in
    the component instance like this: `instance.singleton()`.
 -->
 
-<element data-component-released="true" />
+<element data-jc-released="true" />
 <!--
    +v7.0.0 - sets state of this current component as released.
 -->
@@ -243,42 +243,42 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 ## Special HTML attributes
 
 ```html
-<element data-component-url="" />
+<element data-jc-url="" />
 <!--
     The library downloads a full HTML template with the component and its JavaScript
     declaration. The content will be inserted into the current element and then will
     be evaluated.
 
-    This attribute can be used with `data-component-path`: the library automatically
-    rewrites `$` char in all attributes [data-component-path] of all injected components
-    according to `data-component-path`.
+    This attribute can be used with `data-jc-path`: the library automatically
+    rewrites `$` char in all attributes [data-jc-path] of all injected components
+    according to `data-jc-path`.
 
     If the URL starts with `ONCE http://...` then the content will downloaded only one time.
 -->
 
-<element data-component-bind="" />
+<element data-jc-bind="" />
 <!--
     This attribute can be used only in `<input`, `<textarea` and `<select` tags. If the
     component contains a said tag then the attribute ensures two way binding between
     the input (in component) and the model. You don't need to declare `setter` and
     `getter` because the library to create it automatically. The value of this attribute
-    is empty like this `data-component-bind=""`.
+    is empty like this `data-jc-bind=""`.
 -->
 
-<element data-component-keypress="" />
+<element data-jc-keypress="" />
 <!--
     Works only with `<input` and `<textarea` tags and enables/disables keypress real-time
-    bindings of values. Default: `true` and the tags must have `data-component-bind`
+    bindings of values. Default: `true` and the tags must have `data-jc-bind`
     attribute.
 -->
 
-<element data-component-keypress-delay="" />
+<element data-jc-keypress-delay="" />
 <!--
     It's delay / sleep time for real-time bindings of values in milliseconds.
     Default: `300`.
 -->
 
-<element data-component-keypress-only="" />
+<element data-jc-keypress-only="" />
 <!--
     This attribute can enable only real-time bindings. That means: `blur` and `change`
     event is skipped in `<input`, `<textarea` tags. Suitable for autocomplete fields.
@@ -327,11 +327,11 @@ COMPONENT('my-component-name', function() {
     // binds value between component and the scope / model according this path.
 
     instance.id;
-    // This property contains the component identificator from 'data-component-id`
+    // This property contains the component identificator from 'data-jc-id`
     // attribute. By default contains internal ID of the current component instance.
 
     instance.type;
-    // This property contains the component type from `data-component-type` attribute.
+    // This property contains the component type from `data-jc-type` attribute.
     // Default: ""
 
     instance.template;
@@ -351,7 +351,7 @@ COMPONENT('my-component-name', function() {
     // Works only with broadcasting.
 
     instance.trim;
-    // This property affects trimming of string values and works only with [data-component-bind]
+    // This property affects trimming of string values and works only with [data-jc-bind]
     // and default `.instance.setter`. Default value: true.
 
     instance.usage = { init: 0, manually: 0, input: 0, default: 0, custom: 0, valid: 0, dirty: 0 };
@@ -363,10 +363,10 @@ COMPONENT('my-component-name', function() {
     // instance.usage.convert('minutes')
     
     instance.scope;
-    // The property contains data-component-scope element if exists.
+    // The property contains data-jc-scope element if exists.
     
     instance.pathscope;
-    // The property contains value of data-component-scope element if exists.
+    // The property contains value of data-jc-scope element if exists.
     
     instance.siblings;
     // Returns {Boolean} and it indicates whether the element contains multiple
@@ -386,7 +386,7 @@ COMPONENT('my-component-name', function() {
     };
 
     instance.prerender = function(template) {
-        // A prerender delegate is executed when the `data-component-template` attribute
+        // A prerender delegate is executed when the `data-jc-template` attribute
         // contains URL to template. Is executed once.
 
         this.template = Tangular.compile(template);
@@ -420,8 +420,8 @@ COMPONENT('my-component-name', function() {
     instance.validate = function(value, isInitialValue) {
         // Very important degelate for the validation of values. The library executes
         // this delegate when the value is changed in the current component
-        // with `<input data-component-bind` or `<textarea data-component-bind`
-        // or `<select data-component-bind` elements. Otherwise you must call
+        // with `<input data-jc-bind` or `<textarea data-jc-bind`
+        // or `<select data-jc-bind` elements. Otherwise you must call
         // this delegate manually.
 
         if (isInitialValue)
@@ -453,9 +453,9 @@ COMPONENT('my-component-name', function() {
     instance.setter = function(value, path, type) {
         // This delegate is executed when the value in the model is changed.
         // This delegate has an own implementation for the components which
-        // contain `<input data-component-bind` or `<textarea data-component-bind`
-        // or `<select data-component-bind` elements. If the value is changed
-        // according `data-component-path` then the library executes this delegate.
+        // contain `<input data-jc-bind` or `<textarea data-jc-bind`
+        // or `<select data-jc-bind` elements. If the value is changed
+        // according `data-jc-path` then the library executes this delegate.
 
         // Argument: value
         // value === new value
@@ -481,8 +481,8 @@ COMPONENT('my-component-name', function() {
 
 
     instance.getter = function(value) {
-        // The library executes this delegate when the `<input data-component-bind`,
-        // `<textarea data-component-bind` or `<select data-component-bind` change
+        // The library executes this delegate when the `<input data-jc-bind`,
+        // `<textarea data-jc-bind` or `<select data-jc-bind` change
         // the value in the current component. `getter` means --> get value
         // from the input. This delegate has an own implementation, but you can
         // rewrite it like that:
@@ -502,6 +502,12 @@ COMPONENT('my-component-name', function() {
     // +v6.0.0
     instance.released = function(is) {
         // is {Boolean} == Is released?
+    };
+
+    // This method is executed each 60 seconds
+    // +v9.0.0
+    instance.knockknock = function(counter) {
+        // `counter` starts with `0`
     };
 
 });
@@ -613,7 +619,7 @@ COMPONENT('my-component-name', function() {
 
     
     instance.default([reset]);
-    // Sets a default value from [data-component-value]. [reset] attribute
+    // Sets a default value from [data-jc-value]. [reset] attribute
     // resets the component state (default: true).
 
 
@@ -631,7 +637,7 @@ COMPONENT('my-component-name', function() {
 
 
     instance.noscope();
-    // Disables scoping paths `data-component-scope`.
+    // Disables scoping paths `data-jc-scope`.
 
 
     instance.singleton();
@@ -655,9 +661,10 @@ COMPONENT('my-component-name', function() {
     instance.broadcast('say')('hello');
     instance.broadcast('set')('new value for all dependencies');
     instance.broadcast('*', 'set')('new value for all nested components');
-    instance.broadcast([selector], method_name);
+    var fn = instance.broadcast([selector], method_name);
+    fn('arguments');
     // This method executes [method_name] in all dependencies and
-    // returns function for additional arguments. You can get a caller object
+    // returns a function for additional arguments. You can get a caller object
     // in the called components via `component.caller`.
     
 
@@ -675,8 +682,8 @@ COMPONENT('my-component-name', function() {
         return value.format('dd.MM.yyyy');
     });
     // Appends a new formatter. The formatter formats the model value for the render.
-    // E.g. date. Works only with components which contain `<input data-component-bind`,
-    // `<textarea data-component-bind` or `<select data-component-bind`.
+    // E.g. date. Works only with components which contain `<input data-jc-bind`,
+    // `<textarea data-jc-bind` or `<select data-jc-bind`.
 
 
     instance.formatter(value);
@@ -691,8 +698,8 @@ COMPONENT('my-component-name', function() {
     });
     // Appends a new parser. The parser parses the value from the `input`, `textarea`
     // or `selectfor`. E.g. date. Works only with components which contain
-    // `<input data-component-bind`, `<textarea data-component-bind` or
-    // `<select data-component-bind`.
+    // `<input data-jc-bind`, `<textarea data-jc-bind` or
+    // `<select data-jc-bind`.
 
 
     instance.parser(value);
@@ -746,7 +753,7 @@ COMPONENT('my-component-name', function() {
 
     instance.on('#component-id', function(component) {
         // This event is executed when is ready a new component
-        // with the `data-component-id` attribute.
+        // with the `data-jc-id` attribute.
     });
 
     instance.on('@component-name', function(component) {
@@ -788,51 +795,51 @@ COMPONENT('my-component-name', function() {
 ### Properties
 
 ```javascript
-$.components.version;
+jC.version;
 // {Number} returns the current version of jComponent.
 
-$.components.defaults.delay;
+jC.defaults.delay;
 // {Number} sets the delay for keypress real-time binding, default `300`.
 
-$.components.defaults.keypress;
+jC.defaults.keypress;
 // {Boolean} enables / disables keypress real-time binding, default `true`.
 
-$.components.defaults.localstorage;
+jC.defaults.localstorage;
 // {Boolean} enables / disables localstorage for cache mechanism, default `true`.
 
-$.components.defaults.headers;
+jC.defaults.headers;
 // {Object} can sets AJAX headers for all requests
 
-$.components.defaults.devices = {
+jC.defaults.devices = {
     xs: { max: 768 },
     sm: { min: 768, max: 992 },
     md: { min: 992, max: 1200 },
     lg: { min: 1200 }
 };
 
-$.components.defaults.jsoncompress = false;
+jC.defaults.jsoncompress = false;
 // {Boolean} sets JSON compression (`null`, `false` and `empty strings` are removed)
 // in all AJAX operations (when an object is serializing to JSON)
 // +v8.0.0
 
-$.components.defaults.jsondate = true;
+jC.defaults.jsondate = true;
 // {Boolean} sets auto-parser in all AJAX operations (when is JSON deserialized to Object)
 // +v8.0.0
 
-$.components.$version;
+jC.$version;
 // {String} appends the value to each URL address `?version=$version`
 // called via jComponent, default: "".
 
-$.components.$language;
+jC.$language;
 // {String} appends the value to each URL address `?language=$language`
 // called via jComponent, default: "".
 
-$.components.localstorage = 'jcomponent';
+jC.localstorage = 'jcomponent';
 // {String} is a prefix for all cache keys.
 
-$.components.parser(function(path, value, type) { // Example
+jC.parser(function(path, value, type) { // Example
     // this === component
-    // type === [data-component-type]
+    // type === [data-jc-type]
     if (path === 'model.created') {
         var dt = value.split('.');
         return new Date(parseInt(dt[2]), parseInt(dt[1] - 1), parserInt(dt[0]));
@@ -840,19 +847,19 @@ $.components.parser(function(path, value, type) { // Example
     return value;
 });
 
-var value = $.components.parser('a-value', 'my.custom.path', 'number');
+var value = jC.parser('a-value', 'my.custom.path', 'number');
 // value will be contain parsed `a-value`
 // jComponent executes all parser functions to a value
 
-$.components.formatter(function(path, value, type) { // Example
+jC.formatter(function(path, value, type) { // Example
     // this === component
-    // type === [data-component-type]
+    // type === [data-jc-type]
     if (path === 'model.created')
         return value.format('dd.MM.yyyy');
     return value;
 });
 
-var value = $.components.formatter('a-value', 'my.custom.path', 'number');
+var value = jC.formatter('a-value', 'my.custom.path', 'number');
 // value will be contain formatted `a-value`
 // jComponent executes all formatter functions to a value
 
@@ -861,213 +868,211 @@ var value = $.components.formatter('a-value', 'my.custom.path', 'number');
 ### Methods
 
 ```javascript
-$.components();
 // Runs the compiler for new components. jComponent doesn't watch new elements in DOM.
-
-$.components.rewrite(path, value);
-$.components.rewrite('model.name', 'Peter');
+jC.rewrite(path, value);
+jC.rewrite('model.name', 'Peter');
 // +v4.0.0 Rewrites the value in the model without notification
 
 
-$.components.set(path, value, [reset]);
-$.components.set('model.name', 'Peter'); // Example: sets the value
-$.components.set('+model.tags', 'HTML'); // Example: appends the value into the array
-$.components.set('+model.tags', ['CSS', 'JavaScript']); // Example: appends the array into the array
+jC.set(path, value, [reset]);
+jC.set('model.name', 'Peter'); // Example: sets the value
+jC.set('+model.tags', 'HTML'); // Example: appends the value into the array
+jC.set('+model.tags', ['CSS', 'JavaScript']); // Example: appends the array into the array
 // Sets the value into the model. `reset` argument resets the state
 // (dirty, validation), default: `false`.
 
 
-$.components.push(path, value, [reset]);
-$.components.push('model.tags', 'HTML'); // Example
-$.components.push('model.tags', ['CSS', 'JavaScript']); // Example
+jC.push(path, value, [reset]);
+jC.push('model.tags', 'HTML'); // Example
+jC.push('model.tags', ['CSS', 'JavaScript']); // Example
 // Pushs the value in the model, only for arrays. `reset` argument resets
 // the state (dirty, validation), default: `false`.
 
 
-$.components.inc(path, value, [reset]);
-$.components.inc('model.age', 10); // Example
-$.components.inc('model.price', -5); // Example
+jC.inc(path, value, [reset]);
+jC.inc('model.age', 10); // Example
+jC.inc('model.price', -5); // Example
 // Increments the value in the model, only for numbers. `reset` argument
 // resets the state (dirty, validation), default: `false`.
 
 
-$.components.extend(path, value, [reset]);
-$.components.extend('model', { age: 30, name: 'Peter' }); // Example
+jC.extend(path, value, [reset]);
+jC.extend('model', { age: 30, name: 'Peter' }); // Example
 // Extends the value in the model, only for objects. `reset` argument resets
 // the state (dirty, validation), default: `false`.
 
 
-$.components.get(path, [scope]); // default scope is `window`
-$.components.get('model.age'); // Example
-$.components.get('model.tags'); // Example
+jC.get(path, [scope]); // default scope is `window`
+jC.get('model.age'); // Example
+jC.get('model.tags'); // Example
 // Gets the value from the model.
 
 
-$.components.findByName(name, [path], [fn(component)]);
-$.components.findByName(name, [path], [returnArray]);
-$.components.findByName('my-component'); // Example: Returns only one component
-$.components.findByName('my-component', true); // Example: Returns array with multiple components
-$.components.findByName('my-component', function(component) { console.log(component); });  // Example: Crawls all components
-$.components.findByName('my-component', 'model.*', function(component) { console.log(component); }); // Example: Crawls all components according the path
-// Finds components by `data-component` attribute.
+jC.findByName(name, [path], [fn(component)]);
+jC.findByName(name, [path], [returnArray]);
+jC.findByName('my-component'); // Example: Returns only one component
+jC.findByName('my-component', true); // Example: Returns array with multiple components
+jC.findByName('my-component', function(component) { console.log(component); });  // Example: Crawls all components
+jC.findByName('my-component', 'model.*', function(component) { console.log(component); }); // Example: Crawls all components according the path
+// Finds components by `data-jc` attribute.
 
 
-$.components.findById(name, [path], [fn(component)]);
-$.components.findById(name, [path], [returnArray]);
-$.components.findById('my-component'); // Example: Returns only one component
-$.components.findById('my-component', true); // Example: Returns array with multiple components
-$.components.findById('my-component', function(component) { console.log(component); }); // Example: Crawls all components
-$.components.findById('my-component', 'model.*', function(component) { console.log(component); });  // Example: Crawls all components according the path
-// Finds components by `data-component-id` attribute.
+jC.findById(name, [path], [fn(component)]);
+jC.findById(name, [path], [returnArray]);
+jC.findById('my-component'); // Example: Returns only one component
+jC.findById('my-component', true); // Example: Returns array with multiple components
+jC.findById('my-component', function(component) { console.log(component); }); // Example: Crawls all components
+jC.findById('my-component', 'model.*', function(component) { console.log(component); });  // Example: Crawls all components according the path
+// Finds components by `data-jc-id` attribute.
 
 
-$.components.findByPath([path], [fn(component)]);
-$.components.findByPath([path], [returnArray]);
-$.components.findByPath('model'); // Example: Returns only one component
-$.components.findByPath('model', true); // Example: Returns array with multiple components
-$.components.findByPath('model', function(component) { console.log(component); });  // Example: Crawls all components
-// Finds components by `data-component-id` attribute.
+jC.findByPath([path], [fn(component)]);
+jC.findByPath([path], [returnArray]);
+jC.findByPath('model'); // Example: Returns only one component
+jC.findByPath('model', true); // Example: Returns array with multiple components
+jC.findByPath('model', function(component) { console.log(component); });  // Example: Crawls all components
+// Finds components by `data-jc-id` attribute.
 
 
-$.components.errors([path]);
+jC.errors([path]);
 // Returns array of invalid components.
 
 
-$.components.invalid(path);
+jC.invalid(path);
 // Sets the invalid state to all components according the binding path.
 
 
-$.components.remove(path);
-$.components.remove(jquery_element);
+jC.remove(path);
+jC.remove(jquery_element);
 // Removes all components according the binding path.
 
 
-$.components.import(url, [target], [callback], [insert])
+jC.import(url, [target], [callback], [insert])
 // Imports a HTML content (with components) into the `target` (by default: `document.body`)
 // or can import scripts (.js) or styles (.css). `insert` arguments (default: true) wraps
-// new content into the <div data-component-imported="RANDOM_NUMBER" element otherwise replaces
+// new content into the <div data-jc-imported="RANDOM_NUMBER" element otherwise replaces
 // content of target element. 
 // If the URL starts with `ONCE http://...` then the content will downloaded only one time.
 // +v8.0.0 supports re-type of extension `https://maps.googleapis.com/maps/api/js?key=KEY .js`
 // +v8.0.0 styles are inserted into the head
 
 
-$.components.dirty(path, [value]);
-$.components.dirty('model.isDirty'); // Example: Checker.
-$.components.dirty('model.isDirty', false); // Example: Setter.
+jC.dirty(path, [value]);
+jC.dirty('model.isDirty'); // Example: Checker.
+jC.dirty('model.isDirty', false); // Example: Setter.
 // Checks or sets a dirty value.
 // Returns {Boolean}.
 // Supports wildcard path, e.g. `model.*`.
 
 
-$.components.valid(path, [value]);
-$.components.valid('model.isValid'); // Example: Checker.
-$.components.valid('model.isValid', false); // Example: Setter.
+jC.valid(path, [value]);
+jC.valid('model.isValid'); // Example: Checker.
+jC.valid('model.isValid', false); // Example: Setter.
 // Checks or sets a valid value.
 // Returns {Boolean}.
 // Supports wildcard path, e.g. `model.*`.
 
 
-$.components.can(path, [except_paths_arr]);
+jC.can(path, [except_paths_arr]);
 // Combines the dirty and valid method together (e.g. for enabling of buttons)
 // Returns {Boolean}.
-// Opposite of $.components.disable()
+// Opposite of jC.disable()
 // Supports wildcard path, e.g. `model.*`.
 
 
-$.components.disabled(path, [except_paths_arr]);
+jC.disabled(path, [except_paths_arr]);
 // Combines the dirty and valid method together (e.g. for disabling of buttons)
-// Opposite of $.components.can()
+// Opposite of jC.can()
 // Supports wildcard path, e.g. `model.*`.
 
 
-$.components.cache(key); // Example: Getter.
-$.components.cache(key, value, expire); // Example: Setter.
+jC.cache(key); // Example: Getter.
+jC.cache(key, value, expire); // Example: Setter.
 // Gets or Sets the value from the cache. `Expire` in milliseconds or can be a string `5 minutes`.
 // Returns {Object}.
 
 
-$.components.cachepath(path, expire);
+jC.cachepath(path, expire);
 // +v8.0.0
 // The method creates watcher for `path` and stores values into the localStorage
 // Returns {Components}.
 
 
-$.components.validate([path], [except_paths_arr]);
+jC.validate([path], [except_paths_arr]);
 // Validates all values according the path.
 // Returns {Boolean}.
 // Supports wildcard path, e.g. `model.*`.
 
 
-$.components.reset([path], [timeout]);
+jC.reset([path], [timeout]);
 // Reset the dirty and valid method together (Sets: dirty=true and valid=true)
 // Supports wildcard path, e.g. `model.*`.
 
 
-$.components.each(fn(component, index, isAsterix), path);
-$.components.each(function(component) { console.log(component); }); // Example: All components.
-$.components.each(function(component) { console.log(component); }, 'model.*'); // Example: According the path.
+jC.each(fn(component, index, isAsterix), path);
+jC.each(function(component) { console.log(component); }); // Example: All components.
+jC.each(function(component) { console.log(component); }, 'model.*'); // Example: According the path.
 // Components selector.
 // Supports wildcard path, e.g. `model.*`.
 
 
-$.components.update(path, [reset]);
-$.components.update('model.*'); // Example
-$.components.update('model.name'); // Example
+jC.update(path, [reset]);
+jC.update('model.*'); // Example
+jC.update('model.name'); // Example
 // Executes `Component.setter` for each component according path. `reset` argument resets
 // the state (dirty, validation), default: `false`.
 
 
-$.components.notify([path1], [path2], [path3], [path4], ...);
-$.components.notify('model.age', 'model.name'); // Example
+jC.notify([path1], [path2], [path3], [path4], ...);
+jC.notify('model.age', 'model.name'); // Example
 // Executes `Component.setter` for each component according path (only fixed path).
 
 
-$.components.emit(name, [arg1], [arg2]);
+jC.emit(name, [arg1], [arg2]);
 // Triggers event within all components.
 
 
-$.components.parseCookie();
+jC.parseCookie();
 // Parsers `document.cookie` and returns {Object}.
 
 
-$.components.parseQuery([querystring]);
-$.components.parseQuery(); // Example: Returns parsed values from the current URL address.
+jC.parseQuery([querystring]);
+jC.parseQuery(); // Example: Returns parsed values from the current URL address.
 // Parsers query string (from URL address) and returns {Object}.
 
 
-$.components.createURL([url], values);
-$.components.createURL({ sort: 1, pricefrom: 300 }); // append values into the current URL
-$.components.createURL('/api/query/?priceto=200', { sort: 1 }); // /api/query/?priceto=200&sort=1
+jC.createURL([url], values);
+jC.createURL({ sort: 1, pricefrom: 300 }); // append values into the current URL
+jC.createURL('/api/query/?priceto=200', { sort: 1 }); // /api/query/?priceto=200&sort=1
 // +v4.0.0 Updates or creates URL from the current URL address and QueryString
 
 
-$.components.UPLOAD(url, formdata, [callback or path], [sleep], [progress(percentage, speed, remaining) or path], [error(response, status, type) or path]);
-$.components.UPLOAD('/api/', formdata, 'form.response'); // Example
-$.components.UPLOAD('/api/', formdata, 'response.success-->form.response'); // Example with remapping.
-$.components.UPLOAD('/api/', formdata, function(response, err) { console.log(response); }); // Example
+jC.UPLOAD(url, formdata, [callback or path], [sleep], [progress(percentage, speed, remaining) or path], [error(response, status, type) or path]);
+jC.UPLOAD('/api/', formdata, 'form.response'); // Example
+jC.UPLOAD('/api/', formdata, 'response.success-->form.response'); // Example with remapping.
+jC.UPLOAD('/api/', formdata, function(response, err) { console.log(response); }); // Example
 // Uploads formdata and receive `JSON` from the server. When is throwed an error then
 // "response" is the empty object {}
 
 
-$.components.TEMPLATE(url, callback(template), [prepare(template)]);
+jC.TEMPLATE(url, callback(template), [prepare(template)]);
 // Downloads the HTML content and caches it per session. This method is adapted for multiple
 // executing. The content is downloaded only once. `prepare` argument is optional
 // (and executed once), but if it's declared then must "return" template (e.g. compiled template).
 
-$.components.removeCache(key, fulltext);
+jC.removeCache(key, fulltext);
 // Deletes cache according to the key. If @fulltext {Boolean} is `true` then the method removes
 // all items with their keys contain this key.
 
-$.components.REMOVECACHE(method, url, data);
+jC.REMOVECACHE(method, url, data);
 // Deletes cache (AJAXCACHE).
 
 // +v3.7.0
 // AJAX calls
-$.components.AJAX('METHOD URL', data, [callback(response, err, headers) or path], [sleep], [error(response, status, type, headers) or path]);
+jC.AJAX('METHOD URL', data, [callback(response, err, headers) or path], [sleep], [error(response, status, type, headers) or path]);
 // Is same as GET(), POST(), PUT(), DELETE(). When is throwed an error then
 // "response" is the empty object {}
-$.components.AJAXCACHE('METHOD URL', data, [callback(response, isFromCache) or path], [expire], [sleep], [clear]);
+jC.AJAXCACHE('METHOD URL', data, [callback(response, isFromCache) or path], [expire], [sleep], [clear]);
 // Is same as POSTCACHE, GETCACHE and now supports PUT, DELETE. If the callback is the
 // function then the second argument will be `fromCache {Boolean}`.
 
@@ -1078,43 +1083,43 @@ $.components.AJAXCACHE('METHOD URL', data, [callback(response, isFromCache) or p
 // +v4.4.0 supports custom headers
 // AJAX('GET /api/ { customheader1: "value1", customerheader2: "value2" }', ...);
 
-$.components.broadcast('.path.to.property, #a-component-id, a-component-name')('say')('hello');
-$.components.broadcast('.path.to.property, #a-component-id, a-component-name')('set')('new value');
-$.components.broadcast(['.path.to.property', '#id', 'name'], 'set')('new value');
-$.components.broadcast(selector, method_name, [caller]);
+jC.broadcast('.path.to.property, #a-component-id, a-component-name')('say')('hello');
+jC.broadcast('.path.to.property, #a-component-id, a-component-name')('set')('new value');
+jC.broadcast(['.path.to.property', '#id', 'name'], 'set')('new value');
+jC.broadcast(selector, method_name, [caller]);
 // Executes the method in all components by selector. [selector] can be jQuery
 // element or jComponent --> then the method searchs all nested components.
 // IMPORTANT: selector can be jQuery element or jComponent.
 
 
-$.components.evaluate(path, expression, [path_is_value]);
-$.components.evaluate('model.age', 'value > 20 && value < 30'); // Example
-$.components.evaluate(25, 'value > 20 && value < 30', true); // Example
+jC.evaluate(path, expression, [path_is_value]);
+jC.evaluate('model.age', 'value > 20 && value < 30'); // Example
+jC.evaluate(25, 'value > 20 && value < 30', true); // Example
 // Evaluates the expression. The value in the expression is value according the path.
 
 
-$.components.blocked(name, timeout, [callback]);
-if ($.components.blocked('submitted', 1000)) { // Example.
+jC.blocked(name, timeout, [callback]);
+if (jC.blocked('submitted', 1000)) { // Example.
     alert('Try later.')
     return;
 }
 // Prevention for some operations. It's stored in `localStorage` according
-// `$.components.defaults.localstorage`.
+// `jC.defaults.localstorage`.
 
 
-$.components.ready(fn);
-$.components.ready(function(count) { console.log('Components ready:', count); }); // Example.
+jC.ready(fn);
+jC.ready(function(count) { console.log('Components ready:', count); }); // Example.
 // Are the components ready? Has a similar functionality like $.ready().
 
-$.components.clean([timeout]);
+jC.clean([timeout]);
 // Cleans all unnecessary components.
 // IMPORTANT: The cleaner is started each 5 minutes.
 
-$.components.usage(property, expire, [path], [callback]);
-$.components.usage('manually', '5 seconds');
-$.components.usage('input', '5 seconds', 'form.*');
-$.components.usage('custom', '5 seconds', 'form.*');
-$.components.usage('init', '5 seconds', function(component) {
+jC.usage(property, expire, [path], [callback]);
+jC.usage('manually', '5 seconds');
+jC.usage('input', '5 seconds', 'form.*');
+jC.usage('custom', '5 seconds', 'form.*');
+jC.usage('init', '5 seconds', function(component) {
     // All components initialized 5 seconds before
     console.log(component.usage.convert('seconds'));
 });
@@ -1124,23 +1129,23 @@ $.components.usage('init', '5 seconds', function(component) {
 // Returns Array when is not defined callback.
 
 // +v4.0.0
-$.components.used(path);
+jC.used(path);
 // Sets `instance.usage.custom` usage according to the path.
 
-$.components.schedule(selector, type, expire, callback);
+jC.schedule(selector, type, expire, callback);
 // Schedule executes timeout when is valid `selector` and `expire`.
 // Scheduler checks all tasks each 2 seconds (it has an internal optimalization for good performance).
 // types: `input` (affected by HTML inputs), `manually` (affected by developer), `init`
 
-$.components.schedule('.find-by-path', 'input', '5 minutes', function(component) {
+jC.schedule('.find-by-path', 'input', '5 minutes', function(component) {
     AJAX('GET /api/refresh/', component.path);
 });
 
-$.components.schedule('#find-by-id', 'manually', '3 seconds', function(component) {
+jC.schedule('#find-by-id', 'manually', '3 seconds', function(component) {
     AJAX('GET /api/refresh/', component.path);
 });
 
-$.components.schedule('find-by-name', 'init', '1 hour', function(component) {
+jC.schedule('find-by-name', 'init', '1 hour', function(component) {
     AJAX('GET /api/refresh/', component.path);
 });
 ```
@@ -1148,7 +1153,7 @@ $.components.schedule('find-by-name', 'init', '1 hour', function(component) {
 ## Events
 
 ```js
-$.components.on('watch', 'path.*', function(path, value, type) {
+jC.on('watch', 'path.*', function(path, value, type) {
     // type === 0 : init
     // type === 1 : manually
     // type === 2 : by input
@@ -1156,20 +1161,25 @@ $.components.on('watch', 'path.*', function(path, value, type) {
     // Watchs all changes according the path.
 });
 
-$.components.on('component', function(component) {
+jC.on('component', function(component) {
     // New component is ready to use.
 });
 
-$.components.on('#data-component-id', function(component) {
-    // New component with `data-component-id` attribute is ready to use.
+jC.on('#data-jc-id', function(component) {
+    // New component with `data-jc-id` attribute is ready to use.
 });
 
-$.components.on('@data-component', function(component) {
-    // New component with `data-component` attribute is ready to use.
+jC.on('@data-jc', function(component) {
+    // New component with `data-jc` attribute is ready to use.
 });
 
-$.components.on('destroy', function(name, component) {
+jC.on('destroy', function(name, component) {
     // Is emitted before is a component destroyed.
+});
+
+jC.on('knockknock', function(counter) {
+    // Is executed each 60 seconds
+    // +v9.0.0
 });
 ```
 
@@ -1180,23 +1190,23 @@ COMPILE();
 // Alias for $.components()
 
 GET();
-// Alias for $.components.get();
+// Alias for jC.get();
 
 IMPORT();
-// Alias for $.components.import();
+// Alias for jC.import();
 
 RESET();
-// Alias for $.components.reset();
+// Alias for jC.reset();
 
 CACHE();
-// Alias for $.components.cache();
+// Alias for jC.cache();
 
 CACHEPATH();
 // +v8.0.0
-// Alias for $.components.cacheapath();
+// Alias for jC.cacheapath();
 
 REWRITE(path, value);
-// +v4.0.0 alias for $.components.rewrite();
+// +v4.0.0 alias for jC.rewrite();
 
 SET(path, value, [sleep], [reset]);
 // Sets the value into the model. `reset` argument resets the state
@@ -1219,13 +1229,13 @@ NOTIFY(path1, path2, ...);
 
 DEFAULT(path, [timeout], [reset]);
 // The method sets to all components start with the path an initial value from
-// [data-component-value] attribute. [reset] by default: `true`.
+// [data-jc-value] attribute. [reset] by default: `true`.
 
 ON();
-// Alias for $.components.on();
+// Alias for jC.on();
 
 WATCH();
-// Alias for $.components.on('watch', ...);
+// Alias for jC.on('watch', ...);
 
 HASH(value)
 // Creates a hash from the value.
@@ -1234,20 +1244,20 @@ GUID([size])
 // Creates random string value (default size: 10)
 
 CHANGE();
-// Alias for $.components.change();
+// Alias for jC.change();
 
 STYLE(style);
 STYLE('.hidden { display: none; }'); // Example
 // Creates inline style.
 
 FIND(value, [returnArray]);
-FIND('data-component') // Example: Returns one component.
-FIND('data-component[data-component-path]') // Example: Returns one component.
-FIND('#data-component–id') // Example: Returns one component.
-FIND('.data-component-path') // Example: Returns one component.
-FIND('#data-component–id[data-component-path]') // Example: Returns one component.
+FIND('data-jc') // Example: Returns one component.
+FIND('data-jc[data-jc-path]') // Example: Returns one component.
+FIND('#data-jc–id') // Example: Returns one component.
+FIND('.data-jc-path') // Example: Returns one component.
+FIND('#data-jc–id[data-jc-path]') // Example: Returns one component.
 // Finds the components. When the value starts with `#` then the library will be
-// search components according the `data-component-id`;
+// search components according the `data-jc-id`;
 
 // +3.9.0
 // FIND WAITING FOR
@@ -1270,13 +1280,13 @@ FIND('data-component', true, function(component_array) {
 }, 5000); // +4.0.0 --> 5 seconds timeout
 
 BLOCKED(name, timeout, [callback]);
-// Alias for $.components.blocked();
+// Alias for jC.blocked();
 
 INVALID(path);
-// Alias for $.components.invalid();
+// Alias for jC.invalid();
 
 EVALUATE(path, expression, [path_is_value]);
-// Alias for $.components.evaluate();
+// Alias for jC.evaluate();
 
 NOTMODIFIED(path, [value], [fields]);
 if (NOTMODIFIED('model', newvalue)) return; // Example
@@ -1288,11 +1298,11 @@ if (NOTMODIFIED('model')) return; // Example
 // +v3.7.0
 AJAX('METHOD URL', data, [callback or path], [sleep], , [error(response, status, type) or path]);
 AJAXCACHE('METHOD URL', data, [callback or path], [expire], [sleep], [clear]);
-// Aliases for $.components.AJAX(), $.components.AJAXCACHE()
+// Aliases for jC.AJAX(), jC.AJAXCACHE()
 
 // +v8.0.0
 AJAXCACHEREVIEW('METHOD URL', data, [callback or path], [expire], [sleep], [clear]);
-// Aliases for $.components.AJAXCACHEREVIEW(). This method loads a content from the cache and
+// Aliases for jC.AJAXCACHEREVIEW(). This method loads a content from the cache and
 // then performs AJAX() call again with a simple diff.
 
 // +v4.0.0
@@ -1332,7 +1342,7 @@ MIDDLEWARE(['A-NAME', 'B-NAME'], { count: 0 }, function(value, path) {
 });
 
 SCHEDULE();
-// Alias for $.components.schedule();
+// Alias for jC.schedule();
 // +v4.0.0
 
 SETTER('#loading', 'hide', 1000);
@@ -1344,6 +1354,10 @@ SETTER(selector, propORmethodName, [valueA], [valueB], [valueN]);
 EXEC('path.to.method', 'hide', 1000);
 // Returns EXEC. Can execute a function according to the path.
 // +v4.7.0
+
+EXEC('CONTROLLER/method_name', 'hide', 1000);
+// Executes method in a controller
+// +v9.0.0
 
 // Registers a new workflow. Each workflow can have multiple implementation
 // and each implementation will be executed after another.
@@ -1578,43 +1592,10 @@ var interval = setInterval(function() {
 }, 100);
 ```
 
-## Controllers
-
-Controllers don't know any special features. Their implementation is very simple:
-
-```javascript
-// CONTROLLER returns initialization function.
-var controller = CONTROLLER('users', function(patcher, arg) {
-
-    // "this" === controller
-    // "patcher" argument can replace only paths
-    // "arg" additional init argument
-
-    console.log(patcher('{name}.datasource'));
-    // Output: users.datasource
-
-    this.page = 1;
-
-    console.log(patcher('{name}.datasource and {name}.{page}'));
-    // Output: users.datasource and users.1
-    
-    this.getName = function() {
-        return 'jComponent';
-    };
-});
-
-// Init controller
-// Executes its declaration
-controller('ADDITIONAL ARGUMENT');
-
-// Get controller object
-console.log(CONTROLLER('users').getName());
-```
-
-### Additional usage
+### Controllers
 
 ```html
-<div data-component-scope="users" data-component-controller="users-controller">
+<div data-jc-controller="users-controller">
     <!--
         IMPORTANT: in this element MUST CONTAIN some jComponents, otherwise the scope
         won't be initialized.
@@ -1624,22 +1605,12 @@ console.log(CONTROLLER('users').getName());
 
 <script>
 
-    CONTROLLER('users-controller', function(patcher, arg) {
-        
+    CONTROLLER('users-controller', function(controller) {        
         // this.path    --> scope attribute value
         // this.element --> scope element (jQuery object)
         // this.name    --> controller name
-
-        console.log(patcher('grid'));
-        // OUTPUT: users.grid
-
-        console.log(patcher('{name}.grid'));
-        // OUTPUT: users-controller.grid
-
-        console.log(patcher('{path}.grid'));
-        // OUTPUT: users.grid
-
-        console.log('SCOPE EXECUTES THIS CONTROLLER');
+        // this.set([additionaPath], value, [type]) --> sets a value
+        // this.get([additionaPath]) --> reads a value
     });
 
 </script>
@@ -1647,7 +1618,7 @@ console.log(CONTROLLER('users').getName());
 <!-- OR -->
 <!-- WITHOUT CONTROLLER -->
 
-<div data-component-scope="?" data-component-init="init_function">
+<div data-jc-scope="?" data-jc-init="init_function">
     <!--
         IMPORTANT: in this element MUST CONTAIN some jComponents, otherwise the scope
         won't be initialized.
@@ -1656,7 +1627,7 @@ console.log(CONTROLLER('users').getName());
 </div>
 
 <script>
-    function init_function(path, scope) {
+    function init_function(path, element) {
 
     }
 </script>
@@ -1682,22 +1653,22 @@ $(document).components(function(component, index) {
 
 ## Special cases
 
-### Copy "data-component-path" to nested component
+### Copy "data-jc-path" to nested component
 
 __Usage__:
 
 ```html
-<div data-component-url="/templates/grid.html" data-component-path="grid.datasource"></div>
+<div data-jc-url="/templates/grid.html" data-jc-path="grid.datasource"></div>
 ```
 
 __Component__ `/templates/grid.html`:
 
 ```html
 <!--
-    The library copies "data-component-path" and replaces "$" in
+    The library copies "data-jc-path" and replaces "$" in
     a new template.
 -->
-<div data-component="grid" data-component-path="$"></div>
+<div data-jc="grid" data-jc-path="$"></div>
 
 <script>
     COMPONENT('grid', function() {
@@ -2029,7 +2000,7 @@ arr.async({ counter: 0 }, function(response) {
 - middleware for all setters
 
 ```html
-<div data-component="your_component" data-component-path="path.to.property #MIDDLEWARE1 #MIDDLEWARE 2"></div>
+<div data-jc="your_component" data-jc-path="path.to.property #MIDDLEWARE1 #MIDDLEWARE 2"></div>
 ```
 
 ```javascript
@@ -2070,9 +2041,10 @@ window.jComponent.push(function() {
 ## Reserved keywords
 
 ```javascript
-jC;       // shortcut for $.components
-COM;      // shortcut for $.components
-MAN;      // shortcut for the Component Manager
+jC;        // shortcut for $.components
+COM;       // shortcut for $.components
+MAN;       // shortcut for the Component Manager
+DATETIME;  // contains datetime value (jComponent refreshes the value each 60 seconds)
 
 // jcta.min.js, jctajr.min.js:
 Tangular; // shortcut for Tangular

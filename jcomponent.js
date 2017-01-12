@@ -5,7 +5,7 @@ if (!window.MAN)
 var COMPATTR_B = 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind],input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
 var COMPATTR_C = '[data-jc],[data-component]';
 var COMPATTR_U = '[data-jc-url],[data-component-url]';
-var COMPATTR_S = '[data-jc-scope],[data-component-scope]';
+var COMPATTR_S = '[data-jc-scope],[data-component-scope],[data-jc-controller],[data-component-controller]';
 var COMPATTR_R = 'data-jc-removed';
 var DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
 
@@ -84,7 +84,7 @@ COM.defaults.jsondate = true;
 COM.defaults.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 COM.defaults.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
 COM.defaults.importcache = 'session';
-COM.version = 'v8.0.0';
+COM.version = 'v9.0.0';
 COM.$localstorage = 'jc';
 COM.$version = '';
 COM.$language = '';
@@ -116,7 +116,7 @@ COM.cookies = {
 	set: function (name, value, expire) {
 		var type = typeof(expire)
 		if (type === 'number') {
-			var date = new Date();
+			var date = DATETIME;
 			date.setTime(date.getTime() + (expire * 24 * 60 * 60 * 1000));
 			expire = date;
 		} else if (type === 'string')
@@ -150,7 +150,7 @@ COM.usage = function(name, expire, path, callback) {
 
 	var type = typeof(expire);
 	if (type === 'string')
-		expire = new Date().add('-' + expire);
+		expire = DATETIME.add('-' + expire);
 	else if (type === 'number')
 		expire = Date.now() - expire;
 
@@ -323,13 +323,15 @@ COM.compile = function(container) {
 
 					scopes[i].$initialized = true;
 
-					if (!p || p === '?') {
-						p = 'scope' + (Math.floor(Math.random() * 100000) + 1000);
-						scopes[i].setAttribute('data-jc-scope', p);
-					}
-
 					if (!scopes[i].$processed) {
 						scopes[i].$processed = true;
+
+						if (!p || p === '?') {
+							p = GUID(25).replace(/\d/g, '');
+							// scopes[i].setAttribute('data-jc-scope', p); (security)
+							scopes[i].$jcscope = p;
+						}
+
 						var tmp = COMPATTR(scopes[i], 'value');
 						if (tmp) {
 							var fn = new Function('return ' + tmp);
@@ -342,6 +344,7 @@ COM.compile = function(container) {
 
 					obj.setPath(obj.path === '?' ? p : (obj.path.indexOf('?') === -1 ? p + '.' + obj.path : obj.path.replace(/\?/g, p)));
 					obj.scope = scopes[i];
+					obj.$controller = COMPATTR(scopes[i], 'controller');
 					obj.pathscope = p;
 				}
 			}
@@ -1189,7 +1192,10 @@ function $jc_ready() {
 			var controller = COMPATTR(this, 'controller');
 			if (controller) {
 				var ctrl = CONTROLLER(controller);
-				ctrl && ctrl.$init(undefined, COMPATTR(this, 'scope'), scope);
+				if (ctrl)
+					ctrl.$init(this.$jcscope, scope);
+				else
+					console.warn('The controller "{0}" not found.'.format(controller));
 			}
 
 			var path = COMPATTR(this, 'init');
@@ -1199,12 +1205,12 @@ function $jc_ready() {
 			if (MAN.isOperation(path)) {
 				var op = OPERATION(path);
 				if (op)
-					op.call(scope, COMPATTR(this, 'scope'), scope);
+					op.call(scope, this.$jcscope, scope);
 				else if (window.console)
 					window.console.warn('The operation ' + path + ' not found.');
 			} else {
 				var fn = GET(path);
-				typeof(fn) === 'function' && fn.call(scope, COMPATTR(this, 'scope'), scope);
+				typeof(fn) === 'function' && fn.call(scope, this.$jcscope, scope);
 			}
 		});
 
@@ -2365,7 +2371,7 @@ function COMUSAGE() {
 
 COMUSAGE.prototype.compare = function(type, dt) {
 	if (typeof(dt) === 'string' && dt.substring(0, 1) !== '-')
-		dt = new Date().add('-' + dt);
+		dt = DATETIME.add('-' + dt);
 	var val = this[type];
 	return val === 0 ? false : val < dt.getTime();
 };
@@ -2543,6 +2549,10 @@ function COMP(name) {
 	};
 }
 
+COMP.prototype.controller = function() {
+	return CONTROLLER(this.$controller);
+};
+
 COMP.prototype.compile = function(container) {
 	COM.compile(container || this.element);
 	return this;
@@ -2695,7 +2705,9 @@ COMP.prototype.broadcast = function(selector, name) {
 
 	if (name === undefined) {
 		name = selector;
-		selector = this.dependencies;
+		selector = this.dependencies
+		if (!selector || !selector.length)
+			selector = this;
 	} else if (selector === '*')
 		selector = this;
 
@@ -3086,6 +3098,14 @@ function $jc_async(arr, fn, done) {
 }
 
 function CMAN() {
+	this.kkcounter = 0;
+	this.kkinterval = setInterval(function() {
+		window.DATETIME = new Date();
+		var c = MAN.components;
+		for (var i = 0, length = c.length; i < length; i++)
+			c[i].knockknock && c[i].knockknock(MAN.kkcounter);
+		COM.emit('knockknock', MAN.kkcounter++);
+	}, 60000);
 	this.autofill = [];
 	this.const_emit2 = [null, null, null];
 	this.const_notify = [null, null];
@@ -3873,9 +3893,10 @@ window.BROADCAST = function(selector, name, caller) {
 		selector.find(COMPATTR_C).each(function() {
 			var com = $(this).data(COMPATTR_C);
 			if (com) {
-				if (com instanceof Array)
-					components.push.apply(components, com);
-				else
+				if (com instanceof Array) {
+					for (var i = 0, length = com.length; i < length; i++)
+						com[i] && typeof(com[i][name]) === 'function' && components.push(com[i]);
+				} else if (com && typeof(com[name]) === 'function')
 					components.push(com);
 			}
 		});
@@ -3901,7 +3922,7 @@ window.BROADCAST = function(selector, name, caller) {
 	for (var i = 0, length = selector.length; i < length; i++) {
 		var item = selector[i].trim();
 		var com = FIND(item, true, true);
-		com && components.push.apply(components, com);
+		com && typeof(com[name]) === 'function' && components.push.apply(components, com);
 	}
 
 	MAN.cache[key] = components;
@@ -3917,7 +3938,7 @@ function $BROADCAST_EVAL(components, name, caller) {
 		var arg = arguments;
 		for (var i = 0, length = components.length; i < length; i++) {
 			var component = components[i];
-			if (typeof(component[name]) !== 'function') {
+			if (typeof(component[name]) === 'function') {
 				component.caller = caller;
 				component[name].apply(component[name], arg);
 				component.caller = null;
@@ -4088,28 +4109,36 @@ window.CONTROLLER = function() {
 
 	var obj = {};
 	obj.name = obj.path = arguments[0];
-	var replacer = function(path) {
-
-		var arg = arguments;
-		var is = false;
-
-		path = path.replace(/\{\d+\}/g, function(text) {
-			is = true;
-			return arg[parseInt(text.substring(1, text.length - 1)) + 1];
-		}).replace(/\{\w+\}/g, function(text) {
-			is = true;
-			return obj[text.substring(1, text.length - 1)];
-		});
-
-		return is ? path : obj.path + '.' + path;
-	};
 	MAN.controllers[obj.name] = obj;
-	return obj.$init = function(arg, path, element) {
+
+	obj.get = function(path) {
+		return COM.get(obj.path + (path ? '.' + path : ''));
+	};
+
+	obj.set = function(path, value, type) {
+		if (arguments.length === 1) {
+			value = path;
+			path = undefined;
+		}
+		COM.set(obj.path + (path ? '.' + path : ''), value, type);
+		return obj;
+	};
+
+	obj.destroy = function() {
+		obj.element.remove();
+		delete MAN.controllers[obj.name];
+		setTimeout(function() {
+			MAN.cleaner();
+		}, 500);
+		return undefined;
+	};
+
+	return obj.$init = function(path, element) {
 		obj.$init = undefined;
 		if (path)
 			obj.path = path;
 		obj.element = element;
-		callback.call(obj, replacer, arg);
+		callback.call(obj, obj, path, element);
 		return obj;
 	};
 };
@@ -4130,9 +4159,9 @@ WAIT(function() {
 	MAN.sc = 0;
 	setInterval(function() {
 		MAN.sc++;
+		var now = new Date();
 		for (var i = 0, length = MAN.schedulers.length; i < length; i++) {
 			var item = MAN.schedulers[i];
-
 			if (item.type === 'm') {
 				if (MAN.sc % 30 !== 0)
 					continue;
@@ -4143,7 +4172,7 @@ WAIT(function() {
 					continue;
 			}
 
-			var dt = new Date().add(item.expire);
+			var dt = now.add(item.expire);
 			FIND(item.selector, true).forEach(function(component) {
 				component && component.usage.compare(item.name, dt) && item.callback(component);
 			});
@@ -5523,6 +5552,21 @@ window.EXEC = function(path) {
 	for (var i = 1; i < arguments.length; i++)
 		arg.push(arguments[i]);
 
+	// OPERATION
+	var c = path.charCodeAt(0);
+	if (c === 35) {
+		OPERATION(path).apply(w, arg);
+		return EXEC;
+	}
+
+	var index = path.indexOf('/');
+	if (index !== -1) {
+		var ctrl = CONTROLLER(path.substring(0, index));
+		var fn = path.substring(index + 1);
+		ctrl && typeof(ctrl[fn]) === 'function' && ctrl[fn].apply(ctrl, arg);
+		return w.EXEC;
+	}
+
 	var fn = GET(path);
 	typeof(fn) === 'function' && fn.apply(w, arg);
 	return w.EXEC;
@@ -5576,3 +5620,4 @@ window.PARSE = function(value, date) {
 };
 
 window.NOOP = function(){};
+window.DATETIME = new Date();
