@@ -447,6 +447,9 @@ COM.crawler = function(container, onComponent, level) {
 	else
 		container = document.body;
 
+	if (!container)
+		return COM;
+
 	var name = COMPATTR(container);
 	!container.$jc && name != null && onComponent(name, container, 0);
 
