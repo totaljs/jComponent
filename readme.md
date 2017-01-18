@@ -1646,8 +1646,8 @@ $(document).on('components', function(count) {
 });
 
 // Gets all components in an element
-$(document).components(function(component, index) {
-    console.log(component);
+$(document).components(function(index) {
+    console.log(this);
 });
 ```
 
