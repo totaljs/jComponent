@@ -319,7 +319,7 @@ COM.compile = function(container) {
 					if (!$.contains(scopes[i], dom))
 						continue;
 
-					var p = COMPATTR(scopes[i], 'scope');
+					var p = scopes[i].$jcscope || COMPATTR(scopes[i], 'scope');
 
 					scopes[i].$initialized = true;
 
@@ -328,7 +328,6 @@ COM.compile = function(container) {
 
 						if (!p || p === '?') {
 							p = GUID(25).replace(/\d/g, '');
-							// scopes[i].setAttribute('data-jc-scope', p); (security)
 							scopes[i].$jcscope = p;
 						}
 
