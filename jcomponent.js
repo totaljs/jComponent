@@ -564,19 +564,31 @@ COM.components = function() {
 	return Object.keys(MAN.register).trim();
 };
 
-COM.inject = COM.import = function(url, target, callback, insert) {
+COM.inject = COM.import = function(url, target, callback, insert, preparator) {
 
 	// unique
 	var first = url.substring(0, 1);
 	var once = url.substring(0, 5).toLowerCase() === 'once ';
 
-	if (insert === undefined)
-		insert = true;
-
 	if (typeof(target) === 'function') {
+
+		if (typeof(callback) === 'function') {
+			preparator = callback;
+			insert = true;
+		} else if (typeof(insert) === 'function') {
+			preparator = insert;
+			insert = true;
+		}
+
 		callback = target;
 		target = 'body';
+	} else if (typeof(insert) === 'function') {
+		preparator = insert;
+		insert = true;
 	}
+
+	if (insert === undefined)
+		insert = true;
 
 	var index = url.lastIndexOf(' .');
 	var ext = '';
@@ -676,6 +688,9 @@ COM.inject = COM.import = function(url, target, callback, insert) {
 		AJAXCACHE('GET ' + key, null, function(response) {
 
 			key = '$import' + key;
+
+			if (preparator)
+				response = preparator(response);
 
 			if (MAN.cache[key])
 				response = MAN.removescripts(response);
