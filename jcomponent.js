@@ -2815,6 +2815,10 @@ COMP.prototype.append = function(value) {
 	return value ? el.append(value) : el;
 };
 
+COMP.prototype.on2 = function() {
+	return this.element.on.apply(this.element, arguments);
+};
+
 COMP.prototype.find = function(selector) {
 	return this.element.find(selector);
 };

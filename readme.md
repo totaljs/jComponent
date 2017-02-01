@@ -599,6 +599,12 @@ COMPONENT('my-component-name', function() {
     // Finds a content in the component element.
     // jQuery.find();
 
+    
+    instance.on2(eventname, [selector], callback);
+    // Sets an event listener for the element (not for component!)
+    // jQuery.on();
+    // +v9.0.0
+
 
     instance.noDirty();
     // Disables setting "dirty" state within all components.
