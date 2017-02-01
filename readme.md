@@ -1454,6 +1454,14 @@ PARSE(obj, [date]);
 // {date} optional argument (default: true) converts date fields to Date instance.
 // returns {Object} or {null} (when the value isn't a JSON)
 // +v8.0.0
+
+ON(eventname, function);
+// Creates an event listener
+// +v8.0.0
+
+EMIT(eventname, [arg1], [arg2], [arg..N]);
+// Emits an event
+// +v8.0.0
 ```
 
 ## Device Width
