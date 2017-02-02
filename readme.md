@@ -569,6 +569,12 @@ COMPONENT('my-component-name', function() {
     // jQuery.attr();
 
 
+    instance.css(name, [value]);
+    // Gets or Sets css in the component element.
+    // jQuery.css();
+    // +v9.0.0
+
+
     instance.html([value]);
     // Gets or Sets inner HTML in the component element.
     // jQuery.html();
@@ -590,7 +596,7 @@ COMPONENT('my-component-name', function() {
 
     
     instance.classes(string);
-    // Toggles classes "+classname" adds and "-classname" removes
+    // Toggles classes "+classname" (or without plus) adds and "-classname" removes
     // Example: instance.classes('+selected -hidden +animate');
     // +v8.0.0
 
@@ -600,14 +606,14 @@ COMPONENT('my-component-name', function() {
     // jQuery.find();
 
     
-    instance.on2(eventname, [selector], callback);
+    instance.event(eventname, [selector], callback);
     // Sets an event listener for the element (not for component!)
     // jQuery.on();
     // +v9.0.0
 
 
     instance.noDirty();
-    // Disables setting "dirty" state within all components.
+    // Disables a "dirty" state within all components.
 
 
     instance.noValid();

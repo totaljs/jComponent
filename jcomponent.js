@@ -2789,6 +2789,14 @@ COMP.prototype.attr = function(name, value) {
 	return this;
 };
 
+COMP.prototype.css = function(name, value) {
+	var el = this.element;
+	if (value === undefined)
+		return el.css(name);
+	el.css(name, value);
+	return this;
+};
+
 COMP.prototype.html = function(value) {
 	var el = this.element;
 	var current = el.html();
@@ -2815,7 +2823,7 @@ COMP.prototype.append = function(value) {
 	return value ? el.append(value) : el;
 };
 
-COMP.prototype.on2 = function() {
+COMP.prototype.event = function() {
 	return this.element.on.apply(this.element, arguments);
 };
 
