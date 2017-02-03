@@ -2643,6 +2643,17 @@ COMP.prototype.update = COMP.prototype.refresh = function(notify) {
 };
 
 COMP.prototype.classes = function(cls) {
+
+	var key = 'cls.' + cls;
+	var tmp = MAN.temp[key];
+	var e = this.element;
+
+	if (tmp) {
+		tmp.add && e.addClass(tmp.add);
+		tmp.rem && e.removeClass(tmp.rem);
+		return this;
+	}
+
 	var arr = cls instanceof Array ? cls : cls.split(' ');
 	var add = '';
 	var rem = '';
@@ -2655,8 +2666,13 @@ COMP.prototype.classes = function(cls) {
 			add += (add ? ' ' : '') + (c === '+' ? arr[i].substring(1) : arr[i]);
 	}
 
-	add && this.element.addClass(add);
-	rem && this.element.removeClass(rem);
+	add && e.addClass(add);
+	rem && e.removeClass(rem);
+
+	if (cls instanceof Array)
+		return this;
+
+	MAN.temp[key] = { add: add, rem: rem };
 	return this;
 };
 
@@ -2824,7 +2840,8 @@ COMP.prototype.append = function(value) {
 };
 
 COMP.prototype.event = function() {
-	return this.element.on.apply(this.element, arguments);
+	this.element.on.apply(this.element, arguments);
+	return this;
 };
 
 COMP.prototype.find = function(selector) {

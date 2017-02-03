@@ -2072,8 +2072,9 @@ Tangular; // shortcut for Tangular
 Ta;       // shortcut for Tangular
 
 // jctajr.min.js:
-jRouting; // shortcut for jRouting
-jR;       // shortcut for jRouting
+jRouting;    // shortcut for jRouting
+jR;          // shortcut for jRouting
+NAVIGATION;  // shortcut for jRouting (jComponent +v9.0.0)
 
 // Special {Array} of {Functions}
 window.jComponent   // for async loading scripts
