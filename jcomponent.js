@@ -2823,7 +2823,7 @@ COMP.prototype.html = function(value) {
 	if (value === current)
 		return el;
 	var type = typeof(value);
-	return value || type === 'number' || type === 'boolean' ? el.empty().append(value) : el;
+	return value || type === 'number' || type === 'boolean' ? el.empty().append(value) : el.empty();
 };
 
 COMP.prototype.empty = function() {
