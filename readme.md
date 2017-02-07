@@ -35,15 +35,21 @@ __YOU HAVE TO SEE:__
 
 jComponent offers 3 libraries for development rich web applications:
 
-- `jcomponent.min.js` contains only jComponent library
+- `jc.min.js` contains only jComponent library
 - `jcta.min.js` contains jComponent library and [Tangular template engine](https://github.com/totaljs/Tangular)
 - `jctajr.min.js` contains jComponent library, [Tangular template engine](https://github.com/totaljs/Tangular) and [jRouting](https://github.com/totaljs/jRouting)
 
-If you want to use jComponent on your presentation website - use `jcomponent.min.js` only. If you create a rich web application, then use `jcta.min.js` because it contains template engine and for __SPA__ use `jctajr.min.js` because it contains template engine and HTML 5 history API.
+If you want to use jComponent on your presentation website - use `jc.min.js` only. If you create a rich web application, then use `jcta.min.js` because it contains template engine and for __SPA__ use `jctajr.min.js` because it contains template engine and HTML 5 history API.
 
 The components work is the browser `window.` scope. So each path in the form of `path.to.something` is automatically routed into `window.path.to.something`. The library automatically creates values according the binding path.
 
 The library can be loaded with `async` attribute.
+
+## CDN: latest versions
+
+- jComponent: <https://cdn.totaljs.com/jc.min.js>
+- jComponent + Tangular: <https://cdn.totaljs.com/jcta.min.js>
+- jComponent + Tangular + jRouting: <https://cdn.totaljs.com/jctajr.min.js>
 
 ***
 
