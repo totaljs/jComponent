@@ -1881,6 +1881,16 @@ attrs.attr('readonly');
 console.log(attrs.join(' '));
 
 
+// Array.prototype.quicksort(property, [asc], [maxlength])
+// +v9.0.0
+// The method sorts array
+// @asc: default true
+// @maxlength: default 3
+var arr = [{ name: 'Peter' }, { name: 'Anka' }, { name: 'Lucia' }, { name: 'Betty' }];
+arr.quicksort('name');
+arr.quicksort('name', false);
+
+
 // setTimeout2(key, function, timoeut)
 // Clears timeout according the "key" (if exists) argument and registers new.
 setTimeout2('refresh', function() {

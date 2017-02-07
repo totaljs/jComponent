@@ -5174,6 +5174,76 @@ Array.prototype.last = function(def) {
 	return item === undefined ? def : item;
 };
 
+Array.prototype.quicksort = function(name, asc, maxlength) {
+
+	var length = this.length;
+	if (!length || length === 1)
+		return this;
+
+	if (typeof(name) === 'boolean') {
+		asc = name;
+		name = undefined;
+	}
+
+	if (maxlength === undefined)
+		maxlength = 3;
+
+	if (asc === undefined)
+		asc = true;
+
+	var self = this;
+	var type = 0;
+	var field = name ? self[0][name] : self[0];
+
+	switch (typeof(field)) {
+		case 'string':
+			if (field.isJSONDate())
+				type = 4;
+			else
+				type = 1;
+			break;
+		case 'number':
+			type = 2;
+			break;
+		case 'boolean':
+			type = 3;
+			break;
+		default:
+			if (!(field instanceof Date))
+				return self;
+			type = 4;
+			break;
+	}
+
+	self.sort(function(a, b) {
+
+		var va = name ? a[name] : a;
+		var vb = name ? b[name] : b;
+
+		// String
+		if (type === 1) {
+			return va && vb ? (asc ? va.substring(0, maxlength).removeDiacritics().localeCompare(vb.substring(0, maxlength).removeDiacritics()) : vb.substring(0, maxlength).removeDiacritics().localeCompare(va.substring(0, maxlength).removeDiacritics())) : 0;
+		} else if (type === 2) {
+			return va > vb ? (asc ? 1 : -1) : va < vb ? (asc ? -1 : 1) : 0;
+		} else if (type === 3) {
+			return va === true && vb === false ? (asc ? 1 : -1) : va === false && vb === true ? (asc ? -1 : 1) : 0;
+		} else if (type === 4) {
+			if (!va || !vb)
+				return 0;
+			if (!va.getTime)
+				va = new Date(va);
+			if (!vb.getTime)
+				vb = new Date(vb);
+			var at = va.getTime();
+			var bt = vb.getTime();
+			return at > bt ? (asc ? 1 : -1) : at < bt ? (asc ? -1 : 1) : 0;
+		}
+		return 0;
+	});
+
+	return self;
+};
+
 Array.prototype.attr = function(name, value) {
 
 	if (arguments.length === 2) {
