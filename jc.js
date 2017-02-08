@@ -5699,11 +5699,21 @@ window.MAKE = function(obj, fn, update) {
 			break;
 		case 'string':
 			var p = obj;
+			var is = true;
 			obj = GET(p);
-			if (obj == null)
+			if (obj == null) {
+				is = false;
 				obj = {};
+			}
 			fn.call(obj, obj, p);
-			(update === undefined || update === true) && UPDATE(p, true);
+			if (is && (update === undefined || update === true))
+				UPDATE(p, true);
+			else {
+				if (MAN.isReady)
+					SET(p, obj, true);
+				else
+					MAN.set(p, obj);
+			}
 			return obj;
 	}
 
