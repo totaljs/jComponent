@@ -1011,10 +1011,11 @@ jC.cache(key, value, expire); // Example: Setter.
 // Returns {Object}.
 
 
-jC.cachepath(path, expire);
+jC.cachepath(path, expire, [rebind]);
 // +v8.0.0
 // The method creates watcher for `path` and stores values into the localStorage
 // Returns {Components}.
+// +v9.0.0: added "rebind" argument (default: false)
 
 
 jC.validate([path], [except_paths_arr]);
@@ -1453,6 +1454,16 @@ MAKE(someobject, function(obj) {
 });
 
 console.log(someobject); // { name: 'jComponent', age: 100, great: true }
+
+// +v9.0.0
+// Creates an object according path when not exists otherwise it updates it
+// MAKE(path, fn(obj, path), [update_path(default:true)])
+MAKE('some.path', function(obj, path) {
+    this.name = 'jComponent';
+    obj.age = 100;
+    console.log(path); // ---> "some.path"
+});
+
 
 CLONE(someobject)
 // The method clones an object instance (deep)

@@ -1078,21 +1078,23 @@ COM.AJAXCACHE = function(url, data, callback, expire, timeout, clear, review) {
 	return COM;
 }
 
-COM.cachepath = function(path, expire) {
+COM.cachepath = function(path, expire, rebind) {
+	var key = '$jcpath';
 	WATCH(path, function(p, value) {
-
-		var key = '$jcpath';
 		var obj = MAN.cachestorage(key);
-
 		if (obj)
 			obj[path] = value;
 		else {
 			obj = {};
 			obj[path] = value;
 		}
-
 		MAN.cachestorage(key, obj, expire);
 	});
+
+	if (rebind === undefined || rebind) {
+		var cache = MAN.cachestorage(key);
+		cache && cache[path] !== undefined && cache[path] !== GET(path) && SET(path, cache[path], true)
+	}
 
 	return COM;
 };
@@ -5688,14 +5690,24 @@ window.EXEC = function(path) {
 	return w.EXEC;
 };
 
-window.MAKE = function(obj, fn) {
+window.MAKE = function(obj, fn, update) {
 
-	if (typeof(obj) === 'function') {
-		fn = obj;
-		obj = {};
+	switch (typeof(obj)) {
+		case 'function':
+			fn = obj;
+			obj = {};
+			break;
+		case 'string':
+			var p = obj;
+			obj = GET(p);
+			if (obj == null)
+				obj = {};
+			fn.call(obj, obj, p);
+			(update === undefined || update === true) && UPDATE(p, true);
+			return obj;
 	}
 
-	fn.call(obj, obj);
+	fn.call(obj, obj, '');
 	return obj;
 };
 
