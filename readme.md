@@ -2,6 +2,9 @@
 
 [![Support](https://www.totaljs.com/img/button-support.png?v=2)](https://www.totaljs.com/support/) 
 
+- [__Live chat with professional support__](https://messenger.totaljs.com)
+- [__HelpDesk with professional support__](https://helpdesk.totaljs.com)
+
 # jQuery reusable component library
 
 > __Download__: more than 70 jComponents for free for everyone. www.componentator.com
