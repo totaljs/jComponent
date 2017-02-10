@@ -1756,11 +1756,15 @@ EMPTYARRAY;
 // returns empty object (freezed)
 EMPTYOBJECT;
 
-// isMOBILE == {Boolean} is a global variable and detects mobile device.
+// isMOBILE == {Boolean} is a global variable and detects mobile devices.
 console.log(isMOBILE);
 
 // isMOBILE == {Boolean} is a global variable and detects robot/crawler.
 console.log(isROBOT);
+
+// isSTANDALONE == {Boolean} is a global variable and detects standalone mode in mobile devices.
+// +v9.0.0
+console.log(isSTANDALONE);
 
 // +v4.0.0 String.prototype.removeDiacritics();
 var string = 'Peter Širka'.removeDiacritics();

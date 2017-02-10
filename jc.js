@@ -11,6 +11,8 @@ var DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z
 
 window.isMOBILE = ('ontouchstart' in window || navigator.maxTouchPoints) ? true : false;
 window.isROBOT = navigator.userAgent ? (/search|agent|bot|crawler|spider/i).test(navigator.userAgent) : true;
+window.isSTANDALONE = window.matchMedia('(display-mode: standalone)').matches;
+
 window.EMPTYARRAY = [];
 window.EMPTYOBJECT = {};
 window.setTimeout2 = function(name, fn, timeout) {
