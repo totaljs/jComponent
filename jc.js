@@ -1296,6 +1296,7 @@ COM.on = function(name, path, fn, init) {
 
 	MAN.events[path][name].push({ fn: fn, id: this._id, path: fixed });
 	init && fn.call(COM, path, MAN.get(path), true);
+	(MAN.isReady && (name === 'ready' || name === 'init')) && fn();
 	return COM;
 };
 
