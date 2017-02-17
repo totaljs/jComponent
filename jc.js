@@ -979,7 +979,6 @@ COM.AJAX = function(url, data, callback, timeout) {
 			output.response = r;
 			output.status = s;
 			output.headers = req.getAllResponseHeaders();
-			output.raw = req.response;
 			EMIT('response', output);
 			output.process && $MIDDLEWARE(middleware, output.response, 1, function(path, value) {
 				if (typeof(callback) === 'string')
@@ -994,7 +993,6 @@ COM.AJAX = function(url, data, callback, timeout) {
 			output.response = req.responseText;
 			output.status = status + ': ' + e;
 			output.error = true;
-			output.raw = req.response;
 			output.headers = req.getAllResponseHeaders();
 
 			if (output.headers.indexOf('/json') !== -1) {
@@ -1005,7 +1003,7 @@ COM.AJAX = function(url, data, callback, timeout) {
 
 			EMIT('response', output);
 			output.process && EMIT('error', output);
-			output.process && typeof(callback) === 'function' && callback(body, output.status, output);
+			output.process && typeof(callback) === 'function' && callback(output.response, output.status, output);
 		};
 
 		MAN.ajax[key] = $.ajax($jc_url(url), options);
