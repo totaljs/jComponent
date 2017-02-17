@@ -10,7 +10,7 @@
 > __Download__: more than 70 jComponents for free for everyone. www.componentator.com
 
 - [Gitter - Chat for GitHub](https://gitter.im/totaljs/jComponent)
-- Current version: `v9.0.0` (stable beta)
+- Current version: `v9.0.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
