@@ -783,7 +783,7 @@ COM.parseQuery = function(value) {
 	return obj;
 };
 
-COM.UPLOAD = function(url, data, callback, timeout, progress, error) {
+COM.UPLOAD = function(url, data, callback, timeout, progress) {
 
 	if (!url)
 		url = location.pathname;
@@ -793,15 +793,16 @@ COM.UPLOAD = function(url, data, callback, timeout, progress, error) {
 		callback = undefined;
 	}
 
-	if (typeof(timeout) !== 'number') {
-		var tmp = progress;
-		error = progress;
-		progress = timeout;
-		timeout = tmp;
-	}
-
 	setTimeout(function() {
 		var xhr = new XMLHttpRequest();
+		var output = {};
+		output.process = true;
+		output.error = false;
+		output.upload = true;
+		output.method = 'POST';
+		output.url = url;
+		output.data = data;
+
 		xhr.addEventListener('load', function() {
 
 			var r = this.responseText;
@@ -809,24 +810,31 @@ COM.UPLOAD = function(url, data, callback, timeout, progress, error) {
 				r = PARSE(r, COM.defaults.jsondate);
 			} catch (e) {}
 
-			if (this.status === 200) {
-				if (typeof(callback) === 'string')
-					return MAN.remap(callback, r);
-				return callback && callback(r);
+			if (progress) {
+				if (typeof(progress) === 'string')
+					MAN.remap(progress, 100);
+				else
+					progress(100);
 			}
 
+			output.response = r;
+			output.status = this.status;
+			output.error = this.status !== 200;
+			output.headers = this.getAllResponseHeaders();
+
+			EMIT('response', output);
+
+			if (!output.process)
+				return;
+
+			if (!output.error)
+				return typeof(callback) === 'string' ? MAN.remap(callback, r) : (callback && callback(r));
+
 			if (!r)
-				r = this.status + ': ' + this.statusText;
+				r = output.response = this.status + ': ' + this.statusText;
 
-			COM.emit('error', r, this.status, url);
-
-			if (typeof(error) === 'string')
-				return MAN.remap(error, r);
-
-			if (error)
-				error(r, this.status);
-			else if (typeof(callback) === 'function')
-				callback({}, r, this.status);
+			EMIT('error', output);
+			output.process && typeof(callback) === 'function' && callback({}, r, output);
 
 		}, false);
 
@@ -837,8 +845,9 @@ COM.UPLOAD = function(url, data, callback, timeout, progress, error) {
 			if (evt.lengthComputable)
 				percentage = Math.round(evt.loaded * 100 / evt.total);
 			if (typeof(progress) === 'string')
-				return MAN.remap(progress, percentage);
-			progress(percentage, evt.transferSpeed, evt.timeRemaining);
+				MAN.remap(progress, percentage);
+			else
+				progress(percentage, evt.transferSpeed, evt.timeRemaining);
 		};
 
 		xhr.open('POST', url);
@@ -875,10 +884,9 @@ window.TEMPLATE = COM.TEMPLATE = function(url, callback, prepare) {
 	return COM;
 };
 
-COM.AJAX = function(url, data, callback, timeout, error) {
+COM.AJAX = function(url, data, callback, timeout) {
 
 	if (typeof(url) === 'function') {
-		error = timeout;
 		timeout = callback;
 		callback = data;
 		data = url;
@@ -889,16 +897,9 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 	var tmp;
 
 	if (!callback && (td === 'function' || td === 'string')) {
-		error = timeout;
 		timeout = callback;
 		callback = data;
 		data = undefined;
-	}
-
-	if (typeof(timeout) === 'string') {
-		tmp = error;
-		error = timeout;
-		timeout = tmp;
 	}
 
 	var index = url.indexOf(' ');
@@ -965,34 +966,46 @@ COM.AJAX = function(url, data, callback, timeout, error) {
 			ma = undefined;
 		}
 
-		options.success = function(r, o, req) {
+		var output = {};
+		output.url = url;
+		output.process = true;
+		output.error = false;
+		output.upload = false;
+		output.method = method;
+		output.data = data;
+
+		options.success = function(r, s, req) {
 			delete MAN.ajax[key];
-			$MIDDLEWARE(middleware, r, 1, function(path, value) {
+			output.response = r;
+			output.status = s;
+			output.headers = req.getAllResponseHeaders();
+			output.raw = req.response;
+			EMIT('response', output);
+			output.process && $MIDDLEWARE(middleware, output.response, 1, function(path, value) {
 				if (typeof(callback) === 'string')
-					return MAN.remap(callback, value);
-				callback && callback(value, undefined, req.getAllResponseHeaders());
+					MAN.remap(callback, value);
+				else
+					callback && callback(value, undefined, output);
 			});
 		};
 
-		options.error = function(req, status, r) {
+		options.error = function(req, status, e) {
 			delete MAN.ajax[key];
-			var body = req.responseText;
-			var headers = req.getAllResponseHeaders();
+			output.response = req.responseText;
+			output.status = status + ': ' + e;
+			output.error = true;
+			output.raw = req.response;
+			output.headers = req.getAllResponseHeaders();
 
-			if (headers.indexOf('/json') !== -1) {
+			if (output.headers.indexOf('/json') !== -1) {
 				try {
-					body = PARSE(body, COM.defaults.jsondate);
+					output.response = PARSE(output.response, COM.defaults.jsondate);
 				} catch (e) {}
 			}
 
-			status = status + ': ' + r;
-			COM.emit('error', body, status, url, headers);
-			if (typeof(error) === 'string')
-				return MAN.remap(error, body);
-			if (error)
-				error(body, status, url);
-			else if (typeof(callback) === 'function')
-				callback(body, status, url, headers);
+			EMIT('response', output);
+			output.process && EMIT('error', output);
+			output.process && typeof(callback) === 'function' && callback(body, output.status, output);
 		};
 
 		MAN.ajax[key] = $.ajax($jc_url(url), options);
@@ -1170,8 +1183,8 @@ function $jc_ready() {
 		if (!MAN.isReady) {
 			MAN.clear('valid', 'dirty', 'broadcast', 'find');
 			MAN.isReady = true;
-			COM.emit('init');
-			COM.emit('ready');
+			EMIT('init');
+			EMIT('ready');
 		}
 
 		MAN.timeoutcleaner && clearTimeout(MAN.timeoutcleaner);
@@ -1259,7 +1272,7 @@ COM.watch = function(path, fn, init) {
 		path = '*';
 	}
 
-	COM.on('watch', path, fn);
+	ON('watch', path, fn);
 	init && fn.call(COM, path, MAN.get(path), 0);
 	return COM;
 };
@@ -3154,7 +3167,7 @@ function CMAN() {
 		var c = MAN.components;
 		for (var i = 0, length = c.length; i < length; i++)
 			c[i].knockknock && c[i].knockknock(MAN.kkcounter);
-		COM.emit('knockknock', MAN.kkcounter++);
+		EMIT('knockknock', MAN.kkcounter++);
 	}, 60000);
 	this.autofill = [];
 	this.const_emit2 = [null, null, null];
@@ -3356,9 +3369,9 @@ MAN.prepare = function(obj) {
 		}, 5);
 	})(cls)
 
-	obj.id && COM.emit('#' + obj.id, obj);
-	COM.emit('@' + obj.name, obj);
-	COM.emit('component', obj);
+	obj.id && EMIT('#' + obj.id, obj);
+	EMIT('@' + obj.name, obj);
+	EMIT('component', obj);
 	return this;
 };
 
@@ -3621,7 +3634,7 @@ MAN.cleaner = function() {
 			}
 		}
 
-		COM.emit('destroy', component.name, component);
+		EMIT('destroy', component.name, component);
 
 		component.destroy && component.destroy();
 		component.element.off();
@@ -3786,7 +3799,7 @@ window.DEFAULT = function(path, timeout, reset) {
 };
 
 window.WATCH = function(path, callback, init) {
-	return COM.on('watch', path, callback, init);
+	return ON('watch', path, callback, init);
 };
 
 window.PING = function(url, timeout, callback) {
@@ -3822,7 +3835,7 @@ window.PING = function(url, timeout, callback) {
 
 	options.error = function(req, status, r) {
 		status = status + ': ' + r;
-		COM.emit('error', r, status, url);
+		EMIT('error', r, status, url);
 		typeof(callback) === 'function' && callback(undefined, status, url);
 	};
 

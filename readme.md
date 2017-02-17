@@ -1176,7 +1176,7 @@ jC.schedule('find-by-name', 'init', '1 hour', function(component) {
 ## Events
 
 ```js
-jC.on('watch', 'path.*', function(path, value, type) {
+ON('watch', 'path.*', function(path, value, type) {
     // type === 0 : init
     // type === 1 : manually
     // type === 2 : by input
@@ -1184,25 +1184,55 @@ jC.on('watch', 'path.*', function(path, value, type) {
     // Watchs all changes according the path.
 });
 
-jC.on('component', function(component) {
+ON('component', function(component) {
     // New component is ready to use.
 });
 
-jC.on('#data-jc-id', function(component) {
+ON('#data-jc-id', function(component) {
     // New component with `data-jc-id` attribute is ready to use.
 });
 
-jC.on('@data-jc', function(component) {
+ON('@data-jc', function(component) {
     // New component with `data-jc` attribute is ready to use.
 });
 
-jC.on('destroy', function(name, component) {
+ON('destroy', function(name, component) {
     // Is emitted before is a component destroyed.
 });
 
-jC.on('knockknock', function(counter) {
+ON('knockknock', function(counter) {
     // Is executed each 60 seconds
     // +v9.0.0
+});
+
+ON('response', function(data) {
+    // Is executed for each AJAX response
+    // +v9.0.0
+
+    // data.url      : {String}
+    // data.method   : {String}
+    // data.response : {Object/String}
+    // data.error    : {Boolean}
+    // data.upload   : {Boolean}
+    // data.status   : {Number} HTTP status
+    // data.headers  : {String} HTTP headers
+    // data.data     : {Object/String} Request data (sent)
+
+    // Next processing can be canceled like this:
+    data.process = false;
+});
+
+ON('error', function(data) {
+    // Is executed when AJAX response is other than 200
+    // +v9.0.0
+
+    // data.url      : {String}
+    // data.method   : {String}
+    // data.response : {Object/String}
+    // data.error    : {Boolean}
+    // data.upload   : {Boolean}
+    // data.status   : {Number} HTTP status
+    // data.headers  : {String} HTTP headers
 });
 ```
 
@@ -1319,7 +1349,7 @@ if (NOTMODIFIED('model')) return; // Example
 // further usage. The "fields" argument can contain only string array value.
 
 // +v3.7.0
-AJAX('METHOD URL', data, [callback or path], [sleep], , [error(response, status, type) or path]);
+AJAX('METHOD URL', data, [callback or path], [sleep]);
 AJAXCACHE('METHOD URL', data, [callback or path], [expire], [sleep], [clear]);
 // Aliases for jC.AJAX(), jC.AJAXCACHE()
 
@@ -1329,7 +1359,7 @@ AJAXCACHEREVIEW('METHOD URL', data, [callback or path], [expire], [sleep], [clea
 // then performs AJAX() call again with a simple diff.
 
 // +v4.0.0
-UPLOAD(url, formdata, [callback or path], [sleep], [progress(percentage, speed, remaining) or path], [error(response, status, type) or path]);
+UPLOAD(url, formdata, [callback or path], [sleep], [progress(percentage, speed, remaining) or path]);
 
 // +v3.7.0
 PING('METHOD URL', [interval], [callback or path]);
