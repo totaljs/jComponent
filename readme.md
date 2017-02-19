@@ -9,7 +9,6 @@
 
 > __Download__: more than 70 jComponents for free for everyone <https://componentator.com>
 
-- [Gitter - Chat for GitHub](https://gitter.im/totaljs/jComponent)
 - Current version: `v9.0.0`
 - `>= jQuery +1.7`
 - `>= IE9`
