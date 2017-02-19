@@ -7,7 +7,7 @@
 
 # jQuery reusable component library
 
-> __Download__: more than 70 jComponents for free for everyone. www.componentator.com
+> __Download__: more than 70 jComponents for free for everyone <https://componentator.com>
 
 - [Gitter - Chat for GitHub](https://gitter.im/totaljs/jComponent)
 - Current version: `v9.0.0`
@@ -21,16 +21,14 @@
 
 __YOU HAVE TO SEE:__
 
-- [__jComponent full SPA example with the source-code__](https://example.jcomponent.org/)
 - [Tangular - A template engine like Angular.js](https://github.com/totaljs/Tangular)
 - [jRouting - HTML 5 routing via History API](https://github.com/totaljs/jRouting)
 - [__Download the existing jComponents__](https://componentator.com)
 
 ***
 
-- __Homepage:__ <https://www.jcomponent.org>
-- __Full SPA example:__ <https://example.jcomponent.org>
-- __Download existing components__ <https://www.componentator.com>
+- __Homepage:__ <https://componentator.com/jcomponent/>
+- __Download existing components__ <https://componentator.com>
 
 ***
 
