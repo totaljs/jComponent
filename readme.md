@@ -1397,9 +1397,10 @@ SCHEDULE();
 
 SETTER('#loading', 'hide', 1000);
 SETTER('textbox', 'set', 'NEW VALUE')('dropdown', 'set', 1)('checkbox', 'set', true);
-SETTER(selector, propORmethodName, [valueA], [valueB], [valueN]);
+SETTER(true, 'textbox', 'set', 'NEW VALUE'); // waits for some `textbox` (waits only for 1 available instance)
+SETTER([wait], selector, propORmethodName, [valueA], [valueB], [valueN]);
 // Returns SETTER.
-// +v4.0.0
+// +v4.0.0, [wait] +v9.0.0
 
 EXEC('path.to.method', 'hide', 1000);
 // Returns EXEC. Can execute a function according to the path.
