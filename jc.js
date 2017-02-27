@@ -680,8 +680,10 @@ COM.inject = COM.import = function(url, target, callback, insert, preparator) {
 	}, function() {
 		MAN.others[url] = 2;
 
+		var id = '';
+
 		if (insert) {
-			var id = 'data-jc-imported="' + ((Math.random() * 100000) >> 0) + '"';
+			id = 'data-jc-imported="' + ((Math.random() * 100000) >> 0) + '"';
 			$(target).append('<div ' + id + '></div>');
 			target = $(target).find('> div[' + id + ']');
 		}
@@ -3279,7 +3281,8 @@ MAN.remap = function(path, value) {
 
 MAN.importstyles = function(str, id) {
 	return str.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, function(text) {
-		text = text.replace('<style>', '<style type="text/css">').replace('<style', '<style ' + id);
+		text = text.replace('<style>', '<style type="text/css">');
+		id && (text = text.replace('<style', '<style ' + id));
 		$(text).appendTo('head');
 		return '';
 	});
