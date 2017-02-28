@@ -7,7 +7,7 @@
 
 # jQuery reusable component library
 
-> __Download__: more than 70 jComponents for free for everyone <https://componentator.com>
+> __Download__: more than 80 jComponents for free for everyone <https://componentator.com>
 
 - Current version: `v9.0.0`
 - `>= jQuery +1.7`
@@ -16,7 +16,7 @@
 - works with [Bootstrap](http://getbootstrap.com/), [Foundation](http://foundation.zurb.com/), [Pure](http://purecss.io/), [Material Design](http://www.getmdl.io/) and others
 - you can wrap thousands plugins of jQuery via jComponent
 - best of use with [www.totaljs.com - web framework for Node.js](http://www.totaljs.com)
-- [Download UI components](https://github.com/totaljs/components)
+- [Download UI components](https://componentator.com)
 
 __YOU HAVE TO SEE:__
 
@@ -2102,13 +2102,12 @@ REWRITE('path.to.property #MIDDLEWARE1 #MIDDLEWARE2', 'new value');
 ```
 
 ```javascript
-if (!window.jComponent)
-    window.jComponent = [];
+!window.READY && (window.READY = []);
 
-// jComponent executes each function automatically in `window.jComponent` when the jComponent library is ready
-window.jComponent.push(function() {
+// jComponent executes each function automatically in `window.READY` when the READY library is ready
+READY.push(function() {
 
-    // This context will be executed when the jComponent library is ready
+    // This context will be executed when the READY library is ready
     
     COMPONENT('label', function() {
         // ... 
@@ -2125,8 +2124,6 @@ window.jComponent.push(function() {
 
 ```javascript
 jC;        // shortcut for $.components
-COM;       // shortcut for $.components
-MAN;       // shortcut for the Component Manager
 DATETIME;  // contains datetime value (jComponent refreshes the value each 60 seconds)
 
 // jcta.min.js, jctajr.min.js:
@@ -2134,12 +2131,10 @@ Tangular; // shortcut for Tangular
 Ta;       // shortcut for Tangular
 
 // jctajr.min.js:
-jRouting;    // shortcut for jRouting
-jR;          // shortcut for jRouting
 NAVIGATION;  // shortcut for jRouting (jComponent +v9.0.0)
 
 // Special {Array} of {Functions}
-window.jComponent   // for async loading scripts
+window.READY   // for asynchronous loading scripts
 ```
 
 ## Authors + Contacts

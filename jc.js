@@ -220,7 +220,7 @@ COM.compile = function(container) {
 		return COM;
 	}
 
-	var jcw = window.jComponent;
+	var jcw = window.READY || window.jComponent;
 	if (jcw && jcw.length) {
 		while (true) {
 			var fn = jcw.shift();
@@ -228,7 +228,6 @@ COM.compile = function(container) {
 				break;
 			fn();
 		}
-		window.jRouting && window.jRouting.async();
 	}
 
 	MAN.isCompiling = true;
@@ -269,8 +268,7 @@ COM.compile = function(container) {
 
 				var x = COMPATTR(el, 'import');
 				if (!x) {
-					if (!MAN.initializers['$NE_' + name])
-						MAN.initializers['$NE_' + name] = true;
+					!MAN.initializers['$NE_' + name] && (MAN.initializers['$NE_' + name] = true);
 					return;
 				}
 
@@ -278,8 +276,7 @@ COM.compile = function(container) {
 					return;
 
 				if (MAN.imports[x] === 2) {
-					if (!MAN.initializers['$NE_' + name])
-						MAN.initializers['$NE_' + name] = true;
+					!MAN.initializers['$NE_' + name] && (MAN.initializers['$NE_' + name] = true);
 					return;
 				}
 
@@ -366,7 +363,7 @@ COM.compile = function(container) {
 				obj.$released = true;
 
 			if (COMPATTR(el, 'url')) {
-				window.console && window.console.warn('You cannot use [data-jc-url] for the component: ' + obj.name + '[' + obj.path + ']. Instead of it you must use data-jc-template.');
+				window.console && window.console.warn('jComponent: You cannot use [data-jc-url] for the component: ' + obj.name + '[' + obj.path + ']. Instead of it you have to use data-jc-template.');
 				return;
 			}
 
@@ -1228,8 +1225,10 @@ function $jc_ready() {
 				var ctrl = CONTROLLER(controller);
 				if (ctrl)
 					ctrl.$init(this.$jcscope, scope);
-				else
-					console.warn('The controller "{0}" not found.'.format(controller));
+				else {
+					!MAN.warning[controller] && window.console && window.console.warn('jComponent: The controller "{0}" not found.'.format(controller));
+					MAN.warning[controller] = true;
+				}
 			}
 
 			var path = COMPATTR(this, 'init');
@@ -1240,8 +1239,10 @@ function $jc_ready() {
 				var op = OPERATION(path);
 				if (op)
 					op.call(scope, this.$jcscope, scope);
-				else if (window.console)
-					window.console.warn('The operation ' + path + ' not found.');
+				else if (window.console) {
+					!MAN.warning[path] && window.console.warn('jComponent: The operation ' + path + ' not found.');
+					MAN.warning[path] = true;
+				}
 			} else {
 				var fn = GET(path);
 				typeof(fn) === 'function' && fn.call(scope, this.$jcscope, scope);
@@ -3146,7 +3147,7 @@ window.COMPONENT = function(type, declaration) {
 		return obj;
 	};
 
-	MAN.register[type] && window.console && window.console.warn('Overwriting jComponent:', type);
+	MAN.register[type] && window.console && window.console.warn('jComponent: Overwriting component:', type);
 	MAN.register[type] = fn;
 };
 
@@ -3198,6 +3199,7 @@ function CMAN() {
 	this.operations = {};
 	this.controllers = {};
 	this.initializers = {};
+	this.warning = {};
 	this.waits = {};
 	this.defaults = {};
 	this.middleware = {};
@@ -3481,8 +3483,10 @@ MAN.set = function(path, value) {
 		var op = OPERATION(path);
 		if (op)
 			op(value, path);
-		else if (window.console)
-			window.console.warn('The operation ' + path + ' not found.');
+		else if (window.console) {
+			!MAN.warning[path] && window.console.warn('jComponent: The operation ' + path + ' not found.');
+			MAN.warning[path] = true;
+		}
 		return self;
 	}
 
@@ -5625,7 +5629,9 @@ window.MIDDLEWARE = function(name, value, callback, path) {
 			return;
 		}
 
-		window.console && window.console.warn('Middleware "' + name + '" not found.');
+		!MAN.warning[name] && window.console && window.console.warn('jComponent: Middleware "' + name + '" not found.');
+		MAN.warning[name] = true;
+
 		next();
 	}, function(val) {
 		callback && callback.call(context, val !== undefined ? val : value, path);
