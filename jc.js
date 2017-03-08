@@ -24,7 +24,7 @@ window.setTimeout2 = function(name, fn, timeout) {
 window.clearTimeout2 = function(name) {
 	var key = ':' + name;
 	MAN.others[key] && clearTimeout(MAN.others[key]);
-}
+};
 
 window.TRY = function(fn, err) {
 	try {
@@ -370,7 +370,7 @@ COM.compile = function(container) {
 			if (typeof(template) === 'string') {
 				var fn = function(data) {
 					if (obj.prerender)
-						data = prerender(data);
+						data = obj.prerender(data);
 					typeof(obj.make) === 'function' && obj.make(data);
 					$jc_init(el, obj);
 				};
@@ -405,7 +405,7 @@ COM.compile = function(container) {
 
 				$.get($jc_url(obj.make), function(data) {
 					if (obj.prerender)
-						data = prerender(data);
+						data = obj.prerender(data);
 					el.html(data);
 					$jc_init(el, obj);
 				});
@@ -435,8 +435,6 @@ COM.compile = function(container) {
 		MAN.next();
 	});
 };
-
-var COUNTER = 0;
 
 COM.crawler = function(container, onComponent, level) {
 
@@ -685,7 +683,7 @@ COM.inject = COM.import = function(url, target, callback, insert, preparator) {
 			target = $(target).find('> div[' + id + ']');
 		}
 
-		key = $jc_url(url);
+		var key = $jc_url(url);
 		AJAXCACHE('GET ' + key, null, function(response) {
 
 			key = '$import' + key;
@@ -1018,7 +1016,6 @@ COM.AJAXCACHEREVIEW = function(url, data, callback, expire, timeout, clear) {
 COM.AJAXCACHE = function(url, data, callback, expire, timeout, clear, review) {
 
 	if (typeof(url) === 'function') {
-		error = timeout;
 		timeout = callback;
 		callback = data;
 		data = url;
@@ -1088,7 +1085,7 @@ COM.AJAXCACHE = function(url, data, callback, expire, timeout, clear, review) {
 	}, timeout || 1);
 
 	return COM;
-}
+};
 
 COM.cachepath = function(path, expire, rebind) {
 	var key = '$jcpath';
@@ -1105,7 +1102,7 @@ COM.cachepath = function(path, expire, rebind) {
 
 	if (rebind === undefined || rebind) {
 		var cache = MAN.cachestorage(key);
-		cache && cache[path] !== undefined && cache[path] !== GET(path) && SET(path, cache[path], true)
+		cache && cache[path] !== undefined && cache[path] !== GET(path) && SET(path, cache[path], true);
 	}
 
 	return COM;
@@ -1599,7 +1596,6 @@ COM.update = function(path, reset, type) {
 			return COM;
 
 		var state = [];
-		var was = false;
 		var updates = {};
 
 		// Array prevention
@@ -1674,11 +1670,8 @@ COM.update = function(path, reset, type) {
 				component.valid(component.validate(result), true);
 
 			component.state && state.push(component);
-
-			if (component.path === path)
-				was = true;
-
 			updates[component.path] = result;
+
 		}, is ? path : undefined, undefined, is);
 
 		reset && MAN.clear('dirty', 'valid');
@@ -2059,7 +2052,7 @@ COM.blocked = function(name, timeout, callback) {
 		local && localStorage.setItem(COM.$localstorage + '.blocked', JSON.stringify(MAN.cacheblocked));
 	} catch (e) {
 		// private mode
-	};
+	}
 
 	callback && callback();
 	return false;
@@ -3120,10 +3113,6 @@ COMP.prototype.push = function(path, value, type) {
 	return self;
 };
 
-function component(type, declaration) {
-	return COMPONENT(type, declaration);
-}
-
 window.COMPONENT_EXTEND = function(type, declaration) {
 	if (!MAN.extends[type])
 		MAN.extends[type] = [];
@@ -3227,7 +3216,7 @@ MAN.cacherest = function(method, url, params, value, expire) {
 
 	params = STRINGIFY(params);
 	var key = HASH(method + '#' + url.replace(/\//g, '') + params).toString();
-	return this.cachestorage(key, value, expire);
+	return this.cachestorage(key, value, expire);
 };
 
 MAN.cachestorage = function(key, value, expire) {
