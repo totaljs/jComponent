@@ -5747,6 +5747,21 @@ window.MAKE = function(obj, fn, update) {
 };
 
 window.CLONE = function(obj) {
+
+	var type = typeof(obj);
+	switch (type) {
+		case 'number':
+		case 'string':
+		case 'boolean':
+			return obj;
+	}
+
+	if (obj == null)
+		return obj;
+
+	if (obj instanceof Date)
+		return new Date(obj.getTime());
+
 	return PARSE(JSON.stringify(obj));
 };
 
