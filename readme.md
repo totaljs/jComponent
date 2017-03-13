@@ -1522,6 +1522,12 @@ ON(eventname, function);
 EMIT(eventname, [arg1], [arg2], [arg..N]);
 // Emits an event
 // +v8.0.0
+
+UPTODATE('1 day');
+UPTODATE('1 day', '/products/');
+// UPTODATE(perid, [url], [callback])
+// Performs a refresh, great feature for SPA applications
+// +v9.0.0
 ```
 
 ## Device Width
@@ -1943,7 +1949,7 @@ arr.quicksort('name');
 arr.quicksort('name', false);
 
 
-// setTimeout2(key, function, timoeut)
+// setTimeout2(key, function, timeout, [limit])
 // Clears timeout according the "key" (if exists) argument and registers new.
 setTimeout2('refresh', function() {
     console.log('500');

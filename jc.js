@@ -15,15 +15,36 @@ window.isSTANDALONE = navigator.standalone || window.matchMedia('(display-mode: 
 
 window.EMPTYARRAY = [];
 window.EMPTYOBJECT = {};
-window.setTimeout2 = function(name, fn, timeout) {
+
+window.setTimeout2 = function(name, fn, timeout, limit) {
 	var key = ':' + name;
+	if (limit > 0) {
+		var key2 = key + ':limit';
+		if (MAN.others[key2] >= limit)
+			return;
+		MAN.others[key2] = (MAN.others[key2] || 0) + 1;
+		MAN.others[key] && clearTimeout(MAN.others[key]);
+		return MAN.others[key] = setTimeout(function() {
+			MAN.others[key2] = undefined;
+			fn && fn();
+		}, timeout);
+	}
+
 	MAN.others[key] && clearTimeout(MAN.others[key]);
 	return MAN.others[key] = setTimeout(fn, timeout);
 };
 
 window.clearTimeout2 = function(name) {
 	var key = ':' + name;
-	MAN.others[key] && clearTimeout(MAN.others[key]);
+
+	if (MAN.others[key]) {
+		clearTimeout(MAN.others[key]);
+		MAN.others[key] = undefined;
+		MAN.others[key + ':limit'] && (MAN.others[key + ':limit'] = undefined);
+		return true;
+	}
+
+	return false;
 };
 
 window.TRY = function(fn, err) {
@@ -3795,6 +3816,27 @@ window.DEFAULT = function(path, timeout, reset) {
 
 window.WATCH = function(path, callback, init) {
 	return ON('watch', path, callback, init);
+};
+
+window.UPTODATE = function(period, url, callback) {
+
+	if (typeof(url) === 'function') {
+		callback = url;
+		url = '';
+	}
+
+	var dt = new Date().add(period);
+	ON('knockknock', function() {
+		if (dt > DATETIME)
+			return;
+		setTimeout(function() {
+			if (url)
+				window.location.href = url;
+			else
+				window.location.reload(true);
+		}, 5000);
+		callback && callback();
+	});
 };
 
 window.PING = function(url, timeout, callback) {
