@@ -1,6 +1,5 @@
 var MAN = new CMAN();
-if (!window.MAN)
-	window.MAN = MAN;
+!window.MAN && (window.MAN = MAN);
 
 var COMPATTR_B = 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind],input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
 var COMPATTR_C = '[data-jc],[data-component]';
@@ -2529,6 +2528,7 @@ function COMP(name) {
 	this.getter = function(value, type, dirty, older, skip) {
 
 		value = this.parser(value);
+
 		if (type === 2 && !skip)
 			this.$skip = true;
 
@@ -2576,11 +2576,10 @@ function COMP(name) {
 			if (path && path.length && path !== self.path)
 				return;
 
-			var tmp;
-
 			if (this.type === 'checkbox') {
-				tmp = value != null ? value.toString().toLowerCase() : '';
-				this.checked = tmp === 'true' || tmp === '1' || tmp === 'on';
+				var tmp = value != null ? value.toString().toLowerCase() : '';
+				tmp = tmp === 'true' || tmp === '1' || tmp === 'on';
+				tmp !== this.checked && (this.checked = tmp);
 				return;
 			}
 
@@ -2590,10 +2589,11 @@ function COMP(name) {
 			if (!type && this.type !== a && this.type !== 'range' && (!value || (self.$default && self.$default() === value)))
 				MAN.autofill.push(this.$component);
 
-			if (this.type === a || this.type === 'select')
-				return $(this).val(value);
-
-			this.value = value;
+			if (this.type === a || this.type === 'select') {
+				var el = $(this);
+				el.val() !== value && el.val(value);
+			} else
+				this.value !== value && (this.value = value);
 		});
 	};
 }
@@ -4453,13 +4453,44 @@ function $jc_keypress(self, old, e) {
 		}
 
 		self.$component.getter(self.value, 2, dirty, old, e.type === 'focusout' || e.keyCode === 13);
-		self.value2 = self.value;
+		if (self.nodeName === 'INPUT' || self.nodeName === 'TEXTAREA') {
+			var val = self.$component.formatter(self.value);
+			if (self.value !== val) {
+				var pos = $jc_getcursor(self);
+				self.value = val;
+				$jc_setcursor(self, pos);
+			}
+		}
+		self.$value2 = self.value;
 	}
 
-	setTimeout2('M$cleanup', function() {
+	setTimeout2('$jckp' + self.$component.id, function() {
 		self.$value2 = undefined;
 		self.$value = undefined;
 	}, 60000 * 5);
+}
+
+function $jc_setcursor(el, pos) {
+	if (el.createTextRange) {
+		var range = el.createTextRange();
+		range.move('character', pos);
+		range.select();
+		return true;
+	} else if (el.selectionStart || !el.selectionStart) {
+		el.focus();
+		el.setSelectionRange(pos, pos);
+		return true;
+	}
+}
+
+function $jc_getcursor(el) {
+	if (document.selection) {
+		var sel = document.selection.createRange();
+		sel.moveStart('character', -el.value.length);
+		return sel.text.length;
+	} else if (el.selectionStart || !el.selectionStart)
+		return el.selectionStart;
+	return 0;
 }
 
 Array.prototype.waitFor = function(fn, callback) {
@@ -5812,10 +5843,7 @@ window.CLONE = function(obj) {
 };
 
 window.STRINGIFY = function(obj, compress) {
-
-	if (compress === undefined)
-		compress = COM.defaults.jsoncompress;
-
+	compress === undefined && (compress = COM.defaults.jsoncompress);
 	return JSON.stringify(obj, function(key, value) {
 		if (compress === true) {
 			var t = typeof(value);
@@ -5830,10 +5858,7 @@ window.STRINGIFY = function(obj, compress) {
 };
 
 window.PARSE = function(value, date) {
-
-	if (date === undefined)
-		date = COM.defaults.jsondate;
-
+	date === undefined && (date = COM.defaults.jsondate);
 	try {
 		return JSON.parse(value, function(key, value) {
 			return typeof(value) === 'string' && date && value.isJSONDate() ? new Date(value) : value;
