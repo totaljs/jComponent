@@ -397,7 +397,7 @@ COM.compile = function(container) {
 
 				var c = template.substring(0, 1);
 				if (c === '.' || c === '#' || c === '[') {
-					fn($(c).html());
+					fn($(template).html());
 					return;
 				}
 
