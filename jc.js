@@ -137,7 +137,7 @@ COM.cookies = {
 		return '';
 	},
 	set: function (name, value, expire) {
-		var type = typeof(expire)
+		var type = typeof(expire);
 		if (type === 'number') {
 			var date = DATETIME;
 			date.setTime(date.getTime() + (expire * 24 * 60 * 60 * 1000));
@@ -219,8 +219,7 @@ COM.schedule = function(selector, name, expire, callback) {
 COM.parser = function(value, path, type) {
 
 	if (typeof(value) === 'function') {
-		if (!COM.$parser)
-			COM.$parser = [];
+		!COM.$parser && (COM.$parser = []);
 		COM.$parser.push(value);
 		return this;
 	}
@@ -1743,7 +1742,6 @@ COM.notify = function() {
 		component.$interaction(1);
 	});
 
-
 	Object.keys(MAN.events).forEach(function(key) {
 
 		var is = false;
@@ -2664,6 +2662,11 @@ COMP.prototype.$interaction = function(type) {
 	return this;
 };
 
+COMP.prototype.notify = function() {
+	NOTIFY(this.path);
+	return this;
+};
+
 COMP.prototype.update = COMP.prototype.refresh = function(notify) {
 	var self = this;
 	if (notify)
@@ -2771,7 +2774,7 @@ COMP.prototype.broadcast = function(selector, name) {
 
 	if (name === undefined) {
 		name = selector;
-		selector = this.dependencies
+		selector = this.dependencies;
 		if (!selector || !selector.length)
 			selector = this;
 	} else if (selector === '*')

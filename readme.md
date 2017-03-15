@@ -759,6 +759,10 @@ COMPONENT('my-component-name', function() {
     instance.release();
     // This method returns the current state: Is this component released or no?
     // +v7.0.0
+    
+    instance.notify();
+    // This method notifies all components on component's path
+    // +v9.0.0
 });
 ```
 
