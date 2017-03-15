@@ -1737,8 +1737,9 @@ COM.notify = function() {
 
 		if (!is)
 			return;
-
-		component.setter(component.get(), component.path, 1);
+		var val = component.get();
+		component.setter && component.setter(val, component.path, 1);
+		component.setter2 && component.setter(val, component.path, 1);
 		component.$interaction(1);
 	});
 

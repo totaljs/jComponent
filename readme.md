@@ -1084,12 +1084,15 @@ jC.TEMPLATE(url, callback(template), [prepare(template)]);
 // executing. The content is downloaded only once. `prepare` argument is optional
 // (and executed once), but if it's declared then must "return" template (e.g. compiled template).
 
+
 jC.removeCache(key, fulltext);
 // Deletes cache according to the key. If @fulltext {Boolean} is `true` then the method removes
 // all items with their keys contain this key.
 
+
 jC.REMOVECACHE(method, url, data);
 // Deletes cache (AJAXCACHE).
+
 
 // +v3.7.0
 // AJAX calls
@@ -1106,6 +1109,7 @@ jC.AJAXCACHE('METHOD URL', data, [callback(response, isFromCache) or path], [exp
 
 // +v4.4.0 supports custom headers
 // AJAX('GET /api/ { customheader1: "value1", customerheader2: "value2" }', ...);
+
 
 jC.broadcast('.path.to.property, #a-component-id, a-component-name')('say')('hello');
 jC.broadcast('.path.to.property, #a-component-id, a-component-name')('set')('new value');
@@ -1135,9 +1139,11 @@ jC.ready(fn);
 jC.ready(function(count) { console.log('Components ready:', count); }); // Example.
 // Are the components ready? Has a similar functionality like $.ready().
 
+
 jC.clean([timeout]);
 // Cleans all unnecessary components.
 // IMPORTANT: The cleaner is started each 5 minutes.
+
 
 jC.usage(property, expire, [path], [callback]);
 jC.usage('manually', '5 seconds');
@@ -1152,9 +1158,11 @@ jC.usage('init', '5 seconds', function(component) {
 // @property is meaned as component.usage = { init: 0, manually: 0, input: 0, default: 0, custom: 0, dirty: 0, valid: 0 };
 // Returns Array when is not defined callback.
 
+
 // +v4.0.0
 jC.used(path);
 // Sets `instance.usage.custom` usage according to the path.
+
 
 jC.schedule(selector, type, expire, callback);
 // Schedule executes timeout when is valid `selector` and `expire`.
