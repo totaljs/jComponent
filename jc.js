@@ -3885,6 +3885,8 @@ window.PING = function(url, timeout, callback) {
 	}, timeout || 30000);
 };
 
+window.CAN = COM.can;
+window.DISABLED = COM.disabled;
 window.AJAX = COM.AJAX;
 window.AJAXCACHE = COM.AJAXCACHE;
 window.AJAXCACHEREVIEW = COM.AJAXCACHEREVIEW;

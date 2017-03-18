@@ -1540,6 +1540,16 @@ UPTODATE('1 day', '/products/');
 // UPTODATE(perid, [url], [callback])
 // Performs a refresh, great feature for SPA applications
 // +v9.0.0
+
+var can = CAN('users.form.*');
+can && submit();
+// CAN(path) --> alias for jC.can()
+// returns {Boolean}
+
+var disabled = DISABLED('users.form.*');
+!disabled && submit();
+// DISABLED(path) --> alias for jC.disabled()
+// returns {Boolean}
 ```
 
 ## Device Width
