@@ -1333,8 +1333,8 @@ function $jc_init(el, obj) {
 		collection = el.find(COMPATTR_B);
 
 	collection.each(function() {
-		if (!this.$component)
-			this.$component = obj;
+		if (!this.$jc)
+			this.$jc = obj;
 	});
 
 	obj.released && obj.released(obj.$released);
@@ -2572,7 +2572,7 @@ function COMP(name) {
 		value = self.formatter(value);
 		selector.each(function() {
 
-			var path = this.$component.path;
+			var path = this.$jc.path;
 			if (path && path.length && path !== self.path)
 				return;
 
@@ -2587,7 +2587,7 @@ function COMP(name) {
 				value = '';
 
 			if (!type && this.type !== a && this.type !== 'range' && (!value || (self.$default && self.$default() === value)))
-				MAN.autofill.push(this.$component);
+				MAN.autofill.push(this.$jc);
 
 			if (this.type === a || this.type === 'select') {
 				var el = $(this);
@@ -3753,7 +3753,7 @@ COMPONENT('', function() {
 				return is ? true : value ? true : false;
 			};
 		}
-		self.element.$component = self;
+		self.element.$jc = self;
 	}
 });
 
@@ -3762,7 +3762,7 @@ function $jc_save() {
 		COM.defaults.localstorage && localStorage.setItem(COM.$localstorage + '.cache', JSON.stringify(MAN.storage));
 	} catch(e) {
 		// private mode
-	};
+	}
 }
 
 window.REWRITE = COM.rewrite;
@@ -4285,6 +4285,13 @@ WAIT(function() {
 		}
 	}, 2000);
 
+	// Appends an SVG element
+	$.fn.asvg = function(tag) {
+		var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+		this.append(el);
+		return $(el);
+	};
+
 	$.fn.component = function() {
 		return this.data(COMPATTR_C);
 	};
@@ -4336,10 +4343,10 @@ WAIT(function() {
 
 			// IE 9+ PROBLEM
 			if ((e.type === 'input' && self.type !== 'range') || (e.type === 'keypress'))
-				return !(self.tagName !== 'TEXTAREA' && e.keyCode === 13)
+				return !(self.tagName !== 'TEXTAREA' && e.keyCode === 13);
 
 			var special = self.type === 'checkbox' || self.type === 'radio' || self.type === 'range';// || self.tagName === 'SELECT';
-			if ((e.type === 'focusout' && special) || (e.type === 'change' && (!special && self.tagName !== 'SELECT')) || (!self.$component || self.$component.$removed || !self.$component.getter))
+			if ((e.type === 'focusout' && special) || (e.type === 'change' && (!special && self.tagName !== 'SELECT')) || (!self.$jc || self.$jc.$removed || !self.$jc.getter))
 				return;
 
 			// tab, alt, ctrl, shift, capslock
@@ -4369,9 +4376,9 @@ WAIT(function() {
 				if (e.type === 'keydown')
 					return;
 				var value = self.checked;
-				self.$component.dirty(false, true);
-				self.$component.getter(value, 2);
-				self.$component.$skip = false;
+				self.$jc.dirty(false, true);
+				self.$jc.getter(value, 2);
+				self.$jc.$skip = false;
 				return;
 			}
 
@@ -4381,11 +4388,11 @@ WAIT(function() {
 				var selected = self[self.selectedIndex];
 				value = selected.value;
 				var dirty = false;
-				if (self.$component.$dirty)
+				if (self.$jc.$dirty)
 					dirty = true;
-				self.$component.dirty(false, true);
-				self.$component.getter(value, 2, dirty, old, e.type === 'focusout');
-				self.$component.$skip = false;
+				self.$jc.dirty(false, true);
+				self.$jc.getter(value, 2, dirty, old, e.type === 'focusout');
+				self.$jc.$skip = false;
 				return;
 			}
 
@@ -4449,14 +4456,14 @@ function $jc_keypress(self, old, e) {
 		var dirty = false;
 
 		if (e.keyCode !== 9) {
-			if (self.$component.$dirty)
+			if (self.$jc.$dirty)
 				dirty = true;
-			self.$component.dirty(false, true);
+			self.$jc.dirty(false, true);
 		}
 
-		self.$component.getter(self.value, 2, dirty, old, e.type === 'focusout' || e.keyCode === 13);
+		self.$jc.getter(self.value, 2, dirty, old, e.type === 'focusout' || e.keyCode === 13);
 		if (self.nodeName === 'INPUT' || self.nodeName === 'TEXTAREA') {
-			var val = self.$component.formatter(self.value);
+			var val = self.$jc.formatter(self.value);
 			if (self.value !== val) {
 				var pos = $jc_getcursor(self);
 				self.value = val;
@@ -4466,9 +4473,8 @@ function $jc_keypress(self, old, e) {
 		self.$value2 = self.value;
 	}
 
-	setTimeout2('$jckp' + self.$component.id, function() {
-		self.$value2 = undefined;
-		self.$value = undefined;
+	setTimeout2('$jckp' + self.$jc.id, function() {
+		self.$value2 = self.$value = undefined;
 	}, 60000 * 5);
 }
 

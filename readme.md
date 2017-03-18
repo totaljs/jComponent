@@ -1746,6 +1746,11 @@ $(document).on('components', function(count) {
 $(document).components(function(index) {
     console.log(this);
 });
+
+// Appends an SVG element
+var g = $('svg').asvg('g');
+g.attr('transform', 'translate(100,100)');
+var rect = g.asvg('rect');
 ```
 
 ## Special cases
