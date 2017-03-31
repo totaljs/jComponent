@@ -868,11 +868,10 @@ COM.UPLOAD = function(url, data, callback, timeout, progress) {
 				progress(percentage, evt.transferSpeed, evt.timeRemaining);
 		};
 
+		xhr.open('POST', url);
 		Object.keys(COM.defaults.headers).forEach(function(key) {
 			xhr.setRequestHeader(key, COM.defaults.headers[key]);
 		});
-
-		xhr.open('POST', url);
 		xhr.send(data);
 
 	}, timeout || 0);
