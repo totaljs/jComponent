@@ -1096,7 +1096,7 @@ jC.REMOVECACHE(method, url, data);
 
 // +v3.7.0
 // AJAX calls
-jC.AJAX('METHOD URL', data, [callback(response, err, headers) or path], [sleep], [error(response, status, type, headers) or path]);
+jC.AJAX('METHOD URL', data, [callback(response, err, output) or path], [sleep], [error(response, status, output) or path]);
 // Is same as GET(), POST(), PUT(), DELETE(). When is throwed an error then
 // "response" is the empty object {}
 jC.AJAXCACHE('METHOD URL', data, [callback(response, isFromCache) or path], [expire], [sleep], [clear]);
