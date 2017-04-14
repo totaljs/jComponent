@@ -763,6 +763,10 @@ COMPONENT('my-component-name', function() {
     instance.notify();
     // This method notifies all components on component's path
     // +v9.0.0
+
+    instance.replace(el);
+    // Replace a component element
+    // +v9.0.0
 });
 ```
 

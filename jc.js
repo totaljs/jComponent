@@ -1,5 +1,3 @@
-/*! jComponent v9.0.0 | (c) Peter Sirka | www.petersirka.com */
-
 var MAN = new CMAN();
 !window.MAN && (window.MAN = MAN);
 
@@ -2606,6 +2604,12 @@ function COMP(name) {
 
 COMP.prototype.controller = function() {
 	return CONTROLLER(this.$controller);
+};
+
+COMP.prototype.replace = function(el) {
+	this.element = $(el);
+	this.element.get(0).$jc = true;
+	return this;
 };
 
 COMP.prototype.compile = function(container) {
