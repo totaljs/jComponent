@@ -4309,7 +4309,9 @@ WAIT(function() {
 		var f = document.createDocumentFragment();
 		while (d.firstChild.firstChild)
 			f.appendChild(d.firstChild.firstChild);
-		return $(f);
+		f = $(f);
+		this.append(f);
+		return f;
 	};
 
 	$.fn.component = function() {
