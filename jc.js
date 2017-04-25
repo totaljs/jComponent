@@ -4297,9 +4297,19 @@ WAIT(function() {
 
 	// Appends an SVG element
 	$.fn.asvg = function(tag) {
-		var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
-		this.append(el);
-		return $(el);
+
+		if (tag.indexOf('<') === -1) {
+			var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+			this.append(el);
+			return $(el);
+		}
+
+		var d = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+		d.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg">' + tag + '</svg>';
+		var f = document.createDocumentFragment();
+		while (d.firstChild.firstChild)
+			f.appendChild(d.firstChild.firstChild);
+		return $(f);
 	};
 
 	$.fn.component = function() {
