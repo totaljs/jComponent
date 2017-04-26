@@ -9,7 +9,7 @@
 
 > __Download__: more than 80 jComponents for free for everyone <https://componentator.com>
 
-- Current version: `v9.0.0`
+- Current version: `v9.1.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -1752,9 +1752,21 @@ $(document).components(function(index) {
 });
 
 // Appends an SVG element
+// v9.1.0
 var g = $('svg').asvg('g');
 g.attr('transform', 'translate(100,100)');
 var rect = g.asvg('rect');
+
+// OR
+g.asvg('<rect width="100" height="100" fill="red"></rect>');
+
+// Prepends an SVG element
+// v9.1.0
+var g = $('svg').psvg('g');
+g.attr('transform', 'translate(100,100)');
+var rect = g.psvg('rect');
+
+g.psvg('<rect width="100" height="100" fill="red"></rect>');
 ```
 
 ## Special cases

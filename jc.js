@@ -106,7 +106,7 @@ COM.defaults.jsondate = true;
 COM.defaults.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 COM.defaults.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
 COM.defaults.importcache = 'session';
-COM.version = 'v9.0.0';
+COM.version = 'v9.1.0';
 COM.$localstorage = 'jc';
 COM.$version = '';
 COM.$language = '';
@@ -4311,6 +4311,24 @@ WAIT(function() {
 			f.appendChild(d.firstChild.firstChild);
 		f = $(f);
 		this.append(f);
+		return f;
+	};
+
+	$.fn.psvg = function(tag) {
+
+		if (tag.indexOf('<') === -1) {
+			var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+			this.prepend(el);
+			return $(el);
+		}
+
+		var d = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+		d.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg">' + tag + '</svg>';
+		var f = document.createDocumentFragment();
+		while (d.firstChild.firstChild)
+			f.appendChild(d.firstChild.firstChild);
+		f = $(f);
+		this.prepend(f);
 		return f;
 	};
 
