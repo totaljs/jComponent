@@ -534,7 +534,7 @@ COM.$inject = function() {
 		var key = $jc_url(item.url);
 		var can = false;
 
-		AJAXCACHE('GET ' + key, null, function(response) {
+		AJAXCACHE('GET ' + item.url, null, function(response) {
 
 			key = '$import' + key;
 
