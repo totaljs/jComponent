@@ -3895,6 +3895,7 @@ window.PING = function(url, timeout, callback) {
 	}, timeout || 30000);
 };
 
+window.VALIDATE = COM.validate;
 window.CAN = COM.can;
 window.DISABLED = COM.disabled;
 window.AJAX = COM.AJAX;

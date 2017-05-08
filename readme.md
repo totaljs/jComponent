@@ -1554,6 +1554,11 @@ var disabled = DISABLED('users.form.*');
 !disabled && submit();
 // DISABLED(path) --> alias for jC.disabled()
 // returns {Boolean}
+
+var valid = VALIDATE('users.form.*');
+valid && submit();
+// VALIDATE(path) --> alias for jC.validate()
+// returns {Boolean}
 ```
 
 ## Device Width
