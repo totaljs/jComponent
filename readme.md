@@ -249,7 +249,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 ## Special HTML attributes
 
 ```html
-<element data-jc-url="" />
+<element data-jc-url="" data-jc-cache="5 minutes" />
 <!--
     The library downloads a full HTML template with the component and its JavaScript
     declaration. The content will be inserted into the current element and then will
@@ -260,6 +260,8 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     according to `data-jc-path`.
 
     If the URL starts with `ONCE http://...` then the content will downloaded only one time.
+
+    - attribute "data-jc-cache" (+v9.1.0) is optional and default value is "session"
 -->
 
 <element data-jc-bind="" />

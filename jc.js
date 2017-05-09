@@ -522,7 +522,7 @@ COM.$inject = function() {
 			MAN.others[url] = 2;
 		}
 
-		arr.push({ element: el, cb: COMPATTR(el, 'init'), path: COMPATTR(el, 'path'), url: url, toggle: (COMPATTR(el, 'class') || '').split(' ') });
+		arr.push({ element: el, cb: COMPATTR(el, 'init'), path: COMPATTR(el, 'path'), url: url, toggle: (COMPATTR(el, 'class') || '').split(' '), expire: COMPATTR(el, 'cache') || COM.defaults.importcache });
 	});
 
 	if (!arr.length)
@@ -568,7 +568,7 @@ COM.$inject = function() {
 
 			count++;
 			next();
-		}, COM.defaults.importcache);
+		}, item.expire);
 
 	}, function() {
 		MAN.clear('valid', 'dirty', 'broadcast', 'find');
