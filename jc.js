@@ -1,11 +1,12 @@
 var MAN = new CMAN();
 !window.MAN && (window.MAN = MAN);
 
-var COMPATTR_B = 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind],input[data-component-bind],textarea[data-component-bind],select[data-component-bind]';
-var COMPATTR_C = '[data-jc],[data-component]';
-var COMPATTR_U = '[data-jc-url],[data-component-url]';
-var COMPATTR_S = '[data-jc-scope],[data-component-scope],[data-jc-controller],[data-component-controller]';
+var COMPATTR_B = 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind]';
+var COMPATTR_C = '[data-jc]';
+var COMPATTR_U = '[data-jc-url]';
+var COMPATTR_S = '[data-jc-scope],[data-jc-controller]';
 var COMPATTR_R = 'data-jc-removed';
+var COMPATTR_A = '[data-app-url]';
 var DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
 
 window.isMOBILE = ('ontouchstart' in window || navigator.maxTouchPoints) ? true : false;
@@ -106,7 +107,7 @@ COM.defaults.jsondate = true;
 COM.defaults.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 COM.defaults.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
 COM.defaults.importcache = 'session';
-COM.version = 'v9.1.0';
+COM.version = 'v10.0.0';
 COM.$localstorage = 'jc';
 COM.$version = '';
 COM.$language = '';
@@ -232,7 +233,86 @@ COM.parser = function(value, path, type) {
 	return value;
 };
 
+COM.compileapp = function(html, updated) {
+
+	var beg = -1;
+	var end = -1;
+
+	var body_settings = '';
+	var body_script = '';
+	var body_readme = '';
+	var body_style = '';
+	var body_html = '';
+
+	while (true) {
+		beg = html.indexOf('<script', end);
+		if (beg === -1)
+			break;
+		end = html.indexOf('</script>', beg);
+		if (end === -1)
+			break;
+
+		var body = html.substring(beg, end);
+		var beg = body.indexOf('>') + 1;
+		var type = body.substring(0, beg);
+		body = body.substring(beg).trim();
+
+		if (type.indexOf('markdown') !== -1)
+			body_readme = body;
+		else if (type.indexOf('html') !== -1) {
+			if (type.indexOf('settings') !== -1)
+				body_settings = body;
+			else
+				body_html = body;
+		} else
+			body_script = body;
+
+		end += 9;
+	}
+
+	if (!body)
+		return false;
+
+	beg = html.indexOf('<style');
+	if (beg !== -1)
+		body_style = html.substring(html.indexOf('>', beg) + 1, html.indexOf('</style>')).trim();
+
+	var app = {};
+	new Function('exports', body_script)(app);
+
+	if (!app.name)
+		return false;
+
+	var name = app.name;
+	app.settings = body_settings;
+	app.readme = body_readme;
+	app.html = body_html;
+	app.dateupdated = updated;
+
+	if (body_style) {
+		$('#inlinecss_' + app.name).remove();
+		$('<style type="text/css" id="appcss_{0}">'.format(app.name) + body_style + '</style>').appendTo('head');
+	}
+
+	if (MAN.dbapps[name]) {
+		var tmp = MAN.dbapps[name];
+		tmp.uninstall && tmp.uninstall(true);
+		MAN.dbapps[name] = app;
+	} else
+		MAN.dbapps[name] = app;
+
+	// hack for refreshing database
+	return true;
+};
+
 COM.compile = function(container) {
+
+	if (typeof(container) === 'string') {
+		// jComponent APP
+		COM.compileapp(container);
+		COM.compile();
+		return COM;
+	}
 
 	if (MAN.isCompiling) {
 		MAN.recompile = true;
@@ -251,6 +331,7 @@ COM.compile = function(container) {
 
 	MAN.isCompiling = true;
 	COM.$inject();
+	COM.$injectapp();
 
 	if (MAN.pending.length) {
 		(function(container) {
@@ -282,7 +363,7 @@ COM.compile = function(container) {
 
 		all.forEach(function(name) {
 			name = name.trim();
-			var component = MAN.register[name || ''];
+			var component = MAN.dbcomponents[name || ''];
 			if (!component) {
 
 				var x = COMPATTR(el, 'import');
@@ -438,6 +519,20 @@ COM.compile = function(container) {
 
 		// A reference to implementation
 		el.data(COMPATTR_C, instances.length > 1 ? instances : instances[0]);
+	}, undefined, function(name, dom) {
+		var d = MAN.dbapps[name];
+		if (d) {
+			var id = dom.getAttribute('data-app-id');
+			var el = $(dom);
+			var key = id ? (name + '.' + id + '.options') : null;
+			d.html && el.empty().append(d.html);
+			id = 'app' + HASH(id || (Date.now() + GUID(5)));
+			var app = new COMAPP(id, el, d, key ? COM.cache(key) : null);
+			app.$cache = key;
+			dom.$jcapp = app;
+			MAN.apps.push(app);
+			d.html.indexOf('data-jc="') !== -1 && COMPILE(el);
+		}
 	});
 
 	if (!has)
@@ -455,7 +550,7 @@ COM.compile = function(container) {
 	});
 };
 
-COM.crawler = function(container, onComponent, level) {
+COM.crawler = function(container, onComponent, level, onApp) {
 
 	if (container)
 		container = $(container).get(0);
@@ -480,14 +575,51 @@ COM.crawler = function(container, onComponent, level) {
 		var el = arr[i];
 		if (el) {
 			el.tagName && el.childNodes.length && el.tagName !== 'SCRIPT' && MAN.regexpcom.test(el.innerHTML) && sub.push(el);
-			!el.$jc && el.tagName && (el.hasAttribute('data-jc') || el.hasAttribute('data-component')) && onComponent(COMPATTR(el) || '', el, level);
+			!el.$jc && el.tagName && el.hasAttribute('data-jc') && onComponent(COMPATTR(el) || '', el, level);
+			!el.$jcapp && el.tagName && el.hasAttribute('data-app') && onApp(el.getAttribute('data-app') || '', el, level);
 		}
 	}
 
 	for (var i = 0, length = sub.length; i < length; i++) {
 		el = sub[i];
-		el && COM.crawler(el, onComponent, level);
+		el && COM.crawler(el, onComponent, level, onApp);
 	}
+
+	return COM;
+};
+
+COM.$injectapp = function() {
+
+	var els = $(COMPATTR_A);
+	var arr = [];
+
+	els.each(function() {
+		var el = $(this);
+		if (el.data(COMPATTR_A))
+			return;
+		el.data(COMPATTR_A, '1');
+		arr.push({ url: el.attr('data-app-url'), expire: el.attr('data-app-cache') || COM.defaults.importcache });
+	});
+
+	if (!arr.length)
+		return;
+
+	var can = false;
+
+	$jc_async(arr, function(item, next) {
+		var key = $jc_url(item.url);
+		AJAXCACHE('GET ' + item.url, null, function(response) {
+			key = '$import' + key;
+			if (response && response.indexOf('exports.name') !== -1) {
+				COM.compileapp(response);
+				can = true;
+			}
+			next();
+		}, item.expire);
+
+	}, function() {
+		can && window.COMPILE();
+	});
 
 	return COM;
 };
@@ -577,7 +709,7 @@ COM.$inject = function() {
 };
 
 COM.components = function() {
-	return Object.keys(MAN.register).trim();
+	return Object.keys(MAN.dbcomponents).trim();
 };
 
 COM.inject = COM.import = function(url, target, callback, insert, preparator) {
@@ -2464,6 +2596,55 @@ COMUSAGE.prototype.convert = function(type) {
 	return output;
 };
 
+function COMAPP(id, element, declaration, options) {
+	this.$events = {};
+	this.id = id;
+	this.scope = 'app' + GUID(10);
+	element.attr('data-jc-scope', this.scope);
+	this.name = declaration.name;
+	this.options = $.extend(true, CLONE(declaration.options), options || EMPTYOBJECT);
+	this.element = element;
+	declaration.install.call(this, this);
+	this.make && this.make();
+}
+
+COMAPP.prototype.emit = function(name) {
+	var e = this.$events[name];
+	if (e && e.length) {
+		for (var i = 0, length = e.length; i < length; i++)
+			e[i].call(this, arguments[1], arguments[2], arguments[3], arguments[4], arguments[5]);
+	}
+	return this;
+};
+
+COMAPP.prototype.on = function(name, fn) {
+	var e = this.$events[name];
+	!e && (this.$events[name] = e = []);
+	e.push(fn);
+	return this;
+};
+
+COMAPP.prototype.find = function(selector) {
+	return this.element.find(selector);
+};
+
+COMAPP.prototype.append = function(value) {
+	return this.element.append(value);
+};
+
+COMAPP.prototype.html = function(value) {
+	return this.element.html(value);
+};
+
+COMAPP.prototype.event = function() {
+	this.element.on.apply(this.element, arguments);
+	return this;
+};
+
+COMAPP.prototype.settings = function() {
+	// WHAT?
+};
+
 function COMP(name) {
 
 	this._id = 'component' + (MAN.counter++);
@@ -3171,8 +3352,8 @@ window.COMPONENT = function(type, declaration) {
 		return obj;
 	};
 
-	MAN.register[type] && window.console && window.console.warn('jComponent: Overwriting component:', type);
-	MAN.register[type] = fn;
+	MAN.dbcomponents[type] && window.console && window.console.warn('jComponent: Overwriting component:', type);
+	MAN.dbcomponents[type] = fn;
 };
 
 function $jc_async(arr, fn, done) {
@@ -3205,13 +3386,15 @@ function CMAN() {
 	this.isReady = false;
 	this.isCompiling = false;
 	this.init = [];
-	this.register = {};
+	this.dbcomponents = {};
+	this.dbapps = {};
 	this.cache = {};
 	this.storage = {};
 	this.cacheblocked = {};
 	this.temp = {};
 	this.model = {};
 	this.components = [];
+	this.apps = [];
 	this.schemas = {};
 	this.toggle = [];
 	this.ready = [];
@@ -3302,7 +3485,7 @@ MAN.remap = function(path, value) {
 		var n = path.substring(index + 2).trim();
 		COM.set(n, value[o]);
 	});
-	return this;
+	return this;
 };
 
 MAN.importstyles = function(str, id) {
@@ -3395,7 +3578,7 @@ MAN.prepare = function(obj) {
 			for (var i = 0, length = cls.length; i < length; i++)
 				el.toggleClass(cls[i]);
 		}, 5);
-	})(cls)
+	})(cls);
 
 	obj.id && EMIT('#' + obj.id, obj);
 	EMIT('@' + obj.name, obj);
@@ -3458,11 +3641,7 @@ MAN.isArray = function(path) {
 MAN.isOperation = function(name) {
 	return name.charCodeAt(0) === 35;
 };
-/**
- * Get value from a model
- * @param {String} path
- * @return {Object}
- */
+
 MAN.get = function(path, scope) {
 
 	if (path.charCodeAt(0) === 35) {
@@ -5036,7 +5215,7 @@ Date.prototype.format = function(t) {
 				tmp.setHours(0, 0, 0);
 				tmp.setDate(tmp.getDate() + 4 - (tmp.getDay() || 7));
 				tmp = Math.ceil((((tmp - new Date(tmp.getFullYear(), 0, 1)) / 8.64e7) + 1) / 7);
-				return key === 'ww' ? tmp.toString().padLeft(2, '0') : tmp;
+				return t === 'ww' ? tmp.toString().padLeft(2, '0') : tmp;
 			case 'a':
 				return e.getHours() >= 12 ? 'PM' : 'AM';
 		}
@@ -5143,13 +5322,10 @@ Number.prototype.add = Number.prototype.inc = function(value, decimals) {
 	}
 
 	var length = value.length;
-	var isPercentage = false;
 	var num;
 
 	if (value[length - 1] === '%') {
 		value = value.substring(0, length - 1);
-		isPercentage = true;
-
 		if (is) {
 			var val = value.parseFloat();
 			switch (first) {
@@ -5184,9 +5360,6 @@ Number.prototype.add = Number.prototype.inc = function(value, decimals) {
 			break;
 		case 45:
 			num = this - num;
-			break;
-		case 47:
-			num = this / num;
 			break;
 		case 47:
 			num = this / num;
@@ -5584,7 +5757,6 @@ window.MEDIAQUERY = function(query, element, fn) {
 					break;
 				case 'max-width':
 				case 'max-device-width':
-				case 'width':
 					obj.maxW = num(item);
 					break;
 				case 'min-height':
@@ -5594,7 +5766,6 @@ window.MEDIAQUERY = function(query, element, fn) {
 					break;
 				case 'max-height':
 				case 'max-device-height':
-				case 'height':
 					obj.maxH = num(item);
 					break;
 			}
@@ -5621,7 +5792,7 @@ window.MEDIAQUERY = function(query, element, fn) {
 
 	MAN.mediaquery.push(obj);
 	return obj.id;
-}
+};
 
 function COMPATTR(el, name) {
 	name = name ? '-' + name : '';
