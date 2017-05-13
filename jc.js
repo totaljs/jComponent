@@ -4,6 +4,8 @@
 	var REGCOM = /(data-ja|data-jc|data-component)\=/;
 	var REGSCRIPT = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
+	var REGEMPTY = /\s/g;
+	var REGCOMMA = /,/g;
 	var ATTRSCOPE = '[data-jc-scope],[data-jc-controller]';
 	var ATTRCOM = '[data-jc]';
 	var ATTRURL = '[data-jc-url],[data-ja-url]';
@@ -79,7 +81,8 @@
 	M.components = [];
 	M.$apps = {};
 	M.apps = [];
-
+	M.$formatter = [];
+	M.$parser = [];
 	M.compiler = C;
 
 	C.is = false;
@@ -3935,7 +3938,7 @@
 				value = a[i].call(self, self.path, value, self.type);
 		}
 
-		a = COM.$formatter;
+		a = M.$formatter;
 		if (a && a.length) {
 			for (var i = 0, length = a.length; i < length; i++)
 				value = a[i].call(self, self.path, value, self.type);
@@ -3960,7 +3963,7 @@
 				value = a[i].call(self, self.path, value, self.type);
 		}
 
-		a = COM.$parser;
+		a = M.$parser;
 		if (a && a.length) {
 			for (var i = 0, length = a.length; i < length; i++)
 				value = a[i].call(self, self.path, value, self.type);
@@ -4143,8 +4146,8 @@
 			extensions[name] = [];
 		extensions[name].push(declaration);
 
-		for (var i = 0, length = COM.components.length; i < length; i++) {
-			var m = COM.components[i];
+		for (var i = 0, length = M.components.length; i < length; i++) {
+			var m = M.components[i];
 			if (!m.$removed || name === m.name)
 				declaration.apply(m, m);
 		}
@@ -6110,5 +6113,15 @@
 			setTimeout(compile, 2);
 		});
 	}, 100);
+
+	M.$parser.push(function(path, value, type) {
+		if (type === 'number' || type === 'currency' || type === 'float') {
+			if (typeof(value) === 'string')
+				value = value.replace(REGEMPTY, '').replace(REGCOMMA, '.');
+			var v = parseFloat(value);
+			return isNaN(v) ? null : v;
+		}
+		return value;
+	});
 
 })();
