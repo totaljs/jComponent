@@ -1491,7 +1491,7 @@ PARSE(obj, [date]);
 // returns {Object} or {null} (when the value isn't a JSON)
 // +v8.0.0
 
-ON(eventname, function);
+ON(eventname, [fn(a, b, n)]);
 // Creates an event listener
 // +v8.0.0
 
