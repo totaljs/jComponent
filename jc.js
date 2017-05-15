@@ -2022,7 +2022,6 @@
 
 				if (!el.$com) {
 					name = attrcom(el);
-					console.log('--->', name, el);
 					name != null && onComponent(name || '', el, level);
 				}
 			}
