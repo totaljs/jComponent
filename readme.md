@@ -1796,6 +1796,18 @@ Applications are supported in `+v10.0.0`. __I'll improve docs - coming soon.__
 - framework automatically updates styles
 - framework parses each component
 
+### Application management
+
+- `MAIN.$apps` contains all registered applications
+- `MAIN.apps` contains all instances of all registered applications
+
+```javacript
+APPS.emit(name, [a], [b], [n]);             // Emits event in all app instances 
+APPS.import(url, [callback([err])]);        // Downloads application from URL
+APPS.compile(body);                         // Compiles and registers application (expects "String") and returns {Boolean}
+```
+
+### Application template
 
 ```html
 <style>
@@ -1814,7 +1826,39 @@ exports.name = 'widget';
 
 // REQUIRED
 exports.install = function(instance) {
-    
+    // Properties
+    instance.scope;        // {String} name of scope
+    instance.name;         // {String} name of application
+    instance.id;           // {String} instance id
+    instance.type;         // {String} type of application
+    instance.options;      // {Object} custom options
+    instance.element;      // {jQuery} container (jQuery element)
+    instance.key;          // {String} cache key
+    instance.declaration;  // {Object} a declaration of application
+
+    // Methods
+    instance.emit(name, [a], [b], [c], ..);       // Emits event
+    instance.on(name, fn);                        // Captures event
+    instance.find(selector);                      // Alias for "instance.element.find(selector)"
+    instance.append(value);                       // Alias for "instanec.element.append()"
+    instance.html(value);                         // Alias for "instanec.element.html()"
+    instance.event(name, [selector], callback);   // Alias for "instanec.element.on()"
+    instance.path([path]);                        // Generates path according to the current scope
+    instance.set(path, value);                    // Sets a value according to the current scope
+    instance.update(path, [reset]);               // Updates current scope
+    instance.notify(path);                        // Notifies current scope
+    instance.inc(path, value);                    // Increases a value according to the current scope
+    instance.push(path, value);                   // Pushs a new value according to the current scope
+    instance.extend(path, value);                 // Extends an object according to the current scope
+    instance.rewrite(path, value);                // Rewrites a value with except notifications
+    instance.get(path);                           // Gets a value according to the current scope
+    instance.default(path);                       // Resets to default values
+    instance.toggle(cls, visible, [timeout]);     // Alias for "jQuery.toggleClass()"
+    instance.attr(name, [value]);                 // Alias for "jQuery.attr()"
+    instance.css(name, [value]);                  // Alias for "jQuery.css()"
+    instance.empty();                             // Alias for "jQuery.empty()"
+    instance.remove();                            // Removes itself
+    instance.$save();                             // Saves current options
 };
 
 exports.uninstall = function() {
@@ -2197,6 +2241,10 @@ READY.push(function() {
 ```javascript
 MAIN;      // jComponent main instance
 M;         // jComponent main instance
+
+A;         // jComponent applications
+APPS;      // jComponent applications
+
 DATETIME;  // contains datetime value (jComponent refreshes the value each 60 seconds)
 
 // jcta.min.js, jctajr.min.js:
@@ -2209,6 +2257,13 @@ NAVIGATION;  // shortcut for jRouting (jComponent +v9.0.0)
 // Special {Array} of {Functions}
 window.READY   // for asynchronous loading scripts
 ```
+
+## Good to know
+
+- `MAIN.$components` a list of all registered components
+- `MAIN.components` a list of all instances of all components
+- `MAIN.$apps` a list of all registered apps
+- `MAIN.apps` a list of all instances of all apps
 
 ## Authors + Contacts
 

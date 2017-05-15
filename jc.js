@@ -1748,6 +1748,25 @@
 		return A;
 	};
 
+	A.import = function(url, callback) {
+		var index = url.indexOf(' ');
+		if (index === -1 || index > 5)
+			url = 'GET ' + url;
+		AJAX(url, function(response) {
+			var is = response ? compileapp(response) : false;
+			callback && callback(is ? null : new Error('Invalid jComponent application.'));
+		});
+		return A;
+	};
+
+	A.compile = function(body) {
+		return compileapp(body);
+	};
+
+	A.save = function() {
+
+	};
+
 	// ===============================================================
 	// PRIVATE FUNCTIONS
 	// ===============================================================
@@ -2060,9 +2079,14 @@
 			body_style = html.substring(html.indexOf('>', beg) + 1, html.indexOf('</style>')).trim();
 
 		var app = {};
-		new Function('exports', body_script)(app);
 
-		if (!app.name)
+		try {
+			new Function('exports', body_script)(app);
+		} catch(e) {
+			warn('A problem with compiling application: {0}.' + e.toString());
+		}
+
+		if (!app.name || !app.install)
 			return false;
 
 		var name = app.name;
@@ -2077,7 +2101,13 @@
 
 		if (M.$apps[name]) {
 			var tmp = M.$apps[name];
-			tmp.uninstall && tmp.uninstall(true);
+
+			try {
+				tmp.uninstall && tmp.uninstall(true);
+			} catch (e) {
+				warn('A problem with uninstalling application "{0}": {1}.'.foramt(name, e.toString()));
+			}
+
 			M.$apps[name] = app;
 
 			var apps = M.apps.slice(0);
@@ -2340,7 +2370,7 @@
 				var key = id ? ('app.' + name + '.' + id + '.options') : null;
 				d.html && el.empty().append(d.html);
 				id = 'app' + W.HASH(id);
-				var app = new APP(id, el, d, key ? M.cache(key) : null, key);
+				var app = new APP(id, el, d, key);
 				app.$cache = key;
 				dom.$app = app;
 				el.data(ATTRDATA, app);
@@ -3215,20 +3245,28 @@
 	// APPLICATION DECLARATION
 	// ===============================================================
 
-	function APP(id, element, declaration, options, key) {
-		this.$events = {};
-		this.id = id;
-		this.scope = attrcom(element, 'scope') || ('app' + GUID(10));
-		!attrapp(element, 'noscope') && element.attr('data-jc-scope', this.scope);
-		this.name = declaration.name;
-		this.type = declaration.type;
-		this.options = $.extend(true, CLONE(declaration.options), options || EMPTYOBJECT);
-		this.element = element;
-		declaration.install.call(this, this);
-		this.make && this.make();
-		this.key = key;
-		this.declaration = declaration;
+	function APP(id, element, declaration, key) {
+		var self = this;
+		self.$events = {};
+		self.id = id;
+		self.scope = attrapp(element, 'scope') || attrcom(element, 'scope') || ('app' + GUID(10));
+		!attrapp(element, 'noscope') && element.attr('data-jc-scope', self.scope);
+		self.name = declaration.name;
+		self.type = declaration.type;
+		self.element = element;
+		self.key = key;
+		self.declaration = declaration;
+		self.$load(function(options) {
+			self.options = $.extend(true, CLONE(declaration.options), options || EMPTYOBJECT);
+			declaration.install.call(self, self);
+			self.make && self.make();
+		});
 	}
+
+	APP.prototype.change = function() {
+		this.$save();
+		return this;
+	};
 
 	APP.prototype.emit = function(name) {
 		var e = this.$events[name];
@@ -3270,6 +3308,18 @@
 	APP.prototype.set = function(path, value, type) {
 		var self = this;
 		M.set(self.path(path), value, type);
+		return self;
+	};
+
+	APP.prototype.update = function(path, reset, type) {
+		var self = this;
+		M.update(self.path(path), reset, type);
+		return self;
+	};
+
+	APP.prototype.notify = function(path) {
+		var self = this;
+		M.notify(self.path(path));
 		return self;
 	};
 
@@ -3373,6 +3423,18 @@
 		self.element.off();
 		M.apps = M.apps.remove(self);
 		setTimeout2('$cleaner', cleaner, 100);
+		return self;
+	};
+
+	APP.prototype.$load = function(callback) {
+		var self = this;
+		callback(self.key ? M.cache(self.key) : null);
+		return self;
+	};
+
+	APP.prototype.$save = function() {
+		var self = this;
+		self.key && M.cache(self.key, self.options, '1 year');
 		return self;
 	};
 
