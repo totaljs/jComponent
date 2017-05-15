@@ -1,7 +1,7 @@
 (function() {
 
 	// Constants
-	var REGCOM = /(data-ja|data-jc|data-component)\=/;
+	var REGCOM = /(data-ja|data-jc)\=/;
 	var REGSCRIPT = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGEMPTY = /\s/g;
@@ -1974,7 +1974,7 @@
 
 	function attrcom(el, name) {
 		name = name ? '-' + name : '';
-		return el.getAttribute ? el.getAttribute('data-jc' + name) || el.getAttribute('data-component' + name) : el.attr('data-jc' + name) || el.attr('data-component' + name);
+		return el.getAttribute ? el.getAttribute('data-jc' + name) : el.attr('data-jc' + name);
 	}
 
 	function attrapp(el, name) {
@@ -2022,6 +2022,7 @@
 
 				if (!el.$com) {
 					name = attrcom(el);
+					console.log('--->', name, el);
 					name != null && onComponent(name || '', el, level);
 				}
 			}
