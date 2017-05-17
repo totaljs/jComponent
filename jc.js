@@ -44,6 +44,7 @@
 	var styles = [];
 	var statics = {};
 	var $ready = setTimeout(load, 2);
+	var $loaded = false;
 	var schedulercounter = 0;
 	var mediaqueriescounter = 0;
 	var knockknockcounter = 0;
@@ -273,7 +274,10 @@
 	};
 
 	M.ready = function(fn) {
-		C.ready && C.ready.push(fn);
+		if (C.ready)
+			C.ready.push(fn);
+		else
+			fn();
 		return M;
 	};
 
@@ -311,7 +315,7 @@
 
 		events[path][name].push({ fn: fn, id: this._id, path: fixed });
 		init && fn.call(M, path, get(path), true);
-		(M.ready && (name === 'ready' || name === 'init')) && fn();
+		(!C.ready && (name === 'ready' || name === 'init')) && fn();
 		return M;
 	};
 
@@ -2596,7 +2600,7 @@
 	function initialize() {
 		var item = C.init.pop();
 		if (item === undefined)
-			!M.ready && compile();
+			!C.ready && compile();
 		else {
 			!item.$removed && prepare(item);
 			initialize();
@@ -2697,7 +2701,7 @@
 		var next = C.pending.shift();
 		if (next)
 			next();
-		else if (M.ready)
+		else if (C.ready)
 			C.is = false;
 	}
 
@@ -2819,9 +2823,9 @@
 			var count = M.components.length;
 			$(document).trigger('components', [count]);
 
-			if (!M.ready) {
+			if (!$loaded) {
+				$loaded = true;
 				clear('valid', 'dirty', 'find');
-				M.ready = true;
 				EMIT('init');
 				EMIT('ready');
 			}
@@ -3800,7 +3804,7 @@
 		}
 
 		this.$$path = pre;
-		!init && M.ready && refresh();
+		!init && C.ready && refresh();
 		return this;
 	};
 
@@ -4498,10 +4502,10 @@
 				if (is && (update === undefined || update === true))
 					M.update(p, true);
 				else {
-					if (M.ready)
-						M.set(p, obj, true);
-					else
+					if (C.ready)
 						set(p, obj);
+					else
+						M.set(p, obj, true);
 				}
 				return obj;
 		}
