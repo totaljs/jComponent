@@ -1785,7 +1785,32 @@ Prototypes are supported in `+v10.0.0`.
 PROTOTYPEAPP;        // Application prototype
 PROTOTYPECOMPONENT;  // Component prototype
 PROTOTYPEUSAGE;      // Usage prototype
+PROTOTYPECONTAINER;  // Virtualization container
+PROTOTYPEPROPERTY;   // Virtualization property
 ```
+
+## Virtualization
+
+Is supported in __v10.0.0__. In short this feature can virtualize `DOM` to simple object.
+
+```html
+<div id="container">
+    <h1 data-name="caption"></h1>
+    <p data-name="text"></p>
+    <button data-name="buttom"></button>
+</div>
+
+<script>
+    var obj = VIRTUALIZE($('#container'), { caption: 'h1', text: 'p', button: 'button', something: 'jQuery selector' });
+    obj.caption.html('This is caption');
+    obj.text.html('Lorem ipsum dolor sit amet, consectetur adipisicing elit. Necessitatibus, iusto.');
+    obj.button.html('Click me');
+</script>
+```
+
+- `VIRTUALIZE()` still returns cached object
+- it waits for non-exist elements
+- it doesn't throw any exception when the element doesn't exist
 
 ## APPLICATIONS
 

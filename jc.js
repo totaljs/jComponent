@@ -73,6 +73,18 @@
 		}
 	};
 
+	M.validators = {};
+	M.validators.url = /^(http|https):\/\/(?:(?:(?:[\w\.\-\+!$&'\(\)*\+,;=]|%[0-9a-f]{2})+:)*(?:[\w\.\-\+%!$&'\(\)*\+,;=]|%[0-9a-f]{2})+@)?(?:(?:[a-z0-9\-\.]|%[0-9a-f]{2})+|(?:\[(?:[0-9a-f]{0,4}:)*(?:[0-9a-f]{0,4})\]))(?::[0-9]+)?(?:[\/|\?](?:[\w#!:\.\?\+=&@!$'~*,;\/\(\)\[\]\-]|%[0-9a-f]{2})*)?$/i;
+	M.validators.phone = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
+	M.validators.email = /^[a-zA-Z0-9-_.+]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i;
+
+	M.regexp = {};
+	M.regexp.int = /(\-|\+)?[0-9]+/;
+	M.regexp.float = /(\-|\+)?[0-9\.\,]+/;
+	M.regexp.date = /yyyy|yy|MM|M|dd|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g;
+	M.regexp.pluralize = /\#{1,}/g;
+	M.regexp.format = /\{\d+\}/g;
+
 	M.version = 'v10.0.0';
 	M.$localstorage = 'jc';
 	M.$version = '';
@@ -3246,6 +3258,83 @@
 	}
 
 	// ===============================================================
+	// VIRTUAL DECLARATION
+	// ===============================================================
+
+	function CONTAINER(element, mapping) {
+		var t = this;
+		t.element = element;
+		t.mapping = mapping;
+		t.refresh();
+	}
+
+	var PPVC = CONTAINER.prototype;
+
+	PPVC.refresh = function() {
+		var self = this;
+		var keys = Object.keys(self.mapping);
+		for (var i = 0, length = keys.length; i < length; i++) {
+			var key = keys[i];
+
+			if (key === 'refresh') {
+				warn('VIRTUALIZE can\'t contain field called "refresh" in mapping.');
+				continue;
+			}
+
+			var sel = self.mapping[key];
+			var val = typeof(sel) === 'function' ? sel(self.element) : self.element.find(sel);
+			if (self[key])
+				self[key].refresh();
+			else
+				self[key] = new PROPERTY(self, sel, val instanceof jQuery ? val : $(val));
+		}
+		return self;
+	};
+
+	function PROPERTY(container, selector, el) {
+		var t = this;
+		t.id = 'v' + GUID(10);
+		t.container = container;
+		t.element = el;
+		t.selector = selector;
+		t.length = el.length;
+		!t.length && t.$refresh();
+	}
+
+	var PPP = PROPERTY.prototype;
+
+	PPP.refresh = function() {
+		var self = this;
+		self.element = typeof(self.selector) === 'function' ? self.selector(self.container.element) : self.container.element.find(self.selector);
+		self.length = self.element.length;
+		return self;
+	};
+
+	PPP.replace = function(el) {
+		this.element.replaceWith(el);
+		this.element = el;
+		return this;
+	};
+
+	PPP.$refresh = function() {
+		var self = this;
+		if (self.length)
+			return self;
+		setTimeout(function(self) {
+			self.refresh();
+			self.$refresh();
+		}, 200, self);
+		return self;
+	};
+
+	PPP.click = function(callback) {
+		var e = this.element;
+		e.off('click touchend');
+		e.on('click touchend', callback);
+		return this;
+	};
+
+	// ===============================================================
 	// APPLICATION DECLARATION
 	// ===============================================================
 
@@ -3267,6 +3356,8 @@
 		});
 	}
 
+	var PPA = APP.prototype;
+
 	APP.prototype.change = function() {
 		this.$save();
 		return this;
@@ -3285,23 +3376,6 @@
 		var e = this.$events[name];
 		!e && (this.$events[name] = e = []);
 		e.push(fn);
-		return this;
-	};
-
-	APP.prototype.find = function(selector) {
-		return this.element.find(selector);
-	};
-
-	APP.prototype.append = function(value) {
-		return this.element.append(value);
-	};
-
-	APP.prototype.html = function(value) {
-		return this.element.html(value);
-	};
-
-	APP.prototype.event = function() {
-		this.element.on.apply(this.element, arguments);
 		return this;
 	};
 
@@ -3361,55 +3435,12 @@
 		return get(self.path(path));
 	};
 
-	APP.prototype.toggle = function(cls, visible, timeout) {
-
-		var manual = false;
-
-		if (typeof(cls) !== 'string') {
-			timeout = visible;
-			visible = cls;
-			cls = 'hidden';
-			manual = true;
-		}
-
-		if (typeof(visible) === 'number') {
-			timeout = visible;
-			visible = undefined;
-		} else if (manual && visible !== undefined)
-			visible = !visible;
-
-		var el = this.element;
-		if (!timeout) {
-			el.toggleClass(cls, visible);
-			return this;
-		}
-
-		setTimeout(function() {
-			el.toggleClass(cls, visible);
-		}, timeout);
-		return this;
-	};
-
 	APP.prototype.attr = function(name, value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.attr(name);
 		el.attr(name, value);
 		return this;
-	};
-
-	APP.prototype.css = function(name, value) {
-		var el = this.element;
-		if (value === undefined)
-			return el.css(name);
-		el.css(name, value);
-		return this;
-	};
-
-	APP.prototype.empty = function() {
-		var el = this.element;
-		el.empty();
-		return el;
 	};
 
 	APP.prototype.remove = function(noremove) {
@@ -3502,7 +3533,7 @@
 
 			if (self.$released !== value) {
 				self.$released = value;
-				self.released && this.released(value, self);
+				self.released && self.released(value, self);
 			}
 
 			return value;
@@ -3510,30 +3541,31 @@
 
 		this.getter = function(value, type, dirty, older, skip) {
 
-			value = this.parser(value);
+			var self = this;
+			value = self.parser(value);
 
 			if (type === 2 && !skip)
-				this.$skip = true;
+				self.$skip = true;
 
 			if (type !== 2 || (older !== null && older !== undefined)) {
-				M.validate(this.path);
-				return this;
+				M.validate(self.path);
+				return self;
 			}
 
-			if (this.trim && typeof(value) === 'string')
+			if (self.trim && typeof(value) === 'string')
 				value = value.trim();
 
-			if (value === this.get()) {
-				dirty && M.validate(this.path);
-				return this;
+			if (value === self.get()) {
+				dirty && M.validate(self.path);
+				return self;
 			}
 
 			if (skip)
-				this.$skip = false;
+				self.$skip = false;
 
-			this.getter2 && this.getter2.apply(this, arguments);
-			this.set(this.path + this.middleware, value, type);
-			return this;
+			self.getter2 && self.getter2.apply(self, arguments);
+			self.set(self.path + self.middleware, value, type);
+			return self;
 		};
 
 		this.setter = function(value, path, type) {
@@ -3547,56 +3579,59 @@
 				}
 			}
 
-			this.setter2 && this.setter2.apply(this, arguments);
+			self.setter2 && self.setter2.apply(self, arguments);
 
-			var selector = self.$input === true ? this.element : this.element.find(ATTRBIND);
+			var selector = self.$input === true ? self.element : self.element.find(ATTRBIND);
 			var a = 'select-one';
 
 			value = self.formatter(value);
 			selector.each(function() {
-
-				var path = this.$com.path;
+				var t = this;
+				var path = t.$com.path;
 				if (path && path.length && path !== self.path)
 					return;
 
-				if (this.type === 'checkbox') {
+				if (t.type === 'checkbox') {
 					var tmp = value != null ? value.toString().toLowerCase() : '';
 					tmp = tmp === 'true' || tmp === '1' || tmp === 'on';
-					tmp !== this.checked && (this.checked = tmp);
+					tmp !== t.checked && (t.checked = tmp);
 					return;
 				}
 
 				if (value == null)
 					value = '';
 
-				if (!type && this.type !== a && this.type !== 'range' && (!value || (self.$default && self.$default() === value)))
-					autofill.push(this.$com);
+				if (!type && t.type !== a && t.type !== 'range' && (!value || (self.$default && self.$default() === value)))
+					autofill.push(t.$com);
 
-				if (this.type === a || this.type === 'select') {
-					var el = $(this);
+				if (t.type === a || t.type === 'select') {
+					var el = $(t);
 					el.val() !== value && el.val(value);
 				} else
-					this.value !== value && (this.value = value);
+					t.value !== value && (t.value = value);
 			});
 		};
 	}
 
-	COM.prototype.controller = function() {
+	var PPC = COM.prototype;
+
+	PPC.controller = function() {
 		return CONTROLLER(this.$controller);
 	};
 
-	COM.prototype.replace = function(el) {
-		this.element = $(el);
-		this.element.get(0).$com = this;
-		return this;
+	PPC.replace = function(el) {
+		var self = this;
+		self.element = $(el);
+		self.element.get(0).$com = self;
+		return self;
 	};
 
-	COM.prototype.compile = function(container) {
+	PPC.compile = function(container) {
 		compile(container || this.element);
 		return this;
 	};
 
-	COM.prototype.nested = function() {
+	PPC.nested = function() {
 		var arr = [];
 		this.find(ATTRCOM).each(function() {
 			var el = $(this);
@@ -3611,7 +3646,7 @@
 		return arr;
 	};
 
-	COM.prototype.$interaction = function(type) {
+	PPC.$interaction = function(type) {
 		// type === 0 : init
 		// type === 1 : manually
 		// type === 2 : by input
@@ -3653,31 +3688,33 @@
 		return t;
 	};
 
-	COM.prototype.notify = function() {
+	PPC.notify = function() {
 		W.NOTIFY(this.path);
 		return this;
 	};
 
-	COM.prototype.update = COM.prototype.refresh = function(notify) {
+	PPC.update = PPC.refresh = function(notify) {
+		var self = this;
 		if (notify)
-			this.set(this.get());
+			self.set(self.get());
 		else {
-			this.setter && this.setter(this.get(), this.path, 1);
-			this.$interaction(1);
+			self.setter && self.setter(self.get(), self.path, 1);
+			self.$interaction(1);
 		}
-		return this;
+		return self;
 	};
 
-	COM.prototype.classes = function(cls) {
+	PPC.classes = PPA.classes = PPP.classes = function(cls) {
 
 		var key = 'cls.' + cls;
 		var tmp = temp[key];
-		var e = this.element;
+		var t = this;
+		var e = t.element;
 
 		if (tmp) {
 			tmp.add && e.addClass(tmp.add);
 			tmp.rem && e.removeClass(tmp.rem);
-			return this;
+			return t;
 		}
 
 		var arr = cls instanceof Array ? cls : cls.split(' ');
@@ -3696,15 +3733,16 @@
 		rem && e.removeClass(rem);
 
 		if (cls instanceof Array)
-			return this;
+			return t;
 
 		temp[key] = { add: add, rem: rem };
-		return this;
+		return t;
 	};
 
-	COM.prototype.toggle = function(cls, visible, timeout) {
+	PPC.toggle = PPA.toggle = PPP.toggle = function(cls, visible, timeout) {
 
 		var manual = false;
+		var self = this;
 
 		if (typeof(cls) !== 'string') {
 			timeout = visible;
@@ -3719,63 +3757,68 @@
 		} else if (manual && visible !== undefined)
 			visible = !visible;
 
-		var el = this.element;
+		var el = self.element;
 		if (!timeout) {
 			el.toggleClass(cls, visible);
-			return this;
+			return self;
 		}
 
 		setTimeout(function() {
 			el.toggleClass(cls, visible);
 		}, timeout);
-		return this;
+		return self;
 	};
 
-	COM.prototype.noscope = function(value) {
+	PPC.noscope = function(value) {
 		this.$noscope = value === undefined ? true : value === true;
 		return this;
 	};
 
-	COM.prototype.singleton = function() {
+	PPC.singleton = function() {
 		C.init['$ST_' + this.name] = true;
 		return this;
 	};
 
-	COM.prototype.blind = function() {
-		this.path = null;
-		this.$path = null;
-		this.$$path = null;
-		return this;
+	PPC.blind = function() {
+		var self = this;
+		self.path = null;
+		self.$path = null;
+		self.$$path = null;
+		return self;
 	};
 
-	COM.prototype.readonly = function() {
-		this.noDirty();
-		this.noValid();
-		this.getter = null;
-		this.setter = null;
-		this.$parser = null;
-		this.$formatter = null;
-		return this;
+	PPC.readonly = function() {
+		var self = this;
+		self.noDirty();
+		self.noValid();
+		self.getter = null;
+		self.setter = null;
+		self.$parser = null;
+		self.$formatter = null;
+		return self;
 	};
 
-	COM.prototype.noValid = COM.prototype.noValidate = function(val) {
+	PPC.noValid = PPC.noValidate = function(val) {
 		if (val === undefined)
 			val = true;
-		this.$valid_disabled = val;
-		this.$valid = val;
-		return this;
+		var self = this;
+		self.$valid_disabled = val;
+		self.$valid = val;
+		return self;
 	};
 
-	COM.prototype.noDirty = function(val) {
+	PPC.noDirty = function(val) {
 		if (val === undefined)
 			val = true;
-		this.$dirty_disabled = val;
-		this.$dirty = val ? false : true;
-		return this;
+		var self = this;
+		self.$dirty_disabled = val;
+		self.$dirty = val ? false : true;
+		return self;
 	};
 
-	COM.prototype.setPath = function(path, init) {
+	PPC.setPath = function(path, init) {
 		var fixed = null;
+		var self = this;
 
 		if (path.charCodeAt(0) === 33) {
 			path = path.substring(1);
@@ -3784,13 +3827,13 @@
 
 		var index = path.indexOf(' #');
 		if (index !== -1) {
-			this.middleware = path.substring(index);
+			self.middleware = path.substring(index);
 			path = path.substring(0, index);
 		} else
-			this.middleware = '';
+			self.middleware = '';
 
-		this.path = path;
-		this.$path = fixed;
+		self.path = path;
+		self.$path = fixed;
 		var arr = path.split('.');
 		var pre = [];
 
@@ -3803,12 +3846,12 @@
 			pre.push({ path: item, raw: raw, is: index !== -1 });
 		}
 
-		this.$$path = pre;
+		self.$$path = pre;
 		!init && C.ready && refresh();
-		return this;
+		return self;
 	};
 
-	COM.prototype.attr = function(name, value) {
+	PPC.attr = PPA.attr = PPP.attr = function(name, value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.attr(name);
@@ -3816,7 +3859,7 @@
 		return this;
 	};
 
-	COM.prototype.css = function(name, value) {
+	PPC.css = PPA.css = PPP.css = function(name, value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.css(name);
@@ -3824,7 +3867,7 @@
 		return this;
 	};
 
-	COM.prototype.html = function(value) {
+	PPC.html = PPA.html = PPP.html = function(value) {
 		var el = this.element;
 		var current = el.html();
 		if (value === undefined)
@@ -3837,36 +3880,41 @@
 		return value || type === 'number' || type === 'boolean' ? el.empty().append(value) : el.empty();
 	};
 
-	COM.prototype.empty = function() {
+	PPC.empty = PPA.empty = PPP.empty = function() {
 		var el = this.element;
 		el.empty();
 		return el;
 	};
 
-	COM.prototype.append = function(value) {
+	PPC.append = PPA.append = PPP.append = function(value) {
 		var el = this.element;
 		if (value instanceof Array)
 			value = value.join('');
 		return value ? el.append(value) : el;
 	};
 
-	COM.prototype.event = function() {
-		this.element.on.apply(this.element, arguments);
-		return this;
+	PPC.event = PPA.event = PPP.event = PPP.on = function() {
+		var self = this;
+		self.element.on.apply(self.element, arguments);
+		return self;
 	};
 
-	COM.prototype.find = function(selector) {
+	PPC.find = PPA.find = PPP.find = function(selector) {
 		return this.element.find(selector);
 	};
 
-	COM.prototype.isInvalid = function() {
+	PPC.virtualize = PPA.virtualize = function(mapping) {
+		return W.VIRTUALIZE(this.element, mapping);
+	};
+
+	PPC.isInvalid = function() {
 		var is = !this.$valid;
 		if (is && !this.$validate)
 			is = !this.$dirty;
 		return is;
 	};
 
-	COM.prototype.watch = function(path, fn, init) {
+	PPC.watch = function(path, fn, init) {
 
 		var self = this;
 
@@ -3881,11 +3929,11 @@
 		return self;
 	};
 
-	COM.prototype.invalid = function() {
+	PPC.invalid = function() {
 		return M.invalid(this.path, this);
 	};
 
-	COM.prototype.valid = function(value, noEmit) {
+	PPC.valid = function(value, noEmit) {
 
 		var self = this;
 
@@ -3903,21 +3951,21 @@
 		return self;
 	};
 
-	COM.prototype.style = function(value) {
+	PPC.style = function(value) {
 		W.STYLE(value);
 		return this;
 	};
 
-	COM.prototype.change = function(value) {
+	PPC.change = function(value) {
 		M.change(this.path, value === undefined ? true : value, this);
 		return this;
 	};
 
-	COM.prototype.used = function() {
+	PPC.used = function() {
 		return this.$interaction(100);
 	};
 
-	COM.prototype.dirty = function(value, noEmit) {
+	PPC.dirty = function(value, noEmit) {
 
 		if (value === undefined)
 			return this.$dirty;
@@ -3932,28 +3980,29 @@
 		return this;
 	};
 
-	COM.prototype.reset = function() {
+	PPC.reset = function() {
 		M.reset(this.path, 0, this);
 		return this;
 	};
 
-	COM.prototype.setDefault = function(value) {
+	PPC.setDefault = function(value) {
 		this.$default = function() {
 			return value;
 		};
 		return this;
 	};
 
-	COM.prototype.default = function(reset) {
+	PPC.default = function(reset) {
 		M.default(this.path, 0, this, reset);
 		return this;
 	};
 
-	COM.prototype.remove = function(noClear) {
-		this.element.removeData(ATTRDATA);
-		this.element.find(ATTRCOM).attr(ATTRDEL, 'true');
-		this.element.attr(ATTRDEL, 'true');
-		this.$removed = true;
+	PPC.remove = function(noClear) {
+		var self = this;
+		self.element.removeData(ATTRDATA);
+		self.element.find(ATTRCOM).attr(ATTRDEL, 'true');
+		self.element.attr(ATTRDEL, 'true');
+		self.$removed = true;
 		if (!noClear) {
 			clear();
 			setTimeout2('$cleaner', cleaner, 100);
@@ -3961,7 +4010,7 @@
 		return true;
 	};
 
-	COM.prototype.on = function(name, path, fn, init) {
+	PPC.on = function(name, path, fn, init) {
 
 		if (typeof(path) === 'function') {
 			init = fn;
@@ -3982,12 +4031,13 @@
 		} else if (!events[path][name])
 			events[path][name] = [];
 
-		events[path][name].push({ fn: fn, context: this, id: this._id, path: fixed });
+		var self = this;
+		events[path][name].push({ fn: fn, context: self, id: self._id, path: fixed });
 		init && fn.call(M, path, get(path));
-		return this;
+		return self;
 	};
 
-	COM.prototype.formatter = function(value) {
+	PPC.formatter = function(value) {
 
 		var self = this;
 
@@ -4013,7 +4063,7 @@
 		return value;
 	};
 
-	COM.prototype.parser = function(value) {
+	PPC.parser = function(value) {
 
 		var self = this;
 
@@ -4037,12 +4087,12 @@
 		return value;
 	};
 
-	COM.prototype.emit = function() {
+	PPC.emit = function() {
 		M.emit.apply(M, arguments);
 		return this;
 	};
 
-	COM.prototype.evaluate = function(path, expression, nopath) {
+	PPC.evaluate = function(path, expression, nopath) {
 		if (!expression) {
 			expression = path;
 			path = this.path;
@@ -4050,14 +4100,14 @@
 		return M.evaluate(path, expression, nopath);
 	};
 
-	COM.prototype.get = function(path) {
+	PPC.get = function(path) {
 		if (!path)
 			path = this.path;
 		if (path)
 			return get(path);
 	};
 
-	COM.prototype.set = function(path, value, type) {
+	PPC.set = function(path, value, type) {
 
 		if (value === undefined) {
 			value = path;
@@ -4068,7 +4118,7 @@
 		return this;
 	};
 
-	COM.prototype.inc = function(path, value, type) {
+	PPC.inc = function(path, value, type) {
 
 		if (value === undefined) {
 			value = path;
@@ -4079,7 +4129,7 @@
 		return this;
 	};
 
-	COM.prototype.extend = function(path, value, type) {
+	PPC.extend = function(path, value, type) {
 
 		if (value === undefined) {
 			value = path;
@@ -4090,7 +4140,7 @@
 		return this;
 	};
 
-	COM.prototype.push = function(path, value, type) {
+	PPC.push = function(path, value, type) {
 
 		if (value === undefined) {
 			value = path;
@@ -4106,13 +4156,14 @@
 	// ===============================================================
 
 	function USAGE() {
-		this.init = 0;
-		this.manually = 0;
-		this.input = 0;
-		this.default = 0;
-		this.custom = 0;
-		this.dirty = 0;
-		this.valid = 0;
+		var t = this;
+		t.init = 0;
+		t.manually = 0;
+		t.input = 0;
+		t.default = 0;
+		t.custom = 0;
+		t.dirty = 0;
+		t.valid = 0;
 	}
 
 	USAGE.prototype.compare = function(type, dt) {
@@ -4127,6 +4178,7 @@
 		var n = Date.now();
 		var output = {};
 		var num = 1;
+		var t = this;
 
 		switch (type.toLowerCase().substring(0, 3)) {
 			case 'min':
@@ -4148,13 +4200,13 @@
 				break;
 		}
 
-		output.init = this.init === 0 ? 0 : ((n - this.init) / num) >> 0;
-		output.manually = this.manually === 0 ? 0 : ((n - this.manually) / num) >> 0;
-		output.input = this.input === 0 ? 0 : ((n - this.input) / num) >> 0;
-		output.default = this.default === 0 ? 0 : ((n - this.default) / num) >> 0;
-		output.custom = this.custom === 0 ? 0 : ((n - this.custom) / num) >> 0;
-		output.dirty = this.dirty === 0 ? 0 : ((n - this.dirty) / num) >> 0;
-		output.valid = this.valid === 0 ? 0 : ((n - this.valid) / num) >> 0;
+		output.init = t.init === 0 ? 0 : ((n - t.init) / num) >> 0;
+		output.manually = t.manually === 0 ? 0 : ((n - t.manually) / num) >> 0;
+		output.input = t.input === 0 ? 0 : ((n - t.input) / num) >> 0;
+		output.default = t.default === 0 ? 0 : ((n - t.default) / num) >> 0;
+		output.custom = t.custom === 0 ? 0 : ((n - t.custom) / num) >> 0;
+		output.dirty = t.dirty === 0 ? 0 : ((n - t.dirty) / num) >> 0;
+		output.valid = t.valid === 0 ? 0 : ((n - t.valid) / num) >> 0;
 		return output;
 	};
 
@@ -4162,14 +4214,16 @@
 	// WINDOW FUNCTIONS
 	// ===============================================================
 
-	W.PROTOTYPEAPP = APP.prototype;
-	W.PROTOTYPECOMPONENT = COM.prototype;
+	W.PROTOTYPECONTAINER = PPVC;
+	W.PROTOTYPEPROPERTY = PPP;
+	W.PROTOTYPEAPP = PPA;
+	W.PROTOTYPECOMPONENT = PPC;
 	W.PROTOTYPEUSAGE = USAGE.prototype;
 	W.isMOBILE = ('ontouchstart' in W || navigator.maxTouchPoints) ? true : false;
 	W.isROBOT = navigator.userAgent ? (/search|agent|bot|crawler|spider/i).test(navigator.userAgent) : true;
 	W.isSTANDALONE = navigator.standalone || W.matchMedia('(display-mode: standalone)').matches;
 
-	W.setTimeout2 = function(name, fn, timeout, limit) {
+	W.setTimeout2 = function(name, fn, timeout, limit, param) {
 		var key = ':' + name;
 		if (limit > 0) {
 			var key2 = key + ':limit';
@@ -4177,13 +4231,13 @@
 				return;
 			statics[key2] = (statics[key2] || 0) + 1;
 			statics[key] && clearTimeout(statics[key]);
-			return statics[key] = setTimeout(function() {
+			return statics[key] = setTimeout(function(param) {
 				statics[key2] = undefined;
-				fn && fn();
-			}, timeout);
+				fn && fn(param);
+			}, timeout, param);
 		}
 		statics[key] && clearTimeout(statics[key]);
-		return statics[key] = setTimeout(fn, timeout);
+		return statics[key] = setTimeout(fn, timeout, param);
 	};
 
 	W.clearTimeout2 = function(name) {
@@ -4967,6 +5021,11 @@
 		};
 	};
 
+	W.VIRTUALIZE = function(el, map) {
+		!(el instanceof jQuery) && (el = $(el));
+		return new CONTAINER(el, map);
+	};
+
 	COMPONENT('', function() {
 		var self = this;
 		var type = self.element.get(0).tagName;
@@ -5094,9 +5153,10 @@
 
 	Array.prototype.ticks = function(max, beg) {
 
-		var length = this.length;
+		var self = this;
+		var length = self.length;
 		if (length < max)
-			return this;
+			return self;
 
 		var each = Math.round(length / max);
 		var arr = [];
@@ -5107,7 +5167,7 @@
 			for (var i = 0; i < length; i++) {
 				if (sum++ % each === 0) {
 					count++;
-					arr.push(this[i]);
+					arr.push(self[i]);
 				}
 
 				if (count === max)
@@ -5117,7 +5177,7 @@
 			for (var i = length - 1; i > -1; i--) {
 				if (sum++ % each === 0) {
 					count++;
-					arr.push(this[i]);
+					arr.push(self[i]);
 				}
 
 				if (count === max)
@@ -5150,8 +5210,9 @@
 	};
 
 	String.prototype.isJSONDate = function() {
-		var l = this.length - 1;
-		return l > 22 && l < 30 && this.charCodeAt(l) === 90 && this.charCodeAt(10) === 84 && this.charCodeAt(4) === 45 && this.charCodeAt(13) === 58 && this.charCodeAt(16) === 58;
+		var t = this;
+		var l = t.length - 1;
+		return l > 22 && l < 30 && t.charCodeAt(l) === 90 && t.charCodeAt(10) === 84 && t.charCodeAt(4) === 45 && t.charCodeAt(13) === 58 && t.charCodeAt(16) === 58;
 	};
 
 	String.prototype.parseExpire = function() {
@@ -5291,25 +5352,22 @@
 
 	String.prototype.isEmail = function() {
 		var str = this;
-		var r = /^[a-zA-Z0-9-_.+]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i;
-		return str.length <= 4 ? false : r.test(str);
+		return str.length <= 4 ? false : M.validators.email.test(str);
 	};
 
 	String.prototype.isPhone = function() {
 		var str = this;
-		var r = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
-		return str.length < 6 ? false : r.test(str);
+		return str.length < 6 ? false : M.validators.phone.test(str);
 	};
 
 	String.prototype.isURL = function() {
 		var str = this;
-		var r = /^(http|https):\/\/(?:(?:(?:[\w\.\-\+!$&'\(\)*\+,;=]|%[0-9a-f]{2})+:)*(?:[\w\.\-\+%!$&'\(\)*\+,;=]|%[0-9a-f]{2})+@)?(?:(?:[a-z0-9\-\.]|%[0-9a-f]{2})+|(?:\[(?:[0-9a-f]{0,4}:)*(?:[0-9a-f]{0,4})\]))(?::[0-9]+)?(?:[\/|\?](?:[\w#!:\.\?\+=&@!$'~*,;\/\(\)\[\]\-]|%[0-9a-f]{2})*)?$/i;
-		return str.length <= 7 ? false : r.test(str);
+		return str.length <= 7 ? false : M.validators.url.test(str);
 	};
 
 	String.prototype.parseInt = function(def) {
 		var str = this.trim();
-		var val = str.match(/(\-|\+)?[0-9]+/);
+		var val = str.match(M.regexp.int);
 		if (!val)
 			return def || 0;
 		val = +val[0];
@@ -5318,7 +5376,7 @@
 
 	String.prototype.parseFloat = function(def) {
 		var str = this.trim();
-		var val = str.match(/(\-|\+)?[0-9\.\,]+/);
+		var val = str.match(M.regexp.float);
 		if (!val)
 			return def || 0;
 		val = val[0];
@@ -5452,7 +5510,7 @@
 		var e = this, r = !1;
 		if (t && 33 === t.charCodeAt(0) && (r = !0, t = t.substring(1)), void 0 === t || null === t || '' === t) return e.getFullYear() + '-' + (e.getMonth() + 1).toString().padLeft(2, '0') + '-' + e.getDate().toString().padLeft(2, '0') + 'T' + e.getHours().toString().padLeft(2, '0') + ':' + e.getMinutes().toString().padLeft(2, '0') + ':' + e.getSeconds().toString().padLeft(2, '0') + '.' + e.getMilliseconds().padLeft(3, '0').toString() + 'Z';
 		var n = e.getHours();
-		return r && n >= 12 && (n -= 12), t.replace(/yyyy|yy|MM|M|dd|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g, function(t) {
+		return r && n >= 12 && (n -= 12), t.replace(M.regexp.date, function(t) {
 			switch (t) {
 				case 'yyyy':
 					return e.getFullYear();
@@ -5507,7 +5565,7 @@
 		else
 			value = other;
 
-		return value.indexOf('#') === -1 ? value : value.replace(/\#{1,}/g, function(text) {
+		return value.indexOf('#') === -1 ? value : value.replace(M.regexp.pluralize, function(text) {
 			return text === '##' ? num.format() : num.toString();
 		});
 	};
@@ -5649,7 +5707,7 @@
 
 	String.prototype.format = function() {
 		var arg = arguments;
-		return this.replace(/\{\d+\}/g, function(text) {
+		return this.replace(M.regexp.format, function(text) {
 			var value = arg[+text.substring(1, text.length - 1)];
 			return value == null ? '' : value instanceof Array ? value.join('') : value;
 		});
