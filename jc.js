@@ -2211,7 +2211,7 @@
 			has = true;
 
 			// Check singleton instance
-			if (C.init['$ST_' + name]) {
+			if (statics['$ST_' + name]) {
 				remove(el);
 				return;
 			}
@@ -2227,7 +2227,7 @@
 
 					var x = attrcom(el, 'import');
 					if (!x) {
-						!C.init['$NE_' + name] && (C.init['$NE_' + name] = true);
+						!statics['$NE_' + name] && (statics['$NE_' + name] = true);
 						return;
 					}
 
@@ -2235,7 +2235,7 @@
 						return;
 
 					if (C.imports[x] === 2) {
-						!C.init['$NE_' + name] && (C.init['$NE_' + name] = true);
+						!statics['$NE_' + name] && (statics['$NE_' + name] = true);
 						return;
 					}
 
@@ -2248,8 +2248,8 @@
 
 				var obj = com(el);
 				if (obj.init) {
-					if (!C.init[name]) {
-						C.init[name] = true;
+					if (!statics[name]) {
+						statics[name] = true;
 						obj.init();
 					}
 					obj.init = undefined;
@@ -2378,7 +2378,7 @@
 			}
 		}, undefined);
 
-		if (!has)
+		if (!has || !C.pending.length)
 			C.is = false;
 
 		if (container !== undefined || !toggles.length)
@@ -3797,7 +3797,7 @@
 	};
 
 	PPC.singleton = function() {
-		C.init['$ST_' + this.name] = true;
+		statics['$ST_' + this.name] = true;
 		return this;
 	};
 
