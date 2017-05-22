@@ -2240,7 +2240,7 @@
 					}
 
 					C.imports[x] = 1;
-					IMPORT(x, function() {
+					M.import(x, function() {
 						C.imports[x] = 2;
 					});
 					return;
@@ -2407,7 +2407,7 @@
 		if (d.$pending === undefined && d.dependencies && d.dependencies.length) {
 			d.$pending = 1;
 			d.dependencies.waitFor(function(item, next) {
-				IMPORT(item, next);
+				M.import('ONCE ' + item, next);
 			}, function() {
 				d.$pending = 2;
 				appcreate(d, id, dom);
