@@ -1848,6 +1848,7 @@ APPS.compile(body);                         // Compiles and registers applicatio
 
 <script>
 exports.name = 'widget';
+exports.dependencies = ['url-to-script', 'url-to-style']; // OPTIONAL, it uses IMPORT() method
 
 // REQUIRED
 exports.install = function(instance) {
@@ -1903,6 +1904,24 @@ exports.uninstall = function() {
 <div data-ja="time" data-ja-id="bcd123456"></div>
 <div data-ja="newsletter" data-ja-id="cde123456"></div>
 <div data-ja="filter" data-ja-id="efg123456"></div>
+```
+
+### Internal events of apps
+
+You can extend application's template about your custom content.
+
+```javascript
+// Is triggered when template of application is compiling
+ON('app.compile', function(declaration, html) {
+    // html === string
+    // declaration === App declaration
+});
+
+// Is triggered when the new instance of application is created
+ON('app.instance', function(app, declaration) {
+    // app === New instance
+    // declaration === App declaration
+});
 ```
 
 ## Tools

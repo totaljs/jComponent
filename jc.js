@@ -247,7 +247,7 @@
 				output.error = this.status !== 200;
 				output.headers = this.getAllResponseHeaders();
 
-				EMIT('response', output);
+				M.emit('response', output);
 
 				if (!output.process)
 					return;
@@ -258,7 +258,7 @@
 				if (!r)
 					r = output.response = this.status + ': ' + this.statusText;
 
-				EMIT('error', output);
+				M.emit('error', output);
 				output.process && typeof(callback) === 'function' && callback({}, r, output);
 
 			}, false);
@@ -875,7 +875,7 @@
 				output.response = r;
 				output.status = s;
 				output.headers = req.getAllResponseHeaders();
-				EMIT('response', output);
+				M.emit('response', output);
 				output.process && middleware(mid, output.response, 1, function(path, value) {
 					if (typeof(callback) === 'string')
 						remap(callback, value);
@@ -897,8 +897,8 @@
 					} catch (e) {}
 				}
 
-				EMIT('response', output);
-				output.process && EMIT('error', output);
+				M.emit('response', output);
+				output.process && M.emit('error', output);
 				output.process && typeof(callback) === 'function' && callback(output.response, output.status, output);
 			};
 
@@ -2054,11 +2054,9 @@
 		var beg = -1;
 		var end = -1;
 
-		var body_settings = '';
 		var body_script = '';
-		var body_readme = '';
 		var body_style = '';
-		var body_html = '';
+		var app = {};
 
 		while (true) {
 			beg = html.indexOf('<script', end);
@@ -2074,13 +2072,15 @@
 			var type = body.substring(0, beg);
 			body = body.substring(beg).trim();
 
+			M.emit('app.compile', app, body);
+
 			if (type.indexOf('markdown') !== -1)
-				body_readme = body;
+				app.readme = body;
 			else if (type.indexOf('html') !== -1) {
 				if (type.indexOf('settings') !== -1)
-					body_settings = body;
-				else
-					body_html = body;
+					app.settings = body;
+				else if (type.indexOf('body') !== -1 || type.endsWith('"text/html">'))
+					app.html = body;
 			} else
 				body_script = body;
 
@@ -2094,8 +2094,6 @@
 		if (beg !== -1)
 			body_style = html.substring(html.indexOf('>', beg) + 1, html.indexOf('</style>')).trim();
 
-		var app = {};
-
 		try {
 			new Function('exports', body_script)(app);
 		} catch(e) {
@@ -2106,9 +2104,6 @@
 			return false;
 
 		var name = app.name;
-		app.settings = body_settings;
-		app.readme = body_readme;
-		app.html = body_html;
 
 		if (body_style) {
 			$('#appcss_' + app.name).remove();
@@ -2376,27 +2371,10 @@
 			var d = M.$apps[name];
 			if (d) {
 				var id = attrapp(dom, 'id');
-
-				if (!id) {
+				if (id)
+					appdependencies(d, id, dom);
+				else
 					warn('Apps: The application "{0}" doesn\'t contain "data-ja-id" attribute.'.format(name));
-					return;
-				}
-
-				var el = $(dom);
-				var key = id ? ('app.' + name + '.' + id + '.options') : null;
-				d.html && el.empty().append(d.html);
-				id = 'app' + W.HASH(id);
-				var app = new APP(id, el, d, key);
-				app.$cache = key;
-				dom.$app = app;
-				el.data(ATTRDATA, app);
-				M.apps.push(app);
-				REGCOM.test(d.html) && compile(el);
-				var cls = attrapp(el, 'class');
-				if (cls) {
-					toggles.push({ toggle: cls.split(' '), element: el });
-					el.removeAttr('data-ja-class');
-				}
 			}
 		}, undefined);
 
@@ -2411,6 +2389,50 @@
 				item.element.toggleClass(item.toggle[i]);
 			next();
 		}, nextpending);
+	}
+
+	function appdependencies(d, id, dom) {
+
+		$(dom).data(ATTRDATA, EMPTYOBJECT);
+
+		if (d.$pending === 1) {
+			WAIT(function() {
+				return d.$pending === false;
+			}, function() {
+				appcreate(d, id, dom);
+			});
+			return;
+		}
+
+		if (d.$pending === undefined && d.dependencies && d.dependencies.length) {
+			d.$pending = 1;
+			d.dependencies.waitFor(function(item, next) {
+				IMPORT(item, next);
+			}, function() {
+				d.$pending = 2;
+				appcreate(d, id, dom);
+			});
+		} else
+			appcreate(d, id, dom);
+	}
+
+	function appcreate(d, id, dom) {
+		var el = $(dom);
+		var key = id ? ('app.' + name + '.' + id + '.options') : null;
+		d.html && el.empty().append(d.html);
+		id = 'app' + W.HASH(id);
+		var app = new APP(id, el, d, key);
+		app.$cache = key;
+		dom.$app = app;
+		el.data(ATTRDATA, app);
+		M.apps.push(app);
+		M.emit('app.instance', app, d);
+		REGCOM.test(d.html) && compile(el);
+		var cls = attrapp(el, 'class');
+		if (cls) {
+			toggles.push({ toggle: cls.split(' '), element: el });
+			el.removeAttr('data-ja-class');
+		}
 	}
 
 	function warn() {
@@ -2695,9 +2717,9 @@
 			}, 5);
 		})(cls);
 
-		obj.id && EMIT('#' + obj.id, obj);
-		EMIT('@' + obj.name, obj);
-		EMIT('component', obj);
+		obj.id && M.emit('#' + obj.id, obj);
+		M.emit('@' + obj.name, obj);
+		M.emit('component', obj);
 	}
 
 	function async(arr, fn, done) {
@@ -2838,8 +2860,8 @@
 			if (!$loaded) {
 				$loaded = true;
 				clear('valid', 'dirty', 'find');
-				EMIT('init');
-				EMIT('ready');
+				M.emit('init');
+				M.emit('ready');
 			}
 
 			setTimeout2('$initcleaner', function() {
@@ -3136,7 +3158,7 @@
 				}
 			}
 
-			EMIT('destroy', component.name, component);
+			M.emit('destroy', component.name, component);
 
 			component.destroy && component.destroy();
 			component.element.off();
@@ -3170,7 +3192,7 @@
 			if (app.element && app.element.closest(document.documentElement).length)
 				continue;
 
-			EMIT('destroy', app.name, app);
+			M.emit('destroy', app.name, app);
 
 			app.emit('destroy');
 			app.destroy && app.destroy();
@@ -4727,7 +4749,7 @@
 
 		options.error = function(req, status, r) {
 			status = status + ': ' + r;
-			EMIT('error', r, status, url);
+			M.emit('error', r, status, url);
 			typeof(callback) === 'function' && callback(undefined, status, url);
 		};
 
@@ -6116,7 +6138,7 @@
 				c[i].knockknock && c[i].knockknock(knockknockcounter);
 				c[i].emit('knockknock', knockknockcounter);
 			}
-			EMIT('knockknock', knockknockcounter++);
+			M.emit('knockknock', knockknockcounter++);
 		}, 60000);
 
 		$(document).ready(function() {
