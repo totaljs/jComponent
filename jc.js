@@ -85,6 +85,7 @@
 	M.regexp.pluralize = /\#{1,}/g;
 	M.regexp.format = /\{\d+\}/g;
 
+	M.loaded = false;
 	M.version = 'v10.0.0';
 	M.$localstorage = 'jc';
 	M.$version = '';
@@ -2159,6 +2160,7 @@
 		}
 
 		W.jQuery && setTimeout(compile, 2);
+		M.loaded = true;
 	}
 
 	function compile(container) {

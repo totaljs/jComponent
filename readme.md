@@ -793,6 +793,9 @@ COMPONENT('my-component-name', function() {
 ### Properties
 
 ```javascript
+MAIN.loaded;
+// {Booelan} returns true if the jComponent is ready.
+
 MAIN.version;
 // {Number} returns the current version of jComponent.
 
@@ -860,7 +863,6 @@ MAIN.formatter(function(path, value, type) { // Example
 var value = MAIN.formatter('a-value', 'my.custom.path', 'number');
 // value will be contain formatted `a-value`
 // jComponent executes all formatter functions to a value
-
 ```
 
 ### Methods
