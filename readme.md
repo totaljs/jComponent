@@ -1793,7 +1793,7 @@ PROTOTYPEPROPERTY;   // Virtualization property
 
 ## Virtualization
 
-Is supported in __v10.0.0__. In short this feature can virtualize `DOM` to the simple object.
+Is supported in __v10.0.0__. In short this feature can virtualize `DOM` to a simple object.
 
 ```html
 <div id="container">
