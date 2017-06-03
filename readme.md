@@ -1793,21 +1793,42 @@ PROTOTYPEPROPERTY;   // Virtualization property
 
 ## Virtualization
 
-Is supported in __v10.0.0__. In short this feature can virtualize `DOM` to simple object.
+Is supported in __v10.0.0__. In short this feature can virtualize `DOM` to the simple object.
 
 ```html
 <div id="container">
-    <h1 data-name="caption"></h1>
-    <p data-name="text"></p>
-    <button data-name="buttom"></button>
+    <h1></h1>
+    <p></p>
+    <button data-name="submit"></button>
 </div>
 
 <script>
-    var obj = VIRTUALIZE($('#container'), { caption: 'h1', text: 'p', button: 'button', something: 'jQuery selector' });
+    var obj = VIRTUALIZE($('#container'), { caption: 'h1', text: 'p', button: 'button[data-name="submit"]', something: 'jQuery selector' });
     obj.caption.html('This is caption');
     obj.text.html('Lorem ipsum dolor sit amet, consectetur adipisicing elit. Necessitatibus, iusto.');
     obj.button.html('Click me');
 </script>
+```
+
+```javascript
+// Properties
+obj.id;           // {String} obj id
+obj.element;      // {jQuery} a current element (jQuery element)
+obj.container;    // {jQuery} container (jQuery element)
+obj.selector;     // {String} a current selector from `VIRUTALIZE()`
+
+// Methods
+obj.find(selector);                      // Alias for "obj.element.find(selector)"
+obj.append(value);                       // Alias for "instance.element.append()"
+obj.html(value);                         // Alias for "instance.element.html()"
+obj.event(name, [selector], callback);   // Alias for "instance.element.on()"
+obj.toggle(cls, visible, [timeout]);     // Alias for "jQuery.toggleClass()"
+obj.attr(name, [value]);                 // Alias for "jQuery.attr()"
+obj.css(name, [value]);                  // Alias for "jQuery.css()"
+obj.empty();                             // Alias for "jQuery.empty()"
+obj.click();                             // Performs click+touchend event together
+obj.replace(newEl);                      // Replaces current element to new
+obj.refresh();                           // Refreshes binding to object according to the selector
 ```
 
 - `VIRTUALIZE()` still returns cached object
@@ -1868,9 +1889,9 @@ exports.install = function(instance) {
     instance.emit(name, [a], [b], [c], ..);       // Emits event
     instance.on(name, fn);                        // Captures event
     instance.find(selector);                      // Alias for "instance.element.find(selector)"
-    instance.append(value);                       // Alias for "instanec.element.append()"
-    instance.html(value);                         // Alias for "instanec.element.html()"
-    instance.event(name, [selector], callback);   // Alias for "instanec.element.on()"
+    instance.append(value);                       // Alias for "instance.element.append()"
+    instance.html(value);                         // Alias for "instance.element.html()"
+    instance.event(name, [selector], callback);   // Alias for "instance.element.on()"
     instance.path([path]);                        // Generates path according to the current scope
     instance.set(path, value);                    // Sets a value according to the current scope
     instance.update(path, [reset]);               // Updates current scope
