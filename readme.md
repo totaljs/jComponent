@@ -1837,7 +1837,7 @@ obj.refresh();                           // Refreshes binding to object accordin
 
 ## APPLICATIONS
 
-Applications are supported in `+v10.0.0`. __I'll improve docs - coming soon.__
+Applications are supported in `+v10.0.0`.
 
 - applications have own scopes
 - can be updated just-in-time
