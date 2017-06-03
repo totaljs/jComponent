@@ -1849,7 +1849,7 @@ Applications are supported in `+v10.0.0`.
 - `MAIN.$apps` contains all registered applications
 - `MAIN.apps` contains all instances of all registered applications
 
-```javacript
+```javascript
 APPS.emit(name, [a], [b], [n]);             // Emits event in all app instances 
 APPS.import(url, [callback([err])]);        // Downloads application from URL
 APPS.compile(body);                         // Compiles and registers application (expects "String") and returns {Boolean}
