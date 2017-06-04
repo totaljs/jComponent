@@ -1973,6 +1973,9 @@ EMPTYOBJECT;
 // isMOBILE == {Boolean} is a global variable and detects mobile devices.
 console.log(isMOBILE);
 
+// isTOUCH == {Boolean} is a global variable and detects touch displays.
+console.log(isTOUCH);
+
 // isMOBILE == {Boolean} is a global variable and detects robot/crawler.
 console.log(isROBOT);
 

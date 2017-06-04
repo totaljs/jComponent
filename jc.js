@@ -4244,9 +4244,10 @@
 	W.PROTOTYPECOMPONENT = PPC;
 	W.PROTOTYPEUSAGE = USAGE.prototype;
 
-	W.isMOBILE = navigator.userAgent.match(/Android|iPhone|iPad|BlackBerry|Phone|webOS/i) ? true : false;
+	W.isMOBILE = /Mobi/.test(navigator.userAgent);
 	W.isROBOT = navigator.userAgent ? (/search|agent|bot|crawler|spider/i).test(navigator.userAgent) : true;
 	W.isSTANDALONE = navigator.standalone || W.matchMedia('(display-mode: standalone)').matches;
+	W.isTOUCH = ('ontouchstart' in W || navigator.maxTouchPoints) ? true : false;
 
 	W.setTimeout2 = function(name, fn, timeout, limit, param) {
 		var key = ':' + name;
