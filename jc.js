@@ -4243,7 +4243,7 @@
 	W.PROTOTYPEAPP = PPA;
 	W.PROTOTYPECOMPONENT = PPC;
 	W.PROTOTYPEUSAGE = USAGE.prototype;
-	W.isMOBILE = ('ontouchstart' in W || navigator.maxTouchPoints) ? true : false;
+	W.isMOBILE = (!window.screenX && ('ontouchstart' in W || navigator.maxTouchPoints)) ? true : false;
 	W.isROBOT = navigator.userAgent ? (/search|agent|bot|crawler|spider/i).test(navigator.userAgent) : true;
 	W.isSTANDALONE = navigator.standalone || W.matchMedia('(display-mode: standalone)').matches;
 
