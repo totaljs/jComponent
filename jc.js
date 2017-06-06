@@ -2714,8 +2714,14 @@
 		cls && (function(cls) {
 			setTimeout(function() {
 				cls = cls.split(' ');
-				for (var i = 0, length = cls.length; i < length; i++)
-					el.toggleClass(cls[i]);
+				var tmp = el.get(0).$jclass || {};
+				for (var i = 0, length = cls.length; i < length; i++) {
+					if (!tmp[cls[i]]) {
+						el.toggleClass(cls[i]);
+						tmp[cls[i]] = true;
+					}
+				}
+				el.get(0).$jclass = tmp;
 			}, 5);
 		})(cls);
 
