@@ -86,7 +86,7 @@
 	M.regexp.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v10.0.0';
+	M.version = 'v10.0.0-1';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1941,7 +1941,6 @@
 			return r;
 
 		if (type === 0) {
-
 			for (var i = 0, length = a.length; i < length; i++) {
 				if (b[i] === undefined)
 					continue;
@@ -2268,8 +2267,7 @@
 					obj.$noscope = attrcom(el, 'noscope') === 'true';
 
 				var code = obj.path ? obj.path.charCodeAt(0) : 0;
-				if (!obj.$noscope && scopes_length && obj.path && code !== 33 && code !== 35) {
-
+				if (!obj.$noscope && scopes_length) {
 					for (var i = 0; i < scopes_length; i++) {
 
 						if (!$.contains(scopes[i], dom))
@@ -2284,7 +2282,7 @@
 
 							if (!p || p === '?') {
 								p = GUID(25).replace(/\d/g, '');
-								scopes[i].$cope = p;
+								scopes[i].$scope = p;
 							}
 
 							var tmp = attrcom(scopes[i], 'value');
@@ -2297,7 +2295,13 @@
 							}
 						}
 
-						obj.setPath(obj.path === '?' ? p : (obj.path.indexOf('?') === -1 ? p + '.' + obj.path : obj.path.replace(/\?/g, p)));
+						if (obj.path && code !== 33 && code !== 35)
+							obj.setPath(obj.path === '?' ? p : (obj.path.indexOf('?') === -1 ? p + '.' + obj.path : obj.path.replace(/\?/g, p)));
+						else {
+							obj.$$path = EMPTYARRAY;
+							obj.path = '';
+						}
+
 						obj.scope = scopes[i];
 						obj.$controller = attrcom(scopes[i], 'controller');
 						obj.pathscope = p;
@@ -2504,8 +2508,11 @@
 
 				if (statics[key])
 					response = removescripts(response);
+				else
+					response = importstyles(response);
 
 				can = response && REGCOM.test(response);
+
 				if (can || item.app)
 					canCompile = true;
 
@@ -3847,8 +3854,17 @@
 	};
 
 	PPC.setPath = function(path, init) {
-		var fixed = null;
 		var self = this;
+
+		// Operations
+		if (isOperation(path)) {
+			self.$path = EMPTYARRAY;
+			self.path = path;
+			self.middleware = '';
+			return self;
+		}
+
+		var fixed = null;
 
 		if (path.charCodeAt(0) === 33) {
 			path = path.substring(1);
