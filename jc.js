@@ -2273,7 +2273,7 @@
 						if (!$.contains(scopes[i], dom))
 							continue;
 
-						var p = scopes[i].$cope || attrcom(scopes[i], 'scope');
+						var p = scopes[i].$scope || attrcom(scopes[i], 'scope');
 
 						scopes[i].$initialized = true;
 
