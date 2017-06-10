@@ -64,6 +64,7 @@
 	M.defaults.localstorage = true;
 	M.defaults.jsoncompress = false;
 	M.defaults.jsondate = true;
+	M.defaults.ajaxerrors = false;
 	M.defaults.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 	M.defaults.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
 	M.defaults.importcache = 'session';
@@ -209,6 +210,16 @@
 		return value;
 	};
 
+	function parseHeaders(val) {
+		var h = {};
+		val.split('\n').forEach(function(line) {
+			var index = line.indexOf(':');
+			if (index !== -1)
+				h[line.substring(0, index).toLowerCase()] = line.substring(index + 1).trim();
+		});
+		return h;
+	}
+
 	M.upload = function(url, data, callback, timeout, progress) {
 
 		if (!url)
@@ -220,6 +231,7 @@
 		}
 
 		setTimeout(function() {
+
 			var xhr = new XMLHttpRequest();
 			var output = {};
 			output.process = true;
@@ -245,19 +257,20 @@
 
 				output.response = r;
 				output.status = this.status;
-				output.error = this.status !== 200;
-				output.headers = this.getAllResponseHeaders();
+				output.text = this.statusText;
+				output.error = this.status > 399;
+				output.headers = parseHeaders(this.getAllResponseHeaders());
 
 				M.emit('response', output);
 
-				if (!output.process)
+				if (!output.process || output.cancel)
 					return;
 
-				if (!output.error)
-					return typeof(callback) === 'string' ? remap(callback, r) : (callback && callback(r));
-
-				if (!r)
+				if (!r && output.error)
 					r = output.response = this.status + ': ' + this.statusText;
+
+				if (!output.error || M.defaults.ajaxerrors)
+					return typeof(callback) === 'string' ? remap(callback, r) : (callback && callback(r, null, output));
 
 				M.emit('error', output);
 				output.process && typeof(callback) === 'function' && callback({}, r, output);
@@ -277,10 +290,13 @@
 			};
 
 			xhr.open('POST', url);
+
 			Object.keys(M.defaults.headers).forEach(function(key) {
 				xhr.setRequestHeader(key, M.defaults.headers[key]);
 			});
+
 			xhr.send(data);
+
 		}, timeout || 0);
 
 		return M;
@@ -874,33 +890,51 @@
 			options.success = function(r, s, req) {
 				delete ajax[key];
 				output.response = r;
-				output.status = s;
-				output.headers = req.getAllResponseHeaders();
+				output.status = req.status;
+				output.text = s;
+				output.headers = parseHeaders(req.getAllResponseHeaders());
 				M.emit('response', output);
-				output.process && middleware(mid, output.response, 1, function(path, value) {
+				(output.process && !output.cancel) && middleware(mid, output.response, 1, function(path, value) {
 					if (typeof(callback) === 'string')
 						remap(callback, value);
 					else
-						callback && callback(value, undefined, output);
+						callback && callback.call(output, value, undefined, output);
 				});
 			};
 
-			options.error = function(req, status, e) {
+			options.error = function(req, s) {
+
 				delete ajax[key];
 				output.response = req.responseText;
-				output.status = status + ': ' + e;
+				output.status = req.status;
+				output.text = s;
 				output.error = true;
-				output.headers = req.getAllResponseHeaders();
+				output.headers = parseHeaders(req.getAllResponseHeaders());
+				var ct = output.headers['content-type'];
 
-				if (output.headers.indexOf('/json') !== -1) {
+				if (ct && ct.indexOf('/json') !== -1) {
 					try {
 						output.response = PARSE(output.response, M.defaults.jsondate);
 					} catch (e) {}
 				}
 
 				M.emit('response', output);
-				output.process && M.emit('error', output);
-				output.process && typeof(callback) === 'function' && callback(output.response, output.status, output);
+
+				if (output.cancel || !output.process)
+					return;
+
+				if (M.defaults.ajaxerrors) {
+					middleware(mid, output.response, 1, function(path, value) {
+						if (typeof(callback) === 'string')
+							remap(callback, value);
+						else
+							callback && callback.call(output, value, output.status, output);
+					});
+				} else {
+					M.emit('error', output);
+					if (typeof(callback) === 'function')
+						callback.call(output, output.response, output.status, output);
+				}
 			};
 
 			ajax[key] = $.ajax(makeurl(url), options);
@@ -958,7 +992,7 @@
 				if (!review)
 					return;
 
-				AJAX(url, data, function(r, err) {
+				M.AJAX(url, data, function(r, err) {
 					if (err)
 						r = err;
 					// Is same?
@@ -1741,7 +1775,7 @@
 			return M;
 		}
 
-		AJAX('GET ' + url, function(response, err) {
+		M.AJAX('GET ' + url, function(response, err) {
 
 			if (err)
 				response = '';
@@ -1769,7 +1803,7 @@
 		var index = url.indexOf(' ');
 		if (index === -1 || index > 5)
 			url = 'GET ' + url;
-		AJAX(url, function(response) {
+		M.AJAX(url, function(response) {
 			var is = response ? compileapp(response) : false;
 			callback && callback(is ? null : new Error('Invalid jComponent application.'));
 		});
@@ -4256,15 +4290,20 @@
 		return output;
 	};
 
+	M.prototypes = function(fn) {
+		var obj = {};
+		obj.Container = PPVC;
+		obj.Property = PPP;
+		obj.App = PPA;
+		obj.Component = PPC;
+		obj.Usage = USAGE.prototype;
+		fn.call(obj, obj);
+		return M;
+	};
+
 	// ===============================================================
 	// WINDOW FUNCTIONS
 	// ===============================================================
-
-	W.PROTOTYPECONTAINER = PPVC;
-	W.PROTOTYPEPROPERTY = PPP;
-	W.PROTOTYPEAPP = PPA;
-	W.PROTOTYPECOMPONENT = PPC;
-	W.PROTOTYPEUSAGE = USAGE.prototype;
 
 	W.isMOBILE = /Mobi/.test(navigator.userAgent);
 	W.isROBOT = navigator.userAgent ? (/search|agent|bot|crawler|spider/i).test(navigator.userAgent) : true;

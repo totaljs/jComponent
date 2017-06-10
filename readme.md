@@ -811,6 +811,9 @@ MAIN.defaults.localstorage;
 MAIN.defaults.headers;
 // {Object} can sets AJAX headers for all requests
 
+MAIN.defaults.ajaxerrors;
+// {Boolean} AJAX() won't create exception when HTTP status code will be >= 400, default `false`.
+
 MAIN.defaults.devices = {
     xs: { max: 768 },
     sm: { min: 768, max: 992 },
@@ -1178,11 +1181,14 @@ ON('response', function(data) {
     // data.error    : {Boolean}
     // data.upload   : {Boolean}
     // data.status   : {Number} HTTP status
-    // data.headers  : {String} HTTP headers
+    // data.text     : {String} HTTP status text
+    // data.headers  : {Object} HTTP headers with lower-case keys
     // data.data     : {Object/String} Request data (sent)
 
     // Next processing can be canceled like this:
     data.process = false;
+    // or +v10.0.0
+    data.cancel = true;
 });
 
 ON('error', function(data) {
@@ -1317,12 +1323,12 @@ if (NOTMODIFIED('model')) return; // Example
 // further usage. The "fields" argument can contain only string array value.
 
 // +v3.7.0
-AJAX('METHOD URL', data, [callback or path], [sleep]);
+AJAX('METHOD URL', data, [callback(data, error, response) or path], [sleep]);
 AJAXCACHE('METHOD URL', data, [callback or path], [expire], [sleep], [clear]);
 // Aliases for MAIN.AJAX(), MAIN.AJAXCACHE()
 
 // +v8.0.0
-AJAXCACHEREVIEW('METHOD URL', data, [callback or path], [expire], [sleep], [clear]);
+AJAXCACHEREVIEW('METHOD URL', data, [callback(data, fromCache, reviewed) or path], [expire], [sleep], [clear]);
 // Aliases for MAIN.AJAXCACHEREVIEW(). This method loads a content from the cache and
 // then performs AJAX() call again with a simple diff.
 
@@ -1784,11 +1790,13 @@ COMPONENT_EXTEND('component-name', function(component) {
 Prototypes are supported in `+v10.0.0`.
 
 ```javascript
-PROTOTYPEAPP;        // Application prototype
-PROTOTYPECOMPONENT;  // Component prototype
-PROTOTYPEUSAGE;      // Usage prototype
-PROTOTYPECONTAINER;  // Virtualization container
-PROTOTYPEPROPERTY;   // Virtualization property
+MAIN.prototypes(function(proto) {
+    // proto.App
+    // proto.Component
+    // proto.Property
+    // proto.Usage
+    // proto.Container
+});
 ```
 
 ## Virtualization
