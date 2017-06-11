@@ -9,7 +9,7 @@
 
 > __Download__: more than 80 jComponents for free for everyone <https://componentator.com>
 
-- Current version: `v9.1.0`
+- Current version: `v10.0.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -159,13 +159,6 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     jComponent uses DOM selector and the HTML of the selector will be the template.
 -->
 
-<element data-jc-dependencies="" />
-<!--
-    Can contain multiple [path] or [component-id] or [component-name] divider with comma ",".
-    This feature is only for broadcasting. Look to: BROADCAST() or component.broadcast();
-    E.g. data-jc-dependencies="#component-id, .path.to.property, component-name"
--->
-
 <element data-jc-scope="" />
 <!--
     A scope attribute updates the `data-jc-path` in all nested components.
@@ -189,7 +182,8 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     </element>
 
 
-    ::: Result for imagination:
+    ::: Results for imagination:
+    
     <element data-jc-scope="users">
         <element data-jc="textbox" data-jc-path="users.form.name" />
     </element>
@@ -225,19 +219,13 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     ...
     </element>
 
-    Look into `DEFAULT()`, `component.default()` or `jC.default()` functions.
+    Look into `DEFAULT()`, `component.default()` or `MAIN.default()` functions.
 -->
 
 <element data-jc-controller="CONTROLLER_NAME">
 <!--
    +v3.9.0 - automatically calls the controller initialization. Look into the
    controller section in this manual.
--->
-
-<element data-jc-singleton="true" />
-<!--
-   +v3.9.3 - sets the current component as singleton. Singleton can be set manually in
-   the component instance like this: `instance.singleton()`.
 -->
 
 <element data-jc-released="true" />
@@ -349,14 +337,6 @@ COMPONENT('my-component-name', function() {
 
     instance.element;
     // The HTML element of this component.
-
-    instance.dependencies;
-    // String Array. Can contain multiple [path] or [component-id] or [component-name].
-    // Only for broadcasting.
-
-    instance.caller;
-    // This property contains the brodcast caller (e.g. other component)
-    // Works only with broadcasting.
 
     instance.trim;
     // This property affects trimming of string values and works only with [data-jc-bind]
@@ -677,17 +657,7 @@ COMPONENT('my-component-name', function() {
     instance.emit(event_name, [arg1], [arg2])
     // Emits event for all components.
 
-
-    instance.broadcast('say')('hello');
-    instance.broadcast('set')('new value for all dependencies');
-    instance.broadcast('*', 'set')('new value for all nested components');
-    var fn = instance.broadcast([selector], method_name);
-    fn('arguments');
-    // This method executes [method_name] in all dependencies and
-    // returns a function for additional arguments. You can get a caller object
-    // in the called components via `component.caller`.
     
-
     instance.evaluate([path], expression, [path_is_value]);
     console.log(instance.evaluate('value.age > 18')); // example
     console.log(instance.evaluate('path.to.property', 'value === "Peter"')); // example
@@ -823,49 +793,55 @@ COMPONENT('my-component-name', function() {
 ### Properties
 
 ```javascript
-jC.version;
+MAIN.loaded;
+// {Booelan} returns true if the jComponent is ready.
+
+MAIN.version;
 // {Number} returns the current version of jComponent.
 
-jC.defaults.delay;
+MAIN.defaults.delay;
 // {Number} sets the delay for keypress real-time binding, default `300`.
 
-jC.defaults.keypress;
+MAIN.defaults.keypress;
 // {Boolean} enables / disables keypress real-time binding, default `true`.
 
-jC.defaults.localstorage;
+MAIN.defaults.localstorage;
 // {Boolean} enables / disables localstorage for cache mechanism, default `true`.
 
-jC.defaults.headers;
+MAIN.defaults.headers;
 // {Object} can sets AJAX headers for all requests
 
-jC.defaults.devices = {
+MAIN.defaults.ajaxerrors;
+// {Boolean} AJAX() won't create exception when HTTP status code will be >= 400, default `false`.
+
+MAIN.defaults.devices = {
     xs: { max: 768 },
     sm: { min: 768, max: 992 },
     md: { min: 992, max: 1200 },
     lg: { min: 1200 }
 };
 
-jC.defaults.jsoncompress = false;
+MAIN.defaults.jsoncompress = false;
 // {Boolean} sets JSON compression (`null`, `false` and `empty strings` are removed)
 // in all AJAX operations (when an object is serializing to JSON)
 // +v8.0.0
 
-jC.defaults.jsondate = true;
+MAIN.defaults.jsondate = true;
 // {Boolean} sets auto-parser in all AJAX operations (when is JSON deserialized to Object)
 // +v8.0.0
 
-jC.$version;
+MAIN.$version;
 // {String} appends the value to each URL address `?version=$version`
 // called via jComponent, default: "".
 
-jC.$language;
+MAIN.$language;
 // {String} appends the value to each URL address `?language=$language`
 // called via jComponent, default: "".
 
-jC.localstorage = 'jcomponent';
+MAIN.localstorage = 'jcomponent';
 // {String} is a prefix for all cache keys.
 
-jC.parser(function(path, value, type) { // Example
+MAIN.parser(function(path, value, type) { // Example
     // this === component
     // type === [data-jc-type]
     if (path === 'model.created') {
@@ -875,11 +851,11 @@ jC.parser(function(path, value, type) { // Example
     return value;
 });
 
-var value = jC.parser('a-value', 'my.custom.path', 'number');
+var value = MAIN.parser('a-value', 'my.custom.path', 'number');
 // value will be contain parsed `a-value`
 // jComponent executes all parser functions to a value
 
-jC.formatter(function(path, value, type) { // Example
+MAIN.formatter(function(path, value, type) { // Example
     // this === component
     // type === [data-jc-type]
     if (path === 'model.created')
@@ -887,95 +863,93 @@ jC.formatter(function(path, value, type) { // Example
     return value;
 });
 
-var value = jC.formatter('a-value', 'my.custom.path', 'number');
+var value = MAIN.formatter('a-value', 'my.custom.path', 'number');
 // value will be contain formatted `a-value`
 // jComponent executes all formatter functions to a value
-
 ```
 
 ### Methods
 
 ```javascript
-// Runs the compiler for new components. jComponent doesn't watch new elements in DOM.
-jC.rewrite(path, value);
-jC.rewrite('model.name', 'Peter');
+// Runs the compiler for new components. jComponent doesn't watch new elements in DOM.MAINrewrite(path, value);
+MAIN.rewrite('model.name', 'Peter');
 // +v4.0.0 Rewrites the value in the model without notification
 
 
-jC.set(path, value, [reset]);
-jC.set('model.name', 'Peter'); // Example: sets the value
-jC.set('+model.tags', 'HTML'); // Example: appends the value into the array
-jC.set('+model.tags', ['CSS', 'JavaScript']); // Example: appends the array into the array
+MAIN.set(path, value, [reset]);
+MAIN.set('model.name', 'Peter'); // Example: sets the value
+MAIN.set('+model.tags', 'HTML'); // Example: appends the value into the array
+MAIN.set('+model.tags', ['CSS', 'JavaScript']); // Example: appends the array into the array
 // Sets the value into the model. `reset` argument resets the state
 // (dirty, validation), default: `false`.
 
 
-jC.push(path, value, [reset]);
-jC.push('model.tags', 'HTML'); // Example
-jC.push('model.tags', ['CSS', 'JavaScript']); // Example
+MAIN.push(path, value, [reset]);
+MAIN.push('model.tags', 'HTML'); // Example
+MAIN.push('model.tags', ['CSS', 'JavaScript']); // Example
 // Pushs the value in the model, only for arrays. `reset` argument resets
 // the state (dirty, validation), default: `false`.
 
 
-jC.inc(path, value, [reset]);
-jC.inc('model.age', 10); // Example
-jC.inc('model.price', -5); // Example
+MAIN.inc(path, value, [reset]);
+MAIN.inc('model.age', 10); // Example
+MAIN.inc('model.price', -5); // Example
 // Increments the value in the model, only for numbers. `reset` argument
 // resets the state (dirty, validation), default: `false`.
 
 
-jC.extend(path, value, [reset]);
-jC.extend('model', { age: 30, name: 'Peter' }); // Example
+MAIN.extend(path, value, [reset]);
+MAIN.extend('model', { age: 30, name: 'Peter' }); // Example
 // Extends the value in the model, only for objects. `reset` argument resets
 // the state (dirty, validation), default: `false`.
 
 
-jC.get(path, [scope]); // default scope is `window`
-jC.get('model.age'); // Example
-jC.get('model.tags'); // Example
+MAIN.get(path, [scope]); // default scope is `window`
+MAIN.get('model.age'); // Example
+MAIN.get('model.tags'); // Example
 // Gets the value from the model.
 
 
-jC.findByName(name, [path], [fn(component)]);
-jC.findByName(name, [path], [returnArray]);
-jC.findByName('my-component'); // Example: Returns only one component
-jC.findByName('my-component', true); // Example: Returns array with multiple components
-jC.findByName('my-component', function(component) { console.log(component); });  // Example: Crawls all components
-jC.findByName('my-component', 'model.*', function(component) { console.log(component); }); // Example: Crawls all components according the path
+MAIN.findByName(name, [path], [fn(component)]);
+MAIN.findByName(name, [path], [returnArray]);
+MAIN.findByName('my-component'); // Example: Returns only one component
+MAIN.findByName('my-component', true); // Example: Returns array with multiple components
+MAIN.findByName('my-component', function(component) { console.log(component); });  // Example: Crawls all components
+MAIN.findByName('my-component', 'model.*', function(component) { console.log(component); }); // Example: Crawls all components according the path
 // Finds components by `data-jc` attribute.
 
 
-jC.findById(name, [path], [fn(component)]);
-jC.findById(name, [path], [returnArray]);
-jC.findById('my-component'); // Example: Returns only one component
-jC.findById('my-component', true); // Example: Returns array with multiple components
-jC.findById('my-component', function(component) { console.log(component); }); // Example: Crawls all components
-jC.findById('my-component', 'model.*', function(component) { console.log(component); });  // Example: Crawls all components according the path
+MAIN.findById(name, [path], [fn(component)]);
+MAIN.findById(name, [path], [returnArray]);
+MAIN.findById('my-component'); // Example: Returns only one component
+MAIN.findById('my-component', true); // Example: Returns array with multiple components
+MAIN.findById('my-component', function(component) { console.log(component); }); // Example: Crawls all components
+MAIN.findById('my-component', 'model.*', function(component) { console.log(component); });  // Example: Crawls all components according the path
 // Finds components by `data-jc-id` attribute.
 
 
-jC.findByPath([path], [fn(component)]);
-jC.findByPath([path], [returnArray]);
-jC.findByPath('model'); // Example: Returns only one component
-jC.findByPath('model', true); // Example: Returns array with multiple components
-jC.findByPath('model', function(component) { console.log(component); });  // Example: Crawls all components
+MAIN.findByPath([path], [fn(component)]);
+MAIN.findByPath([path], [returnArray]);
+MAIN.findByPath('model'); // Example: Returns only one component
+MAIN.findByPath('model', true); // Example: Returns array with multiple components
+MAIN.findByPath('model', function(component) { console.log(component); });  // Example: Crawls all components
 // Finds components by `data-jc-id` attribute.
 
 
-jC.errors([path]);
+MAIN.errors([path]);
 // Returns array of invalid components.
 
 
-jC.invalid(path);
+MAIN.invalid(path);
 // Sets the invalid state to all components according the binding path.
 
 
-jC.remove(path);
-jC.remove(jquery_element);
+MAIN.remove(path);
+MAIN.remove(jquery_element);
 // Removes all components according the binding path.
 
 
-jC.import(url, [target], [callback], [insert], [preparator(response)])
+MAIN.import(url, [target], [callback], [insert], [preparator(response)])
 // Imports a HTML content (with components) into the `target` (by default: `document.body`)
 // or can import scripts (.js) or styles (.css). `insert` argument (default: true) wraps
 // a new content into the <div data-jc-imported="RANDOM_NUMBER" element otherwise replaces
@@ -986,126 +960,112 @@ jC.import(url, [target], [callback], [insert], [preparator(response)])
 // +v9.0.0 added a preparator {Function} for preparing values, example `function(response) { return response; }` (it has to return a value)
 
 
-jC.dirty(path, [value]);
-jC.dirty('model.isDirty'); // Example: Checker.
-jC.dirty('model.isDirty', false); // Example: Setter.
+MAIN.dirty(path, [value]);
+MAIN.dirty('model.isDirty'); // Example: Checker.
+MAIN.dirty('model.isDirty', false); // Example: Setter.
 // Checks or sets a dirty value.
 // Returns {Boolean}.
 // Supports wildcard path, e.g. `model.*`.
 
 
-jC.valid(path, [value]);
-jC.valid('model.isValid'); // Example: Checker.
-jC.valid('model.isValid', false); // Example: Setter.
+MAIN.valid(path, [value]);
+MAIN.valid('model.isValid'); // Example: Checker.
+MAIN.valid('model.isValid', false); // Example: Setter.
 // Checks or sets a valid value.
 // Returns {Boolean}.
 // Supports wildcard path, e.g. `model.*`.
 
 
-jC.can(path, [except_paths_arr]);
+MAIN.can(path, [except_paths_arr]);
 // Combines the dirty and valid method together (e.g. for enabling of buttons)
 // Returns {Boolean}.
-// Opposite of jC.disable()
+// Opposite of MAIN.disable()
 // Supports wildcard path, e.g. `model.*`.
 
 
-jC.disabled(path, [except_paths_arr]);
+MAIN.disabled(path, [except_paths_arr]);
 // Combines the dirty and valid method together (e.g. for disabling of buttons)
-// Opposite of jC.can()
+// Opposite of MAIN.can()
 // Supports wildcard path, e.g. `model.*`.
 
 
-jC.cache(key); // Example: Getter.
-jC.cache(key, value, expire); // Example: Setter.
+MAIN.cache(key); // Example: Getter.
+MAIN.cache(key, value, expire); // Example: Setter.
 // Gets or Sets the value from the cache. `Expire` in milliseconds or can be a string `5 minutes`.
 // Returns {Object}.
 
 
-jC.cachepath(path, expire, [rebind]);
+MAIN.cachepath(path, expire, [rebind]);
 // +v8.0.0
 // The method creates watcher for `path` and stores values into the localStorage
 // Returns {Components}.
 // +v9.0.0: added "rebind" argument (default: false)
 
 
-jC.validate([path], [except_paths_arr]);
+MAIN.validate([path], [except_paths_arr]);
 // Validates all values according the path.
 // Returns {Boolean}.
 // Supports wildcard path, e.g. `model.*`.
 
 
-jC.reset([path], [timeout]);
+MAIN.reset([path], [timeout]);
 // Reset the dirty and valid method together (Sets: dirty=true and valid=true)
 // Supports wildcard path, e.g. `model.*`.
 
 
-jC.each(fn(component, index, isAsterix), path);
-jC.each(function(component) { console.log(component); }); // Example: All components.
-jC.each(function(component) { console.log(component); }, 'model.*'); // Example: According the path.
+MAIN.each(fn(component, index, isAsterix), path);
+MAIN.each(function(component) { console.log(component); }); // Example: All components.
+MAIN.each(function(component) { console.log(component); }, 'model.*'); // Example: According the path.
 // Components selector.
 // Supports wildcard path, e.g. `model.*`.
 
 
-jC.update(path, [reset]);
-jC.update('model.*'); // Example
-jC.update('model.name'); // Example
+MAIN.update(path, [reset]);
+MAIN.update('model.*'); // Example
+MAIN.update('model.name'); // Example
 // Executes `Component.setter` for each component according path. `reset` argument resets
 // the state (dirty, validation), default: `false`.
 
 
-jC.notify([path1], [path2], [path3], [path4], ...);
-jC.notify('model.age', 'model.name'); // Example
+MAIN.notify([path1], [path2], [path3], [path4], ...);
+MAIN.notify('model.age', 'model.name'); // Example
 // Executes `Component.setter` for each component according path (only fixed path).
 
 
-jC.emit(name, [arg1], [arg2]);
+MAIN.emit(name, [arg1], [arg2]);
 // Triggers event within all components.
 
 
-jC.parseCookie();
+MAIN.parseCookie();
 // Parsers `document.cookie` and returns {Object}.
 
 
-jC.parseQuery([querystring]);
-jC.parseQuery(); // Example: Returns parsed values from the current URL address.
+MAIN.parseQuery([querystring]);
+MAIN.parseQuery(); // Example: Returns parsed values from the current URL address.
 // Parsers query string (from URL address) and returns {Object}.
 
 
-jC.createURL([url], values);
-jC.createURL({ sort: 1, pricefrom: 300 }); // append values into the current URL
-jC.createURL('/api/query/?priceto=200', { sort: 1 }); // /api/query/?priceto=200&sort=1
+MAIN.createURL([url], values);
+MAIN.createURL({ sort: 1, pricefrom: 300 }); // append values into the current URL
+MAIN.createURL('/api/query/?priceto=200', { sort: 1 }); // /api/query/?priceto=200&sort=1
 // +v4.0.0 Updates or creates URL from the current URL address and QueryString
 
 
-jC.UPLOAD(url, formdata, [callback or path], [sleep], [progress(percentage, speed, remaining) or path], [error(response, status, type) or path]);
-jC.UPLOAD('/api/', formdata, 'form.response'); // Example
-jC.UPLOAD('/api/', formdata, 'response.success-->form.response'); // Example with remapping.
-jC.UPLOAD('/api/', formdata, function(response, err) { console.log(response); }); // Example
-// Uploads formdata and receive `JSON` from the server. When is throwed an error then
-// "response" is the empty object {}
-
-
-jC.TEMPLATE(url, callback(template), [prepare(template)]);
-// Downloads the HTML content and caches it per session. This method is adapted for multiple
-// executing. The content is downloaded only once. `prepare` argument is optional
-// (and executed once), but if it's declared then must "return" template (e.g. compiled template).
-
-
-jC.removeCache(key, fulltext);
+MAIN.removeCache(key, fulltext);
 // Deletes cache according to the key. If @fulltext {Boolean} is `true` then the method removes
 // all items with their keys contain this key.
 
 
-jC.REMOVECACHE(method, url, data);
+MAIN.REMOVECACHE(method, url, data);
 // Deletes cache (AJAXCACHE).
 
 
 // +v3.7.0
 // AJAX calls
-jC.AJAX('METHOD URL', data, [callback(response, err, output) or path], [sleep], [error(response, status, output) or path]);
+MAIN.AJAX('METHOD URL', data, [callback(response, err, output) or path], [sleep], [error(response, status, output) or path]);
 // Is same as GET(), POST(), PUT(), DELETE(). When is throwed an error then
 // "response" is the empty object {}
-jC.AJAXCACHE('METHOD URL', data, [callback(response, isFromCache) or path], [expire], [sleep], [clear]);
+MAIN.AJAXCACHE('METHOD URL', data, [callback(response, isFromCache) or path], [expire], [sleep], [clear]);
 // Is same as POSTCACHE, GETCACHE and now supports PUT, DELETE. If the callback is the
 // function then the second argument will be `fromCache {Boolean}`.
 
@@ -1117,45 +1077,36 @@ jC.AJAXCACHE('METHOD URL', data, [callback(response, isFromCache) or path], [exp
 // AJAX('GET /api/ { customheader1: "value1", customerheader2: "value2" }', ...);
 
 
-jC.broadcast('.path.to.property, #a-component-id, a-component-name')('say')('hello');
-jC.broadcast('.path.to.property, #a-component-id, a-component-name')('set')('new value');
-jC.broadcast(['.path.to.property', '#id', 'name'], 'set')('new value');
-jC.broadcast(selector, method_name, [caller]);
-// Executes the method in all components by selector. [selector] can be jQuery
-// element or jComponent --> then the method searchs all nested components.
-// IMPORTANT: selector can be jQuery element or jComponent.
-
-
-jC.evaluate(path, expression, [path_is_value]);
-jC.evaluate('model.age', 'value > 20 && value < 30'); // Example
-jC.evaluate(25, 'value > 20 && value < 30', true); // Example
+MAIN.evaluate(path, expression, [path_is_value]);
+MAIN.evaluate('model.age', 'value > 20 && value < 30'); // Example
+MAIN.evaluate(25, 'value > 20 && value < 30', true); // Example
 // Evaluates the expression. The value in the expression is value according the path.
 
 
-jC.blocked(name, timeout, [callback]);
-if (jC.blocked('submitted', 1000)) { // Example.
+MAIN.blocked(name, timeout, [callback]);
+if (MAIN.blocked('submitted', 1000)) { // Example.
     alert('Try later.')
     return;
 }
 // Prevention for some operations. It's stored in `localStorage` according
-// `jC.defaults.localstorage`.
+// `MAIN.defaults.localstorage`.
 
 
-jC.ready(fn);
-jC.ready(function(count) { console.log('Components ready:', count); }); // Example.
+MAIN.ready(fn);
+MAIN.ready(function(count) { console.log('Components ready:', count); }); // Example.
 // Are the components ready? Has a similar functionality like $.ready().
 
 
-jC.clean([timeout]);
+MAIN.clean([timeout]);
 // Cleans all unnecessary components.
 // IMPORTANT: The cleaner is started each 5 minutes.
 
 
-jC.usage(property, expire, [path], [callback]);
-jC.usage('manually', '5 seconds');
-jC.usage('input', '5 seconds', 'form.*');
-jC.usage('custom', '5 seconds', 'form.*');
-jC.usage('init', '5 seconds', function(component) {
+MAIN.usage(property, expire, [path], [callback]);
+MAIN.usage('manually', '5 seconds');
+MAIN.usage('input', '5 seconds', 'form.*');
+MAIN.usage('custom', '5 seconds', 'form.*');
+MAIN.usage('init', '5 seconds', function(component) {
     // All components initialized 5 seconds before
     console.log(component.usage.convert('seconds'));
 });
@@ -1166,24 +1117,24 @@ jC.usage('init', '5 seconds', function(component) {
 
 
 // +v4.0.0
-jC.used(path);
+MAIN.used(path);
 // Sets `instance.usage.custom` usage according to the path.
 
 
-jC.schedule(selector, type, expire, callback);
+MAIN.schedule(selector, type, expire, callback);
 // Schedule executes timeout when is valid `selector` and `expire`.
 // Scheduler checks all tasks each 2 seconds (it has an internal optimalization for good performance).
 // types: `input` (affected by HTML inputs), `manually` (affected by developer), `init`
 
-jC.schedule('.find-by-path', 'input', '5 minutes', function(component) {
+MAIN.schedule('.find-by-path', 'input', '5 minutes', function(component) {
     AJAX('GET /api/refresh/', component.path);
 });
 
-jC.schedule('#find-by-id', 'manually', '3 seconds', function(component) {
+MAIN.schedule('#find-by-id', 'manually', '3 seconds', function(component) {
     AJAX('GET /api/refresh/', component.path);
 });
 
-jC.schedule('find-by-name', 'init', '1 hour', function(component) {
+MAIN.schedule('find-by-name', 'init', '1 hour', function(component) {
     AJAX('GET /api/refresh/', component.path);
 });
 ```
@@ -1230,11 +1181,14 @@ ON('response', function(data) {
     // data.error    : {Boolean}
     // data.upload   : {Boolean}
     // data.status   : {Number} HTTP status
-    // data.headers  : {String} HTTP headers
+    // data.text     : {String} HTTP status text
+    // data.headers  : {Object} HTTP headers with lower-case keys
     // data.data     : {Object/String} Request data (sent)
 
     // Next processing can be canceled like this:
     data.process = false;
+    // or +v10.0.0
+    data.cancel = true;
 });
 
 ON('error', function(data) {
@@ -1258,23 +1212,23 @@ COMPILE();
 // Alias for $.components()
 
 GET();
-// Alias for jC.get();
+// Alias for MAIN.get();
 
 IMPORT();
-// Alias for jC.import();
+// Alias for MAIN.import();
 
 RESET();
-// Alias for jC.reset();
+// Alias for MAIN.reset();
 
 CACHE();
-// Alias for jC.cache();
+// Alias for MAIN.cache();
 
 CACHEPATH();
 // +v8.0.0
-// Alias for jC.cacheapath();
+// Alias for MAIN.cacheapath();
 
 REWRITE(path, value);
-// +v4.0.0 alias for jC.rewrite();
+// +v4.0.0 alias for MAIN.rewrite();
 
 SET(path, value, [sleep], [reset]);
 // Sets the value into the model. `reset` argument resets the state
@@ -1299,11 +1253,16 @@ DEFAULT(path, [timeout], [reset]);
 // The method sets to all components start with the path an initial value from
 // [data-jc-value] attribute. [reset] by default: `true`.
 
+TEMPLATE(url, callback(template), [prepare(template)]);
+// Downloads the HTML content and caches it per session. This method is adapted for multiple
+// executing. The content is downloaded only once. `prepare` argument is optional
+// (and executed once), but if it's declared then must "return" template (e.g. compiled template).
+
 ON();
-// Alias for jC.on();
+// Alias for MAIN.on();
 
 WATCH();
-// Alias for jC.on('watch', ...);
+// Alias for MAIN.on('watch', ...);
 
 HASH(value)
 // Creates a hash from the value.
@@ -1312,7 +1271,7 @@ GUID([size])
 // Creates random string value (default size: 10)
 
 CHANGE();
-// Alias for jC.change();
+// Alias for MAIN.change();
 
 STYLE(style);
 STYLE('.hidden { display: none; }'); // Example
@@ -1348,13 +1307,13 @@ FIND('data-component', true, function(component_array) {
 }, 5000); // +4.0.0 --> 5 seconds timeout
 
 BLOCKED(name, timeout, [callback]);
-// Alias for jC.blocked();
+// Alias forMAINblocked();
 
 INVALID(path);
-// Alias for jC.invalid();
+// Alias for MAIN.invalid();
 
 EVALUATE(path, expression, [path_is_value]);
-// Alias for jC.evaluate();
+// Alias for MAIN.evaluate();
 
 NOTMODIFIED(path, [value], [fields]);
 if (NOTMODIFIED('model', newvalue)) return; // Example
@@ -1364,17 +1323,24 @@ if (NOTMODIFIED('model')) return; // Example
 // further usage. The "fields" argument can contain only string array value.
 
 // +v3.7.0
-AJAX('METHOD URL', data, [callback or path], [sleep]);
+AJAX('METHOD URL', data, [callback(data, error, response) or path], [sleep]);
 AJAXCACHE('METHOD URL', data, [callback or path], [expire], [sleep], [clear]);
-// Aliases for jC.AJAX(), jC.AJAXCACHE()
+// Aliases for MAIN.AJAX(), MAIN.AJAXCACHE()
 
 // +v8.0.0
-AJAXCACHEREVIEW('METHOD URL', data, [callback or path], [expire], [sleep], [clear]);
-// Aliases for jC.AJAXCACHEREVIEW(). This method loads a content from the cache and
+AJAXCACHEREVIEW('METHOD URL', data, [callback(data, fromCache, reviewed) or path], [expire], [sleep], [clear]);
+// Aliases for MAIN.AJAXCACHEREVIEW(). This method loads a content from the cache and
 // then performs AJAX() call again with a simple diff.
 
 // +v4.0.0
 UPLOAD(url, formdata, [callback or path], [sleep], [progress(percentage, speed, remaining) or path]);
+UPLOAD(url, formdata, [callback or path], [sleep], [progress(percentage, speed, remaining) or path], [error(response, status, type) or path]);
+UPLOAD('/api/', formdata, 'form.response'); // Example
+UPLOAD('/api/', formdata, 'response.success-->form.response'); // Example with remapping.
+UPLOAD('/api/', formdata, function(response, err) { console.log(response); }); // Example
+// Uploads formdata and receive `JSON` from the server. When is throwed an error then
+// "response" is the empty object {}
+
 
 // +v3.7.0
 PING('METHOD URL', [interval], [callback or path]);
@@ -1410,7 +1376,7 @@ MIDDLEWARE(['A-NAME', 'B-NAME'], { count: 0 }, function(value, path) {
 });
 
 SCHEDULE();
-// Alias for jC.schedule();
+// Alias for MAIN.schedule();
 // +v4.0.0
 
 SETTER('#loading', 'hide', 1000);
@@ -1533,7 +1499,7 @@ PARSE(obj, [date]);
 // returns {Object} or {null} (when the value isn't a JSON)
 // +v8.0.0
 
-ON(eventname, function);
+ON(eventname, fn(a, b, n));
 // Creates an event listener
 // +v8.0.0
 
@@ -1549,17 +1515,17 @@ UPTODATE('1 day', '/products/');
 
 var can = CAN('users.form.*');
 can && submit();
-// CAN(path) --> alias for jC.can()
+// CAN(path) --> alias for MAIN.can()
 // returns {Boolean}
 
 var disabled = DISABLED('users.form.*');
 !disabled && submit();
-// DISABLED(path) --> alias for jC.disabled()
+// DISABLED(path) --> alias for MAIN.disabled()
 // returns {Boolean}
 
 var valid = VALIDATE('users.form.*');
 valid && submit();
-// VALIDATE(path) --> alias for jC.validate()
+// VALIDATE(path) --> alias for MAIN.validate()
 // returns {Boolean}
 ```
 
@@ -1819,20 +1785,189 @@ COMPONENT_EXTEND('component-name', function(component) {
 });
 ```
 
+## PROTOTYPES
+
+Prototypes are supported in `+v10.0.0`.
+
+```javascript
+MAIN.prototypes(function(proto) {
+    // proto.App
+    // proto.Component
+    // proto.Property
+    // proto.Usage
+    // proto.Container
+});
+```
+
+## Virtualization
+
+Is supported in __v10.0.0__. In short this feature can virtualize `DOM` to a simple object.
+
+```html
+<div id="container">
+    <h1></h1>
+    <p></p>
+    <button data-name="submit"></button>
+</div>
+
+<script>
+    var obj = VIRTUALIZE($('#container'), { caption: 'h1', text: 'p', button: 'button[data-name="submit"]', something: 'jQuery selector' });
+    obj.caption.html('This is caption');
+    obj.text.html('Lorem ipsum dolor sit amet, consectetur adipisicing elit. Necessitatibus, iusto.');
+    obj.button.html('Click me');
+</script>
+```
+
+```javascript
+// Properties
+obj.id;           // {String} obj id
+obj.element;      // {jQuery} a current element (jQuery element)
+obj.container;    // {jQuery} container (jQuery element)
+obj.selector;     // {String} a current selector from `VIRUTALIZE()`
+
+// Methods
+obj.find(selector);                      // Alias for "obj.element.find(selector)"
+obj.append(value);                       // Alias for "instance.element.append()"
+obj.html(value);                         // Alias for "instance.element.html()"
+obj.event(name, [selector], callback);   // Alias for "instance.element.on()"
+obj.toggle(cls, visible, [timeout]);     // Alias for "jQuery.toggleClass()"
+obj.attr(name, [value]);                 // Alias for "jQuery.attr()"
+obj.css(name, [value]);                  // Alias for "jQuery.css()"
+obj.empty();                             // Alias for "jQuery.empty()"
+obj.click();                             // Performs click+touchend event together
+obj.replace(newEl);                      // Replaces current element to new
+obj.refresh();                           // Refreshes binding to object according to the selector
+```
+
+- `VIRTUALIZE()` still returns cached object
+- it waits for non-exist elements
+- it doesn't throw any exception when the element doesn't exist
+
+## APPLICATIONS
+
+Applications are supported in `+v10.0.0`.
+
+- applications have own scopes
+- can be updated just-in-time
+- framework automatically updates styles
+- framework parses each component
+
+### Application management
+
+- `MAIN.$apps` contains all registered applications
+- `MAIN.apps` contains all instances of all registered applications
+
+```javascript
+APPS.emit(name, [a], [b], [n]);             // Emits event in all app instances 
+APPS.import(url, [callback([err])]);        // Downloads application from URL
+APPS.compile(body);                         // Compiles and registers application (expects "String") and returns {Boolean}
+```
+
+### Application template
+
+```html
+<style>
+    .app-filter { background-color:red; }
+</style>
+
+<script type="text/html" body>
+    <div class="app-filter">
+        <h2>Filter</h2>
+        <div data-jc="textbox" data-jc-path="search"></div>
+    </div>
+</script>
+
+<script>
+exports.name = 'widget';
+exports.dependencies = ['url-to-script', 'url-to-style']; // OPTIONAL, it uses IMPORT() method
+
+// REQUIRED
+exports.install = function(instance) {
+    // Properties
+    instance.scope;        // {String} name of scope
+    instance.name;         // {String} name of application
+    instance.id;           // {String} instance id
+    instance.type;         // {String} type of application
+    instance.options;      // {Object} custom options
+    instance.element;      // {jQuery} container (jQuery element)
+    instance.key;          // {String} cache key
+    instance.declaration;  // {Object} a declaration of application
+
+    // Methods
+    instance.emit(name, [a], [b], [c], ..);       // Emits event
+    instance.on(name, fn);                        // Captures event
+    instance.find(selector);                      // Alias for "instance.element.find(selector)"
+    instance.append(value);                       // Alias for "instance.element.append()"
+    instance.html(value);                         // Alias for "instance.element.html()"
+    instance.event(name, [selector], callback);   // Alias for "instance.element.on()"
+    instance.path([path]);                        // Generates path according to the current scope
+    instance.set(path, value);                    // Sets a value according to the current scope
+    instance.update(path, [reset]);               // Updates current scope
+    instance.notify(path);                        // Notifies current scope
+    instance.inc(path, value);                    // Increases a value according to the current scope
+    instance.push(path, value);                   // Pushs a new value according to the current scope
+    instance.extend(path, value);                 // Extends an object according to the current scope
+    instance.rewrite(path, value);                // Rewrites a value with except notifications
+    instance.get(path);                           // Gets a value according to the current scope
+    instance.default(path);                       // Resets to default values
+    instance.toggle(cls, visible, [timeout]);     // Alias for "jQuery.toggleClass()"
+    instance.attr(name, [value]);                 // Alias for "jQuery.attr()"
+    instance.css(name, [value]);                  // Alias for "jQuery.css()"
+    instance.empty();                             // Alias for "jQuery.empty()"
+    instance.remove();                            // Removes itself
+    instance.$save();                             // Saves current options
+};
+
+exports.uninstall = function() {
+    // OPTIONAL
+};
+</script>
+```
+
+```html
+<!-- REGISTER TEMPLATE OF APPLICATION -->
+<div data-ja-url="/filter.html" data-ja-cache="5 minutes"></div>
+<div data-ja-url="/time.html"></div>
+<div data-ja-url="/newsletter.html"></div>
+
+<!-- USAGE -->
+<div data-ja="filter" data-ja-id="abc123456"></div>
+<div data-ja="time" data-ja-id="bcd123456"></div>
+<div data-ja="newsletter" data-ja-id="cde123456"></div>
+<div data-ja="filter" data-ja-id="efg123456"></div>
+```
+
+### Internal events of apps
+
+You can extend application's template about your custom content.
+
+```javascript
+// Is triggered when template of application is compiling
+ON('app.compile', function(declaration, html) {
+    // html === string
+    // declaration === App declaration
+});
+
+// Is triggered when the new instance of application is created
+ON('app.instance', function(app, declaration) {
+    // app === New instance
+    // declaration === App declaration
+});
+```
+
 ## Tools
 
 #### Cookies
 
 ```javascript
-jC.cookies.get('cookie_name');
+COOKIES.get('cookie_name');
 
-jC.cookies.set('cookie_name', 'cookie_value', expiration);
+COOKIES.set('cookie_name', 'cookie_value', expiration);
 // {Number} expiration = method sets days for the expiration
 // {Date} expiration
 
-jC.cookies.rem('cookie_name');
+COOKIES.rem('cookie_name');
 ```
-
 
 ### Helpers
 
@@ -1845,6 +1980,9 @@ EMPTYOBJECT;
 
 // isMOBILE == {Boolean} is a global variable and detects mobile devices.
 console.log(isMOBILE);
+
+// isTOUCH == {Boolean} is a global variable and detects touch displays.
+console.log(isTOUCH);
 
 // isMOBILE == {Boolean} is a global variable and detects robot/crawler.
 console.log(isROBOT);
@@ -2179,7 +2317,12 @@ READY.push(function() {
 ## Reserved keywords
 
 ```javascript
-jC;        // shortcut for $.components
+MAIN;      // jComponent main instance
+M;         // jComponent main instance
+
+A;         // jComponent applications
+APPS;      // jComponent applications
+
 DATETIME;  // contains datetime value (jComponent refreshes the value each 60 seconds)
 
 // jcta.min.js, jctajr.min.js:
@@ -2192,6 +2335,13 @@ NAVIGATION;  // shortcut for jRouting (jComponent +v9.0.0)
 // Special {Array} of {Functions}
 window.READY   // for asynchronous loading scripts
 ```
+
+## Good to know
+
+- `MAIN.$components` a list of all registered components
+- `MAIN.components` a list of all instances of all components
+- `MAIN.$apps` a list of all registered apps
+- `MAIN.apps` a list of all instances of all apps
 
 ## Authors + Contacts
 
