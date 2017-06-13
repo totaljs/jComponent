@@ -359,6 +359,10 @@ COMPONENT('my-component-name', function() {
     instance.siblings;
     // Returns {Boolean} and it indicates whether the element contains multiple
     // declaration of components.
+
+    instance.caller;
+    // This property contains an instance of execute,
+    // works only with instance.exec().
 });
 ```
 
@@ -593,6 +597,11 @@ COMPONENT('my-component-name', function() {
     // Finds a content in the component element.
     // jQuery.find();
 
+
+    instance.exec(name, [a], [b], [c]);
+    // Executes method in all nested components
+    // +v10.0.0
+    
     
     instance.event(eventname, [selector], callback);
     // Sets an event listener for the element (not for component!)

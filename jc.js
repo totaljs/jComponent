@@ -87,7 +87,7 @@
 	M.regexp.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v10.0.0-1';
+	M.version = 'v10.0.0-2';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -3685,6 +3685,18 @@
 	}
 
 	var PPC = COM.prototype;
+
+	PPC.exec = function(name, a, b, c, d, e) {
+		var self = this;
+		self.find(ATTRCOM).each(function() {
+			var t = this;
+			if (t.$com) {
+				t.$com.caller = self;
+				t.$com[name] && this.$com[name](a, b, c, d, e);
+			}
+		});
+		return self;
+	};
 
 	PPC.controller = function() {
 		return CONTROLLER(this.$controller);
