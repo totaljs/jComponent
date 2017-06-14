@@ -87,7 +87,7 @@
 	M.regexp.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v10.0.0-2';
+	M.version = 'v10.0.4';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1799,6 +1799,23 @@
 		return A;
 	};
 
+	A.remove = function(element, noremove) {
+
+		if (element === true) {
+			noremove = true;
+			element = null;
+		}
+
+		if (!element)
+			element = $(document.body);
+
+		element.find('[data-ja]').each(function() {
+			this.$app && this.$app.remove(noremove);
+		});
+
+		return A;
+	};
+
 	A.import = function(url, callback) {
 		var index = url.indexOf(' ');
 		if (index === -1 || index > 5)
@@ -1812,10 +1829,6 @@
 
 	A.compile = function(body) {
 		return compileapp(body);
-	};
-
-	A.save = function() {
-
 	};
 
 	// ===============================================================
@@ -3414,7 +3427,8 @@
 		self.$events = {};
 		self.id = id;
 		self.scope = attrapp(element, 'scope') || attrcom(element, 'scope') || ('app' + GUID(10));
-		!attrapp(element, 'noscope') && element.attr('data-jc-scope', self.scope);
+		element.get(0).$scope = self.scope;
+		!attrapp(element, 'noscope') && element.attr('data-jc-scope', '?');
 		self.name = declaration.name;
 		self.type = declaration.type;
 		self.element = element;
@@ -3520,6 +3534,7 @@
 		self.emit('destroy');
 		self.element.removeData(ATTRDATA);
 		self.element.get(0).$app = null;
+		self.element.removeAttr('data-jc-scope');
 
 		if (!noremove) {
 			self.element.remove();
