@@ -1,5 +1,8 @@
 [![MIT License][license-image]][license-url] [![Gitter chat](https://badges.gitter.im/totaljs/framework.png)](https://gitter.im/totaljs/jComponent)
 
+- [ ] add info about `!` in `set()`
+- [ ] add info about `@` in `set()`, `get()`, `EXEC()`
+
 [![Support](https://www.totaljs.com/img/button-support.png?v=2)](https://www.totaljs.com/support/) 
 
 - [__Live chat with professional support__](https://messenger.totaljs.com)
