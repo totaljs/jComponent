@@ -14,6 +14,11 @@
 </head>
 <body style="font-family:Arial">
 
+	<div data-jc-controller="users">
+		<div data-jc="a"></div>
+	</div>
+
+<!--
 	<div data-ja-url="app.html"></div>
 
 	<div data-jc="a,b">
@@ -38,6 +43,7 @@
 	<div data-ja="widget" data-ja-id="d">
 		4
 	</div>
+-->
 
 	<script>
 		var form = {};
@@ -69,6 +75,25 @@
 
 		SCHEDULE('.form.email', 'custom', '5 seconds', function(component) {
 			console.log('OK');
+		});
+
+		ON('pages#refresh', a);
+		ON('pages#refresh', b);
+
+		function a() {
+			console.log('SOM TU: A');
+		}
+
+		function b() {
+			console.log('SOM TU: B');
+		}
+
+		CONTROLLER('users', function() {
+			console.log(this);
+			this.set('name', 'kokotaris');
+			this.fet = function() {
+				console.log('OK');
+			};
 		});
 
 	</script>

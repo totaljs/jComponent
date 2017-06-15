@@ -39,7 +39,6 @@
 	var defaults = {};
 	var waits = {};
 	var operations = {};
-	var controllers = {};
 	var workflows = {};
 	var styles = [];
 	var statics = {};
@@ -98,6 +97,7 @@
 	M.apps = [];
 	M.$formatter = [];
 	M.$parser = [];
+	M.controllers = {};
 	M.compiler = C;
 
 	C.is = false;
@@ -330,10 +330,19 @@
 			path = name === 'watch' ? '*' : '';
 		} else
 			path = path.replace('.*', '');
+
 		var fixed = null;
 		if (path.charCodeAt(0) === 33) {
 			path = path.substring(1);
 			fixed = path;
+		}
+
+		var owner = null;
+		var index = name.indexOf('#');
+
+		if (index) {
+			owner = name.substring(0, index).trim();
+			name = name.substring(index + 1).trim();
 		}
 
 		if (!events[path]) {
@@ -342,9 +351,88 @@
 		} else if (!events[path][name])
 			events[path][name] = [];
 
-		events[path][name].push({ fn: fn, id: this._id, path: fixed });
+		events[path][name].push({ fn: fn, id: this._id, path: fixed, owner: owner });
 		init && fn.call(M, path, get(path), true);
 		(!C.ready && (name === 'ready' || name === 'init')) && fn();
+		return M;
+	};
+
+	M.off = function(name, path, fn) {
+
+		if (typeof(path) === 'function') {
+			fn = path;
+			path = '';
+		}
+
+		if (path === undefined)
+			path = '';
+
+		var owner = null;
+		var index = name.indexOf('#');
+
+		if (index) {
+			owner = name.substring(0, index).trim();
+			name = name.substring(index + 1).trim();
+
+			if (!name) {
+
+				Object.keys(events[path]).forEach(function(key) {
+					M.off(owner + '#' + key, path, fn);
+				});
+
+				return M;
+			}
+
+		}
+
+		var evt = events[path];
+		if (!evt)
+			return M;
+
+		evt = evt[name];
+		if (!evt)
+			return M;
+
+		index = 0;
+
+		while (true) {
+			var e = evt[index];
+
+			if (!e)
+				break;
+
+			if (owner) {
+				if (owner !== e.owner) {
+					index++;
+					continue;
+				}
+
+				if (fn) {
+					if (fn === e.fn)
+						evt.splice(index, 1);
+					else
+						index++;
+				} else
+					evt.splice(index, 1);
+
+				continue;
+			}
+
+			if (fn) {
+
+				if (fn === e.fn)
+					evt.splice(index, 1);
+				else
+					index++;
+				continue;
+			}
+
+			evt.splice(index, 1);
+		}
+
+		if (!evt.length)
+			delete events[path][name];
+
 		return M;
 	};
 
@@ -1031,7 +1119,6 @@
 	};
 
 	M.errors = function(path, except) {
-
 		if (path instanceof Array) {
 			except = path;
 			path = undefined;
@@ -1043,19 +1130,24 @@
 				return;
 			if (obj.$valid === false && !obj.$valid_disabled)
 				arr.push(obj);
-		}, path);
+		}, ctrl_path(path));
 		return arr;
 	};
 
 	M.can = function(path, except) {
+		path = ctrl_path(path);
 		return !M.dirty(path, except) && M.valid(path, except);
 	};
 
 	M.disabled = M.disable = function(path, except) {
+		path = ctrl_path(path);
 		return M.dirty(path, except) || !M.valid(path, except);
 	};
 
 	M.invalid = function(path, onlyComponent) {
+		path = ctrl_path(path);
+		if (!path)
+			return M;
 		M.dirty(path, false, onlyComponent, true);
 		M.valid(path, false, onlyComponent);
 		return M;
@@ -1085,6 +1177,10 @@
 	// 1 === manually
 	// 2 === by input
 	M.update = function(path, reset, type) {
+
+		path = ctrl_path(path);
+		if (!path)
+			return M;
 
 		var is = path.charCodeAt(0) === 33;
 		if (is)
@@ -1216,6 +1312,7 @@
 
 			if (!is)
 				return;
+
 			var val = component.get();
 			component.setter && component.setter(val, component.path, 1);
 			component.setter2 && component.setter(val, component.path, 1);
@@ -1244,15 +1341,19 @@
 	};
 
 	M.extend = function(path, value, type) {
-		var val = get(path);
-		if (val == null)
-			val = {};
-		M.set(path, $.extend(val, value), type);
+		path = ctrl_path(path);
+		if (path) {
+			var val = get(path);
+			if (val == null)
+				val = {};
+			M.set(path, $.extend(val, value), type);
+		}
 		return M;
 	};
 
 	M.rewrite = function(path, val) {
-		middleware(path, val, 1, helper_rewrite);
+		path = ctrl_path(path);
+		path && middleware(path, val, 1, helper_rewrite);
 		return M;
 	};
 
@@ -1262,6 +1363,11 @@
 	}
 
 	M.inc = function(path, value, type) {
+
+		path = ctrl_path(path);
+		if (!path)
+			return M;
+
 		var current = get(path);
 		if (!current) {
 			current = 0;
@@ -1279,6 +1385,11 @@
 	// 1 === manually
 	// 2 === by input
 	M.set = function(path, val, type) {
+
+		path = ctrl_path(path);
+		if (!path)
+			return M;
+
 		middleware(path, val, type, function(path, value) {
 			var is = path.charCodeAt(0) === 33;
 			if (is)
@@ -1410,8 +1521,17 @@
 		return M;
 	};
 
+	function ctrl_path(path) {
+		if (path.charCodeAt(0) !== 64)
+			return path;
+		path = path.substring(1);
+		var index = path.indexOf('.');
+		var ctrl = CONTROLLER(path.substring(0, index));
+		return (ctrl ? ctrl.scope : 'UNDEFINED') + path.substring(index);
+	}
+
 	M.get = function(path, scope) {
-		return get(path, scope);
+		return get(ctrl_path(path), scope);
 	};
 
 	M.remove = function(path) {
@@ -3419,6 +3539,20 @@
 	};
 
 	// ===============================================================
+	// CONTROLLER DECLARATION
+	// ===============================================================
+
+	function Controller(name) {
+		var self = this;
+		self.$events = {};
+		self.scope = '';
+		self.name = name;
+		self.element = null;
+	}
+
+	var PCTRL = Controller.prototype;
+
+	// ===============================================================
 	// APPLICATION DECLARATION
 	// ===============================================================
 
@@ -3443,12 +3577,12 @@
 
 	var PPA = APP.prototype;
 
-	APP.prototype.change = function() {
+	PPA.change = function() {
 		this.$save();
 		return this;
 	};
 
-	APP.prototype.emit = function(name) {
+	PPA.emit = PCTRL.emit = function(name) {
 		var e = this.$events[name];
 		if (e && e.length) {
 			for (var i = 0, length = e.length; i < length; i++)
@@ -3457,70 +3591,70 @@
 		return this;
 	};
 
-	APP.prototype.on = function(name, fn) {
+	PPA.on = PCTRL.on = function(name, fn) {
 		var e = this.$events[name];
 		!e && (this.$events[name] = e = []);
 		e.push(fn);
 		return this;
 	};
 
-	APP.prototype.path = function(path) {
+	PPA.path = PCTRL.path = function(path) {
 		return this.scope + (path ? '.' + path : '');
 	};
 
-	APP.prototype.set = function(path, value, type) {
+	PPA.set = PCTRL.set = function(path, value, type) {
 		var self = this;
 		M.set(self.path(path), value, type);
 		return self;
 	};
 
-	APP.prototype.update = function(path, reset, type) {
+	PPA.update = PCTRL.update = function(path, reset, type) {
 		var self = this;
 		M.update(self.path(path), reset, type);
 		return self;
 	};
 
-	APP.prototype.notify = function(path) {
+	PPA.notify = PCTRL.notify = function(path) {
 		var self = this;
 		M.notify(self.path(path));
 		return self;
 	};
 
-	APP.prototype.inc = function(path, value, type) {
+	PPA.inc = PCTRL.inc = function(path, value, type) {
 		var self = this;
 		M.inc(self.path(path), value, type);
 		return self;
 	};
 
-	APP.prototype.push = function(path, value, type) {
+	PPA.push = PCTRL.push = function(path, value, type) {
 		var self = this;
 		M.push(self.path(path), value, type);
 		return self;
 	};
 
-	APP.prototype.extend = function(path, value, type) {
+	PPA.extend = PCTRL.extend = function(path, value, type) {
 		var self = this;
 		M.extend(self.path(path), value, type);
 		return self;
 	};
 
-	APP.prototype.rewrite = function(path, value) {
+	PPA.rewrite = PCTRL.rewrite = function(path, value) {
 		var self = this;
 		M.rewrite(self.path(path), value);
 		return self;
 	};
 
-	APP.prototype.default = function(path, timeout, onlyComponent, reset) {
+	PPA.default = PCTRL.default = function(path, timeout, onlyComponent, reset) {
 		var self = this;
 		M.default(self.path(path), timeout, onlyComponent, reset);
 		return self;
 	};
 
-	APP.prototype.get = function(path) {
+	PPA.get = PCTRL.get = function(path) {
 		return get(self.path(path));
 	};
 
-	APP.prototype.attr = function(name, value) {
+	PPA.attr = function(name, value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.attr(name);
@@ -3528,7 +3662,7 @@
 		return this;
 	};
 
-	APP.prototype.remove = function(noremove) {
+	PPA.remove = PPA.destroy = function(noremove) {
 		var self = this;
 		self.destroy && self.destroy();
 		self.emit('destroy');
@@ -3547,13 +3681,13 @@
 		return self;
 	};
 
-	APP.prototype.$load = function(callback) {
+	PPA.$load = function(callback) {
 		var self = this;
 		callback(self.key ? M.cache(self.key) : null);
 		return self;
 	};
 
-	APP.prototype.$save = function() {
+	PPA.$save = function() {
 		var self = this;
 		self.key && M.cache(self.key, self.options, '1 year');
 		return self;
@@ -4324,6 +4458,7 @@
 		obj.App = PPA;
 		obj.Component = PPC;
 		obj.Usage = USAGE.prototype;
+		obj.Controller = PCTRL;
 		fn.call(obj, obj);
 		return M;
 	};
@@ -4635,9 +4770,21 @@
 		var c = path.charCodeAt(0);
 		if (c === 35) {
 			OPERATION(path).apply(W, arg);
-			return EXEC;
+			return W.EXEC;
 		}
 
+		// CONTROLLER
+		if (c === 64) {
+			var index = path.indexOf('.');
+			var ctrl = CONTROLLER(path.substring(1, index));
+			if (ctrl) {
+				var fn = ctrl[path.substring(index + 1)];
+				typeof(fn) === 'function' && fn.apply(ctrl, arg);
+			}
+			return W.EXEC;
+		}
+
+		// CONTROLLER
 		var index = path.indexOf('/');
 		if (index !== -1) {
 			var ctrl = CONTROLLER(path.substring(0, index));
@@ -4970,8 +5117,16 @@
 		return fn;
 	};
 
+	W.SCOPE = function(name, fn) {
+
+	};
+
 	W.ON = function(name, path, fn, init) {
 		return M.on(name, path, fn, init);
+	};
+
+	W.OFF = function(name, fn) {
+		return M.off(name, fn);
 	};
 
 	W.EMIT = M.emit;
@@ -5096,43 +5251,62 @@
 	};
 
 	W.CONTROLLER = function() {
+
 		var callback = arguments[arguments.length - 1];
-
 		if (typeof(callback) !== 'function')
-			return controllers[arguments[0]];
+			return M.controllers[arguments[0]];
 
-		var obj = {};
-		obj.name = obj.path = arguments[0];
-		controllers[obj.name] = obj;
+		var obj = new Controller(arguments[0]);
+		obj.$callback = callback;
 
-		obj.get = function(path) {
-			return M.get(obj.path + (path ? '.' + path : ''));
-		};
+		M.controllers[obj.name] = obj;
 
-		obj.set = function(path, value, type) {
-			if (arguments.length === 1) {
-				value = path;
-				path = undefined;
-			}
-			M.set(obj.path + (path ? '.' + path : ''), value, type);
-			return obj;
-		};
+		var key = 'ctrl$' + obj.name;
 
-		obj.destroy = function() {
-			obj.element.remove();
-			delete controllers[obj.name];
-			setTimeout(cleaner, 500);
-			return undefined;
-		};
+		obj.$init = function(path, element) {
 
-		return obj.$init = function(path, element) {
-			obj.$init = undefined;
+			clearTimeout(statics[key]);
+
 			if (path)
-				obj.path = path;
-			obj.element = element;
-			callback.call(obj, obj, path, element);
+				obj.scope = path;
+
+			if (element)
+				obj.element = element;
+
+			if (obj.$callback) {
+				obj.$callback.call(obj, obj, path, element);
+				obj.$callback = null;
+			}
+
 			return obj;
 		};
+
+		statics[key] = setTimeout(function() {
+			obj.$init();
+		}, 500);
+
+		return obj.$init;
+	};
+
+	PCTRL.exec = function(a, b, c, d, f, g) {
+		var self = this;
+		self[a] && self[a](b, c, d, f, g);
+		return self;
+	};
+
+	PCTRL.setter = function(a, b, c, d, f, g) {
+		var self = this;
+		return self;
+	};
+
+	PCTRL.remove = PCTRL.destroy = function() {
+		var self = this;
+		self.emit('destroy');
+		setTimeout(function() {
+			self.element && self.element.remove();
+			delete M.controllers[self.name];
+			setTimeout(cleaner, 500);
+		}, 1000);
 	};
 
 	W.VIRTUALIZE = function(el, map) {

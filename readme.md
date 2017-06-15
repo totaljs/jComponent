@@ -9,7 +9,7 @@
 
 > __Download__: more than 80 jComponents for free for everyone <https://componentator.com>
 
-- Current version: `v10.0.0`
+- Current version: `v10.1.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -1212,6 +1212,38 @@ ON('error', function(data) {
     // data.status   : {Number} HTTP status
     // data.headers  : {String} HTTP headers
 });
+
+
+OFF('error', [path], [fn]);
+// Removes events
+// +v10.1.0
+```
+
+### Events identificators
+
+- supported in +v10.1.0
+
+```javascript
+ON('pages#refresh', function() {
+    console.log('PAGES --> REFRESH');
+});
+
+ON('orders#refresh', function() {
+    console.log('ORDERS --> REFRESH');
+});
+
+EMIT('refresh');
+// PAGES --> REFRESH
+// ORDERS --> REFRESH
+
+// Removes all events with "pages" identificator
+OFF('pages#');
+
+// Removes "refresh" event with "pages" identificator
+OFF('pages#refresh');
+
+// Removes all "refresh" events
+OFF('refresh');
 ```
 
 ## Additional methods / helpers
@@ -1678,22 +1710,19 @@ var interval = setInterval(function() {
 ### Controllers
 
 ```html
+
 <div data-jc-controller="users-controller">
-    <!--
-        IMPORTANT: in this element MUST CONTAIN some jComponents, otherwise the scope
-        won't be initialized.
-    -->
-    ... A CONTENT ...
+    <!-- OPTIONAL -->
 </div>
 
 <script>
 
     CONTROLLER('users-controller', function(controller) {        
-        // this.path    --> scope attribute value
+        // this.scope   --> scope attribute value
         // this.element --> scope element (jQuery object)
         // this.name    --> controller name
         // this.set([additionaPath], value, [type]) --> sets a value
-        // this.get([additionaPath]) --> reads a value
+        // this.get([additionaPath]) --> reads a value        
     });
 
 </script>
