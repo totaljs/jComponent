@@ -1,8 +1,5 @@
 [![MIT License][license-image]][license-url] [![Gitter chat](https://badges.gitter.im/totaljs/framework.png)](https://gitter.im/totaljs/jComponent)
 
-- [ ] add info about `!` in `set()`
-- [ ] add info about `@` in `set()`, `get()`, `EXEC()`
-
 [![Support](https://www.totaljs.com/img/button-support.png?v=2)](https://www.totaljs.com/support/) 
 
 - [__Live chat with professional support__](https://messenger.totaljs.com)
@@ -12,7 +9,7 @@
 
 > __Download__: more than 80 jComponents for free for everyone <https://componentator.com>
 
-- Current version: `v10.1.0`
+- Current version: `v11.0.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -886,12 +883,15 @@ var value = MAIN.formatter('a-value', 'my.custom.path', 'number');
 // Runs the compiler for new components. jComponent doesn't watch new elements in DOM.MAINrewrite(path, value);
 MAIN.rewrite('model.name', 'Peter');
 // +v4.0.0 Rewrites the value in the model without notification
+// +v10.1.0 supports "@controllername.path"
 
 
 MAIN.set(path, value, [reset]);
 MAIN.set('model.name', 'Peter'); // Example: sets the value
 MAIN.set('+model.tags', 'HTML'); // Example: appends the value into the array
 MAIN.set('+model.tags', ['CSS', 'JavaScript']); // Example: appends the array into the array
+MAIN.set('!model.name', 'jComponent'); // Notifies all components which listen on this absolute path
+MAIN.set('@controllername.name', 'jComponent'); // +v10.1.0 sets a value according to the controller scope
 // Sets the value into the model. `reset` argument resets the state
 // (dirty, validation), default: `false`.
 
@@ -899,6 +899,7 @@ MAIN.set('+model.tags', ['CSS', 'JavaScript']); // Example: appends the array in
 MAIN.push(path, value, [reset]);
 MAIN.push('model.tags', 'HTML'); // Example
 MAIN.push('model.tags', ['CSS', 'JavaScript']); // Example
+// +v10.1.0 supports "@controllername.path"
 // Pushs the value in the model, only for arrays. `reset` argument resets
 // the state (dirty, validation), default: `false`.
 
@@ -906,12 +907,14 @@ MAIN.push('model.tags', ['CSS', 'JavaScript']); // Example
 MAIN.inc(path, value, [reset]);
 MAIN.inc('model.age', 10); // Example
 MAIN.inc('model.price', -5); // Example
+// +v10.1.0 supports "@controllername.path"
 // Increments the value in the model, only for numbers. `reset` argument
 // resets the state (dirty, validation), default: `false`.
 
 
 MAIN.extend(path, value, [reset]);
 MAIN.extend('model', { age: 30, name: 'Peter' }); // Example
+// +v10.1.0 supports "@controllername.path"
 // Extends the value in the model, only for objects. `reset` argument resets
 // the state (dirty, validation), default: `false`.
 
@@ -919,6 +922,7 @@ MAIN.extend('model', { age: 30, name: 'Peter' }); // Example
 MAIN.get(path, [scope]); // default scope is `window`
 MAIN.get('model.age'); // Example
 MAIN.get('model.tags'); // Example
+MAIN.get('@controllername.name'); // +v10.1.0 reads a value according to the controller scope
 // Gets the value from the model.
 
 
@@ -949,10 +953,12 @@ MAIN.findByPath('model', function(component) { console.log(component); });  // E
 
 
 MAIN.errors([path]);
+// +v10.1.0 supports "@controllername.path"
 // Returns array of invalid components.
 
 
 MAIN.invalid(path);
+// +v10.1.0 supports "@controllername.path"
 // Sets the invalid state to all components according the binding path.
 
 
@@ -993,12 +999,14 @@ MAIN.can(path, [except_paths_arr]);
 // Returns {Boolean}.
 // Opposite of MAIN.disable()
 // Supports wildcard path, e.g. `model.*`.
+// +v10.1.0 supports "@controllername.path"
 
 
 MAIN.disabled(path, [except_paths_arr]);
 // Combines the dirty and valid method together (e.g. for disabling of buttons)
 // Opposite of MAIN.can()
 // Supports wildcard path, e.g. `model.*`.
+// +v10.1.0 supports "@controllername.path"
 
 
 MAIN.cache(key); // Example: Getter.
@@ -1012,17 +1020,20 @@ MAIN.cachepath(path, expire, [rebind]);
 // The method creates watcher for `path` and stores values into the localStorage
 // Returns {Components}.
 // +v9.0.0: added "rebind" argument (default: false)
+// +v10.1.0 supports "@controllername.path"
 
 
 MAIN.validate([path], [except_paths_arr]);
 // Validates all values according the path.
 // Returns {Boolean}.
 // Supports wildcard path, e.g. `model.*`.
+// +v10.1.0 supports "@controllername.path"
 
 
 MAIN.reset([path], [timeout]);
 // Reset the dirty and valid method together (Sets: dirty=true and valid=true)
 // Supports wildcard path, e.g. `model.*`.
+// +v10.1.0 supports "@controllername.path"
 
 
 MAIN.each(fn(component, index, isAsterix), path);
@@ -1438,6 +1449,10 @@ EXEC('CONTROLLER/method_name', 'hide', 1000);
 // Executes method in a controller
 // +v9.0.0
 
+EXEC('@CONTROLLER.method_name', 'hide', 1000);
+// Executes method in a controller
+// +v11.0.0
+
 // Registers a new workflow. Each workflow can have multiple implementation
 // and each implementation will be executed after another.
 // +v4.1.0
@@ -1713,41 +1728,78 @@ var interval = setInterval(function() {
 ### Controllers
 
 ```html
-
 <div data-jc-controller="users-controller">
     <!-- OPTIONAL -->
 </div>
 
 <script>
 
-    CONTROLLER('users-controller', function(controller) {        
-        // this.scope   --> scope attribute value
-        // this.element --> scope element (jQuery object)
-        // this.name    --> controller name
-        // this.set([additionaPath], value, [type]) --> sets a value
-        // this.get([additionaPath]) --> reads a value        
+    CONTROLLER('users-controller', function(controller) {
+        // controller scope
+        // here you can defined your code and methods
     });
 
 </script>
-
-<!-- OR -->
-<!-- WITHOUT CONTROLLER -->
-
-<div data-jc-scope="?" data-jc-init="init_function">
-    <!--
-        IMPORTANT: in this element MUST CONTAIN some jComponents, otherwise the scope
-        won't be initialized.
-    -->
-    ... A CONTENT ...
-</div>
-
-<script>
-    function init_function(path, element) {
-
-    }
-</script>
 ```
 
+Improved controllers are supported in `+v11.0.0`.
+
+- controllers have own scopes
+- can be removed/added just-in-time
+
+### Controllers management
+
+- `MAIN.controllers` contains all instances of all registered controllers
+
+__Global__
+
+```javascript
+CONTROLLERS.emit(name, [a], [b], [n]);    // Emits event in all controller instances 
+CONTROLLERS.remove([name]);               // Removes controllers
+var ctrl = CONTROLLER('User');            // Gets a controller instance
+```
+
+__Instance properties/methods__:
+
+```javascript
+// REQUIRED
+CONTROLLER('Users', function(instance) {
+
+    // Properties
+    instance.scope;        // {String} name of scope
+    instance.name;         // {String} name of controller
+    instance.element;      // {jQuery} container (jQuery element)
+
+    // Methods
+    instance.emit(name, [a], [b], [c], ..);       // Emits event defined in controller
+    instance.on(name, fn);                        // Captures event
+    instance.find(selector);                      // Alias for "instance.element.find(selector)"
+    instance.append(value);                       // Alias for "instance.element.append()"
+    instance.html(value);                         // Alias for "instance.element.html()"
+    instance.event(name, [selector], callback);   // Alias for "instance.element.on()"
+    instance.path([path]);                        // Generates path according to the current scope
+    instance.set(path, value);                    // Sets a value according to the current scope
+    instance.update(path, [reset]);               // Updates current scope
+    instance.notify(path);                        // Notifies current scope
+    instance.inc(path, value);                    // Increases a value according to the current scope
+    instance.push(path, value);                   // Pushs a new value according to the current scope
+    instance.extend(path, value);                 // Extends an object according to the current scope
+    instance.rewrite(path, value);                // Rewrites a value with except notifications
+    instance.get(path);                           // Gets a value according to the current scope
+    instance.default(path);                       // Resets to default values
+    instance.toggle(cls, visible, [timeout]);     // Alias for "jQuery.toggleClass()"
+    instance.classes(string);                     // Toggles classes e.g. "+block -hidden"
+    instance.attr(name, [value]);                 // Alias for "jQuery.attr()"
+    instance.css(name, [value]);                  // Alias for "jQuery.css()"
+    instance.exec(name, [a], [b], [c]);           // Executes methods in all components
+    instance.empty();                             // Alias for "jQuery.empty()"
+    instance.remove();                            // Removes itself
+});
+```
+
+__Good to know__:
+- all registered events `ON()` are removed too when controller is removed
+- controller can be defined without scope `<div data-jc-controller` and then the main scope is `window` object
 
 ## jQuery
 
@@ -1834,9 +1886,10 @@ Prototypes are supported in `+v10.0.0`.
 MAIN.prototypes(function(proto) {
     // proto.App
     // proto.Component
+    // proto.Container
+    // proto.Controller
     // proto.Property
     // proto.Usage
-    // proto.Container
 });
 ```
 
@@ -1935,7 +1988,7 @@ exports.install = function(instance) {
     instance.declaration;  // {Object} a declaration of application
 
     // Methods
-    instance.emit(name, [a], [b], [c], ..);       // Emits event
+    instance.emit(name, [a], [b], [c], ..);       // Emits event in this app
     instance.on(name, fn);                        // Captures event
     instance.find(selector);                      // Alias for "instance.element.find(selector)"
     instance.append(value);                       // Alias for "instance.element.append()"
@@ -1956,6 +2009,7 @@ exports.install = function(instance) {
     instance.css(name, [value]);                  // Alias for "jQuery.css()"
     instance.empty();                             // Alias for "jQuery.empty()"
     instance.remove();                            // Removes itself
+    instance.exec(name, [a], [b], [c]);           // Executes methods in all components
     instance.$save();                             // Saves current options
 };
 

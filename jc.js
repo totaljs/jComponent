@@ -16,6 +16,7 @@
 
 	var C = {}; // COMPILER
 	var M = {}; // MAIN
+	var L = {}; // CONTROLLERS
 	var A = {}; // APPS CONTAINER
 	var W = window;
 
@@ -33,7 +34,7 @@
 	var toggles = [];
 	var ajax = {};
 	var middlewares = {};
-	var warnings = [];
+	var warnings = {};
 	var schemas = {};
 	var autofill = [];
 	var defaults = {};
@@ -50,9 +51,11 @@
 
 	var tmp_emit2 = [null, null, null];
 	var tmp_notify = [null, null];
+	var current_ctrl = null;
 
 	W.MAIN = W.M = W.jC = W.COM = M;
 	W.APPS = W.A = A;
+	W.CONTROLLERS = L;
 	W.EMPTYARRAY = [];
 	W.EMPTYOBJECT = {};
 	W.DATETIME = new Date();
@@ -86,7 +89,7 @@
 	M.regexp.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v10.0.4';
+	M.version = 'v11.0.0';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -351,7 +354,7 @@
 		} else if (!events[path][name])
 			events[path][name] = [];
 
-		events[path][name].push({ fn: fn, id: this._id, path: fixed, owner: owner });
+		events[path][name].push({ fn: fn, id: this._id, path: fixed, owner: owner, controller: current_ctrl });
 		init && fn.call(M, path, get(path), true);
 		(!C.ready && (name === 'ready' || name === 'init')) && fn();
 		return M;
@@ -1568,7 +1571,7 @@
 		clear();
 		M.each(function(obj) {
 			obj.remove(true);
-		}, path);
+		}, ctrl_path(path));
 
 		setTimeout2('$cleaner', cleaner, 100);
 		return M;
@@ -1607,6 +1610,8 @@
 
 		var arr = [];
 		var valid = true;
+
+		path = ctrl_path(path);
 
 		M.each(function(obj) {
 
@@ -1651,6 +1656,8 @@
 
 		if (reset === undefined)
 			reset = true;
+
+		path = ctrl_path(path);
 
 		// Reset scope
 		var key = path.replace(/\.\*$/, '');
@@ -1720,6 +1727,7 @@
 		}
 
 		var arr = [];
+		path = ctrl_path(path);
 
 		M.each(function(obj) {
 
@@ -1787,7 +1795,7 @@
 			}
 
 			com.push(component);
-		}, path);
+		}, ctrl_path(path));
 
 		return isCallback ? M : com;
 	};
@@ -1798,44 +1806,6 @@
 
 	M.findById = function(id, path, callback) {
 		return M.findByProperty('id', id, path, callback);
-	};
-
-	M.findByProperty = function(prop, value, path, callback) {
-
-		var tp = typeof(path);
-		if (tp === 'function' || tp === 'boolean') {
-			callback = path;
-			path = undefined;
-		}
-
-		var tc = typeof(callback);
-		var isCallback = tc === 'function';
-		var isMany = tc === 'boolean';
-
-		var com;
-
-		if (isMany) {
-			callback = undefined;
-			com = [];
-		}
-
-		M.each(function(component) {
-
-			if (component[prop] !== value)
-				return;
-
-			if (isCallback)
-				return callback(component);
-
-			if (!isMany) {
-				com = component;
-				return true; // stop
-			}
-
-			com.push(component);
-		}, path);
-
-		return isCallback ? M : com;
 	};
 
 	M.each = function(fn, path, watch, fix) {
@@ -1907,6 +1877,26 @@
 				callback(value);
 		});
 		return M;
+	};
+
+	// ===============================================================
+	// CONTROLLERS FUNCTIONS
+	// ===============================================================
+
+	L.emit = function(a, b, c, d, e) {
+		Object.keys(M.controllers).forEach(function(key) {
+			var c = M.controllers[key];
+			c.emit.call(c, a, b, c, d, e);
+		});
+		return L;
+	};
+
+	L.remove = function(name) {
+		Object.keys(M.controllers).forEach(function(key) {
+			if (!name || key === name)
+				M.controllers[key].remove();
+		});
+		return L;
 	};
 
 	// ===============================================================
@@ -3599,7 +3589,17 @@
 	};
 
 	PPA.path = PCTRL.path = function(path) {
-		return this.scope + (path ? '.' + path : '');
+		var self = this;
+
+		if (!self.scope && self instanceof Controller) {
+			var k = '$ctrl' + self.name;
+			if (!warnings[k]) {
+				warn('Controller "{0}" doesn\'t have defined a scope for path "{1}".'.format(name, path));
+				warnings[k] = true;
+			}
+		}
+
+		return self.scope + (path ? (self.scope ? '.' : '') + path : '');
 	};
 
 	PPA.set = PCTRL.set = function(path, value, type) {
@@ -3835,7 +3835,7 @@
 
 	var PPC = COM.prototype;
 
-	PPC.exec = function(name, a, b, c, d, e) {
+	PPC.exec = PPA.exec = PCTRL.exec = function(name, a, b, c, d, e) {
 		var self = this;
 		self.find(ATTRCOM).each(function() {
 			var t = this;
@@ -3936,7 +3936,7 @@
 		return self;
 	};
 
-	PPC.classes = PPA.classes = PPP.classes = function(cls) {
+	PPC.classes = PPA.classes = PPP.classes = PCTRL.classes = function(cls) {
 
 		var key = 'cls.' + cls;
 		var tmp = temp[key];
@@ -3971,7 +3971,7 @@
 		return t;
 	};
 
-	PPC.toggle = PPA.toggle = PPP.toggle = function(cls, visible, timeout) {
+	PPC.toggle = PPA.toggle = PPP.toggle = PCTRL.toggle = function(cls, visible, timeout) {
 
 		var manual = false;
 		var self = this;
@@ -4092,7 +4092,7 @@
 		return self;
 	};
 
-	PPC.attr = PPA.attr = PPP.attr = function(name, value) {
+	PPC.attr = PPA.attr = PPP.attr = PCTRL.attr = function(name, value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.attr(name);
@@ -4100,7 +4100,7 @@
 		return this;
 	};
 
-	PPC.css = PPA.css = PPP.css = function(name, value) {
+	PPC.css = PPA.css = PPP.css = PCTRL.css = function(name, value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.css(name);
@@ -4108,7 +4108,7 @@
 		return this;
 	};
 
-	PPC.html = PPA.html = PPP.html = function(value) {
+	PPC.html = PPA.html = PPP.html = PCTRL.html = function(value) {
 		var el = this.element;
 		var current = el.html();
 		if (value === undefined)
@@ -4121,30 +4121,30 @@
 		return value || type === 'number' || type === 'boolean' ? el.empty().append(value) : el.empty();
 	};
 
-	PPC.empty = PPA.empty = PPP.empty = function() {
+	PPC.empty = PPA.empty = PPP.empty = PCTRL.empty = function() {
 		var el = this.element;
 		el.empty();
 		return el;
 	};
 
-	PPC.append = PPA.append = PPP.append = function(value) {
+	PPC.append = PPA.append = PPP.append = PCTRL.append = function(value) {
 		var el = this.element;
 		if (value instanceof Array)
 			value = value.join('');
 		return value ? el.append(value) : el;
 	};
 
-	PPC.event = PPA.event = PPP.event = PPP.on = function() {
+	PPC.event = PPA.event = PPP.event = PPP.on = PCTRL.event = function() {
 		var self = this;
 		self.element.on.apply(self.element, arguments);
 		return self;
 	};
 
-	PPC.find = PPA.find = PPP.find = function(selector) {
+	PPC.find = PPA.find = PPP.find = PCTRL.find = function(selector) {
 		return this.element.find(selector);
 	};
 
-	PPC.virtualize = PPA.virtualize = function(mapping) {
+	PPC.virtualize = PPA.virtualize = PCTRL.virtualize = function(mapping) {
 		return W.VIRTUALIZE(this.element, mapping);
 	};
 
@@ -5274,8 +5274,10 @@
 				obj.element = element;
 
 			if (obj.$callback) {
+				current_ctrl = obj.name;
 				obj.$callback.call(obj, obj, path, element);
 				obj.$callback = null;
+				current_ctrl = null;
 			}
 
 			return obj;
@@ -5288,25 +5290,32 @@
 		return obj.$init;
 	};
 
-	PCTRL.exec = function(a, b, c, d, f, g) {
-		var self = this;
-		self[a] && self[a](b, c, d, f, g);
-		return self;
-	};
-
-	PCTRL.setter = function(a, b, c, d, f, g) {
-		var self = this;
-		return self;
-	};
-
 	PCTRL.remove = PCTRL.destroy = function() {
+
 		var self = this;
+
+		if (!M.controllers[self.name])
+			return;
+
 		self.emit('destroy');
-		setTimeout(function() {
+		delete M.controllers[self.name];
+
+		// remove all global events
+		var evt = events[''];
+		if (evt) {
+			Object.keys(evt).forEach(function(key) {
+				evt[key] = evt[key].remove('controller', self.name);
+				if (!evt[key].length)
+					delete events[''][key];
+			});
+		}
+
+		setTimeout(function(scope) {
+			if (scope)
+				delete window[scope];
 			self.element && self.element.remove();
-			delete M.controllers[self.name];
 			setTimeout(cleaner, 500);
-		}, 1000);
+		}, 1000, self.scope);
 	};
 
 	W.VIRTUALIZE = function(el, map) {
@@ -6291,6 +6300,7 @@
 
 		setInterval(function() {
 			temp = {};
+			paths = {};
 			cleaner();
 		}, (1000 * 60) * 5);
 
