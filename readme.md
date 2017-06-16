@@ -1733,6 +1733,7 @@ var interval = setInterval(function() {
 ### Controllers
 
 ```html
+
 <div data-jc-controller="users-controller">
     <!-- OPTIONAL -->
 </div>
@@ -1805,6 +1806,7 @@ CONTROLLER('Users', function(instance) {
 __Good to know__:
 - all registered events `ON()` + schedulers `SCHEDULE()` are removed too when controller is removed
 - controller can be defined without scope `<div data-jc-controller` and then the main scope is `window` object
+- `data-jc-scope=""` creates a scope for all nested components
 
 ## jQuery
 

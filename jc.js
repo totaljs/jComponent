@@ -6,7 +6,8 @@
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGEMPTY = /\s/g;
 	var REGCOMMA = /,/g;
-	var ATTRSCOPE = '[data-jc-scope],[data-jc-controller]';
+	var ATTRSCOPE = '[data-jc-scope]';
+	var ATTRSCOPECTRL = '[data-jc-controller]';
 	var ATTRCOM = '[data-jc]';
 	var ATTRURL = '[data-jc-url],[data-ja-url]';
 	var ATTRDATA = 'jc';
@@ -106,7 +107,6 @@
 	C.is = false;
 	C.recompile = false;
 	C.pending = [];
-	C.imports = [];
 	C.init = [];
 	C.imports = {};
 	C.ready = [];
@@ -707,36 +707,30 @@
 		}, function() {
 			statics[url] = 2;
 
-			var id = '';
+			var key = makeurl(url);
+			var id = 'import' + HASH(key);
 
 			if (insert) {
-				id = 'data-jc-imported="' + ((Math.random() * 100000) >> 0) + '"';
-				$(target).append('<div ' + id + '></div>');
-				target = $(target).find('> div[' + id + ']');
+				var attr = 'data-jc-imported="' + Date.now() + '"';
+				$(target).append('<div ' + attr + '></div>');
+				target = $(target).find('> div[' + attr + ']');
 			}
 
-			var key = makeurl(url);
-			AJAXCACHE('GET ' + key, null, function(response) {
+			AJAX('GET ' + key, function(response) {
 
 				key = '$import' + key;
 
 				if (preparator)
 					response = preparator(response);
 
-				if (cache[key])
-					response = removescripts(response);
-				else
-					response = importstyles(response, id);
-
+				response = importstyles(response, id);
 				$(target).html(response);
-				cache[key] = true;
 
 				setTimeout(function() {
 					response && REGCOM.test(response) && compile(target);
 					callback && callback();
 				}, 10);
-
-			}, M.defaults.importcache);
+			});
 		});
 
 		return M;
@@ -2481,10 +2475,11 @@
 						if (!scopes[i].$processed) {
 							scopes[i].$processed = true;
 
-							if (!p || p === '?') {
+							if (!p || p === '?')
 								p = GUID(25).replace(/\d/g, '');
+
+							if (!scopes[i].$scope)
 								scopes[i].$scope = p;
-							}
 
 							var tmp = attrcom(scopes[i], 'value');
 							if (tmp) {
@@ -3095,11 +3090,15 @@
 
 			C.is = false;
 
-			$(ATTRSCOPE).each(function() {
+			$(ATTRSCOPECTRL).each(function() {
 
 				var t = this;
+				var controller = attrcom(t, 'controller');
 
-				if (!t.$initialized || t.$ready)
+				if (controller) {
+					if (t.$ready)
+						return;
+				} else if (!t.$initialized || t.$ready)
 					return;
 
 				var scope = $(t);
@@ -3117,7 +3116,6 @@
 					})(cls);
 				}
 
-				var controller = attrcom(t, 'controller');
 				if (controller) {
 					var ctrl = CONTROLLER(controller);
 					if (ctrl)
@@ -3171,8 +3169,16 @@
 
 	function importstyles(str, id) {
 		return str.replace(REGCSS, function(text) {
+
+			if (id) {
+				if (statics[id])
+					$('#css' + id).remove();
+				else
+					statics[id] = true;
+			}
+
 			text = text.replace('<style>', '<style type="text/css">');
-			id && (text = text.replace('<style', '<style ' + id));
+			id && (text = text.replace('<style', '<style id="css' + id + '"'));
 			$(text).appendTo('head');
 			return '';
 		});
