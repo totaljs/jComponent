@@ -1531,7 +1531,7 @@
 	};
 
 	function ctrl_path(path) {
-		if (path.charCodeAt(0) !== 64)
+		if (!path || path.charCodeAt(0) !== 64)
 			return path;
 		path = path.substring(1);
 		var index = path.indexOf('.');
@@ -1812,6 +1812,44 @@
 
 	M.findById = function(id, path, callback) {
 		return M.findByProperty('id', id, path, callback);
+	};
+
+	M.findByProperty = function(prop, value, path, callback) {
+
+		var tp = typeof(path);
+		if (tp === 'function' || tp === 'boolean') {
+			callback = path;
+			path = undefined;
+		}
+
+		var tc = typeof(callback);
+		var isCallback = tc === 'function';
+		var isMany = tc === 'boolean';
+
+		var com;
+
+		if (isMany) {
+			callback = undefined;
+			com = [];
+		}
+
+		M.each(function(component) {
+
+			if (component[prop] !== value)
+				return;
+
+			if (isCallback)
+				return callback(component);
+
+			if (!isMany) {
+				com = component;
+				return true; // stop
+			}
+
+			com.push(component);
+		}, ctrl_path(path));
+
+		return isCallback ? M : com;
 	};
 
 	M.each = function(fn, path, watch, fix) {
