@@ -1117,7 +1117,13 @@
 			expire = '-' + expire;
 		var arr = expire.split(' ');
 		var type = arr[1].toLowerCase().substring(0, 1);
-		schedulers.push({ name: name, expire: expire, selector: selector, callback: callback, type: type === 'y' || type === 'd' ? 'h' : type });
+		var id = GUID(10);
+		schedulers.push({ id: id, name: name, expire: expire, selector: selector, callback: callback, type: type === 'y' || type === 'd' ? 'h' : type, controller: current_ctrl });
+		return id;
+	};
+
+	M.clearSchedule = function(id) {
+		schedulers = schedulers.remove('id', id);
 		return M;
 	};
 
@@ -5300,7 +5306,7 @@
 		self.emit('destroy');
 		delete M.controllers[self.name];
 
-		// remove all global events
+		// Remove all global events
 		var evt = events[''];
 		if (evt) {
 			Object.keys(evt).forEach(function(key) {
@@ -5310,10 +5316,14 @@
 			});
 		}
 
+		// Remove schedulers
+		schedulers = schedulers.remove('controller', self.name);
+
 		setTimeout(function(scope) {
 			if (scope)
 				delete window[scope];
 			self.element && self.element.remove();
+			clear();
 			setTimeout(cleaner, 500);
 		}, 1000, self.scope);
 	};

@@ -1148,6 +1148,11 @@ MAIN.schedule(selector, type, expire, callback);
 // Schedule executes timeout when is valid `selector` and `expire`.
 // Scheduler checks all tasks each 2 seconds (it has an internal optimalization for good performance).
 // types: `input` (affected by HTML inputs), `manually` (affected by developer), `init`
+// +v11.0.0 returns ID of scheduler
+
+MAIN.clearSchedule(id);
+// Removes scheduler
+// +v11.0.0
 
 MAIN.schedule('.find-by-path', 'input', '5 minutes', function(component) {
     AJAX('GET /api/refresh/', component.path);
@@ -1798,7 +1803,7 @@ CONTROLLER('Users', function(instance) {
 ```
 
 __Good to know__:
-- all registered events `ON()` are removed too when controller is removed
+- all registered events `ON()` + schedulers `SCHEDULE()` are removed too when controller is removed
 - controller can be defined without scope `<div data-jc-controller` and then the main scope is `window` object
 
 ## jQuery
