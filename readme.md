@@ -2346,7 +2346,7 @@ __Pluralize__
 {{ count | pluralize('no users', '# user', '# users', '#users') }}
 ```
 
-### Async
+### Async
 
 __Simple usage__:
 
@@ -2455,20 +2455,22 @@ READY.push(function() {
 ## Reserved keywords
 
 ```javascript
-MAIN;      // jComponent main instance
-M;         // jComponent main instance
+MAIN;          // jComponent main instance
+M;             // jComponent main instance
 
-A;         // jComponent applications
-APPS;      // jComponent applications
+A;             // jComponent applications controller
+APPS;          // jComponent applications controller
 
-DATETIME;  // contains datetime value (jComponent refreshes the value each 60 seconds)
+CONTROLLERS;   // jComponent controllers controller (+v11.0.0)
+
+DATETIME;      // contains datetime value (jComponent refreshes the value each 60 seconds)
 
 // jcta.min.js, jctajr.min.js:
-Tangular; // shortcut for Tangular
-Ta;       // shortcut for Tangular
+Tangular;      // shortcut for Tangular
+Ta;            // shortcut for Tangular
 
 // jctajr.min.js:
-NAVIGATION;  // shortcut for jRouting (jComponent +v9.0.0)
+NAVIGATION;    // shortcut for jRouting (jComponent +v9.0.0)
 
 // Special {Array} of {Functions}
 window.READY   // for asynchronous loading scripts
