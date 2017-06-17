@@ -351,7 +351,7 @@ COMPONENT('my-component-name', function() {
     // instance.usage.convert('minutes')
     
     instance.scope;
-    // The property contains data-jc-scope element if exists.
+    // +v11.0.0 The property contains plain array of all jQuery elements of scopes.
     
     instance.pathscope;
     // The property contains value of data-jc-scope element if exists.
@@ -1730,6 +1730,46 @@ var interval = setInterval(function() {
 }, 100);
 ```
 
+### Scopes
+
+Improved scopes are supported in `+v11.0.0`. Scopes can create independent scope for all nested components.
+
+```html
+<!-- <div data-jc-scope="PATH"> -->
+<div data-jc-scope="users">
+    
+    <div data-jc="grid" data-jc-path="grid"></div>
+    <!-- PATH WILL BE: users.grid -->
+    
+    <div data-jc-scope="form">
+
+        <div data-jc="textbox" data-jc-path="name"></div>
+        <!-- PATH WILL BE: users.form.name -->
+
+        <div data-jc="textbox" data-jc-path="age"></div>
+        <!-- PATH WILL BE: users.form.age -->
+
+    </div>
+
+    <!-- INDEPENDENT SCOPES +v11.0.0 -->
+    <div data-jc-scope="!orders">
+
+        <div data-jc="grid" data-jc-path="grid"></div>
+        <!-- PATH WILL BE: orders.name -->
+
+        <div data-jc-scope="form">
+            <div data-jc="textbox" data-jc-path="name"></div>
+            <!-- PATH WILL BE: orders.form.name -->
+        </div>
+
+    </div>    
+</div>
+```
+
+__Good to know__:
+- `data-jc-scope="?"` generates a scope path randomly
+- `data-jc-scope="!PATH"` creates idependent scope (it doesn't inherit absolute path) `+v11.0.0`
+
 ### Controllers
 
 ```html
@@ -1938,6 +1978,31 @@ obj.empty();                             // Alias for "jQuery.empty()"
 obj.click();                             // Performs click+touchend event together
 obj.replace(newEl);                      // Replaces current element to new
 obj.refresh();                           // Refreshes binding to object according to the selector
+```
+
+__Virtualized elements__:
+
+```javascript
+// Properties
+obj.something.container;                 // jQuery container
+obj.something.element;                   // jQuery element
+obj.something.selector;                  // {String} Selector
+obj.something.length;                    // {Number} Count of captured elements
+obj.something.id;                        // {String} Internal identificator
+
+// Methods
+obj.something.refresh();                 // Refreshes element by its selector
+obj.something.replace(el);               // Replaces element to another
+obj.something.click(callback(e));        // Captures "click/touchend" event
+obj.something.src(url);                  // Changes src="" attribute in the current element
+obj.something.classes(classes);          // Changes classes e.g. "-hidden +animation"
+obj.something.attr(name, [value]);       // Alias for "jQuery.attr()"
+obj.something.css(name, [value]);        // Alias for "jQuery.css()"
+obj.something.find(selector);            // Alias for "element.find(selector)"
+obj.something.append(value);             // Alias for "element.append()"
+obj.something.html(value);               // Alias for "element.html()"
+obj.something.toggle(cls, visible, [timeout]);    // Alias for "jQuery.toggleClass()"
+obj.something.event(name, [selector], callback);  // Alias for "element.on()"
 ```
 
 - `VIRTUALIZE()` still returns cached object

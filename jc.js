@@ -246,7 +246,8 @@
 
 			xhr.addEventListener('load', function() {
 
-				var r = this.responseText;
+				var self = this;
+				var r = self.responseText;
 				try {
 					r = PARSE(r, M.defaults.jsondate);
 				} catch (e) {}
@@ -259,10 +260,10 @@
 				}
 
 				output.response = r;
-				output.status = this.status;
-				output.text = this.statusText;
-				output.error = this.status > 399;
-				output.headers = parseHeaders(this.getAllResponseHeaders());
+				output.status = self.status;
+				output.text = self.statusText;
+				output.error = self.status > 399;
+				output.headers = parseHeaders(self.getAllResponseHeaders());
 
 				M.emit('response', output);
 
@@ -270,7 +271,7 @@
 					return;
 
 				if (!r && output.error)
-					r = output.response = this.status + ': ' + this.statusText;
+					r = output.response = self.status + ': ' + self.statusText;
 
 				if (!output.error || M.defaults.ajaxerrors)
 					return typeof(callback) === 'string' ? remap(callback, r) : (callback && callback(r, null, output));
@@ -2397,8 +2398,6 @@
 			return;
 		}
 
-		var scopes = $(ATTRSCOPE);
-		var scopes_length = scopes.length;
 		var has = false;
 
 		crawler(container, function(name, dom) {
@@ -2414,6 +2413,7 @@
 
 			var instances = [];
 			var all = name.split(',');
+			var scope = el.closest(ATTRSCOPE);
 
 			all.forEach(function(name) {
 				name = name.trim();
@@ -2462,46 +2462,20 @@
 					obj.$noscope = attrcom(el, 'noscope') === 'true';
 
 				var code = obj.path ? obj.path.charCodeAt(0) : 0;
-				if (!obj.$noscope && scopes_length) {
-					for (var i = 0; i < scopes_length; i++) {
+				if (!obj.$noscope && scope.length) {
 
-						if (!$.contains(scopes[i], dom))
-							continue;
+					var output = initscopes(scope);
 
-						var p = scopes[i].$scope || attrcom(scopes[i], 'scope');
-
-						scopes[i].$initialized = true;
-
-						if (!scopes[i].$processed) {
-							scopes[i].$processed = true;
-
-							if (!p || p === '?')
-								p = GUID(25).replace(/\d/g, '');
-
-							if (!scopes[i].$scope)
-								scopes[i].$scope = p;
-
-							var tmp = attrcom(scopes[i], 'value');
-							if (tmp) {
-								var fn = new Function('return ' + tmp);
-								defaults['#' + W.HASH(p)] = fn; // store by path (DEFAULT() --> can reset scope object)
-								tmp = fn();
-								set(p, tmp);
-								emitwildcard(p, tmp, 1);
-							}
-						}
-
-						if (obj.path && code !== 33 && code !== 35)
-							obj.setPath(obj.path === '?' ? p : (obj.path.indexOf('?') === -1 ? p + '.' + obj.path : obj.path.replace(/\?/g, p)));
-						else {
-							obj.$$path = EMPTYARRAY;
-							obj.path = '';
-						}
-
-						obj.scope = scopes[i];
-						obj.$controller = attrcom(scopes[i], 'controller');
-						obj.pathscope = p;
+					if (obj.path && code !== 33 && code !== 35)
+						obj.setPath(obj.path === '?' ? output.path : (obj.path.indexOf('?') === -1 ? output.path + '.' + obj.path : obj.path.replace(/\?/g, output.path)));
+					else {
+						obj.$$path = EMPTYARRAY;
+						obj.path = '';
 					}
+
+					obj.scope = output.elements;
+					obj.$controller = attrcom(scope, 'controller');
+					obj.pathscope = output.path;
 				}
 
 				instances.push(obj);
@@ -2591,6 +2565,82 @@
 				item.element.toggleClass(item.toggle[i]);
 			next();
 		}, nextpending);
+	}
+
+	function initscopes(scope) {
+
+		if (scope[0].$scopedata)
+			return scope[0].$scopedata;
+
+		var path = attrcom(scope, 'scope');
+		var independent = path.substring(0, 1) === '!';
+
+		if (independent)
+			path = path.substring(1);
+
+		var arr = [scope];
+
+		if (!independent) {
+			var index = 0;
+			var parent = scope;
+			while (true) {
+				index++;
+				if (index > 2)
+					break;
+				parent = parent.parent().closest(ATTRSCOPE);
+				if (!parent.length)
+					break;
+				arr.push(parent);
+			}
+		}
+
+		var absolute = '';
+
+		arr.length && arr.reverse();
+
+		for (var i = 0, length = arr.length; i < length; i++) {
+
+			var sc = arr[i][0];
+			var p = sc.$scope || attrcom(sc, 'scope');
+
+			sc.$initialized = true;
+
+			if (sc.$processed) {
+				if (sc.$independent)
+					absolute = p;
+				else
+					absolute += (absolute ? '.' : '') + p;
+				continue;
+			}
+
+			sc.$processed = true;
+			sc.$independent = p.substring(0, 1) === '!';
+
+			if (sc.$independent)
+				p = p.substring(1);
+
+			if (!p || p === '?')
+				p = GUID(25).replace(/\d/g, '');
+
+			if (sc.$independent)
+				absolute = p;
+			else
+				absolute += (absolute ? '.' : '') + p;
+
+			sc.$scope = absolute;
+			sc.$scopedata = { path: absolute, elements: arr.slice(0, i + 1) };
+
+			var tmp = attrcom(sc, 'value');
+			if (tmp) {
+				var fn = new Function('return ' + tmp);
+				defaults['#' + W.HASH(p)] = fn; // store by path (DEFAULT() --> can reset scope object)
+				tmp = fn();
+				set(p, tmp);
+				emitwildcard(p, tmp, 1);
+			}
+		}
+
+		return scope[0].$scopedata;
 	}
 
 	function appdependencies(d, id, dom) {
@@ -2715,17 +2765,18 @@
 				item.element.html(response);
 				statics[key] = true;
 
+				/* I DON'T KNOW WHAT IS IT.
 				if (can && item.path) {
 					var com = item.element.find(ATTRCOM);
 					com.each(function() {
 						var el = $(this);
 						$.each(this.attributes, function() {
-							// @TODO: this.specified --> WTF?
-							this.specified && el.attr(this.name, this.value.replace('$', item.path));
+							var self = this;
+							self.specified && el.attr(self.name, self.value.replace('$', item.path));
 						});
 					});
 				}
-
+				*/
 				item.toggle.length && item.toggle[0] && toggles.push(item);
 
 				if (item.callback && !attrcom(item.element)) {
@@ -3555,9 +3606,10 @@
 	};
 
 	PPP.replace = function(el) {
-		this.element.replaceWith(el);
-		this.element = el;
-		return this;
+		var self = this;
+		self.element.replaceWith(el);
+		self.element = el;
+		return self;
 	};
 
 	PPP.$refresh = function() {
@@ -3576,6 +3628,12 @@
 		e.off('click touchend');
 		e.on('click touchend', callback);
 		return this;
+	};
+
+	PPP.src = function(url) {
+		var self = this;
+		self.element.attr('src', url);
+		return self;
 	};
 
 	// ===============================================================
@@ -3623,19 +3681,21 @@
 	};
 
 	PPA.emit = PCTRL.emit = function(name) {
-		var e = this.$events[name];
+		var self = this;
+		var e = self.$events[name];
 		if (e && e.length) {
 			for (var i = 0, length = e.length; i < length; i++)
-				e[i].call(this, arguments[1], arguments[2], arguments[3], arguments[4], arguments[5]);
+				e[i].call(self, arguments[1], arguments[2], arguments[3], arguments[4], arguments[5]);
 		}
-		return this;
+		return self;
 	};
 
 	PPA.on = PCTRL.on = function(name, fn) {
-		var e = this.$events[name];
-		!e && (this.$events[name] = e = []);
+		var self = this;
+		var e = self.$events[name];
+		!e && (self.$events[name] = e = []);
 		e.push(fn);
-		return this;
+		return self;
 	};
 
 	PPA.path = PCTRL.path = function(path) {
@@ -3748,35 +3808,36 @@
 	// ===============================================================
 
 	function COM(name) {
-		this._id = 'component' + (C.counter++);
-		this.usage = new USAGE();
-		this.$dirty = true;
-		this.$valid = true;
-		this.$validate = false;
-		this.$parser = [];
-		this.$formatter = [];
-		this.$skip = false;
-		this.$ready = false;
-		this.$path;
-		this.trim = true;
-		this.middleware = ''; // internal
-		this.$released = false;
+		var self = this;
+		self._id = 'component' + (C.counter++);
+		self.usage = new USAGE();
+		self.$dirty = true;
+		self.$valid = true;
+		self.$validate = false;
+		self.$parser = [];
+		self.$formatter = [];
+		self.$skip = false;
+		self.$ready = false;
+		self.$path;
+		self.trim = true;
+		self.middleware = ''; // internal
+		self.$released = false;
 
-		this.name = name;
-		this.path;
-		this.type;
-		this.id;
-		this.disabled = false;
+		self.name = name;
+		self.path;
+		self.type;
+		self.id;
+		self.disabled = false;
 
-		this.make;
-		this.done;
-		this.prerender;
-		this.destroy;
-		this.state;
-		this.validate;
-		this.released;
+		self.make;
+		self.done;
+		self.prerender;
+		self.destroy;
+		self.state;
+		self.validate;
+		self.released;
 
-		this.release = function(value) {
+		self.release = function(value) {
 
 			var self = this;
 			if (value === undefined || self.$removed)
@@ -3809,7 +3870,7 @@
 			return value;
 		};
 
-		this.getter = function(value, type, dirty, older, skip) {
+		self.getter = function(value, type, dirty, older, skip) {
 
 			var self = this;
 			value = self.parser(value);
@@ -3838,7 +3899,7 @@
 			return self;
 		};
 
-		this.setter = function(value, path, type) {
+		self.setter = function(value, path, type) {
 
 			var self = this;
 
@@ -4199,9 +4260,10 @@
 	};
 
 	PPC.isInvalid = function() {
-		var is = !this.$valid;
-		if (is && !this.$validate)
-			is = !this.$dirty;
+		var self = this;
+		var is = !self.$valid;
+		if (is && !self.$validate)
+			is = !self.$dirty;
 		return is;
 	};
 
@@ -4248,8 +4310,9 @@
 	};
 
 	PPC.change = function(value) {
-		M.change(this.path, value === undefined ? true : value, this);
-		return this;
+		var self = this;
+		M.change(self.path, value === undefined ? true : value, self);
+		return self;
 	};
 
 	PPC.used = function() {
@@ -4258,22 +4321,25 @@
 
 	PPC.dirty = function(value, noEmit) {
 
+		var self = this;
+
 		if (value === undefined)
-			return this.$dirty;
+			return self.$dirty;
 
-		if (this.$dirty_disabled)
-			return this;
+		if (self.$dirty_disabled)
+			return self;
 
-		this.$dirty = value;
-		this.$interaction(101);
+		self.$dirty = value;
+		self.$interaction(101);
 		clear('dirty');
-		!noEmit && this.state && this.state(2, 2);
-		return this;
+		!noEmit && self.state && self.state(2, 2);
+		return self;
 	};
 
 	PPC.reset = function() {
-		M.reset(this.path, 0, this);
-		return this;
+		var self = this;
+		M.reset(self.path, 0, self);
+		return self;
 	};
 
 	PPC.setDefault = function(value) {
@@ -4284,8 +4350,9 @@
 	};
 
 	PPC.default = function(reset) {
-		M.default(this.path, 0, this, reset);
-		return this;
+		var self = this;
+		M.default(self.path, 0, self, reset);
+		return self;
 	};
 
 	PPC.remove = function(noClear) {
@@ -5167,10 +5234,6 @@
 		return fn;
 	};
 
-	W.SCOPE = function(name, fn) {
-
-	};
-
 	W.ON = function(name, path, fn, init) {
 		return M.on(name, path, fn, init);
 	};
@@ -5987,11 +6050,13 @@
 
 	Number.prototype.add = Number.prototype.inc = function(value, decimals) {
 
+		var self = this;
+
 		if (value == null)
-			return this;
+			return self;
 
 		if (typeof(value) === 'number')
-			return this + value;
+			return self + value;
 
 		var first = value.charCodeAt(0);
 		var is = false;
@@ -6010,21 +6075,21 @@
 				var val = value.parseFloat();
 				switch (first) {
 					case 42:
-						num = this * ((this / 100) * val);
+						num = self * ((self / 100) * val);
 						break;
 					case 43:
-						num = this + ((this / 100) * val);
+						num = self + ((self / 100) * val);
 						break;
 					case 45:
-						num = this - ((this / 100) * val);
+						num = self - ((self / 100) * val);
 						break;
 					case 47:
-						num = this / ((this / 100) * val);
+						num = self / ((self / 100) * val);
 						break;
 				}
 				return decimals !== undefined ? num.floor(decimals) : num;
 			} else {
-				num = (this / 100) * value.parseFloat();
+				num = (self / 100) * value.parseFloat();
 				return decimals !== undefined ? num.floor(decimals) : num;
 			}
 
@@ -6033,19 +6098,19 @@
 
 		switch (first) {
 			case 42:
-				num = this * num;
+				num = self * num;
 				break;
 			case 43:
-				num = this + num;
+				num = self + num;
 				break;
 			case 45:
-				num = this - num;
+				num = self - num;
 				break;
 			case 47:
-				num = this / num;
+				num = self / num;
 				break;
 			default:
-				num = this;
+				num = self;
 				break;
 		}
 
@@ -6167,9 +6232,10 @@
 
 	Array.prototype.quicksort = function(name, asc, maxlength) {
 
-		var length = this.length;
+		var self = this;
+		var length = self.length;
 		if (!length || length === 1)
-			return this;
+			return self;
 
 		if (typeof(name) === 'boolean') {
 			asc = name;
@@ -6182,7 +6248,7 @@
 		if (asc === undefined)
 			asc = true;
 
-		var self = this;
+		var self = self;
 		var type = 0;
 		var field = name ? self[0][name] : self[0];
 
@@ -6237,13 +6303,15 @@
 
 	Array.prototype.attr = function(name, value) {
 
+		var self = this;
+
 		if (arguments.length === 2) {
 			if (value == null)
-				return this;
+				return self;
 		} else if (value === undefined)
 			value = name.toString();
 
-		this.push(name + '="' + value.toString().replace(/[<>&"]/g, function(c) {
+		self.push(name + '="' + value.toString().replace(/[<>&"]/g, function(c) {
 			switch (c) {
 				case '&': return '&amp;';
 				case '<': return '&lt;';
@@ -6253,7 +6321,7 @@
 			return c;
 		}) + '"');
 
-		return this;
+		return self;
 	};
 
 	Array.prototype.scalar = function(type, key, def) {
@@ -6262,9 +6330,10 @@
 		var isDate = false;
 		var isAvg = type === 'avg' || type === 'average';
 		var isDistinct = type === 'distinct';
+		var self = this;
 
-		for (var i = 0, length = this.length; i < length; i++) {
-			var val = key ? this[i][key] : this[i];
+		for (var i = 0, length = self.length; i < length; i++) {
+			var val = key ? self[i][key] : self[i];
 
 			if (typeof(val) === 'string')
 				val = val.parseFloat();
@@ -6325,7 +6394,7 @@
 			return output;
 
 		if (isAvg) {
-			output = output / this.length;
+			output = output / self.length;
 			return isDate ? new Date(output) : output;
 		}
 
