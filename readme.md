@@ -1882,35 +1882,6 @@ var rect = g.psvg('rect');
 g.psvg('<rect width="100" height="100" fill="red"></rect>');
 ```
 
-## Special cases
-
-### Copy "data-jc-path" to nested component
-
-__Usage__:
-
-```html
-<div data-jc-url="/templates/grid.html" data-jc-path="grid.datasource"></div>
-```
-
-__Component__ `/templates/grid.html`:
-
-```html
-<!--
-    The library copies "data-jc-path" and replaces "$" in
-    a new template.
--->
-<div data-jc="grid" data-jc-path="$"></div>
-
-<script>
-    COMPONENT('grid', function() {
-        this.make = function() {
-            // It will be "grid.datasource"
-            console.log(self.path);
-        };
-    });
-</script>
-```
-
 ## Extending components
 
 - __v5.0.0__ offers a great way how to extend existing components:
