@@ -2482,6 +2482,7 @@ window.READY   // for asynchronous loading scripts
 - `MAIN.components` a list of all instances of all components
 - `MAIN.$apps` a list of all registered apps
 - `MAIN.apps` a list of all instances of all apps
+- `MAIN.controllers` a list of all instances of all controllers
 
 ## Authors + Contacts
 
