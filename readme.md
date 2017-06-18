@@ -1950,6 +1950,7 @@ obj.empty();                             // Alias for "jQuery.empty()"
 obj.click();                             // Performs click+touchend event together
 obj.replace(newEl);                      // Replaces current element to new
 obj.refresh();                           // Refreshes binding to object according to the selector
+obj.make(callback);                      // Executes a callback when the element is attached
 ```
 
 __Virtualized elements__:

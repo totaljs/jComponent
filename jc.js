@@ -3598,6 +3598,18 @@
 
 	var PPP = PROPERTY.prototype;
 
+	PPP.make = function(fn) {
+		var self = this;
+		if (self.length)
+			fn.call(self, self);
+		else {
+			setTimeout(function(self, fn) {
+				self.make(fn);
+			}, 200, self, fn);
+		}
+		return self;
+	};
+
 	PPP.refresh = function() {
 		var self = this;
 		self.element = typeof(self.selector) === 'function' ? self.selector(self.container.element) : self.container.element.find(self.selector);
@@ -5436,6 +5448,8 @@
 	};
 
 	W.VIRTUALIZE = function(el, map) {
+		if (el.element instanceof jQuery)
+			el = el.element;
 		!(el instanceof jQuery) && (el = $(el));
 		return new CONTAINER(el, map);
 	};
