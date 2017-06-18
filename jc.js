@@ -98,10 +98,10 @@
 	M.$components = {};
 	M.components = [];
 	M.$apps = {};
-	M.apps = [];
+	A.items = M.apps = [];
 	M.$formatter = [];
 	M.$parser = [];
-	M.controllers = {};
+	L.items = M.controllers = {};
 	M.compiler = C;
 
 	C.is = false;

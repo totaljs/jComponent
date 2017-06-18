@@ -1800,6 +1800,7 @@ Improved controllers are supported in `+v11.0.0`.
 __Global__
 
 ```javascript
+CONTROLLERS.items;                        // {Object} all registered controllers
 CONTROLLERS.emit(name, [a], [b], [n]);    // Emits event in all controller instances 
 CONTROLLERS.remove([name]);               // Removes controllers
 var ctrl = CONTROLLER('User');            // Gets a controller instance
@@ -1995,6 +1996,7 @@ Applications are supported in `+v10.0.0`.
 - `MAIN.apps` contains all instances of all registered applications
 
 ```javascript
+APPS.items;                                 // {Object} all registered apps
 APPS.emit(name, [a], [b], [n]);             // Emits event in all app instances 
 APPS.import(url, [callback([err])]);        // Downloads application from URL
 APPS.compile(body);                         // Compiles and registers application (expects "String") and returns {Boolean}
