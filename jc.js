@@ -4004,6 +4004,12 @@
 
 	var PPC = COM.prototype;
 
+	PPC.import = PPA.import = PPP.import = PCTRL.import = function(url, callback, insert, preparator) {
+		var self = this;
+		M.import(url, self.element, callback, insert, preparator);
+		return self;
+	};
+
 	PPC.exec = PPA.exec = PCTRL.exec = function(name, a, b, c, d, e) {
 		var self = this;
 		self.find(ATTRCOM).each(function() {

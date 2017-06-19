@@ -561,6 +561,12 @@ COMPONENT('my-component-name', function() {
     // jQuery.attr();
 
 
+    instance.import(url, [callback], [insert], [preparator(response)]);
+    // Imports resource into the this element
+    // Alias for MAIN.import();
+    // +v11.0.0
+
+
     instance.css(name, [value]);
     // Gets or Sets css in the component element.
     // jQuery.css();
@@ -1949,6 +1955,8 @@ obj.click();                             // Performs click+touchend event togeth
 obj.replace(newEl);                      // Replaces current element to new
 obj.refresh();                           // Refreshes binding to object according to the selector
 obj.make(callback);                      // Executes a callback when the element is attached
+obj.import(url, [callback], [insert], [preparator(response)]); // Alias for MAIN.import();
+
 ```
 
 __Virtualized elements__:
@@ -1974,6 +1982,7 @@ obj.something.append(value);             // Alias for "element.append()"
 obj.something.html(value);               // Alias for "element.html()"
 obj.something.toggle(cls, visible, [timeout]);    // Alias for "jQuery.toggleClass()"
 obj.something.event(name, [selector], callback);  // Alias for "element.on()"
+obj.something.import(url, [callback], [insert], [preparator(response)]); // Alias for MAIN.import();
 ```
 
 - `VIRTUALIZE()` still returns cached object
@@ -2055,6 +2064,7 @@ exports.install = function(instance) {
     instance.remove();                            // Removes itself
     instance.exec(name, [a], [b], [c]);           // Executes methods in all components
     instance.$save();                             // Saves current options
+    instance.import(url, [callback], [insert], [preparator(response)]); // Alias for MAIN.import();
 };
 
 exports.uninstall = function() {
