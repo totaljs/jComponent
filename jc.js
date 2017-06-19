@@ -711,12 +711,6 @@
 			var key = makeurl(url);
 			var id = 'import' + HASH(key);
 
-			if (insert) {
-				var attr = 'data-jc-imported="' + Date.now() + '"';
-				$(target).append('<div ' + attr + '></div>');
-				target = $(target).find('> div[' + attr + ']');
-			}
-
 			AJAX('GET ' + key, function(response) {
 
 				key = '$import' + key;
@@ -724,8 +718,12 @@
 				if (preparator)
 					response = preparator(response);
 
-				response = importstyles(response, id);
-				$(target).html(response);
+				response = importscripts(importstyles(response, id), id);
+
+				if (insert)
+					$(target).append(response);
+				else
+					$(target).html(response);
 
 				setTimeout(function() {
 					response && REGCOM.test(response) && compile(target);
@@ -2755,7 +2753,7 @@
 				if (statics[key])
 					response = removescripts(response);
 				else
-					response = importstyles(response);
+					response = importscripts(importstyles(response));
 
 				can = response && REGCOM.test(response);
 
@@ -3214,25 +3212,71 @@
 		return str.replace(REGSCRIPT, function(text) {
 			var index = text.indexOf('>');
 			var scr = text.substring(0, index + 1);
-			return scr.substring(0, 6) === '<style' || scr === '<script>' || scr.indexOf('/javascript"') !== -1 ? '' : text;
+			return scr.substring(0, 6) === '<style' || (scr.substring(0, 7) === '<script' && scr.indexOf('type="') === -1) || scr.indexOf('/javascript"') !== -1 ? '' : text;
 		});
 	}
 
+	function importscripts(str, id) {
+
+		var beg = -1;
+		var output = str;
+		var builder = [];
+		var scr;
+
+		while (true) {
+			beg = str.indexOf('<script', beg);
+			if (beg === -1)
+				break;
+			var end = str.indexOf('</script>', beg + 9);
+			var code = str.substring(beg, end + 9);
+			beg = end + 9;
+
+			end = code.indexOf('>');
+
+			scr = code.substring(0, end);
+			if (scr.indexOf('type=') !== -1 && scr.lastIndexOf('javascript') === -1)
+				continue;
+
+			output = output.replace(code, '').trim();
+			builder.push(code.substring(end + 1, code.length - 9).trim());
+		}
+
+		var key = 'js' + (id || '');
+
+		if (id) {
+			if (statics[key])
+				$('#' + key).remove();
+			else
+				statics[key] = true;
+		}
+
+		scr = document.createElement('script');
+		scr.type = 'text/javascript';
+		scr.text = builder.join('\n');
+		id && (scr.id = key);
+		document.body.appendChild(scr);
+		return output;
+	}
+
 	function importstyles(str, id) {
-		return str.replace(REGCSS, function(text) {
-
-			if (id) {
-				if (statics[id])
-					$('#css' + id).remove();
-				else
-					statics[id] = true;
-			}
-
+		var builder = [];
+		str = str.replace(REGCSS, function(text) {
 			text = text.replace('<style>', '<style type="text/css">');
-			id && (text = text.replace('<style', '<style id="css' + id + '"'));
-			$(text).appendTo('head');
+			builder.push(text.substring(25, text.length - 8).trim());
 			return '';
 		});
+
+		var key = 'css' + (id || '');
+
+		if (id) {
+			if (statics[key])
+				$('#' + key).remove();
+			else
+				statics[key] = true;
+		}
+
+		$('<style' + (id ? ' id="' + key + '"' : '') + '>{0}</style>'.format(builder.join('\n'))).appendTo('head');
+		return str;
 	}
 
 	function remap(path, value) {

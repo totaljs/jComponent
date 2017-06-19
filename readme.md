@@ -970,9 +970,7 @@ MAIN.remove(jquery_element);
 MAIN.import(url, [target], [callback], [insert], [preparator(response)])
 // Imports a HTML content (with components) into the `target` (by default: `document.body`)
 // or can import scripts (.js) or styles (.css). `insert` argument (default: true) wraps
-// a new content into the <div data-jc-imported="RANDOM_NUMBER" element otherwise replaces
-// content of target element. 
-// If the URL starts with `ONCE http://...` then the content will downloaded only one time.
+// If the URL starts with `ONCE http://...` then the content will be downloaded only one time.
 // +v8.0.0 supports re-type of extension `https://maps.googleapis.com/maps/api/js?key=KEY .js`
 // +v8.0.0 styles are inserted into the head
 // +v9.0.0 added a preparator {Function} for preparing values, example `function(response) { return response; }` (it has to return a value)
