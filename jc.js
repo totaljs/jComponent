@@ -720,10 +720,12 @@
 
 				response = importscripts(importstyles(response, id), id);
 
+				target = $(target);
+
 				if (insert)
-					$(target).append(response);
+					target.append(response);
 				else
-					$(target).html(response);
+					target.html(response);
 
 				setTimeout(function() {
 					response && REGCOM.test(response) && compile(target);
