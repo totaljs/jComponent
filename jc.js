@@ -957,7 +957,7 @@
 
 			options.headers = $.extend(headers, M.defaults.headers);
 
-			var key = W.HASH(url + STRINGIFY(options));
+			var key = W.HASH(method + url + STRINGIFY(options));
 			var ma = ajax[key];
 			if (ma) {
 				ma.jcabort = true;

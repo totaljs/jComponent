@@ -1416,7 +1416,7 @@ PING('METHOD URL', [interval], [callback or path]);
 // Middleware
 
 // Registers MIDDLEWARE
-// MIDDLEWARE(name, fn(value, [path]));
+// MIDDLEWARE(name, fn(next, value, [path]));
 MIDDLEWARE('A-NAME', function(next, value, path) {
     value.count++;
     this.customvariable1 = true;
