@@ -976,7 +976,7 @@
 			options.success = function(r, s, req) {
 				delete ajax[key];
 				output.response = r;
-				output.status = req.status;
+				output.status = req.status || 999;
 				output.text = s;
 				output.headers = parseHeaders(req.getAllResponseHeaders());
 				M.emit('response', output);
@@ -992,7 +992,7 @@
 
 				delete ajax[key];
 				output.response = req.responseText;
-				output.status = req.status;
+				output.status = req.status || 999;
 				output.text = s;
 				output.error = true;
 				output.headers = parseHeaders(req.getAllResponseHeaders());

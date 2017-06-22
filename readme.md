@@ -1089,7 +1089,7 @@ MAIN.REMOVECACHE(method, url, data);
 
 // +v3.7.0
 // AJAX calls
-MAIN.AJAX('METHOD URL', data, [callback(response, err, output) or path], [sleep], [error(response, status, output) or path]);
+MAIN.AJAX('METHOD URL', data, [callback(response, status, output) or path], [sleep], [error(response, status, output) or path]);
 // Is same as GET(), POST(), PUT(), DELETE(). When is throwed an error then
 // "response" is the empty object {}
 MAIN.AJAXCACHE('METHOD URL', data, [callback(response, isFromCache) or path], [expire], [sleep], [clear]);
@@ -1102,6 +1102,8 @@ MAIN.AJAXCACHE('METHOD URL', data, [callback(response, isFromCache) or path], [e
 
 // +v4.4.0 supports custom headers
 // AJAX('GET /api/ { customheader1: "value1", customerheader2: "value2" }', ...);
+
+// +v11.0.0 status can be 999 and this is unspecific network error.
 
 
 MAIN.evaluate(path, expression, [path_is_value]);
