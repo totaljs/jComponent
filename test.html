@@ -21,7 +21,7 @@
 	<div data-jc-scope="!users">
 		<div data-jc="a" data-jc-path="grid"></div>
 		<div data-jc-scope="form">
-			<div data-jc="a" data-jc-path="name"></div>
+			<div data-jc="a" data-jc-path="name #A"></div>
 			<div data-jc="a" data-jc-path="age"></div>
 			<div data-jc="a" data-jc-path="year"></div>
 		</div>
@@ -64,7 +64,9 @@
 		COMPONENT('a', function() {
 			var self = this;
 			self.make = function() {
-				console.log(self.path);
+			};
+			self.setter = function(value) {
+				console.log('VALUE --->', value);
 			};
 		});
 
@@ -76,17 +78,14 @@
 		});
 
 		MIDDLEWARE('A', function(next, value, path, type) {
-			console.log('MIDDLEWARE A', value, path);
+			console.log('M:', value, path);
 			if (typeof(value) === 'object') {
 				value.value = 3;
 				next();
-			} else
-				next('1');
+			} else {
+				next('MIDDLEWARE VALUE');
+			}
 			// next('petersirka@gmail.com');
-		});
-
-		SCHEDULE('.form.email', 'custom', '5 seconds', function(component) {
-			console.log('OK');
 		});
 
 		ON('pages#refresh', a);

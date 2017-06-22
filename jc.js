@@ -1415,7 +1415,7 @@
 			set(path, value, type);
 
 			if (isUpdate)
-				return M.update(path, reset, type);
+				return M.update(path, reset, type, true);
 
 			// Is changed value by e.g. middleware?
 			// If yes the control/input will be redrawn
@@ -2057,15 +2057,16 @@
 	function middleware(path, value, type, callback) {
 
 		var index = path.indexOf(' #');
-
 		if (index === -1) {
 			callback(path, value);
 			return;
 		}
 
 		var a = path.substring(0, index);
+
 		if (value === undefined)
 			value = get(a);
+
 		W.MIDDLEWARE(path.substring(index + 1).trim().replace(/\#/g, '').split(' '), value, function(value) {
 			callback(a, value);
 		}, a);
@@ -2467,7 +2468,7 @@
 					var output = initscopes(scope);
 
 					if (obj.path && code !== 33 && code !== 35)
-						obj.setPath(obj.path === '?' ? output.path : (obj.path.indexOf('?') === -1 ? output.path + '.' + obj.path : obj.path.replace(/\?/g, output.path)));
+						obj.setPath(obj.path === '?' ? output.path : (obj.path.indexOf('?') === -1 ? output.path + '.' + obj.path : obj.path.replace(/\?/g, output.path)), 2);
 					else {
 						obj.$$path = EMPTYARRAY;
 						obj.path = '';
@@ -2931,7 +2932,7 @@
 
 				if (!obj.$binded) {
 					obj.$binded = true;
-					middleware(obj.middleware, value, 1, function(path, value) {
+					middleware(obj.path + obj.middleware, value, 1, function(path, value) {
 						obj.setter(value, obj.path, 0);
 						obj.$interaction(0);
 					});
@@ -3953,7 +3954,7 @@
 				self.$skip = false;
 
 			self.getter2 && self.getter2.apply(self, arguments);
-			self.set(self.path + self.middleware, value, type);
+			self.set(self.path, value, type);
 			return self;
 		};
 
@@ -4223,7 +4224,11 @@
 		return self;
 	};
 
-	PPC.setPath = function(path, init) {
+	PPC.setPath = function(path, type) {
+
+		// type 1: init
+		// type 2: scope
+
 		var self = this;
 
 		// Operations
@@ -4242,10 +4247,11 @@
 		}
 
 		var index = path.indexOf(' #');
+
 		if (index !== -1) {
 			self.middleware = path.substring(index);
 			path = path.substring(0, index);
-		} else
+		} else if (type !== 2)
 			self.middleware = '';
 
 		self.path = path;
@@ -4263,7 +4269,10 @@
 		}
 
 		self.$$path = pre;
-		!init && C.ready && refresh();
+
+		if (type !== 1 && C.ready)
+			refresh();
+
 		return self;
 	};
 
@@ -4531,13 +4540,15 @@
 
 	PPC.set = function(path, value, type) {
 
+		var self = this;
+
 		if (value === undefined) {
 			value = path;
-			path = this.path;
+			path = self.path;
 		}
 
 		path && M.set(path, value, type);
-		return this;
+		return self;
 	};
 
 	PPC.inc = function(path, value, type) {
@@ -4711,7 +4722,7 @@
 			var obj = new COM(name);
 			obj.global = shared;
 			obj.element = el;
-			obj.setPath(attrcom(el, 'path') || obj._id, true);
+			obj.setPath(attrcom(el, 'path') || obj._id, 1);
 			declaration.call(obj);
 			return obj;
 		};
@@ -4865,6 +4876,7 @@
 
 		var context = {};
 		name.waitFor(function(name, next) {
+
 			var mid = middlewares[name];
 
 			if (mid) {
@@ -5531,25 +5543,23 @@
 	// PROTOTYPES
 	// ===============================================================
 
-	Array.prototype.waitFor = function(fn, callback) {
+	Array.prototype.waitFor = function(fn, callback, meta) {
 
-		if (fn.index === undefined)
-			fn.index = 0;
+		if (meta === undefined)
+			meta = { index: 0, value: null };
 
-		var index = fn.index;
 		var self = this;
-		var item = self[fn.index++];
+		var item = self[meta.index++];
 
 		if (!item) {
-			callback && callback(fn.value);
-			delete fn.value;
+			callback && callback(meta.value);
 			return self;
 		}
 
 		fn.call(self, item, function(value) {
-			fn.value = value;
-			self.waitFor(fn, callback);
-		}, index);
+			meta.value = value;
+			self.waitFor(fn, callback, meta);
+		}, meta.index);
 
 		return self;
 	};
