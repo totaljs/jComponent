@@ -2677,12 +2677,19 @@
 		var key = id ? ('app.' + d.name + '.' + id + '.options') : null;
 		d.html && el.empty().append(d.html);
 		id = 'app' + W.HASH(id);
-		var app = new APP(id, el, d, key);
+
+		var initd = el.attr('data-ja-path');
+		if (initd)
+			initd = get(initd);
+		else
+			initd = undefined;
+
+		var app = new APP(id, el, d, key, initd);
 		app.$cache = key;
 		dom.$app = app;
 		el.data(ATTRDATA, app);
 		M.apps.push(app);
-		M.emit('app.instance', app, d);
+		M.emit('app.instance', app, d, initd);
 		REGCOM.test(d.html) && compile(el);
 		var cls = attrapp(el, 'class');
 		if (cls) {
@@ -3716,7 +3723,7 @@
 	// APPLICATION DECLARATION
 	// ===============================================================
 
-	function APP(id, element, declaration, key) {
+	function APP(id, element, declaration, key, data) {
 		var self = this;
 		self.$events = {};
 		self.id = id;
@@ -3730,8 +3737,8 @@
 		self.declaration = declaration;
 		self.$load(function(options) {
 			self.options = $.extend(true, CLONE(declaration.options), options || EMPTYOBJECT);
-			declaration.install.call(self, self);
-			self.make && self.make();
+			declaration.install.call(self, self, data);
+			self.make && self.make(data);
 		});
 	}
 

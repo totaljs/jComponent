@@ -2029,7 +2029,7 @@ exports.name = 'widget';
 exports.dependencies = ['url-to-script', 'url-to-style']; // OPTIONAL, it uses IMPORT() method
 
 // REQUIRED
-exports.install = function(instance) {
+exports.install = function(instance, initdata) {
     // Properties
     instance.scope;        // {String} name of scope
     instance.name;         // {String} name of application
@@ -2039,6 +2039,11 @@ exports.install = function(instance) {
     instance.element;      // {jQuery} container (jQuery element)
     instance.key;          // {String} cache key
     instance.declaration;  // {Object} a declaration of application
+    
+    // Delegates
+    instance.make = function(initdata) {
+        // initdata {Object/String/Number} according data-ja-path="" attribute
+    };
 
     // Methods
     instance.emit(name, [a], [b], [c], ..);       // Emits event in this app
@@ -2080,7 +2085,7 @@ exports.uninstall = function() {
 <div data-ja-url="/newsletter.html"></div>
 
 <!-- USAGE -->
-<div data-ja="filter" data-ja-id="abc123456"></div>
+<div data-ja="filter" data-ja-id="abc123456" data-ja-path="path.to.initdata.optional"></div>
 <div data-ja="time" data-ja-id="bcd123456"></div>
 <div data-ja="newsletter" data-ja-id="cde123456"></div>
 <div data-ja="filter" data-ja-id="efg123456"></div>
