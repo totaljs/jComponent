@@ -2639,6 +2639,9 @@
 				set(p, tmp);
 				emitwildcard(p, tmp, 1);
 			}
+
+			tmp = attrcom(sc, 'init');
+			tmp && W.EXEC(tmp, p, $(sc));
 		}
 
 		return scope[0].$scopedata;
@@ -2671,7 +2674,7 @@
 
 	function appcreate(d, id, dom) {
 		var el = $(dom);
-		var key = id ? ('app.' + name + '.' + id + '.options') : null;
+		var key = id ? ('app.' + d.name + '.' + id + '.options') : null;
 		d.html && el.empty().append(d.html);
 		id = 'app' + W.HASH(id);
 		var app = new APP(id, el, d, key);
