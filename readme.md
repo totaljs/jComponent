@@ -2490,6 +2490,9 @@ Ta;            // shortcut for Tangular
 // jctajr.min.js:
 NAVIGATION;    // shortcut for jRouting (jComponent +v9.0.0)
 
+MONTHS;        // +v11.0.0 Array of month name
+DAYS;          // +v11.0.0 Array of day name
+
 // Special {Array} of {Functions}
 window.READY   // for asynchronous loading scripts
 ```

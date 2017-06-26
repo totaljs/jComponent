@@ -6,6 +6,7 @@
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGEMPTY = /\s/g;
 	var REGCOMMA = /,/g;
+	var REGSEARCH = /[^a-zA-Zá-žÁ-Ž\d\s:]/g;
 	var ATTRSCOPE = '[data-jc-scope]';
 	var ATTRSCOPECTRL = '[data-jc-controller]';
 	var ATTRCOM = '[data-jc]';
@@ -77,6 +78,9 @@
 		}
 	};
 
+	W.MONTHS = M.months = 'January,February,March,April,May,June,July,August,September,October,November,December'.split(',');
+	W.DAYS = M.days = 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'.split(',');
+
 	M.validators = {};
 	M.validators.url = /^(http|https):\/\/(?:(?:(?:[\w\.\-\+!$&'\(\)*\+,;=]|%[0-9a-f]{2})+:)*(?:[\w\.\-\+%!$&'\(\)*\+,;=]|%[0-9a-f]{2})+@)?(?:(?:[a-z0-9\-\.]|%[0-9a-f]{2})+|(?:\[(?:[0-9a-f]{0,4}:)*(?:[0-9a-f]{0,4})\]))(?::[0-9]+)?(?:[\/|\?](?:[\w#!:\.\?\+=&@!$'~*,;\/\(\)\[\]\-]|%[0-9a-f]{2})*)?$/i;
 	M.validators.phone = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
@@ -85,7 +89,7 @@
 	M.regexp = {};
 	M.regexp.int = /(\-|\+)?[0-9]+/;
 	M.regexp.float = /(\-|\+)?[0-9\.\,]+/;
-	M.regexp.date = /yyyy|yy|MM|M|dd|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g;
+	M.regexp.date = /yyyy|yy|MMMM|MMM|MM|M|dddd|ddd|dd|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g;
 	M.regexp.pluralize = /\#{1,}/g;
 	M.regexp.format = /\{\d+\}/g;
 
@@ -175,7 +179,7 @@
 			document.cookie = name + '=' + value + '; expires=' + expire.toGMTString() + '; path=/';
 		},
 		rem: function (name) {
-			M.set(name, '', -1);
+			M.cookies.set(name, '', -1);
 		}
 	};
 
@@ -4733,7 +4737,7 @@
 			obj.global = shared;
 			obj.element = el;
 			obj.setPath(attrcom(el, 'path') || obj._id, 1);
-			declaration.call(obj);
+			declaration.call(obj, obj);
 			return obj;
 		};
 
@@ -5799,7 +5803,7 @@
 
 	String.prototype.toSearch = function() {
 
-		var str = this.replace(/[^a-zA-Zá-žÁ-Ž\d\s:]/g, '').trim().toLowerCase().removeDiacritics();
+		var str = this.replace(REGSEARCH, '').trim().toLowerCase().removeDiacritics();
 		var buf = [];
 		var prev = '';
 
@@ -6010,16 +6014,26 @@
 		var e = this, r = !1;
 		if (t && 33 === t.charCodeAt(0) && (r = !0, t = t.substring(1)), void 0 === t || null === t || '' === t) return e.getFullYear() + '-' + (e.getMonth() + 1).toString().padLeft(2, '0') + '-' + e.getDate().toString().padLeft(2, '0') + 'T' + e.getHours().toString().padLeft(2, '0') + ':' + e.getMinutes().toString().padLeft(2, '0') + ':' + e.getSeconds().toString().padLeft(2, '0') + '.' + e.getMilliseconds().padLeft(3, '0').toString() + 'Z';
 		var n = e.getHours();
+		var tmp;
 		return r && n >= 12 && (n -= 12), t.replace(M.regexp.date, function(t) {
 			switch (t) {
 				case 'yyyy':
 					return e.getFullYear();
 				case 'yy':
 					return e.getYear().toString().substring(1);
+				case 'MMMM':
+					return M.months[e.getMonth()];
+				case 'MMM':
+					tmp = M.months[e.getMonth()];
+					return tmp.length > 3 ? tmp.substring(0, 3) : tmp;
 				case 'MM':
 					return (e.getMonth() + 1).toString().padLeft(2, '0');
 				case 'M':
 					return e.getMonth() + 1;
+				case 'dddd':
+					return M.months[e.getMonth()];
+				case 'ddd':
+					return M.days[e.getDay()].substring(0, 2).toUpperCase();
 				case 'dd':
 					return e.getDate().toString().padLeft(2, '0');
 				case 'd':
@@ -6040,7 +6054,7 @@
 					return e.getSeconds();
 				case 'w':
 				case 'ww':
-					var tmp = new Date(+e);
+					tmp = new Date(+e);
 					tmp.setHours(0, 0, 0);
 					tmp.setDate(tmp.getDate() + 4 - (tmp.getDay() || 7));
 					tmp = Math.ceil((((tmp - new Date(tmp.getFullYear(), 0, 1)) / 8.64e7) + 1) / 7);
