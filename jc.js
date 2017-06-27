@@ -3479,7 +3479,7 @@
 				continue;
 			}
 
-			if (component.$removed)
+			if (!component.$removed || component.$removed === 2)
 				continue;
 
 			if (component.element && component.element.closest(document.documentElement).length) {
@@ -3499,7 +3499,7 @@
 			component.element.find('*').off();
 			component.element.remove();
 			component.element = null;
-			component.$removed = true;
+			component.$removed = 2;
 			component.path = null;
 			component.setter = null;
 			component.getter = null;
@@ -4447,7 +4447,7 @@
 		self.element.removeData(ATTRDATA);
 		self.element.find(ATTRCOM).attr(ATTRDEL, 'true');
 		self.element.attr(ATTRDEL, 'true');
-		self.$removed = true;
+		self.$removed = 1;
 		if (!noClear) {
 			clear();
 			setTimeout2('$cleaner', cleaner, 100);
