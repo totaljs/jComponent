@@ -2447,13 +2447,16 @@
 					return;
 				}
 
-				var obj = com(el);
-				if (obj.init) {
-					if (!statics[name]) {
-						statics[name] = true;
-						obj.init();
-					}
-					obj.init = undefined;
+				var obj = new COM(com.name);
+				obj.global = com.shared;
+				obj.element = el;
+				obj.setPath(attrcom(el, 'path') || obj._id, 1);
+
+				com.declaration.call(obj, obj);
+
+				if (obj.init && !statics[name]) {
+					statics[name] = true;
+					obj.init();
 				}
 
 				obj.$init = attrcom(el, 'init') || null;
@@ -4717,9 +4720,11 @@
 	};
 
 	W.COMPONENT_EXTEND = function(name, declaration) {
-		if (!extensions[name])
-			extensions[name] = [];
-		extensions[name].push(declaration);
+
+		if (extensions[name])
+			extensions[name].push(declaration);
+		else
+			extensions[name] = [declaration];
 
 		for (var i = 0, length = M.components.length; i < length; i++) {
 			var m = M.components[i];
@@ -4729,20 +4734,8 @@
 	};
 
 	W.COMPONENT = function(name, declaration) {
-
-		var shared = {};
-
-		var fn = function(el) {
-			var obj = new COM(name);
-			obj.global = shared;
-			obj.element = el;
-			obj.setPath(attrcom(el, 'path') || obj._id, 1);
-			declaration.call(obj, obj);
-			return obj;
-		};
-
 		M.$components[name] && warn('Components: Overwriting component:', name);
-		M.$components[name] = fn;
+		M.$components[name] = { name: name, declaration: declaration, shared: {} };
 	};
 
 	W.SINGLETON = function(name, def) {
