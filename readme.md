@@ -572,6 +572,15 @@ COMPONENT('my-component-name', function() {
     // jQuery.css();
     // +v9.0.0
 
+    instance.closest(selector);
+    // Finds superior elements
+    // jQuery.closest();
+    // +v11.0.0
+
+    instance.parent([selector]);
+    // Finds parent
+    // jQuery.parent();
+    // +v11.0.0
 
     instance.html([value]);
     // Gets or Sets inner HTML in the component element.

@@ -4286,10 +4286,7 @@
 		}
 
 		self.$$path = pre;
-
-		if (type !== 1 && C.ready)
-			refresh();
-
+		type !== 1 && C.ready && refresh();
 		return self;
 	};
 
@@ -4307,6 +4304,14 @@
 			return el.css(name);
 		el.css(name, value);
 		return this;
+	};
+
+	PPC.closest = PPA.closest = PPP.closest = PCTRL.closest = function(sel) {
+		return this.element.closest(sel);
+	};
+
+	PPC.parent = PPA.parent = PPP.parent = PCTRL.parent = function(sel) {
+		return this.element.parent(sel);
 	};
 
 	PPC.html = PPA.html = PPP.html = PCTRL.html = function(value) {
