@@ -5555,7 +5555,12 @@
 	// PROTOTYPES
 	// ===============================================================
 
-	Array.prototype.waitFor = function(fn, callback, meta) {
+	var AP = Array.prototype;
+	var SP = String.prototype;
+	var NP = Number.prototype;
+	var DP = Date.prototype;
+
+	AP.waitFor = function(fn, callback, meta) {
 
 		if (meta === undefined)
 			meta = { index: 0, value: null };
@@ -5563,7 +5568,7 @@
 		var self = this;
 		var item = self[meta.index++];
 
-		if (!item) {
+		if (item === undefined) {
 			callback && callback(meta.value);
 			return self;
 		}
@@ -5576,7 +5581,7 @@
 		return self;
 	};
 
-	Array.prototype.compare = function(id, b, fields) {
+	AP.compare = function(id, b, fields) {
 		var a = this;
 		var update = [];
 		var append = [];
@@ -5627,7 +5632,7 @@
 		};
 	};
 
-	Array.prototype.async = function(context, callback) {
+	AP.async = function(context, callback) {
 
 		if (typeof(context) === 'function') {
 			var tmp = callback;
@@ -5653,7 +5658,7 @@
 		return this;
 	};
 
-	Array.prototype.ticks = function(max, beg) {
+	AP.ticks = function(max, beg) {
 
 		var self = this;
 		var length = self.length;
@@ -5690,7 +5695,7 @@
 		return arr;
 	};
 
-	Array.prototype.take = function(count) {
+	AP.take = function(count) {
 		var arr = [];
 		var self = this;
 		var length = self.length;
@@ -5702,7 +5707,7 @@
 		return arr;
 	};
 
-	Array.prototype.skip = function(count) {
+	AP.skip = function(count) {
 		var arr = [];
 		var self = this;
 		var length = self.length;
@@ -5711,13 +5716,13 @@
 		return arr;
 	};
 
-	String.prototype.isJSONDate = function() {
+	SP.isJSONDate = function() {
 		var t = this;
 		var l = t.length - 1;
 		return l > 22 && l < 30 && t.charCodeAt(l) === 90 && t.charCodeAt(10) === 84 && t.charCodeAt(4) === 45 && t.charCodeAt(13) === 58 && t.charCodeAt(16) === 58;
 	};
 
-	String.prototype.parseExpire = function() {
+	SP.parseExpire = function() {
 
 		var str = this.split(' ');
 		var number = parseInt(str[0]);
@@ -5774,7 +5779,7 @@
 		}
 	};
 
-	String.prototype.removeDiacritics = function() {
+	SP.removeDiacritics = function() {
 		var buf = '';
 		for (var i = 0, length = this.length; i < length; i++) {
 			var c = this[i];
@@ -5799,7 +5804,7 @@
 		return buf;
 	};
 
-	String.prototype.toSearch = function() {
+	SP.toSearch = function() {
 
 		var str = this.replace(REGSEARCH, '').trim().toLowerCase().removeDiacritics();
 		var buf = [];
@@ -5818,7 +5823,7 @@
 		return buf.join('');
 	};
 
-	String.prototype.slug = function(max) {
+	SP.slug = function(max) {
 		max = max || 60;
 
 		var self = this.trim().toLowerCase().removeDiacritics();
@@ -5852,22 +5857,22 @@
 		return builder[l] === '-' ? builder.substring(0, l) : builder;
 	};
 
-	String.prototype.isEmail = function() {
+	SP.isEmail = function() {
 		var str = this;
 		return str.length <= 4 ? false : M.validators.email.test(str);
 	};
 
-	String.prototype.isPhone = function() {
+	SP.isPhone = function() {
 		var str = this;
 		return str.length < 6 ? false : M.validators.phone.test(str);
 	};
 
-	String.prototype.isURL = function() {
+	SP.isURL = function() {
 		var str = this;
 		return str.length <= 7 ? false : M.validators.url.test(str);
 	};
 
-	String.prototype.parseInt = function(def) {
+	SP.parseInt = function(def) {
 		var str = this.trim();
 		var val = str.match(M.regexp.int);
 		if (!val)
@@ -5876,7 +5881,7 @@
 		return isNaN(val) ? def || 0 : val;
 	};
 
-	String.prototype.parseFloat = function(def) {
+	SP.parseFloat = function(def) {
 		var str = this.trim();
 		var val = str.match(M.regexp.float);
 		if (!val)
@@ -5888,7 +5893,7 @@
 		return isNaN(val) ? def || 0 : val;
 	};
 
-	Array.prototype.trim = function() {
+	AP.trim = function() {
 		var self = this;
 		var output = [];
 		for (var i = 0, length = self.length; i < length; i++) {
@@ -5899,7 +5904,7 @@
 		return output;
 	};
 
-	Array.prototype.findIndex = function(cb, value) {
+	AP.findIndex = function(cb, value) {
 
 		var self = this;
 		var isFN = typeof(cb) === 'function';
@@ -5922,13 +5927,13 @@
 		return -1;
 	};
 
-	Array.prototype.findItem = function(cb, value) {
+	AP.findItem = function(cb, value) {
 		var index = this.findIndex(cb, value);
 		if (index !== -1)
 			return this[index];
 	};
 
-	Array.prototype.remove = function(cb, value) {
+	AP.remove = function(cb, value) {
 
 		var self = this;
 		var arr = [];
@@ -5952,11 +5957,11 @@
 		return arr;
 	};
 
-	Date.prototype.parseDate = function() {
+	DP.parseDate = function() {
 		return this;
 	};
 
-	Date.prototype.add = function(type, value) {
+	DP.add = function(type, value) {
 
 		if (value === undefined) {
 			var arr = type.split(' ');
@@ -6008,7 +6013,7 @@
 		return dt;
 	};
 
-	Date.prototype.format = function(t) {
+	DP.format = function(t) {
 		var e = this, r = !1;
 		if (t && 33 === t.charCodeAt(0) && (r = !0, t = t.substring(1)), void 0 === t || null === t || '' === t) return e.getFullYear() + '-' + (e.getMonth() + 1).toString().padLeft(2, '0') + '-' + e.getDate().toString().padLeft(2, '0') + 'T' + e.getHours().toString().padLeft(2, '0') + ':' + e.getMinutes().toString().padLeft(2, '0') + ':' + e.getSeconds().toString().padLeft(2, '0') + '.' + e.getMilliseconds().padLeft(3, '0').toString() + 'Z';
 		var n = e.getHours();
@@ -6063,7 +6068,7 @@
 		});
 	};
 
-	Number.prototype.pluralize = function(zero, one, few, other) {
+	NP.pluralize = function(zero, one, few, other) {
 
 		var num = this;
 		var value = '';
@@ -6082,7 +6087,7 @@
 		});
 	};
 
-	Number.prototype.format = function(decimals, separator, separatorDecimal) {
+	NP.format = function(decimals, separator, separatorDecimal) {
 		var self = this;
 		var num = self.toString();
 		var dec = '';
@@ -6128,25 +6133,38 @@
 		return minus + output + (dec.length ? separatorDecimal + dec : '');
 	};
 
-	String.prototype.padLeft = function(t, e) {
+	SP.padLeft = function(t, e) {
 		var r = this.toString();
 		return Array(Math.max(0, t - r.length + 1)).join(e || ' ') + r;
 	};
 
-	String.prototype.padRight = function(t, e) {
+	SP.padRight = function(t, e) {
 		var r = this.toString();
 		return r + Array(Math.max(0, t - r.length + 1)).join(e || ' ');
 	};
 
-	Number.prototype.padLeft = function(t, e) {
+	NP.padLeft = function(t, e) {
 		return this.toString().padLeft(t, e || '0');
 	};
 
-	Number.prototype.padRight = function(t, e) {
+	NP.padRight = function(t, e) {
 		return this.toString().padRight(t, e || '0');
 	};
 
-	Number.prototype.add = Number.prototype.inc = function(value, decimals) {
+	NP.async = function(fn, callback) {
+		var number = this;
+		if (number >= 0)
+			fn(number, function() {
+				setTimeout(function() {
+					(number - 1).async(fn, callback);
+				}, 1);
+			});
+		else
+			callback && callback();
+		return number;
+	};
+
+	NP.add = NP.inc = function(value, decimals) {
 
 		var self = this;
 
@@ -6215,11 +6233,11 @@
 		return decimals !== undefined ? num.floor(decimals) : num;
 	};
 
-	Number.prototype.floor = function(decimals) {
+	NP.floor = function(decimals) {
 		return Math.floor(this * Math.pow(10, decimals)) / Math.pow(10, decimals);
 	};
 
-	String.prototype.format = function() {
+	SP.format = function() {
 		var arg = arguments;
 		return this.replace(M.regexp.format, function(text) {
 			var value = arg[+text.substring(1, text.length - 1)];
@@ -6227,7 +6245,7 @@
 		});
 	};
 
-	String.prototype.parseDate = function() {
+	SP.parseDate = function() {
 		var self = this.trim();
 		if (!self)
 			return null;
@@ -6323,12 +6341,12 @@
 		return new Date(parsed[0], parsed[1] - 1, parsed[2], parsed[3], parsed[4], parsed[5]);
 	};
 
-	Array.prototype.last = function(def) {
+	AP.last = function(def) {
 		var item = this[this.length - 1];
 		return item === undefined ? def : item;
 	};
 
-	Array.prototype.quicksort = function(name, asc, maxlength) {
+	AP.quicksort = function(name, asc, maxlength) {
 
 		var self = this;
 		var length = self.length;
@@ -6399,7 +6417,7 @@
 		return self;
 	};
 
-	Array.prototype.attr = function(name, value) {
+	AP.attr = function(name, value) {
 
 		var self = this;
 
@@ -6422,7 +6440,7 @@
 		return self;
 	};
 
-	Array.prototype.scalar = function(type, key, def) {
+	AP.scalar = function(type, key, def) {
 
 		var output = def;
 		var isDate = false;

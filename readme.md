@@ -2211,6 +2211,17 @@ console.log(number.pluralize('beers ##', 'beer ##', 'beers ##', 'beers ##'));
 // The method replaces "#" for number.
 // The method replaces "##" for number and applied number.format().
 
+var number = 5;
+
+number.async(function(number, next) {
+    console.log(number, next);
+}, function() {
+    console.log('DONE');
+});
+// Number.prototype.async(fn(index, next), [callback])
+// +v11.0.0
+// Async number decreasing (number > 0)
+
 
 // Array.prototype.trim();
 var a = ['', 'A', 'B', '', 'C'].trim();
