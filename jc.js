@@ -6,7 +6,9 @@
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGEMPTY = /\s/g;
 	var REGCOMMA = /,/g;
-	var ATTRSCOPE = '[data-jc-scope],[data-jc-controller]';
+	var REGSEARCH = /[^a-zA-Zá-žÁ-Ž\d\s:]/g;
+	var ATTRSCOPE = '[data-jc-scope]';
+	var ATTRSCOPECTRL = '[data-jc-controller]';
 	var ATTRCOM = '[data-jc]';
 	var ATTRURL = '[data-jc-url],[data-ja-url]';
 	var ATTRDATA = 'jc';
@@ -16,6 +18,7 @@
 
 	var C = {}; // COMPILER
 	var M = {}; // MAIN
+	var L = {}; // CONTROLLERS
 	var A = {}; // APPS CONTAINER
 	var W = window;
 
@@ -33,13 +36,12 @@
 	var toggles = [];
 	var ajax = {};
 	var middlewares = {};
-	var warnings = [];
+	var warnings = {};
 	var schemas = {};
 	var autofill = [];
 	var defaults = {};
 	var waits = {};
 	var operations = {};
-	var controllers = {};
 	var workflows = {};
 	var styles = [];
 	var statics = {};
@@ -51,9 +53,11 @@
 
 	var tmp_emit2 = [null, null, null];
 	var tmp_notify = [null, null];
+	var current_ctrl = null;
 
 	W.MAIN = W.M = W.jC = W.COM = M;
 	W.APPS = W.A = A;
+	W.CONTROLLERS = L;
 	W.EMPTYARRAY = [];
 	W.EMPTYOBJECT = {};
 	W.DATETIME = new Date();
@@ -74,6 +78,9 @@
 		}
 	};
 
+	W.MONTHS = M.months = 'January,February,March,April,May,June,July,August,September,October,November,December'.split(',');
+	W.DAYS = M.days = 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'.split(',');
+
 	M.validators = {};
 	M.validators.url = /^(http|https):\/\/(?:(?:(?:[\w\.\-\+!$&'\(\)*\+,;=]|%[0-9a-f]{2})+:)*(?:[\w\.\-\+%!$&'\(\)*\+,;=]|%[0-9a-f]{2})+@)?(?:(?:[a-z0-9\-\.]|%[0-9a-f]{2})+|(?:\[(?:[0-9a-f]{0,4}:)*(?:[0-9a-f]{0,4})\]))(?::[0-9]+)?(?:[\/|\?](?:[\w#!:\.\?\+=&@!$'~*,;\/\(\)\[\]\-]|%[0-9a-f]{2})*)?$/i;
 	M.validators.phone = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
@@ -82,12 +89,12 @@
 	M.regexp = {};
 	M.regexp.int = /(\-|\+)?[0-9]+/;
 	M.regexp.float = /(\-|\+)?[0-9\.\,]+/;
-	M.regexp.date = /yyyy|yy|MM|M|dd|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g;
+	M.regexp.date = /yyyy|yy|MMMM|MMM|MM|M|dddd|ddd|dd|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g;
 	M.regexp.pluralize = /\#{1,}/g;
 	M.regexp.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v10.0.4';
+	M.version = 'v11.0.0';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -95,15 +102,15 @@
 	M.$components = {};
 	M.components = [];
 	M.$apps = {};
-	M.apps = [];
+	A.items = M.apps = [];
 	M.$formatter = [];
 	M.$parser = [];
+	L.items = M.controllers = {};
 	M.compiler = C;
 
 	C.is = false;
 	C.recompile = false;
 	C.pending = [];
-	C.imports = [];
 	C.init = [];
 	C.imports = {};
 	C.ready = [];
@@ -172,7 +179,7 @@
 			document.cookie = name + '=' + value + '; expires=' + expire.toGMTString() + '; path=/';
 		},
 		rem: function (name) {
-			M.set(name, '', -1);
+			M.cookies.set(name, '', -1);
 		}
 	};
 
@@ -243,7 +250,8 @@
 
 			xhr.addEventListener('load', function() {
 
-				var r = this.responseText;
+				var self = this;
+				var r = self.responseText;
 				try {
 					r = PARSE(r, M.defaults.jsondate);
 				} catch (e) {}
@@ -256,10 +264,10 @@
 				}
 
 				output.response = r;
-				output.status = this.status;
-				output.text = this.statusText;
-				output.error = this.status > 399;
-				output.headers = parseHeaders(this.getAllResponseHeaders());
+				output.status = self.status;
+				output.text = self.statusText;
+				output.error = self.status > 399;
+				output.headers = parseHeaders(self.getAllResponseHeaders());
 
 				M.emit('response', output);
 
@@ -267,7 +275,7 @@
 					return;
 
 				if (!r && output.error)
-					r = output.response = this.status + ': ' + this.statusText;
+					r = output.response = self.status + ': ' + self.statusText;
 
 				if (!output.error || M.defaults.ajaxerrors)
 					return typeof(callback) === 'string' ? remap(callback, r) : (callback && callback(r, null, output));
@@ -330,10 +338,19 @@
 			path = name === 'watch' ? '*' : '';
 		} else
 			path = path.replace('.*', '');
+
 		var fixed = null;
 		if (path.charCodeAt(0) === 33) {
 			path = path.substring(1);
 			fixed = path;
+		}
+
+		var owner = null;
+		var index = name.indexOf('#');
+
+		if (index) {
+			owner = name.substring(0, index).trim();
+			name = name.substring(index + 1).trim();
 		}
 
 		if (!events[path]) {
@@ -342,9 +359,88 @@
 		} else if (!events[path][name])
 			events[path][name] = [];
 
-		events[path][name].push({ fn: fn, id: this._id, path: fixed });
+		events[path][name].push({ fn: fn, id: this._id, path: fixed, owner: owner, controller: current_ctrl });
 		init && fn.call(M, path, get(path), true);
 		(!C.ready && (name === 'ready' || name === 'init')) && fn();
+		return M;
+	};
+
+	M.off = function(name, path, fn) {
+
+		if (typeof(path) === 'function') {
+			fn = path;
+			path = '';
+		}
+
+		if (path === undefined)
+			path = '';
+
+		var owner = null;
+		var index = name.indexOf('#');
+
+		if (index) {
+			owner = name.substring(0, index).trim();
+			name = name.substring(index + 1).trim();
+
+			if (!name) {
+
+				Object.keys(events[path]).forEach(function(key) {
+					M.off(owner + '#' + key, path, fn);
+				});
+
+				return M;
+			}
+
+		}
+
+		var evt = events[path];
+		if (!evt)
+			return M;
+
+		evt = evt[name];
+		if (!evt)
+			return M;
+
+		index = 0;
+
+		while (true) {
+			var e = evt[index];
+
+			if (!e)
+				break;
+
+			if (owner) {
+				if (owner !== e.owner) {
+					index++;
+					continue;
+				}
+
+				if (fn) {
+					if (fn === e.fn)
+						evt.splice(index, 1);
+					else
+						index++;
+				} else
+					evt.splice(index, 1);
+
+				continue;
+			}
+
+			if (fn) {
+
+				if (fn === e.fn)
+					evt.splice(index, 1);
+				else
+					index++;
+				continue;
+			}
+
+			evt.splice(index, 1);
+		}
+
+		if (!evt.length)
+			delete events[path][name];
+
 		return M;
 	};
 
@@ -616,36 +712,30 @@
 		}, function() {
 			statics[url] = 2;
 
-			var id = '';
-
-			if (insert) {
-				id = 'data-jc-imported="' + ((Math.random() * 100000) >> 0) + '"';
-				$(target).append('<div ' + id + '></div>');
-				target = $(target).find('> div[' + id + ']');
-			}
-
 			var key = makeurl(url);
-			AJAXCACHE('GET ' + key, null, function(response) {
+			var id = 'import' + HASH(key);
+
+			AJAX('GET ' + key, function(response) {
 
 				key = '$import' + key;
 
 				if (preparator)
 					response = preparator(response);
 
-				if (cache[key])
-					response = removescripts(response);
-				else
-					response = importstyles(response, id);
+				response = importscripts(importstyles(response, id), id);
 
-				$(target).html(response);
-				cache[key] = true;
+				target = $(target);
+
+				if (insert)
+					target.append(response);
+				else
+					target.html(response);
 
 				setTimeout(function() {
 					response && REGCOM.test(response) && compile(target);
 					callback && callback();
 				}, 10);
-
-			}, M.defaults.importcache);
+			});
 		});
 
 		return M;
@@ -871,7 +961,7 @@
 
 			options.headers = $.extend(headers, M.defaults.headers);
 
-			var key = W.HASH(url + STRINGIFY(options));
+			var key = W.HASH(method + url + STRINGIFY(options));
 			var ma = ajax[key];
 			if (ma) {
 				ma.jcabort = true;
@@ -890,7 +980,7 @@
 			options.success = function(r, s, req) {
 				delete ajax[key];
 				output.response = r;
-				output.status = req.status;
+				output.status = req.status || 999;
 				output.text = s;
 				output.headers = parseHeaders(req.getAllResponseHeaders());
 				M.emit('response', output);
@@ -906,7 +996,7 @@
 
 				delete ajax[key];
 				output.response = req.responseText;
-				output.status = req.status;
+				output.status = req.status || 999;
 				output.text = s;
 				output.error = true;
 				output.headers = parseHeaders(req.getAllResponseHeaders());
@@ -1026,12 +1116,17 @@
 			expire = '-' + expire;
 		var arr = expire.split(' ');
 		var type = arr[1].toLowerCase().substring(0, 1);
-		schedulers.push({ name: name, expire: expire, selector: selector, callback: callback, type: type === 'y' || type === 'd' ? 'h' : type });
+		var id = GUID(10);
+		schedulers.push({ id: id, name: name, expire: expire, selector: selector, callback: callback, type: type === 'y' || type === 'd' ? 'h' : type, controller: current_ctrl });
+		return id;
+	};
+
+	M.clearSchedule = function(id) {
+		schedulers = schedulers.remove('id', id);
 		return M;
 	};
 
 	M.errors = function(path, except) {
-
 		if (path instanceof Array) {
 			except = path;
 			path = undefined;
@@ -1043,19 +1138,24 @@
 				return;
 			if (obj.$valid === false && !obj.$valid_disabled)
 				arr.push(obj);
-		}, path);
+		}, ctrl_path(path));
 		return arr;
 	};
 
 	M.can = function(path, except) {
+		path = ctrl_path(path);
 		return !M.dirty(path, except) && M.valid(path, except);
 	};
 
 	M.disabled = M.disable = function(path, except) {
+		path = ctrl_path(path);
 		return M.dirty(path, except) || !M.valid(path, except);
 	};
 
 	M.invalid = function(path, onlyComponent) {
+		path = ctrl_path(path);
+		if (!path)
+			return M;
 		M.dirty(path, false, onlyComponent, true);
 		M.valid(path, false, onlyComponent);
 		return M;
@@ -1085,6 +1185,10 @@
 	// 1 === manually
 	// 2 === by input
 	M.update = function(path, reset, type) {
+
+		path = ctrl_path(path);
+		if (!path)
+			return M;
 
 		var is = path.charCodeAt(0) === 33;
 		if (is)
@@ -1216,6 +1320,7 @@
 
 			if (!is)
 				return;
+
 			var val = component.get();
 			component.setter && component.setter(val, component.path, 1);
 			component.setter2 && component.setter(val, component.path, 1);
@@ -1244,15 +1349,19 @@
 	};
 
 	M.extend = function(path, value, type) {
-		var val = get(path);
-		if (val == null)
-			val = {};
-		M.set(path, $.extend(val, value), type);
+		path = ctrl_path(path);
+		if (path) {
+			var val = get(path);
+			if (val == null)
+				val = {};
+			M.set(path, $.extend(val, value), type);
+		}
 		return M;
 	};
 
 	M.rewrite = function(path, val) {
-		middleware(path, val, 1, helper_rewrite);
+		path = ctrl_path(path);
+		path && middleware(path, val, 1, helper_rewrite);
 		return M;
 	};
 
@@ -1262,6 +1371,11 @@
 	}
 
 	M.inc = function(path, value, type) {
+
+		path = ctrl_path(path);
+		if (!path)
+			return M;
+
 		var current = get(path);
 		if (!current) {
 			current = 0;
@@ -1279,6 +1393,11 @@
 	// 1 === manually
 	// 2 === by input
 	M.set = function(path, val, type) {
+
+		path = ctrl_path(path);
+		if (!path)
+			return M;
+
 		middleware(path, val, type, function(path, value) {
 			var is = path.charCodeAt(0) === 33;
 			if (is)
@@ -1300,7 +1419,7 @@
 			set(path, value, type);
 
 			if (isUpdate)
-				return M.update(path, reset, type);
+				return M.update(path, reset, type, true);
 
 			// Is changed value by e.g. middleware?
 			// If yes the control/input will be redrawn
@@ -1410,8 +1529,17 @@
 		return M;
 	};
 
+	function ctrl_path(path) {
+		if (!path || path.charCodeAt(0) !== 64)
+			return path;
+		path = path.substring(1);
+		var index = path.indexOf('.');
+		var ctrl = CONTROLLER(path.substring(0, index));
+		return (ctrl ? ctrl.scope : 'UNDEFINED') + path.substring(index);
+	}
+
 	M.get = function(path, scope) {
-		return get(path, scope);
+		return get(ctrl_path(path), scope);
 	};
 
 	M.remove = function(path) {
@@ -1448,7 +1576,7 @@
 		clear();
 		M.each(function(obj) {
 			obj.remove(true);
-		}, path);
+		}, ctrl_path(path));
 
 		setTimeout2('$cleaner', cleaner, 100);
 		return M;
@@ -1487,6 +1615,8 @@
 
 		var arr = [];
 		var valid = true;
+
+		path = ctrl_path(path);
 
 		M.each(function(obj) {
 
@@ -1531,6 +1661,8 @@
 
 		if (reset === undefined)
 			reset = true;
+
+		path = ctrl_path(path);
 
 		// Reset scope
 		var key = path.replace(/\.\*$/, '');
@@ -1600,6 +1732,7 @@
 		}
 
 		var arr = [];
+		path = ctrl_path(path);
 
 		M.each(function(obj) {
 
@@ -1667,7 +1800,7 @@
 			}
 
 			com.push(component);
-		}, path);
+		}, ctrl_path(path));
 
 		return isCallback ? M : com;
 	};
@@ -1713,7 +1846,7 @@
 			}
 
 			com.push(component);
-		}, path);
+		}, ctrl_path(path));
 
 		return isCallback ? M : com;
 	};
@@ -1787,6 +1920,26 @@
 				callback(value);
 		});
 		return M;
+	};
+
+	// ===============================================================
+	// CONTROLLERS FUNCTIONS
+	// ===============================================================
+
+	L.emit = function(a, b, c, d, e) {
+		Object.keys(M.controllers).forEach(function(key) {
+			var c = M.controllers[key];
+			c.emit.call(c, a, b, c, d, e);
+		});
+		return L;
+	};
+
+	L.remove = function(name) {
+		Object.keys(M.controllers).forEach(function(key) {
+			if (!name || key === name)
+				M.controllers[key].remove();
+		});
+		return L;
 	};
 
 	// ===============================================================
@@ -1908,15 +2061,16 @@
 	function middleware(path, value, type, callback) {
 
 		var index = path.indexOf(' #');
-
 		if (index === -1) {
 			callback(path, value);
 			return;
 		}
 
 		var a = path.substring(0, index);
+
 		if (value === undefined)
 			value = get(a);
+
 		W.MIDDLEWARE(path.substring(index + 1).trim().replace(/\#/g, '').split(' '), value, function(value) {
 			callback(a, value);
 		}, a);
@@ -2249,8 +2403,6 @@
 			return;
 		}
 
-		var scopes = $(ATTRSCOPE);
-		var scopes_length = scopes.length;
 		var has = false;
 
 		crawler(container, function(name, dom) {
@@ -2266,6 +2418,7 @@
 
 			var instances = [];
 			var all = name.split(',');
+			var scope = el.closest(ATTRSCOPE);
 
 			all.forEach(function(name) {
 				name = name.trim();
@@ -2294,13 +2447,16 @@
 					return;
 				}
 
-				var obj = com(el);
-				if (obj.init) {
-					if (!statics[name]) {
-						statics[name] = true;
-						obj.init();
-					}
-					obj.init = undefined;
+				var obj = new COM(com.name);
+				obj.global = com.shared;
+				obj.element = el;
+				obj.setPath(attrcom(el, 'path') || obj._id, 1);
+
+				com.declaration.call(obj, obj);
+
+				if (obj.init && !statics[name]) {
+					statics[name] = true;
+					obj.init();
 				}
 
 				obj.$init = attrcom(el, 'init') || null;
@@ -2314,45 +2470,20 @@
 					obj.$noscope = attrcom(el, 'noscope') === 'true';
 
 				var code = obj.path ? obj.path.charCodeAt(0) : 0;
-				if (!obj.$noscope && scopes_length) {
-					for (var i = 0; i < scopes_length; i++) {
+				if (!obj.$noscope && scope.length) {
 
-						if (!$.contains(scopes[i], dom))
-							continue;
+					var output = initscopes(scope);
 
-						var p = scopes[i].$scope || attrcom(scopes[i], 'scope');
-
-						scopes[i].$initialized = true;
-
-						if (!scopes[i].$processed) {
-							scopes[i].$processed = true;
-
-							if (!p || p === '?') {
-								p = GUID(25).replace(/\d/g, '');
-								scopes[i].$scope = p;
-							}
-
-							var tmp = attrcom(scopes[i], 'value');
-							if (tmp) {
-								var fn = new Function('return ' + tmp);
-								defaults['#' + W.HASH(p)] = fn; // store by path (DEFAULT() --> can reset scope object)
-								tmp = fn();
-								set(p, tmp);
-								emitwildcard(p, tmp, 1);
-							}
-						}
-
-						if (obj.path && code !== 33 && code !== 35)
-							obj.setPath(obj.path === '?' ? p : (obj.path.indexOf('?') === -1 ? p + '.' + obj.path : obj.path.replace(/\?/g, p)));
-						else {
-							obj.$$path = EMPTYARRAY;
-							obj.path = '';
-						}
-
-						obj.scope = scopes[i];
-						obj.$controller = attrcom(scopes[i], 'controller');
-						obj.pathscope = p;
+					if (obj.path && code !== 33 && code !== 35)
+						obj.setPath(obj.path === '?' ? output.path : (obj.path.indexOf('?') === -1 ? output.path + '.' + obj.path : obj.path.replace(/\?/g, output.path)), 2);
+					else {
+						obj.$$path = EMPTYARRAY;
+						obj.path = '';
 					}
+
+					obj.scope = output.elements;
+					obj.$controller = attrcom(scope, 'controller');
+					obj.pathscope = output.path;
 				}
 
 				instances.push(obj);
@@ -2444,6 +2575,85 @@
 		}, nextpending);
 	}
 
+	function initscopes(scope) {
+
+		if (scope[0].$scopedata)
+			return scope[0].$scopedata;
+
+		var path = attrcom(scope, 'scope');
+		var independent = path.substring(0, 1) === '!';
+
+		if (independent)
+			path = path.substring(1);
+
+		var arr = [scope];
+
+		if (!independent) {
+			var index = 0;
+			var parent = scope;
+			while (true) {
+				index++;
+				if (index > 2)
+					break;
+				parent = parent.parent().closest(ATTRSCOPE);
+				if (!parent.length)
+					break;
+				arr.push(parent);
+			}
+		}
+
+		var absolute = '';
+
+		arr.length && arr.reverse();
+
+		for (var i = 0, length = arr.length; i < length; i++) {
+
+			var sc = arr[i][0];
+			var p = sc.$scope || attrcom(sc, 'scope');
+
+			sc.$initialized = true;
+
+			if (sc.$processed) {
+				if (sc.$independent)
+					absolute = p;
+				else
+					absolute += (absolute ? '.' : '') + p;
+				continue;
+			}
+
+			sc.$processed = true;
+			sc.$independent = p.substring(0, 1) === '!';
+
+			if (sc.$independent)
+				p = p.substring(1);
+
+			if (!p || p === '?')
+				p = GUID(25).replace(/\d/g, '');
+
+			if (sc.$independent)
+				absolute = p;
+			else
+				absolute += (absolute ? '.' : '') + p;
+
+			sc.$scope = absolute;
+			sc.$scopedata = { path: absolute, elements: arr.slice(0, i + 1) };
+
+			var tmp = attrcom(sc, 'value');
+			if (tmp) {
+				var fn = new Function('return ' + tmp);
+				defaults['#' + W.HASH(p)] = fn; // store by path (DEFAULT() --> can reset scope object)
+				tmp = fn();
+				set(p, tmp);
+				emitwildcard(p, tmp, 1);
+			}
+
+			tmp = attrcom(sc, 'init');
+			tmp && W.EXEC(tmp, p, $(sc));
+		}
+
+		return scope[0].$scopedata;
+	}
+
 	function appdependencies(d, id, dom) {
 
 		$(dom).data(ATTRDATA, EMPTYOBJECT);
@@ -2471,15 +2681,22 @@
 
 	function appcreate(d, id, dom) {
 		var el = $(dom);
-		var key = id ? ('app.' + name + '.' + id + '.options') : null;
+		var key = id ? ('app.' + d.name + '.' + id + '.options') : null;
 		d.html && el.empty().append(d.html);
 		id = 'app' + W.HASH(id);
-		var app = new APP(id, el, d, key);
+
+		var initd = el.attr('data-ja-path');
+		if (initd)
+			initd = get(initd);
+		else
+			initd = undefined;
+
+		var app = new APP(id, el, d, key, initd);
 		app.$cache = key;
 		dom.$app = app;
 		el.data(ATTRDATA, app);
 		M.apps.push(app);
-		M.emit('app.instance', app, d);
+		M.emit('app.instance', app, d, initd);
 		REGCOM.test(d.html) && compile(el);
 		var cls = attrapp(el, 'class');
 		if (cls) {
@@ -2556,7 +2773,7 @@
 				if (statics[key])
 					response = removescripts(response);
 				else
-					response = importstyles(response);
+					response = importscripts(importstyles(response));
 
 				can = response && REGCOM.test(response);
 
@@ -2566,17 +2783,18 @@
 				item.element.html(response);
 				statics[key] = true;
 
+				/* I DON'T KNOW WHAT IS IT.
 				if (can && item.path) {
 					var com = item.element.find(ATTRCOM);
 					com.each(function() {
 						var el = $(this);
 						$.each(this.attributes, function() {
-							// @TODO: this.specified --> WTF?
-							this.specified && el.attr(this.name, this.value.replace('$', item.path));
+							var self = this;
+							self.specified && el.attr(self.name, self.value.replace('$', item.path));
 						});
 					});
 				}
-
+				*/
 				item.toggle.length && item.toggle[0] && toggles.push(item);
 
 				if (item.callback && !attrcom(item.element)) {
@@ -2731,7 +2949,7 @@
 
 				if (!obj.$binded) {
 					obj.$binded = true;
-					middleware(obj.middleware, value, 1, function(path, value) {
+					middleware(obj.path + obj.middleware, value, 1, function(path, value) {
 						obj.setter(value, obj.path, 0);
 						obj.$interaction(0);
 					});
@@ -2941,11 +3159,15 @@
 
 			C.is = false;
 
-			$(ATTRSCOPE).each(function() {
+			$(ATTRSCOPECTRL).each(function() {
 
 				var t = this;
+				var controller = attrcom(t, 'controller');
 
-				if (!t.$initialized || t.$ready)
+				if (controller) {
+					if (t.$ready)
+						return;
+				} else if (!t.$initialized || t.$ready)
 					return;
 
 				var scope = $(t);
@@ -2963,7 +3185,6 @@
 					})(cls);
 				}
 
-				var controller = attrcom(t, 'controller');
 				if (controller) {
 					var ctrl = CONTROLLER(controller);
 					if (ctrl)
@@ -3011,17 +3232,71 @@
 		return str.replace(REGSCRIPT, function(text) {
 			var index = text.indexOf('>');
 			var scr = text.substring(0, index + 1);
-			return scr.substring(0, 6) === '<style' || scr === '<script>' || scr.indexOf('/javascript"') !== -1 ? '' : text;
+			return scr.substring(0, 6) === '<style' || (scr.substring(0, 7) === '<script' && scr.indexOf('type="') === -1) || scr.indexOf('/javascript"') !== -1 ? '' : text;
 		});
 	}
 
+	function importscripts(str, id) {
+
+		var beg = -1;
+		var output = str;
+		var builder = [];
+		var scr;
+
+		while (true) {
+			beg = str.indexOf('<script', beg);
+			if (beg === -1)
+				break;
+			var end = str.indexOf('</script>', beg + 9);
+			var code = str.substring(beg, end + 9);
+			beg = end + 9;
+
+			end = code.indexOf('>');
+
+			scr = code.substring(0, end);
+			if (scr.indexOf('type=') !== -1 && scr.lastIndexOf('javascript') === -1)
+				continue;
+
+			output = output.replace(code, '').trim();
+			builder.push(code.substring(end + 1, code.length - 9).trim());
+		}
+
+		var key = 'js' + (id || '');
+
+		if (id) {
+			if (statics[key])
+				$('#' + key).remove();
+			else
+				statics[key] = true;
+		}
+
+		scr = document.createElement('script');
+		scr.type = 'text/javascript';
+		scr.text = builder.join('\n');
+		id && (scr.id = key);
+		document.body.appendChild(scr);
+		return output;
+	}
+
 	function importstyles(str, id) {
-		return str.replace(REGCSS, function(text) {
+		var builder = [];
+		str = str.replace(REGCSS, function(text) {
 			text = text.replace('<style>', '<style type="text/css">');
-			id && (text = text.replace('<style', '<style ' + id));
-			$(text).appendTo('head');
+			builder.push(text.substring(25, text.length - 8).trim());
 			return '';
 		});
+
+		var key = 'css' + (id || '');
+
+		if (id) {
+			if (statics[key])
+				$('#' + key).remove();
+			else
+				statics[key] = true;
+		}
+
+		$('<style' + (id ? ' id="' + key + '"' : '') + '>{0}</style>'.format(builder.join('\n'))).appendTo('head');
+		return str;
 	}
 
 	function remap(path, value) {
@@ -3207,7 +3482,7 @@
 				continue;
 			}
 
-			if (component.$removed)
+			if (!component.$removed || component.$removed === 2)
 				continue;
 
 			if (component.element && component.element.closest(document.documentElement).length) {
@@ -3227,7 +3502,7 @@
 			component.element.find('*').off();
 			component.element.remove();
 			component.element = null;
-			component.$removed = true;
+			component.$removed = 2;
 			component.path = null;
 			component.setter = null;
 			component.getter = null;
@@ -3387,6 +3662,18 @@
 
 	var PPP = PROPERTY.prototype;
 
+	PPP.make = function(fn) {
+		var self = this;
+		if (self.length)
+			fn.call(self, self);
+		else {
+			setTimeout(function(self, fn) {
+				self.make(fn);
+			}, 200, self, fn);
+		}
+		return self;
+	};
+
 	PPP.refresh = function() {
 		var self = this;
 		self.element = typeof(self.selector) === 'function' ? self.selector(self.container.element) : self.container.element.find(self.selector);
@@ -3395,9 +3682,10 @@
 	};
 
 	PPP.replace = function(el) {
-		this.element.replaceWith(el);
-		this.element = el;
-		return this;
+		var self = this;
+		self.element.replaceWith(el);
+		self.element = el;
+		return self;
 	};
 
 	PPP.$refresh = function() {
@@ -3418,11 +3706,31 @@
 		return this;
 	};
 
+	PPP.src = function(url) {
+		var self = this;
+		self.element.attr('src', url);
+		return self;
+	};
+
+	// ===============================================================
+	// CONTROLLER DECLARATION
+	// ===============================================================
+
+	function Controller(name) {
+		var self = this;
+		self.$events = {};
+		self.scope = '';
+		self.name = name;
+		self.element = null;
+	}
+
+	var PCTRL = Controller.prototype;
+
 	// ===============================================================
 	// APPLICATION DECLARATION
 	// ===============================================================
 
-	function APP(id, element, declaration, key) {
+	function APP(id, element, declaration, key, data) {
 		var self = this;
 		self.$events = {};
 		self.id = id;
@@ -3436,91 +3744,103 @@
 		self.declaration = declaration;
 		self.$load(function(options) {
 			self.options = $.extend(true, CLONE(declaration.options), options || EMPTYOBJECT);
-			declaration.install.call(self, self);
-			self.make && self.make();
+			declaration.install.call(self, self, data);
+			self.make && self.make(data);
 		});
 	}
 
 	var PPA = APP.prototype;
 
-	APP.prototype.change = function() {
+	PPA.change = function() {
 		this.$save();
 		return this;
 	};
 
-	APP.prototype.emit = function(name) {
-		var e = this.$events[name];
+	PPA.emit = PCTRL.emit = function(name) {
+		var self = this;
+		var e = self.$events[name];
 		if (e && e.length) {
 			for (var i = 0, length = e.length; i < length; i++)
-				e[i].call(this, arguments[1], arguments[2], arguments[3], arguments[4], arguments[5]);
+				e[i].call(self, arguments[1], arguments[2], arguments[3], arguments[4], arguments[5]);
 		}
-		return this;
+		return self;
 	};
 
-	APP.prototype.on = function(name, fn) {
-		var e = this.$events[name];
-		!e && (this.$events[name] = e = []);
+	PPA.on = PCTRL.on = function(name, fn) {
+		var self = this;
+		var e = self.$events[name];
+		!e && (self.$events[name] = e = []);
 		e.push(fn);
-		return this;
+		return self;
 	};
 
-	APP.prototype.path = function(path) {
-		return this.scope + (path ? '.' + path : '');
+	PPA.path = PCTRL.path = function(path) {
+		var self = this;
+
+		if (!self.scope && self instanceof Controller) {
+			var k = '$ctrl' + self.name;
+			if (!warnings[k]) {
+				warn('Controller "{0}" doesn\'t have defined a scope for path "{1}".'.format(name, path));
+				warnings[k] = true;
+			}
+		}
+
+		return self.scope + (path ? (self.scope ? '.' : '') + path : '');
 	};
 
-	APP.prototype.set = function(path, value, type) {
+	PPA.set = PCTRL.set = function(path, value, type) {
 		var self = this;
 		M.set(self.path(path), value, type);
 		return self;
 	};
 
-	APP.prototype.update = function(path, reset, type) {
+	PPA.update = PCTRL.update = function(path, reset, type) {
 		var self = this;
 		M.update(self.path(path), reset, type);
 		return self;
 	};
 
-	APP.prototype.notify = function(path) {
+	PPA.notify = PCTRL.notify = function(path) {
 		var self = this;
 		M.notify(self.path(path));
 		return self;
 	};
 
-	APP.prototype.inc = function(path, value, type) {
+	PPA.inc = PCTRL.inc = function(path, value, type) {
 		var self = this;
 		M.inc(self.path(path), value, type);
 		return self;
 	};
 
-	APP.prototype.push = function(path, value, type) {
+	PPA.push = PCTRL.push = function(path, value, type) {
 		var self = this;
 		M.push(self.path(path), value, type);
 		return self;
 	};
 
-	APP.prototype.extend = function(path, value, type) {
+	PPA.extend = PCTRL.extend = function(path, value, type) {
 		var self = this;
 		M.extend(self.path(path), value, type);
 		return self;
 	};
 
-	APP.prototype.rewrite = function(path, value) {
+	PPA.rewrite = PCTRL.rewrite = function(path, value) {
 		var self = this;
 		M.rewrite(self.path(path), value);
 		return self;
 	};
 
-	APP.prototype.default = function(path, timeout, onlyComponent, reset) {
+	PPA.default = PCTRL.default = function(path, timeout, onlyComponent, reset) {
 		var self = this;
 		M.default(self.path(path), timeout, onlyComponent, reset);
 		return self;
 	};
 
-	APP.prototype.get = function(path) {
+	PPA.get = PCTRL.get = function(path) {
 		return get(self.path(path));
 	};
 
-	APP.prototype.attr = function(name, value) {
+	PPA.attr = function(name, value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.attr(name);
@@ -3528,7 +3848,7 @@
 		return this;
 	};
 
-	APP.prototype.remove = function(noremove) {
+	PPA.remove = PPA.destroy = function(noremove) {
 		var self = this;
 		self.destroy && self.destroy();
 		self.emit('destroy');
@@ -3547,13 +3867,13 @@
 		return self;
 	};
 
-	APP.prototype.$load = function(callback) {
+	PPA.$load = function(callback) {
 		var self = this;
 		callback(self.key ? M.cache(self.key) : null);
 		return self;
 	};
 
-	APP.prototype.$save = function() {
+	PPA.$save = function() {
 		var self = this;
 		self.key && M.cache(self.key, self.options, '1 year');
 		return self;
@@ -3564,35 +3884,36 @@
 	// ===============================================================
 
 	function COM(name) {
-		this._id = 'component' + (C.counter++);
-		this.usage = new USAGE();
-		this.$dirty = true;
-		this.$valid = true;
-		this.$validate = false;
-		this.$parser = [];
-		this.$formatter = [];
-		this.$skip = false;
-		this.$ready = false;
-		this.$path;
-		this.trim = true;
-		this.middleware = ''; // internal
-		this.$released = false;
+		var self = this;
+		self._id = 'component' + (C.counter++);
+		self.usage = new USAGE();
+		self.$dirty = true;
+		self.$valid = true;
+		self.$validate = false;
+		self.$parser = [];
+		self.$formatter = [];
+		self.$skip = false;
+		self.$ready = false;
+		self.$path;
+		self.trim = true;
+		self.middleware = ''; // internal
+		self.$released = false;
 
-		this.name = name;
-		this.path;
-		this.type;
-		this.id;
-		this.disabled = false;
+		self.name = name;
+		self.path;
+		self.type;
+		self.id;
+		self.disabled = false;
 
-		this.make;
-		this.done;
-		this.prerender;
-		this.destroy;
-		this.state;
-		this.validate;
-		this.released;
+		self.make;
+		self.done;
+		self.prerender;
+		self.destroy;
+		self.state;
+		self.validate;
+		self.released;
 
-		this.release = function(value) {
+		self.release = function(value) {
 
 			var self = this;
 			if (value === undefined || self.$removed)
@@ -3625,7 +3946,7 @@
 			return value;
 		};
 
-		this.getter = function(value, type, dirty, older, skip) {
+		self.getter = function(value, type, dirty, older, skip) {
 
 			var self = this;
 			value = self.parser(value);
@@ -3650,11 +3971,11 @@
 				self.$skip = false;
 
 			self.getter2 && self.getter2.apply(self, arguments);
-			self.set(self.path + self.middleware, value, type);
+			self.set(self.path, value, type);
 			return self;
 		};
 
-		this.setter = function(value, path, type) {
+		self.setter = function(value, path, type) {
 
 			var self = this;
 
@@ -3701,7 +4022,13 @@
 
 	var PPC = COM.prototype;
 
-	PPC.exec = function(name, a, b, c, d, e) {
+	PPC.import = PPA.import = PPP.import = PCTRL.import = function(url, callback, insert, preparator) {
+		var self = this;
+		M.import(url, self.element, callback, insert, preparator);
+		return self;
+	};
+
+	PPC.exec = PPA.exec = PCTRL.exec = function(name, a, b, c, d, e) {
 		var self = this;
 		self.find(ATTRCOM).each(function() {
 			var t = this;
@@ -3802,7 +4129,7 @@
 		return self;
 	};
 
-	PPC.classes = PPA.classes = PPP.classes = function(cls) {
+	PPC.classes = PPA.classes = PPP.classes = PCTRL.classes = function(cls) {
 
 		var key = 'cls.' + cls;
 		var tmp = temp[key];
@@ -3837,7 +4164,7 @@
 		return t;
 	};
 
-	PPC.toggle = PPA.toggle = PPP.toggle = function(cls, visible, timeout) {
+	PPC.toggle = PPA.toggle = PPP.toggle = PCTRL.toggle = function(cls, visible, timeout) {
 
 		var manual = false;
 		var self = this;
@@ -3914,7 +4241,11 @@
 		return self;
 	};
 
-	PPC.setPath = function(path, init) {
+	PPC.setPath = function(path, type) {
+
+		// type 1: init
+		// type 2: scope
+
 		var self = this;
 
 		// Operations
@@ -3933,10 +4264,11 @@
 		}
 
 		var index = path.indexOf(' #');
+
 		if (index !== -1) {
 			self.middleware = path.substring(index);
 			path = path.substring(0, index);
-		} else
+		} else if (type !== 2)
 			self.middleware = '';
 
 		self.path = path;
@@ -3954,11 +4286,11 @@
 		}
 
 		self.$$path = pre;
-		!init && C.ready && refresh();
+		type !== 1 && C.ready && refresh();
 		return self;
 	};
 
-	PPC.attr = PPA.attr = PPP.attr = function(name, value) {
+	PPC.attr = PPA.attr = PPP.attr = PCTRL.attr = function(name, value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.attr(name);
@@ -3966,7 +4298,7 @@
 		return this;
 	};
 
-	PPC.css = PPA.css = PPP.css = function(name, value) {
+	PPC.css = PPA.css = PPP.css = PCTRL.css = function(name, value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.css(name);
@@ -3974,7 +4306,15 @@
 		return this;
 	};
 
-	PPC.html = PPA.html = PPP.html = function(value) {
+	PPC.closest = PPA.closest = PPP.closest = PCTRL.closest = function(sel) {
+		return this.element.closest(sel);
+	};
+
+	PPC.parent = PPA.parent = PPP.parent = PCTRL.parent = function(sel) {
+		return this.element.parent(sel);
+	};
+
+	PPC.html = PPA.html = PPP.html = PCTRL.html = function(value) {
 		var el = this.element;
 		var current = el.html();
 		if (value === undefined)
@@ -3987,37 +4327,38 @@
 		return value || type === 'number' || type === 'boolean' ? el.empty().append(value) : el.empty();
 	};
 
-	PPC.empty = PPA.empty = PPP.empty = function() {
+	PPC.empty = PPA.empty = PPP.empty = PCTRL.empty = function() {
 		var el = this.element;
 		el.empty();
 		return el;
 	};
 
-	PPC.append = PPA.append = PPP.append = function(value) {
+	PPC.append = PPA.append = PPP.append = PCTRL.append = function(value) {
 		var el = this.element;
 		if (value instanceof Array)
 			value = value.join('');
 		return value ? el.append(value) : el;
 	};
 
-	PPC.event = PPA.event = PPP.event = PPP.on = function() {
+	PPC.event = PPA.event = PPP.event = PPP.on = PCTRL.event = function() {
 		var self = this;
 		self.element.on.apply(self.element, arguments);
 		return self;
 	};
 
-	PPC.find = PPA.find = PPP.find = function(selector) {
+	PPC.find = PPA.find = PPP.find = PCTRL.find = function(selector) {
 		return this.element.find(selector);
 	};
 
-	PPC.virtualize = PPA.virtualize = function(mapping) {
+	PPC.virtualize = PPA.virtualize = PCTRL.virtualize = function(mapping) {
 		return W.VIRTUALIZE(this.element, mapping);
 	};
 
 	PPC.isInvalid = function() {
-		var is = !this.$valid;
-		if (is && !this.$validate)
-			is = !this.$dirty;
+		var self = this;
+		var is = !self.$valid;
+		if (is && !self.$validate)
+			is = !self.$dirty;
 		return is;
 	};
 
@@ -4064,8 +4405,9 @@
 	};
 
 	PPC.change = function(value) {
-		M.change(this.path, value === undefined ? true : value, this);
-		return this;
+		var self = this;
+		M.change(self.path, value === undefined ? true : value, self);
+		return self;
 	};
 
 	PPC.used = function() {
@@ -4074,22 +4416,25 @@
 
 	PPC.dirty = function(value, noEmit) {
 
+		var self = this;
+
 		if (value === undefined)
-			return this.$dirty;
+			return self.$dirty;
 
-		if (this.$dirty_disabled)
-			return this;
+		if (self.$dirty_disabled)
+			return self;
 
-		this.$dirty = value;
-		this.$interaction(101);
+		self.$dirty = value;
+		self.$interaction(101);
 		clear('dirty');
-		!noEmit && this.state && this.state(2, 2);
-		return this;
+		!noEmit && self.state && self.state(2, 2);
+		return self;
 	};
 
 	PPC.reset = function() {
-		M.reset(this.path, 0, this);
-		return this;
+		var self = this;
+		M.reset(self.path, 0, self);
+		return self;
 	};
 
 	PPC.setDefault = function(value) {
@@ -4100,8 +4445,9 @@
 	};
 
 	PPC.default = function(reset) {
-		M.default(this.path, 0, this, reset);
-		return this;
+		var self = this;
+		M.default(self.path, 0, self, reset);
+		return self;
 	};
 
 	PPC.remove = function(noClear) {
@@ -4109,7 +4455,7 @@
 		self.element.removeData(ATTRDATA);
 		self.element.find(ATTRCOM).attr(ATTRDEL, 'true');
 		self.element.attr(ATTRDEL, 'true');
-		self.$removed = true;
+		self.$removed = 1;
 		if (!noClear) {
 			clear();
 			setTimeout2('$cleaner', cleaner, 100);
@@ -4216,13 +4562,15 @@
 
 	PPC.set = function(path, value, type) {
 
+		var self = this;
+
 		if (value === undefined) {
 			value = path;
-			path = this.path;
+			path = self.path;
 		}
 
 		path && M.set(path, value, type);
-		return this;
+		return self;
 	};
 
 	PPC.inc = function(path, value, type) {
@@ -4324,6 +4672,7 @@
 		obj.App = PPA;
 		obj.Component = PPC;
 		obj.Usage = USAGE.prototype;
+		obj.Controller = PCTRL;
 		fn.call(obj, obj);
 		return M;
 	};
@@ -4376,9 +4725,11 @@
 	};
 
 	W.COMPONENT_EXTEND = function(name, declaration) {
-		if (!extensions[name])
-			extensions[name] = [];
-		extensions[name].push(declaration);
+
+		if (extensions[name])
+			extensions[name].push(declaration);
+		else
+			extensions[name] = [declaration];
 
 		for (var i = 0, length = M.components.length; i < length; i++) {
 			var m = M.components[i];
@@ -4388,20 +4739,8 @@
 	};
 
 	W.COMPONENT = function(name, declaration) {
-
-		var shared = {};
-
-		var fn = function(el) {
-			var obj = new COM(name);
-			obj.global = shared;
-			obj.element = el;
-			obj.setPath(attrcom(el, 'path') || obj._id, true);
-			declaration.call(obj);
-			return obj;
-		};
-
 		M.$components[name] && warn('Components: Overwriting component:', name);
-		M.$components[name] = fn;
+		M.$components[name] = { name: name, declaration: declaration, shared: {} };
 	};
 
 	W.SINGLETON = function(name, def) {
@@ -4549,6 +4888,7 @@
 
 		var context = {};
 		name.waitFor(function(name, next) {
+
 			var mid = middlewares[name];
 
 			if (mid) {
@@ -4635,9 +4975,21 @@
 		var c = path.charCodeAt(0);
 		if (c === 35) {
 			OPERATION(path).apply(W, arg);
-			return EXEC;
+			return W.EXEC;
 		}
 
+		// CONTROLLER
+		if (c === 64) {
+			var index = path.indexOf('.');
+			var ctrl = CONTROLLER(path.substring(1, index));
+			if (ctrl) {
+				var fn = ctrl[path.substring(index + 1)];
+				typeof(fn) === 'function' && fn.apply(ctrl, arg);
+			}
+			return W.EXEC;
+		}
+
+		// CONTROLLER
 		var index = path.indexOf('/');
 		if (index !== -1) {
 			var ctrl = CONTROLLER(path.substring(0, index));
@@ -4974,6 +5326,10 @@
 		return M.on(name, path, fn, init);
 	};
 
+	W.OFF = function(name, fn) {
+		return M.off(name, fn);
+	};
+
 	W.EMIT = M.emit;
 	W.EVALUATE = M.evaluate;
 
@@ -5096,46 +5452,80 @@
 	};
 
 	W.CONTROLLER = function() {
+
 		var callback = arguments[arguments.length - 1];
-
 		if (typeof(callback) !== 'function')
-			return controllers[arguments[0]];
+			return M.controllers[arguments[0]];
 
-		var obj = {};
-		obj.name = obj.path = arguments[0];
-		controllers[obj.name] = obj;
+		var obj = new Controller(arguments[0]);
+		obj.$callback = callback;
 
-		obj.get = function(path) {
-			return M.get(obj.path + (path ? '.' + path : ''));
-		};
+		M.controllers[obj.name] = obj;
 
-		obj.set = function(path, value, type) {
-			if (arguments.length === 1) {
-				value = path;
-				path = undefined;
-			}
-			M.set(obj.path + (path ? '.' + path : ''), value, type);
-			return obj;
-		};
+		var key = 'ctrl$' + obj.name;
 
-		obj.destroy = function() {
-			obj.element.remove();
-			delete controllers[obj.name];
-			setTimeout(cleaner, 500);
-			return undefined;
-		};
+		obj.$init = function(path, element) {
 
-		return obj.$init = function(path, element) {
-			obj.$init = undefined;
+			clearTimeout(statics[key]);
+
 			if (path)
-				obj.path = path;
-			obj.element = element;
-			callback.call(obj, obj, path, element);
+				obj.scope = path;
+
+			if (element)
+				obj.element = element;
+
+			if (obj.$callback) {
+				current_ctrl = obj.name;
+				obj.$callback.call(obj, obj, path, element);
+				obj.$callback = null;
+				current_ctrl = null;
+			}
+
 			return obj;
 		};
+
+		statics[key] = setTimeout(function() {
+			obj.$init();
+		}, 500);
+
+		return obj.$init;
+	};
+
+	PCTRL.remove = PCTRL.destroy = function() {
+
+		var self = this;
+
+		if (!M.controllers[self.name])
+			return;
+
+		self.emit('destroy');
+		delete M.controllers[self.name];
+
+		// Remove all global events
+		var evt = events[''];
+		if (evt) {
+			Object.keys(evt).forEach(function(key) {
+				evt[key] = evt[key].remove('controller', self.name);
+				if (!evt[key].length)
+					delete events[''][key];
+			});
+		}
+
+		// Remove schedulers
+		schedulers = schedulers.remove('controller', self.name);
+
+		setTimeout(function(scope) {
+			if (scope)
+				delete window[scope];
+			self.element && self.element.remove();
+			clear();
+			setTimeout(cleaner, 500);
+		}, 1000, self.scope);
 	};
 
 	W.VIRTUALIZE = function(el, map) {
+		if (el.element instanceof jQuery)
+			el = el.element;
 		!(el instanceof jQuery) && (el = $(el));
 		return new CONTAINER(el, map);
 	};
@@ -5165,25 +5555,23 @@
 	// PROTOTYPES
 	// ===============================================================
 
-	Array.prototype.waitFor = function(fn, callback) {
+	Array.prototype.waitFor = function(fn, callback, meta) {
 
-		if (fn.index === undefined)
-			fn.index = 0;
+		if (meta === undefined)
+			meta = { index: 0, value: null };
 
-		var index = fn.index;
 		var self = this;
-		var item = self[fn.index++];
+		var item = self[meta.index++];
 
 		if (!item) {
-			callback && callback(fn.value);
-			delete fn.value;
+			callback && callback(meta.value);
 			return self;
 		}
 
 		fn.call(self, item, function(value) {
-			fn.value = value;
-			self.waitFor(fn, callback);
-		}, index);
+			meta.value = value;
+			self.waitFor(fn, callback, meta);
+		}, meta.index);
 
 		return self;
 	};
@@ -5413,7 +5801,7 @@
 
 	String.prototype.toSearch = function() {
 
-		var str = this.replace(/[^a-zA-Zá-žÁ-Ž\d\s:]/g, '').trim().toLowerCase().removeDiacritics();
+		var str = this.replace(REGSEARCH, '').trim().toLowerCase().removeDiacritics();
 		var buf = [];
 		var prev = '';
 
@@ -5624,16 +6012,26 @@
 		var e = this, r = !1;
 		if (t && 33 === t.charCodeAt(0) && (r = !0, t = t.substring(1)), void 0 === t || null === t || '' === t) return e.getFullYear() + '-' + (e.getMonth() + 1).toString().padLeft(2, '0') + '-' + e.getDate().toString().padLeft(2, '0') + 'T' + e.getHours().toString().padLeft(2, '0') + ':' + e.getMinutes().toString().padLeft(2, '0') + ':' + e.getSeconds().toString().padLeft(2, '0') + '.' + e.getMilliseconds().padLeft(3, '0').toString() + 'Z';
 		var n = e.getHours();
+		var tmp;
 		return r && n >= 12 && (n -= 12), t.replace(M.regexp.date, function(t) {
 			switch (t) {
 				case 'yyyy':
 					return e.getFullYear();
 				case 'yy':
 					return e.getYear().toString().substring(1);
+				case 'MMMM':
+					return M.months[e.getMonth()];
+				case 'MMM':
+					tmp = M.months[e.getMonth()];
+					return tmp.length > 3 ? tmp.substring(0, 3) : tmp;
 				case 'MM':
 					return (e.getMonth() + 1).toString().padLeft(2, '0');
 				case 'M':
 					return e.getMonth() + 1;
+				case 'dddd':
+					return M.months[e.getMonth()];
+				case 'ddd':
+					return M.days[e.getDay()].substring(0, 2).toUpperCase();
 				case 'dd':
 					return e.getDate().toString().padLeft(2, '0');
 				case 'd':
@@ -5654,7 +6052,7 @@
 					return e.getSeconds();
 				case 'w':
 				case 'ww':
-					var tmp = new Date(+e);
+					tmp = new Date(+e);
 					tmp.setHours(0, 0, 0);
 					tmp.setDate(tmp.getDate() + 4 - (tmp.getDay() || 7));
 					tmp = Math.ceil((((tmp - new Date(tmp.getFullYear(), 0, 1)) / 8.64e7) + 1) / 7);
@@ -5750,11 +6148,13 @@
 
 	Number.prototype.add = Number.prototype.inc = function(value, decimals) {
 
+		var self = this;
+
 		if (value == null)
-			return this;
+			return self;
 
 		if (typeof(value) === 'number')
-			return this + value;
+			return self + value;
 
 		var first = value.charCodeAt(0);
 		var is = false;
@@ -5773,21 +6173,21 @@
 				var val = value.parseFloat();
 				switch (first) {
 					case 42:
-						num = this * ((this / 100) * val);
+						num = self * ((self / 100) * val);
 						break;
 					case 43:
-						num = this + ((this / 100) * val);
+						num = self + ((self / 100) * val);
 						break;
 					case 45:
-						num = this - ((this / 100) * val);
+						num = self - ((self / 100) * val);
 						break;
 					case 47:
-						num = this / ((this / 100) * val);
+						num = self / ((self / 100) * val);
 						break;
 				}
 				return decimals !== undefined ? num.floor(decimals) : num;
 			} else {
-				num = (this / 100) * value.parseFloat();
+				num = (self / 100) * value.parseFloat();
 				return decimals !== undefined ? num.floor(decimals) : num;
 			}
 
@@ -5796,19 +6196,19 @@
 
 		switch (first) {
 			case 42:
-				num = this * num;
+				num = self * num;
 				break;
 			case 43:
-				num = this + num;
+				num = self + num;
 				break;
 			case 45:
-				num = this - num;
+				num = self - num;
 				break;
 			case 47:
-				num = this / num;
+				num = self / num;
 				break;
 			default:
-				num = this;
+				num = self;
 				break;
 		}
 
@@ -5930,9 +6330,10 @@
 
 	Array.prototype.quicksort = function(name, asc, maxlength) {
 
-		var length = this.length;
+		var self = this;
+		var length = self.length;
 		if (!length || length === 1)
-			return this;
+			return self;
 
 		if (typeof(name) === 'boolean') {
 			asc = name;
@@ -5945,7 +6346,7 @@
 		if (asc === undefined)
 			asc = true;
 
-		var self = this;
+		var self = self;
 		var type = 0;
 		var field = name ? self[0][name] : self[0];
 
@@ -6000,13 +6401,15 @@
 
 	Array.prototype.attr = function(name, value) {
 
+		var self = this;
+
 		if (arguments.length === 2) {
 			if (value == null)
-				return this;
+				return self;
 		} else if (value === undefined)
 			value = name.toString();
 
-		this.push(name + '="' + value.toString().replace(/[<>&"]/g, function(c) {
+		self.push(name + '="' + value.toString().replace(/[<>&"]/g, function(c) {
 			switch (c) {
 				case '&': return '&amp;';
 				case '<': return '&lt;';
@@ -6016,7 +6419,7 @@
 			return c;
 		}) + '"');
 
-		return this;
+		return self;
 	};
 
 	Array.prototype.scalar = function(type, key, def) {
@@ -6025,9 +6428,10 @@
 		var isDate = false;
 		var isAvg = type === 'avg' || type === 'average';
 		var isDistinct = type === 'distinct';
+		var self = this;
 
-		for (var i = 0, length = this.length; i < length; i++) {
-			var val = key ? this[i][key] : this[i];
+		for (var i = 0, length = self.length; i < length; i++) {
+			var val = key ? self[i][key] : self[i];
 
 			if (typeof(val) === 'string')
 				val = val.parseFloat();
@@ -6088,7 +6492,7 @@
 			return output;
 
 		if (isAvg) {
-			output = output / this.length;
+			output = output / self.length;
 			return isDate ? new Date(output) : output;
 		}
 
@@ -6117,6 +6521,7 @@
 
 		setInterval(function() {
 			temp = {};
+			paths = {};
 			cleaner();
 		}, (1000 * 60) * 5);
 

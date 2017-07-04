@@ -9,7 +9,7 @@
 
 > __Download__: more than 80 jComponents for free for everyone <https://componentator.com>
 
-- Current version: `v10.0.0`
+- Current version: `v11.0.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -351,7 +351,7 @@ COMPONENT('my-component-name', function() {
     // instance.usage.convert('minutes')
     
     instance.scope;
-    // The property contains data-jc-scope element if exists.
+    // +v11.0.0 The property contains plain array of all jQuery elements of scopes.
     
     instance.pathscope;
     // The property contains value of data-jc-scope element if exists.
@@ -561,11 +561,26 @@ COMPONENT('my-component-name', function() {
     // jQuery.attr();
 
 
+    instance.import(url, [callback], [insert], [preparator(response)]);
+    // Imports resource into the this element
+    // Alias for MAIN.import();
+    // +v11.0.0
+
+
     instance.css(name, [value]);
     // Gets or Sets css in the component element.
     // jQuery.css();
     // +v9.0.0
 
+    instance.closest(selector);
+    // Finds superior elements
+    // jQuery.closest();
+    // +v11.0.0
+
+    instance.parent([selector]);
+    // Finds parent
+    // jQuery.parent();
+    // +v11.0.0
 
     instance.html([value]);
     // Gets or Sets inner HTML in the component element.
@@ -883,12 +898,15 @@ var value = MAIN.formatter('a-value', 'my.custom.path', 'number');
 // Runs the compiler for new components. jComponent doesn't watch new elements in DOM.MAINrewrite(path, value);
 MAIN.rewrite('model.name', 'Peter');
 // +v4.0.0 Rewrites the value in the model without notification
+// +v10.1.0 supports "@controllername.path"
 
 
 MAIN.set(path, value, [reset]);
 MAIN.set('model.name', 'Peter'); // Example: sets the value
 MAIN.set('+model.tags', 'HTML'); // Example: appends the value into the array
 MAIN.set('+model.tags', ['CSS', 'JavaScript']); // Example: appends the array into the array
+MAIN.set('!model.name', 'jComponent'); // Notifies all components which listen on this absolute path
+MAIN.set('@controllername.name', 'jComponent'); // +v10.1.0 sets a value according to the controller scope
 // Sets the value into the model. `reset` argument resets the state
 // (dirty, validation), default: `false`.
 
@@ -896,6 +914,7 @@ MAIN.set('+model.tags', ['CSS', 'JavaScript']); // Example: appends the array in
 MAIN.push(path, value, [reset]);
 MAIN.push('model.tags', 'HTML'); // Example
 MAIN.push('model.tags', ['CSS', 'JavaScript']); // Example
+// +v10.1.0 supports "@controllername.path"
 // Pushs the value in the model, only for arrays. `reset` argument resets
 // the state (dirty, validation), default: `false`.
 
@@ -903,12 +922,14 @@ MAIN.push('model.tags', ['CSS', 'JavaScript']); // Example
 MAIN.inc(path, value, [reset]);
 MAIN.inc('model.age', 10); // Example
 MAIN.inc('model.price', -5); // Example
+// +v10.1.0 supports "@controllername.path"
 // Increments the value in the model, only for numbers. `reset` argument
 // resets the state (dirty, validation), default: `false`.
 
 
 MAIN.extend(path, value, [reset]);
 MAIN.extend('model', { age: 30, name: 'Peter' }); // Example
+// +v10.1.0 supports "@controllername.path"
 // Extends the value in the model, only for objects. `reset` argument resets
 // the state (dirty, validation), default: `false`.
 
@@ -916,6 +937,7 @@ MAIN.extend('model', { age: 30, name: 'Peter' }); // Example
 MAIN.get(path, [scope]); // default scope is `window`
 MAIN.get('model.age'); // Example
 MAIN.get('model.tags'); // Example
+MAIN.get('@controllername.name'); // +v10.1.0 reads a value according to the controller scope
 // Gets the value from the model.
 
 
@@ -946,10 +968,12 @@ MAIN.findByPath('model', function(component) { console.log(component); });  // E
 
 
 MAIN.errors([path]);
+// +v10.1.0 supports "@controllername.path"
 // Returns array of invalid components.
 
 
 MAIN.invalid(path);
+// +v10.1.0 supports "@controllername.path"
 // Sets the invalid state to all components according the binding path.
 
 
@@ -961,9 +985,7 @@ MAIN.remove(jquery_element);
 MAIN.import(url, [target], [callback], [insert], [preparator(response)])
 // Imports a HTML content (with components) into the `target` (by default: `document.body`)
 // or can import scripts (.js) or styles (.css). `insert` argument (default: true) wraps
-// a new content into the <div data-jc-imported="RANDOM_NUMBER" element otherwise replaces
-// content of target element. 
-// If the URL starts with `ONCE http://...` then the content will downloaded only one time.
+// If the URL starts with `ONCE http://...` then the content will be downloaded only one time.
 // +v8.0.0 supports re-type of extension `https://maps.googleapis.com/maps/api/js?key=KEY .js`
 // +v8.0.0 styles are inserted into the head
 // +v9.0.0 added a preparator {Function} for preparing values, example `function(response) { return response; }` (it has to return a value)
@@ -990,12 +1012,14 @@ MAIN.can(path, [except_paths_arr]);
 // Returns {Boolean}.
 // Opposite of MAIN.disable()
 // Supports wildcard path, e.g. `model.*`.
+// +v10.1.0 supports "@controllername.path"
 
 
 MAIN.disabled(path, [except_paths_arr]);
 // Combines the dirty and valid method together (e.g. for disabling of buttons)
 // Opposite of MAIN.can()
 // Supports wildcard path, e.g. `model.*`.
+// +v10.1.0 supports "@controllername.path"
 
 
 MAIN.cache(key); // Example: Getter.
@@ -1009,17 +1033,20 @@ MAIN.cachepath(path, expire, [rebind]);
 // The method creates watcher for `path` and stores values into the localStorage
 // Returns {Components}.
 // +v9.0.0: added "rebind" argument (default: false)
+// +v10.1.0 supports "@controllername.path"
 
 
 MAIN.validate([path], [except_paths_arr]);
 // Validates all values according the path.
 // Returns {Boolean}.
 // Supports wildcard path, e.g. `model.*`.
+// +v10.1.0 supports "@controllername.path"
 
 
 MAIN.reset([path], [timeout]);
 // Reset the dirty and valid method together (Sets: dirty=true and valid=true)
 // Supports wildcard path, e.g. `model.*`.
+// +v10.1.0 supports "@controllername.path"
 
 
 MAIN.each(fn(component, index, isAsterix), path);
@@ -1071,7 +1098,7 @@ MAIN.REMOVECACHE(method, url, data);
 
 // +v3.7.0
 // AJAX calls
-MAIN.AJAX('METHOD URL', data, [callback(response, err, output) or path], [sleep], [error(response, status, output) or path]);
+MAIN.AJAX('METHOD URL', data, [callback(response, status, output) or path], [sleep], [error(response, status, output) or path]);
 // Is same as GET(), POST(), PUT(), DELETE(). When is throwed an error then
 // "response" is the empty object {}
 MAIN.AJAXCACHE('METHOD URL', data, [callback(response, isFromCache) or path], [expire], [sleep], [clear]);
@@ -1084,6 +1111,8 @@ MAIN.AJAXCACHE('METHOD URL', data, [callback(response, isFromCache) or path], [e
 
 // +v4.4.0 supports custom headers
 // AJAX('GET /api/ { customheader1: "value1", customerheader2: "value2" }', ...);
+
+// +v11.0.0 status can be 999 and this is unspecific network error.
 
 
 MAIN.evaluate(path, expression, [path_is_value]);
@@ -1134,6 +1163,11 @@ MAIN.schedule(selector, type, expire, callback);
 // Schedule executes timeout when is valid `selector` and `expire`.
 // Scheduler checks all tasks each 2 seconds (it has an internal optimalization for good performance).
 // types: `input` (affected by HTML inputs), `manually` (affected by developer), `init`
+// +v11.0.0 returns ID of scheduler
+
+MAIN.clearSchedule(id);
+// Removes scheduler
+// +v11.0.0
 
 MAIN.schedule('.find-by-path', 'input', '5 minutes', function(component) {
     AJAX('GET /api/refresh/', component.path);
@@ -1212,6 +1246,38 @@ ON('error', function(data) {
     // data.status   : {Number} HTTP status
     // data.headers  : {String} HTTP headers
 });
+
+
+OFF('error', [path], [fn]);
+// Removes events
+// +v10.1.0
+```
+
+### Events identificators
+
+- supported in +v10.1.0
+
+```javascript
+ON('pages#refresh', function() {
+    console.log('PAGES --> REFRESH');
+});
+
+ON('orders#refresh', function() {
+    console.log('ORDERS --> REFRESH');
+});
+
+EMIT('refresh');
+// PAGES --> REFRESH
+// ORDERS --> REFRESH
+
+// Removes all events with "pages" identificator
+OFF('pages#');
+
+// Removes "refresh" event with "pages" identificator
+OFF('pages#refresh');
+
+// Removes all "refresh" events
+OFF('refresh');
 ```
 
 ## Additional methods / helpers
@@ -1361,7 +1427,7 @@ PING('METHOD URL', [interval], [callback or path]);
 // Middleware
 
 // Registers MIDDLEWARE
-// MIDDLEWARE(name, fn(value, [path]));
+// MIDDLEWARE(name, fn(next, value, [path]));
 MIDDLEWARE('A-NAME', function(next, value, path) {
     value.count++;
     this.customvariable1 = true;
@@ -1402,6 +1468,10 @@ EXEC('path.to.method', 'hide', 1000);
 EXEC('CONTROLLER/method_name', 'hide', 1000);
 // Executes method in a controller
 // +v9.0.0
+
+EXEC('@CONTROLLER.method_name', 'hide', 1000);
+// Executes method in a controller
+// +v11.0.0
 
 // Registers a new workflow. Each workflow can have multiple implementation
 // and each implementation will be executed after another.
@@ -1675,47 +1745,124 @@ var interval = setInterval(function() {
 }, 100);
 ```
 
+### Scopes
+
+Improved scopes are supported in `+v11.0.0`. Scopes can create independent scope for all nested components.
+
+```html
+<!-- <div data-jc-scope="PATH"> -->
+<div data-jc-scope="users">
+    
+    <div data-jc="grid" data-jc-path="grid"></div>
+    <!-- PATH WILL BE: users.grid -->
+    
+    <div data-jc-scope="form">
+
+        <div data-jc="textbox" data-jc-path="name"></div>
+        <!-- PATH WILL BE: users.form.name -->
+
+        <div data-jc="textbox" data-jc-path="age"></div>
+        <!-- PATH WILL BE: users.form.age -->
+
+    </div>
+
+    <!-- INDEPENDENT SCOPES +v11.0.0 -->
+    <div data-jc-scope="!orders">
+
+        <div data-jc="grid" data-jc-path="grid"></div>
+        <!-- PATH WILL BE: orders.name -->
+
+        <div data-jc-scope="form">
+            <div data-jc="textbox" data-jc-path="name"></div>
+            <!-- PATH WILL BE: orders.form.name -->
+        </div>
+
+    </div>    
+</div>
+```
+
+__Good to know__:
+- `data-jc-scope="?"` generates a scope path randomly
+- `data-jc-scope="!PATH"` creates idependent scope (it doesn't inherit absolute path) `+v11.0.0`
+
 ### Controllers
 
 ```html
+
 <div data-jc-controller="users-controller">
-    <!--
-        IMPORTANT: in this element MUST CONTAIN some jComponents, otherwise the scope
-        won't be initialized.
-    -->
-    ... A CONTENT ...
+    <!-- OPTIONAL -->
 </div>
 
 <script>
 
-    CONTROLLER('users-controller', function(controller) {        
-        // this.path    --> scope attribute value
-        // this.element --> scope element (jQuery object)
-        // this.name    --> controller name
-        // this.set([additionaPath], value, [type]) --> sets a value
-        // this.get([additionaPath]) --> reads a value
+    CONTROLLER('users-controller', function(controller) {
+        // controller scope
+        // here you can defined your code and methods
     });
 
 </script>
-
-<!-- OR -->
-<!-- WITHOUT CONTROLLER -->
-
-<div data-jc-scope="?" data-jc-init="init_function">
-    <!--
-        IMPORTANT: in this element MUST CONTAIN some jComponents, otherwise the scope
-        won't be initialized.
-    -->
-    ... A CONTENT ...
-</div>
-
-<script>
-    function init_function(path, element) {
-
-    }
-</script>
 ```
 
+Improved controllers are supported in `+v11.0.0`.
+
+- controllers have own scopes
+- can be removed/added just-in-time
+
+### Controllers management
+
+- `MAIN.controllers` contains all instances of all registered controllers
+
+__Global__
+
+```javascript
+CONTROLLERS.items;                        // {Object} all registered controllers
+CONTROLLERS.emit(name, [a], [b], [n]);    // Emits event in all controller instances 
+CONTROLLERS.remove([name]);               // Removes controllers
+var ctrl = CONTROLLER('User');            // Gets a controller instance
+```
+
+__Instance properties/methods__:
+
+```javascript
+// REQUIRED
+CONTROLLER('Users', function(instance) {
+
+    // Properties
+    instance.scope;        // {String} name of scope
+    instance.name;         // {String} name of controller
+    instance.element;      // {jQuery} container (jQuery element)
+
+    // Methods
+    instance.emit(name, [a], [b], [c], ..);       // Emits event defined in controller
+    instance.on(name, fn);                        // Captures event
+    instance.find(selector);                      // Alias for "instance.element.find(selector)"
+    instance.append(value);                       // Alias for "instance.element.append()"
+    instance.html(value);                         // Alias for "instance.element.html()"
+    instance.event(name, [selector], callback);   // Alias for "instance.element.on()"
+    instance.path([path]);                        // Generates path according to the current scope
+    instance.set(path, value);                    // Sets a value according to the current scope
+    instance.update(path, [reset]);               // Updates current scope
+    instance.notify(path);                        // Notifies current scope
+    instance.inc(path, value);                    // Increases a value according to the current scope
+    instance.push(path, value);                   // Pushs a new value according to the current scope
+    instance.extend(path, value);                 // Extends an object according to the current scope
+    instance.rewrite(path, value);                // Rewrites a value with except notifications
+    instance.get(path);                           // Gets a value according to the current scope
+    instance.default(path);                       // Resets to default values
+    instance.toggle(cls, visible, [timeout]);     // Alias for "jQuery.toggleClass()"
+    instance.classes(string);                     // Toggles classes e.g. "+block -hidden"
+    instance.attr(name, [value]);                 // Alias for "jQuery.attr()"
+    instance.css(name, [value]);                  // Alias for "jQuery.css()"
+    instance.exec(name, [a], [b], [c]);           // Executes methods in all components
+    instance.empty();                             // Alias for "jQuery.empty()"
+    instance.remove();                            // Removes itself
+});
+```
+
+__Good to know__:
+- all registered events `ON()` + schedulers `SCHEDULE()` are removed too when controller is removed
+- controller can be defined without scope `<div data-jc-controller` and then the main scope is `window` object
+- `data-jc-scope=""` creates a scope for all nested components
 
 ## jQuery
 
@@ -1751,35 +1898,6 @@ var rect = g.psvg('rect');
 g.psvg('<rect width="100" height="100" fill="red"></rect>');
 ```
 
-## Special cases
-
-### Copy "data-jc-path" to nested component
-
-__Usage__:
-
-```html
-<div data-jc-url="/templates/grid.html" data-jc-path="grid.datasource"></div>
-```
-
-__Component__ `/templates/grid.html`:
-
-```html
-<!--
-    The library copies "data-jc-path" and replaces "$" in
-    a new template.
--->
-<div data-jc="grid" data-jc-path="$"></div>
-
-<script>
-    COMPONENT('grid', function() {
-        this.make = function() {
-            // It will be "grid.datasource"
-            console.log(self.path);
-        };
-    });
-</script>
-```
-
 ## Extending components
 
 - __v5.0.0__ offers a great way how to extend existing components:
@@ -1802,9 +1920,10 @@ Prototypes are supported in `+v10.0.0`.
 MAIN.prototypes(function(proto) {
     // proto.App
     // proto.Component
+    // proto.Container
+    // proto.Controller
     // proto.Property
     // proto.Usage
-    // proto.Container
 });
 ```
 
@@ -1846,6 +1965,35 @@ obj.empty();                             // Alias for "jQuery.empty()"
 obj.click();                             // Performs click+touchend event together
 obj.replace(newEl);                      // Replaces current element to new
 obj.refresh();                           // Refreshes binding to object according to the selector
+obj.make(callback);                      // Executes a callback when the element is attached
+obj.import(url, [callback], [insert], [preparator(response)]); // Alias for MAIN.import();
+
+```
+
+__Virtualized elements__:
+
+```javascript
+// Properties
+obj.something.container;                 // jQuery container
+obj.something.element;                   // jQuery element
+obj.something.selector;                  // {String} Selector
+obj.something.length;                    // {Number} Count of captured elements
+obj.something.id;                        // {String} Internal identificator
+
+// Methods
+obj.something.refresh();                 // Refreshes element by its selector
+obj.something.replace(el);               // Replaces element to another
+obj.something.click(callback(e));        // Captures "click/touchend" event
+obj.something.src(url);                  // Changes src="" attribute in the current element
+obj.something.classes(classes);          // Changes classes e.g. "-hidden +animation"
+obj.something.attr(name, [value]);       // Alias for "jQuery.attr()"
+obj.something.css(name, [value]);        // Alias for "jQuery.css()"
+obj.something.find(selector);            // Alias for "element.find(selector)"
+obj.something.append(value);             // Alias for "element.append()"
+obj.something.html(value);               // Alias for "element.html()"
+obj.something.toggle(cls, visible, [timeout]);    // Alias for "jQuery.toggleClass()"
+obj.something.event(name, [selector], callback);  // Alias for "element.on()"
+obj.something.import(url, [callback], [insert], [preparator(response)]); // Alias for MAIN.import();
 ```
 
 - `VIRTUALIZE()` still returns cached object
@@ -1867,6 +2015,7 @@ Applications are supported in `+v10.0.0`.
 - `MAIN.apps` contains all instances of all registered applications
 
 ```javascript
+APPS.items;                                 // {Object} all registered apps
 APPS.emit(name, [a], [b], [n]);             // Emits event in all app instances 
 APPS.import(url, [callback([err])]);        // Downloads application from URL
 APPS.compile(body);                         // Compiles and registers application (expects "String") and returns {Boolean}
@@ -1891,7 +2040,7 @@ exports.name = 'widget';
 exports.dependencies = ['url-to-script', 'url-to-style']; // OPTIONAL, it uses IMPORT() method
 
 // REQUIRED
-exports.install = function(instance) {
+exports.install = function(instance, initdata) {
     // Properties
     instance.scope;        // {String} name of scope
     instance.name;         // {String} name of application
@@ -1901,9 +2050,14 @@ exports.install = function(instance) {
     instance.element;      // {jQuery} container (jQuery element)
     instance.key;          // {String} cache key
     instance.declaration;  // {Object} a declaration of application
+    
+    // Delegates
+    instance.make = function(initdata) {
+        // initdata {Object/String/Number} according data-ja-path="" attribute
+    };
 
     // Methods
-    instance.emit(name, [a], [b], [c], ..);       // Emits event
+    instance.emit(name, [a], [b], [c], ..);       // Emits event in this app
     instance.on(name, fn);                        // Captures event
     instance.find(selector);                      // Alias for "instance.element.find(selector)"
     instance.append(value);                       // Alias for "instance.element.append()"
@@ -1924,7 +2078,9 @@ exports.install = function(instance) {
     instance.css(name, [value]);                  // Alias for "jQuery.css()"
     instance.empty();                             // Alias for "jQuery.empty()"
     instance.remove();                            // Removes itself
+    instance.exec(name, [a], [b], [c]);           // Executes methods in all components
     instance.$save();                             // Saves current options
+    instance.import(url, [callback], [insert], [preparator(response)]); // Alias for MAIN.import();
 };
 
 exports.uninstall = function() {
@@ -1940,7 +2096,7 @@ exports.uninstall = function() {
 <div data-ja-url="/newsletter.html"></div>
 
 <!-- USAGE -->
-<div data-ja="filter" data-ja-id="abc123456"></div>
+<div data-ja="filter" data-ja-id="abc123456" data-ja-path="path.to.initdata.optional"></div>
 <div data-ja="time" data-ja-id="bcd123456"></div>
 <div data-ja="newsletter" data-ja-id="cde123456"></div>
 <div data-ja="filter" data-ja-id="efg123456"></div>
@@ -2217,7 +2373,7 @@ __Pluralize__
 {{ count | pluralize('no users', '# user', '# users', '#users') }}
 ```
 
-### Async
+### Async
 
 __Simple usage__:
 
@@ -2326,20 +2482,25 @@ READY.push(function() {
 ## Reserved keywords
 
 ```javascript
-MAIN;      // jComponent main instance
-M;         // jComponent main instance
+MAIN;          // jComponent main instance
+M;             // jComponent main instance
 
-A;         // jComponent applications
-APPS;      // jComponent applications
+A;             // jComponent applications controller
+APPS;          // jComponent applications controller
 
-DATETIME;  // contains datetime value (jComponent refreshes the value each 60 seconds)
+CONTROLLERS;   // jComponent controllers controller (+v11.0.0)
+
+DATETIME;      // contains datetime value (jComponent refreshes the value each 60 seconds)
 
 // jcta.min.js, jctajr.min.js:
-Tangular; // shortcut for Tangular
-Ta;       // shortcut for Tangular
+Tangular;      // shortcut for Tangular
+Ta;            // shortcut for Tangular
 
 // jctajr.min.js:
-NAVIGATION;  // shortcut for jRouting (jComponent +v9.0.0)
+NAVIGATION;    // shortcut for jRouting (jComponent +v9.0.0)
+
+MONTHS;        // +v11.0.0 Array of month name
+DAYS;          // +v11.0.0 Array of day name
 
 // Special {Array} of {Functions}
 window.READY   // for asynchronous loading scripts
@@ -2351,6 +2512,7 @@ window.READY   // for asynchronous loading scripts
 - `MAIN.components` a list of all instances of all components
 - `MAIN.$apps` a list of all registered apps
 - `MAIN.apps` a list of all instances of all apps
+- `MAIN.controllers` a list of all instances of all controllers
 
 ## Authors + Contacts
 

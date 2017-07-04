@@ -14,7 +14,31 @@
 </head>
 <body style="font-family:Arial">
 
-	<div data-ja-url="app.html"></div>
+<div data-ja-url="app.html"></div>
+
+<div data-jc-scope="orders">
+	<div data-jc="a" data-jc-path="grid"></div>
+	<div data-jc-scope="!users">
+		<div data-jc="a" data-jc-path="grid"></div>
+		<div data-jc-scope="form">
+			<div data-jc="a" data-jc-path="name #A"></div>
+			<div data-jc="a" data-jc-path="age"></div>
+			<div data-jc="a" data-jc-path="year"></div>
+		</div>
+		<div data-jc="a" data-jc-path="pagination"></div>
+	</div>
+	<div data-jc="a" data-jc-path="pagination"></div>
+</div>
+
+<div data-ja="widget" data-ja-id="a" data-ja-path="form.value">
+	1
+</div>
+
+<div data-ja="widget" data-ja-id="b">
+	2
+</div>
+
+<!--
 
 	<div data-jc="a,b">
 		<br />
@@ -23,13 +47,6 @@
 		<br />
 	</div>
 
-	<div data-ja="widget" data-ja-id="a">
-		1
-	</div>
-
-	<div data-ja="widget" data-ja-id="b">
-		2
-	</div>
 
 	<div data-ja="widget" data-ja-id="c">
 		3
@@ -38,6 +55,7 @@
 	<div data-ja="widget" data-ja-id="d">
 		4
 	</div>
+-->
 
 	<script>
 		var form = {};
@@ -46,7 +64,9 @@
 		COMPONENT('a', function() {
 			var self = this;
 			self.make = function() {
-				console.log('A');
+			};
+			self.setter = function(value) {
+				console.log('VALUE --->', value);
 			};
 		});
 
@@ -58,19 +78,53 @@
 		});
 
 		MIDDLEWARE('A', function(next, value, path, type) {
-			console.log('MIDDLEWARE A', value, path);
+			console.log('M:', value, path);
 			if (typeof(value) === 'object') {
 				value.value = 3;
 				next();
-			} else
-				next('1');
+			} else {
+				next('MIDDLEWARE VALUE');
+			}
 			// next('petersirka@gmail.com');
 		});
 
-		SCHEDULE('.form.email', 'custom', '5 seconds', function(component) {
-			console.log('OK');
+		ON('pages#refresh', a);
+		ON('pages#refresh', b);
+
+		function a() {
+			console.log('SOM TU: A');
+		}
+
+		function b() {
+			console.log('SOM TU: B');
+		}
+/*
+		CONTROLLER('users', function() {
+			this.scope = 'users';
+
+			console.log(this);
+
+			ON('neviem', function() {
+				console.log('users: event');
+			});
+
+			this.fet = function() {
+				console.log('users: OK');
+			};
 		});
 
+		CONTROLLER('orders', function() {
+			console.log(this);
+
+			ON('neviem', function() {
+				console.log('orders: event');
+			});
+
+			this.fet = function() {
+				console.log('orders: OK');
+			};
+		});
+*/
 	</script>
 
 </body>
