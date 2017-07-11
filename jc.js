@@ -30,7 +30,7 @@
 	var paths = {}; // saved paths from get() and set()
 	var events = {};
 	var temp = {};
-	var mediaqueries = {};
+	var mediaqueries = [];
 	var singletons = {};
 	var schedulers = [];
 	var toggles = [];
