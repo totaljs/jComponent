@@ -4734,7 +4734,7 @@
 		for (var i = 0, length = M.components.length; i < length; i++) {
 			var m = M.components[i];
 			if (!m.$removed || name === m.name)
-				declaration.apply(m, m);
+				declaration.call(m, m);
 		}
 	};
 
