@@ -3954,7 +3954,7 @@
 			if (type === 2 && !skip)
 				self.$skip = true;
 
-			if (type !== 2 || (older !== null && older !== undefined)) {
+			if (type !== 2 || (older != null)) {
 				M.validate(self.path);
 				return self;
 			}
