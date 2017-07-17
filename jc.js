@@ -5365,7 +5365,7 @@
 	W.GUID = function(size) {
 		if (!size)
 			size = 10;
-		var l = ((size / 24) >> 0) + 1;
+		var l = ((size / 10) >> 0) + 1;
 		var b = [];
 		for (var i = 0; i < l; i++)
 			b.push(Math.random().toString(36).substring(2));
