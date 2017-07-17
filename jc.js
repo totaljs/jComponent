@@ -2083,14 +2083,14 @@
 
 		if (self.value !== self.$value2) {
 			var dirty = false;
-
-			if (e.keyCode !== 9) {
+			var code = e.keyCode || e.which;
+			if (code !== 9) {
 				if (self.$com.$dirty)
 					dirty = true;
 				self.$com.dirty(false, true);
 			}
 
-			self.$com.getter(self.value, 2, dirty, old, e.type === 'focusout' || e.keyCode === 13);
+			self.$com.getter(self.value, 2, dirty, old, e.type === 'focusout' || code === 13);
 			if (self.nodeName === 'INPUT' || self.nodeName === 'TEXTAREA') {
 				var val = self.$com.formatter(self.value);
 				if (self.value !== val) {
@@ -6673,14 +6673,14 @@
 
 				// IE 9+ PROBLEM
 				if ((e.type === 'input' && self.type !== 'range') || (e.type === 'keypress'))
-					return !(self.tagName !== 'TEXTAREA' && e.keyCode === 13);
+					return !(self.tagName !== 'TEXTAREA' && e.which === 13);
 
 				var special = self.type === 'checkbox' || self.type === 'radio' || self.type === 'range';// || self.tagName === 'SELECT';
 				if ((e.type === 'focusout' && special) || (e.type === 'change' && (!special && self.tagName !== 'SELECT')) || (!self.$com || self.$com.$removed || !self.$com.getter))
 					return;
 
 				// tab, alt, ctrl, shift, capslock
-				var code = e.keyCode;
+				var code = e.keyCode || e.which;
 				if (e.metaKey || code === 9 || (code > 15 && code < 21) || (code > 36 && code < 41)) {
 					// Paste / Cut
 					if (code !== 86 && code !== 88)
@@ -6688,7 +6688,7 @@
 				}
 
 				// Backspace
-				if (e.keyCode === 8 && !self.value)
+				if (code === 8 && !self.value)
 					return;
 
 				if (self.$skip && e.type === 'focusout') {
@@ -6732,11 +6732,11 @@
 				if (self.$only === undefined)
 					self.$only = attrcom(self, 'keypress-only') === 'true';
 
-				if ((self.$only && (e.type === 'focusout' || e.type === 'change')) || (e.type === 'keydown' && (e.keyCode === undefined || e.keyCode === 9)))
+				if ((self.$only && (e.type === 'focusout' || e.type === 'change')) || (e.type === 'keydown' && (code === undefined || code === 9)))
 					return;
 
-				if (e.keyCode < 41 && e.keyCode !== 8 && e.keyCode !== 32) {
-					if (e.keyCode !== 13)
+				if (code < 41 && code !== 8 && code !== 32) {
+					if (code !== 13)
 						return;
 					if (e.tagName !== 'TEXTAREA') {
 						self.$value = self.value;
