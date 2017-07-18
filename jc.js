@@ -3840,14 +3840,6 @@
 		return get(self.path(path));
 	};
 
-	PPA.attr = function(name, value) {
-		var el = this.element;
-		if (value === undefined)
-			return el.attr(name);
-		el.attr(name, value);
-		return this;
-	};
-
 	PPA.remove = PPA.destroy = function(noremove) {
 		var self = this;
 		self.destroy && self.destroy();
@@ -4291,6 +4283,15 @@
 	};
 
 	PPC.attr = PPA.attr = PPP.attr = PCTRL.attr = function(name, value) {
+		var el = this.element;
+		if (value === undefined)
+			return el.attr(name);
+		el.attr(name, value);
+		return this;
+	};
+
+	PPC.attrd = PPA.attrd = PPP.attrd = PCTRL.attrd = function(name, value) {
+		name = 'data-' + name;
 		var el = this.element;
 		if (value === undefined)
 			return el.attr(name);

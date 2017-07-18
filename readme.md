@@ -561,6 +561,11 @@ COMPONENT('my-component-name', function() {
     // jQuery.attr();
 
 
+    instance.attrd(name, [value]);
+    // Gets or Sets an "data-{name}" attribute in the component element.
+    // jQuery.attr();
+
+
     instance.import(url, [callback], [insert], [preparator(response)]);
     // Imports resource into the this element
     // Alias for MAIN.import();
@@ -1852,6 +1857,7 @@ CONTROLLER('Users', function(instance) {
     instance.toggle(cls, visible, [timeout]);     // Alias for "jQuery.toggleClass()"
     instance.classes(string);                     // Toggles classes e.g. "+block -hidden"
     instance.attr(name, [value]);                 // Alias for "jQuery.attr()"
+    instance.attrd(name, [value]);                // Alias for "jQuery.attr('data-{name}')"
     instance.css(name, [value]);                  // Alias for "jQuery.css()"
     instance.exec(name, [a], [b], [c]);           // Executes methods in all components
     instance.empty();                             // Alias for "jQuery.empty()"
@@ -1960,6 +1966,7 @@ obj.html(value);                         // Alias for "instance.element.html()"
 obj.event(name, [selector], callback);   // Alias for "instance.element.on()"
 obj.toggle(cls, visible, [timeout]);     // Alias for "jQuery.toggleClass()"
 obj.attr(name, [value]);                 // Alias for "jQuery.attr()"
+obj.attrd(name, [value]);                // Alias for "jQuery.attr('data-{name}')"
 obj.css(name, [value]);                  // Alias for "jQuery.css()"
 obj.empty();                             // Alias for "jQuery.empty()"
 obj.click();                             // Performs click+touchend event together
@@ -1987,6 +1994,7 @@ obj.something.click(callback(e));        // Captures "click/touchend" event
 obj.something.src(url);                  // Changes src="" attribute in the current element
 obj.something.classes(classes);          // Changes classes e.g. "-hidden +animation"
 obj.something.attr(name, [value]);       // Alias for "jQuery.attr()"
+obj.something.attrd(name, [value]);      // Alias for "jQuery.attr('data-{name}')"
 obj.something.css(name, [value]);        // Alias for "jQuery.css()"
 obj.something.find(selector);            // Alias for "element.find(selector)"
 obj.something.append(value);             // Alias for "element.append()"
@@ -2075,6 +2083,7 @@ exports.install = function(instance, initdata) {
     instance.default(path);                       // Resets to default values
     instance.toggle(cls, visible, [timeout]);     // Alias for "jQuery.toggleClass()"
     instance.attr(name, [value]);                 // Alias for "jQuery.attr()"
+    instance.attrd(name, [value]);                // Alias for "jQuery.attr('data-{name}')"
     instance.css(name, [value]);                  // Alias for "jQuery.css()"
     instance.empty();                             // Alias for "jQuery.empty()"
     instance.remove();                            // Removes itself
