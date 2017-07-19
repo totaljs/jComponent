@@ -4121,6 +4121,16 @@
 		return self;
 	};
 
+	PPC.aclass = PPA.aclass = PPP.aclass = PCTRL.aclass = function(cls) {
+		this.element.addClass(cls);
+		return this;
+	};
+
+	PPC.rclass = PPA.rclass = PPP.rclass = PCTRL.rclass = function(cls) {
+		this.element.removeClass(cls);
+		return this;
+	};
+
 	PPC.classes = PPA.classes = PPP.classes = PCTRL.classes = function(cls) {
 
 		var key = 'cls.' + cls;

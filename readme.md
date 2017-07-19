@@ -607,10 +607,20 @@ COMPONENT('my-component-name', function() {
     // jQuery.toggleClass();
 
     
-    instance.classes(string);
+    instance.classes(string);    
     // Toggles classes "+classname" (or without plus) adds and "-classname" removes
     // Example: instance.classes('+selected -hidden +animate');
     // +v8.0.0
+
+
+    instance.aclass(string);
+    // Adds classes
+    // +v11.0.0
+
+
+    instance.rclass(string);
+    // Removes classes
+    // +v11.0.0
 
 
     instance.find(selectors);
