@@ -3362,6 +3362,9 @@
 
 	function get(path, scope) {
 
+		if (path == null)
+			return;
+
 		if (path.charCodeAt(0) === 35) {
 			var op = OPERATION(path);
 			return op ? op : NOOP;
