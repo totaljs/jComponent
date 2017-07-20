@@ -3312,6 +3312,9 @@
 
 	function set(path, value) {
 
+		if (path == null)
+			return;
+
 		if (path.charCodeAt(0) === 35) {
 			var op = OPERATION(path);
 			if (op)
@@ -4124,14 +4127,22 @@
 		return self;
 	};
 
-	PPC.aclass = PPA.aclass = PPP.aclass = PCTRL.aclass = function(cls) {
-		this.element.addClass(cls);
-		return this;
+	PPC.aclass = PPA.aclass = PPP.aclass = PCTRL.aclass = function(cls, timeout) {
+		var self = this;
+		if (timeout)
+			setTimeout(function() { self.element.addClass(cls); }, timeout);
+		else
+			self.element.addClass(cls);
+		return self;
 	};
 
-	PPC.rclass = PPA.rclass = PPP.rclass = PCTRL.rclass = function(cls) {
-		this.element.removeClass(cls);
-		return this;
+	PPC.rclass = PPA.rclass = PPP.rclass = PCTRL.rclass = function(cls, timeout) {
+		var self = this;
+		if (timeout)
+			setTimeout(function() { self.element.removeClass(cls); }, timeout);
+		else
+			self.element.removeClass(cls);
+		return self;
 	};
 
 	PPC.classes = PPA.classes = PPP.classes = PCTRL.classes = function(cls) {

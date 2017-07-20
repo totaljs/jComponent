@@ -613,12 +613,12 @@ COMPONENT('my-component-name', function() {
     // +v8.0.0
 
 
-    instance.aclass(string);
+    instance.aclass(string, [timeout]);
     // Adds classes
     // +v11.0.0
 
 
-    instance.rclass(string);
+    instance.rclass(string, [timeout]);
     // Removes classes
     // +v11.0.0
 
