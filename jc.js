@@ -72,6 +72,7 @@
 	M.defaults.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 	M.defaults.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
 	M.defaults.importcache = 'session';
+	M.defaults.pingdata = {};
 	M.defaults.jsonconverter = {
 		'text json': function (text) {
 			return PARSE(text);
@@ -5199,7 +5200,16 @@
 		}
 
 		var options = {};
-		var uri = makeurl(url);
+		var data = $.param(M.defaults.pingdata);
+
+		if (data) {
+			index = url.lastIndexOf('?');
+			if (index === -1)
+				url += '?' + data;
+			else
+				url += '&' + data;
+		}
+
 		options.type = method;
 		options.headers = { 'X-Ping': location.pathname };
 
@@ -5218,7 +5228,7 @@
 		};
 
 		return setInterval(function() {
-			$.ajax(uri, options);
+			$.ajax(makeurl(url), options);
 		}, timeout || 30000);
 	};
 

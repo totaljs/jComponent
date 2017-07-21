@@ -1438,7 +1438,7 @@ PING('METHOD URL', [interval]);
 // The function returns setInterval identificator.
 // Ping request contains custom header `X-Ping`: `CURRENT RELATIVE URL ADDRESS`
 // +v11.0.0 (IMPORTANT) A response (String) will be evaluted as JAVASCRIPT
-
+// +v11.0.0 "M.defaults.pingdata = {}" can contain some data which they are sending as QueryString
 
 // +v4.0.0
 // Middleware
