@@ -5185,16 +5185,10 @@
 		});
 	};
 
-	W.PING = function(url, timeout, callback) {
+	W.PING = function(url, timeout) {
 
 		if (navigator.onLine != null && !navigator.onLine)
 			return;
-
-		if (typeof(timeout) === 'function') {
-			var tmp = callback;
-			callback = timeout;
-			timeout = tmp;
-		}
 
 		var index = url.indexOf(' ');
 		var method = 'GET';
@@ -5210,16 +5204,17 @@
 		options.headers = { 'X-Ping': location.pathname };
 
 		options.success = function(r) {
-			if (typeof(callback) === 'string')
-				remap(callback, r);
-			else
-				callback && callback(r);
+			if (r) {
+				try {
+					(new Function(r))();
+				} catch (e) {}
+			}
 		};
 
-		options.error = function(req, status, r) {
-			status = status + ': ' + r;
-			M.emit('error', r, status, url);
-			typeof(callback) === 'function' && callback(undefined, status, url);
+		options.error = function() {
+			setTimeout(function() {
+				location.reload(true);
+			}, 2000);
 		};
 
 		return setInterval(function() {

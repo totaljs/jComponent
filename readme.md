@@ -1432,11 +1432,13 @@ UPLOAD('/api/', formdata, function(response, err) { console.log(response); }); /
 // "response" is the empty object {}
 
 
-// +v3.7.0
-PING('METHOD URL', [interval], [callback or path]);
+// +v11.0.0
+PING('METHOD URL', [interval]);
 // Ping pings an URL in the specific interval (default: 30000 (30 seconds)).
 // The function returns setInterval identificator.
-// A ping request contains custom header `X-Ping`: `CURRENT RELATIVE URL ADDRESS`
+// Ping request contains custom header `X-Ping`: `CURRENT RELATIVE URL ADDRESS`
+// +v11.0.0 (IMPORTANT) A response (String) will be evaluted as JAVASCRIPT
+
 
 // +v4.0.0
 // Middleware
