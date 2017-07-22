@@ -9,7 +9,7 @@
 
 > __Download__: more than 80 jComponents for free for everyone <https://componentator.com>
 
-- Current version: `v11.0.0`
+- Current version: `v11.1.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -397,10 +397,15 @@ COMPONENT('my-component-name', function() {
         // return true;
     };
 
-
     instance.done = function() {
         // This delegate is executed when the component is ready to use
         // (after the making).
+    };
+
+
+    instance.configure = function(key, value) {
+        // +v11.1.0
+        // it executed if "instance.config()" parses some value and "callback" argument is not defined
     };
 
 
@@ -637,6 +642,12 @@ COMPONENT('my-component-name', function() {
     // Sets an event listener for the element (not for component!)
     // jQuery.on();
     // +v9.0.0
+
+
+    instance.config(value, [callback(key, value)]);
+    // Parses configuration
+    // "value" can be "max:10;size:20;required:false" or "max=10;size=20;required=false"
+    // +11.1.0
 
 
     instance.noDirty();
@@ -1999,6 +2010,11 @@ obj.something.selector;                  // {String} Selector
 obj.something.length;                    // {Number} Count of captured elements
 obj.something.id;                        // {String} Internal identificator
 
+// Delegates
+obj.something.configure = function(key, value) {
+    // It's executed if the "obj.something.config()" is executed
+};
+
 // Methods
 obj.something.refresh();                 // Refreshes element by its selector
 obj.something.replace(el);               // Replaces element to another
@@ -2014,6 +2030,7 @@ obj.something.html(value);               // Alias for "element.html()"
 obj.something.toggle(cls, visible, [timeout]);    // Alias for "jQuery.toggleClass()"
 obj.something.event(name, [selector], callback);  // Alias for "element.on()"
 obj.something.import(url, [callback], [insert], [preparator(response)]); // Alias for MAIN.import();
+obj.something.config(value, [callback(key, value)]); // Parses configuration
 ```
 
 - `VIRTUALIZE()` still returns cached object
@@ -2076,6 +2093,11 @@ exports.install = function(instance, initdata) {
         // initdata {Object/String/Number} according data-ja-path="" attribute
     };
 
+    instance.configure = function(key, value) {
+        // +v11.1.0
+        // it executed if "instance.config()" parses some value and "callback" argument is not defined
+    };
+
     // Methods
     instance.emit(name, [a], [b], [c], ..);       // Emits event in this app
     instance.on(name, fn);                        // Captures event
@@ -2102,6 +2124,7 @@ exports.install = function(instance, initdata) {
     instance.exec(name, [a], [b], [c]);           // Executes methods in all components
     instance.$save();                             // Saves current options
     instance.import(url, [callback], [insert], [preparator(response)]); // Alias for MAIN.import();
+    instance.config(value, [callback(key, value)]); // +v11.1.0 Parses configuration
 };
 
 exports.uninstall = function() {

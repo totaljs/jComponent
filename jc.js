@@ -95,7 +95,7 @@
 	M.regexp.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v11.0.0';
+	M.version = 'v11.1.0';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -4330,6 +4330,42 @@
 			return el.css(name);
 		el.css(name, value);
 		return this;
+	};
+
+	PPC.config = PPA.config = PPP.config = PCTRL.config = function(value, callback) {
+
+		var self = this;
+
+		if (!callback && !self.configure)
+			return self;
+
+		var arr = value.split(';');
+		var reg = /\=|\:/;
+		var num = /^(\-)?[0-9\.\,]+$/;
+
+		for (var i = 0, length = arr.length; i < length; i++) {
+			var kv = arr[i].split(reg);
+			var l = kv.length;
+			if (!l)
+				continue;
+			var is = l === 1;
+			var k = is ? '' : kv[0];
+			var v = is ? kv[0] : kv[1];
+			if (v === 'true' || v === 'false')
+				v = v === 'true';
+			else if (num.test(v)) {
+				var tmp = +num;
+				if (!isNaN(tmp))
+					v = tmp;
+			}
+
+			if (callback)
+				callback(k, v);
+			else
+				self.configure(k, v);
+		}
+
+		return self;
 	};
 
 	PPC.closest = PPA.closest = PPP.closest = PCTRL.closest = function(sel) {
