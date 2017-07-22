@@ -4341,7 +4341,7 @@
 
 		var arr = value.split(';');
 		var reg = /\=|\:/;
-		var num = /^(\-)?[0-9\.\,]+$/;
+		var num = /^(\-)?[0-9\.]+$/;
 
 		for (var i = 0, length = arr.length; i < length; i++) {
 			var kv = arr[i].split(reg);
@@ -4354,7 +4354,7 @@
 			if (v === 'true' || v === 'false')
 				v = v === 'true';
 			else if (num.test(v)) {
-				var tmp = +num;
+				var tmp = +v;
 				if (!isNaN(tmp))
 					v = tmp;
 			}
