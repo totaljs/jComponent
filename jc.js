@@ -201,8 +201,11 @@
 
 		var a = M.$formatter;
 		if (a && a.length) {
-			for (var i = 0, length = a.length; i < length; i++)
-				value = a[i].call(M, path, value, type);
+			for (var i = 0, length = a.length; i < length; i++) {
+				var val = a[i].call(M, path, value, type);
+				if (val !== undefined)
+					value = val;
+			}
 		}
 
 		return value;
