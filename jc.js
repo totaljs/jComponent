@@ -4032,8 +4032,10 @@
 				if (t.type === a || t.type === 'select') {
 					var el = $(t);
 					el.val() !== value && el.val(value);
-				} else if (t.value !== value)
+				} else if (t.value !== value) {
 					t.value = value;
+					type === 1 && (t.$value2 = value);
+				}
 			});
 		};
 	}
