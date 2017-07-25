@@ -280,6 +280,11 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     event is skipped in `<input`, `<textarea` tags. Suitable for autocomplete fields.
     Default: `false`.
 -->
+
+<element data-jc-config="title:Something;maxlength:30;boolean:true" />
+<!--
+    +v11.1.0 creates a configuration for the component. It's bound to `data-jc` attribute.
+-->
 ```
 
 ***
@@ -334,6 +339,10 @@ COMPONENT('my-component-name', function() {
     // This property contains the current `String` template. You can change the value
     // of this property for anything. This property can contain URL address and the
     // library download the template automatically.
+
+    instances.config;
+    // {Object} contains parsed configuration from "data-jc-config" attribute
+    // +v11.1.0
 
     instance.element;
     // The HTML element of this component.
@@ -405,7 +414,7 @@ COMPONENT('my-component-name', function() {
 
     instance.configure = function(key, value) {
         // +v11.1.0
-        // it executed if "instance.config()" parses some value and "callback" argument is not defined
+        // it executed if "instance.reconfigure()" parses some value and "callback" argument is not defined
     };
 
 
@@ -644,7 +653,7 @@ COMPONENT('my-component-name', function() {
     // +v9.0.0
 
 
-    instance.config(value, [callback(key, value)]);
+    instance.reconfigure(value, [callback(key, value)]);
     // Parses configuration
     // "value" can be "max:10;size:20;required:false" or "max=10;size=20;required=false" or can be Object
     // +11.1.0
@@ -1637,6 +1646,14 @@ var valid = VALIDATE('users.form.*');
 valid && submit();
 // VALIDATE(path) --> alias for MAIN.validate()
 // returns {Boolean}
+
+LOG(a, [b], [..n]);
+// A safe alternative to console.log()
+// +v11.1.0
+
+WARN(a, [b], [..n]);
+// A safe alternative to console.warn()
+// +v11.1.0
 ```
 
 ## Device Width
@@ -2015,7 +2032,7 @@ obj.something.id;                        // {String} Internal identificator
 
 // Delegates
 obj.something.configure = function(key, value) {
-    // It's executed if the "obj.something.config()" is executed
+    // It's executed if the "obj.something.reconfigure()" is executed
 };
 
 // Methods
@@ -2033,7 +2050,7 @@ obj.something.html(value);               // Alias for "element.html()"
 obj.something.toggle(cls, visible, [timeout]);    // Alias for "jQuery.toggleClass()"
 obj.something.event(name, [selector], callback);  // Alias for "element.on()"
 obj.something.import(url, [callback], [insert], [preparator(response)]); // Alias for MAIN.import();
-obj.something.config(value, [callback(key, value)]); // Parses configuration
+obj.something.reconfigure(value, [callback(key, value)]); // Parses configuration
 ```
 
 - `VIRTUALIZE()` still returns cached object
@@ -2098,7 +2115,7 @@ exports.install = function(instance, initdata) {
 
     instance.configure = function(key, value) {
         // +v11.1.0
-        // it executed if "instance.config()" parses some value and "callback" argument is not defined
+        // it executed if "instance.reconfigure()" parses some value and "callback" argument is not defined
     };
 
     // Methods
@@ -2127,7 +2144,7 @@ exports.install = function(instance, initdata) {
     instance.exec(name, [a], [b], [c]);           // Executes methods in all components
     instance.$save();                             // Saves current options
     instance.import(url, [callback], [insert], [preparator(response)]); // Alias for MAIN.import();
-    instance.config(value, [callback(key, value)]); // +v11.1.0 Parses configuration
+    instance.reconfigure(value, [callback(key, value)]); // +v11.1.0 Parses configuration
 };
 
 exports.uninstall = function() {

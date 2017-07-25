@@ -2462,6 +2462,7 @@
 				obj.global = com.shared;
 				obj.element = el;
 				obj.setPath(attrcom(el, 'path') || obj._id, 1);
+				obj.config = {};
 
 				com.declaration.call(obj, obj);
 
@@ -2716,6 +2717,14 @@
 		}
 	}
 
+	W.LOG = function() {
+		window.console && console.log.apply(console, arguments);
+	};
+
+	W.WARN = function() {
+		window.console && console.warn.apply(console, arguments);
+	};
+
 	function warn() {
 		W.console && W.console.warn.apply(W.console, arguments);
 	}
@@ -2793,19 +2802,6 @@
 
 				item.element.html(response);
 				statics[key] = true;
-
-				/* I DON'T KNOW WHAT IS IT.
-				if (can && item.path) {
-					var com = item.element.find(ATTRCOM);
-					com.each(function() {
-						var el = $(this);
-						$.each(this.attributes, function() {
-							var self = this;
-							self.specified && el.attr(self.name, self.value.replace('$', item.path));
-						});
-					});
-				}
-				*/
 				item.toggle.length && item.toggle[0] && toggles.push(item);
 
 				if (item.callback && !attrcom(item.element)) {
@@ -2909,6 +2905,9 @@
 			!this.$com && (this.$com = obj);
 		});
 
+		var tmp = attrcom(el, 'config');
+		tmp && obj.reconfigure(tmp, NOOP, true);
+		obj.configure && obj.reconfigure(obj.config, undefined, true);
 		obj.released && obj.released(obj.$released);
 		M.components.push(obj);
 		C.init.push(obj);
@@ -3669,6 +3668,7 @@
 
 	function PROPERTY(container, selector, el) {
 		var t = this;
+		t.config = {};
 		t.id = 'v' + GUID(10);
 		t.container = container;
 		t.element = el;
@@ -3735,6 +3735,7 @@
 
 	function Controller(name) {
 		var self = this;
+		self.config = {};
 		self.$events = {};
 		self.scope = '';
 		self.name = name;
@@ -3751,6 +3752,11 @@
 		var self = this;
 		self.$events = {};
 		self.id = id;
+		self.config = {};
+
+		var tmp = attrapp(element, 'config');
+		tmp && self.reconfigure(tmp, NOOP, true);
+
 		self.scope = attrapp(element, 'scope') || attrcom(element, 'scope') || ('app' + GUID(10));
 		element.get(0).$scope = self.scope;
 		!attrapp(element, 'noscope') && element.attr('data-jc-scope', '?');
@@ -3764,6 +3770,8 @@
 			declaration.install.call(self, self, data);
 			self.make && self.make(data);
 		});
+
+		self.configure && self.reconfigure(self.config, undefined, true);
 	}
 
 	var PPA = APP.prototype;
@@ -4342,19 +4350,18 @@
 		return this;
 	};
 
-	PPC.config = PPA.config = PPP.config = PCTRL.config = function(value, callback) {
+	PPC.reconfigure = PPA.reconfigure = PPP.reconfigure = PCTRL.reconfigure = function(value, callback, init) {
 
 		var self = this;
 
-		if (!callback && !self.configure)
-			return self;
-
 		if (typeof(value) === 'object') {
 			Object.keys(value).forEach(function(k) {
+				if (!init && self.config[k] !== value[k])
+					self.config[k] = value[k];
 				if (callback)
-					callback(k, value[k]);
-				else
-					self.configure(k, value[k]);
+					callback(k, value[k], init);
+				else if (self.configure)
+					self.configure(k, value[k], init);
 			});
 			return self;
 		}
@@ -4366,11 +4373,10 @@
 		for (var i = 0, length = arr.length; i < length; i++) {
 			var kv = arr[i].split(reg);
 			var l = kv.length;
-			if (!l)
+			if (l !== 2)
 				continue;
-			var is = l === 1;
-			var k = is ? '' : kv[0];
-			var v = is ? kv[0] : kv[1];
+			var k = kv[0].trim();
+			var v = kv[1].trim();
 			if (v === 'true' || v === 'false')
 				v = v === 'true';
 			else if (num.test(v)) {
@@ -4379,10 +4385,13 @@
 					v = tmp;
 			}
 
+			if (!init && self.config[k] !== value[k])
+				self.config[k] = value[k];
+
 			if (callback)
-				callback(k, v);
-			else
-				self.configure(k, v);
+				callback(k, v, init);
+			else if (self.configure)
+				self.configure(k, v, init);
 		}
 
 		return self;
