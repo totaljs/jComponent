@@ -132,6 +132,13 @@
 	// MAIN FUNCTIONS
 	// ===============================================================
 
+	M.environment = function(name, version, language) {
+		M.$localstorage = name;
+		M.$version = version || '';
+		M.$language = language || '';
+		return M;
+	};
+
 	M.clean = function(timeout) {
 		setTimeout2('$clean', cleaner, timeout || 10);
 		return M;
@@ -4339,6 +4346,16 @@
 		if (!callback && !self.configure)
 			return self;
 
+		if (typeof(value) === 'object') {
+			Object.keys(value).forEach(function(k) {
+				if (callback)
+					callback(k, value[k]);
+				else
+					self.configure(k, value[k]);
+			});
+			return self;
+		}
+
 		var arr = value.split(';');
 		var reg = /\=|\:/;
 		var num = /^(\-)?[0-9\.]+$/;
@@ -5626,7 +5643,7 @@
 	var NP = Number.prototype;
 	var DP = Date.prototype;
 
-	AP.waitFor = function(fn, callback, meta) {
+	AP.wait = AP.waitFor = function(fn, callback, meta) {
 
 		if (meta === undefined)
 			meta = { index: 0, value: null };
@@ -5779,6 +5796,20 @@
 		var length = self.length;
 		for (var i = 0; i < length; i++)
 			i >= count && arr.push(self[i]);
+		return arr;
+	};
+
+	AP.takeskip = function(take, skip) {
+		var arr = [];
+		var self = this;
+		var length = self.length;
+		for (var i = 0; i < length; i++) {
+			if (i < skip)
+				continue;
+			if (arr.length >= take)
+				return arr;
+			arr.push(self[i]);
+		}
 		return arr;
 	};
 

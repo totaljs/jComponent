@@ -646,7 +646,7 @@ COMPONENT('my-component-name', function() {
 
     instance.config(value, [callback(key, value)]);
     // Parses configuration
-    // "value" can be "max:10;size:20;required:false" or "max=10;size=20;required=false"
+    // "value" can be "max:10;size:20;required:false" or "max=10;size=20;required=false" or can be Object
     // +11.1.0
 
 
@@ -921,11 +921,14 @@ var value = MAIN.formatter('a-value', 'my.custom.path', 'number');
 ### Methods
 
 ```javascript
+MAIN.environment(key, [version], [language]);
+// Changes localstorage key, version and language
+// +v11.1.0
+
 // Runs the compiler for new components. jComponent doesn't watch new elements in DOM.MAINrewrite(path, value);
 MAIN.rewrite('model.name', 'Peter');
 // +v4.0.0 Rewrites the value in the model without notification
 // +v10.1.0 supports "@controllername.path"
-
 
 MAIN.set(path, value, [reset]);
 MAIN.set('model.name', 'Peter'); // Example: sets the value
