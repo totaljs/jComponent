@@ -2464,6 +2464,9 @@
 				obj.setPath(attrcom(el, 'path') || obj._id, 1);
 				obj.config = {};
 
+				var tmp = attrcom(el, 'config');
+				tmp && obj.reconfigure(tmp, NOOP);
+
 				com.declaration.call(obj, obj);
 
 				if (obj.init && !statics[name]) {
@@ -2905,8 +2908,6 @@
 			!this.$com && (this.$com = obj);
 		});
 
-		var tmp = attrcom(el, 'config');
-		tmp && obj.reconfigure(tmp, NOOP, true);
 		obj.configure && obj.reconfigure(obj.config, undefined, true);
 		obj.released && obj.released(obj.$released);
 		M.components.push(obj);
@@ -3755,7 +3756,7 @@
 		self.config = {};
 
 		var tmp = attrapp(element, 'config');
-		tmp && self.reconfigure(tmp, NOOP, true);
+		tmp && self.reconfigure(tmp, NOOP);
 
 		self.scope = attrapp(element, 'scope') || attrcom(element, 'scope') || ('app' + GUID(10));
 		element.get(0).$scope = self.scope;
@@ -4155,6 +4156,10 @@
 		return self;
 	};
 
+	PPC.hclass = PPA.hclass = PPP.hclass = PCTRL.hclass = function(cls) {
+		return this.element.hasClass(cls);
+	};
+
 	PPC.rclass = PPA.rclass = PPP.rclass = PCTRL.rclass = function(cls, timeout) {
 		var self = this;
 		if (timeout)
@@ -4385,8 +4390,8 @@
 					v = tmp;
 			}
 
-			if (!init && self.config[k] !== value[k])
-				self.config[k] = value[k];
+			if (!init && self.config[k] !== v)
+				self.config[k] = v;
 
 			if (callback)
 				callback(k, v, init);

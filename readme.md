@@ -627,6 +627,11 @@ COMPONENT('my-component-name', function() {
     // +v8.0.0
 
 
+    instance.hclass(string);
+    // Alias for hasClass
+    // +v11.0.0
+
+
     instance.aclass(string, [timeout]);
     // Adds classes
     // +v11.0.0
