@@ -2908,7 +2908,6 @@
 			!this.$com && (this.$com = obj);
 		});
 
-		obj.configure && obj.reconfigure(obj.config, undefined, true);
 		obj.released && obj.released(obj.$released);
 		M.components.push(obj);
 		C.init.push(obj);
@@ -2976,6 +2975,7 @@
 			obj.done();
 		}, 20);
 
+		obj.configure && obj.reconfigure(obj.config, undefined, true);
 		obj.state && obj.state(0, 3);
 
 		obj.$init && setTimeout(function() {
@@ -4033,7 +4033,7 @@
 					var el = $(t);
 					el.val() !== value && el.val(value);
 				} else if (t.value !== value)
-					t.$value2 = t.value = value;
+					t.value = value;
 			});
 		};
 	}
@@ -6793,6 +6793,7 @@
 					return !(self.tagName !== 'TEXTAREA' && code === 13);
 
 				var special = self.type === 'checkbox' || self.type === 'radio' || self.type === 'range';
+
 				if ((e.type === 'focusout' && special) || (e.type === 'change' && (!special && self.tagName !== 'SELECT')) || (!self.$com || self.$com.$removed || !self.$com.getter))
 					return;
 
@@ -6850,7 +6851,7 @@
 				if ((self.$only && (e.type === 'focusout' || e.type === 'change')) || (e.type === 'keydown' && (code === undefined || code === 9)))
 					return;
 
-				if (code < 41 && code !== 8 && code !== 32) {
+				if (code && code < 41 && code !== 8 && code !== 32) {
 					if (code !== 13)
 						return;
 					if (e.tagName !== 'TEXTAREA') {
