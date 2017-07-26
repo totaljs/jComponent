@@ -701,7 +701,6 @@
 				callback && callback();
 				W.jQuery && setTimeout(compile, 300);
 			};
-
 			scr.src = url;
 			d.getElementsByTagName('head')[0].appendChild(scr);
 			return M;
@@ -3252,6 +3251,7 @@
 		var beg = -1;
 		var output = str;
 		var builder = [];
+		var external = [];
 		var scr;
 
 		while (true) {
@@ -3261,31 +3261,43 @@
 			var end = str.indexOf('</script>', beg + 9);
 			var code = str.substring(beg, end + 9);
 			beg = end + 9;
-
 			end = code.indexOf('>');
-
 			scr = code.substring(0, end);
+
 			if (scr.indexOf('type=') !== -1 && scr.lastIndexOf('javascript') === -1)
 				continue;
 
 			output = output.replace(code, '').trim();
-			builder.push(code.substring(end + 1, code.length - 9).trim());
+
+			var tmp = code.substring(end + 1, code.length - 9).trim();
+			if (tmp)
+				builder.push(tmp);
+			else {
+				var eid = 'external' + HASH(code);
+				if (!statics[eid]) {
+					external.push(code);
+					statics[eid] = true;
+				}
+			}
 		}
 
-		var key = 'js' + (id || '');
+		external.length && $('head').append(external.join('\n'));
 
-		if (id) {
-			if (statics[key])
-				$('#' + key).remove();
-			else
-				statics[key] = true;
+		if (builder.length) {
+			var key = 'js' + (id || '');
+			if (id) {
+				if (statics[key])
+					$('#' + key).remove();
+				else
+					statics[key] = true;
+			}
+			scr = document.createElement('script');
+			scr.type = 'text/javascript';
+			scr.text = builder.join('\n');
+			id && (scr.id = key);
+			document.body.appendChild(scr);
 		}
 
-		scr = document.createElement('script');
-		scr.type = 'text/javascript';
-		scr.text = builder.join('\n');
-		id && (scr.id = key);
-		document.body.appendChild(scr);
 		return output;
 	}
 
@@ -3306,7 +3318,7 @@
 				statics[key] = true;
 		}
 
-		$('<style' + (id ? ' id="' + key + '"' : '') + '>{0}</style>'.format(builder.join('\n'))).appendTo('head');
+		builder.length && $('<style' + (id ? ' id="' + key + '"' : '') + '>{0}</style>'.format(builder.join('\n'))).appendTo('head');
 		return str;
 	}
 
