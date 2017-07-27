@@ -6141,59 +6141,96 @@
 		return dt;
 	};
 
-	DP.format = function(t) {
-		var e = this, r = !1;
-		if (t && 33 === t.charCodeAt(0) && (r = !0, t = t.substring(1)), void 0 === t || null === t || '' === t) return e.getFullYear() + '-' + (e.getMonth() + 1).toString().padLeft(2, '0') + '-' + e.getDate().toString().padLeft(2, '0') + 'T' + e.getHours().toString().padLeft(2, '0') + ':' + e.getMinutes().toString().padLeft(2, '0') + ':' + e.getSeconds().toString().padLeft(2, '0') + '.' + e.getMilliseconds().padLeft(3, '0').toString() + 'Z';
-		var n = e.getHours();
-		var tmp;
-		return r && n >= 12 && (n -= 12), t.replace(M.regexp.date, function(t) {
-			switch (t) {
+	DP.format = function(format) {
+
+		var self = this;
+
+		if (!format)
+			return self.getFullYear() + '-' + (self.getMonth() + 1).toString().padLeft(2, '0') + '-' + self.getDate().toString().padLeft(2, '0') + 'T' + self.getHours().toString().padLeft(2, '0') + ':' + self.getMinutes().toString().padLeft(2, '0') + ':' + self.getSeconds().toString().padLeft(2, '0') + '.' + self.getMilliseconds().toString().padLeft(3, '0') + 'Z';
+
+		var key = 'dt_' + format;
+
+		if (statics[key])
+			return statics[key](self);
+
+		var half = false;
+
+		if (format && format[0] === '!') {
+			half = true;
+			format = format.substring(1);
+		}
+
+		var h = self.getHours();
+
+		if (half) {
+			if (h >= 12)
+				h -= 12;
+		}
+
+		var beg = '\'+';
+		var end = '+\'';
+		var before = [];
+
+		var ismm = false;
+		var isdd = false;
+		var isww = false;
+
+		format = format.replace(M.regexp.date, function(key) {
+			switch (key) {
 				case 'yyyy':
-					return e.getFullYear();
+					return beg + 'd.getFullYear()' + end;
 				case 'yy':
-					return e.getYear().toString().substring(1);
-				case 'MMMM':
-					return M.months[e.getMonth()];
+					return beg + 'd.getFullYear().toString().substring(2)' + end;
 				case 'MMM':
-					tmp = M.months[e.getMonth()];
-					return tmp.length > 3 ? tmp.substring(0, 3) : tmp;
+					ismm = true;
+					return beg + 'mm.substring(0, 3)' + end;
+				case 'MMMM':
+					ismm = true;
+					return beg + 'mm' + end;
 				case 'MM':
-					return (e.getMonth() + 1).toString().padLeft(2, '0');
+					return beg + '(d.getMonth() + 1).toString().padLeft(2, \'0\')' + end;
 				case 'M':
-					return e.getMonth() + 1;
-				case 'dddd':
-					return M.months[e.getMonth()];
+					return beg + '(d.getMonth() + 1)' + end;
 				case 'ddd':
-					return M.days[e.getDay()].substring(0, 2).toUpperCase();
+					isdd = true;
+					return beg + 'dd.substring(0, 2).toUpperCase()' + end;
+				case 'dddd':
+					isdd = true;
+					return beg + 'dd' + end;
 				case 'dd':
-					return e.getDate().toString().padLeft(2, '0');
+					return beg + 'd.getDate().toString().padLeft(2, \'0\')' + end;
 				case 'd':
-					return e.getDate();
+					return beg + 'd.getDate()' + end;
 				case 'HH':
 				case 'hh':
-					return n.toString().padLeft(2, '0');
+					return beg + 'd.getHours().toString().padLeft(2, \'0\')' + end;
 				case 'H':
 				case 'h':
-					return e.getHours();
+					return beg + 'd.getHours()' + end;
 				case 'mm':
-					return e.getMinutes().toString().padLeft(2, '0');
+					return beg + 'd.getMinutes().toString().padLeft(2, \'0\')' + end;
 				case 'm':
-					return e.getMinutes();
+					return beg + 'd.getMinutes()' + end;
 				case 'ss':
-					return e.getSeconds().toString().padLeft(2, '0');
+					return beg + 'd.getSeconds().toString().padLeft(2, \'0\')' + end;
 				case 's':
-					return e.getSeconds();
+					return beg + 'd.getSeconds()' + end;
 				case 'w':
 				case 'ww':
-					tmp = new Date(+e);
-					tmp.setHours(0, 0, 0);
-					tmp.setDate(tmp.getDate() + 4 - (tmp.getDay() || 7));
-					tmp = Math.ceil((((tmp - new Date(tmp.getFullYear(), 0, 1)) / 8.64e7) + 1) / 7);
-					return t === 'ww' ? tmp.toString().padLeft(2, '0') : tmp;
+					isww = true;
+					return beg + (key === 'ww' ? 'ww.toString().padLeft(2, \'0\')' : 'ww') + end;
 				case 'a':
-					return e.getHours() >= 12 ? 'PM' : 'AM';
+					var b = "'PM':'AM'";
+					return beg + '(d.getHours() >= 12 ? ' + b + end;
 			}
 		});
+
+		ismm && before.push('var mm = M.months[d.getMonth()];');
+		isdd && before.push('var dd = M.days[d.getDay()];');
+		isww && before.push('var ww = new Date(+d);ww.setHours(0, 0, 0);ww.setDate(ww.getDate() + 4 - (ww.getDay() || 7));ww = Math.ceil((((ww - new Date(ww.getFullYear(), 0, 1)) / 8.64e7) + 1) / 7);');
+
+		statics[key] = new Function('d', before.join('\n') + 'return \'' + format + '\';');
+		return statics[key](self);
 	};
 
 	NP.pluralize = function(zero, one, few, other) {
