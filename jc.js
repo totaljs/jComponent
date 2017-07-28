@@ -2466,7 +2466,7 @@
 				var tmp = attrcom(el, 'config');
 				tmp && obj.reconfigure(tmp, NOOP);
 
-				com.declaration.call(obj, obj);
+				com.declaration.call(obj, obj, obj.config);
 
 				if (obj.init && !statics[name]) {
 					statics[name] = true;

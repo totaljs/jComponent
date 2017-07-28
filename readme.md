@@ -296,10 +296,10 @@ The definition of the component must be defined in JavaScript. You can define th
 __Simple example__:
 
 ```javascript
-COMPONENT('my-component-name', function() {
+COMPONENT('my-component-name', function(instance, config) {
 
     // A component instance
-    var instance = this;
+    // var instance = this;
 
     // component definition
     this.make = function(template) {
@@ -312,8 +312,8 @@ COMPONENT('my-component-name', function() {
 ### Properties
 
 ```javascript
-COMPONENT('my-component-name', function() {
-    var instance = this;
+COMPONENT('my-component-name', function(instance, config) {
+    // var instance = this;
 
     instance.global;
     // Returns {Object}. The global object is the shared object for all instances
@@ -378,9 +378,9 @@ COMPONENT('my-component-name', function() {
 ### Delegates
 
 ```javascript
-COMPONENT('my-component-name', function() {
+COMPONENT('my-component-name', function(instance, config) {
 
-    var instance = this;
+    // var instance = this;
     
     instance.init = function() {
         // Is executed onetime for all same components.
@@ -522,9 +522,9 @@ COMPONENT('my-component-name', function() {
 ### Methods
 
 ```javascript
-COMPONENT('my-component-name', function() {
+COMPONENT('my-component-name', function(instance, config) {
 
-    var instance = this;
+    // var instance = this;
 
     instance.setPath(path);
     // This method sets a new path for this component.
@@ -809,9 +809,9 @@ COMPONENT('my-component-name', function() {
 ### Events
 
 ```javascript
-COMPONENT('my-component-name', function() {
+COMPONENT('my-component-name', function(instance, config) {
 
-    var instance = this;
+    // var instance = this;
 
     instance.on('#component-id', function(component) {
         // This event is executed when is ready a new component
