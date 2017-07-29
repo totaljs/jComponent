@@ -3323,13 +3323,16 @@
 	}
 
 	function remap(path, value) {
+
+		var index = path.replace('-->', '->').indexOf('->');
+
+		if (index !== -1) {
+			value = value[path.substring(0, index).trim()];
+			path = path.substring(index + 3).trim();
+		}
+
 		middleware(path, value, 1, function(path, value) {
-			var index = path.replace('-->', '->').indexOf('->');
-			if (index === -1)
-				return M.set(path, value);
-			var o = path.substring(0, index).trim();
-			var n = path.substring(index + 2).trim();
-			M.set(n, value[o]);
+			M.set(path, value);
 		});
 	}
 
@@ -5842,6 +5845,12 @@
 			arr.push(self[i]);
 		}
 		return arr;
+	};
+
+	SP.params = function(obj) {
+		return this.replace(/\{[a-z0-9]+\}/gi, function(id) {
+			return obj[id.substring(1, id.length - 1)];
+		});
 	};
 
 	SP.isJSONDate = function() {
