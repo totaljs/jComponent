@@ -394,15 +394,15 @@
 			name = name.substring(index + 1).trim();
 
 			if (!name) {
-
 				Object.keys(events[path]).forEach(function(key) {
 					M.off(owner + '#' + key, path, fn);
 				});
-
 				return M;
 			}
-
 		}
+
+		if (path)
+			path = path.replace('.*', '');
 
 		var evt = events[path];
 		if (!evt)
@@ -416,7 +416,6 @@
 
 		while (true) {
 			var e = evt[index];
-
 			if (!e)
 				break;
 
@@ -433,12 +432,10 @@
 						index++;
 				} else
 					evt.splice(index, 1);
-
 				continue;
 			}
 
 			if (fn) {
-
 				if (fn === e.fn)
 					evt.splice(index, 1);
 				else
@@ -4473,6 +4470,12 @@
 		if (is && !self.$validate)
 			is = !self.$dirty;
 		return is;
+	};
+
+	PPC.unwatch = function(path, fn) {
+		var self = this;
+		M.off('watch', path, fn);
+		return self;
 	};
 
 	PPC.watch = function(path, fn, init) {

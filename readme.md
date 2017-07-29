@@ -788,6 +788,11 @@ COMPONENT('my-component-name', function(instance, config) {
     // This delegate watches all changes according the model.
     
     
+    instance.unwatch([path], [function]);
+    // +v11.1.0
+    // Unregister watcher
+
+    
     instance.release(true|false);
     // This method releases this component and all nested components.
     // +v7.0.0
