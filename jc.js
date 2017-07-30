@@ -1273,7 +1273,10 @@
 					}
 
 					component.element.find(ATTRBIND).each(function() {
-						this.$value = this.$value2 = undefined;
+						var t = this;
+						if (t.$com !== component)
+							t.$com = component;
+						t.$value = t.$value2 = undefined;
 					});
 
 				} else if (component.validate && !component.$valid_disabled)
@@ -1490,7 +1493,10 @@
 					}
 
 					component.element.find(ATTRBIND).each(function() {
-						this.$value = this.$value2 = undefined;
+						var t = this;
+						if (t.$com !== component)
+							t.$com = component;
+						t.$value = t.$value2 = undefined;
 					});
 
 				} else if (component.validate && !component.$valid_disabled)
@@ -1701,7 +1707,10 @@
 				return;
 
 			obj.element.find(ATTRBIND).each(function() {
-				this.$value = this.$value2 = undefined;
+				var t = this;
+				if (t.$com !== obj)
+					t.$com = obj;
+				t.$value = t.$value2 = undefined;
 			});
 
 			if (!obj.$dirty_disabled)
@@ -1752,7 +1761,10 @@
 				return;
 
 			obj.element.find(ATTRBIND).each(function() {
-				this.$value2 = this.$value = undefined;
+				var t = this;
+				if (t.$com !== obj)
+					t.$com = obj;
+				t.$value2 = t.$value = undefined;
 			});
 
 			if (!obj.$dirty_disabled) {
@@ -3979,6 +3991,7 @@
 		self.getter = function(value, type, dirty, older, skip) {
 
 			var self = this;
+
 			value = self.parser(value);
 
 			if (type === 2 && !skip)
@@ -4024,6 +4037,10 @@
 			value = self.formatter(value);
 			selector.each(function() {
 				var t = this;
+
+				if (t.$com !== self)
+					t.$com = self;
+
 				var path = t.$com.path;
 				if (path && path.length && path !== self.path)
 					return;
@@ -4153,7 +4170,7 @@
 	PPC.update = PPC.refresh = function(notify) {
 		var self = this;
 		if (notify)
-			self.set(self.get());
+			self.set(self.get(), self.path);
 		else {
 			self.setter && self.setter(self.get(), self.path, 1);
 			self.$interaction(1);
