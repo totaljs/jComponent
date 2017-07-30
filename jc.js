@@ -4,6 +4,7 @@
 	var REGCOM = /(data-ja|data-jc)\=/;
 	var REGSCRIPT = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
+	var REGENV = /\%[a-z0-9]+/i;
 	var REGEMPTY = /\s/g;
 	var REGCOMMA = /,/g;
 	var REGSEARCH = /[^a-zA-Zá-žÁ-Ž\d\s:]/g;
@@ -63,6 +64,7 @@
 	W.DATETIME = new Date();
 
 	M.defaults = {};
+	M.defaults.environment = {};
 	M.defaults.delay = 300;
 	M.defaults.keypress = true;
 	M.defaults.localstorage = true;
@@ -132,10 +134,18 @@
 	// MAIN FUNCTIONS
 	// ===============================================================
 
-	M.environment = function(name, version, language) {
+	M.ENV = W.ENV = function(name, value) {
+		if (value !== undefined)
+			return M.defaults.environment[name] = value;
+		return M.defaults.environment[name];
+	};
+
+	M.environment = function(name, version, language, env) {
 		M.$localstorage = name;
 		M.$version = version || '';
 		M.$language = language || '';
+		if (env)
+			M.defaults.environment = env;
 		return M;
 	};
 
@@ -154,6 +164,7 @@
 			val = path;
 		else
 			val = get(path);
+
 		if (exp !== undefined)
 			return exp.call(val, val, path);
 		if (expression.indexOf('return') === -1)
@@ -165,6 +176,7 @@
 
 	M.cookies = {
 		get: function (name) {
+			name = name.env();
 			var arr = document.cookie.split(';');
 			for (var i = 0; i < arr.length; i++) {
 				var c = arr[i];
@@ -184,10 +196,10 @@
 				expire = date;
 			} else if (type === 'string')
 				expire = new Date(Date.now() + expire.parseExpire());
-			document.cookie = name + '=' + value + '; expires=' + expire.toGMTString() + '; path=/';
+			document.cookie = name.env() + '=' + value + '; expires=' + expire.toGMTString() + '; path=/';
 		},
 		rem: function (name) {
-			M.cookies.set(name, '', -1);
+			M.cookies.set(name.env(), '', -1);
 		}
 	};
 
@@ -256,7 +268,7 @@
 			output.error = false;
 			output.upload = true;
 			output.method = 'POST';
-			output.url = url;
+			output.url = url.$env();
 			output.data = data;
 
 			xhr.addEventListener('load', function() {
@@ -289,7 +301,7 @@
 					r = output.response = self.status + ': ' + self.statusText;
 
 				if (!output.error || M.defaults.ajaxerrors)
-					return typeof(callback) === 'string' ? remap(callback, r) : (callback && callback(r, null, output));
+					return typeof(callback) === 'string' ? remap(callback.env(), r) : (callback && callback(r, null, output));
 
 				M.emit('error', output);
 				output.process && typeof(callback) === 'function' && callback({}, r, output);
@@ -303,7 +315,7 @@
 				if (evt.lengthComputable)
 					percentage = Math.round(evt.loaded * 100 / evt.total);
 				if (typeof(progress) === 'string')
-					remap(progress, percentage);
+					remap(progress.env(), percentage);
 				else
 					progress(percentage, evt.transferSpeed, evt.timeRemaining);
 			};
@@ -311,7 +323,7 @@
 			xhr.open('POST', url);
 
 			Object.keys(M.defaults.headers).forEach(function(key) {
-				xhr.setRequestHeader(key, M.defaults.headers[key]);
+				xhr.setRequestHeader(key.env(), M.defaults.headers[key].env());
 			});
 
 			xhr.send(data);
@@ -611,6 +623,8 @@
 
 	M.import = function(url, target, callback, insert, preparator) {
 
+		url = url.$env();
+
 		// unique
 		var first = url.substring(0, 1);
 		var once = url.substring(0, 5).toLowerCase() === 'once ';
@@ -720,7 +734,7 @@
 			statics[url] = 2;
 
 			var key = makeurl(url);
-			var id = 'import' + HASH(key);
+			var id = 'import' + W.HASH(key);
 
 			AJAX('GET ' + key, function(response) {
 
@@ -931,7 +945,7 @@
 				headers = tmp;
 		}
 
-		url = url.substring(index).trim();
+		url = url.substring(index).trim().$env();
 
 		// middleware
 		index = url.indexOf(' #');
@@ -1073,7 +1087,7 @@
 			return M;
 
 		var method = url.substring(0, index).toUpperCase();
-		var uri = url.substring(index).trim();
+		var uri = url.substring(index).trim().$env();
 
 		setTimeout(function() {
 			var value = clear ? undefined : cacherest(method, uri, data, undefined, expire);
@@ -1383,6 +1397,7 @@
 	M.inc = function(path, value, type) {
 
 		path = ctrl_path(path);
+
 		if (!path)
 			return M;
 
@@ -1405,6 +1420,7 @@
 	M.set = function(path, val, type) {
 
 		path = ctrl_path(path);
+
 		if (!path)
 			return M;
 
@@ -3991,7 +4007,6 @@
 		self.getter = function(value, type, dirty, older, skip) {
 
 			var self = this;
-
 			value = self.parser(value);
 
 			if (type === 2 && !skip)
@@ -4327,6 +4342,8 @@
 			return self;
 		}
 
+		path = path.env(true);
+
 		var fixed = null;
 
 		if (path.charCodeAt(0) === 33) {
@@ -4411,8 +4428,10 @@
 			var l = kv.length;
 			if (l !== 2)
 				continue;
+
 			var k = kv[0].trim();
-			var v = kv[1].trim();
+			var v = kv[1].trim().env();
+
 			if (v === 'true' || v === 'false')
 				v = v === 'true';
 			else if (num.test(v)) {
@@ -4670,6 +4689,7 @@
 			for (var i = 0, length = a.length; i < length; i++)
 				value = a[i].call(self, self.path, value, self.type);
 		}
+
 		return value;
 	};
 
@@ -5110,6 +5130,8 @@
 	};
 
 	W.EXEC = function(path) {
+
+		path = path.env();
 		var arg = [];
 
 		for (var i = 1; i < arguments.length; i++)
@@ -5290,6 +5312,8 @@
 			url = '';
 		}
 
+		url = url.$env();
+
 		var dt = new Date().add(period);
 		ON('knockknock', function() {
 			if (dt > W.DATETIME)
@@ -5308,6 +5332,8 @@
 
 		if (navigator.onLine != null && !navigator.onLine)
 			return;
+
+		url = url.$env();
 
 		var index = url.indexOf(' ');
 		var method = 'GET';
@@ -5878,6 +5904,21 @@
 		return arr;
 	};
 
+	SP.env = function(search) {
+		var self = this;
+		if (search) {
+			return self.replace(REGENV, function(val) {
+				return M.defaults.environment[val.substring(1)] || val;
+			});
+		}
+		return self.charCodeAt(0) === 37 ? (M.defaults.environment[self.substring(1)] || self) : self;
+	};
+
+	SP.$env = function() {
+		var index = this.indexOf('?');
+		return index === -1 ? this.env(true) : this.substring(0, index).env() + this.substring(index);
+	};
+
 	SP.params = function(obj) {
 		return this.replace(/\{[a-z0-9]+\}/gi, function(id) {
 			return obj[id.substring(1, id.length - 1)];
@@ -6137,6 +6178,9 @@
 			value = parseInt(arr[0]);
 		}
 
+		if (typeof(value) === 'string')
+			value = value.env();
+
 		var self = this;
 		var dt = new Date(self.getTime());
 
@@ -6194,6 +6238,8 @@
 			return statics[key](self);
 
 		var half = false;
+
+		format = format.env();
 
 		if (format && format[0] === '!') {
 			half = true;
@@ -6293,6 +6339,7 @@
 	};
 
 	NP.format = function(decimals, separator, separatorDecimal) {
+
 		var self = this;
 		var num = self.toString();
 		var dec = '';
@@ -6632,7 +6679,7 @@
 		} else if (value === undefined)
 			value = name.toString();
 
-		self.push(name + '="' + value.toString().replace(/[<>&"]/g, function(c) {
+		self.push(name + '="' + value.toString().env().toString().replace(/[<>&"]/g, function(c) {
 			switch (c) {
 				case '&': return '&amp;';
 				case '<': return '&lt;';
@@ -6989,7 +7036,7 @@
 		if (type === 'number' || type === 'currency' || type === 'float') {
 			if (typeof(value) === 'string')
 				value = value.replace(REGEMPTY, '').replace(REGCOMMA, '.');
-			var v = parseFloat(value);
+			var v = +value;
 			return isNaN(v) ? null : v;
 		}
 		return value;
