@@ -1687,6 +1687,8 @@ ENV(key, [value]);
 // Gets/Sets the environment value
 // Alternative: String.prototype.env([search])
 // +v11.2.0
+
+ENV([object]); // sets environments
 ```
 
 ## Device Width

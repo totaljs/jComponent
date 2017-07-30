@@ -136,8 +136,21 @@
 	// ===============================================================
 
 	M.ENV = W.ENV = function(name, value) {
-		if (value !== undefined)
-			return M.defaults.environment[name] = value;
+
+		if (typeof(name) === 'object') {
+			name && Object.keys(name).forEach(function(key) {
+				M.defaults.environment[key] = name[key];
+				EMIT('environment', key, name[key]);
+			});
+			return name;
+		}
+
+		if (value !== undefined) {
+			EMIT('environment', name, value);
+			M.defaults.environment[name] = value;
+			return value;
+		}
+
 		return M.defaults.environment[name];
 	};
 
@@ -145,8 +158,7 @@
 		M.$localstorage = name;
 		M.$version = version || '';
 		M.$language = language || '';
-		if (env)
-			M.defaults.environment = env;
+		env && M.ENV(env);
 		return M;
 	};
 
