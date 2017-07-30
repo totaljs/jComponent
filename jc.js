@@ -4,7 +4,7 @@
 	var REGCOM = /(data-ja|data-jc)\=/;
 	var REGSCRIPT = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
-	var REGENV = /\%[a-z0-9]+/i;
+	var REGENV = /\%[a-z0-9\-\.\_]+/i;
 	var REGEMPTY = /\s/g;
 	var REGCOMMA = /,/g;
 	var REGSEARCH = /[^a-zA-Zá-žÁ-Ž\d\s:]/g;
