@@ -1172,7 +1172,7 @@ MAIN.AJAXCACHE('METHOD URL', data, [callback(response, isFromCache) or path], [e
 // AJAX('GET /api/ { customheader1: "value1", customerheader2: "value2" }', ...);
 
 // +v11.0.0 status can be 999 and this is unspecific network error.
-// +v11.2.0 supports environments e.g. AJAX('GET %adminurl') replaces '%adminurl' for ENV('adminurl') --> in url and headers
+// +v11.2.0 supports environments e.g. AJAX('GET [adminurl]') replaces '[adminurl]' for ENV('adminurl') --> in url and headers
 
 MAIN.evaluate(path, expression, [path_is_value]);
 MAIN.evaluate('model.age', 'value > 20 && value < 30'); // Example
@@ -1460,13 +1460,13 @@ if (NOTMODIFIED('model')) return; // Example
 AJAX('METHOD URL', data, [callback(data, error, response) or path], [sleep]);
 AJAXCACHE('METHOD URL', data, [callback or path], [expire], [sleep], [clear]);
 // Aliases for MAIN.AJAX(), MAIN.AJAXCACHE()
-// +v11.2.0 supports environments e.g. PING('%adminurl') replaces '%adminurl' for ENV('adminurl') --> in url and headers
+// +v11.2.0 supports environments e.g. PING('[adminurl]') replaces '[adminurl]' for ENV('adminurl') --> in url and headers
 
 // +v8.0.0
 AJAXCACHEREVIEW('METHOD URL', data, [callback(data, fromCache, reviewed) or path], [expire], [sleep], [clear]);
 // Aliases for MAIN.AJAXCACHEREVIEW(). This method loads a content from the cache and
 // then performs AJAX() call again with a simple diff.
-// +v11.2.0 supports environments e.g. PING('%adminurl') replaces '%adminurl' for ENV('adminurl') --> in url and headers
+// +v11.2.0 supports environments e.g. PING('[adminurl]') replaces '[adminurl]' for ENV('adminurl') --> in url and headers
 
 // +v4.0.0
 UPLOAD(url, formdata, [callback or path], [sleep], [progress(percentage, speed, remaining) or path]);
@@ -1476,7 +1476,7 @@ UPLOAD('/api/', formdata, 'response.success-->form.response'); // Example with r
 UPLOAD('/api/', formdata, function(response, err) { console.log(response); }); // Example
 // Uploads formdata and receive `JSON` from the server. When is throwed an error then
 // "response" is the empty object {}
-// +v11.2.0 supports environments e.g. UPLOAD('%adminurl') replaces '%adminurl' for ENV('adminurl') --> in url
+// +v11.2.0 supports environments e.g. UPLOAD('[adminurl]') replaces '[adminurl]' for ENV('adminurl') --> in url
 
 // +v11.0.0
 PING('METHOD URL', [interval]);
@@ -1485,7 +1485,7 @@ PING('METHOD URL', [interval]);
 // Ping request contains custom header `X-Ping`: `CURRENT RELATIVE URL ADDRESS`
 // +v11.0.0 (IMPORTANT) A response (String) will be evaluted as JAVASCRIPT
 // +v11.0.0 "M.defaults.pingdata = {}" can contain some data which they are sending as QueryString
-// +v11.2.0 supports environments e.g. PING('%adminurl') replaces '%adminurl' for ENV('adminurl') --> in url
+// +v11.2.0 supports environments e.g. PING('[adminurl]') replaces '[adminurl]' for ENV('adminurl') --> in url
 
 // +v4.0.0
 // Middleware
@@ -1658,7 +1658,7 @@ UPTODATE('1 day', '/products/');
 // UPTODATE(perid, [url], [callback])
 // Performs a refresh, great feature for SPA applications
 // +v9.0.0
-// +v11.2.0 supports environments e.g. PING('%adminurl') replaces '%adminurl' for ENV('adminurl') --> in url
+// +v11.2.0 supports environments e.g. UPTODATE('[adminurl]') replaces '[adminurl]' for ENV('adminurl') --> in url
 
 var can = CAN('users.form.*');
 can && submit();
@@ -1945,7 +1945,7 @@ __Good to know__:
 - all registered events `ON()` + schedulers `SCHEDULE()` are removed too when controller is removed
 - controller can be defined without scope `<div data-jc-controller` and then the main scope is `window` object
 - `data-jc-scope=""` creates a scope for all nested components
-- `jRouting` +v11.2.0 supports environments in URL addreses `ROUTE('%adminurl', ..)` or `REDIRECT('%adminurl')`
+- `jRouting` +v11.2.0 supports environments in URL addreses `ROUTE('[adminurl]', ..)` or `REDIRECT('[adminurl]')`
 
 ## jQuery
 
@@ -2273,7 +2273,7 @@ var string = 'Peter Širka'.slug();
 // String.prototype.parseExpire() --> returns miliseconds
 // String.prototype.toSearch()    --> returns string for fulltext search
 
-// String.prototype.env(search)   --> +v11.2.0 replaces %keyword according to ENVIRONMENT (search finds all keys in string (default: false))
+// String.prototype.env(search)   --> +v11.2.0 replaces [keyword] according to ENVIRONMENT (search finds all keys in string (default: false))
 
 // String.prototype.format(format, arg1, arg2, arg3, ...);
 var string = 'My name is {0} and I am {1} years old.'.format('Peter', 31);

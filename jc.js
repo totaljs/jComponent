@@ -4,7 +4,8 @@
 	var REGCOM = /(data-ja|data-jc)\=/;
 	var REGSCRIPT = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
-	var REGENV = /\%[a-z0-9\-\.\_]+/i;
+	var REGENV = /(\[.*?\])/gi;
+	var REGPARAMS = /\{[a-z0-9]+\}/gi;
 	var REGEMPTY = /\s/g;
 	var REGCOMMA = /,/g;
 	var REGSEARCH = /[^a-zA-Zá-žÁ-Ž\d\s:]/g;
@@ -5908,10 +5909,11 @@
 		var self = this;
 		if (search) {
 			return self.replace(REGENV, function(val) {
-				return M.defaults.environment[val.substring(1)] || val;
+				return M.defaults.environment[val.substring(1, val.length - 1)] || val;
 			});
 		}
-		return (self.charCodeAt(0) === 37 ? (M.defaults.environment[self.substring(1)] || self) : self).toString();
+		var l = self.length - 1;
+		return (self.charCodeAt(0) === 91 && self.charCodeAt(l) === 93 ? (M.defaults.environment[self.substring(1, l)] || self) : self).toString();
 	};
 
 	SP.$env = function() {
@@ -5920,7 +5922,7 @@
 	};
 
 	SP.params = function(obj) {
-		return this.replace(/\{[a-z0-9]+\}/gi, function(id) {
+		return this.replace(REGPARAMS, function(id) {
 			return obj[id.substring(1, id.length - 1)];
 		});
 	};
