@@ -9,7 +9,7 @@
 
 > __Download__: more than 80 jComponents for free for everyone <https://componentator.com>
 
-- Current version: `v11.1.0`
+- Current version: `v11.2.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -542,6 +542,12 @@ COMPONENT('my-component-name', function(instance, config) {
     // Sets the value into the model.
     // path {String}: default: instance.path
     // type {Number}: default 1
+
+
+    instance.rewrite([path], value);
+    // Rewrites a value with except notifications
+    // path {String}: default: instance.path
+    // +v11.2.0
 
 
     instance.update([updatePath]);

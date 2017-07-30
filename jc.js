@@ -95,7 +95,7 @@
 	M.regexp.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v11.1.0';
+	M.version = 'v11.2.0';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -4708,6 +4708,17 @@
 		}
 
 		path && M.extend(path, value, type);
+		return this;
+	};
+
+	PPC.rewrite = function(path, value) {
+
+		if (value === undefined) {
+			value = path;
+			path = this.path;
+		}
+
+		path && M.rewrite(path, value);
 		return this;
 	};
 
