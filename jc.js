@@ -5911,12 +5911,12 @@
 				return M.defaults.environment[val.substring(1)] || val;
 			});
 		}
-		return self.charCodeAt(0) === 37 ? (M.defaults.environment[self.substring(1)] || self) : self;
+		return (self.charCodeAt(0) === 37 ? (M.defaults.environment[self.substring(1)] || self) : self).toString();
 	};
 
 	SP.$env = function() {
 		var index = this.indexOf('?');
-		return index === -1 ? this.env(true) : this.substring(0, index).env() + this.substring(index);
+		return index === -1 ? this.env(true) : this.substring(0, index).env(true) + this.substring(index);
 	};
 
 	SP.params = function(obj) {
