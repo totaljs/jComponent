@@ -3219,8 +3219,10 @@
 					var val = el.val();
 					if (val) {
 						var tmp = component.parser(val);
-						component.set(tmp);
-						emitwildcard(component.path, tmp, 3);
+						if (tmp) {
+							component.set(tmp);
+							emitwildcard(component.path, tmp, 3);
+						}
 					}
 				});
 			}, 1000);
@@ -4374,7 +4376,7 @@
 
 		// Operations
 		if (isOperation(path)) {
-			self.$path = EMPTYARRAY;
+			self.$$path = self.$path = EMPTYARRAY;
 			self.path = path;
 			self.middleware = '';
 			return self;
