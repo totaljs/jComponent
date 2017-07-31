@@ -638,6 +638,11 @@ COMPONENT('my-component-name', function(instance, config) {
     // +v11.0.0
 
 
+    instance.tclass(string, [visible]);
+    // Toggles classes
+    // +v11.0.0
+
+
     instance.aclass(string, [timeout]);
     // Adds classes
     // +v11.0.0
@@ -1991,10 +1996,19 @@ $('selector').aclass('newclass');
 // +v11.2.0
 $('selector').rclass('removeclass');
 
+// Alias to .toggleClass()
+// +v11.2.0
+$('selector').tclass('toggleclass');
+
 // Alias to .hasClass()
 // +v11.2.0
 if ($('selector').hclass('hasthisclass'))
    console.log('It has!');
+
+// Alias to .attr('data-' + key)
+// +v11.2.0
+$('selector').dattr('title');
+
 ```
 
 ## Extending components

@@ -4226,6 +4226,11 @@
 		return self;
 	};
 
+	PPC.tclass = PPA.tclass = PPP.tclass = PCTRL.tclass = function(cls, v) {
+		self.element.toggleClass(cls, v);
+		return self;
+	};
+
 	PPC.aclass = PPA.aclass = PPP.aclass = PCTRL.aclass = function(cls, timeout) {
 		var self = this;
 		if (timeout)
@@ -6869,6 +6874,14 @@
 
 		$.fn.hclass = function(a) {
 			return this.hasClass(a);
+		};
+
+		$.fn.tclass = function(a, v) {
+			return this.toggleClass(a, v);
+		};
+
+		$.fn.dattr = function(a) {
+			return this.attr('data-' + a);
 		};
 
 		// Appends an SVG element
