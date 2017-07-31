@@ -4220,7 +4220,7 @@
 	PPC.update = PPC.refresh = function(notify) {
 		var self = this;
 		if (notify)
-			self.set(self.get(), self.path);
+			self.set(self.path, self.get());
 		else {
 			self.setter && self.setter(self.get(), self.path, 1);
 			self.$interaction(1);
