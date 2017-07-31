@@ -24,6 +24,9 @@
 	var A = {}; // APPS CONTAINER
 	var W = window;
 
+	// temporary
+	W.jctmp = {};
+
 	// Internal cache
 	var blocked = {};
 	var storage = {};
@@ -362,6 +365,7 @@
 			path = '*';
 		}
 
+		path = ctrl_path(path);
 		ON('watch', path, fn);
 		init && fn.call(M, path, get(path), 0);
 		return M;
@@ -1572,6 +1576,22 @@
 	};
 
 	function ctrl_path(path) {
+
+		if (!path)
+			return path;
+
+		// temporary
+		if (path.charCodeAt(0) === 37)
+			return 'jctmp.' + path.substring(1);
+
+		if (path.charCodeAt(0) !== 64) {
+			var index = path.indexOf('/');
+			if (index === -1)
+				return path;
+			var ctrl = CONTROLLER(path.substring(0, index));
+			return (ctrl ? ctrl.scope : 'UNDEFINED') + '.' + path.substring(index + 1);
+		}
+
 		if (!path || path.charCodeAt(0) !== 64)
 			return path;
 		path = path.substring(1);
@@ -4535,7 +4555,8 @@
 			init = fn;
 			fn = path;
 			path = self.path;
-		}
+		} else
+			path = ctrl_path(path);
 
 		self.on('watch', path, fn);
 		init && fn.call(self, path, self.get(path), 0);
@@ -5315,7 +5336,7 @@
 	};
 
 	W.WATCH = function(path, callback, init) {
-		return ON('watch', path, callback, init);
+		return ON('watch', ctrl_path(path), callback, init);
 	};
 
 	W.UPTODATE = function(period, url, callback) {
@@ -6837,6 +6858,18 @@
 				});
 			}
 		}, 3500);
+
+		$.fn.aclass = function(a) {
+			return this.addClass(a);
+		};
+
+		$.fn.rclass = function(a) {
+			return this.removeClass(a);
+		};
+
+		$.fn.hclass = function(a) {
+			return this.hasClass(a);
+		};
 
 		// Appends an SVG element
 		$.fn.asvg = function(tag) {

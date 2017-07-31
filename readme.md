@@ -1948,6 +1948,7 @@ __Good to know__:
 - controller can be defined without scope `<div data-jc-controller` and then the main scope is `window` object
 - `data-jc-scope=""` creates a scope for all nested components
 - `jRouting` +v11.2.0 supports environments in URL addreses `ROUTE('[adminurl]', ..)` or `REDIRECT('[adminurl]')`
+- Temporary variables: `v11.2.0` --> `SET('%yourpath', 'value')` (works everywhere)
 
 ## jQuery
 
@@ -1981,6 +1982,19 @@ g.attr('transform', 'translate(100,100)');
 var rect = g.psvg('rect');
 
 g.psvg('<rect width="100" height="100" fill="red"></rect>');
+
+// Alias to .addClass()
+// +v11.2.0
+$('selector').aclass('newclass');
+
+// Alias to .removeClass()
+// +v11.2.0
+$('selector').rclass('removeclass');
+
+// Alias to .hasClass()
+// +v11.2.0
+if ($('selector').hclass('hasthisclass'))
+   console.log('It has!');
 ```
 
 ## Extending components
