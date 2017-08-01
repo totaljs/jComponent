@@ -101,7 +101,7 @@
 	M.regexp.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v11.2.0';
+	M.version = 'v11.3.0';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2521,9 +2521,11 @@
 				obj.setPath(attrcom(el, 'path') || obj._id, 1);
 				obj.config = {};
 
+				// Default config
+				com.config && obj.reconfigure(com.config, NOOP);
+
 				var tmp = attrcom(el, 'config');
 				tmp && obj.reconfigure(tmp, NOOP);
-
 				com.declaration.call(obj, obj, obj.config);
 
 				if (obj.init && !statics[name]) {
@@ -3830,6 +3832,7 @@
 		self.id = id;
 		self.config = {};
 
+		declaration.config && self.reconfigure(declaration.config, NOOP);
 		var tmp = attrapp(element, 'config');
 		tmp && self.reconfigure(tmp, NOOP);
 
@@ -4943,9 +4946,15 @@
 		}
 	};
 
-	W.COMPONENT = function(name, declaration) {
+	W.COMPONENT = function(name, config, declaration) {
+
+		if (typeof(config) === 'function') {
+			declaration = config;
+			config = null;
+		}
+
 		M.$components[name] && warn('Components: Overwriting component:', name);
-		M.$components[name] = { name: name, declaration: declaration, shared: {} };
+		M.$components[name] = { name: name, config: config, declaration: declaration, shared: {} };
 	};
 
 	W.SINGLETON = function(name, def) {

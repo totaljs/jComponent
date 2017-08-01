@@ -307,6 +307,20 @@ COMPONENT('my-component-name', function(instance, config) {
     };
 
 });
+
+// +v11.3.0
+// With a default configuration
+COMPONENT('my-component-name', 'default:config;max:30;required:false', function(instance, config) {
+
+    // A component instance
+    // var instance = this;
+
+    // component definition
+    this.make = function(template) {
+        this.element.html('Hello world!');
+    };
+
+});
 ```
 
 ### Properties
@@ -2214,6 +2228,10 @@ exports.install = function(instance, initdata) {
 exports.uninstall = function() {
     // OPTIONAL
 };
+
+// A default configuration
+// +v11.3.0
+exports.config = 'title:Something;required:true';
 </script>
 ```
 
