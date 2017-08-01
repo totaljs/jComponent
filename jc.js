@@ -4232,6 +4232,7 @@
 	};
 
 	PPC.tclass = PPA.tclass = PPP.tclass = PCTRL.tclass = function(cls, v) {
+		var self = this;
 		self.element.toggleClass(cls, v);
 		return self;
 	};
