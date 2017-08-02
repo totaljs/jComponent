@@ -686,7 +686,7 @@ COMPONENT('my-component-name', function(instance, config) {
 
     instance.reconfigure(value, [callback(key, value)]);
     // Parses configuration
-    // "value" can be "max:10;size:20;required:false" or "max=10;size=20;required=false" or can be Object
+    // "value" can be "max:10;size:20;required:false" or can be Object
     // +11.1.0
 
 
