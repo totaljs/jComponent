@@ -4464,18 +4464,19 @@
 			return self;
 		}
 
-		var arr = value.split(';');
-		var reg = /\=|\:/;
+		var arr = value.replace(/\\\;/g, '\0').split(';');
 		var num = /^(\-)?[0-9\.]+$/;
 
 		for (var i = 0, length = arr.length; i < length; i++) {
-			var kv = arr[i].split(reg);
+
+			var item = arr[i].replace(/\0/g, ';').replace(/\\\:/g, '\0');
+			var kv = item.split(':');
 			var l = kv.length;
 			if (l !== 2)
 				continue;
 
 			var k = kv[0].trim();
-			var v = kv[1].trim().env();
+			var v = kv[1].trim().replace(/\0/g, ':').env();
 
 			if (v === 'true' || v === 'false')
 				v = v === 'true';

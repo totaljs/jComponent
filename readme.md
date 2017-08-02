@@ -284,6 +284,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 <element data-jc-config="title:Something;maxlength:30;boolean:true" />
 <!--
     +v11.1.0 creates a configuration for the component. It's bound to `data-jc` attribute.
+    +v11.2.0 if you need to use ";" or ":" in a value then append "\" slash before this char.
 -->
 ```
 
