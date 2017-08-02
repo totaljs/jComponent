@@ -4453,12 +4453,13 @@
 
 		if (typeof(value) === 'object') {
 			Object.keys(value).forEach(function(k) {
+				var prev = self.config[k];
 				if (!init && self.config[k] !== value[k])
 					self.config[k] = value[k];
 				if (callback)
 					callback(k, value[k], init);
 				else if (self.configure)
-					self.configure(k, value[k], init);
+					self.configure(k, value[k], init, prev);
 			});
 			return self;
 		}
@@ -4484,13 +4485,15 @@
 					v = tmp;
 			}
 
+			var prev = self.config[k];
+
 			if (!init && self.config[k] !== v)
 				self.config[k] = v;
 
 			if (callback)
-				callback(k, v, init);
+				callback(k, v, init, prev);
 			else if (self.configure)
-				self.configure(k, v, init);
+				self.configure(k, v, init, prev);
 		}
 
 		return self;
