@@ -6894,7 +6894,7 @@
 			return this.toggleClass(a, v);
 		};
 
-		$.fn.dattr = function(a) {
+		$.fn.attrd = function(a) {
 			return this.attr('data-' + a);
 		};
 

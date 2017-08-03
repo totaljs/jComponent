@@ -2022,7 +2022,7 @@ if ($('selector').hclass('hasthisclass'))
 
 // Alias to .attr('data-' + key)
 // +v11.2.0
-$('selector').dattr('title');
+$('selector').attrd('title');
 
 ```
 
