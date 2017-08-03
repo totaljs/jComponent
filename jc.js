@@ -5367,15 +5367,13 @@
 			url = '';
 		}
 
-		url = url.$env();
-
 		var dt = new Date().add(period);
 		ON('knockknock', function() {
 			if (dt > W.DATETIME)
 				return;
 			setTimeout(function() {
 				if (url)
-					W.location.href = url;
+					W.location.href = url.$env();
 				else
 					W.location.reload(true);
 			}, 5000);
