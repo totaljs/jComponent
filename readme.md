@@ -1051,7 +1051,7 @@ MAIN.errors(path, [except], [highlight]);
 // +v11.4.0 supports highlighting
 // path {String}
 // except {String Array} excepts paths
-// highlight {Boolean} highlights invalid components
+// highlight {Boolean} highlights invalid components (default: false)
 // Returns array of invalid components.
 
 
@@ -1441,6 +1441,7 @@ FIND('data-jc[data-jc-path]') // Example: Returns one component.
 FIND('#data-jc–id') // Example: Returns one component.
 FIND('.data-jc-path') // Example: Returns one component.
 FIND('#data-jc–id[data-jc-path]') // Example: Returns one component.
+FIND($(window)); // +v11.4.0 supports jQuery element or DOM element
 // Finds the components. When the value starts with `#` then the library will be
 // search components according the `data-jc-id`;
 
@@ -1463,6 +1464,7 @@ FIND('data-component', function(component) {
 FIND('data-component', true, function(component_array) {
     console.log(component_array);
 }, 5000); // +4.0.0 --> 5 seconds timeout
+
 
 BLOCKED(name, timeout, [callback]);
 // Alias forMAINblocked();
@@ -1548,6 +1550,9 @@ SETTER(true, 'textbox', 'set', 'NEW VALUE'); // waits for some `textbox` (waits 
 SETTER([wait], selector, propORmethodName, [valueA], [valueB], [valueN]);
 // Returns SETTER.
 // +v4.0.0, [wait] +v9.0.0
+
+SETTER($('#container'), 'reconfigure', 'icon:home');
+// +v11.4.0 supports jQuery element or DOM element
 
 EXEC('path.to.method', 'hide', 1000);
 // Returns EXEC. Can execute a function according to the path.

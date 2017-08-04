@@ -5503,8 +5503,26 @@
 			return;
 		}
 
-		var key;
-		var output;
+		// Element
+		if (typeof(value) === 'object') {
+
+			if (!(value instanceof jQuery))
+				value = $(value);
+
+			var selector = value.find('[data-jc]');
+			if (many) {
+				var arr = [];
+				selector.each(function() {
+					this.$com && arr.push(this.$com);
+				});
+				return arr;
+			}
+
+			var item = selector[0];
+			return item ? item.$com : null;
+		}
+
+		var key, output;
 
 		if (!noCache) {
 			key = 'find.' + value + '.' + (many ? 0 : 1);
