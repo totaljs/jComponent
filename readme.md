@@ -9,7 +9,7 @@
 
 > __Download__: more than 80 jComponents for free for everyone <https://componentator.com>
 
-- Current version: `v11.2.0`
+- Current version: `v11.4.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
