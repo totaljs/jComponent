@@ -101,7 +101,7 @@
 	M.regexp.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v11.3.0';
+	M.version = 'v11.4.0';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1164,19 +1164,28 @@
 		return M;
 	};
 
-	M.errors = function(path, except) {
+	M.errors = function(path, except, highlight) {
+
 		if (path instanceof Array) {
 			except = path;
 			path = undefined;
 		}
 
+		if (except === true) {
+			except = highlight instanceof Array ? highlight : null;
+			highlight = true;
+		}
+
 		var arr = [];
+
 		M.each(function(obj) {
 			if (except && except.indexOf(obj.path) !== -1)
 				return;
 			if (obj.$valid === false && !obj.$valid_disabled)
 				arr.push(obj);
 		}, ctrl_path(path));
+
+		highlight && state(arr, 1, 1);
 		return arr;
 	};
 

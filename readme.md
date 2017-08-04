@@ -1046,8 +1046,12 @@ MAIN.findByPath('model', function(component) { console.log(component); });  // E
 // Finds components by `data-jc-id` attribute.
 
 
-MAIN.errors([path]);
+MAIN.errors(path, [except], [highlight]);
 // +v10.1.0 supports "@controllername.path"
+// +v11.4.0 supports highlighting
+// path {String}
+// except {String Array} excepts paths
+// highlight {Boolean} highlights invalid components
 // Returns array of invalid components.
 
 
