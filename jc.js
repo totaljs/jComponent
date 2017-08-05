@@ -3819,12 +3819,11 @@
 	PPP.prop = function(k, v) {
 		var self = this;
 
-		if (v) {
-			self.element.prop(k, v);
-			return self;
-		}
+		if (v === undefined)
+			return self.element.prop(k);
 
-		return self.element.prop(k);
+		self.element.prop(k, v);
+		return self;
 	};
 
 	PPP.val = function(v) {
