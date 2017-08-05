@@ -3816,6 +3816,25 @@
 		return self;
 	};
 
+	PPP.prop = function(k, v) {
+		var self = this;
+
+		if (v) {
+			self.element.prop(k, v);
+			return self;
+		}
+
+		return self.element.prop(k);
+	};
+
+	PPP.val = function(v) {
+		var self = this;
+		if (v === undefined)
+			return self.element.val();
+		self.element.val(v);
+		return self;
+	};
+
 	// ===============================================================
 	// CONTROLLER DECLARATION
 	// ===============================================================
@@ -4240,13 +4259,13 @@
 		return self;
 	};
 
-	PPC.tclass = PPA.tclass = PPP.tclass = PCTRL.tclass = function(cls, v) {
+	PPVC.tclass = PPC.tclass = PPA.tclass = PPP.tclass = PCTRL.tclass = function(cls, v) {
 		var self = this;
 		self.element.toggleClass(cls, v);
 		return self;
 	};
 
-	PPC.aclass = PPA.aclass = PPP.aclass = PCTRL.aclass = function(cls, timeout) {
+	PPVC.aclass = PPC.aclass = PPA.aclass = PPP.aclass = PCTRL.aclass = function(cls, timeout) {
 		var self = this;
 		if (timeout)
 			setTimeout(function() { self.element.addClass(cls); }, timeout);
@@ -4255,11 +4274,11 @@
 		return self;
 	};
 
-	PPC.hclass = PPA.hclass = PPP.hclass = PCTRL.hclass = function(cls) {
+	PPVC.hclass = PPC.hclass = PPA.hclass = PPP.hclass = PCTRL.hclass = function(cls) {
 		return this.element.hasClass(cls);
 	};
 
-	PPC.rclass = PPA.rclass = PPP.rclass = PCTRL.rclass = function(cls, timeout) {
+	PPVC.rclass = PPC.rclass = PPA.rclass = PPP.rclass = PCTRL.rclass = function(cls, timeout) {
 		var self = this;
 		if (timeout)
 			setTimeout(function() { self.element.removeClass(cls); }, timeout);
@@ -4268,7 +4287,7 @@
 		return self;
 	};
 
-	PPC.classes = PPA.classes = PPP.classes = PCTRL.classes = function(cls) {
+	PPVC.classes = PPC.classes = PPA.classes = PPP.classes = PCTRL.classes = function(cls) {
 
 		var key = 'cls.' + cls;
 		var tmp = temp[key];
@@ -4431,7 +4450,7 @@
 		return self;
 	};
 
-	PPC.attr = PPA.attr = PPP.attr = PCTRL.attr = function(name, value) {
+	PPVC.attr = PPC.attr = PPA.attr = PPP.attr = PCTRL.attr = function(name, value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.attr(name);
@@ -4439,7 +4458,7 @@
 		return this;
 	};
 
-	PPC.attrd = PPA.attrd = PPP.attrd = PCTRL.attrd = function(name, value) {
+	PPVC.attrd = PPC.attrd = PPA.attrd = PPP.attrd = PCTRL.attrd = function(name, value) {
 		name = 'data-' + name;
 		var el = this.element;
 		if (value === undefined)
@@ -4448,7 +4467,7 @@
 		return this;
 	};
 
-	PPC.css = PPA.css = PPP.css = PCTRL.css = function(name, value) {
+	PPVC.css = PPC.css = PPA.css = PPP.css = PCTRL.css = function(name, value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.css(name);
@@ -4509,15 +4528,15 @@
 		return self;
 	};
 
-	PPC.closest = PPA.closest = PPP.closest = PCTRL.closest = function(sel) {
+	PPVC.closest = PPC.closest = PPA.closest = PPP.closest = PCTRL.closest = function(sel) {
 		return this.element.closest(sel);
 	};
 
-	PPC.parent = PPA.parent = PPP.parent = PCTRL.parent = function(sel) {
+	PPVC.parent = PPC.parent = PPA.parent = PPP.parent = PCTRL.parent = function(sel) {
 		return this.element.parent(sel);
 	};
 
-	PPC.html = PPA.html = PPP.html = PCTRL.html = function(value) {
+	PPVC.html = PPC.html = PPA.html = PPP.html = PCTRL.html = function(value) {
 		var el = this.element;
 		var current = el.html();
 		if (value === undefined)
@@ -4530,26 +4549,26 @@
 		return value || type === 'number' || type === 'boolean' ? el.empty().append(value) : el.empty();
 	};
 
-	PPC.empty = PPA.empty = PPP.empty = PCTRL.empty = function() {
+	PPVC.empty = PPC.empty = PPA.empty = PPP.empty = PCTRL.empty = function() {
 		var el = this.element;
 		el.empty();
 		return el;
 	};
 
-	PPC.append = PPA.append = PPP.append = PCTRL.append = function(value) {
+	PPVC.append = PPC.append = PPA.append = PPP.append = PCTRL.append = function(value) {
 		var el = this.element;
 		if (value instanceof Array)
 			value = value.join('');
 		return value ? el.append(value) : el;
 	};
 
-	PPC.event = PPA.event = PPP.event = PPP.on = PCTRL.event = function() {
+	PPVC.event = PPC.event = PPA.event = PPP.event = PPP.on = PCTRL.event = function() {
 		var self = this;
 		self.element.on.apply(self.element, arguments);
 		return self;
 	};
 
-	PPC.find = PPA.find = PPP.find = PCTRL.find = function(selector) {
+	PPVC.find = PPC.find = PPA.find = PPP.find = PCTRL.find = function(selector) {
 		return this.element.find(selector);
 	};
 

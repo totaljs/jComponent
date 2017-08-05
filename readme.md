@@ -2105,7 +2105,10 @@ obj.replace(newEl);                      // Replaces current element to new
 obj.refresh();                           // Refreshes binding to object according to the selector
 obj.make(callback);                      // Executes a callback when the element is attached
 obj.import(url, [callback], [insert], [preparator(response)]); // Alias for MAIN.import();
-
+obj.aclass(cls);                         // Alias to .addClass()
+obj.rclass(cls);                         // Alias to .removeClass()
+obj.tclass(cls);                         // Alias to .toggleClass()
+obj.hclass(cls);                         // Alias to .hasClass()
 ```
 
 __Virtualized elements__:
@@ -2129,12 +2132,18 @@ obj.something.replace(el);               // Replaces element to another
 obj.something.click(callback(e));        // Captures "click/touchend" event
 obj.something.src(url);                  // Changes src="" attribute in the current element
 obj.something.classes(classes);          // Changes classes e.g. "-hidden +animation"
+obj.something.aclass(cls);               // Alias to .addClass()
+obj.something.rclass(cls);               // Alias to .removeClass()
+obj.something.tclass(cls);               // Alias to .toggleClass()
+obj.something.hclass(cls);               // Alias to .hasClass()
+obj.something.prop(key, [value]);        // Alias for "jQuery.prop()"
 obj.something.attr(name, [value]);       // Alias for "jQuery.attr()"
 obj.something.attrd(name, [value]);      // Alias for "jQuery.attr('data-{name}')"
 obj.something.css(name, [value]);        // Alias for "jQuery.css()"
 obj.something.find(selector);            // Alias for "element.find(selector)"
 obj.something.append(value);             // Alias for "element.append()"
 obj.something.html(value);               // Alias for "element.html()"
+obj.something.val(value);                // Alias for "element.val()"
 obj.something.toggle(cls, visible, [timeout]);    // Alias for "jQuery.toggleClass()"
 obj.something.event(name, [selector], callback);  // Alias for "element.on()"
 obj.something.import(url, [callback], [insert], [preparator(response)]); // Alias for MAIN.import();
