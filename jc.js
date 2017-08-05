@@ -3906,6 +3906,7 @@
 	};
 
 	PPA.path = PCTRL.path = function(path) {
+
 		var self = this;
 
 		if (!self.scope && self instanceof Controller) {
@@ -3968,6 +3969,7 @@
 	};
 
 	PPA.get = PCTRL.get = function(path) {
+		var self = this;
 		return get(self.path(path));
 	};
 
