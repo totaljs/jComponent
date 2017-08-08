@@ -4281,10 +4281,15 @@
 
 	PPVC.rclass = PPC.rclass = PPA.rclass = PPP.rclass = PCTRL.rclass = function(cls, timeout) {
 		var self = this;
+		var e = self.element;
 		if (timeout)
-			setTimeout(function() { self.element.removeClass(cls); }, timeout);
-		else
-			self.element.removeClass(cls);
+			setTimeout(function() { e.removeClass(cls); }, timeout);
+		else {
+			if (cls)
+				e.removeClass(cls);
+			else
+				e.removeClass();
+		}
 		return self;
 	};
 
@@ -6930,7 +6935,7 @@
 		};
 
 		$.fn.rclass = function(a) {
-			return this.removeClass(a);
+			return a ? this.removeClass(a) : this.removeClass();
 		};
 
 		$.fn.hclass = function(a) {
