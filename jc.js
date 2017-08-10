@@ -2569,6 +2569,9 @@
 					obj.pathscope = output.path;
 				}
 
+				if (!obj.$controller)
+					obj.$controller = attrcom(el, 'controller');
+
 				instances.push(obj);
 
 				var template = attrcom(el, 'template') || obj.template;
@@ -3244,6 +3247,11 @@
 
 				var t = this;
 				var controller = attrcom(t, 'controller');
+
+				// Does this element contain jComponent?
+				// If yes, skip
+				if (attrcom(t))
+					return;
 
 				if (controller) {
 					if (t.$ready)
@@ -4159,7 +4167,7 @@
 		return self;
 	};
 
-	PPC.exec = PPA.exec = PCTRL.exec = function(name, a, b, c, d, e) {
+	PPC.exec = PPA.exec = function(name, a, b, c, d, e) {
 		var self = this;
 		self.find(ATTRCOM).each(function() {
 			var t = this;
@@ -4171,8 +4179,13 @@
 		return self;
 	};
 
-	PPC.controller = function() {
-		return CONTROLLER(this.$controller);
+	PPC.controller = function(name) {
+		var self = this;
+		if (name) {
+			self.$controller = name;
+			return self;
+		}
+		return CONTROLLER(self.$controller);
 	};
 
 	PPC.replace = function(el) {
@@ -5793,6 +5806,11 @@
 		// Remove schedulers
 		schedulers = schedulers.remove('controller', self.name);
 
+		for (var i = 0, length = M.components.length; i < length; i++) {
+			var com = M.components[i];
+			com.$controller === self.name && com.remove(true);
+		}
+
 		setTimeout(function(scope) {
 			if (scope)
 				delete window[scope];
@@ -5800,6 +5818,27 @@
 			clear();
 			setTimeout(cleaner, 500);
 		}, 1000, self.scope);
+	};
+
+	PCTRL.exec = function(name, a, b, c, d, e) {
+		var self = this;
+		for (var i = 0, length = M.components.length; i < length; i++) {
+			var t = M.components[i];
+			if (t.$controller === self.name) {
+				t.caller = self;
+				t[name] && t[name](a, b, c, d, e);
+			}
+		}
+		return self;
+	};
+
+	PCTRL.components = function() {
+		var arr = [];
+		for (var i = 0, length = M.components.length; i < length; i++) {
+			var com = M.components[i];
+			com.$controller === this.name && arr.push(com);
+		}
+		return arr;
 	};
 
 	W.VIRTUALIZE = function(el, map) {

@@ -9,7 +9,7 @@
 
 > __Download__: more than 80 jComponents for free for everyone <https://componentator.com>
 
-- Current version: `v11.4.0`
+- Current version: `v11.5.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -226,6 +226,11 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 <!--
    +v3.9.0 - automatically calls the controller initialization. Look into the
    controller section in this manual.
+-->
+
+<element data-jc="somecomponent" data-jc-controller="CONTROLLER_NAME">
+<!--
+   +v11.5.0 - automatically assigns the controller to the component. Controller does not have to exist. It's the internal info only.
 -->
 
 <element data-jc-released="true" />
@@ -1968,6 +1973,7 @@ CONTROLLER('Users', function(instance) {
     instance.css(name, [value]);                  // Alias for "jQuery.css()"
     instance.exec(name, [a], [b], [c]);           // Executes methods in all components
     instance.empty();                             // Alias for "jQuery.empty()"
+    instance.components();                        // +v11.5.0 returns all nested components
     instance.remove();                            // Removes itself
 });
 ```
