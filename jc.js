@@ -6935,7 +6935,7 @@
 		};
 
 		$.fn.rclass = function(a) {
-			return a ? this.removeClass(a) : this.removeClass();
+			return a == null ? this.removeClass() : this.removeClass(a);
 		};
 
 		$.fn.hclass = function(a) {
@@ -6946,8 +6946,9 @@
 			return this.toggleClass(a, v);
 		};
 
-		$.fn.attrd = function(a) {
-			return this.attr('data-' + a);
+		$.fn.attrd = function(a, v) {
+			a = 'data-' + a;
+			return v == null ? this.attr(a) : this.attr(a, v);
 		};
 
 		// Appends an SVG element
