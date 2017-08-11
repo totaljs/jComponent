@@ -417,66 +417,61 @@
 
 		var owner = null;
 		var index = name.indexOf('#');
-
 		if (index) {
 			owner = name.substring(0, index).trim();
 			name = name.substring(index + 1).trim();
-
-			if (!name) {
-				Object.keys(events[path]).forEach(function(key) {
-					M.off(owner + '#' + key, path, fn);
-				});
-				return M;
-			}
 		}
 
 		if (path)
 			path = path.replace('.*', '');
 
-		var evt = events[path];
-		if (!evt)
-			return M;
+		var type = 0;
 
-		evt = evt[name];
-		if (!evt)
-			return M;
+		if (owner && !path && !fn && !name)
+			type = 1;
+		else if (owner && name && !fn && !path)
+			type = 2;
+		else if (owner && name && path)
+			type = 3;
+		else if (owner && name && path && fn)
+			type = 4;
+		else if (name && path && fn)
+			type = 5;
+		else if (fn)
+			type = 6;
 
-		index = 0;
+		Object.keys(events).forEach(function(p) {
 
-		while (true) {
-			var e = evt[index];
-			if (!e)
-				break;
-
-			if (owner) {
-				if (owner !== e.owner) {
-					index++;
-					continue;
-				}
-
-				if (fn) {
-					if (fn === e.fn)
-						evt.splice(index, 1);
-					else
-						index++;
-				} else
-					evt.splice(index, 1);
-				continue;
+			var evt = events[p];
+			if (type > 2 && type < 5) {
+				if (p !== path)
+					return false;
 			}
 
-			if (fn) {
-				if (fn === e.fn)
-					evt.splice(index, 1);
-				else
-					index++;
-				continue;
-			}
+			Object.keys(evt).forEach(function(key) {
+				evt[key] = evt[key].remove(function(item) {
+					if (type === 1)
+						return item.owner === owner;
+					else if (type === 2)
+						return key === name && item.owner === owner;
+					else if (type === 3)
+						return key === name && item.owner === owner;
+					else if (type === 4)
+						return key === name && item.owner === owner && item.fn === fn;
+					else if (type === 5 || type === 6)
+						return key === name && item.fn === fn;
+					else if (type === 6)
+						return item.fn === fn;
+					return key === name;
+				});
 
-			evt.splice(index, 1);
-		}
+				if (!evt[key].length)
+					delete evt[key];
+			});
 
-		if (!evt.length)
-			delete events[path][name];
+			if (!Object.keys(evt).length)
+				delete events[p];
+		});
 
 		return M;
 	};
@@ -507,9 +502,7 @@
 	};
 
 	M.change = function(path, value) {
-		if (value === undefined)
-			return !M.dirty(path);
-		return !M.dirty(path, !value);
+		return value === undefined ? !M.dirty(path) : !M.dirty(path, !value);
 	};
 
 	M.used = function(path) {
@@ -3913,6 +3906,34 @@
 		return self;
 	};
 
+	PPA.unwatch = function(path, fn) {
+		var self = this;
+		M.off('app' + self.id + '#watch', self.path(path), fn);
+		return self;
+	};
+
+	PPA.watch = function(path, fn, init) {
+		var self = this;
+		path = self.path(path);
+		M.on('app' + self.id + '#watch', path, fn);
+		init && fn.call(self, path, self.get(path), 0);
+		return self;
+	};
+
+	PCTRL.unwatch = function(path, fn) {
+		var self = this;
+		M.off('ctrl' + self.name + '#watch', self.path(path), fn);
+		return self;
+	};
+
+	PCTRL.watch = function(path, fn, init) {
+		var self = this;
+		path = self.path(path);
+		M.on('ctrl' + self.name + '#watch', path, fn);
+		init && fn.call(self, path, self.get(path), 0);
+		return self;
+	};
+
 	PPA.path = PCTRL.path = function(path) {
 
 		var self = this;
@@ -3993,6 +4014,9 @@
 			self.element.remove();
 			self.key && M.removeCache(self.key);
 		}
+
+		// Remove events
+		M.off('app' + self.id + '#watch');
 
 		self.element.off();
 		M.apps = M.apps.remove(self);
@@ -4605,7 +4629,7 @@
 
 	PPC.unwatch = function(path, fn) {
 		var self = this;
-		M.off('watch', path, fn);
+		M.off('com' + self._id + '#watch', path, fn);
 		return self;
 	};
 
@@ -4704,6 +4728,7 @@
 		self.element.find(ATTRCOM).attr(ATTRDEL, 'true');
 		self.element.attr(ATTRDEL, 'true');
 		self.$removed = 1;
+		M.off('com' + self.name + '#');
 		if (!noClear) {
 			clear();
 			setTimeout2('$cleaner', cleaner, 100);
@@ -4733,7 +4758,7 @@
 			events[path][name] = [];
 
 		var self = this;
-		events[path][name].push({ fn: fn, context: self, id: self._id, path: fixed });
+		events[path][name].push({ fn: fn, context: self, id: self._id, owner: 'com' + self._id, path: fixed });
 		init && fn.call(M, path, get(path));
 		return self;
 	};
@@ -5802,6 +5827,9 @@
 					delete events[''][key];
 			});
 		}
+
+		// Remove events
+		M.off('ctrl' + self.name + '#watch');
 
 		// Remove schedulers
 		schedulers = schedulers.remove('controller', self.name);

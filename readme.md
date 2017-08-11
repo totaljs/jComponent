@@ -1975,6 +1975,8 @@ CONTROLLER('Users', function(instance) {
     instance.empty();                             // Alias for "jQuery.empty()"
     instance.components();                        // +v11.5.0 returns all nested components
     instance.remove();                            // Removes itself
+    instance.watch('path', fn(path, value, type), init); // +v11.5.0 Enables watching of property within controller's scope
+    instance.unwatch('path', [fn]);               // +v11.5.0 Unbinds watching
 });
 ```
 
@@ -2248,6 +2250,8 @@ exports.install = function(instance, initdata) {
     instance.$save();                             // Saves current options
     instance.import(url, [callback], [insert], [preparator(response)]); // Alias for MAIN.import();
     instance.reconfigure(value, [callback(key, value)]); // +v11.1.0 Parses configuration
+    instance.watch('path', fn(path, value, type), init); // +v11.5.0 Enables watching of property within controller's scope
+    instance.unwatch('path', [fn]);               // +v11.5.0 Unbinds watching
 };
 
 exports.uninstall = function() {
