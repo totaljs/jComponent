@@ -4004,21 +4004,24 @@
 
 	PPA.remove = PPA.destroy = function(noremove) {
 		var self = this;
+		var el = self.element;
+
 		self.destroy && self.destroy();
 		self.emit('destroy');
-		self.element.removeData(ATTRDATA);
-		self.element.get(0).$app = null;
-		self.element.removeAttr('data-jc-scope');
+
+		el.removeData(ATTRDATA);
+		el.get(0).$app = null;
+		el.removeAttr('data-jc-scope');
+		el.off();
 
 		if (!noremove) {
-			self.element.remove();
+			el.remove();
 			self.key && M.removeCache(self.key);
 		}
 
 		// Remove events
 		M.off('app' + self.id + '#watch');
 
-		self.element.off();
 		M.apps = M.apps.remove(self);
 		setTimeout2('$cleaner', cleaner, 100);
 		return self;
@@ -7056,16 +7059,18 @@
 		};
 
 		$.fn.component = function() {
-			return this.data(ATTRDATA);
+			var com = this.data(ATTRDATA);
+			return com instanceof COM || com instanceof Array ? com : null;
 		};
 
 		$.fn.components = function(fn) {
 			var all = this.find(ATTRCOM);
 			var output;
 			all.each(function(index) {
-				var com = $(this).data(ATTRCOM);
-				if (com) {
-					if (com instanceof Array) {
+				var com = $(this).data(ATTRDATA);
+				var isarr = com instanceof Array;
+				if (com instanceof COM || isarr) {
+					if (isarr) {
 						com.forEach(function(o) {
 							if (o && o.$ready && !o.$removed) {
 								if (fn)
