@@ -2046,9 +2046,10 @@ $('selector').attrd('title');
 ## Extending components
 
 - __v5.0.0__ offers a great way how to extend existing components:
+- __v11.6.0__ supports custom configuration
 
 ```javascript
-COMPONENT_EXTEND('component-name', function(component) {
+COMPONENT_EXTEND('component-name', 'name:Custom config;width:300', function(component) {
     component.element.append('<div>EXTENDED 1</div>');
 });
 

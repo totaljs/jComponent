@@ -2998,9 +2998,12 @@
 		var el = obj.element;
 		var tmp;
 
-		extensions[obj.name] && extensions[obj.name].forEach(function(fn) {
-			fn.call(obj, obj);
+		extensions[obj.name] && extensions[obj.name].forEach(function(item) {
+			item.config && obj.reconfigure(item.config, NOOP);
+			item.fn.call(obj, obj);
 		});
+
+		obj.configure && obj.reconfigure(obj.config, undefined, true);
 
 		if (obj.setter) {
 			if (!obj.$prepared) {
@@ -3039,7 +3042,6 @@
 			obj.done();
 		}, 20);
 
-		obj.configure && obj.reconfigure(obj.config, undefined, true);
 		obj.state && obj.state(0, 3);
 
 		obj.$init && setTimeout(function() {
@@ -5013,17 +5015,25 @@
 		return false;
 	};
 
-	W.COMPONENT_EXTEND = function(name, declaration) {
+	W.COMPONENT_EXTEND = function(name, config, declaration) {
+
+		if (typeof(config) === 'function') {
+			var tmp = declaration;
+			declaration = config;
+			config = tmp;
+		}
 
 		if (extensions[name])
-			extensions[name].push(declaration);
+			extensions[name].push({ config: config, fn: declaration });
 		else
-			extensions[name] = [declaration];
+			extensions[name] = [{ config: config, fn: declaration }];
 
 		for (var i = 0, length = M.components.length; i < length; i++) {
 			var m = M.components[i];
-			if (!m.$removed || name === m.name)
+			if (!m.$removed || name === m.name){
+				config && m.reconfigure(config, undefined, true);
 				declaration.call(m, m);
+			}
 		}
 	};
 
