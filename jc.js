@@ -1366,7 +1366,7 @@
 
 			var val = component.get();
 			component.setter && component.setter(val, component.path, 1);
-			component.setter2 && component.setter(val, component.path, 1);
+			component.setter2 && component.setter2(val, component.path, 1);
 			component.$interaction(1);
 		});
 
@@ -2160,7 +2160,7 @@
 				self.$com.dirty(false, true);
 			}
 
-			self.$com.getter(self.value, 2, dirty, old, e.type === 'focusout' || code === 13);
+			self.$com.getter(self.value, 2, dirty, old, e.type === 'focusout' || code === 13 || code === 8);
 			if (self.nodeName === 'INPUT' || self.nodeName === 'TEXTAREA') {
 				var val = self.$com.formatter(self.value);
 				if (self.value !== val) {
@@ -4111,6 +4111,8 @@
 			var self = this;
 			value = self.parser(value);
 
+			self.getter2 && self.getter2(value, type, dirty);
+
 			if (type === 2 && !skip)
 				self.$skip = true;
 
@@ -4130,7 +4132,6 @@
 			if (skip)
 				self.$skip = false;
 
-			self.getter2 && self.getter2.apply(self, arguments);
 			self.set(self.path, value, type);
 			return self;
 		};
@@ -4139,14 +4140,14 @@
 
 			var self = this;
 
+			self.setter2 && self.setter2(value, path, type);
+
 			if (type === 2) {
 				if (self.$skip) {
 					self.$skip = false;
 					return self;
 				}
 			}
-
-			self.setter2 && self.setter2.apply(self, arguments);
 
 			var selector = self.$input === true ? self.element : self.element.find(ATTRBIND);
 			var a = 'select-one';
