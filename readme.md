@@ -392,6 +392,9 @@ COMPONENT('my-component-name', function(instance, config) {
     instance.caller;
     // This property contains an instance of execute,
     // works only with instance.exec().
+
+    instance.removed;
+    // Returns {Boolean} and it indicates whether the element is removed or no
 });
 ```
 
@@ -2213,6 +2216,7 @@ exports.install = function(instance, initdata) {
     instance.element;      // {jQuery} container (jQuery element)
     instance.key;          // {String} cache key
     instance.declaration;  // {Object} a declaration of application
+    isntance.removed;      // {Booelan} is application removed?
     
     // Delegates
     instance.make = function(initdata) {

@@ -3848,6 +3848,7 @@
 		self.scope = '';
 		self.name = name;
 		self.element = null;
+		self.removed = false;
 	}
 
 	var PCTRL = Controller.prototype;
@@ -3858,6 +3859,8 @@
 
 	function APP(id, element, declaration, key, data) {
 		var self = this;
+
+		self.removed = false;
 		self.$events = {};
 		self.id = id;
 		self.config = {};
@@ -4008,6 +4011,7 @@
 		var self = this;
 		var el = self.element;
 
+		self.removed = true;
 		self.destroy && self.destroy();
 		self.emit('destroy');
 
@@ -4066,6 +4070,7 @@
 		self.type;
 		self.id;
 		self.disabled = false;
+		self.removed = false;
 
 		self.make;
 		self.done;
@@ -4730,10 +4735,11 @@
 
 	PPC.remove = function(noClear) {
 		var self = this;
-		self.element.removeData(ATTRDATA);
-		self.element.find(ATTRCOM).attr(ATTRDEL, 'true');
-		self.element.attr(ATTRDEL, 'true');
+		var el = self.element;
+		el.removeData(ATTRDATA);
+		el.attr(ATTRDEL, 'true').find(ATTRCOM).attr(ATTRDEL, 'true');
 		self.$removed = 1;
+		self.removed = true;
 		M.off('com' + self.name + '#');
 		if (!noClear) {
 			clear();
@@ -5829,6 +5835,7 @@
 		if (!M.controllers[self.name])
 			return;
 
+		self.removed = true;
 		self.emit('destroy');
 		delete M.controllers[self.name];
 
