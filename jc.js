@@ -18,6 +18,10 @@
 	var ATTRBIND = 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind]';
 	var DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
 
+	var LCOMPARER = window.Intl ? window.Intl.Collator().compare : function(a, b) {
+		return a.localeCompare(b);
+	};
+
 	var C = {}; // COMPILER
 	var M = {}; // MAIN
 	var L = {}; // CONTROLLERS
@@ -3702,7 +3706,7 @@
 					return -1;
 				var al = a.path.length;
 				var bl = b.path.length;
-				return al > bl ? - 1 : al === bl ? a.path.localeCompare(b.path) : 1;
+				return al > bl ? - 1 : al === bl ? LCOMPARER(a.path, b.path) : 1;
 			});
 		}, 200);
 	}
@@ -6841,7 +6845,7 @@
 
 			// String
 			if (type === 1) {
-				return va && vb ? (asc ? va.substring(0, maxlength).removeDiacritics().localeCompare(vb.substring(0, maxlength).removeDiacritics()) : vb.substring(0, maxlength).removeDiacritics().localeCompare(va.substring(0, maxlength).removeDiacritics())) : 0;
+				return va && vb ? (asc ? LCOMPARER(va.substring(0, maxlength), vb.substring(0, maxlength)) : LCOMPARER(vb.substring(0, maxlength), va.substring(0, maxlength))) : 0;
 			} else if (type === 2) {
 				return va > vb ? (asc ? 1 : -1) : va < vb ? (asc ? -1 : 1) : 0;
 			} else if (type === 3) {
