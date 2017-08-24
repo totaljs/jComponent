@@ -5465,7 +5465,7 @@
 
 		var dt = new Date().add(period);
 		ON('knockknock', function() {
-			if (dt > W.DATETIME)
+			if (dt > W.DATETIME || document.hasFocus())
 				return;
 			setTimeout(function() {
 				if (url)
