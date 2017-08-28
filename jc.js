@@ -1,3 +1,4 @@
+
 (function() {
 
 	// Constants
@@ -2273,7 +2274,7 @@
 		return el.getAttribute ? el.getAttribute('data-ja' + name) : el.attr('data-ja' + name);
 	}
 
-	function crawler(container, onComponent, onApp, level) {
+	function crawler(container, onComponent, onApp, level, controller) {
 
 		if (container)
 			container = $(container).get(0);
@@ -2286,8 +2287,12 @@
 		var name = attrapp(container);
 		!container.$app && name != null && onApp(name, container, 0);
 
+		var tmp = attrcom(container, 'controller');
+		if (tmp)
+			controller = tmp;
+
 		name = attrcom(container);
-		!container.$com && name != null && onComponent(name, container, 0);
+		!container.$com && name != null && onComponent(name, container, 0, controller);
 
 		var arr = container.childNodes;
 		var sub = [];
@@ -2313,14 +2318,14 @@
 
 				if (!el.$com) {
 					name = attrcom(el);
-					name != null && onComponent(name || '', el, level);
+					name != null && onComponent(name || '', el, level, controller);
 				}
 			}
 		}
 
 		for (var i = 0, length = sub.length; i < length; i++) {
 			el = sub[i];
-			el && crawler(el, onComponent, onApp, level);
+			el && crawler(el, onComponent, onApp, level, controller);
 		}
 	}
 
@@ -2479,7 +2484,7 @@
 
 		var has = false;
 
-		crawler(container, function(name, dom) {
+		crawler(container, function(name, dom, level, controller) {
 
 			var el = $(dom);
 			has = true;
@@ -2562,12 +2567,12 @@
 					}
 
 					obj.scope = output.elements;
-					obj.$controller = attrcom(scope, 'controller');
+					obj.$controller = attrcom(scope, 'controller') || controller;
 					obj.pathscope = output.path;
 				}
 
 				if (!obj.$controller)
-					obj.$controller = attrcom(el, 'controller');
+					obj.$controller = attrcom(el, 'controller') || controller;
 
 				instances.push(obj);
 
