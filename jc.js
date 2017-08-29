@@ -9,7 +9,7 @@
 	var REGPARAMS = /\{[a-z0-9]+\}/gi;
 	var REGEMPTY = /\s/g;
 	var REGCOMMA = /,/g;
-	var REGSEARCH = /[^a-zA-Zá-žÁ-Ž\d\s:]/g;
+	var REGSEARCH = /[^a-zA-Zá-žÁ-Žа-яА-Я\d\s:]/g;
 	var ATTRSCOPE = '[data-jc-scope]';
 	var ATTRSCOPECTRL = '[data-jc-controller]';
 	var ATTRCOM = '[data-jc]';
