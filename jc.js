@@ -1,4 +1,3 @@
-
 (function() {
 
 	// Constants
@@ -106,7 +105,7 @@
 	M.regexp.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v11.6.0';
+	M.version = 'v11.7.0';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -404,7 +403,7 @@
 		} else if (!events[path][name])
 			events[path][name] = [];
 
-		events[path][name].push({ fn: fn, id: this._id, path: fixed, owner: owner, controller: current_ctrl });
+		events[path][name].push({ fn: fn, path: fixed, owner: owner, controller: current_ctrl });
 		init && fn.call(M, path, get(path), true);
 		(!C.ready && (name === 'ready' || name === 'init')) && fn();
 		return M;
@@ -5797,6 +5796,20 @@
 		return compile(container);
 	};
 
+	W.SCOPE = function(name, fn) {
+		var ctrl = M.controllers[arguments[0]];
+		if (!ctrl) {
+			setTimeout(function() {
+				W.SCOPE(name, fn);
+			}, 350);
+			return;
+		}
+		var tmp = current_ctrl;
+		current_ctrl = name;
+		fn.call(ctrl, ctrl, ctrl.scope, ctrl.element);
+		current_ctrl = tmp;
+	};
+
 	W.CONTROLLER = function() {
 
 		var callback = arguments[arguments.length - 1];
@@ -5849,14 +5862,14 @@
 		delete M.controllers[self.name];
 
 		// Remove all global events
-		var evt = events[''];
-		if (evt) {
+		Object.keys(events).forEach(function(e) {
+			var evt = events[e];
 			Object.keys(evt).forEach(function(key) {
 				evt[key] = evt[key].remove('controller', self.name);
 				if (!evt[key].length)
 					delete events[''][key];
 			});
-		}
+		});
 
 		// Remove events
 		M.off('ctrl' + self.name + '#watch');

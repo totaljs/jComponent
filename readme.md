@@ -1983,12 +1983,22 @@ CONTROLLER('Users', function(instance) {
 });
 ```
 
+__Parts ouside of controller scope__:
+
+jComponent `+v11.7.0` supports `SCOPE()` method can create controller's scope outside of controller declaration. __IMPORTANT__ the method waits for the controller if the controller is not intialized.
+
+```javascript
+SCOPE('Users', function(controller, path, element) {
+    // controller scope
+    // here you can use e.g. WATCH() method or controller.watch()
+});
+```
+
 __Good to know__:
 - all registered events `ON()` + schedulers `SCHEDULE()` are removed too when controller is removed
 - controller can be defined without scope `<div data-jc-controller` and then the main scope is `window` object
 - `data-jc-scope=""` creates a scope for all nested components
 - `jRouting` +v11.2.0 supports environments in URL addreses `ROUTE('[adminurl]', ..)` or `REDIRECT('[adminurl]')`
-- Temporary variables: `v11.2.0` --> `SET('%yourpath', 'value')` (works everywhere)
 
 ## jQuery
 
@@ -2707,6 +2717,7 @@ window.READY   // for asynchronous loading scripts
 - `MAIN.$apps` a list of all registered apps
 - `MAIN.apps` a list of all instances of all apps
 - `MAIN.controllers` a list of all instances of all controllers
+- Temporary variables: `+v11.2.0` --> `SET('%yourpath', 'value')` (works everywhere)
 
 ## Authors + Contacts
 
