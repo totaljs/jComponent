@@ -2693,7 +2693,8 @@ APPS;          // jComponent applications controller
 
 CONTROLLERS;   // jComponent controllers controller (+v11.0.0)
 
-DATETIME;      // contains datetime value (jComponent refreshes the value each 60 seconds)
+DATETIME;      // {Date} contains datetime value (jComponent refreshes the value each 60 seconds)
+PRIVATEMODE;   // {Boolean} determines whether the browser has disabled localStorage (+v11.7.0)
 
 // jcta.min.js, jctajr.min.js:
 Tangular;      // shortcut for Tangular
