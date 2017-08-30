@@ -31,6 +31,15 @@
 	// temporary
 	W.jctmp = {};
 
+	try {
+		var pmk = 'jc.test';
+		W.localStorage.setItem(pmk, '1');
+		W.PRIVATEMODE = W.localStorage.getItem(pmk) !== '1';
+		W.localStorage.removeItem(pmk);
+	} catch (e) {
+		W.PRIVATEMODE = true;
+	}
+
 	// Internal cache
 	var blocked = {};
 	var storage = {};
