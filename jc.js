@@ -1452,11 +1452,11 @@
 	M.set = function(path, val, type) {
 
 		path = ctrl_path(path);
-
 		if (!path)
 			return M;
 
 		middleware(path, val, type, function(path, value) {
+
 			var is = path.charCodeAt(0) === 33;
 			if (is)
 				path = path.substring(1);
@@ -1469,7 +1469,7 @@
 			if (!path)
 				return M;
 
-			var isUpdate = (typeof(value) === 'object' && !(value instanceof Array) && value !== null && value !== undefined);
+			var isUpdate = (typeof(value) === 'object' && !(value instanceof Array) && value != null);
 			var reset = type === true;
 			if (reset)
 				type = 1;
@@ -3485,10 +3485,12 @@
 		if (path == null)
 			return;
 
-		if (path.charCodeAt(0) === 35) {
+		var code = path.charCodeAt(0);
+		if (code === 35) {
 			var op = OPERATION(path);
 			return op ? op : NOOP;
-		}
+		} else if (code === 37)
+			path = 'jctmp.' + path.substring(1);
 
 		var key = '=' + path;
 		if (paths[key])
@@ -4476,6 +4478,10 @@
 		// type 2: scope
 
 		var self = this;
+
+		// Temporary
+		if (path.charCodeAt(0) === 37)
+			path = 'jctmp.' + path.substring(1);
 
 		// Operations
 		if (isOperation(path)) {
