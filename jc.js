@@ -4026,7 +4026,7 @@
 		return get(self.path(path));
 	};
 
-	PPA.remove = PPA.destroy = function(noremove) {
+	PPA.remove = PPA.kill = PPA.destroy = function(noremove) {
 		var self = this;
 		var el = self.element;
 
@@ -4756,7 +4756,7 @@
 		return self;
 	};
 
-	PPC.remove = function(noClear) {
+	PPC.remove = PPC.kill = function(noClear) {
 		var self = this;
 		var el = self.element;
 		el.removeData(ATTRDATA);
@@ -5865,7 +5865,7 @@
 		return obj.$init;
 	};
 
-	PCTRL.remove = PCTRL.destroy = function() {
+	PCTRL.remove = PCTRL.kill = PCTRL.destroy = function() {
 
 		var self = this;
 
@@ -6373,7 +6373,7 @@
 			return this[index];
 	};
 
-	AP.remove = function(cb, value) {
+	AP.remove = AP.kill = function(cb, value) {
 
 		var self = this;
 		var arr = [];
