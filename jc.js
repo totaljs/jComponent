@@ -3940,7 +3940,7 @@
 		var self = this;
 		path = self.path(path);
 		M.on('app' + self.id + '#watch', path, fn);
-		init && fn.call(self, path, self.get(path), 0);
+		init && fn.call(self, path, path, 0);
 		return self;
 	};
 
@@ -3954,7 +3954,7 @@
 		var self = this;
 		path = self.path(path);
 		M.on('ctrl' + self.name + '#watch', path, fn);
-		init && fn.call(self, path, self.get(path), 0);
+		init && fn.call(self, path, get(path), 0);
 		return self;
 	};
 
