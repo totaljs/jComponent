@@ -548,8 +548,7 @@
 				return;
 
 			if (obj.disabled || obj.$valid_disabled) {
-				if (arr && obj.state)
-					arr.push(obj);
+				arr && obj.state && arr.push(obj);
 				return;
 			}
 
@@ -559,8 +558,7 @@
 				return;
 			}
 
-			if (obj.state)
-				arr.push(obj);
+			obj.state && arr.push(obj);
 
 			if (!onlyComponent) {
 				if (isAsterix || obj.path === path) {
@@ -607,8 +605,7 @@
 				return;
 
 			if (obj.disabled || obj.$dirty_disabled) {
-				if (arr && obj.state)
-					arr.push(obj);
+				arr && obj.state && arr.push(obj);
 				return;
 			}
 
@@ -618,8 +615,7 @@
 				return;
 			}
 
-			if (obj.state)
-				arr.push(obj);
+			obj.state && arr.push(obj);
 
 			if (!onlyComponent) {
 				if (isAsterix || obj.path === path) {
@@ -1005,14 +1001,6 @@
 
 			options.headers = $.extend(headers, M.defaults.headers);
 
-			var key = W.HASH(method + url + STRINGIFY(options));
-			var ma = ajax[key];
-			if (ma) {
-				ma.jcabort = true;
-				ma.abort();
-				ma = undefined;
-			}
-
 			var output = {};
 			output.url = url;
 			output.process = true;
@@ -1022,7 +1010,6 @@
 			output.data = data;
 
 			options.success = function(r, s, req) {
-				delete ajax[key];
 				output.response = r;
 				output.status = req.status || 999;
 				output.text = s;
@@ -1038,7 +1025,6 @@
 
 			options.error = function(req, s) {
 
-				delete ajax[key];
 				output.response = req.responseText;
 				output.status = req.status || 999;
 				output.text = s;
@@ -1071,7 +1057,8 @@
 				}
 			};
 
-			ajax[key] = $.ajax(makeurl(url), options);
+			$.ajax(makeurl(url), options);
+
 		}, timeout || 0);
 
 		return M;
@@ -4712,6 +4699,8 @@
 
 	PPC.change = function(value) {
 		var self = this;
+		self.$dirty_disabled = false;
+		self.$dirty = true;
 		M.change(self.path, value === undefined ? true : value, self);
 		return self;
 	};
