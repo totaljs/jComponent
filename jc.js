@@ -52,7 +52,6 @@
 	var singletons = {};
 	var schedulers = [];
 	var toggles = [];
-	var ajax = {};
 	var middlewares = {};
 	var warnings = {};
 	var schemas = {};
@@ -2261,12 +2260,12 @@
 
 	function attrcom(el, name) {
 		name = name ? '-' + name : '';
-		return el.getAttribute ? el.getAttribute('data-jc' + name) : el.attr('data-jc' + name);
+		return el.getAttribute ? el.getAttribute('data-jc' + name) : el.attrd('jc' + name);
 	}
 
 	function attrapp(el, name) {
 		name = name ? '-' + name : '';
-		return el.getAttribute ? el.getAttribute('data-ja' + name) : el.attr('data-ja' + name);
+		return el.getAttribute ? el.getAttribute('data-ja' + name) : el.attrd('ja' + name);
 	}
 
 	function crawler(container, onComponent, onApp, level, controller) {
@@ -2653,7 +2652,7 @@
 
 		async(toggles, function(item, next) {
 			for (var i = 0, length = item.toggle.length; i < length; i++)
-				item.element.toggleClass(item.toggle[i]);
+				item.element.tclass(item.toggle[i]);
 			next();
 		}, nextpending);
 	}
@@ -2768,7 +2767,7 @@
 		d.html && el.empty().append(d.html);
 		id = 'app' + W.HASH(id);
 
-		var initd = el.attr('data-ja-path');
+		var initd = el.attrd('ja-path');
 		if (initd)
 			initd = get(initd);
 		else
@@ -2896,7 +2895,7 @@
 		dom.$com = null;
 		dom.$app = null;
 		el.attr(ATTRDEL, true);
-		el.attr('data-ja-removed', true);
+		el.attrd('ja-removed', true);
 		el.remove();
 	}
 
@@ -3070,7 +3069,7 @@
 				var tmp = el.get(0).$jclass || {};
 				for (var i = 0, length = cls.length; i < length; i++) {
 					if (!tmp[cls[i]]) {
-						el.toggleClass(cls[i]);
+						el.tclass(cls[i]);
 						tmp[cls[i]] = true;
 					}
 				}
@@ -3268,7 +3267,7 @@
 						cls = cls.split(' ');
 						setTimeout(function() {
 							for (var i = 0, length = cls.length; i < length; i++)
-								scope.toggleClass(cls[i]);
+								scope.tclass(cls[i]);
 						}, 5);
 					})(cls);
 				}
@@ -3351,7 +3350,7 @@
 			if (tmp)
 				builder.push(tmp);
 			else {
-				var eid = 'external' + HASH(code);
+				var eid = 'external' + W.HASH(code);
 				if (!statics[eid]) {
 					external.push(code);
 					statics[eid] = true;
@@ -3827,10 +3826,8 @@
 
 	PPP.prop = function(k, v) {
 		var self = this;
-
 		if (v === undefined)
 			return self.element.prop(k);
-
 		self.element.prop(k, v);
 		return self;
 	};
@@ -3877,7 +3874,7 @@
 
 		self.scope = attrapp(element, 'scope') || attrcom(element, 'scope') || ('app' + GUID(10));
 		element.get(0).$scope = self.scope;
-		!attrapp(element, 'noscope') && element.attr('data-jc-scope', '?');
+		!attrapp(element, 'noscope') && element.attrd('jc-scope', '?');
 		self.name = declaration.name;
 		self.type = declaration.type;
 		self.element = element;
@@ -4094,7 +4091,7 @@
 
 			self.element.find(ATTRCOM).each(function() {
 				var el = $(this);
-				el.attr('data-jc-released', value ? 'true' : 'false');
+				el.attrd('jc-released', value ? 'true' : 'false');
 				var com = el.data(ATTRDATA);
 				if (com) {
 					if (com instanceof Array) {
@@ -4316,33 +4313,33 @@
 
 	PPVC.tclass = PPC.tclass = PPA.tclass = PPP.tclass = PCTRL.tclass = function(cls, v) {
 		var self = this;
-		self.element.toggleClass(cls, v);
+		self.element.tclass(cls, v);
 		return self;
 	};
 
 	PPVC.aclass = PPC.aclass = PPA.aclass = PPP.aclass = PCTRL.aclass = function(cls, timeout) {
 		var self = this;
 		if (timeout)
-			setTimeout(function() { self.element.addClass(cls); }, timeout);
+			setTimeout(function() { self.element.aclass(cls); }, timeout);
 		else
-			self.element.addClass(cls);
+			self.element.aclass(cls);
 		return self;
 	};
 
 	PPVC.hclass = PPC.hclass = PPA.hclass = PPP.hclass = PCTRL.hclass = function(cls) {
-		return this.element.hasClass(cls);
+		return this.element.hclass(cls);
 	};
 
 	PPVC.rclass = PPC.rclass = PPA.rclass = PPP.rclass = PCTRL.rclass = function(cls, timeout) {
 		var self = this;
 		var e = self.element;
 		if (timeout)
-			setTimeout(function() { e.removeClass(cls); }, timeout);
+			setTimeout(function() { e.rclass(cls); }, timeout);
 		else {
 			if (cls)
-				e.removeClass(cls);
+				e.rclass(cls);
 			else
-				e.removeClass();
+				e.rclass();
 		}
 		return self;
 	};
@@ -4355,8 +4352,8 @@
 		var e = t.element;
 
 		if (tmp) {
-			tmp.add && e.addClass(tmp.add);
-			tmp.rem && e.removeClass(tmp.rem);
+			tmp.add && e.aclass(tmp.add);
+			tmp.rem && e.rclass(tmp.rem);
 			return t;
 		}
 
@@ -4372,8 +4369,8 @@
 				add += (add ? ' ' : '') + (c === '+' ? arr[i].substring(1) : arr[i]);
 		}
 
-		add && e.addClass(add);
-		rem && e.removeClass(rem);
+		add && e.aclass(add);
+		rem && e.rclass(rem);
 
 		if (cls instanceof Array)
 			return t;
@@ -4402,12 +4399,12 @@
 
 		var el = self.element;
 		if (!timeout) {
-			el.toggleClass(cls, visible);
+			el.tclass(cls, visible);
 			return self;
 		}
 
 		setTimeout(function() {
-			el.toggleClass(cls, visible);
+			el.tclass(cls, visible);
 		}, timeout);
 		return self;
 	};
