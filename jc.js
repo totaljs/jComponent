@@ -1585,20 +1585,19 @@
 		if (path.charCodeAt(0) === 37)
 			return 'jctmp.' + path.substring(1);
 
-		if (path.charCodeAt(0) !== 64) {
-			var index = path.indexOf('/');
-			if (index === -1)
-				return path;
+		if (path.charCodeAt(0) === 64) {
+			path = path.substring(1);
+			var index = path.indexOf('.');
 			var ctrl = CONTROLLER(path.substring(0, index));
-			return (ctrl ? ctrl.scope : 'UNDEFINED') + '.' + path.substring(index + 1);
+			return (ctrl ? ctrl.scope : 'UNDEFINED') + path.substring(index);
 		}
 
-		if (!path || path.charCodeAt(0) !== 64)
+		var index = path.indexOf('/');
+		if (index === -1)
 			return path;
-		path = path.substring(1);
-		var index = path.indexOf('.');
+
 		var ctrl = CONTROLLER(path.substring(0, index));
-		return (ctrl ? ctrl.scope : 'UNDEFINED') + path.substring(index);
+		return (ctrl ? ctrl.scope : 'UNDEFINED') + '.' + path.substring(index + 1);
 	}
 
 	M.get = function(path, scope) {
