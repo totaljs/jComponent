@@ -6340,17 +6340,31 @@
 			if (isFN) {
 				if (cb.call(self, self[i], i))
 					return i;
-				continue;
-			}
-			if (isV) {
+			} else if (isV) {
 				if (self[i][cb] === value)
 					return i;
-				continue;
-			}
-			if (self[i] === cb)
+			} else if (self[i] === cb)
 				return i;
 		}
 		return -1;
+	};
+
+	AP.findAll = function(cb, value) {
+
+		var self = this;
+		var isFN = typeof(cb) === 'function';
+		var isV = value !== undefined;
+		var arr = [];
+
+		for (var i = 0, length = self.length; i < length; i++) {
+			if (isFN) {
+				cb.call(self, self[i], i) && arr.push(self[i]);
+			} else if (isV) {
+				self[i][cb] === value && arr.push(self[i]);
+			} else
+				self[i] === cb && arr.push(self[i]);
+		}
+		return arr;
 	};
 
 	AP.findItem = function(cb, value) {
@@ -6367,18 +6381,13 @@
 		var isV = value !== undefined;
 
 		for (var i = 0, length = self.length; i < length; i++) {
-
 			if (isFN) {
 				!cb.call(self, self[i], i) && arr.push(self[i]);
-				continue;
-			}
-
-			if (isV) {
+			} else if (isV) {
 				self[i][cb] !== value && arr.push(self[i]);
-				continue;
+			} else {
+				self[i] !== cb && arr.push(self[i]);
 			}
-
-			self[i] !== cb && arr.push(self[i]);
 		}
 		return arr;
 	};

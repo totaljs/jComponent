@@ -2434,6 +2434,11 @@ var index2 = b.findIndex(function(obj) {
 // or
 // Array.prototype.findItem(property, value);
 
+// +v11.8.0
+// Array.prototype.findAll(fn);
+// or
+// Array.prototype.findAll(property, value);
+
 // Array.prototype.remove(fn);
 // or
 // Array.prototype.remove(property, value);
