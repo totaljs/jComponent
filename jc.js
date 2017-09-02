@@ -4343,6 +4343,11 @@
 		return self;
 	};
 
+	PPVC.rclass2 = PPC.rclass2 = PPA.rclass2 = PPP.rclass2 = PCTRL.rclass2 = function(search) {
+		this.element.rclass2(search);
+		return this;
+	};
+
 	PPVC.classes = PPC.classes = PPA.classes = PPP.classes = PCTRL.classes = function(cls) {
 
 		var key = 'cls.' + cls;
@@ -7059,6 +7064,26 @@
 
 		$.fn.rclass = function(a) {
 			return a == null ? this.removeClass() : this.removeClass(a);
+		};
+
+		$.fn.rclass2 = function(a) {
+
+			var self = this;
+			var arr = self.attr('class').split(' ');
+			var isReg = typeof(a) === 'object';
+
+			for (var i = 0, length = arr.length; i < length; i++) {
+				var cls = arr[i];
+				if (cls) {
+					if (isReg) {
+						a.test(cls) && self.rclass(cls);
+					} else {
+						cls.indexOf(a) !== -1 && self.rclass(cls);
+					}
+				}
+			}
+
+			return self;
 		};
 
 		$.fn.hclass = function(a) {
