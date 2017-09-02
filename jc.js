@@ -114,7 +114,7 @@
 	M.regexp.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v11.7.0';
+	M.version = 'v11.8.0';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -6709,6 +6709,10 @@
 		return Math.floor(this * Math.pow(10, decimals)) / Math.pow(10, decimals);
 	};
 
+	NP.parseDate = function(offset) {
+		return new Date(this + (offset || 0));
+	};
+
 	SP.format = function() {
 		var arg = arguments;
 		return this.replace(M.regexp.format, function(text) {
@@ -7276,12 +7280,30 @@
 	}, 100);
 
 	M.$parser.push(function(path, value, type) {
-		if (type === 'number' || type === 'currency' || type === 'float') {
-			if (typeof(value) === 'string')
-				value = value.replace(REGEMPTY, '').replace(REGCOMMA, '.');
-			var v = +value;
-			return isNaN(v) ? null : v;
+
+		switch (type) {
+			case 'number':
+			case 'currency':
+			case 'float':
+
+				if (typeof(value) === 'string')
+					value = value.replace(REGEMPTY, '').replace(REGCOMMA, '.');
+				var v = +value;
+				return isNaN(v) ? null : v;
+
+			case 'date':
+			case 'datetime':
+
+				if (value instanceof Date)
+					return value;
+
+				if (!value)
+					return null;
+
+				value = value.parseDate();
+				return value && value.getTime() ? value : null;
 		}
+
 		return value;
 	});
 
