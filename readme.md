@@ -675,6 +675,10 @@ COMPONENT('my-component-name', function(instance, config) {
     // Removes classes
     // +v11.0.0
 
+    instance.rclass2(string_or_regexp);
+    // Removes all classes which contain `string` or `regexp`
+    // +v11.8.0
+
 
     instance.find(selectors);
     // Finds a content in the component element.
@@ -2040,6 +2044,10 @@ $('selector').aclass('newclass');
 // Alias to .removeClass()
 // +v11.2.0
 $('selector').rclass('removeclass');
+
+// Can remove all classes which contain "string" or "regexp"
+// +v11.8.0
+$('selector').rclass2('string_regexp');
 
 // Alias to .toggleClass()
 // +v11.2.0
