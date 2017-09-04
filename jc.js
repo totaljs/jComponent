@@ -4559,10 +4559,14 @@
 
 		var arr = value.replace(/\\\;/g, '\0').split(';');
 		var num = /^(\-)?[0-9\.]+$/;
+		var colon = /(https|http|wss|ws):\/\//gi;
 
 		for (var i = 0, length = arr.length; i < length; i++) {
 
-			var item = arr[i].replace(/\0/g, ';').replace(/\\\:/g, '\0');
+			var item = arr[i].replace(/\0/g, ';').replace(/\\\:/g, '\0').replace(colon, function(text) {
+				return text.replace(/\:/g, '\0');
+			});
+
 			var kv = item.split(':');
 			var l = kv.length;
 			if (l !== 2)
