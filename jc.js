@@ -1209,7 +1209,7 @@
 			return true;
 
 		var local = M.defaults.localstorage && timeout > 10000;
-		blocked[key] = now + timeout;
+		blocked[key] = now + (typeof(timeout) === 'string' ? timeout.parseExpire() : timeout);
 
 		try {
 			local && localStorage.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
@@ -5548,6 +5548,16 @@
 	W.CACHE = M.cache;
 	W.CACHEPATH = M.cachepath;
 	W.NOTIFY = M.notify;
+
+	M.modified = W.MODIFIED = function(path) {
+		var output = [];
+		M.each(function(obj) {
+			if (obj.disabled || obj.$dirty_disabled)
+				return;
+			obj.$dirty === false && output.push(obj.path);
+		}, path, true);
+		return output;
+	};
 
 	W.NOTMODIFIED = function(path, value, fields) {
 

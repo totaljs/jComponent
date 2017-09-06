@@ -1223,6 +1223,7 @@ if (MAIN.blocked('submitted', 1000)) { // Example.
 }
 // Prevention for some operations. It's stored in `localStorage` according
 // `MAIN.defaults.localstorage`.
+// +11.8.0 timeout can contains string e.g. "5 minutes"
 
 
 MAIN.ready(fn);
@@ -1479,7 +1480,7 @@ FIND('data-component', true, function(component_array) {
 
 
 BLOCKED(name, timeout, [callback]);
-// Alias forMAINblocked();
+// Alias for MAIN.blocked();
 
 INVALID(path);
 // Alias for MAIN.invalid();
@@ -1493,6 +1494,10 @@ if (NOTMODIFIED('model')) return; // Example
 // Method checks whether the value was not modified. If the value is not defined as argument,
 // then the method reads the value from the scope. The method creates hash from the value for
 // further usage. The "fields" argument can contain only string array value.
+
+MODIFIED(path);
+// +v11.8.0
+// Methods returns {Array} with modified paths (each component has to have dirty state set to "false")
 
 // +v3.7.0
 AJAX('METHOD URL', data, [callback(data, error, response) or path], [sleep]);
