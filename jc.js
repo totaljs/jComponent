@@ -4557,7 +4557,7 @@
 			return self;
 		}
 
-		var arr = value.replace(/\\\;/g, '\0').split(';');
+		var arr = value.env().replace(/\\\;/g, '\0').split(';');
 		var num = /^(\-)?[0-9\.]+$/;
 		var colon = /(https|http|wss|ws):\/\//gi;
 

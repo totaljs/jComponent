@@ -290,6 +290,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 <!--
     +v11.1.0 creates a configuration for the component. It's bound to `data-jc` attribute.
     +v11.2.0 if you need to use ";" or ":" in a value make sure to properly escape it with backslash "\;".
+    +v11.8.0 can contain an "%environment" key
 -->
 ```
 
