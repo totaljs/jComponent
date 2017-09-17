@@ -13,6 +13,7 @@
 	var ATTRSCOPECTRL = '[data-jc-controller]';
 	var ATTRCOM = '[data-jc]';
 	var ATTRURL = '[data-jc-url],[data-ja-url]';
+	var ATTRS = '[data-jc-source]';
 	var ATTRDATA = 'jc';
 	var ATTRDEL = 'data-jc-removed';
 	var ATTRBIND = 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind]';
@@ -113,7 +114,7 @@
 	M.regexp.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v11.8.0';
+	M.version = 'v11.9.0';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -4457,6 +4458,15 @@
 		var self = this;
 		self.$dirty_disabled = val;
 		self.$dirty = val ? false : true;
+		return self;
+	};
+
+	PPC.datasource = function(path, callback) {
+		var self = this;
+		var ds = self.$datasource;
+		ds && self.unwatch(ds.path, ds.fn);
+		self.$datasource = { path: path, fn: callback };
+		self.watch(path, callback, true);
 		return self;
 	};
 

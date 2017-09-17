@@ -702,6 +702,10 @@ COMPONENT('my-component-name', function(instance, config) {
     // "value" can be "max:10;size:20;required:false" or can be Object
     // +11.1.0
 
+    instance.datasource(path, callback(path, value, type));
+    // Creates a special/unique "watch" scope and removes previous automatically
+    // +11.9.0
+
 
     instance.noDirty();
     // Disables a "dirty" state within all components.
