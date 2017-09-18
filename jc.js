@@ -4549,6 +4549,10 @@
 		return this;
 	};
 
+	PPC.rcwatch = PPA.rcwatch = PPP.rcwatch = PCTRL.rcwatch = function(path, value) {
+		return value ? this.reconfigure(value) : this;
+	};
+
 	PPC.reconfigure = PPA.reconfigure = PPP.reconfigure = PCTRL.reconfigure = function(value, callback, init) {
 
 		var self = this;
@@ -4563,6 +4567,18 @@
 				else if (self.configure)
 					self.configure(k, value[k], init, prev);
 			});
+			return self;
+		}
+
+		// Variable
+		if (value.substring(0, 1) === '=') {
+			value = value.substring(1);
+			if (self.watch) {
+				self.$rcwatch && self.unwatch(self.$rcwatch, self.rcwatch);
+				self.watch(value, self.rcwatch);
+				self.$rcwatch = value;
+			}
+			self.reconfigure(get(value), callback, init);
 			return self;
 		}
 
@@ -4766,7 +4782,7 @@
 		el.attr(ATTRDEL, 'true').find(ATTRCOM).attr(ATTRDEL, 'true');
 		self.$removed = 1;
 		self.removed = true;
-		M.off('com' + self.name + '#');
+		M.off('com' + self._id + '#');
 		if (!noClear) {
 			clear();
 			setTimeout2('$cleaner', cleaner, 100);
@@ -4798,6 +4814,7 @@
 		var self = this;
 		events[path][name].push({ fn: fn, context: self, id: self._id, owner: 'com' + self._id, path: fixed });
 		init && fn.call(M, path, get(path));
+
 		return self;
 	};
 
