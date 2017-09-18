@@ -13,7 +13,6 @@
 	var ATTRSCOPECTRL = '[data-jc-controller]';
 	var ATTRCOM = '[data-jc]';
 	var ATTRURL = '[data-jc-url],[data-ja-url]';
-	var ATTRS = '[data-jc-source]';
 	var ATTRDATA = 'jc';
 	var ATTRDEL = 'data-jc-removed';
 	var ATTRBIND = 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind]';
