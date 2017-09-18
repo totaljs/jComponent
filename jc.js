@@ -4460,12 +4460,18 @@
 		return self;
 	};
 
-	PPC.datasource = function(path, callback) {
+	PPC.datasource = function(path, callback, init) {
 		var self = this;
 		var ds = self.$datasource;
+
 		ds && self.unwatch(ds.path, ds.fn);
-		self.$datasource = { path: path, fn: callback };
-		self.watch(path, callback, true);
+
+		if (path) {
+			self.$datasource = { path: path, fn: callback };
+			self.watch(path, callback, init !== false);
+		} else
+			self.$datasource = null;
+
 		return self;
 	};
 
