@@ -15,8 +15,8 @@
 	var ATTRURL = '[data-jc-url],[data-ja-url]';
 	var ATTRDATA = 'jc';
 	var ATTRDEL = 'data-jc-removed';
-	var ATTRBIND = 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind]';
 	var DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
+	var ACTRLS = { INPUT: true, TEXTAREA: true, SELECT: true };
 
 	var LCOMPARER = window.Intl ? window.Intl.Collator().compare : function(a, b) {
 		return a.localeCompare(b);
@@ -113,7 +113,7 @@
 	M.regexp.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v11.9.0';
+	M.version = 'v12.0.0';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1304,11 +1304,10 @@
 						}
 					}
 
-					component.element.find(ATTRBIND).each(function() {
-						var t = this;
-						if (t.$com !== component)
-							t.$com = component;
-						t.$value = t.$value2 = undefined;
+					findcontrol(component.element.get(0), function(el) {
+						if (el.$com !== component)
+							el.$com = component;
+						el.$value = el.$value2 = undefined;
 					});
 
 				} else if (component.validate && !component.$valid_disabled)
@@ -1526,11 +1525,10 @@
 						}
 					}
 
-					component.element.find(ATTRBIND).each(function() {
-						var t = this;
-						if (t.$com !== component)
-							t.$com = component;
-						t.$value = t.$value2 = undefined;
+					findcontrol(component.element.get(0), function(el) {
+						if (el.$com !== component)
+							el.$com = component;
+						el.$value = el.$value2 = undefined;
 					});
 
 				} else if (component.validate && !component.$valid_disabled)
@@ -1755,8 +1753,7 @@
 			if (!reset)
 				return;
 
-			obj.element.find(ATTRBIND).each(function() {
-				var t = this;
+			findcontrol(obj.element.get(0), function(t) {
 				if (t.$com !== obj)
 					t.$com = obj;
 				t.$value = t.$value2 = undefined;
@@ -1809,8 +1806,7 @@
 			if (onlyComponent && onlyComponent._id !== obj._id)
 				return;
 
-			obj.element.find(ATTRBIND).each(function() {
-				var t = this;
+			findcontrol(obj.element.get(0), function(t) {
 				if (t.$com !== obj)
 					t.$com = obj;
 				t.$value2 = t.$value = undefined;
@@ -2322,6 +2318,36 @@
 		}
 	}
 
+	function findcontrol(container, onElement, level) {
+
+		var arr = container.childNodes;
+		var sub = [];
+
+		ACTRLS[container.tagName] && onElement(container);
+
+		if (level == null)
+			level = 0;
+		else
+			level++;
+
+		for (var i = 0, length = arr.length; i < length; i++) {
+			var el = arr[i];
+			if (el) {
+				if (!el.tagName)
+					continue;
+				el.childNodes.length && el.tagName !== 'SCRIPT' && el.getAttribute('data-jc') == null && sub.push(el);
+				if (ACTRLS[el.tagName] && el.getAttribute('data-jc-bind') != null && onElement(el) === false)
+					return;
+			}
+		}
+
+		for (var i = 0, length = sub.length; i < length; i++) {
+			el = sub[i];
+			if (el && findcontrol(el, onElement, level) === false)
+				return;
+		}
+	}
+
 	function compileapp(html) {
 
 		var beg = -1;
@@ -2396,9 +2422,7 @@
 
 			var apps = M.apps.slice(0);
 			apps.waitFor(function(item, next) {
-				if (item.name !== name)
-					return next();
-				item.remove(true);
+				item.name === name && item.remove(true);
 				next();
 			});
 
@@ -2964,14 +2988,14 @@
 		var collection;
 
 		// autobind
-		if (type === 'INPUT' || type === 'SELECT' || type === 'TEXTAREA') {
+		if (ACTRLS[type]) {
 			obj.$input = true;
 			collection = obj.element;
 		} else
-			collection = el.find(ATTRBIND);
+			collection = el;
 
-		collection.each(function() {
-			!this.$com && (this.$com = obj);
+		findcontrol(collection.get(0), function(el) {
+			!el.$com && (el.$com = obj);
 		});
 
 		obj.released && obj.released(obj.$released);
@@ -3226,15 +3250,17 @@
 			setTimeout2('$initcleaner', function() {
 				cleaner();
 				autofill.splice(0).forEach(function(component) {
-					var el = component.element.find(ATTRBIND).eq(0);
-					var val = el.val();
-					if (val) {
-						var tmp = component.parser(val);
-						if (tmp) {
-							component.set(tmp);
-							emitwildcard(component.path, tmp, 3);
+					findcontrol(component.element.get(0), function(el) {
+						var val = $(el).val();
+						if (val) {
+							var tmp = component.parser(val);
+							if (tmp) {
+								component.set(tmp);
+								emitwildcard(component.path, tmp, 3);
+							}
 						}
-					}
+						return true;
+					});
 				});
 			}, 1000);
 
@@ -4158,12 +4184,10 @@
 				}
 			}
 
-			var selector = self.$input === true ? self.element : self.element.find(ATTRBIND);
 			var a = 'select-one';
-
 			value = self.formatter(value);
-			selector.each(function() {
-				var t = this;
+
+			findcontrol(self.element.get(0), function(t) {
 
 				if (t.$com !== self)
 					t.$com = self;
@@ -7242,7 +7266,7 @@
 			$(W).on('orientationchange', mediaquery);
 			mediaquery();
 
-			$(document).on('input change keypress keydown blur', ATTRBIND, function(e) {
+			$(document).on('input change keypress keydown blur', 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind]', function(e) {
 
 				var self = this;
 
