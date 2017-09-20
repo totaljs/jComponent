@@ -1491,6 +1491,9 @@ BLOCKED(name, timeout, [callback]);
 INVALID(path);
 // Alias for MAIN.invalid();
 
+ERRORS(path);
+// Alias for MAIN.errors();
+
 EVALUATE(path, expression, [path_is_value]);
 // Alias for MAIN.evaluate();
 

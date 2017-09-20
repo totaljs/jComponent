@@ -5513,6 +5513,7 @@
 		return M;
 	};
 
+	W.ERRORS = M.errors;
 	W.INVALID = M.invalid;
 	W.RESET = M.reset;
 	W.COOKIES = M.cookies;
