@@ -724,7 +724,7 @@
 		if (ext === '.js') {
 			var scr = d.createElement('script');
 			scr.type = 'text/javascript';
-			scr.async = true;
+			// scr.async = true;
 			scr.onload = function() {
 				statics[url] = 2;
 				callback && callback();
