@@ -1189,12 +1189,9 @@ MAIN.createURL('/api/query/?priceto=200', { sort: 1 }); // /api/query/?priceto=2
 
 
 MAIN.removeCache(key, fulltext);
+REMOVECACHE(key, fulltext);
 // Deletes cache according to the key. If @fulltext {Boolean} is `true` then the method removes
 // all items with their keys contain this key.
-
-
-MAIN.REMOVECACHE(method, url, data);
-// Deletes cache (AJAXCACHE).
 
 
 // +v3.7.0

@@ -806,7 +806,7 @@
 		return cachestorage(key, value, expire);
 	};
 
-	M.removeCache = function(key, isSearching) {
+	W.REMOVECACHE = M.removeCache = function(key, isSearching) {
 		if (isSearching) {
 			for (var m in storage) {
 				if (m.indexOf(key) !== -1)
