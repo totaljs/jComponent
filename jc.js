@@ -62,6 +62,7 @@
 	var workflows = {};
 	var styles = [];
 	var statics = {};
+	var ajaxoptions = {};
 	var $ready = setTimeout(load, 2);
 	var $loaded = false;
 	var schedulercounter = 0;
@@ -926,6 +927,11 @@
 		return obj;
 	};
 
+	W.AJAXOPTIONS = M.AJAXOPTIONS = function(name, fn) {
+		ajaxoptions[name] = fn;
+		return M;
+	};
+
 	M.AJAX = function(url, data, callback, timeout) {
 
 		if (typeof(url) === 'function') {
@@ -992,13 +998,25 @@
 				}
 			}
 
+			options.headers = $.extend(headers, M.defaults.headers);
+
 			if (url.match(/http\:\/\/|https\:\/\//i)) {
 				options.crossDomain = true;
+				delete options.headers['X-Requested-With'];
 				if (isCredentials)
 					options.xhrFields = { withCredentials: true };
 			}
 
-			options.headers = $.extend(headers, M.defaults.headers);
+
+			var custom = url.match(/\([a-z0-9\-\.\,]+\)/i);
+			if (custom) {
+				url = url.replace(custom, '').replace(/\s+/g, '');
+				custom = custom.toString().replace(/\(|\)/g, '').split(',');
+				for (var i = 0; i < custom.length; i++) {
+					var opt = ajaxoptions[custom[i].trim()];
+					opt && opt(options);
+				}
+			}
 
 			var output = {};
 			output.url = url;

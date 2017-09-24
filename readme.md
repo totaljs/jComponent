@@ -1199,12 +1199,23 @@ MAIN.REMOVECACHE(method, url, data);
 
 // +v3.7.0
 // AJAX calls
-MAIN.AJAX('METHOD URL', data, [callback(response, status, output) or path], [sleep], [error(response, status, output) or path]);
+AJAX('METHOD URL', data, [callback(response, status, output) or path], [sleep], [error(response, status, output) or path]);
 // Is same as GET(), POST(), PUT(), DELETE(). When is throwed an error then
 // "response" is the empty object {}
-MAIN.AJAXCACHE('METHOD URL', data, [callback(response, isFromCache) or path], [expire], [sleep], [clear]);
+AJAXCACHE('METHOD URL', data, [callback(response, isFromCache) or path], [expire], [sleep], [clear]);
 // Is same as POSTCACHE, GETCACHE and now supports PUT, DELETE. If the callback is the
 // function then the second argument will be `fromCache {Boolean}`.
+
+
+AJAXOPTIONS('custom', function(req) {
+    req.headers['x-token'] = 'custom header';
+    // req.type = 'GET';
+    // req.data
+});
+// Can create a custom options for the request
+// Usage: AJAX('GET (custom) /api/users/', ...);
+// Usage (multiple): AJAX('GET (custom1, custom2, custom3) /api/users/', ...);
+// +v12.0.0
 
 // +v3.9.1 supports CORS with credentials
 // CORS by default is enabled if the URL starts with `http://` or `https://` and credentials are
