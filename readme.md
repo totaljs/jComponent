@@ -927,7 +927,7 @@ MAIN.defaults.localstorage;
 // {Boolean} enables / disables localstorage for cache mechanism, default `true`.
 
 MAIN.defaults.headers;
-// {Object} can sets AJAX headers for all requests
+// {Object} can sets AJAX headers for all requests (+v12.0.0: with except X-Request-With header, the header is removed for request out of current hostname. You can add it manually via AJAXCONFIG())
 
 MAIN.defaults.ajaxerrors;
 // {Boolean} AJAX() won't create exception when HTTP status code will be >= 400, default `false`.
@@ -1204,7 +1204,7 @@ AJAXCACHE('METHOD URL', data, [callback(response, isFromCache) or path], [expire
 // function then the second argument will be `fromCache {Boolean}`.
 
 
-AJAXOPTIONS('custom', function(req) {
+AJAXCONFIG('custom', function(req) {
     req.headers['x-token'] = 'custom header';
     // req.type = 'GET';
     // req.data

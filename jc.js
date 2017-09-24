@@ -62,7 +62,7 @@
 	var workflows = {};
 	var styles = [];
 	var statics = {};
-	var ajaxoptions = {};
+	var ajaxconfig = {};
 	var $ready = setTimeout(load, 2);
 	var $loaded = false;
 	var schedulercounter = 0;
@@ -781,7 +781,7 @@
 		return M;
 	};
 
-	M.cachepath = function(path, expire, rebind) {
+	W.CACHEPATH = M.cachepath = function(path, expire, rebind) {
 		var key = '$jcpath';
 		M.watch(path, function(p, value) {
 			var obj = cachestorage(key);
@@ -802,7 +802,7 @@
 	};
 
 
-	M.cache = function(key, value, expire) {
+	W.CACHE = M.cache = function(key, value, expire) {
 		return cachestorage(key, value, expire);
 	};
 
@@ -927,12 +927,12 @@
 		return obj;
 	};
 
-	W.AJAXOPTIONS = M.AJAXOPTIONS = function(name, fn) {
-		ajaxoptions[name] = fn;
+	W.AJAXCONFIG = M.AJAXCONFIG = function(name, fn) {
+		ajaxconfig[name] = fn;
 		return M;
 	};
 
-	M.AJAX = function(url, data, callback, timeout) {
+	W.AJAX = M.AJAX = function(url, data, callback, timeout) {
 
 		if (typeof(url) === 'function') {
 			timeout = callback;
@@ -1013,7 +1013,7 @@
 				url = url.replace(custom, '').replace(/\s+/g, '');
 				custom = custom.toString().replace(/\(|\)/g, '').split(',');
 				for (var i = 0; i < custom.length; i++) {
-					var opt = ajaxoptions[custom[i].trim()];
+					var opt = ajaxconfig[custom[i].trim()];
 					opt && opt(options);
 				}
 			}
@@ -1081,7 +1081,7 @@
 		return M;
 	};
 
-	M.AJAXCACHEREVIEW = function(url, data, callback, expire, timeout, clear) {
+	W.AJAXCACHEREVIEW = M.AJAXCACHEREVIEW = function(url, data, callback, expire, timeout, clear) {
 		return AJAXCACHE(url, data, callback, expire, timeout, clear, true);
 	};
 
@@ -1199,12 +1199,12 @@
 		return arr;
 	};
 
-	M.can = function(path, except) {
+	W.CAN = M.can = function(path, except) {
 		path = ctrl_path(path);
 		return !M.dirty(path, except) && M.valid(path, except);
 	};
 
-	M.disabled = M.disable = function(path, except) {
+	W.DISABLED = M.disabled = M.disable = function(path, except) {
 		path = ctrl_path(path);
 		return M.dirty(path, except) || !M.valid(path, except);
 	};
@@ -1358,7 +1358,7 @@
 		return M;
 	};
 
-	M.notify = function() {
+	W.NOTIFY = M.notify = function() {
 
 		var arg = arguments;
 		var length = arguments.length;
@@ -1616,7 +1616,7 @@
 		return (ctrl ? ctrl.scope : 'UNDEFINED') + '.' + path.substring(index + 1);
 	}
 
-	M.get = function(path, scope) {
+	W.GET = M.get = function(path, scope) {
 		return get(ctrl_path(path), scope);
 	};
 
@@ -1689,7 +1689,7 @@
 		}
 	};
 
-	M.validate = function(path, except) {
+	W.VALIDATE = M.validate = function(path, except) {
 
 		var arr = [];
 		var valid = true;
@@ -5612,17 +5612,6 @@
 			$.ajax(makeurl(url), options);
 		}, timeout || 30000);
 	};
-
-	W.VALIDATE = M.validate;
-	W.CAN = M.can;
-	W.DISABLED = M.disabled;
-	W.AJAX = M.AJAX;
-	W.AJAXCACHE = M.AJAXCACHE;
-	W.AJAXCACHEREVIEW = M.AJAXCACHEREVIEW;
-	W.GET = M.get;
-	W.CACHE = M.cache;
-	W.CACHEPATH = M.cachepath;
-	W.NOTIFY = M.notify;
 
 	M.modified = W.MODIFIED = function(path) {
 		var output = [];
