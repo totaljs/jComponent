@@ -476,8 +476,9 @@ COMPONENT('my-component-name', function(instance, config) {
         // who  === 3 : reset
         // who  === 4 : update
         // who  === 5 : set
+        // who  === 6 : notify
 
-        instance.element.toggleClass('error', instance.isInvalid());
+        instance.element.tclass('error', instance.isInvalid());
     };
 
 

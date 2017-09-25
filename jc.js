@@ -1383,6 +1383,7 @@
 			var val = component.get();
 			component.setter && component.setter(val, component.path, 1);
 			component.setter2 && component.setter2(val, component.path, 1);
+			component.state && component.state(1, 6);
 			component.$interaction(1);
 		});
 
@@ -1399,9 +1400,10 @@
 			if (!is)
 				return;
 
-			tmp_notify[0] = key;
-			tmp_notify[1] = get(key);
-			emit2('watch', key, tmp_notify);
+			tmp_emit2[0] = key;
+			tmp_emit2[1] = get(key);
+			tmp_emit2[2] = 1;
+			emit2('watch', key, tmp_emit2);
 		});
 
 		return M;
