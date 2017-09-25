@@ -949,6 +949,14 @@ MAIN.defaults.jsondate = true;
 // {Boolean} sets auto-parser in all AJAX operations (when is JSON deserialized to Object)
 // +v8.0.0
 
+MAIN.defaults.thousandsseparator = ' ';
+// {String} default thousands separator
+// +v12.0.0
+
+MAIN.defaults.decimalseparator = '.';
+// {String} default decimal separator
+// +v12.0.0
+
 MAIN.$version;
 // {String} appends the value to each URL address `?version=$version`
 // called via jComponent, default: "".

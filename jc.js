@@ -98,6 +98,9 @@
 		}
 	};
 
+	M.defaults.thousandsseparator = ' ';
+	M.defaults.decimalseparator = '.';
+
 	W.MONTHS = M.months = 'January,February,March,April,May,June,July,August,September,October,November,December'.split(',');
 	W.DAYS = M.days = 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'.split(',');
 
@@ -1082,10 +1085,10 @@
 	};
 
 	W.AJAXCACHEREVIEW = M.AJAXCACHEREVIEW = function(url, data, callback, expire, timeout, clear) {
-		return AJAXCACHE(url, data, callback, expire, timeout, clear, true);
+		return M.AJAXCACHE(url, data, callback, expire, timeout, clear, true);
 	};
 
-	M.AJAXCACHE = function(url, data, callback, expire, timeout, clear, review) {
+	W.AJAXCACHE = M.AJAXCACHE = function(url, data, callback, expire, timeout, clear, review) {
 
 		if (typeof(url) === 'function') {
 			timeout = callback;
@@ -2892,7 +2895,7 @@
 			var key = makeurl(item.url);
 			var can = false;
 
-			AJAXCACHE('GET ' + item.url, null, function(response) {
+			M.AJAXCACHE('GET ' + item.url, null, function(response) {
 
 				if (item.app) {
 					compileapp(response);
@@ -6222,8 +6225,12 @@
 
 	SP.params = function(obj) {
 		return this.replace(REGPARAMS, function(id) {
-			return obj[id.substring(1, id.length - 1)];
+			return get(id.substring(1, id.length - 1), obj);
 		});
+	};
+
+	SP.render = function(a, b) {
+		return Tangular.render(this, a, b);
 	};
 
 	SP.isJSONDate = function() {
@@ -6617,7 +6624,7 @@
 					return beg + (key === 'ww' ? 'ww.toString().padLeft(2, \'0\')' : 'ww') + end;
 				case 'a':
 					var b = "'PM':'AM'";
-					return beg + '(d.getHours() >= 12 ? ' + b + end;
+					return beg + '(d.getHours() >= 12 ? ' + b + ')' + end;
 			}
 		});
 
@@ -6667,7 +6674,7 @@
 		}
 
 		if (separator === undefined)
-			separator = ' ';
+			separator = M.defaults.thousandsseparator;
 
 		if (index !== -1) {
 			dec = num.substring(index + 1);
@@ -6690,7 +6697,7 @@
 		}
 
 		if (dec.length && separatorDecimal === undefined)
-			separatorDecimal = separator === '.' ? ',' : '.';
+			separatorDecimal = M.defaults.decimalseparator;
 
 		return minus + output + (dec.length ? separatorDecimal + dec : '');
 	};
