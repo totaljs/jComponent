@@ -6558,16 +6558,9 @@
 
 		format = format.env();
 
-		if (format && format[0] === '!') {
+		if (format && format.substring(0, 1) === '!') {
 			half = true;
 			format = format.substring(1);
-		}
-
-		var h = self.getHours();
-
-		if (half) {
-			if (h >= 12)
-				h -= 12;
 		}
 
 		var beg = '\'+';
@@ -6591,7 +6584,7 @@
 					ismm = true;
 					return beg + 'mm' + end;
 				case 'MM':
-					return beg + '(d.getMonth() + 1).toString().padLeft(2, \'0\')' + end;
+					return beg + '(d.getMonth() + 1).padLeft(2, \'0\')' + end;
 				case 'M':
 					return beg + '(d.getMonth() + 1)' + end;
 				case 'ddd':
@@ -6601,27 +6594,27 @@
 					isdd = true;
 					return beg + 'dd' + end;
 				case 'dd':
-					return beg + 'd.getDate().toString().padLeft(2, \'0\')' + end;
+					return beg + 'd.getDate().padLeft(2, \'0\')' + end;
 				case 'd':
 					return beg + 'd.getDate()' + end;
 				case 'HH':
 				case 'hh':
-					return beg + 'd.getHours().toString().padLeft(2, \'0\')' + end;
+					return beg + (half ? 'window.$jcdatempam(d.getHours()).padLeft(2, \'0\')' : 'd.getHours().padLeft(2, \'0\')') + end;
 				case 'H':
 				case 'h':
-					return beg + 'd.getHours()' + end;
+					return beg + (half ? 'window.$jcdatempam(d.getHours())' : 'd.getHours()') + end;
 				case 'mm':
-					return beg + 'd.getMinutes().toString().padLeft(2, \'0\')' + end;
+					return beg + 'd.getMinutes().padLeft(2, \'0\')' + end;
 				case 'm':
 					return beg + 'd.getMinutes()' + end;
 				case 'ss':
-					return beg + 'd.getSeconds().toString().padLeft(2, \'0\')' + end;
+					return beg + 'd.getSeconds().padLeft(2, \'0\')' + end;
 				case 's':
 					return beg + 'd.getSeconds()' + end;
 				case 'w':
 				case 'ww':
 					isww = true;
-					return beg + (key === 'ww' ? 'ww.toString().padLeft(2, \'0\')' : 'ww') + end;
+					return beg + (key === 'ww' ? 'ww.padLeft(2, \'0\')' : 'ww') + end;
 				case 'a':
 					var b = "'PM':'AM'";
 					return beg + '(d.getHours() >= 12 ? ' + b + ')' + end;
@@ -6634,6 +6627,10 @@
 
 		statics[key] = new Function('d', before.join('\n') + 'return \'' + format + '\';');
 		return statics[key](self);
+	};
+
+	W.$jcdatempam = function(value) {
+		return value >= 12 ? value - 12 : value;
 	};
 
 	NP.pluralize = function(zero, one, few, other) {
