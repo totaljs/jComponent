@@ -6464,7 +6464,7 @@
 			return this[index];
 	};
 
-	AP.remove = AP.kill = function(cb, value) {
+	AP.remove = function(cb, value) {
 
 		var self = this;
 		var arr = [];
