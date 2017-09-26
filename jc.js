@@ -70,7 +70,6 @@
 	var knockknockcounter = 0;
 
 	var tmp_emit2 = [null, null, null];
-	var tmp_notify = [null, null];
 	var current_ctrl = null;
 
 	W.MAIN = W.M = W.jC = W.COM = M;
@@ -4274,6 +4273,10 @@
 
 	PPC.replace = function(el) {
 		var self = this;
+
+		if (C.is)
+			C.recompile = true;
+
 		self.element = $(el);
 		self.element.get(0).$com = self;
 		return self;
