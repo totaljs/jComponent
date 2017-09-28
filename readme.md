@@ -2378,7 +2378,7 @@ console.log(isMOBILE);
 // isTOUCH == {Boolean} is a global variable and detects touch displays.
 console.log(isTOUCH);
 
-// isMOBILE == {Boolean} is a global variable and detects robot/crawler.
+// isROBOT == {Boolean} is a global variable and detects robot/crawler.
 console.log(isROBOT);
 
 // isSTANDALONE == {Boolean} is a global variable and detects standalone mode in mobile devices.
