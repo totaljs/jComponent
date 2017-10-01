@@ -205,7 +205,7 @@
 		return exp.call(val, val, path);
 	};
 
-	M.cookies = {
+	W.COOKIES = M.cookies = {
 		get: function (name) {
 			name = name.env();
 			var arr = document.cookie.split(';');
@@ -1161,7 +1161,7 @@
 		return M;
 	};
 
-	M.schedule = function(selector, name, expire, callback) {
+	W.SCHEDULE = M.schedule = function(selector, name, expire, callback) {
 		if (expire.substring(0, 1) !== '-')
 			expire = '-' + expire;
 		var arr = expire.split(' ');
@@ -1176,7 +1176,7 @@
 		return M;
 	};
 
-	M.errors = function(path, except, highlight) {
+	W.ERRORS = M.errors = function(path, except, highlight) {
 
 		if (path instanceof Array) {
 			except = path;
@@ -1211,7 +1211,7 @@
 		return M.dirty(path, except) || !M.valid(path, except);
 	};
 
-	M.invalid = function(path, onlyComponent) {
+	W.INVALID = M.invalid = function(path, onlyComponent) {
 		path = ctrl_path(path);
 		if (!path)
 			return M;
@@ -1220,7 +1220,7 @@
 		return M;
 	};
 
-	M.blocked = function(name, timeout, callback) {
+	W.BLOCKED = M.blocked = function(name, timeout, callback) {
 		var key = name;
 		var item = blocked[key];
 		var now = Date.now();
@@ -1422,7 +1422,7 @@
 		return M;
 	};
 
-	M.rewrite = function(path, val) {
+	W.REWRITE = M.rewrite = function(path, val) {
 		path = ctrl_path(path);
 		path && middleware(path, val, 1, helper_rewrite);
 		return M;
@@ -1806,7 +1806,7 @@
 		return M;
 	};
 
-	M.reset = function(path, timeout, onlyComponent) {
+	W.RESET = M.reset = function(path, timeout, onlyComponent) {
 
 		if (timeout > 0) {
 			setTimeout(function() {
@@ -4302,6 +4302,8 @@
 		return arr;
 	};
 
+	// @TODO: add reconfiguration for nested
+
 	PPC.$interaction = function(type) {
 		// type === 0 : init
 		// type === 1 : manually
@@ -5492,9 +5494,6 @@
 	};
 
 	W.NOOP = function(){};
-
-	W.REWRITE = M.rewrite;
-
 	W.SET = function(path, value, timeout, reset) {
 		if (typeof(timeout) === 'boolean')
 			return M.set(path, value, timeout);
@@ -5538,11 +5537,6 @@
 		}, timeout);
 		return M;
 	};
-
-	W.ERRORS = M.errors;
-	W.INVALID = M.invalid;
-	W.RESET = M.reset;
-	W.COOKIES = M.cookies;
 
 	W.DEFAULT = function(path, timeout, reset) {
 		return M.default(path, timeout, null, reset);
@@ -5650,7 +5644,6 @@
 		return false;
 	};
 
-	W.SCHEDULE = M.schedule;
 	W.FIND = function(value, many, noCache, callback) {
 
 		var isWaiting = false;
@@ -5775,10 +5768,6 @@
 			$('<style type="text/css">' + styles.join('') + '</style>').appendTo('head');
 			styles = [];
 		}, 50);
-	};
-
-	W.BLOCKED = function(name, timeout, callback) {
-		return M.blocked(name, timeout, callback);
 	};
 
 	W.HASH = function(s) {
