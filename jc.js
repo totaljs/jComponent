@@ -185,7 +185,7 @@
 		return M;
 	};
 
-	M.evaluate = function(path, expression, nopath) {
+	W.EVALUATE = M.evaluate = function(path, expression, nopath) {
 
 		var key = 'eval' + expression;
 		var exp = temp[key];
@@ -281,7 +281,7 @@
 		return h;
 	}
 
-	M.upload = function(url, data, callback, timeout, progress) {
+	W.UPLOAD = M.upload = function(url, data, callback, timeout, progress) {
 
 		if (!url)
 			url = location.pathname;
@@ -491,7 +491,7 @@
 		return M;
 	};
 
-	M.emit = function(name) {
+	W.EMIT = M.emit = function(name) {
 
 		var e = events[''];
 		if (!e)
@@ -667,9 +667,6 @@
 			insert = true;
 		}
 
-		if (insert === undefined)
-			insert = true;
-
 		var index = url.lastIndexOf(' .');
 		var ext = '';
 
@@ -768,10 +765,10 @@
 
 				target = $(target);
 
-				if (insert)
-					target.append(response);
-				else
+				if (insert === false)
 					target.html(response);
+				else
+					target.append(response);
 
 				setTimeout(function() {
 					response && REGCOM.test(response) && compile(target);
@@ -1171,7 +1168,7 @@
 		return id;
 	};
 
-	M.clearSchedule = function(id) {
+	W.CLEARSCHEDULE = M.clearSchedule = function(id) {
 		schedulers = schedulers.remove('id', id);
 		return M;
 	};
@@ -1667,7 +1664,7 @@
 	M.schema = function(name, declaration) {
 
 		if (!declaration)
-			return $.extend(true, {}, schemas[name]);
+			return CLONE(schemas[name]);
 
 		if (typeof(declaration) === 'object') {
 			schemas[name] = declaration;
@@ -5283,8 +5280,6 @@
 		return obj.id;
 	};
 
-	W.UPLOAD = M.upload;
-
 	W.MIDDLEWARE = function(name, value, callback, path) {
 
 		if (!(name instanceof Array)) {
@@ -5467,9 +5462,22 @@
 		return PARSE(JSON.stringify(obj));
 	};
 
-	W.STRINGIFY = function(obj, compress) {
+	W.STRINGIFY = function(obj, compress, fields) {
 		compress === undefined && (compress = M.defaults.jsoncompress);
+		var tf = typeof(fields);
 		return JSON.stringify(obj, function(key, value) {
+
+			if (fields) {
+				if (fields instanceof Array) {
+					if (fields.indexOf(key) === -1)
+						return undefined;
+				} else if (tf === 'function') {
+					if (!fields(key, value))
+						return undefined;
+				} else if (fields[key] === false)
+					return undefined;
+			}
+
 			if (compress === true) {
 				var t = typeof(value);
 				if (t === 'string') {
@@ -5636,8 +5644,9 @@
 		if (fields)
 			path = path.concat('#', fields);
 
-		var hash = W.HASH(W.STRINGIFY(value, fields));
+		var hash = W.HASH(W.STRINGIFY(value, false, fields));
 		var key = 'notmodified.' + path;
+
 		if (cache[key] === hash)
 			return true;
 		cache[key] = hash;
@@ -5758,9 +5767,6 @@
 	W.OFF = function(name, fn) {
 		return M.off(name, fn);
 	};
-
-	W.EMIT = M.emit;
-	W.EVALUATE = M.evaluate;
 
 	W.STYLE = function(value) {
 		styles.push(value instanceof Array ? value.join('\n') : value);
@@ -6066,7 +6072,7 @@
 				var bb = b[j];
 				if (bb[id] !== aa[id])
 					continue;
-				STRINGIFY(aa, fields) !== STRINGIFY(bb, fields) && update.push({ oldIndex: i, newIndex: j, oldItem: aa, newItem: bb });
+				STRINGIFY(aa, false, fields) !== STRINGIFY(bb, false, fields) && update.push({ oldIndex: i, newIndex: j, oldItem: aa, newItem: bb });
 				is = true;
 				break;
 			}
