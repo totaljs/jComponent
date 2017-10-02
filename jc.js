@@ -805,6 +805,18 @@
 		return cachestorage(key, value, expire);
 	};
 
+	W.SCROLLBARWIDTH = function() {
+		var id = 'jcscrollbarwidth';
+		if (cache[id])
+			return cache[id];
+		var b = document.body;
+		$(b).append('<div id="{0}" style="width{1}height{1}overflow:scroll;position:absolute;top{2}left{2}"></div>'.format(id, ':100px;', ':9999px;'));
+		var el = document.getElementById(id);
+		var w = cache[id] = el.offsetWidth - el.clientWidth;
+		b.removeChild(el);
+		return w;
+	};
+
 	W.REMOVECACHE = M.removeCache = function(key, isSearching) {
 		if (isSearching) {
 			for (var m in storage) {

@@ -1761,6 +1761,10 @@ ENV(key, [value]);
 // +v11.2.0
 
 ENV([object]); // sets environments
+
+SCROLLBARWIDTH();
+// Gets width of scrollbar
+// v12.0.0
 ```
 
 ## Device Width
