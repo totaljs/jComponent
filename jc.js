@@ -2632,7 +2632,7 @@
 					obj.$released = true;
 
 				if (attrcom(el, 'url'))
-					return warn('Components: You cannot use [data-jc-url] for the component: {0}[{1}]. Instead of it you have to use data-jc-template.'.format(obj.name, obj.path));
+					return warn('Components: You have to use "data-jc-template" attribute instead of "data-jc-url" for the component: {0}[{1}].'.format(obj.name, obj.path));
 
 				if (typeof(template) === 'string') {
 					var fn = function(data) {
