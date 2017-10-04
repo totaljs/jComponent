@@ -4296,11 +4296,12 @@
 		else
 			self.element.removeAttr('data-jc');
 
-		self.attrd('jc-moved', 'true');
-
 		delete self.element.get(0).$com;
 
-		remove && prev.off().remove();
+		if (remove)
+			prev.off().remove();
+		else
+			self.attrd('jc-replaced', 'true');
 
 		self.element = $(el);
 		self.element.get(0).$com = self;
