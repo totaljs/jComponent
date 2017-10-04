@@ -34,10 +34,10 @@
 	try {
 		var pmk = 'jc.test';
 		W.localStorage.setItem(pmk, '1');
-		W.PRIVATEMODE = W.localStorage.getItem(pmk) !== '1';
+		W.isPRIVATEMODE = W.localStorage.getItem(pmk) !== '1';
 		W.localStorage.removeItem(pmk);
 	} catch (e) {
-		W.PRIVATEMODE = true;
+		W.isPRIVATEMODE = true;
 	}
 
 	// Internal cache
@@ -1240,13 +1240,7 @@
 
 		var local = M.defaults.localstorage && timeout > 10000;
 		blocked[key] = now + (typeof(timeout) === 'string' ? timeout.parseExpire() : timeout);
-
-		try {
-			local && localStorage.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
-		} catch (e) {
-			// private mode
-		}
-
+		!W.isPRIVATEMODE && local && localStorage.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
 		callback && callback();
 		return false;
 	};
@@ -3727,13 +3721,7 @@
 			is2 = true;
 		}
 
-		if (M.defaults.localstorage && is2) {
-			try {
-				localStorage.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
-			} catch(e) {
-				// private mode
-			}
-		}
+		M.defaults.localstorage && is2 && !W.isPRIVATEMODE && localStorage.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
 
 		for (var key in storage) {
 			var item = storage[key];
@@ -3748,11 +3736,7 @@
 	}
 
 	function save() {
-		try {
-			M.defaults.localstorage && localStorage.setItem(M.$localstorage + '.cache', JSON.stringify(storage));
-		} catch(e) {
-			// private mode
-		}
+		!W.isPRIVATEMODE && M.defaults.localstorage && localStorage.setItem(M.$localstorage + '.cache', JSON.stringify(storage));
 	}
 
 	function refresh() {
