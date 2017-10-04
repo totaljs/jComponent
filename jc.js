@@ -2331,12 +2331,12 @@
 
 				el.childNodes.length && el.tagName !== 'SCRIPT' && REGCOM.test(el.innerHTML) && sub.push(el);
 
-				if (!el.$app) {
+				if (el.$app === undefined) {
 					name = attrapp(el);
 					name != null && onApp(name || '', el, level);
 				}
 
-				if (!el.$com) {
+				if (el.$com === undefined) {
 					name = attrcom(el);
 					name != null && onComponent(name || '', el, level, controller);
 				}
@@ -4287,16 +4287,9 @@
 			C.recompile = true;
 
 		var prev = self.element;
-		var name = (self.element.attrd('jc') || '').split(',').trim();
 
-		name = name.remove(self.name);
-
-		if (name.length)
-			self.attrd('jc', name);
-		else
-			self.element.removeAttr('data-jc');
-
-		delete self.element.get(0).$com;
+		self.element.removeAttr('data-jc');
+		self.element.get(0).$com = null;
 
 		if (remove)
 			prev.off().remove();
@@ -4305,13 +4298,7 @@
 
 		self.element = $(el);
 		self.element.get(0).$com = self;
-
-		name = (self.element.attrd('jc') || '').split(',').trim();
-
-		if (name.indexOf(self.name) === -1)
-			name.push(self.name);
-
-		self.element.attrd('jc', name.join(','));
+		self.attrd('jc', self.name);
 		self.siblings = false;
 		return self;
 	};
