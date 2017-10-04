@@ -516,7 +516,7 @@
 		return true;
 	};
 
-	M.change = function(path, value) {
+	W.CHANGE = M.change = function(path, value) {
 		return value === undefined ? !M.dirty(path) : !M.dirty(path, !value);
 	};
 
@@ -642,7 +642,7 @@
 		return dirty;
 	};
 
-	M.import = function(url, target, callback, insert, preparator) {
+	W.INJECT = W.IMPORT = M.import = function(url, target, callback, insert, preparator) {
 
 		url = url.$env();
 
@@ -4280,14 +4280,38 @@
 		return CONTROLLER(self.$controller);
 	};
 
-	PPC.replace = function(el) {
+	PPC.replace = function(el, remove) {
 		var self = this;
 
 		if (C.is)
 			C.recompile = true;
 
+		var prev = self.element;
+		var name = (self.element.attrd('jc') || '').split(',').trim();
+
+		name = name.remove(self.name);
+
+		if (name.length)
+			self.attrd('jc', name);
+		else
+			self.element.removeAttr('data-jc');
+
+		self.attrd('jc-moved', 'true');
+
+		delete self.element.get(0).$com;
+
+		remove && prev.off().remove();
+
 		self.element = $(el);
 		self.element.get(0).$com = self;
+
+		name = (self.element.attrd('jc') || '').split(',').trim();
+
+		if (name.indexOf(self.name) === -1)
+			name.push(self.name);
+
+		self.element.attrd('jc', name.join(','));
+		self.siblings = false;
 		return self;
 	};
 
@@ -4474,7 +4498,7 @@
 		return self;
 	};
 
-	PPC.noscope = function(value) {
+	PPC.noScope = function(value) {
 		this.$noscope = value === undefined ? true : value === true;
 		return this;
 	};
@@ -5756,9 +5780,6 @@
 			M.update(path, reset);
 		}, timeout);
 	};
-
-	W.CHANGE = M.change;
-	W.INJECT = W.IMPORT = M.import;
 
 	W.SCHEMA = function(name, declaration) {
 		return M.schema(name, declaration);
