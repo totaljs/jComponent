@@ -4646,42 +4646,15 @@
 			return self;
 		}
 
-		var arr = value.env().replace(/\\\;/g, '\0').split(';');
-		var num = /^(\-)?[0-9\.]+$/;
-		var colon = /(https|http|wss|ws):\/\//gi;
-
-		for (var i = 0, length = arr.length; i < length; i++) {
-
-			var item = arr[i].replace(/\0/g, ';').replace(/\\\:/g, '\0').replace(colon, function(text) {
-				return text.replace(/\:/g, '\0');
-			});
-
-			var kv = item.split(':');
-			var l = kv.length;
-			if (l !== 2)
-				continue;
-
-			var k = kv[0].trim();
-			var v = kv[1].trim().replace(/\0/g, ':').env();
-
-			if (v === 'true' || v === 'false')
-				v = v === 'true';
-			else if (num.test(v)) {
-				var tmp = +v;
-				if (!isNaN(tmp))
-					v = tmp;
-			}
-
+		value.$config(function(k, v) {
 			var prev = self.config[k];
-
 			if (!init && self.config[k] !== v)
 				self.config[k] = v;
-
 			if (callback)
 				callback(k, v, init, prev);
 			else if (self.configure)
 				self.configure(k, v, init, prev);
-		}
+		});
 
 		return self;
 	};
@@ -6225,6 +6198,43 @@
 	SP.$env = function() {
 		var index = this.indexOf('?');
 		return index === -1 ? this.env(true) : this.substring(0, index).env(true) + this.substring(index);
+	};
+
+	SP.parseConfig = SP.$config = function(callback) {
+
+		var arr = this.env().replace(/\\\;/g, '\0').split(';');
+		var num = /^(\-)?[0-9\.]+$/;
+		var colon = /(https|http|wss|ws):\/\//gi;
+		var output = {};
+
+		for (var i = 0, length = arr.length; i < length; i++) {
+
+			var item = arr[i].replace(/\0/g, ';').replace(/\\\:/g, '\0').replace(colon, function(text) {
+				return text.replace(/\:/g, '\0');
+			});
+
+			var kv = item.split(':');
+			var l = kv.length;
+
+			if (l !== 2)
+				continue;
+
+			var k = kv[0].trim();
+			var v = kv[1].trim().replace(/\0/g, ':').env();
+
+			if (v === 'true' || v === 'false')
+				v = v === 'true';
+			else if (num.test(v)) {
+				var tmp = +v;
+				if (!isNaN(tmp))
+					v = tmp;
+			}
+
+			output[k] = v;
+			callback && callback(k, v);
+		}
+
+		return output;
 	};
 
 	SP.params = function(obj) {
