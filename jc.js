@@ -829,12 +829,13 @@
 		return M;
 	};
 
-	M.usage = function(name, expire, path, callback) {
+	W.USAGE = M.usage = function(name, expire, path, callback) {
 
 		var type = typeof(expire);
-		if (type === 'string')
-			expire = W.DATETIME.add('-' + expire);
-		else if (type === 'number')
+		if (type === 'string') {
+			var dt = W.DATETIME = new Date();
+			expire = dt.add('-' + expire).getTime();
+		} else if (type === 'number')
 			expire = Date.now() - expire;
 
 		if (typeof(path) === 'function') {
