@@ -116,7 +116,7 @@
 	M.regexp.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v12.0.0';
+	M.version = 'v12.0.1';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
