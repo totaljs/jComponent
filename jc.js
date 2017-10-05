@@ -158,13 +158,13 @@
 		if (typeof(name) === 'object') {
 			name && Object.keys(name).forEach(function(key) {
 				M.defaults.environment[key] = name[key];
-				EMIT('environment', key, name[key]);
+				M.emit('environment', key, name[key]);
 			});
 			return name;
 		}
 
 		if (value !== undefined) {
-			EMIT('environment', name, value);
+			M.emit('environment', name, value);
 			M.defaults.environment[name] = value;
 			return value;
 		}
@@ -2397,8 +2397,6 @@
 			var type = body.substring(0, beg);
 			body = body.substring(beg).trim();
 
-			M.emit('app.compile', app, body);
-
 			if (type.indexOf('markdown') !== -1)
 				app.readme = body;
 			else if (type.indexOf('html') !== -1) {
@@ -2424,6 +2422,8 @@
 		} catch(e) {
 			warn('A problem with compiling application: {0}.' + e.toString());
 		}
+
+		M.emit('app.compile', app);
 
 		if (!app.name || !app.install)
 			return false;
@@ -2827,7 +2827,7 @@
 		dom.$app = app;
 		el.data(ATTRDATA, app);
 		M.apps.push(app);
-		M.emit('app.instance', app, d, initd);
+		M.emit('app', app, d, initd);
 		REGCOM.test(d.html) && compile(el);
 		var cls = attrapp(el, 'class');
 		if (cls) {
@@ -3658,6 +3658,7 @@
 			}
 
 			M.emit('destroy', component.name, component);
+			M.emit('component.destroy', component.name, component);
 
 			component.destroy && component.destroy();
 			component.element.off();
@@ -3691,7 +3692,7 @@
 			if (app.element && app.element.closest(document.documentElement).length)
 				continue;
 
-			M.emit('destroy', app.name, app);
+			M.emit('app.destroy', app.name, app);
 
 			app.emit('destroy');
 			app.destroy && app.destroy();
@@ -5131,7 +5132,8 @@
 		}
 
 		M.$components[name] && warn('Components: Overwriting component:', name);
-		M.$components[name] = { name: name, config: config, declaration: declaration, shared: {} };
+		var a = M.$components[name] = { name: name, config: config, declaration: declaration, shared: {} };
+		M.emit('component.compile', name, a);
 	};
 
 	W.SINGLETON = function(name, def) {
