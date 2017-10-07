@@ -4761,7 +4761,7 @@
 	};
 
 	PPC.style = function(value) {
-		W.STYLE(value);
+		W.STYLE(value, this._id);
 		return this;
 	};
 
@@ -5749,12 +5749,9 @@
 		return M.off(name, fn);
 	};
 
-	W.STYLE = function(value) {
-		styles.push(value instanceof Array ? value.join('\n') : value);
-		setTimeout2('$style', function() {
-			$('<style type="text/css">' + styles.join('') + '</style>').appendTo('head');
-			styles = [];
-		}, 50);
+	W.CSS = W.STYLE = function(value, id) {
+		id && $('#css' + id).remove();
+		$('<style type="text/css"' + (id ? ' id="css' + id + '"' : '') + '>' + (value instanceof Array ? value.join('') : value) + '</style>').appendTo('head');
 	};
 
 	W.HASH = function(s) {
@@ -6202,12 +6199,32 @@
 		return index === -1 ? this.env(true) : this.substring(0, index).env(true) + this.substring(index);
 	};
 
-	SP.parseConfig = SP.$config = function(callback) {
+	SP.parseConfig = SP.$config = function(def, callback) {
+
+		var output;
+
+		switch (typeof(def)) {
+			case 'function':
+				callback = def;
+				output = {};
+				break;
+			case 'string':
+				output = def.parseConfig();
+				break;
+			case 'object':
+				if (def != null)
+					output = def;
+				else
+					output = {};
+				break;
+			default:
+				output = {};
+				break;
+		}
 
 		var arr = this.env().replace(/\\\;/g, '\0').split(';');
 		var num = /^(\-)?[0-9\.]+$/;
 		var colon = /(https|http|wss|ws):\/\//gi;
-		var output = {};
 
 		for (var i = 0, length = arr.length; i < length; i++) {
 
@@ -6945,7 +6962,7 @@
 		}
 
 		if (maxlength === undefined)
-			maxlength = 3;
+			maxlength = 5;
 
 		if (asc === undefined)
 			asc = true;
