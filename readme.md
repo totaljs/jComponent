@@ -9,16 +9,17 @@
 
 > __Download__: more than 80 jComponents for free for everyone <https://componentator.com>
 
-- Current version: `v12.0.0`
+- Current version: `v12.0.1`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
 - works with [Bootstrap](http://getbootstrap.com/), [Foundation](http://foundation.zurb.com/), [Pure](http://purecss.io/), [Material Design](http://www.getmdl.io/) and others
 - you can wrap thousands plugins of jQuery via jComponent
-- best of use with [www.totaljs.com - web framework for Node.js](http://www.totaljs.com)
+- best of use with [www.totaljs.com - Web framework for Node.js](http://www.totaljs.com)
 - [Download UI components](https://componentator.com)
+- [NEW: __Documentation__](https://wiki.totaljs.com/jcomponent/)
 
-__YOU HAVE TO SEE:__
+__YOU NEED TO SEE:__
 
 - [Tangular - A template engine like Angular.js](https://github.com/totaljs/Tangular)
 - [jRouting - HTML 5 routing via History API](https://github.com/totaljs/jRouting)
