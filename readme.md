@@ -2160,6 +2160,7 @@ obj.selector;     // {String} a current selector from `VIRUTALIZE()`
 obj.find(selector);                      // Alias for "obj.element.find(selector)"
 obj.append(value);                       // Alias for "instance.element.append()"
 obj.html(value);                         // Alias for "instance.element.html()"
+obj.text(value);                         // Alias for "instance.element.text()"
 obj.event(name, [selector], callback);   // Alias for "instance.element.on()"
 obj.toggle(cls, visible, [timeout]);     // Alias for "jQuery.toggleClass()"
 obj.attr(name, [value]);                 // Alias for "jQuery.attr()"

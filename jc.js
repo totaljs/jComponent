@@ -4686,6 +4686,19 @@
 		return value || type === 'number' || type === 'boolean' ? el.empty().append(value) : el.empty();
 	};
 
+	PPVC.text = PPC.text = PPA.text = PPP.text = PCTRL.text = function(value) {
+		var el = this.element;
+		var current = el.text();
+		if (value === undefined)
+			return current;
+		if (value instanceof Array)
+			value = value.join('');
+		if (value === current)
+			return el;
+		var type = typeof(value);
+		return value || type === 'number' || type === 'boolean' ? el.empty().text(value) : el.empty();
+	};
+
 	PPVC.empty = PPC.empty = PPA.empty = PPP.empty = PCTRL.empty = function() {
 		var el = this.element;
 		el.empty();
