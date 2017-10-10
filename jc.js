@@ -116,7 +116,7 @@
 	M.regexp.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v12.0.1';
+	M.version = 'v12.0.2';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -3782,14 +3782,19 @@
 
 	var PPVC = CONTAINER.prototype;
 
+	PPVC.clone = function(deep) {
+		var t = this;
+		return new CONTAINER(t.element.clone(true), deep ? W.CLONE(t.mapping) : t.mapping);
+	};
+
 	PPVC.refresh = function() {
 		var self = this;
 		var keys = Object.keys(self.mapping);
 		for (var i = 0, length = keys.length; i < length; i++) {
 			var key = keys[i];
 
-			if (key === 'refresh') {
-				warn('VIRTUALIZE can\'t contain field called "refresh" in mapping.');
+			if (key === 'refresh' || key === 'clone') {
+				warn('VIRTUALIZE can\'t contain a field called "{0}" in mapping.'.format(key));
 				continue;
 			}
 
@@ -4691,6 +4696,8 @@
 		var el = this.element;
 		if (value instanceof Array)
 			value = value.join('');
+		else if (value instanceof CONTAINER)
+			value = value.element;
 		return value ? el.append(value) : el;
 	};
 

@@ -2175,6 +2175,7 @@ obj.aclass(cls);                         // Alias to .addClass()
 obj.rclass(cls);                         // Alias to .removeClass()
 obj.tclass(cls);                         // Alias to .toggleClass()
 obj.hclass(cls);                         // Alias to .hasClass()
+obj.clone([deep]);                       // Clones container to a new virtual element v12.0.2
 ```
 
 __Virtualized elements__:
