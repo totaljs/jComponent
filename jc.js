@@ -3793,7 +3793,7 @@
 		for (var i = 0, length = keys.length; i < length; i++) {
 			var key = keys[i];
 
-			if (key === 'refresh' || key === 'clone') {
+			if (key === 'refresh' || key === 'clone' || key === 'event' || key === 'on' || key === 'emit') {
 				warn('VIRTUALIZE can\'t contain a field called "{0}" in mapping.'.format(key));
 				continue;
 			}
