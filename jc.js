@@ -288,6 +288,38 @@
 		if (!url)
 			url = location.pathname;
 
+		var method = 'POST';
+		var index = url.indexOf(' ');
+		var tmp;
+
+		if (index !== -1)
+			method = url.substring(0, index).toUpperCase();
+
+		var isCredentials = method.substring(0, 1) === '!';
+		if (isCredentials)
+			method = method.substring(1);
+
+		var headers = {};
+		tmp = url.match(/\{.*?\}/g);
+
+		if (tmp) {
+			url = url.replace(tmp, '').replace(/\s{2,}/g, ' ');
+			tmp = (new Function('return ' + tmp))();
+			if (typeof(tmp) === 'object')
+				headers = tmp;
+		}
+
+		url = url.substring(index).trim().$env();
+
+		// middleware
+		index = url.indexOf(' #');
+		var mid = '';
+
+		if (index !== -1) {
+			mid = url.substring(index);
+			url = url.substring(0, index);
+		}
+
 		if (typeof(callback) === 'number') {
 			timeout = callback;
 			callback = undefined;
@@ -297,10 +329,14 @@
 
 			var xhr = new XMLHttpRequest();
 			var output = {};
+
+			if (isCredentials)
+				xhr.withCredentials = true;
+
 			output.process = true;
 			output.error = false;
 			output.upload = true;
-			output.method = 'POST';
+			output.method = method;
 			output.url = url.$env();
 			output.data = data;
 
@@ -333,8 +369,12 @@
 				if (!r && output.error)
 					r = output.response = self.status + ': ' + self.statusText;
 
-				if (!output.error || M.defaults.ajaxerrors)
-					return typeof(callback) === 'string' ? remap(callback.env(), r) : (callback && callback(r, null, output));
+				if (!output.error || M.defaults.ajaxerrors) {
+					middleware(mid, r, 1, function(path, value) {
+						typeof(callback) === 'string' ? remap(callback.env(), value) : (callback && callback(value, null, output));
+					});
+					return;
+				}
 
 				M.emit('error', output);
 				output.process && typeof(callback) === 'function' && callback({}, r, output);
@@ -353,11 +393,17 @@
 					progress(percentage, evt.transferSpeed, evt.timeRemaining);
 			};
 
-			xhr.open('POST', url);
+			xhr.open(method, makeurl(url));
 
-			Object.keys(M.defaults.headers).forEach(function(key) {
-				xhr.setRequestHeader(key.env(), M.defaults.headers[key].env());
-			});
+			var keys = Object.keys(M.defaults.headers);
+			for (var i = 0; i < keys.length; i++)
+				xhr.setRequestHeader(keys[i].env(), M.defaults.headers[keys[i]].env());
+
+			if (headers) {
+				var keys = Object.keys(headers);
+				for (var i = 0; i < keys.length; i++)
+					xhr.setRequestHeader(keys[i], headers[keys[i]]);
+			}
 
 			xhr.send(data);
 
@@ -1020,7 +1066,6 @@
 				if (isCredentials)
 					options.xhrFields = { withCredentials: true };
 			}
-
 
 			var custom = url.match(/\([a-z0-9\-\.\,]+\)/i);
 			if (custom) {

@@ -1547,6 +1547,7 @@ UPLOAD('/api/', formdata, function(response, err) { console.log(response); }); /
 // Uploads formdata and receive `JSON` from the server. When is throwed an error then
 // "response" is the empty object {}
 // +v11.2.0 supports environments e.g. UPLOAD('[adminurl]') replaces '[adminurl]' for ENV('adminurl') --> in url
+// +v12.0.2 supports methods, custom headers and middleware like AJAX()
 
 // +v11.0.0
 PING('METHOD URL', [interval]);
