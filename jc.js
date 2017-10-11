@@ -8,6 +8,8 @@
 	var REGPARAMS = /\{[a-z0-9]+\}/gi;
 	var REGEMPTY = /\s/g;
 	var REGCOMMA = /,/g;
+	var REGGROUP = /\{[a-z0-9\-\,\s]+\}/i;
+	var REGBACKUP = /^backup\s/i;
 	var REGSEARCH = /[^a-zA-Zá-žÁ-Žа-яА-Я\d\s:]/g;
 	var ATTRSCOPE = '[data-jc-scope]';
 	var ATTRSCOPECTRL = '[data-jc-controller]';
@@ -3800,27 +3802,33 @@
 		for (var i = 0, length = keys.length; i < length; i++) {
 			var key = keys[i];
 
-			if (key === 'refresh' || key === 'clone' || key === 'event' || key === 'on' || key === 'emit') {
+			if (key === 'refresh' || key === 'clone' || key === 'event' || key === 'on' || key === 'emit' || key === 'group') {
 				warn('VIRTUALIZE can\'t contain a field called "{0}" in mapping.'.format(key));
 				continue;
 			}
 
 			var sel = self.mapping[key];
 			var backup = false;
+			var group = null;
 
 			if (typeof(sel) === 'string') {
 				sel = sel.$env();
-				backup = (/^backup\s/i).test(sel);
+				backup = (REGBACKUP).test(sel);
 				if (backup)
-					sel = sel.substring(7).trim();
-				self.mapping[key] = sel;
+					sel = sel.substring(7);
+				group = sel.match(REGGROUP);
+				if (group) {
+					sel = sel.replace(group, '').trim();
+					group = group.toString().replace(/\{|\}/g, '').split(',').trim();
+				}
+				self.mapping[key] = sel.trim();
 			}
 
 			var val = typeof(sel) === 'function' ? sel(self.element) : self.element.find(sel);
 			if (self[key])
 				self[key].refresh();
 			else {
-				self[key] = new PROPERTY(self, sel, val instanceof jQuery ? val : $(val));
+				self[key] = new PROPERTY(self, sel, val instanceof jQuery ? val : $(val), group);
 				backup && self[key].backup();
 			}
 		}
@@ -3833,7 +3841,9 @@
 			var keys = Object.keys(t.mapping);
 			for (var i = 0, length = keys.length; i < length; i++) {
 				var key = keys[i];
-				t[key].$backup && t[key].backup();
+				var o = t[key];
+				if (o.$backup && (elements === true || (o.group && o.group.indexOf(elements) !== -1)))
+					o.backup();
 			}
 		} else
 			t.$backup = t.element.clone(true);
@@ -3846,7 +3856,9 @@
 			var keys = Object.keys(t.mapping);
 			for (var i = 0, length = keys.length; i < length; i++) {
 				var key = keys[i];
-				t[key].$backup && t[key].restore();
+				var o = t[key];
+				if (o.$backup && (elements === true || (o.group && o.group.indexOf(elements) !== -1)))
+					o.restore();
 			}
 		} else if (t.$backup) {
 			var clone = t.$backup.clone(true);
@@ -3857,9 +3869,10 @@
 		return t;
 	};
 
-	function PROPERTY(container, selector, el) {
+	function PROPERTY(container, selector, el, group) {
 		var t = this;
 		t.id = 'v' + GUID(10);
+		t.group = group;
 		t.container = container;
 		t.element = el;
 		t.selector = selector;
