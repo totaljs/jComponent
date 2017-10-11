@@ -3821,6 +3821,23 @@
 
 	var PPP = PROPERTY.prototype;
 
+	PPVC.backup = PPP.backup = function() {
+		var t = this;
+		t.$backup = t.element.clone(true);
+		return t;
+	};
+
+	PPVC.restore = PPP.restore = function() {
+		var t = this;
+		if (t.$backup) {
+			var clone = t.$backup.clone(true);
+			t.element.replaceWith(clone);
+			t.element = clone;
+			t instanceof CONTAINER && t.refresh();
+		}
+		return t;
+	};
+
 	PPP.make = function(fn) {
 		var self = this;
 		if (self.length)

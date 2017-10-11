@@ -2176,7 +2176,9 @@ obj.aclass(cls);                         // Alias to .addClass()
 obj.rclass(cls);                         // Alias to .removeClass()
 obj.tclass(cls);                         // Alias to .toggleClass()
 obj.hclass(cls);                         // Alias to .hasClass()
-obj.clone([deep]);                       // Clones container to a new virtual element v12.0.2
+obj.clone([deep]);                       // Clones container to a new virtual element +v12.0.2
+obj.backup();                            // Back up the element +v12.0.2
+obj.restore();                           // Restores the element +v12.0.2
 ```
 
 __Virtualized elements__:
@@ -2195,6 +2197,8 @@ obj.something.configure = function(key, value) {
 };
 
 // Methods
+obj.something.backup();                  // Back up the element +v12.0.2
+obj.something.restore();                 // Restores the element +v12.0.2
 obj.something.refresh();                 // Refreshes element by its selector
 obj.something.replace(el);               // Replaces element to another
 obj.something.click(callback(e));        // Captures "click/touchend" event
@@ -2212,7 +2216,6 @@ obj.something.find(selector);            // Alias for "element.find(selector)"
 obj.something.append(value);             // Alias for "element.append()"
 obj.something.html(value);               // Alias for "element.html()"
 obj.something.val(value);                // Alias for "element.val()"
-obj.something.toggle(cls, visible, [timeout]);    // Alias for "jQuery.toggleClass()"
 obj.something.event(name, [selector], callback);  // Alias for "element.on()"
 obj.something.import(url, [callback], [insert], [preparator(response)]); // Alias for MAIN.import();
 obj.something.reconfigure(value, [callback(key, value)]); // Parses configuration
