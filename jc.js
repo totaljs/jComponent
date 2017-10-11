@@ -3797,6 +3797,7 @@
 	};
 
 	PPVC.refresh = function() {
+
 		var self = this;
 		var keys = Object.keys(self.mapping);
 		for (var i = 0, length = keys.length; i < length; i++) {
@@ -3854,17 +3855,21 @@
 		var t = this;
 		if (elements) {
 			var keys = Object.keys(t.mapping);
+			var count = 0;
 			for (var i = 0, length = keys.length; i < length; i++) {
 				var key = keys[i];
 				var o = t[key];
-				if (o.$backup && (elements === true || (o.group && o.group.indexOf(elements) !== -1)))
+				if (o.$backup && (elements === true || (o.group && o.group.indexOf(elements) !== -1))) {
+					count++;
 					o.restore();
+				}
 			}
+			count && t.refresh();
 		} else if (t.$backup) {
 			var clone = t.$backup.clone(true);
-			t.element.replaceWith(clone);
+			t.element.replaceWith(clone).remove();
 			t.element = clone;
-			t instanceof CONTAINER && t.refresh();
+			t.refresh();
 		}
 		return t;
 	};
@@ -3892,9 +3897,8 @@
 		var t = this;
 		if (t.$backup) {
 			var clone = t.$backup.clone(true);
-			t.element.replaceWith(clone);
+			t.element.replaceWith(clone).remove();
 			t.element = clone;
-			t instanceof CONTAINER && t.refresh();
 		}
 		return t;
 	};
