@@ -2142,6 +2142,7 @@ Is supported in __v10.0.0__. In short this feature can virtualize `DOM` to a sim
 </div>
 
 <script>
+    // VIRTUALIZE(element, mapping, [config]);
     var obj = VIRTUALIZE($('#container'), { caption: 'h1', text: 'p', button: 'button[data-name="submit"]', something: 'jQuery selector' });
     obj.caption.html('This is caption');
     obj.text.html('Lorem ipsum dolor sit amet, consectetur adipisicing elit. Necessitatibus, iusto.');
@@ -2152,6 +2153,7 @@ Is supported in __v10.0.0__. In short this feature can virtualize `DOM` to a sim
 ```javascript
 // Properties
 obj.id;           // {String} obj id
+obj.config;       // {Object} a configuration
 obj.element;      // {jQuery} a current element (jQuery element)
 obj.container;    // {jQuery} container (jQuery element)
 obj.selector;     // {String} a current selector from `VIRUTALIZE()`
@@ -2177,8 +2179,12 @@ obj.rclass(cls);                         // Alias to .removeClass()
 obj.tclass(cls);                         // Alias to .toggleClass()
 obj.hclass(cls);                         // Alias to .hasClass()
 obj.clone([deep]);                       // Clones container to a new virtual element +v12.0.2
-obj.backup();                            // Back up the element +v12.0.2
-obj.restore();                           // Restores the element +v12.0.2
+obj.backup([elements]);                  // Back up the element +v12.0.2
+obj.restore([elements]);                 // Restores the element +v12.0.2
+obj.reconfigure(value, [callback(key, value)]); // Parses configuration
+
+// Delegates
+obj.configure;
 ```
 
 __Virtualized elements__:
@@ -2218,7 +2224,6 @@ obj.something.html(value);               // Alias for "element.html()"
 obj.something.val(value);                // Alias for "element.val()"
 obj.something.event(name, [selector], callback);  // Alias for "element.on()"
 obj.something.import(url, [callback], [insert], [preparator(response)]); // Alias for MAIN.import();
-obj.something.reconfigure(value, [callback(key, value)]); // Parses configuration
 ```
 
 - `VIRTUALIZE()` still returns cached object

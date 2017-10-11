@@ -3773,18 +3773,25 @@
 	// VIRTUAL DECLARATION
 	// ===============================================================
 
-	function CONTAINER(element, mapping) {
+	function CONTAINER(element, mapping, config) {
 		var t = this;
-		t.element = element;
+		t.element = typeof(element) === 'string' ? $(element.$env()) : element;
 		t.mapping = mapping;
+		t.config = {};
+		config && t.reconfigure(config, NOOP);
 		t.refresh();
+		setTimeout(function(t) {
+			t.configure && t.reconfigure(t.config, undefined, true);
+		}, 1, t);
 	}
 
 	var PPVC = CONTAINER.prototype;
 
 	PPVC.clone = function(deep) {
 		var t = this;
-		return new CONTAINER(t.element.clone(true), deep ? W.CLONE(t.mapping) : t.mapping);
+		var c = new CONTAINER(t.element.clone(true), deep ? W.CLONE(t.mapping) : t.mapping, t.config);
+		c.configure = t.configure;
+		return c;
 	};
 
 	PPVC.refresh = function() {
@@ -3799,18 +3806,59 @@
 			}
 
 			var sel = self.mapping[key];
+			var backup = false;
+
+			if (typeof(sel) === 'string') {
+				sel = sel.$env();
+				backup = (/^backup\s/i).test(sel);
+				if (backup)
+					sel = sel.substring(7).trim();
+				self.mapping[key] = sel;
+			}
+
 			var val = typeof(sel) === 'function' ? sel(self.element) : self.element.find(sel);
 			if (self[key])
 				self[key].refresh();
-			else
+			else {
 				self[key] = new PROPERTY(self, sel, val instanceof jQuery ? val : $(val));
+				backup && self[key].backup();
+			}
 		}
 		return self;
 	};
 
+	PPVC.backup = function(elements) {
+		var t = this;
+		if (elements) {
+			var keys = Object.keys(t.mapping);
+			for (var i = 0, length = keys.length; i < length; i++) {
+				var key = keys[i];
+				t[key].$backup && t[key].backup();
+			}
+		} else
+			t.$backup = t.element.clone(true);
+		return t;
+	};
+
+	PPVC.restore = function(elements) {
+		var t = this;
+		if (elements) {
+			var keys = Object.keys(t.mapping);
+			for (var i = 0, length = keys.length; i < length; i++) {
+				var key = keys[i];
+				t[key].$backup && t[key].restore();
+			}
+		} else if (t.$backup) {
+			var clone = t.$backup.clone(true);
+			t.element.replaceWith(clone);
+			t.element = clone;
+			t instanceof CONTAINER && t.refresh();
+		}
+		return t;
+	};
+
 	function PROPERTY(container, selector, el) {
 		var t = this;
-		t.config = {};
 		t.id = 'v' + GUID(10);
 		t.container = container;
 		t.element = el;
@@ -3821,13 +3869,13 @@
 
 	var PPP = PROPERTY.prototype;
 
-	PPVC.backup = PPP.backup = function() {
+	PPP.backup = function() {
 		var t = this;
 		t.$backup = t.element.clone(true);
 		return t;
 	};
 
-	PPVC.restore = PPP.restore = function() {
+	PPP.restore = function() {
 		var t = this;
 		if (t.$backup) {
 			var clone = t.$backup.clone(true);
@@ -4640,7 +4688,7 @@
 		return value ? this.reconfigure(value) : this;
 	};
 
-	PPC.reconfigure = PPA.reconfigure = PPP.reconfigure = PCTRL.reconfigure = function(value, callback, init) {
+	PPC.reconfigure = PPA.reconfigure = PPVC.reconfigure = PCTRL.reconfigure = function(value, callback, init) {
 
 		var self = this;
 
@@ -4650,9 +4698,9 @@
 				if (!init && self.config[k] !== value[k])
 					self.config[k] = value[k];
 				if (callback)
-					callback(k, value[k], init);
+					callback(k, value[k], init, init ? undefined : prev);
 				else if (self.configure)
-					self.configure(k, value[k], init, prev);
+					self.configure(k, value[k], init, init ? undefined : prev);
 			});
 			return self;
 		}
@@ -4674,9 +4722,9 @@
 			if (!init && self.config[k] !== v)
 				self.config[k] = v;
 			if (callback)
-				callback(k, v, init, prev);
+				callback(k, v, init, init ? undefined : prev);
 			else if (self.configure)
-				self.configure(k, v, init, prev);
+				self.configure(k, v, init, init ? undefined : prev);
 		});
 
 		return self;
@@ -4741,8 +4789,8 @@
 		return this.element.find(selector);
 	};
 
-	PPC.virtualize = PPA.virtualize = PCTRL.virtualize = function(mapping) {
-		return W.VIRTUALIZE(this.element, mapping);
+	PPC.virtualize = PPA.virtualize = PCTRL.virtualize = function(mapping, config) {
+		return W.VIRTUALIZE(this.element, mapping, config);
 	};
 
 	PPC.isInvalid = function() {
@@ -6013,11 +6061,11 @@
 		return arr;
 	};
 
-	W.VIRTUALIZE = function(el, map) {
+	W.VIRTUALIZE = function(el, map, config) {
 		if (el.element instanceof jQuery)
 			el = el.element;
 		!(el instanceof jQuery) && (el = $(el));
-		return new CONTAINER(el, map);
+		return new CONTAINER(el, map, config);
 	};
 
 	COMPONENT('', function() {
