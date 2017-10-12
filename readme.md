@@ -2216,6 +2216,7 @@ obj.something.rclass(cls);               // Alias to .removeClass()
 obj.something.tclass(cls);               // Alias to .toggleClass()
 obj.something.hclass(cls);               // Alias to .hasClass()
 obj.something.prop(key, [value]);        // Alias for "jQuery.prop()"
+obj.something.disable([value]);          // Alias for "jQuery.prop('disabled')"
 obj.something.attr(name, [value]);       // Alias for "jQuery.attr()"
 obj.something.attrd(name, [value]);      // Alias for "jQuery.attr('data-{name}')"
 obj.something.css(name, [value]);        // Alias for "jQuery.css()"

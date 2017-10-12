@@ -3998,6 +3998,14 @@
 		return self;
 	};
 
+	PPP.disable = function(v) {
+		var self = this;
+		if (v === undefined)
+			return self.element.prop('disabled');
+		self.element.prop('disabled', v);
+		return self;
+	};
+
 	PPP.prop = function(k, v) {
 		var self = this;
 		if (v === undefined)
