@@ -6086,6 +6086,7 @@
 
 		self.removed = true;
 		self.emit('destroy');
+		self.destroy && self.destroy();
 		delete M.controllers[self.name];
 
 		// Remove all global events
