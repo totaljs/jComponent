@@ -1,7 +1,7 @@
 (function() {
 
 	// Constants
-	var REGCOM = /(data-ja|data-jc)\=/;
+	var REGCOM = /(data-ja|data-jc|data-jc-controller)\=/;
 	var REGSCRIPT = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGENV = /(\[.*?\])/gi;
@@ -118,7 +118,7 @@
 	M.regexp.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v12.0.2';
+	M.version = 'v12.0.3';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -139,6 +139,7 @@
 	C.imports = {};
 	C.ready = [];
 	C.counter = 0;
+	C.controllers = 0;
 
 	if (Object.freeze) {
 		Object.freeze(EMPTYOBJECT);
@@ -819,8 +820,11 @@
 					target.append(response);
 
 				setTimeout(function() {
+
 					response && REGCOM.test(response) && compile(target);
-					callback && callback();
+					callback && WAIT(function() {
+						return C.is == false && C.controllers == 0;
+					}, callback);
 				}, 10);
 			});
 		});
@@ -2590,6 +2594,7 @@
 			var scope = el.closest(ATTRSCOPE);
 
 			all.forEach(function(name) {
+
 				name = name.trim();
 
 				var com = M.$components[name || ''];
@@ -6044,6 +6049,7 @@
 
 		obj.$init = function(path, element) {
 
+			C.controllers--;
 			clearTimeout(statics[key]);
 
 			if (path)
@@ -6061,6 +6067,8 @@
 
 			return obj;
 		};
+
+		C.controllers++;
 
 		statics[key] = setTimeout(function() {
 			obj.$init();
