@@ -4418,9 +4418,13 @@
 			C.recompile = true;
 
 		var prev = self.element;
+		var ctrl = prev.attrd('jc-controller');
+		var scope = prev.attrd('jc-scope');
 
 		self.element.removeAttr('data-jc');
 		self.element.get(0).$com = null;
+		ctrl && self.element.removeAttr('data-jc-controller');
+		scope && self.element.removeAttr('data-jc-scope');
 
 		if (remove)
 			prev.off().remove();
@@ -4430,6 +4434,8 @@
 		self.element = $(el);
 		self.element.get(0).$com = self;
 		self.attrd('jc', self.name);
+		ctrl && self.attrd('jc-controller', ctrl);
+		scope && self.attrd('jc-scope', scope);
 		self.siblings = false;
 		return self;
 	};
