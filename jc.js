@@ -118,7 +118,7 @@
 	M.regexp.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v12.0.3';
+	M.version = 'v12.0.4';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2536,6 +2536,31 @@
 		M.loaded = true;
 	}
 
+	function dependencies(declaration, callback, obj, el) {
+
+		if (declaration.importing) {
+			WAIT(function() {
+				return declaration.importing;
+			}, function() {
+				callback(obj, el);
+			});
+			return;
+		}
+
+		if (!declaration.dependencies || !declaration.dependencies.length) {
+			callback(obj, el);
+			return;
+		}
+
+		declaration.importing = true;
+		declaration.dependencies.wait(function(item, next) {
+			IMPORT(item, next);
+		}, function() {
+			declaration.importing = false;
+			callback(obj, el);
+		});
+	}
+
 	function compile(container) {
 
 		// jComponent APP
@@ -2618,6 +2643,7 @@
 					M.import(x, function() {
 						C.imports[x] = 2;
 					});
+
 					return;
 				}
 
@@ -2685,8 +2711,10 @@
 					var fn = function(data) {
 						if (obj.prerender)
 							data = obj.prerender(data);
-						typeof(obj.make) === 'function' && obj.make(data);
-						init(el, obj);
+						dependencies(com, function(obj, el) {
+							typeof(obj.make) === 'function' && obj.make(data);
+							init(el, obj);
+						}, obj, el);
 					};
 
 					var c = template.substring(0, 1);
@@ -2710,25 +2738,36 @@
 				if (typeof(obj.make) === 'string') {
 
 					if (obj.make.indexOf('<') !== -1) {
-						if (obj.prerender)
-							obj.make = obj.prerender(obj.make);
-						el.html(obj.make);
-						init(el, obj);
+						dependencies(com, function(obj, el) {
+							if (obj.prerender)
+								obj.make = obj.prerender(obj.make);
+							el.html(obj.make);
+							init(el, obj);
+						}, obj, el);
 						return;
 					}
 
 					$.get(makeurl(obj.make), function(data) {
-						if (obj.prerender)
-							data = obj.prerender(data);
-						el.html(data);
-						init(el, obj);
+						dependencies(com, function(obj, el) {
+							if (obj.prerender)
+								data = obj.prerender(data);
+							el.html(data);
+							init(el, obj);
+						}, obj, el);
 					});
 
 					return;
 				}
 
-				obj.make && obj.make();
-				init(el, obj);
+				if (com.dependencies) {
+					dependencies(com, function(obj, el) {
+						obj.make && obj.make();
+						init(el, obj);
+					}, obj, el);
+				} else {
+					obj.make && obj.make();
+					init(el, obj);
+				}
 			});
 
 			// A reference to instance
@@ -5290,15 +5329,16 @@
 		}
 	};
 
-	W.COMPONENT = function(name, config, declaration) {
+	W.COMPONENT = function(name, config, declaration, dependencies) {
 
 		if (typeof(config) === 'function') {
+			dependencies = declaration;
 			declaration = config;
 			config = null;
 		}
 
 		M.$components[name] && warn('Components: Overwriting component:', name);
-		var a = M.$components[name] = { name: name, config: config, declaration: declaration, shared: {} };
+		var a = M.$components[name] = { name: name, config: config, declaration: declaration, shared: {}, dependencies: dependencies instanceof Array ? dependencies : null };
 		M.emit('component.compile', name, a);
 	};
 
