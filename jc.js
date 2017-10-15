@@ -798,6 +798,7 @@
 		WAIT(function() {
 			return W.jQuery ? true : false;
 		}, function() {
+
 			statics[url] = 2;
 
 			var key = makeurl(url);
@@ -820,7 +821,6 @@
 					target.append(response);
 
 				setTimeout(function() {
-
 					response && REGCOM.test(response) && compile(target);
 					callback && WAIT(function() {
 						return C.is == false && C.controllers == 0;
@@ -6095,7 +6095,6 @@
 
 		obj.$init = function(path, element) {
 
-			C.controllers--;
 			clearTimeout(statics[key]);
 
 			if (path)
@@ -6105,6 +6104,7 @@
 				obj.element = element;
 
 			if (obj.$callback) {
+				C.controllers--;
 				current_ctrl = obj.name;
 				obj.$callback.call(obj, obj, path, element);
 				obj.$callback = null;
