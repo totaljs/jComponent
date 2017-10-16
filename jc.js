@@ -6123,6 +6123,18 @@
 		return obj.$init;
 	};
 
+	PCTRL.change = function(path, value) {
+
+		if (typeof(path) === 'boolean') {
+			value = path;
+			path = '';
+		}
+
+		var self = this;
+		M.change(self.path(path), value === undefined ? true : value);
+		return self;
+	};
+
 	PCTRL.remove = PCTRL.kill = PCTRL.destroy = function() {
 
 		var self = this;

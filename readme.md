@@ -1,6 +1,6 @@
 [![MIT License][license-image]][license-url] [![Gitter chat](https://badges.gitter.im/totaljs/framework.png)](https://gitter.im/totaljs/jComponent)
 
-[![Support](https://www.totaljs.com/img/button-support.png?v=2)](https://www.totaljs.com/support/) 
+[![Support](https://www.totaljs.com/img/button-support.png?v=2)](https://www.totaljs.com/support/)
 
 - [__Live chat with professional support__](https://messenger.totaljs.com)
 - [__HelpDesk with professional support__](https://helpdesk.totaljs.com)
@@ -184,7 +184,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
 
     ::: Results for imagination:
-    
+
     <element data-jc-scope="users">
         <element data-jc="textbox" data-jc-path="users.form.name" />
     </element>
@@ -381,13 +381,13 @@ COMPONENT('my-component-name', function(instance, config) {
     // instance.usage.convert('seconds')
     // instance.usage.convert('hours')
     // instance.usage.convert('minutes')
-    
+
     instance.scope;
     // +v11.0.0 The property contains plain array of all jQuery elements of scopes.
-    
+
     instance.pathscope;
     // The property contains value of data-jc-scope element if exists.
-    
+
     instance.siblings;
     // Returns {Boolean} and it indicates whether the element contains multiple
     // declaration of components.
@@ -407,7 +407,7 @@ COMPONENT('my-component-name', function(instance, config) {
 COMPONENT('my-component-name', function(instance, config) {
 
     // var instance = this;
-    
+
     instance.init = function() {
         // Is executed onetime for all same components.
     };
@@ -638,11 +638,11 @@ COMPONENT('my-component-name', function(instance, config) {
     // Gets or Sets inner HTML in the component element.
     // jQuery.html();
 
-    
+
     instance.empty();
     // Removes whole content.
     // jQuery.empty();
-    
+
 
     instance.append(value);
     // Appends a content into the inner HTML in the component element.
@@ -653,8 +653,8 @@ COMPONENT('my-component-name', function(instance, config) {
     // Toggles a class name.
     // jQuery.toggleClass();
 
-    
-    instance.classes(string);    
+
+    instance.classes(string);
     // Toggles classes "+classname" (or without plus) adds and "-classname" removes
     // Example: instance.classes('+selected -hidden +animate');
     // +v8.0.0
@@ -692,8 +692,8 @@ COMPONENT('my-component-name', function(instance, config) {
     instance.exec(name, [a], [b], [c]);
     // Executes method in all nested components
     // +v10.0.0
-    
-    
+
+
     instance.event(eventname, [selector], callback);
     // Sets an event listener for the element (not for component!)
     // jQuery.on();
@@ -727,7 +727,7 @@ COMPONENT('my-component-name', function(instance, config) {
     instance.reset();
     // Resets `instance.dirty(false)` and `instance.valid(false)`.
 
-    
+
     instance.default([reset]);
     // Sets a default value from [data-jc-value]. [reset] attribute
     // resets the component state (default: true).
@@ -767,7 +767,7 @@ COMPONENT('my-component-name', function(instance, config) {
     instance.emit(event_name, [arg1], [arg2])
     // Emits event for all components.
 
-    
+
     instance.evaluate([path], expression, [path_is_value]);
     console.log(instance.evaluate('value.age > 18')); // example
     console.log(instance.evaluate('path.to.property', 'value === "Peter"')); // example
@@ -775,7 +775,7 @@ COMPONENT('my-component-name', function(instance, config) {
 
     console.log(instance.evaluate('Peter', 'value === "Peter"'), true); // example
     console.log(instance.evaluate(true, 'value === true'), true); // example
-    
+
 
     instance.formatter(fn);
     instance.formatter(function(path, value, type) { // example
@@ -810,7 +810,7 @@ COMPONENT('my-component-name', function(instance, config) {
     instance.nested();
     // +v8.0.0
     // Returns all nested jComponents as Array of Objects
-    
+
 
     instance.compile();
     // +v8.0.0
@@ -832,13 +832,13 @@ COMPONENT('my-component-name', function(instance, config) {
         // type === 3 : by default
     });
     // This delegate watches all changes according the model.
-    
-    
+
+
     instance.unwatch([path], [function]);
     // +v11.1.0
     // Unregister watcher
 
-    
+
     instance.release(true|false);
     // This method releases this component and all nested components.
     // +v7.0.0
@@ -846,7 +846,7 @@ COMPONENT('my-component-name', function(instance, config) {
     instance.release();
     // This method returns the current state: Is this component released or no?
     // +v7.0.0
-    
+
     instance.notify();
     // This method notifies all components on component's path
     // +v9.0.0
@@ -1889,7 +1889,7 @@ WAIT('d3', function(again) {
 
 ## Keypress
 
-`+v4.0.0` The method `KEYPRESS` is a great feature for e.g. filters. When a user types a fulltext search then you can create delay between sending data and user interaction. 
+`+v4.0.0` The method `KEYPRESS` is a great feature for e.g. filters. When a user types a fulltext search then you can create delay between sending data and user interaction.
 
 ```javascript
 // KEYPRESS(fn, [timeout], [key]);
@@ -1898,7 +1898,7 @@ WAIT('d3', function(again) {
 
 var count = 0;
 var interval = setInterval(function() {
-    if (count++ > 100)    
+    if (count++ > 100)
         clearInterval(interval);
     KEYPRESS(function() {
         console.log('When count will be great then 100');
@@ -1913,10 +1913,10 @@ Improved scopes are supported in `+v11.0.0`. Scopes can create independent scope
 ```html
 <!-- <div data-jc-scope="PATH"> -->
 <div data-jc-scope="users">
-    
+
     <div data-jc="grid" data-jc-path="grid"></div>
     <!-- PATH WILL BE: users.grid -->
-    
+
     <div data-jc-scope="form">
 
         <div data-jc="textbox" data-jc-path="name"></div>
@@ -1938,7 +1938,7 @@ Improved scopes are supported in `+v11.0.0`. Scopes can create independent scope
             <!-- PATH WILL BE: orders.form.name -->
         </div>
 
-    </div>    
+    </div>
 </div>
 ```
 
@@ -1977,7 +1977,7 @@ __Global__
 
 ```javascript
 CONTROLLERS.items;                        // {Object} all registered controllers
-CONTROLLERS.emit(name, [a], [b], [n]);    // Emits event in all controller instances 
+CONTROLLERS.emit(name, [a], [b], [n]);    // Emits event in all controller instances
 CONTROLLERS.remove([name]);               // Removes controllers
 var ctrl = CONTROLLER('User');            // Gets a controller instance
 ```
@@ -2021,6 +2021,7 @@ CONTROLLER('Users', function(instance) {
     instance.remove();                            // Removes itself
     instance.watch('path', fn(path, value, type), init); // +v11.5.0 Enables watching of property within controller's scope
     instance.unwatch('path', [fn]);               // +v11.5.0 Unbinds watching
+    instance.change([path], [isChange]);          // +v12.0.4 Can perform a change
 });
 ```
 
@@ -2248,7 +2249,7 @@ Applications are supported in `+v10.0.0`.
 
 ```javascript
 APPS.items;                                 // {Object} all registered apps
-APPS.emit(name, [a], [b], [n]);             // Emits event in all app instances 
+APPS.emit(name, [a], [b], [n]);             // Emits event in all app instances
 APPS.import(url, [callback([err])]);        // Downloads application from URL
 APPS.compile(body);                         // Compiles and registers application (expects "String") and returns {Boolean}
 ```
@@ -2283,7 +2284,7 @@ exports.install = function(instance, initdata) {
     instance.key;          // {String} cache key
     instance.declaration;  // {Object} a declaration of application
     isntance.removed;      // {Booelan} is application removed?
-    
+
     // Delegates
     instance.make = function(initdata) {
         // initdata {Object/String/Number} according data-ja-path="" attribute
@@ -2731,13 +2732,13 @@ REWRITE('path.to.property #MIDDLEWARE1 #MIDDLEWARE2', 'new value');
 READY.push(function() {
 
     // This context will be executed when the READY library is ready
-    
+
     COMPONENT('label', function() {
-        // ... 
+        // ...
     });
 
     COMPONENT('textbox', function() {
-        // ... 
+        // ...
     });
 
 });
