@@ -2087,6 +2087,14 @@ $('selector').rclass('removeclass');
 // +v11.8.0
 $('selector').rclass2('string_regexp');
 
+// Alias to .removeAttr()
+// +v12.0.4
+$('selector').rattr('attrName');
+
+// Alias to .removeAttr('data-')
+// +v12.0.4
+$('selector').rattrd('attrName');
+
 // Alias to .toggleClass()
 // +v11.2.0
 $('selector').tclass('toggleclass');

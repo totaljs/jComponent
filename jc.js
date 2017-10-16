@@ -7405,6 +7405,14 @@
 			return a == null ? this.removeClass() : this.removeClass(a);
 		};
 
+		$.fn.rattr = function(a) {
+			return this.removeAttr(a);
+		};
+
+		$.fn.rattrd = function(a) {
+			return this.removeAttr('data-' + a);
+		};
+
 		$.fn.rclass2 = function(a) {
 
 			var self = this;
