@@ -4804,7 +4804,7 @@
 		return this;
 	};
 
-	PPC.rcwatch = PPA.rcwatch = PPP.rcwatch = PCTRL.rcwatch = function(path, value) {
+	PPC.rcwatch = PPA.rcwatch = PCTRL.rcwatch = function(path, value) {
 		return value ? this.reconfigure(value) : this;
 	};
 
