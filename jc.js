@@ -1150,26 +1150,19 @@
 
 	W.AJAXCACHE = M.AJAXCACHE = function(url, data, callback, expire, timeout, clear, review) {
 
-		if (typeof(url) === 'function') {
-			timeout = callback;
-			callback = data;
-			data = url;
-			url = location.pathname;
-		}
+		var tdata = typeof(data);
 
-		var td = typeof(data);
-		if ((!callback || typeof(callback) === 'number') && (td === 'function' || td === 'string')) {
+		if (tdata === 'function' || (tdata === 'string' && typeof(callback) === 'string' && typeof(expire) !== 'string')) {
 			clear = timeout;
 			timeout = expire;
 			expire = callback;
 			callback = data;
-			data = undefined;
+			data = null;
 		}
 
 		if (typeof(timeout) === 'boolean') {
-			var tmp = clear;
-			clear = timeout;
-			timeout = tmp;
+			timeout = 0;
+			clear = true;
 		}
 
 		var index = url.indexOf(' ');
