@@ -7510,17 +7510,28 @@
 			return fn ? all : output;
 		};
 
-		$.fn.rescroll = function(offset) {
+		$.fn.rescroll = function(offset, bottom) {
 			var t = this;
 			t.each(function() {
-				var el = this;
+				var e = this;
+				var el = e;
 				el.scrollIntoView(true);
 				if (offset) {
 					var count = 0;
-					while (el || el.scrollTop == 0 || count++ > 22) {
+					while (el && el.scrollTop == 0 && count++ < 25) {
 						el = el.parentNode;
-						if (el.scrollTop) {
-							el.scrollTop += offset;
+						if (el && el.scrollTop) {
+
+							var off = el.scrollTop + offset;
+
+							if (bottom != false) {
+								if (el.scrollTop + el.getBoundingClientRect().height >= el.scrollHeight) {
+									el.scrollTop = el.scrollHeight;
+									return;
+								}
+							}
+
+							el.scrollTop = off;
 							return;
 						}
 					}
