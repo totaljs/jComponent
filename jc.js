@@ -7510,6 +7510,25 @@
 			return fn ? all : output;
 		};
 
+		$.fn.rescroll = function(offset) {
+			var t = this;
+			t.each(function() {
+				var el = this;
+				el.scrollIntoView(true);
+				if (offset) {
+					var count = 0;
+					while (el || el.scrollTop == 0 || count++ > 22) {
+						el = el.parentNode;
+						if (el.scrollTop) {
+							el.scrollTop += offset;
+							return;
+						}
+					}
+				}
+			});
+			return t;
+		};
+
 		$.components = M;
 
 		setInterval(function() {
