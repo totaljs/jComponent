@@ -3160,14 +3160,15 @@
 					}
 				}
 
-				if (!obj.$binded) {
+				if (obj.$binded)
+					obj.$interaction(0);
+				else {
 					obj.$binded = true;
 					middleware(obj.path + obj.middleware, value, 1, function(path, value) {
 						obj.setter(value, obj.path, 0);
 						obj.$interaction(0);
 					});
-				} else
-					obj.$interaction(0);
+				}
 			}
 		}
 
@@ -4168,7 +4169,7 @@
 		if (!self.scope && self instanceof Controller) {
 			var k = '$ctrl' + self.name;
 			if (!warnings[k]) {
-				warn('Controller "{0}" doesn\'t have defined a scope for path "{1}".'.format(name, path));
+				warn('Controller "{0}" doesn\'t have defined a scope for path "{1}".'.format(self.name, path));
 				warnings[k] = true;
 			}
 		}
@@ -4543,11 +4544,13 @@
 
 	PPC.update = PPC.refresh = function(notify) {
 		var self = this;
-		if (notify)
-			self.set(self.path, self.get());
-		else {
-			self.setter && self.setter(self.get(), self.path, 1);
-			self.$interaction(1);
+		if (self.$binded) {
+			if (notify)
+				self.set(self.path, self.get());
+			else {
+				self.setter && self.setter(self.get(), self.path, 1);
+				self.$interaction(1);
+			}
 		}
 		return self;
 	};
