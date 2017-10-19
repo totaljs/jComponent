@@ -4860,8 +4860,6 @@
 			return el.html();
 		if (value instanceof Array)
 			value = value.join('');
-		if (value === current)
-			return el;
 		var type = typeof(value);
 		return value || type === 'number' || type === 'boolean' ? el.empty().append(value) : el.empty();
 	};
