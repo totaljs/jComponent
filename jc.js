@@ -4219,6 +4219,12 @@
 		return self;
 	};
 
+	PPA.reset = PCTRL.reset = function(path) {
+		var self = this;
+		RESET(self.path(path));
+		return self;
+	};
+
 	PPA.default = PCTRL.default = function(path, timeout, onlyComponent, reset) {
 		var self = this;
 		M.default(self.path(path), timeout, onlyComponent, reset);
