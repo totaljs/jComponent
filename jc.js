@@ -3468,10 +3468,11 @@
 		var scr;
 
 		while (true) {
+
 			beg = str.indexOf('<script', beg);
 			if (beg === -1)
 				break;
-			var end = str.indexOf('</script>', beg + 9);
+			var end = str.indexOf('</script>', beg + 8);
 			var code = str.substring(beg, end + 9);
 			beg = end + 9;
 			end = code.indexOf('>');
@@ -3516,9 +3517,10 @@
 
 	function importstyles(str, id) {
 		var builder = [];
+
 		str = str.replace(REGCSS, function(text) {
 			text = text.replace('<style>', '<style type="text/css">');
-			builder.push(text.substring(25, text.length - 8).trim());
+			builder.push(text.substring(23, text.length - 8).trim());
 			return '';
 		});
 
