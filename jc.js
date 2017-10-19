@@ -4856,9 +4856,8 @@
 
 	PPVC.html = PPC.html = PPA.html = PPP.html = PCTRL.html = function(value) {
 		var el = this.element;
-		var current = el.html();
 		if (value === undefined)
-			return current;
+			return el.html();
 		if (value instanceof Array)
 			value = value.join('');
 		if (value === current)
@@ -4869,13 +4868,10 @@
 
 	PPVC.text = PPC.text = PPA.text = PPP.text = PCTRL.text = function(value) {
 		var el = this.element;
-		var current = el.text();
 		if (value === undefined)
-			return current;
+			return el.text();
 		if (value instanceof Array)
 			value = value.join('');
-		if (value === current)
-			return el;
 		var type = typeof(value);
 		return value || type === 'number' || type === 'boolean' ? el.empty().text(value) : el.empty();
 	};
