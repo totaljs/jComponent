@@ -118,7 +118,7 @@
 	M.regexp.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v12.0.4';
+	M.version = 'v12.0.5';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5560,18 +5560,39 @@
 		return W.SETTER;
 	};
 
+	function exechelper(path, arg) {
+		setTimeout(function() {
+			W.EXEC(true, path, arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6]);
+		}, 200);
+	}
+
 	W.EXEC = function(path) {
 
-		path = path.env();
 		var arg = [];
+		var f = 1;
+		var wait = false;
+		var ok = 0;
 
-		for (var i = 1; i < arguments.length; i++)
+		if (path === true) {
+			wait = true;
+			path = arguments[1];
+			f = 2;
+		}
+
+		path = path.env();
+
+		for (var i = f; i < arguments.length; i++)
 			arg.push(arguments[i]);
 
 		// OPERATION
 		var c = path.charCodeAt(0);
 		if (c === 35) {
-			OPERATION(path).apply(W, arg);
+			var op = OPERATION(path);
+			if (op) {
+				op.apply(W, arg);
+				ok = 1;
+			}
+			wait && !ok && exechelper(path, arg);
 			return W.EXEC;
 		}
 
@@ -5581,8 +5602,13 @@
 			var ctrl = CONTROLLER(path.substring(1, index));
 			if (ctrl) {
 				var fn = ctrl[path.substring(index + 1)];
-				typeof(fn) === 'function' && fn.apply(ctrl, arg);
+				if (typeof(fn) === 'function') {
+					fn.apply(ctrl, arg);
+					ok = 1;
+				}
 			}
+
+			wait && !ok && exechelper(path, arg);
 			return W.EXEC;
 		}
 
@@ -5591,12 +5617,23 @@
 		if (index !== -1) {
 			var ctrl = CONTROLLER(path.substring(0, index));
 			var fn = path.substring(index + 1);
-			ctrl && typeof(ctrl[fn]) === 'function' && ctrl[fn].apply(ctrl, arg);
+			if (ctrl && typeof(ctrl[fn]) === 'function') {
+				ctrl[fn].apply(ctrl, arg);
+				ok = 1;
+			}
+
+			wait && !ok && exechelper(path, arg);
 			return W.EXEC;
 		}
 
 		var fn = get(path);
-		typeof(fn) === 'function' && fn.apply(W, arg);
+
+		if (typeof(fn) === 'function') {
+			fn.apply(W, arg);
+			ok = 1;
+		}
+
+		wait && !ok && exechelper(path, arg);
 		return W.EXEC;
 	};
 

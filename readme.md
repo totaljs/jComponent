@@ -1606,6 +1606,7 @@ EXEC('path.to.method', 'hide', 1000);
 EXEC('CONTROLLER/method_name', 'hide', 1000);
 // Executes method in a controller
 // +v9.0.0
+// +v12.0.5 supports "WAITING" for a method e.g. EXEC(true, 'CONTROLLER/method_name', 'hide', 1000);
 
 EXEC('@CONTROLLER.method_name', 'hide', 1000);
 // Executes method in a controller
