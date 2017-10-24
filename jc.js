@@ -799,13 +799,11 @@
 		}, function() {
 
 			statics[url] = 2;
+			var id = 'import' + W.HASH(url);
 
-			var key = makeurl(url);
-			var id = 'import' + W.HASH(key);
+			AJAX('GET ' + url, function(response) {
 
-			AJAX('GET ' + key, function(response) {
-
-				key = '$import' + key;
+				url = '$import' + url;
 
 				if (preparator)
 					response = preparator(response);
