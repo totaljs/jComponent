@@ -1,14 +1,14 @@
 (function() {
 
 	// Constants
-	var REGCOM = /(data-ja|data-jc|data-jc-controller)\=/;
+	var REGCOM = /(data-ja|data-jc|data-jc-controller)=/;
 	var REGSCRIPT = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGENV = /(\[.*?\])/gi;
 	var REGPARAMS = /\{[a-z0-9]+\}/gi;
 	var REGEMPTY = /\s/g;
 	var REGCOMMA = /,/g;
-	var REGGROUP = /\{[a-z0-9\-\,\s]+\}/i;
+	var REGGROUP = /\{[a-z0-9\-,\s]+\}/i;
 	var REGBACKUP = /^backup\s/i;
 	var REGSEARCH = /[^a-zA-Zá-žÁ-Žа-яА-Я\d\s:]/g;
 	var ATTRSCOPE = '[data-jc-scope]';
@@ -62,7 +62,6 @@
 	var waits = {};
 	var operations = {};
 	var workflows = {};
-	var styles = [];
 	var statics = {};
 	var ajaxconfig = {};
 	var $ready = setTimeout(load, 2);
@@ -111,10 +110,10 @@
 	M.validators.email = /^[a-zA-Z0-9-_.+]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i;
 
 	M.regexp = {};
-	M.regexp.int = /(\-|\+)?[0-9]+/;
-	M.regexp.float = /(\-|\+)?[0-9\.\,]+/;
+	M.regexp.int = /(-|\+)?[0-9]+/;
+	M.regexp.float = /(-|\+)?[0-9.,]+/;
 	M.regexp.date = /yyyy|yy|MMMM|MMM|MM|M|dddd|ddd|dd|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g;
-	M.regexp.pluralize = /\#{1,}/g;
+	M.regexp.pluralize = /#{1,}/g;
 	M.regexp.format = /\{\d+\}/g;
 
 	M.loaded = false;
@@ -2205,7 +2204,7 @@
 		if (value === undefined)
 			value = get(a);
 
-		W.MIDDLEWARE(path.substring(index + 1).trim().replace(/\#/g, '').split(' '), value, function(value) {
+		W.MIDDLEWARE(path.substring(index + 1).trim().replace(/#/g, '').split(' '), value, function(value) {
 			callback(a, value);
 		}, a);
 	}
@@ -3598,7 +3597,7 @@
 			break;
 		}
 
-		var fn = (new Function('w', 'a', 'b', builder.join(';') + ';var v=typeof(a)===\'function\'?a(MAIN.compiler.get(b)):a;w.' + path.replace(/\'/, '\'') + '=v;return v'));
+		var fn = (new Function('w', 'a', 'b', builder.join(';') + ';var v=typeof(a)===\'function\'?a(MAIN.compiler.get(b)):a;w.' + path.replace(/'/, '\'') + '=v;return v'));
 		paths[key] = fn;
 		fn(W, value, path);
 		return C;
@@ -3635,7 +3634,7 @@
 			builder.push('if(!w.' + p + ')return');
 		}
 
-		var fn = (new Function('w', builder.join(';') + ';return w.' + path.replace(/\'/, '\'')));
+		var fn = (new Function('w', builder.join(';') + ';return w.' + path.replace(/'/, '\'')));
 		paths[key] = fn;
 		return fn(scope || W);
 	}
@@ -4181,12 +4180,24 @@
 
 	PPA.set = PCTRL.set = function(path, value, type) {
 		var self = this;
+
+		if (value === undefined) {
+			value = path;
+			path = '';
+		}
+
 		M.set(self.path(path), value, type);
 		return self;
 	};
 
 	PPA.update = PCTRL.update = function(path, reset, type) {
 		var self = this;
+
+		if (path === true) {
+			reset = true;
+			path = '';
+		}
+
 		M.update(self.path(path), reset, type);
 		return self;
 	};
@@ -4199,23 +4210,45 @@
 
 	PPA.inc = PCTRL.inc = function(path, value, type) {
 		var self = this;
+
+		if (value === undefined) {
+			value = path;
+			path = '';
+		}
+
 		M.inc(self.path(path), value, type);
 		return self;
 	};
 
 	PPA.push = PCTRL.push = function(path, value, type) {
 		var self = this;
+
+		if (value === undefined) {
+			value = path;
+			path = '';
+		}
+
 		M.push(self.path(path), value, type);
 		return self;
 	};
 
 	PPA.extend = PCTRL.extend = function(path, value, type) {
 		var self = this;
+		if (value === undefined) {
+			value = path;
+			path = '';
+		}
 		M.extend(self.path(path), value, type);
 		return self;
 	};
 
 	PPA.rewrite = PCTRL.rewrite = function(path, value) {
+
+		if (value === undefined) {
+			value = path;
+			path = '';
+		}
+
 		var self = this;
 		M.rewrite(self.path(path), value);
 		return self;
@@ -6479,14 +6512,14 @@
 				break;
 		}
 
-		var arr = this.env().replace(/\\\;/g, '\0').split(';');
-		var num = /^(\-)?[0-9\.]+$/;
+		var arr = this.env().replace(/\\;/g, '\0').split(';');
+		var num = /^(-)?[0-9.]+$/;
 		var colon = /(https|http|wss|ws):\/\//gi;
 
 		for (var i = 0, length = arr.length; i < length; i++) {
 
-			var item = arr[i].replace(/\0/g, ';').replace(/\\\:/g, '\0').replace(colon, function(text) {
-				return text.replace(/\:/g, '\0');
+			var item = arr[i].replace(/\0/g, ';').replace(/\\:/g, '\0').replace(colon, function(text) {
+				return text.replace(/:/g, '\0');
 			});
 
 			var kv = item.split(':');
