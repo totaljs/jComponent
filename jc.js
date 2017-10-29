@@ -6479,7 +6479,7 @@
 			});
 		}
 		var l = self.length - 1;
-		return (self.charCodeAt(0) === 91 && self.charCodeAt(l) === 93 ? (M.defaults.environment[self.substring(1, l)] || self) : self).toString();
+		return (self.charCodeAt(0) === 91 && self.charCodeAt(l) === 93 ? (M.defaults.environment[self.substring(1, l)] || self) : self);
 	};
 
 	SP.$env = function() {
@@ -6986,9 +6986,20 @@
 		var index = num.indexOf('.');
 
 		if (typeof(decimals) === 'string') {
-			var tmp = separator;
-			separator = decimals;
-			decimals = tmp;
+			var tmp;
+			if (decimals.substring(0, 1) === '[') {
+				tmp = decimals.env();
+				console.log(tmp)
+				decimals = tmp.decimals;
+				if (tmp.separator)
+					separator = tmp.separator;
+				if (tmp.decimalseparator)
+					separatorDecimal = tmp.decimalseparator;
+			} else {
+				tmp = separator;
+				separator = decimals;
+				decimals = tmp;
+			}
 		}
 
 		if (separator === undefined)

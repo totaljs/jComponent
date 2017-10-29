@@ -2462,6 +2462,10 @@ format = number.format(2, '.', ',');
 format = number.format(0);
 // 1 000 000
 
+// +v12.0.5
+ENV('numberformat', { decimals: 2, separator: '.', decimalseparator: ' ' });
+number.format('[numberformat]');
+
 // Number.prototype.pluralize(zero, one, few, other)
 console.log(number.pluralize('beers', 'beer', 'beers', 'beers'));
 console.log(number.pluralize('beers #', 'beer #', 'beers #', 'beers #'));
