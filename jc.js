@@ -117,7 +117,7 @@
 	M.regexp.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v12.0.5';
+	M.version = 'v12.0.6';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2221,9 +2221,9 @@
 				self.$com.dirty(false, true);
 			}
 
-			self.$com.getter(self.value, 2, dirty, old, e.type === 'focusout' || code === 13 || code === 8);
+			var v = self.$com.getter(self.value, 2, dirty, old, e.type === 'focusout' || code === 13 || code === 8);
 			if (self.nodeName === 'INPUT' || self.nodeName === 'TEXTAREA') {
-				var val = self.$com.formatter(self.value);
+				var val = self.$com.formatter(v);
 				if (self.value !== val) {
 					var pos = getcursor(self);
 					self.value = val;
@@ -4387,7 +4387,7 @@
 
 			if (type !== 2 || (older != null)) {
 				M.validate(self.path);
-				return self;
+				return value;
 			}
 
 			if (self.trim && typeof(value) === 'string')
@@ -4395,14 +4395,14 @@
 
 			if (value === self.get()) {
 				dirty && M.validate(self.path);
-				return self;
+				return value;
 			}
 
 			if (skip)
 				self.$skip = false;
 
 			self.set(self.path, value, type);
-			return self;
+			return value;
 		};
 
 		self.setter = function(value, path, type) {
@@ -6479,7 +6479,7 @@
 			});
 		}
 		var l = self.length - 1;
-		return (self.charCodeAt(0) === 91 && self.charCodeAt(l) === 93 ? (M.defaults.environment[self.substring(1, l)] || self) : self);
+		return (self.charCodeAt(0) === 91 && self.charCodeAt(l) === 93 ? (M.defaults.environment[self.substring(1, l)] || self.toString()) : self.toString());
 	};
 
 	SP.$env = function() {
