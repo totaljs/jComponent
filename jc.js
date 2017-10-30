@@ -420,7 +420,7 @@
 		return M;
 	};
 
-	M.watch = function(path, fn, init) {
+	W.WATCH = M.watch = function(path, fn, init) {
 
 		if (typeof(path) === 'function') {
 			init = fn;
@@ -434,7 +434,7 @@
 		return M;
 	};
 
-	M.on = function(name, path, fn, init) {
+	W.ON = M.on = function(name, path, fn, init) {
 
 		if (typeof(path) === 'function') {
 			fn = path;
@@ -468,7 +468,7 @@
 		return M;
 	};
 
-	M.off = function(name, path, fn) {
+	W.OFF = M.off = function(name, path, fn) {
 
 		if (typeof(path) === 'function') {
 			fn = path;
@@ -5806,10 +5806,6 @@
 		return M.default(path, timeout, null, reset);
 	};
 
-	W.WATCH = function(path, callback, init) {
-		return ON('watch', ctrl_path(path), callback, init);
-	};
-
 	W.UPTODATE = function(period, url, callback) {
 
 		if (typeof(url) === 'function') {
@@ -6011,14 +6007,6 @@
 		else
 			fn = operations[name.charCodeAt(0) === 35 ? name.substring(1) : name];
 		return fn;
-	};
-
-	W.ON = function(name, path, fn, init) {
-		return M.on(name, path, fn, init);
-	};
-
-	W.OFF = function(name, fn) {
-		return M.off(name, fn);
 	};
 
 	W.CSS = W.STYLE = function(value, id) {
