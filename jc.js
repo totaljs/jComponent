@@ -2000,7 +2000,7 @@
 		for (var i = 0, length = M.components.length; i < length; i++) {
 			var component = M.components[i];
 
-			if (!component || component.$removed || (fix && component.path !== path))
+			if (!component || !component.$loaded || component.$removed || (fix && component.path !== path))
 				continue;
 
 			if (path) {
@@ -3137,6 +3137,7 @@
 		});
 
 		obj.configure && obj.reconfigure(obj.config, undefined, true);
+		obj.$loaded = true;
 
 		if (obj.setter) {
 			if (!obj.$prepared) {
