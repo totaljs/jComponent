@@ -5700,14 +5700,15 @@
 		return obj;
 	};
 
-	W.CLONE = function(obj) {
+	W.CLONE = function(obj, path) {
 
 		var type = typeof(obj);
 		switch (type) {
 			case 'number':
-			case 'string':
 			case 'boolean':
 				return obj;
+			case 'string':
+				return path ? obj : CLONE(get(obj), true);
 		}
 
 		if (obj == null)

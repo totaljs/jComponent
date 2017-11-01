@@ -1703,6 +1703,10 @@ CLONE(someobject)
 // returns a new instance
 // +v8.0.0
 
+// CLONE('path.to.object')
+// Can clone an object according to the path
+// +v12.0.6
+
 
 STRINGIFY(obj, [trim]);
 // The method creates a JSON string from the object.
