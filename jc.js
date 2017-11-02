@@ -4459,6 +4459,37 @@
 	}
 
 	var PPC = COM.prototype;
+	var dp = Object.defineProperty;
+
+	dp(PPC, 'hidden', {
+		get: function() {
+			return this.element.get(0).offsetParent === null;
+		}
+	});
+
+	dp(PPP, 'hidden', {
+		get: function() {
+			return this.element.get(0).offsetParent === null;
+		}
+	});
+
+	dp(PPA, 'hidden', {
+		get: function() {
+			return this.element.get(0).offsetParent === null;
+		}
+	});
+
+	dp(PPVC, 'hidden', {
+		get: function() {
+			return this.element.get(0).offsetParent === null;
+		}
+	});
+
+	dp(PCTRL, 'hidden', {
+		get: function() {
+			return this.element.get(0).offsetParent === null;
+		}
+	});
 
 	PPC.import = PPA.import = PPP.import = PCTRL.import = function(url, callback, insert, preparator) {
 		var self = this;
