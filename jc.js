@@ -1279,8 +1279,11 @@
 		if (item > now)
 			return true;
 
+		if (typeof(timeout) === 'string')
+			timeout = timeout.env().parseExpire();
+
 		var local = M.defaults.localstorage && timeout > 10000;
-		blocked[key] = now + (typeof(timeout) === 'string' ? timeout.parseExpire() : timeout);
+		blocked[key] = now + timeout;
 		!W.isPRIVATEMODE && local && localStorage.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
 		callback && callback();
 		return false;
