@@ -4184,7 +4184,7 @@
 							clearInterval(o.id);
 							for (var i = 0; i < o.callback.length; i++)
 								o.callback[i].call(t, v);
-							t.$W[prop] = null;
+							delete t.$W[prop];
 						}
 					}, M.defaults.delaywatcher, t, k);
 				}
@@ -4193,8 +4193,10 @@
 		} else if (prop === false) {
 			if (t.$W) {
 				var keys = Object.keys(t.$W);
-				for (var i = 0; i < keys.length; i++)
-					clearInterval(t.$W[keys[i]].id);
+				for (var i = 0; i < keys.length; i++) {
+					var a = t.$W[keys[i]];
+					a && clearInterval(a.id);
+				}
 			}
 			return;
 		}
@@ -4215,7 +4217,7 @@
 					clearInterval(o.id);
 					for (var i = 0; i < o.callback.length; i++)
 						o.callback[i].call(t, v);
-					t.$W[prop] = null;
+					delete t.$W[prop];
 				}
 			}, M.defaults.delaywatcher, t, prop);
 		}
