@@ -1,7 +1,7 @@
 (function() {
 
 	// Constants
-	var REGCOM = /(data-ja|data-jc|data-jc-controller)=/;
+	var REGCOM = /(data-jc|data-jc-controller)=/;
 	var REGSCRIPT = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGENV = /(\[.*?\])/gi;
@@ -14,7 +14,7 @@
 	var ATTRSCOPE = '[data-jc-scope]';
 	var ATTRSCOPECTRL = '[data-jc-controller]';
 	var ATTRCOM = '[data-jc]';
-	var ATTRURL = '[data-jc-url],[data-ja-url]';
+	var ATTRURL = '[data-jc-url]';
 	var ATTRDATA = 'jc';
 	var ATTRDEL = 'data-jc-removed';
 	var DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
@@ -27,7 +27,6 @@
 	var C = {}; // COMPILER
 	var M = {}; // MAIN
 	var L = {}; // CONTROLLERS
-	var A = {}; // APPS CONTAINER
 	var W = window;
 
 	// temporary
@@ -74,58 +73,56 @@
 	var current_ctrl = null;
 
 	W.MAIN = W.M = W.jC = W.COM = M;
-	W.APPS = W.A = A;
 	W.CONTROLLERS = L;
 	W.EMPTYARRAY = [];
 	W.EMPTYOBJECT = {};
 	W.DATETIME = new Date();
 
-	M.defaults = {};
-	M.defaults.environment = {};
-	M.defaults.delay = 300;
-	M.defaults.keypress = true;
-	M.defaults.localstorage = true;
-	M.defaults.jsoncompress = false;
-	M.defaults.jsondate = true;
-	M.defaults.ajaxerrors = false;
-	M.defaults.headers = { 'X-Requested-With': 'XMLHttpRequest' };
-	M.defaults.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
-	M.defaults.importcache = 'session';
-	M.defaults.pingdata = {};
-	M.defaults.jsonconverter = {
+	var MD = M.defaults = {};
+	MD.environment = {};
+	MD.delay = 300;
+	MD.delaywatcher = 777;
+	MD.keypress = true;
+	MD.localstorage = true;
+	MD.jsoncompress = false;
+	MD.jsondate = true;
+	MD.ajaxerrors = false;
+	MD.headers = { 'X-Requested-With': 'XMLHttpRequest' };
+	MD.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
+	MD.importcache = 'session';
+	MD.pingdata = {};
+	MD.jsonconverter = {
 		'text json': function (text) {
 			return PARSE(text);
 		}
 	};
 
-	M.defaults.thousandsseparator = ' ';
-	M.defaults.decimalseparator = '.';
+	MD.thousandsseparator = ' ';
+	MD.decimalseparator = '.';
 
 	W.MONTHS = M.months = 'January,February,March,April,May,June,July,August,September,October,November,December'.split(',');
 	W.DAYS = M.days = 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'.split(',');
 
-	M.validators = {};
-	M.validators.url = /^(http|https):\/\/(?:(?:(?:[\w\.\-\+!$&'\(\)*\+,;=]|%[0-9a-f]{2})+:)*(?:[\w\.\-\+%!$&'\(\)*\+,;=]|%[0-9a-f]{2})+@)?(?:(?:[a-z0-9\-\.]|%[0-9a-f]{2})+|(?:\[(?:[0-9a-f]{0,4}:)*(?:[0-9a-f]{0,4})\]))(?::[0-9]+)?(?:[\/|\?](?:[\w#!:\.\?\+=&@!$'~*,;\/\(\)\[\]\-]|%[0-9a-f]{2})*)?$/i;
-	M.validators.phone = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
-	M.validators.email = /^[a-zA-Z0-9-_.+]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i;
+	var MV = M.validators = {};
+	MV.url = /^(http|https):\/\/(?:(?:(?:[\w\.\-\+!$&'\(\)*\+,;=]|%[0-9a-f]{2})+:)*(?:[\w\.\-\+%!$&'\(\)*\+,;=]|%[0-9a-f]{2})+@)?(?:(?:[a-z0-9\-\.]|%[0-9a-f]{2})+|(?:\[(?:[0-9a-f]{0,4}:)*(?:[0-9a-f]{0,4})\]))(?::[0-9]+)?(?:[\/|\?](?:[\w#!:\.\?\+=&@!$'~*,;\/\(\)\[\]\-]|%[0-9a-f]{2})*)?$/i;
+	MV.phone = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
+	MV.email = /^[a-zA-Z0-9-_.+]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i;
 
-	M.regexp = {};
-	M.regexp.int = /(-|\+)?[0-9]+/;
-	M.regexp.float = /(-|\+)?[0-9.,]+/;
-	M.regexp.date = /yyyy|yy|MMMM|MMM|MM|M|dddd|ddd|dd|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g;
-	M.regexp.pluralize = /#{1,}/g;
-	M.regexp.format = /\{\d+\}/g;
+	var MR = M.regexp = {};
+	MR.int = /(-|\+)?[0-9]+/;
+	MR.float = /(-|\+)?[0-9.,]+/;
+	MR.date = /yyyy|yy|MMMM|MMM|MM|M|dddd|ddd|dd|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g;
+	MR.pluralize = /#{1,}/g;
+	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v12.0.6';
+	M.version = 'v13.0.0';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
 
 	M.$components = {};
 	M.components = [];
-	M.$apps = {};
-	A.items = M.apps = [];
 	M.$formatter = [];
 	M.$parser = [];
 	L.items = M.controllers = {};
@@ -2077,48 +2074,6 @@
 	};
 
 	// ===============================================================
-	// APPS FUNCTIONS
-	// ===============================================================
-
-	A.emit = function(a, b, c, d, e) {
-		for (var i = 0, length = M.apps.length; i < length; i++)
-			M.apps[i].emit.call(M.apps[i], a, b, c, d, e);
-		return A;
-	};
-
-	A.remove = function(element, noremove) {
-
-		if (element === true) {
-			noremove = true;
-			element = null;
-		}
-
-		if (!element)
-			element = $(document.body);
-
-		element.find('[data-ja]').each(function() {
-			this.$app && this.$app.remove(noremove);
-		});
-
-		return A;
-	};
-
-	A.import = function(url, callback) {
-		var index = url.indexOf(' ');
-		if (index === -1 || index > 5)
-			url = 'GET ' + url;
-		M.AJAX(url, function(response) {
-			var is = response ? compileapp(response) : false;
-			callback && callback(is ? null : new Error('Invalid jComponent application.'));
-		});
-		return A;
-	};
-
-	A.compile = function(body) {
-		return compileapp(body);
-	};
-
-	// ===============================================================
 	// PRIVATE FUNCTIONS
 	// ===============================================================
 
@@ -2328,12 +2283,7 @@
 		return el.getAttribute ? el.getAttribute('data-jc' + name) : el.attrd('jc' + name);
 	}
 
-	function attrapp(el, name) {
-		name = name ? '-' + name : '';
-		return el.getAttribute ? el.getAttribute('data-ja' + name) : el.attrd('ja' + name);
-	}
-
-	function crawler(container, onComponent, onApp, level, controller) {
+	function crawler(container, onComponent, level, controller) {
 
 		if (container)
 			container = $(container).get(0);
@@ -2343,14 +2293,11 @@
 		if (!container)
 			return;
 
-		var name = attrapp(container);
-		!container.$app && name != null && onApp(name, container, 0);
-
 		var tmp = attrcom(container, 'controller');
 		if (tmp)
 			controller = tmp;
 
-		name = attrcom(container);
+		var name = attrcom(container);
 		!container.$com && name != null && onComponent(name, container, 0, controller);
 
 		var arr = container.childNodes;
@@ -2370,11 +2317,6 @@
 
 				el.childNodes.length && el.tagName !== 'SCRIPT' && REGCOM.test(el.innerHTML) && sub.push(el);
 
-				if (el.$app === undefined) {
-					name = attrapp(el);
-					name != null && onApp(name || '', el, level);
-				}
-
 				if (el.$com === undefined) {
 					name = attrcom(el);
 					name != null && onComponent(name || '', el, level, controller);
@@ -2384,7 +2326,7 @@
 
 		for (var i = 0, length = sub.length; i < length; i++) {
 			el = sub[i];
-			el && crawler(el, onComponent, onApp, level, controller);
+			el && crawler(el, onComponent, level, controller);
 		}
 	}
 
@@ -2416,90 +2358,6 @@
 			if (el && findcontrol(el, onElement, level) === false)
 				return;
 		}
-	}
-
-	function compileapp(html) {
-
-		var beg = -1;
-		var end = -1;
-
-		var body_script = '';
-		var body_style = '';
-		var app = {};
-
-		while (true) {
-			beg = html.indexOf('<script', end);
-			if (beg === -1)
-				break;
-
-			end = html.indexOf('</script>', beg);
-			if (end === -1)
-				break;
-
-			var body = html.substring(beg, end);
-			var beg = body.indexOf('>') + 1;
-			var type = body.substring(0, beg);
-			body = body.substring(beg).trim();
-
-			if (type.indexOf('markdown') !== -1)
-				app.readme = body;
-			else if (type.indexOf('html') !== -1) {
-				if (type.indexOf('settings') !== -1)
-					app.settings = body;
-				else if (type.indexOf('body') !== -1 || type.endsWith('"text/html">'))
-					app.html = body;
-			} else
-				body_script = body;
-
-			end += 9;
-		}
-
-		if (!body)
-			return false;
-
-		beg = html.indexOf('<style');
-		if (beg !== -1)
-			body_style = html.substring(html.indexOf('>', beg) + 1, html.indexOf('</style>')).trim();
-
-		try {
-			new Function('exports', body_script)(app);
-		} catch(e) {
-			warn('A problem with compiling application: {0}.' + e.toString());
-		}
-
-		M.emit('app.compile', app);
-
-		if (!app.name || !app.install)
-			return false;
-
-		var name = app.name;
-
-		if (body_style) {
-			$('#appcss_' + app.name).remove();
-			$('<style type="text/css" id="appcss_{0}">'.format(app.name) + body_style + '</style>').appendTo('head');
-		}
-
-		if (M.$apps[name]) {
-			var tmp = M.$apps[name];
-
-			try {
-				tmp.uninstall && tmp.uninstall(true);
-			} catch (e) {
-				warn('A problem with uninstalling application "{0}": {1}.'.foramt(name, e.toString()));
-			}
-
-			M.$apps[name] = app;
-
-			var apps = M.apps.slice(0);
-			apps.waitFor(function(item, next) {
-				item.name === name && item.remove(true);
-				next();
-			});
-
-		} else
-			M.$apps[name] = app;
-
-		return true;
 	}
 
 	function load() {
@@ -2555,12 +2413,6 @@
 	}
 
 	function compile(container) {
-
-		// jComponent APP
-		if (typeof(container) === 'string') {
-			compileapp(container);
-			return;
-		}
 
 		if (C.is) {
 			C.recompile = true;
@@ -2766,15 +2618,6 @@
 			// A reference to instance
 			el.data(ATTRDATA, instances.length > 1 ? instances : instances[0]);
 
-		}, function(name, dom) {
-			var d = M.$apps[name];
-			if (d) {
-				var id = attrapp(dom, 'id');
-				if (id)
-					appdependencies(d, id, dom);
-				else
-					warn('Apps: The application "{0}" doesn\'t contain "data-ja-id" attribute.'.format(name));
-			}
 		}, undefined);
 
 		if (!has || !C.pending.length)
@@ -2869,57 +2712,6 @@
 		return scope[0].$scopedata;
 	}
 
-	function appdependencies(d, id, dom) {
-
-		$(dom).data(ATTRDATA, EMPTYOBJECT);
-
-		if (d.$pending === 1) {
-			WAIT(function() {
-				return d.$pending === false;
-			}, function() {
-				appcreate(d, id, dom);
-			});
-			return;
-		}
-
-		if (d.$pending === undefined && d.dependencies && d.dependencies.length) {
-			d.$pending = 1;
-			d.dependencies.waitFor(function(item, next) {
-				M.import('ONCE ' + item, next);
-			}, function() {
-				d.$pending = 2;
-				appcreate(d, id, dom);
-			});
-		} else
-			appcreate(d, id, dom);
-	}
-
-	function appcreate(d, id, dom) {
-		var el = $(dom);
-		var key = id ? ('app.' + d.name + '.' + id + '.options') : null;
-		d.html && el.empty().append(d.html);
-		id = 'app' + W.HASH(id);
-
-		var initd = el.attrd('ja-path');
-		if (initd)
-			initd = get(initd);
-		else
-			initd = undefined;
-
-		var app = new APP(id, el, d, key, initd);
-		app.$cache = key;
-		dom.$app = app;
-		el.data(ATTRDATA, app);
-		M.apps.push(app);
-		M.emit('app', app, d, initd);
-		REGCOM.test(d.html) && compile(el);
-		var cls = attrapp(el, 'class');
-		if (cls) {
-			toggles.push({ toggle: cls.split(' '), element: el });
-			el.removeAttr('data-ja-class');
-		}
-	}
-
 	W.LOG = function() {
 		window.console && console.log.apply(console, arguments);
 	};
@@ -2946,8 +2738,7 @@
 
 			el.data(ATTRDATA, '1');
 
-			var app = attrapp(el, 'url');
-			var url = app ? app : attrcom(el, 'url');
+			var url = attrcom(el, 'url');
 
 			// Unique
 			var once = url.substring(0, 5).toLowerCase() === 'once ';
@@ -2964,11 +2755,10 @@
 			var item = {};
 			item.url = url;
 			item.element = el;
-			item.callback = app ? null : attrcom(el, 'init');
-			item.path = app ? null : attrcom(el, 'path');
-			item.toggle = app ? null : (attrcom(el, 'class') || '').split(' ');
-			item.expire = ((app ? attrapp(el, 'cache') : attrcom(el, 'cache')) || M.defaults.importcache);
-			item.app = app ? true : false;
+			item.callback = attrcom(el, 'init');
+			item.path = attrcom(el, 'path');
+			item.toggle = (attrcom(el, 'class') || '').split(' ');
+			item.expire = attrcom(el, 'cache') || M.defaults.importcache;
 			arr.push(item);
 		});
 
@@ -2984,13 +2774,6 @@
 
 			M.AJAXCACHE('GET ' + item.url, null, function(response) {
 
-				if (item.app) {
-					compileapp(response);
-					canCompile = true;
-					count++;
-					return next();
-				}
-
 				key = '$import' + key;
 
 				if (statics[key])
@@ -3000,7 +2783,7 @@
 
 				can = response && REGCOM.test(response);
 
-				if (can || item.app)
+				if (can)
 					canCompile = true;
 
 				item.element.html(response);
@@ -3026,9 +2809,7 @@
 	function remove(el) {
 		var dom = el.get(0);
 		dom.$com = null;
-		dom.$app = null;
 		el.attr(ATTRDEL, true);
-		el.attrd('ja-removed', true);
 		el.remove();
 	}
 
@@ -3765,37 +3546,6 @@
 			is = true;
 		}
 
-		var index = 0;
-		var length = M.apps.length;
-
-		while (index < length) {
-			var app = M.apps[index++];
-			if (!app) {
-				index--;
-				M.apps.splice(index, 1);
-				length = M.apps.length;
-				continue;
-			}
-
-			if (app.element && app.element.closest(document.documentElement).length)
-				continue;
-
-			M.emit('app.destroy', app.name, app);
-
-			app.emit('destroy');
-			app.destroy && app.destroy();
-			app.element.off();
-			app.element.find('*').off();
-			app.element.remove();
-			app.element = null;
-			app.$removed = true;
-			app.make = null;
-
-			index--;
-			M.apps.splice(index, 1);
-			length = M.apps.length;
-		}
-
 		clear('find');
 
 		W.DATETIME = new Date();
@@ -3804,10 +3554,10 @@
 		var is3 = false;
 
 		for (var key in blocked) {
-			if (blocked[key] > now)
-				continue;
-			delete blocked[key];
-			is2 = true;
+			if (blocked[key] <= now) {
+				delete blocked[key];
+				is2 = true;
+			}
 		}
 
 		M.defaults.localstorage && is2 && !W.isPRIVATEMODE && localStorage.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
@@ -4079,47 +3829,7 @@
 
 	var PCTRL = Controller.prototype;
 
-	// ===============================================================
-	// APPLICATION DECLARATION
-	// ===============================================================
-
-	function APP(id, element, declaration, key, data) {
-		var self = this;
-
-		self.removed = false;
-		self.$events = {};
-		self.id = id;
-		self.config = {};
-
-		declaration.config && self.reconfigure(declaration.config, NOOP);
-		var tmp = attrapp(element, 'config');
-		tmp && self.reconfigure(tmp, NOOP);
-
-		self.scope = attrapp(element, 'scope') || attrcom(element, 'scope') || ('app' + GUID(10));
-		element.get(0).$scope = self.scope;
-		!attrapp(element, 'noscope') && element.attrd('jc-scope', '?');
-		self.name = declaration.name;
-		self.type = declaration.type;
-		self.element = element;
-		self.key = key;
-		self.declaration = declaration;
-		self.$load(function(options) {
-			self.options = $.extend(true, CLONE(declaration.options), options || EMPTYOBJECT);
-			declaration.install.call(self, self, data);
-			self.make && self.make(data);
-		});
-
-		self.configure && self.reconfigure(self.config, undefined, true);
-	}
-
-	var PPA = APP.prototype;
-
-	PPA.change = function() {
-		this.$save();
-		return this;
-	};
-
-	PPA.emit = PCTRL.emit = function(name) {
+	PCTRL.emit = function(name) {
 		var self = this;
 		var e = self.$events[name];
 		if (e && e.length) {
@@ -4129,25 +3839,11 @@
 		return self;
 	};
 
-	PPA.on = PCTRL.on = function(name, fn) {
+	PCTRL.on = function(name, fn) {
 		var self = this;
 		var e = self.$events[name];
 		!e && (self.$events[name] = e = []);
 		e.push(fn);
-		return self;
-	};
-
-	PPA.unwatch = function(path, fn) {
-		var self = this;
-		M.off('app' + self.id + '#watch', self.path(path), fn);
-		return self;
-	};
-
-	PPA.watch = function(path, fn, init) {
-		var self = this;
-		path = self.path(path);
-		M.on('app' + self.id + '#watch', path, fn);
-		init && fn.call(self, path, path, 0);
 		return self;
 	};
 
@@ -4165,7 +3861,7 @@
 		return self;
 	};
 
-	PPA.path = PCTRL.path = function(path) {
+	PCTRL.path = function(path) {
 
 		var self = this;
 
@@ -4180,7 +3876,7 @@
 		return self.scope + (path ? (self.scope ? '.' : '') + path : '');
 	};
 
-	PPA.set = PCTRL.set = function(path, value, type) {
+	PCTRL.set = function(path, value, type) {
 		var self = this;
 
 		if (value === undefined) {
@@ -4192,7 +3888,7 @@
 		return self;
 	};
 
-	PPA.update = PCTRL.update = function(path, reset, type) {
+	PCTRL.update = function(path, reset, type) {
 		var self = this;
 
 		if (path === true) {
@@ -4204,13 +3900,13 @@
 		return self;
 	};
 
-	PPA.notify = PCTRL.notify = function(path) {
+	PCTRL.notify = function(path) {
 		var self = this;
 		M.notify(self.path(path));
 		return self;
 	};
 
-	PPA.inc = PCTRL.inc = function(path, value, type) {
+	PCTRL.inc = function(path, value, type) {
 		var self = this;
 
 		if (value === undefined) {
@@ -4222,7 +3918,7 @@
 		return self;
 	};
 
-	PPA.push = PCTRL.push = function(path, value, type) {
+	PCTRL.push = function(path, value, type) {
 		var self = this;
 
 		if (value === undefined) {
@@ -4234,7 +3930,7 @@
 		return self;
 	};
 
-	PPA.extend = PCTRL.extend = function(path, value, type) {
+	PCTRL.extend = function(path, value, type) {
 		var self = this;
 		if (value === undefined) {
 			value = path;
@@ -4244,7 +3940,7 @@
 		return self;
 	};
 
-	PPA.rewrite = PCTRL.rewrite = function(path, value) {
+	PCTRL.rewrite = function(path, value) {
 
 		if (value === undefined) {
 			value = path;
@@ -4256,60 +3952,23 @@
 		return self;
 	};
 
-	PPA.reset = PCTRL.reset = function(path) {
+	PCTRL.reset = function(path) {
 		var self = this;
 		RESET(self.path(path));
 		return self;
 	};
 
-	PPA.default = PCTRL.default = function(path, timeout, onlyComponent, reset) {
+	PCTRL.default = function(path, timeout, onlyComponent, reset) {
 		var self = this;
 		M.default(self.path(path), timeout, onlyComponent, reset);
 		return self;
 	};
 
-	PPA.get = PCTRL.get = function(path) {
+	PCTRL.get = function(path) {
 		var self = this;
 		return get(self.path(path));
 	};
 
-	PPA.remove = PPA.kill = PPA.destroy = function(noremove) {
-		var self = this;
-		var el = self.element;
-
-		self.removed = true;
-		self.destroy && self.destroy();
-		self.emit('destroy');
-
-		el.removeData(ATTRDATA);
-		el.get(0).$app = null;
-		el.removeAttr('data-jc-scope');
-		el.off();
-
-		if (!noremove) {
-			el.remove();
-			self.key && M.removeCache(self.key);
-		}
-
-		// Remove events
-		M.off('app' + self.id + '#watch');
-
-		M.apps = M.apps.remove(self);
-		setTimeout2('$cleaner', cleaner, 100);
-		return self;
-	};
-
-	PPA.$load = function(callback) {
-		var self = this;
-		callback(self.key ? M.cache(self.key) : null);
-		return self;
-	};
-
-	PPA.$save = function() {
-		var self = this;
-		self.key && M.cache(self.key, self.options, '1 year');
-		return self;
-	};
 
 	// ===============================================================
 	// COMPONENT DECLARATION
@@ -4374,6 +4033,7 @@
 			if (self.$released !== value) {
 				self.$released = value;
 				self.released && self.released(value, self);
+				self.$waiter(!self.$released);
 			}
 
 			return value;
@@ -4459,45 +4119,130 @@
 	}
 
 	var PPC = COM.prototype;
-	var dp = Object.defineProperty;
 
-	dp(PPC, 'hidden', {
-		get: function() {
-			return this.element.get(0).offsetParent === null;
+	function removewaiter(obj) {
+		if (obj.$W) {
+			var keys = Object.keys(obj.$W);
+			for (var i = 0, length = keys.length; i < length; i++) {
+				var v = obj.$W[keys[i]];
+				v.id && clearInterval(v.id);
+			}
 		}
-	});
+	}
 
-	dp(PPP, 'hidden', {
-		get: function() {
-			return this.element.get(0).offsetParent === null;
+	PPC.$waiter = PPP.$waiter = PPVC.$waiter = PCTRL.$waiter = function(prop, callback) {
+
+		var t = this;
+
+		if (prop === true) {
+			if (t.$W) {
+				var keys = Object.keys(t.$W);
+				for (var i = 0; i < keys.length; i++) {
+					var k = keys[i];
+					var o = t.$W[k];
+					o.id = setInterval(function(t, prop) {
+						console.log('1', prop);
+						var o = t.$W[prop];
+						var v = t[prop]();
+						if (v) {
+							clearInterval(o.id);
+							for (var i = 0; i < o.callback.length; i++)
+								o.callback[i].call(t, v);
+							t.$W[prop] = null;
+						}
+					}, M.defaults.delaywatcher, t, k);
+				}
+			}
+			return;
+		} else if (prop === false) {
+			if (t.$W) {
+				var keys = Object.keys(t.$W);
+				for (var i = 0; i < keys.length; i++)
+					clearInterval(t.$W[keys[i]].id);
+			}
+			return;
 		}
-	});
 
-	dp(PPA, 'hidden', {
-		get: function() {
-			return this.element.get(0).offsetParent === null;
+		!t.$W && (t.$W = {});
+
+		if (t.$W[prop]) {
+			t.$W[prop].callback.push(callback);
+			return t;
+		} else
+			t.$W[prop] = { callback: [callback] };
+
+		if (!t.$released) {
+			t.$W[prop].id = setInterval(function(t, prop) {
+				console.log('2', prop);
+				var o = t.$W[prop];
+				var v = t[prop]();
+				if (v) {
+					clearInterval(o.id);
+					for (var i = 0; i < o.callback.length; i++)
+						o.callback[i].call(t, v);
+					t.$W[prop] = null;
+				}
+			}, M.defaults.delaywatcher, t, prop);
 		}
-	});
+		return t;
+	};
 
-	dp(PPVC, 'hidden', {
-		get: function() {
-			return this.element.get(0).offsetParent === null;
+	PPC.hidden = PPP.hidden = PPVC.hidden = PCTRL.hidden = function(callback) {
+		var t = this;
+		var v = t.element ? t.element.get(0).offsetParent : null;
+		v = v === null;
+		if (callback) {
+			if (v)
+				callback.call(t);
+			else
+				t.$waiter('hidden', callback);
 		}
-	});
+		return v;
+	};
 
-	dp(PCTRL, 'hidden', {
-		get: function() {
-			return this.element.get(0).offsetParent === null;
+	PPC.visible = PPP.visible = PPVC.visible = PCTRL.visible = function(callback) {
+		var t = this;
+		var v = t.element ? t.element.get(0).offsetParent : null;
+		v = v !== null;
+		if (callback) {
+			if (v)
+				callback.call(t);
+			else
+				t.$waiter('visible', callback);
 		}
-	});
+		return v;
+	};
 
-	PPC.import = PPA.import = PPP.import = PCTRL.import = function(url, callback, insert, preparator) {
+	PPC.width = PPP.width = PPVC.width = PCTRL.width = function(callback) {
+		var t = this;
+		var v = t.element ? t.element.get(0).offsetWidth : 0;
+		if (callback) {
+			if (v)
+				callback.call(t, v);
+			else
+				t.$waiter('width', callback);
+		}
+		return v;
+	};
+
+	PPC.height = PPP.height = PPVC.height = PCTRL.height = function(callback) {
+		var v = t.element ? t.element.get(0).offsetHeight : 0;
+		if (callback) {
+			if (v)
+				callback.call(t, v);
+			else
+				t.$waiter('height', callback);
+		}
+		return v;
+	};
+
+	PPC.import = PPP.import = PCTRL.import = function(url, callback, insert, preparator) {
 		var self = this;
 		M.import(url, self.element, callback, insert, preparator);
 		return self;
 	};
 
-	PPC.exec = PPA.exec = function(name, a, b, c, d, e) {
+	PPC.exec = function(name, a, b, c, d, e) {
 		var self = this;
 		self.find(ATTRCOM).each(function() {
 			var t = this;
@@ -4629,13 +4374,13 @@
 		return self;
 	};
 
-	PPVC.tclass = PPC.tclass = PPA.tclass = PPP.tclass = PCTRL.tclass = function(cls, v) {
+	PPVC.tclass = PPC.tclass = PPP.tclass = PCTRL.tclass = function(cls, v) {
 		var self = this;
 		self.element.tclass(cls, v);
 		return self;
 	};
 
-	PPVC.aclass = PPC.aclass = PPA.aclass = PPP.aclass = PCTRL.aclass = function(cls, timeout) {
+	PPVC.aclass = PPC.aclass = PPP.aclass = PCTRL.aclass = function(cls, timeout) {
 		var self = this;
 		if (timeout)
 			setTimeout(function() { self.element.aclass(cls); }, timeout);
@@ -4644,11 +4389,11 @@
 		return self;
 	};
 
-	PPVC.hclass = PPC.hclass = PPA.hclass = PPP.hclass = PCTRL.hclass = function(cls) {
+	PPVC.hclass = PPC.hclass = PPP.hclass = PCTRL.hclass = function(cls) {
 		return this.element.hclass(cls);
 	};
 
-	PPVC.rclass = PPC.rclass = PPA.rclass = PPP.rclass = PCTRL.rclass = function(cls, timeout) {
+	PPVC.rclass = PPC.rclass = PPP.rclass = PCTRL.rclass = function(cls, timeout) {
 		var self = this;
 		var e = self.element;
 		if (timeout)
@@ -4662,12 +4407,12 @@
 		return self;
 	};
 
-	PPVC.rclass2 = PPC.rclass2 = PPA.rclass2 = PPP.rclass2 = PCTRL.rclass2 = function(search) {
+	PPVC.rclass2 = PPC.rclass2 = PPP.rclass2 = PCTRL.rclass2 = function(search) {
 		this.element.rclass2(search);
 		return this;
 	};
 
-	PPVC.classes = PPC.classes = PPA.classes = PPP.classes = PCTRL.classes = function(cls) {
+	PPVC.classes = PPC.classes = PPP.classes = PCTRL.classes = function(cls) {
 
 		var key = 'cls.' + cls;
 		var tmp = temp[key];
@@ -4702,7 +4447,7 @@
 		return t;
 	};
 
-	PPC.toggle = PPA.toggle = PPP.toggle = PCTRL.toggle = function(cls, visible, timeout) {
+	PPC.toggle = PPP.toggle = PCTRL.toggle = function(cls, visible, timeout) {
 
 		var manual = false;
 		var self = this;
@@ -4849,7 +4594,7 @@
 		return self;
 	};
 
-	PPVC.attr = PPC.attr = PPA.attr = PPP.attr = PCTRL.attr = function(name, value) {
+	PPVC.attr = PPC.attr = PPP.attr = PCTRL.attr = function(name, value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.attr(name);
@@ -4857,7 +4602,7 @@
 		return this;
 	};
 
-	PPVC.attrd = PPC.attrd = PPA.attrd = PPP.attrd = PCTRL.attrd = function(name, value) {
+	PPVC.attrd = PPC.attrd = PPP.attrd = PCTRL.attrd = function(name, value) {
 		name = 'data-' + name;
 		var el = this.element;
 		if (value === undefined)
@@ -4866,7 +4611,7 @@
 		return this;
 	};
 
-	PPVC.css = PPC.css = PPA.css = PPP.css = PCTRL.css = function(name, value) {
+	PPVC.css = PPC.css = PPP.css = PCTRL.css = function(name, value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.css(name);
@@ -4874,11 +4619,11 @@
 		return this;
 	};
 
-	PPC.rcwatch = PPA.rcwatch = PCTRL.rcwatch = function(path, value) {
+	PPC.rcwatch = PCTRL.rcwatch = function(path, value) {
 		return value ? this.reconfigure(value) : this;
 	};
 
-	PPC.reconfigure = PPA.reconfigure = PPVC.reconfigure = PCTRL.reconfigure = function(value, callback, init) {
+	PPC.reconfigure = PPVC.reconfigure = PCTRL.reconfigure = function(value, callback, init) {
 
 		var self = this;
 
@@ -4920,15 +4665,15 @@
 		return self;
 	};
 
-	PPVC.closest = PPC.closest = PPA.closest = PPP.closest = PCTRL.closest = function(sel) {
+	PPVC.closest = PPC.closest = PPP.closest = PCTRL.closest = function(sel) {
 		return this.element.closest(sel);
 	};
 
-	PPVC.parent = PPC.parent = PPA.parent = PPP.parent = PCTRL.parent = function(sel) {
+	PPVC.parent = PPC.parent = PPP.parent = PCTRL.parent = function(sel) {
 		return this.element.parent(sel);
 	};
 
-	PPVC.html = PPC.html = PPA.html = PPP.html = PCTRL.html = function(value) {
+	PPVC.html = PPC.html = PPP.html = PCTRL.html = function(value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.html();
@@ -4938,7 +4683,7 @@
 		return value || type === 'number' || type === 'boolean' ? el.empty().append(value) : el.empty();
 	};
 
-	PPVC.text = PPC.text = PPA.text = PPP.text = PCTRL.text = function(value) {
+	PPVC.text = PPC.text = PPP.text = PCTRL.text = function(value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.text();
@@ -4948,13 +4693,13 @@
 		return value || type === 'number' || type === 'boolean' ? el.empty().text(value) : el.empty();
 	};
 
-	PPVC.empty = PPC.empty = PPA.empty = PPP.empty = PCTRL.empty = function() {
+	PPVC.empty = PPC.empty = PPP.empty = PCTRL.empty = function() {
 		var el = this.element;
 		el.empty();
 		return el;
 	};
 
-	PPVC.append = PPC.append = PPA.append = PPP.append = PCTRL.append = function(value) {
+	PPVC.append = PPC.append = PPP.append = PCTRL.append = function(value) {
 		var el = this.element;
 		if (value instanceof Array)
 			value = value.join('');
@@ -4963,17 +4708,17 @@
 		return value ? el.append(value) : el;
 	};
 
-	PPVC.event = PPC.event = PPA.event = PPP.event = PPP.on = PCTRL.event = function() {
+	PPVC.event = PPC.event = PPP.event = PPP.on = PCTRL.event = function() {
 		var self = this;
 		self.element.on.apply(self.element, arguments);
 		return self;
 	};
 
-	PPVC.find = PPC.find = PPA.find = PPP.find = PCTRL.find = function(selector) {
+	PPVC.find = PPC.find = PPP.find = PCTRL.find = function(selector) {
 		return this.element.find(selector);
 	};
 
-	PPC.virtualize = PPA.virtualize = PCTRL.virtualize = function(mapping, config) {
+	PPC.virtualize = PCTRL.virtualize = function(mapping, config) {
 		return W.VIRTUALIZE(this.element, mapping, config);
 	};
 
@@ -5085,6 +4830,7 @@
 	PPC.remove = PPC.kill = function(noClear) {
 		var self = this;
 		var el = self.element;
+		removewaiter(self);
 		el.removeData(ATTRDATA);
 		el.attr(ATTRDEL, 'true').find(ATTRCOM).attr(ATTRDEL, 'true');
 		self.$removed = 1;
@@ -5316,7 +5062,6 @@
 		var obj = {};
 		obj.Container = PPVC;
 		obj.Property = PPP;
-		obj.App = PPA;
 		obj.Component = PPC;
 		obj.Usage = USAGE.prototype;
 		obj.Controller = PCTRL;
@@ -6232,6 +5977,7 @@
 		if (!M.controllers[self.name])
 			return;
 
+		removewaiter(self);
 		self.removed = true;
 		self.emit('destroy');
 		self.destroy && self.destroy();
@@ -7656,11 +7402,6 @@
 			var c = M.components;
 			for (var i = 0, length = c.length; i < length; i++)
 				c[i].knockknock && c[i].knockknock(knockknockcounter);
-			c = M.apps;
-			for (var i = 0, length = c.length; i < length; i++) {
-				c[i].knockknock && c[i].knockknock(knockknockcounter);
-				c[i].emit('knockknock', knockknockcounter);
-			}
 			M.emit('knockknock', knockknockcounter++);
 		}, 60000);
 
