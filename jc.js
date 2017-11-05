@@ -82,6 +82,7 @@
 	MD.environment = {};
 	MD.delay = 300;
 	MD.delaywatcher = 777;
+	MD.delaybinder = 777;
 	MD.keypress = true;
 	MD.localstorage = true;
 	MD.jsoncompress = false;
@@ -1126,8 +1127,7 @@
 					});
 				} else {
 					M.emit('error', output);
-					if (typeof(callback) === 'function')
-						callback.call(output, output.response, output.status, output);
+					typeof(callback) === 'function' && callback.call(output, output.response, output.status, output);
 				}
 			};
 
@@ -1346,7 +1346,7 @@
 				if (component.setter) {
 					component.$skip = false;
 					middleware(component.middleware, result, type, function(tmp, value) {
-						component.setter(value, path, type);
+						component.setterX(value, path, type);
 					});
 					component.$interaction(type);
 				}
@@ -1428,8 +1428,7 @@
 				return;
 
 			var val = component.get();
-			component.setter && component.setter(val, component.path, 1);
-			component.setter2 && component.setter2(val, component.path, 1);
+			component.setter && component.setterX(val, component.path, 1);
 			component.state && component.state(1, 6);
 			component.$interaction(1);
 		});
@@ -1562,7 +1561,7 @@
 						if (isChanged)
 							component.$skip = false;
 						middleware(component.middleware, result, type, function(tmp, value) {
-							component.setter(value, path, type);
+							component.setterX(value, path, type);
 						});
 						component.$interaction(type);
 					}
@@ -1571,7 +1570,7 @@
 						if (isChanged)
 							component.$skip = false;
 						middleware(component.middleware, get(component.path), type, function(tmp, value) {
-							component.setter(value, path, type);
+							component.setterX(value, path, type);
 						});
 						component.$interaction(type);
 					}
@@ -2468,9 +2467,11 @@
 				name = name.trim();
 
 				var com = M.$components[name || ''];
+
 				if (!com) {
 
 					var x = attrcom(el, 'import');
+
 					if (!x) {
 						!statics['$NE_' + name] && (statics['$NE_' + name] = true);
 						return;
@@ -2616,7 +2617,8 @@
 			});
 
 			// A reference to instance
-			el.data(ATTRDATA, instances.length > 1 ? instances : instances[0]);
+			if (instances.length > 0)
+				el.data(ATTRDATA, instances.length > 1 ? instances : instances[0]);
 
 		}, undefined);
 
@@ -2732,7 +2734,6 @@
 		$(ATTRURL).each(function() {
 
 			var el = $(this);
-
 			if (el.data(ATTRDATA))
 				return;
 
@@ -2947,7 +2948,7 @@
 				else {
 					obj.$binded = true;
 					middleware(obj.path + obj.middleware, value, 1, function(path, value) {
-						obj.setter(value, obj.path, 0);
+						obj.setterX(value, obj.path, 0);
 						obj.$interaction(0);
 					});
 				}
@@ -3537,7 +3538,9 @@
 			component.$removed = 2;
 			component.path = null;
 			component.setter = null;
+			component.setter2 = null;
 			component.getter = null;
+			component.getter2 = null;
 			component.make = null;
 
 			index--;
@@ -3989,6 +3992,7 @@
 		self.trim = true;
 		self.middleware = ''; // internal
 		self.$released = false;
+		self.$bindreleased = true;
 
 		self.name = name;
 		self.path;
@@ -4005,35 +4009,41 @@
 		self.validate;
 		self.released;
 
-		self.release = function(value) {
+		self.release = function(value, container) {
 
 			var self = this;
 			if (value === undefined || self.$removed)
 				return self.$released;
 
-			self.element.find(ATTRCOM).each(function() {
+			(container || self.element).find(ATTRCOM).each(function() {
 				var el = $(this);
 				el.attrd('jc-released', value ? 'true' : 'false');
 				var com = el.data(ATTRDATA);
-				if (com) {
+				if (com instanceof Object) {
 					if (com instanceof Array) {
-						com.forEach(function(o) {
+						for (var i = 0, length = com.length; i < length; i++) {
+							var o = com[i];
 							if (!o.$removed && o.$released !== value) {
-								com.$released = value;
-								com.released && com.released(value, self);
+								o.$released = value;
+								o.released && o.released(value, self);
+								o.$waiter(!value);
+								!value && o.setterX();
 							}
-						});
+						}
 					} else if (!com.$removed && com.$released !== value) {
 						com.$released = value;
 						com.released && com.released(value, self);
+						com.$waiter(!value);
+						!value && com.setterX();
 					}
 				}
 			});
 
-			if (self.$released !== value) {
+			if (!container && self.$released !== value) {
 				self.$released = value;
 				self.released && self.released(value, self);
-				self.$waiter(!self.$released);
+				self.$waiter(!value);
+				!value && self.setterX();
 			}
 
 			return value;
@@ -4069,12 +4079,39 @@
 			return value;
 		};
 
+		self.setterX = function(value, path, type) {
+
+			if (!self.setter)
+				return;
+
+			if (!self.$bindreleased && self.$bindcache) {
+				if (self.$released) {
+					var cache = self.$bindcache;
+					cache.value = value;
+					cache.path = path;
+					cache.type = type;
+					cache.is = true;
+					return;
+				} else if (!arguments.length) {
+					var cache = self.$bindcache;
+					if (cache && cache.is) {
+						cache.is = false;
+						setTimeout(function(self, cache) {
+							self.setterX(cache.value, cache.path, cache.type);
+						}, self.$bindtimeout, self, cache);
+						return;
+					}
+				}
+			} else if (!arguments.length)
+				return;
+
+			self.setter && self.setter(value, path, type);
+			self.setter2 && self.setter2(value, path, type);
+		};
+
 		self.setter = function(value, path, type) {
 
 			var self = this;
-
-			self.setter2 && self.setter2(value, path, type);
-
 			if (type === 2) {
 				if (self.$skip) {
 					self.$skip = false;
@@ -4141,7 +4178,6 @@
 					var k = keys[i];
 					var o = t.$W[k];
 					o.id = setInterval(function(t, prop) {
-						console.log('1', prop);
 						var o = t.$W[prop];
 						var v = t[prop]();
 						if (v) {
@@ -4173,7 +4209,6 @@
 
 		if (!t.$released) {
 			t.$W[prop].id = setInterval(function(t, prop) {
-				console.log('2', prop);
 				var o = t.$W[prop];
 				var v = t[prop]();
 				if (v) {
@@ -4367,7 +4402,7 @@
 			if (notify)
 				self.set(self.path, self.get());
 			else {
-				self.setter && self.setter(self.get(), self.path, 1);
+				self.setter && self.setterX(self.get(), self.path, 1);
 				self.$interaction(1);
 			}
 		}
@@ -4492,6 +4527,14 @@
 		self.path = null;
 		self.$path = null;
 		self.$$path = null;
+		return self;
+	};
+
+	PPC.bindVisible = PPC.bindvisible = function(timeout) {
+		var self = this;
+		self.$bindreleased = false;
+		self.$bindtimeout = timeout || M.defaults.delaybinder;
+		self.$bindcache = {};
 		return self;
 	};
 

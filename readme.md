@@ -723,10 +723,32 @@ COMPONENT('my-component-name', function(instance, config) {
     // Is combination: component.noDirty(), component.noValid(), component.getter and component.setter sets to `null`
     // and it's meant as read-only data from the model.
 
+    instance.bindvisible();
+    // setter will be executed if the "released" state will be "false"
+    // +v13.0.0
 
-    instance.reset();
+    instance.width([callback(width)]);
+    // Gets a width of the element. "callback" can wait for a width (async)
+    // Returns {Number}
+    // +v13.0.0
+
+    instance.height([callback(height)]);
+    // Gets a height of the element. "callback" can wait for a height (async)
+    // Returns {Number}
+    // +v13.0.0
+
+    instance.hidden([callback]);
+    // Returns if "true" if the element is hidden. "callback" can wait for a "hidden" state.
+    // Returns {Boolean}
+    // +v13.0.0
+
+    instance.visible([callback]);
+    // Returns if "true" if the element is visible. "callback" can wait for a "visible" state.
+    // Returns {Boolean}
+    // +v13.0.0
+
+    // instance.reset()
     // Resets `instance.dirty(false)` and `instance.valid(false)`.
-
 
     instance.default([reset]);
     // Sets a default value from [data-jc-value]. [reset] attribute
