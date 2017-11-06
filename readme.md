@@ -277,7 +277,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 <element data-jc-keypress-delay="" />
 <!--
     It's delay / sleep time for real-time bindings of values in milliseconds.
-    Default: `300`.
+    Default: `555`.
 -->
 
 <element data-jc-keypress-only="" />

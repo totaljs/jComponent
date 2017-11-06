@@ -80,7 +80,7 @@
 
 	var MD = M.defaults = {};
 	MD.environment = {};
-	MD.delay = 300;
+	MD.delay = 555;
 	MD.delaywatcher = 777;
 	MD.delaybinder = 777;
 	MD.keypress = true;
@@ -106,7 +106,7 @@
 
 	var MV = M.validators = {};
 	MV.url = /^(http|https):\/\/(?:(?:(?:[\w\.\-\+!$&'\(\)*\+,;=]|%[0-9a-f]{2})+:)*(?:[\w\.\-\+%!$&'\(\)*\+,;=]|%[0-9a-f]{2})+@)?(?:(?:[a-z0-9\-\.]|%[0-9a-f]{2})+|(?:\[(?:[0-9a-f]{0,4}:)*(?:[0-9a-f]{0,4})\]))(?::[0-9]+)?(?:[\/|\?](?:[\w#!:\.\?\+=&@!$'~*,;\/\(\)\[\]\-]|%[0-9a-f]{2})*)?$/i;
-	MV.phone = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im;
+	MV.phone = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/im;
 	MV.email = /^[a-zA-Z0-9-_.+]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i;
 
 	var MR = M.regexp = {};
@@ -1059,14 +1059,14 @@
 
 			options.headers = $.extend(headers, M.defaults.headers);
 
-			if (url.match(/http\:\/\/|https\:\/\//i)) {
+			if (url.match(/http:\/\/|https:\/\//i)) {
 				options.crossDomain = true;
 				delete options.headers['X-Requested-With'];
 				if (isCredentials)
 					options.xhrFields = { withCredentials: true };
 			}
 
-			var custom = url.match(/\([a-z0-9\-\.\,]+\)/i);
+			var custom = url.match(/\([a-z0-9\-.,]+\)/i);
 			if (custom) {
 				url = url.replace(custom, '').replace(/\s+/g, '');
 				custom = custom.toString().replace(/\(|\)/g, '').split(',');
@@ -4263,6 +4263,7 @@
 	};
 
 	PPC.height = PPP.height = PPVC.height = PCTRL.height = function(callback) {
+		var t = this;
 		var v = t.element ? t.element.get(0).offsetHeight : 0;
 		if (callback) {
 			if (v)
