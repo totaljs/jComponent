@@ -1771,6 +1771,35 @@
 		return valid;
 	};
 
+	M.validate2 = function(com) {
+
+		var arr = [];
+		var valid = true;
+
+		if (com.disabled)
+			return;
+
+		com.state && arr.push(com);
+
+		if (com.$valid_disabled)
+			return;
+
+		com.$validate = true;
+
+		if (com.validate) {
+			com.$valid = com.validate(get(com.path));
+			com.$interaction(102);
+			if (!com.$valid)
+				valid = false;
+		}
+
+		clear('valid');
+		state(arr, 1, 1);
+		emit('validate', com.path);
+
+		return M;
+	};
+
 	M.default = function(path, timeout, onlyComponent, reset) {
 
 		if (timeout > 0) {
@@ -1841,12 +1870,12 @@
 
 		emit('default', path);
 
-		if (!reset)
-			return M;
+		if (reset) {
+			clear('valid', 'dirty');
+			state(arr, 3, 3);
+			emit('reset', path);
+		}
 
-		clear('valid', 'dirty');
-		state(arr, 3, 3);
-		emit('reset', path);
 		return M;
 	};
 
@@ -2162,37 +2191,6 @@
 		W.MIDDLEWARE(path.substring(index + 1).trim().replace(/#/g, '').split(' '), value, function(value) {
 			callback(a, value);
 		}, a);
-	}
-
-	function keypress(self, old, e) {
-
-		if (self.value === old)
-			return;
-
-		if (self.value !== self.$value2) {
-			var dirty = false;
-			var code = e.keyCode || e.which;
-			if (code !== 9) {
-				if (self.$com.$dirty)
-					dirty = true;
-				self.$com.dirty(false, true);
-			}
-
-			var v = self.$com.getter(self.value, 2, dirty, old, e.type === 'focusout' || code === 13 || code === 8);
-			if (self.nodeName === 'INPUT' || self.nodeName === 'TEXTAREA') {
-				var val = self.$com.formatter(v);
-				if (self.value !== val) {
-					var pos = getcursor(self);
-					self.value = val;
-					setcursor(self, pos);
-				}
-			}
-			self.$value2 = self.value;
-		}
-
-		setTimeout2('$jckp' + self.$com.id, function() {
-			self.$value2 = self.$value = undefined;
-		}, 60000 * 5);
 	}
 
 	function setcursor(el, pos) {
@@ -2953,7 +2951,8 @@
 					});
 				}
 			}
-		}
+		} else
+			obj.$binded = true;
 
 		if (obj.validate && !obj.$valid_disabled)
 			obj.$valid = obj.validate(obj.get(), true);
@@ -4049,34 +4048,21 @@
 			return value;
 		};
 
-		self.getter = function(value, type, dirty, older, skip) {
+		self.getter = function(value, realtime, validate, nobind) {
 
 			var self = this;
-			value = self.parser(value);
 
-			self.getter2 && self.getter2(value, type, dirty);
+			value = self.parser(typeof(value) === 'string' && self.trim ? value.trim() : value);
+			self.getter2 && self.getter2(value, realtime);
 
-			if (type === 2 && !skip)
+			if (realtime)
 				self.$skip = true;
 
-			if (type !== 2 || (older != null)) {
-				M.validate(self.path);
-				return value;
-			}
-
-			if (self.trim && typeof(value) === 'string')
-				value = value.trim();
-
-			if (value === self.get()) {
-				dirty && M.validate(self.path);
-				return value;
-			}
-
-			if (skip)
-				self.$skip = false;
-
-			self.set(self.path, value, type);
-			return value;
+			// Binds a value
+			if (nobind)
+				M.validate2(self);
+			else
+				self.set(self.path, value, 2);
 		};
 
 		self.setterX = function(value, path, type) {
@@ -4105,17 +4091,18 @@
 			} else if (!arguments.length)
 				return;
 
-			self.setter && self.setter(value, path, type);
+			self.setter(value, path, type);
 			self.setter2 && self.setter2(value, path, type);
 		};
 
 		self.setter = function(value, path, type) {
 
 			var self = this;
+
 			if (type === 2) {
 				if (self.$skip) {
 					self.$skip = false;
-					return self;
+					return;
 				}
 			}
 
@@ -4147,12 +4134,14 @@
 				if (t.type === a || t.type === 'select') {
 					var el = $(t);
 					el.val() !== value && el.val(value);
-				} else if (t.value !== value) {
+				} else if (t.value !== value)
 					t.value = value;
-					type === 1 && (t.$value2 = value);
-				}
 			});
 		};
+	}
+
+	function gettervalidation(self) {
+		M.validate(self.path);
 	}
 
 	var PPC = COM.prototype;
@@ -4350,9 +4339,8 @@
 		return arr;
 	};
 
-	// @TODO: add reconfiguration for nested
-
 	PPC.$interaction = function(type) {
+
 		// type === 0 : init
 		// type === 1 : manually
 		// type === 2 : by input
@@ -5705,9 +5693,8 @@
 	M.modified = W.MODIFIED = function(path) {
 		var output = [];
 		M.each(function(obj) {
-			if (obj.disabled || obj.$dirty_disabled)
-				return;
-			obj.$dirty === false && output.push(obj.path);
+			if (!(obj.disabled || obj.$dirty_disabled))
+				obj.$dirty === false && output.push(obj.path);
 		}, path, true);
 		return output;
 	};
@@ -5758,10 +5745,10 @@
 				return val ? true : false;
 			}, function(err) {
 				// timeout
-				if (err)
-					return;
-				var val = FIND(value, many);
-				callback.call(val ? val : W, val);
+				if (!err) {
+					var val = FIND(value, many);
+					callback.call(val ? val : W, val);
+				}
 			}, 500, noCache);
 			return;
 		}
@@ -5949,16 +5936,16 @@
 
 	W.SCOPE = function(name, fn) {
 		var ctrl = M.controllers[arguments[0]];
-		if (!ctrl) {
+		if (ctrl) {
+			var tmp = current_ctrl;
+			current_ctrl = name;
+			fn.call(ctrl, ctrl, ctrl.scope, ctrl.element);
+			current_ctrl = tmp;
+		} else {
 			setTimeout(function() {
 				W.SCOPE(name, fn);
 			}, 350);
-			return;
 		}
-		var tmp = current_ctrl;
-		current_ctrl = name;
-		fn.call(ctrl, ctrl, ctrl.scope, ctrl.element);
-		current_ctrl = tmp;
 	};
 
 	W.CONTROLLER = function() {
@@ -7462,118 +7449,102 @@
 			$(W).on('orientationchange', mediaquery);
 			mediaquery();
 
-			$(document).on('input change keypress keydown blur', 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind]', function(e) {
+			$(document).on('input', 'input[data-jc-bind],textarea[data-jc-bind]', function(e) {
+
+				// realtime binding
+				var self = this;
+				var com = self.$com;
+
+				if (!self.$com || self.$com.$removed || !self.$com.getter || self.$jckeypress === false)
+					return;
+
+				self.$jcevent = 2;
+
+				if (self.$jckeypress === undefined) {
+					var tmp = attrcom(self, 'keypress');
+					if (tmp)
+						self.$jckeypress = tmp === 'true';
+					else
+						self.$jckeypress = M.defaults.keypress;
+					if (self.$jckeypress === false)
+						return;
+				}
+
+				if (self.$jcdelay === undefined)
+					self.$jcdelay = +(attrcom(self, 'keypress-delay') || M.defaults.delay);
+
+				if (self.$jconly === undefined)
+					self.$jconly = attrcom(self, 'keypress-only') === 'true';
+
+				self.$jctimeout && clearTimeout(self.$jctimeout);
+				self.$jctimeout = setTimeout(keypressdelay, self.$jcdelay, self);
+			});
+
+			$(document).on('focus blur', 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind]', function(e) {
+				var self = this;
+
+				if (!self.$com || self.$com.$removed || !self.$com.getter)
+					return;
+
+				if (e.type === 'focusin')
+					self.$jcevent = 1;
+				else if (self.$jcevent === 1) {
+					self.$com.dirty(false, true);
+					self.$com.getter(self.value, true, true, true);
+				}
+			});
+
+			$(document).on('change', 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind]', function(e) {
 
 				var self = this;
 
-				// tab, alt, ctrl, shift, capslock
-				var code = e.keyCode || e.which;
-
-				// IE 9+ PROBLEM
-				if ((e.type === 'input' && self.type !== 'range') || (e.type === 'keypress'))
-					return !(self.tagName !== 'TEXTAREA' && code === 13);
-
-				var special = self.type === 'checkbox' || self.type === 'radio' || self.type === 'range';
-
-				if ((e.type === 'focusout' && special) || (e.type === 'change' && (!special && self.tagName !== 'SELECT')) || (!self.$com || self.$com.$removed || !self.$com.getter))
+				if (self.$jconly || !self.$com || self.$com.$removed || !self.$com.getter)
 					return;
 
-				if (e.metaKey || code === 9 || (code > 15 && code < 21) || (code > 36 && code < 41)) {
-
-					// Paste / Cut
-					if (code !== 86 && code !== 88) {
-						self.$value = null;
-						return;
-					}
-				}
-
-				// Backspace
-				if (code === 8 && !self.value)
-					return;
-
-				if (self.$skip && e.type === 'focusout') {
-					keypress(self, self.$value, e);
+				if (self.$jckeypress === false) {
+					// bind + validate
+					self.$com.getter(self.value, false, true);
 					return;
 				}
 
-				var old = self.$value;
-				var value;
-
-				// cleans old value
-				self.$value = null;
-
-				if (self.type === 'checkbox' || self.type === 'radio') {
-					if (e.type === 'keydown')
+				switch (self.tagName) {
+					case 'SELECT':
+						var sel = self[self.selectedIndex];
+						self.$jcevent = 2;
+						self.$com.dirty(false, true);
+						self.$com.getter(sel.value, false, true);
 						return;
-					var value = self.checked;
-					self.$com.dirty(false, true);
-					self.$com.getter(value, 2);
-					self.$com.$skip = false;
-					return;
+					case 'INPUT':
+						if (self.type === 'checkbox' || self.type === 'radio') {
+							self.$jcevent = 2;
+							self.$com.dirty(false, true);
+							self.$com.getter(self.checked, false, true);
+							return;
+						}
+						break;
 				}
 
-				if (self.tagName === 'SELECT') {
-					if (e.type === 'keydown' || self.selectedIndex === -1)
-						return;
-					var selected = self[self.selectedIndex];
-					value = selected.value;
-					var dirty = false;
-					if (self.$com.$dirty)
-						dirty = true;
-					self.$com.dirty(false, true);
-					self.$com.getter(value, 2, dirty, old, e.type === 'focusout');
-					self.$com.$skip = false;
-					return;
-				}
+				if (self.$jctimeout) {
+					clearTimeout(self.$jctimeout);
+					self.$jctimeout = 0;
+					self.$com.getter(self.value, false, true);
+				} else
+					self.$com.setter && self.$com.setterX(self.$com.get(), self.path, 2);
 
-				if (self.$delay === undefined)
-					self.$delay = parseInt(attrcom(self, 'keypress-delay') || '0');
-
-				if (self.$only === undefined)
-					self.$only = attrcom(self, 'keypress-only') === 'true';
-
-				if ((self.$only && (e.type === 'focusout' || e.type === 'change')) || (e.type === 'keydown' && (code === undefined || code === 9)))
-					return;
-
-				if (code && code < 41 && code !== 8 && code !== 32) {
-					if (code !== 13)
-						return;
-					if (e.tagName !== 'TEXTAREA') {
-						self.$value = self.value;
-						clearTimeout2('M$timeout');
-						keypress(self, old, e);
-						return;
-					}
-				}
-
-				if (self.$nkp === undefined) {
-					var v = attrcom(self, 'keypress');
-					if (v)
-						self.$nkp = v === 'false';
-					else
-						self.$nkp = M.defaults.keypress === false;
-				}
-
-				var delay = self.$delay;
-				if (self.$nkp) {
-					if (e.type === 'keydown' || e.type === 'focusout')
-						return;
-					if (!delay)
-						delay = 1;
-				} else if (!delay)
-					delay = M.defaults.delay;
-
-				if (e.type === 'focusout')
-					delay = 0;
-
-				setTimeout2('M$timeout', function() {
-					keypress(self, old, e);
-				}, delay);
 			});
 
 			setTimeout(compile, 2);
 		});
 	}, 100);
+
+	function keypressdelay(self) {
+		// Reset timeout
+		self.$jctimeout = 0;
+		// Is not dirty
+		self.$com.dirty(false, true);
+		// Binds a value
+		self.$com.getter(self.value, true, true);
+	}
 
 	M.$parser.push(function(path, value, type) {
 
