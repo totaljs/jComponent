@@ -4527,6 +4527,7 @@
 
 	PPC.blind = function() {
 		var self = this;
+		self.$binded = true;
 		self.path = null;
 		self.$path = null;
 		self.$$path = null;
@@ -4543,6 +4544,7 @@
 
 	PPC.readonly = function() {
 		var self = this;
+		self.$binded = true;
 		self.noDirty();
 		self.noValid();
 		self.getter = null;
