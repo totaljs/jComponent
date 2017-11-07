@@ -7312,7 +7312,7 @@
 		$.fn.rclass2 = function(a) {
 
 			var self = this;
-			var arr = self.attr('class').split(' ');
+			var arr = (self.attr('class') || '').split(' ');
 			var isReg = typeof(a) === 'object';
 
 			for (var i = 0, length = arr.length; i < length; i++) {
