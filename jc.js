@@ -4052,7 +4052,7 @@
 
 			var self = this;
 
-			value = self.parser(typeof(value) === 'string' && self.trim ? value.trim() : value);
+			value = self.parser(value);
 			self.getter2 && self.getter2(value, realtime);
 
 			if (realtime)
@@ -4934,13 +4934,18 @@
 	PPC.parser = function(value) {
 
 		var self = this;
+		var type = typeof(value);
 
-		if (typeof(value) === 'function') {
+		if (type === 'function') {
 			if (!self.$parser)
 				self.$parser = [];
 			self.$parser.push(value);
 			return self;
 		}
+
+		if (self.trim && type === 'string')
+			value = value.trim();
+
 		var a = self.$parser;
 		if (a && a.length) {
 			for (var i = 0, length = a.length; i < length; i++)
