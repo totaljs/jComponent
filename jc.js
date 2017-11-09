@@ -17,6 +17,7 @@
 	var ATTRURL = '[data-jc-url]';
 	var ATTRDATA = 'jc';
 	var ATTRDEL = 'data-jc-removed';
+	var SELINPUT = 'input,textarea,select';
 	var DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
 	var ACTRLS = { INPUT: true, TEXTAREA: true, SELECT: true };
 
@@ -587,6 +588,23 @@
 		if (typeof(value) !== 'boolean' && cache[key] !== undefined)
 			return cache[key];
 
+		var flags;
+
+		if (isExcept) {
+			var is = false;
+			flags = {};
+			except = except.remove(function(item) {
+				if (item.substring(0, 1) === '@') {
+					flags[item.substring(1)] = true;
+					is = true;
+					return true;
+				}
+				return false;
+			});
+			!is && (flags = null);
+			isExcept = except.length > 0;
+		}
+
 		var valid = true;
 		var arr = value !== undefined ? [] : null;
 
@@ -599,6 +617,9 @@
 				arr && obj.state && arr.push(obj);
 				return;
 			}
+
+			if (flags && ((flags.visible && !obj.visible()) || (flags.hidden && !obj.hidden()) || (flags.enabled && obj.find(SELINPUT).is(':disabled')) || (flags.disabled && obj.find(SELINPUT).is(':enabled'))))
+				return;
 
 			if (value === undefined) {
 				if (obj.$valid === false)
@@ -647,6 +668,23 @@
 		var dirty = true;
 		var arr = value !== undefined ? [] : null;
 
+		var flags;
+
+		if (isExcept) {
+			var is = false;
+			flags = {};
+			except = except.remove(function(item) {
+				if (item.substring(0, 1) === '@') {
+					flags[item.substring(1)] = true;
+					is = true;
+					return true;
+				}
+				return false;
+			});
+			!is && (flags = null);
+			isExcept = except.length > 0;
+		}
+
 		M.each(function(obj, index, isAsterix) {
 
 			if (isExcept && except.indexOf(obj.path) !== -1)
@@ -656,6 +694,9 @@
 				arr && obj.state && arr.push(obj);
 				return;
 			}
+
+			if (flags && ((flags.visible && !obj.visible()) || (flags.hidden && !obj.hidden()) || (flags.enabled && obj.find(SELINPUT).is(':disabled')) || (flags.disabled && obj.find(SELINPUT).is(':enabled'))))
+				return;
 
 			if (value === undefined) {
 				if (obj.$dirty === false)
@@ -1744,9 +1785,29 @@
 
 		path = ctrl_path(path);
 
+		var flags;
+
+		if (except) {
+			var is = false;
+			flags = {};
+			except = except.remove(function(item) {
+				if (item.substring(0, 1) === '@') {
+					flags[item.substring(1)] = true;
+					is = true;
+					return true;
+				}
+				return false;
+			});
+			!is && (flags = null);
+			!except.length && (except = null);
+		}
+
 		M.each(function(obj) {
 
 			if (obj.disabled || (except && except.indexOf(obj.path) !== -1))
+				return;
+
+			if (flags && ((flags.visible && !obj.visible()) || (flags.hidden && !obj.hidden()) || (flags.enabled && obj.find(SELINPUT).is(':disabled')) || (flags.disabled && obj.find(SELINPUT).is(':enabled'))))
 				return;
 
 			obj.state && arr.push(obj);

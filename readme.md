@@ -1096,19 +1096,20 @@ MAIN.findByPath('model', function(component) { console.log(component); });  // E
 // Finds components by `data-jc-id` attribute.
 
 
-MAIN.errors(path, [except], [highlight]);
+MAIN.errors(path, [except_paths_arr], [highlight]);
 // +v10.1.0 supports "@controllername.path"
 // +v11.4.0 supports highlighting
+// +v13.0.0 supports an except flags "@hidden" (only hidden components), "@visible" (only visible components), "@disabled" (only disabled inputs in the component), "@enabled" (only enabled inputs in the component) in "except"
 // path {String}
 // except {String Array} excepts paths
 // highlight {Boolean} highlights invalid components (default: false)
 // Returns array of invalid components.
 
 
-MAIN.invalid(path);
+MAIN.invalid(path, [except_paths_arr]);
 // +v10.1.0 supports "@controllername.path"
+// +v13.0.0 supports an except flags "@hidden" (only hidden components), "@visible" (only visible components), "@disabled" (only disabled inputs in the component), "@enabled" (only enabled inputs in the component) in "except"
 // Sets the invalid state to all components according the binding path.
-
 
 MAIN.remove(path);
 MAIN.remove(jquery_element);
@@ -1146,6 +1147,7 @@ MAIN.can(path, [except_paths_arr]);
 // Opposite of MAIN.disable()
 // Supports wildcard path, e.g. `model.*`.
 // +v10.1.0 supports "@controllername.path"
+// +v13.0.0 supports an except flags "@hidden" (only hidden components), "@visible" (only visible components), "@disabled" (only disabled inputs in the component), "@enabled" (only enabled inputs in the component) in "except"
 
 
 MAIN.disabled(path, [except_paths_arr]);
@@ -1153,6 +1155,7 @@ MAIN.disabled(path, [except_paths_arr]);
 // Opposite of MAIN.can()
 // Supports wildcard path, e.g. `model.*`.
 // +v10.1.0 supports "@controllername.path"
+// +v13.0.0 supports an except flags "@hidden" (only hidden components), "@visible" (only visible components), "@disabled" (only disabled inputs in the component), "@enabled" (only enabled inputs in the component) in "except"
 
 
 MAIN.cache(key); // Example: Getter.
