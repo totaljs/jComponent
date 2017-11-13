@@ -2457,7 +2457,9 @@
 		}
 
 		if (!declaration.dependencies || !declaration.dependencies.length) {
-			callback(obj, el);
+			setTimeout(function(callback, obj, el) {
+				callback(obj, el);
+			}, 5, callback, obj, el);
 			return;
 		}
 
@@ -2524,7 +2526,6 @@
 			all.forEach(function(name) {
 
 				name = name.trim();
-
 				var com = M.$components[name || ''];
 
 				if (!com) {
@@ -2670,8 +2671,11 @@
 						init(el, obj);
 					}, obj, el);
 				} else {
-					obj.make && obj.make();
-					init(el, obj);
+					// Because sometimes make doesn't contain the content of the element
+					setTimeout(function(init, el, obj) {
+						obj.make && obj.make();
+						init(el, obj);
+					}, 5, init, el, obj);
 				}
 			});
 
@@ -5458,19 +5462,24 @@
 		if (beg === 3) {
 			selector = name;
 			name = arguments[2];
-			FIND(selector, function(o) {
-				if (typeof(o[name]) === 'function')
-					o[name].apply(o, arg);
-				else
-					o[name] = arg[0];
+			FIND(selector, true, function(arr) {
+				for (var i = 0, length = arr.length; i < length; i++) {
+					var o = arr[i];
+					if (typeof(o[name]) === 'function')
+						o[name].apply(o, arg);
+					else
+						o[name] = arg[0];
+				}
 			});
 		} else {
-			FIND(selector, true).forEach(function(o) {
+			var arr = FIND(selector, true);
+			for (var i = 0, length = arr.length; i < length; i++) {
+				var o = arr[i];
 				if (typeof(o[name]) === 'function')
 					o[name].apply(o, arg);
 				else
 					o[name] = arg[0];
-			});
+			}
 		}
 
 		return W.SETTER;
@@ -5832,16 +5841,29 @@
 				value = $(value);
 
 			var selector = value.find('[data-jc]');
+
 			if (many) {
 				var arr = [];
 				selector.each(function() {
-					this.$com && arr.push(this.$com);
+					var com = this.$com;
+					com && !com.$removed && arr.push(this.$com);
 				});
 				return arr;
 			}
 
-			var item = selector[0];
-			return item ? item.$com : null;
+			var index = 0;
+
+			while (true) {
+				var item = selector[index++];
+				if (item) {
+					var com = item.$com;
+					if (com && !com.$removed)
+						return com;
+				} else
+					break;
+			}
+
+			return null;
 		}
 
 		var key, output;
@@ -5855,21 +5877,18 @@
 
 		if (value.charCodeAt(0) === 46) {
 			output = M.findByPath(value.substring(1), many);
-			if (!noCache)
-				cache[key] = output;
+			!noCache && (cache[key] = output);
 			return output;
 		}
 
 		if (value.charCodeAt(0) === 35) {
 			output = M.findById(value.substring(1), undefined, many);
-			if (!noCache)
-				cache[key] = output;
+			!noCache && (cache[key] = output);
 			return output;
 		}
 
 		output = M.findByName(value, undefined, many);
-		if (!noCache)
-			cache[key] = output;
+		!noCache && (cache[key] = output);
 		return output;
 	};
 
