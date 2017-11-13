@@ -1614,6 +1614,14 @@ SCHEDULE();
 // Alias for MAIN.schedule();
 // +v4.0.0
 
+
+RECONFIGURE('#loading', 'title:Peter');
+RECONFIGURE('form', { title: 'Peter' });
+RECONFIGURE(selector, value);
+// +v13.0.0
+// Reconfigures components
+
+
 SETTER('#loading', 'hide', 1000);
 SETTER('textbox', 'set', 'NEW VALUE')('dropdown', 'set', 1)('checkbox', 'set', true);
 SETTER(true, 'textbox', 'set', 'NEW VALUE'); // waits for some `textbox` (waits only for 1 available instance)

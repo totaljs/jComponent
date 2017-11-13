@@ -5442,6 +5442,11 @@
 		}
 	};
 
+	W.RECONFIGURE = function(selector, value) {
+		SETTER(true, selector, 'reconfigure', value);
+		return W.RECONFIGURE;
+	};
+
 	W.SETTER = function(selector, name) {
 
 		var arg = [];
@@ -5781,6 +5786,7 @@
 
 		if (cache[key] === hash)
 			return true;
+
 		cache[key] = hash;
 		return false;
 	};
