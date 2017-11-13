@@ -7616,9 +7616,10 @@
 				}
 
 				if (self.$jctimeout) {
+					self.$com.dirty(false, true);
+					self.$com.getter(self.value, true, true);
 					clearTimeout(self.$jctimeout);
 					self.$jctimeout = 0;
-					self.$com.getter(self.value, false, true);
 				} else
 					self.$com.setter && self.$com.setterX(self.$com.get(), self.path, 2);
 
