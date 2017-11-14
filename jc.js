@@ -64,6 +64,7 @@
 	var workflows = {};
 	var statics = {};
 	var ajaxconfig = {};
+	var skips = {};
 	var $ready = setTimeout(load, 2);
 	var $loaded = false;
 	var schedulercounter = 0;
@@ -1838,12 +1839,12 @@
 		var valid = true;
 
 		if (com.disabled)
-			return;
+			return valid;
 
 		com.state && arr.push(com);
 
 		if (com.$valid_disabled)
-			return;
+			return valid;
 
 		com.$validate = true;
 
@@ -1858,7 +1859,7 @@
 		state(arr, 1, 1);
 		emit('validate', com.path);
 
-		return M;
+		return valid;
 	};
 
 	M.default = function(path, timeout, onlyComponent, reset) {
@@ -2252,29 +2253,6 @@
 		W.MIDDLEWARE(path.substring(index + 1).trim().replace(/#/g, '').split(' '), value, function(value) {
 			callback(a, value);
 		}, a);
-	}
-
-	function setcursor(el, pos) {
-		if (el.createTextRange) {
-			var range = el.createTextRange();
-			range.move('character', pos);
-			range.select();
-			return true;
-		} else if (el.selectionStart || !el.selectionStart) {
-			el.focus();
-			el.setSelectionRange(pos, pos);
-			return true;
-		}
-	}
-
-	function getcursor(el) {
-		if (document.selection) {
-			var sel = document.selection.createRange();
-			sel.moveStart('character', -el.value.length);
-			return sel.text.length;
-		} else if (el.selectionStart || !el.selectionStart)
-			return el.selectionStart;
-		return 0;
 	}
 
 	function compare(a, b, type, ak, bk, isarray) {
@@ -3213,6 +3191,7 @@
 						if (val) {
 							var tmp = component.parser(val);
 							if (tmp) {
+								component.dirty(false, true);
 								component.set(tmp);
 								emitwildcard(component.path, tmp, 3);
 							}
@@ -4156,6 +4135,14 @@
 			} else if (!arguments.length)
 				return;
 
+			if (skips[self.path]) {
+				var s = --skips[self.path];
+				if (s <= 0) {
+					delete skips[self.path];
+					return;
+				}
+			}
+
 			self.setter(value, path, type);
 			self.setter2 && self.setter2(value, path, type);
 		};
@@ -4203,10 +4190,6 @@
 					t.value = value;
 			});
 		};
-	}
-
-	function gettervalidation(self) {
-		M.validate(self.path);
 	}
 
 	var PPC = COM.prototype;
@@ -4258,6 +4241,11 @@
 		!t.$W && (t.$W = {});
 
 		if (t.$W[prop]) {
+			// Checks if same callback exists
+			for (var i = 0; i < t.$W[prop].length; i++) {
+				if (t.$W[prop][i] === callback)
+					return t;
+			}
 			t.$W[prop].callback.push(callback);
 			return t;
 		} else
@@ -5046,6 +5034,12 @@
 			return get(path);
 	};
 
+	PPC.skip = function(path) {
+		var self = this;
+		SKIP(path || self.path);
+		return self;
+	};
+
 	PPC.set = function(path, value, type) {
 
 		var self = this;
@@ -5649,6 +5643,19 @@
 			});
 		} catch (e) {
 			return null;
+		}
+	};
+
+	W.SKIP = function() {
+		for (var j = 0; j < arguments.length; j++) {
+			var arr = arguments[j].split(',');
+			for (var i = 0, length = arr.length; i < length; i++) {
+				var p = arr[i].trim();
+				if (skips[p])
+					skips[p]++;
+				else
+					skips[p] = 1;
+			}
 		}
 	};
 
@@ -7540,11 +7547,10 @@
 			$(W).on('orientationchange', mediaquery);
 			mediaquery();
 
-			$(document).on('input', 'input[data-jc-bind],textarea[data-jc-bind]', function(e) {
+			$(document).on('input', 'input[data-jc-bind],textarea[data-jc-bind]', function() {
 
 				// realtime binding
 				var self = this;
-				var com = self.$com;
 
 				if (!self.$com || self.$com.$removed || !self.$com.getter || self.$jckeypress === false)
 					return;
@@ -7585,7 +7591,7 @@
 				}
 			});
 
-			$(document).on('change', 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind]', function(e) {
+			$(document).on('change', 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind]', function() {
 
 				var self = this;
 

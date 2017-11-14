@@ -577,6 +577,12 @@ COMPONENT('my-component-name', function(instance, config) {
     // +v11.2.0
 
 
+    instance.skip([path]);
+    // Skips future setter
+    // path {String}: optional, default: current component data-jc-path
+    // +v13.0.0
+
+
     instance.update([updatePath]);
     instance.refresh([updatePath]);
     // Updates current value.
@@ -1805,6 +1811,16 @@ ENV([object]); // sets environments
 SCROLLBARWIDTH();
 // Gets width of scrollbar
 // v12.0.0
+
+SKIP(pathA, [pathB], [pathN]);
+// v13.0.0
+// Skips "setter" for this path.
+// This method uses internal counter, so if you call this method two times for the one path then the path will be skipped 2x
+// IMPORTANT: Path must be absolute to component
+
+SKIP('users.form.firstname', 'users.form.lastname');
+// or
+SKIP('users.form.firstname, users.form.lastname', 'users.stats.logins, users.stats.orders');
 ```
 
 ## Device Width
