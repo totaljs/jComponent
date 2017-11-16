@@ -2988,7 +2988,7 @@
 					obj.$interaction(0);
 				else {
 					obj.$binded = true;
-					middleware(obj.path + obj.middleware, value, 1, function(path, value) {
+					middleware(obj.path + obj.middleware, value, 0, function(path, value) {
 						obj.setterX(value, obj.path, 0);
 						obj.$interaction(0);
 					});
@@ -3185,20 +3185,22 @@
 
 			setTimeout2('$initcleaner', function() {
 				cleaner();
-				autofill.splice(0).forEach(function(component) {
-					findcontrol(component.element.get(0), function(el) {
+				var arr = autofill.splice(0);
+				for (var i = 0; i < arr.length; i++) {
+					var com = arr[i];
+					!com.$default && findcontrol(com.element.get(0), function(el) {
 						var val = $(el).val();
 						if (val) {
-							var tmp = component.parser(val);
-							if (tmp) {
-								component.dirty(false, true);
-								component.set(tmp);
-								emitwildcard(component.path, tmp, 3);
+							var tmp = com.parser(val);
+							if (tmp && com.get() !== tmp) {
+								com.dirty(false, true);
+								com.set(tmp, undefined, 0);
+								emitwildcard(com.path, tmp, 0);
 							}
 						}
 						return true;
 					});
-				});
+				}
 			}, 1000);
 
 			C.is = false;
@@ -4180,7 +4182,7 @@
 				if (value == null)
 					value = '';
 
-				if (!type && t.type !== a && t.type !== 'range' && (!value || (self.$default && self.$default() === value)))
+				if (!type && t.type !== a && t.type !== 'range' && !self.$default && !value)
 					autofill.push(t.$com);
 
 				if (t.type === a || t.type === 'select') {
