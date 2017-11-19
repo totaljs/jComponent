@@ -83,8 +83,8 @@
 	var MD = M.defaults = {};
 	MD.environment = {};
 	MD.delay = 555;
-	MD.delaywatcher = 777;
-	MD.delaybinder = 777;
+	MD.delaywatcher = 555;
+	MD.delaybinder = 200;
 	MD.keypress = true;
 	MD.localstorage = true;
 	MD.jsoncompress = false;
@@ -119,7 +119,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v13.0.1';
+	M.version = 'v13.0.2';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -3001,10 +3001,7 @@
 		if (obj.validate && !obj.$valid_disabled)
 			obj.$valid = obj.validate(obj.get(), true);
 
-		obj.done && setTimeout(function() {
-			obj.done();
-		}, 20);
-
+		obj.done && setTimeout(obj.done, 20);
 		obj.state && obj.state(0, 3);
 
 		obj.$init && setTimeout(function() {
@@ -4117,37 +4114,49 @@
 			if (!self.setter)
 				return;
 
-			if (!self.$bindreleased && self.$bindcache) {
-				if (self.$released) {
-					var cache = self.$bindcache;
-					cache.value = value;
-					cache.path = path;
-					cache.type = type;
-					cache.is = true;
-					return;
-				} else if (!arguments.length) {
-					var cache = self.$bindcache;
-					if (cache && cache.is) {
-						cache.is = false;
-						setTimeout(function(self, cache) {
-							self.setterX(cache.value, cache.path, cache.type);
-						}, self.$bindtimeout, self, cache);
+			var cache = self.$bindcache;
+
+			if (arguments.length) {
+
+				if (skips[self.path]) {
+					var s = --skips[self.path];
+					if (s <= 0) {
+						delete skips[self.path];
 						return;
 					}
 				}
-			} else if (!arguments.length)
-				return;
 
-			if (skips[self.path]) {
-				var s = --skips[self.path];
-				if (s <= 0) {
-					delete skips[self.path];
-					return;
+				if (!self.$bindreleased) {
+					if (self.$released) {
+						cache.is = true;
+						cache.value = value;
+						cache.path = path;
+						cache.type = type;
+					} else {
+						cache.value = value;
+						cache.path = path;
+						cache.type = type;
+						if (!cache.bt) {
+							cache.is = true;
+							self.setterX();
+						}
+					}
+				} else {
+					// Binds value directly
+					self.setter(value, path, type);
+					self.setter2 && self.setter2(value, path, type);
 				}
-			}
 
-			self.setter(value, path, type);
-			self.setter2 && self.setter2(value, path, type);
+			} else if (!self.$released && cache && cache.is) {
+				cache.is = false;
+				cache.bt && clearTimeout(cache.bt);
+				cache.bt = setTimeout(function(self) {
+					var cache = self.$bindcache;
+					cache.bt = 0; // reset timer id
+					self.setter(cache.value, cache.path, cache.type);
+					self.setter2 && self.setter2(cache.value, cache.path, cache.type);
+				}, self.$bindtimeout, self);
+			}
 		};
 
 		self.setter = function(value, path, type) {
@@ -4559,7 +4568,7 @@
 		return self;
 	};
 
-	PPC.noScope = function(value) {
+	PPC.noscope = PPC.noScope = function(value) {
 		this.$noscope = value === undefined ? true : value === true;
 		return this;
 	};
@@ -4596,7 +4605,7 @@
 		return self;
 	};
 
-	PPC.noValid = PPC.noValidate = function(val) {
+	PPC.novalidate = PPC.noValid = PPC.noValidate = function(val) {
 		if (val === undefined)
 			val = true;
 		var self = this;
