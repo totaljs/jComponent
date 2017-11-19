@@ -2444,7 +2444,10 @@
 
 		declaration.importing = true;
 		declaration.dependencies.wait(function(item, next) {
-			IMPORT(item, next);
+			if (typeof(item) === 'function')
+				item(next);
+			else
+				IMPORT(item, next);
 		}, function() {
 			declaration.importing = false;
 			callback(obj, el);
