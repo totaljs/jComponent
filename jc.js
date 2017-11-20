@@ -1982,7 +1982,6 @@
 					obj.$interaction(102);
 				}
 			}
-
 		}, path);
 
 		clear('valid', 'dirty');
@@ -4003,7 +4002,7 @@
 
 	PCTRL.reset = function(path) {
 		var self = this;
-		RESET(self.path(path));
+		M.reset(self.path(path));
 		return self;
 	};
 
