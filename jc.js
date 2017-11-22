@@ -17,6 +17,7 @@
 	var ATTRURL = '[data-jc-url]';
 	var ATTRDATA = 'jc';
 	var ATTRDEL = 'data-jc-removed';
+	var ATTRREL = 'data-jc-released';
 	var SELINPUT = 'input,textarea,select';
 	var DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
 	var ACTRLS = { INPUT: true, TEXTAREA: true, SELECT: true };
@@ -119,7 +120,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v13.0.2';
+	M.version = 'v13.0.3';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2328,6 +2329,8 @@
 		if (!container)
 			return;
 
+		var released = container ? attrcom(container, 'released') === 'true' : false;
+
 		var tmp = attrcom(container, 'controller');
 		if (tmp)
 			controller = tmp;
@@ -2350,9 +2353,11 @@
 				if (!el.tagName)
 					continue;
 
+
 				el.childNodes.length && el.tagName !== 'SCRIPT' && REGCOM.test(el.innerHTML) && sub.push(el);
 
 				if (el.$com === undefined) {
+					released && el.setAttribute(ATTRREL, 'true');
 					name = attrcom(el);
 					name != null && onComponent(name || '', el, level, controller);
 				}
@@ -2361,7 +2366,7 @@
 
 		for (var i = 0, length = sub.length; i < length; i++) {
 			el = sub[i];
-			el && crawler(el, onComponent, level, controller);
+			el && crawler(el, onComponent, level, controller, released);
 		}
 	}
 
@@ -4059,6 +4064,8 @@
 			var self = this;
 			if (value === undefined || self.$removed)
 				return self.$released;
+
+			self.attrd('jc-released', value);
 
 			(container || self.element).find(ATTRCOM).each(function() {
 				var el = $(this);
