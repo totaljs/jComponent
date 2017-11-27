@@ -120,7 +120,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v13.0.3';
+	M.version = 'v13.0.4';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -4059,48 +4059,6 @@
 		self.validate;
 		self.released;
 
-		self.release = function(value, container) {
-
-			var self = this;
-			if (value === undefined || self.$removed)
-				return self.$released;
-
-			self.attrd('jc-released', value);
-
-			(container || self.element).find(ATTRCOM).each(function() {
-				var el = $(this);
-				el.attrd('jc-released', value ? 'true' : 'false');
-				var com = el.data(ATTRDATA);
-				if (com instanceof Object) {
-					if (com instanceof Array) {
-						for (var i = 0, length = com.length; i < length; i++) {
-							var o = com[i];
-							if (!o.$removed && o.$released !== value) {
-								o.$released = value;
-								o.released && o.released(value, self);
-								o.$waiter(!value);
-								!value && o.setterX();
-							}
-						}
-					} else if (!com.$removed && com.$released !== value) {
-						com.$released = value;
-						com.released && com.released(value, self);
-						com.$waiter(!value);
-						!value && com.setterX();
-					}
-				}
-			});
-
-			if (!container && self.$released !== value) {
-				self.$released = value;
-				self.released && self.released(value, self);
-				self.$waiter(!value);
-				!value && self.setterX();
-			}
-
-			return value;
-		};
-
 		self.getter = function(value, realtime, validate, nobind) {
 
 			var self = this;
@@ -4116,10 +4074,6 @@
 				M.validate2(self);
 			else
 				self.set(self.path, value, 2);
-		};
-
-		self.validate2 = function() {
-			return M.validate2(self);
 		};
 
 		self.setterX = function(value, path, type) {
@@ -4345,6 +4299,52 @@
 		var self = this;
 		M.import(url, self.element, callback, insert, preparator);
 		return self;
+	};
+
+	PPC.release = function(value, container) {
+
+		var self = this;
+		if (value === undefined || self.$removed)
+			return self.$released;
+
+		self.attrd('jc-released', value);
+
+		(container || self.element).find(ATTRCOM).each(function() {
+			var el = $(this);
+			el.attrd('jc-released', value ? 'true' : 'false');
+			var com = el.data(ATTRDATA);
+			if (com instanceof Object) {
+				if (com instanceof Array) {
+					for (var i = 0, length = com.length; i < length; i++) {
+						var o = com[i];
+						if (!o.$removed && o.$released !== value) {
+							o.$released = value;
+							o.released && o.released(value, self);
+							o.$waiter(!value);
+							!value && o.setterX();
+						}
+					}
+				} else if (!com.$removed && com.$released !== value) {
+					com.$released = value;
+					com.released && com.released(value, self);
+					com.$waiter(!value);
+					!value && com.setterX();
+				}
+			}
+		});
+
+		if (!container && self.$released !== value) {
+			self.$released = value;
+			self.released && self.released(value, self);
+			self.$waiter(!value);
+			!value && self.setterX();
+		}
+
+		return value;
+	};
+
+	PPC.validate2 = function() {
+		return M.validate2(this);
 	};
 
 	PPC.exec = function(name, a, b, c, d, e) {
