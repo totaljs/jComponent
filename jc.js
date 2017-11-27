@@ -4118,6 +4118,10 @@
 				self.set(self.path, value, 2);
 		};
 
+		self.validate2 = function() {
+			return M.validate2(self);
+		};
+
 		self.setterX = function(value, path, type) {
 
 			if (!self.setter)
