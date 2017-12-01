@@ -2467,9 +2467,9 @@
 
 		var arr = [];
 
-		W.READY && arr.push.apply(arr, W.READY);
-		W.jComponent && arr.push.apply(arr, W.jComponent);
-		W.components && arr.push.apply(arr, W.components);
+		W.READY instanceof Array && arr.push.apply(arr, W.READY);
+		W.jComponent instanceof Array && arr.push.apply(arr, W.jComponent);
+		W.components instanceof Array && arr.push.apply(arr, W.components);
 
 		if (arr.length) {
 			while (true) {
