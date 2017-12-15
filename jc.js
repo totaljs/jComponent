@@ -2723,10 +2723,13 @@
 			sc.$initialized = true;
 
 			if (sc.$processed) {
+				/*
 				if (sc.$independent)
 					absolute = p;
 				else
 					absolute += (absolute ? '.' : '') + p;
+				*/
+				absolute = p;
 				continue;
 			}
 
