@@ -120,7 +120,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v13.0.4';
+	M.version = 'v13.0.5';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -836,7 +836,7 @@
 		}
 
 		WAIT(function() {
-			return W.jQuery ? true : false;
+			return !!W.jQuery;
 		}, function() {
 
 			statics[url] = 2;
@@ -4632,7 +4632,7 @@
 			val = true;
 		var self = this;
 		self.$dirty_disabled = val;
-		self.$dirty = val ? false : true;
+		self.$dirty = !val;
 		return self;
 	};
 
@@ -4988,8 +4988,7 @@
 		var self = this;
 
 		if (typeof(value) === 'function') {
-			if (!self.$formatter)
-				self.$formatter = [];
+			!self.$formatter && (self.$formatter = []);
 			self.$formatter.push(value);
 			return self;
 		}
@@ -5015,8 +5014,7 @@
 		var type = typeof(value);
 
 		if (type === 'function') {
-			if (!self.$parser)
-				self.$parser = [];
+			!self.$parser && (self.$parser = []);
 			self.$parser.push(value);
 			return self;
 		}
@@ -5199,7 +5197,7 @@
 	W.isMOBILE = /Mobi/.test(navigator.userAgent);
 	W.isROBOT = navigator.userAgent ? (/search|agent|bot|crawler|spider/i).test(navigator.userAgent) : true;
 	W.isSTANDALONE = navigator.standalone || W.matchMedia('(display-mode: standalone)').matches;
-	W.isTOUCH = ('ontouchstart' in W || navigator.maxTouchPoints) ? true : false;
+	W.isTOUCH = !!('ontouchstart' in W || navigator.maxTouchPoints);
 
 	W.setTimeout2 = function(name, fn, timeout, limit, param) {
 		var key = ':' + name;
@@ -5853,9 +5851,7 @@
 		if (isWaiting) {
 			WAIT(function() {
 				var val = FIND(value, many, noCache);
-				if (val instanceof Array)
-					return val.length > 0;
-				return val ? true : false;
+				return val instanceof Array ? val.length > 0 : !!val;
 			}, function(err) {
 				// timeout
 				if (!err) {
@@ -6211,7 +6207,7 @@
 			!self.element.attr(a) && self.element.attr(a, '1');
 			if (self.element.attr('required')) {
 				self.validate = function(value, is) {
-					return is ? true : value ? true : false;
+					return is ? true : !!value;
 				};
 			}
 			self.element.$com = self;
@@ -6291,7 +6287,7 @@
 		var pu = (update.length / il) * 100;
 
 		return {
-			change: append.length || remove.length || update.length ? true : false,
+			change: !!(append.length || remove.length || update.length),
 			redraw: pr > 60 || pu > 60,
 			append: append,
 			remove: remove,
@@ -6863,7 +6859,7 @@
 					isww = true;
 					return beg + (key === 'ww' ? 'ww.padLeft(2, \'0\')' : 'ww') + end;
 				case 'a':
-					var b = "'PM':'AM'";
+					var b = '\'PM\':\'AM\'';
 					return beg + '(d.getHours() >= 12 ? ' + b + ')' + end;
 			}
 		});
@@ -7363,7 +7359,7 @@
 
 	// Waits for jQuery
 	WAIT(function() {
-		return W.jQuery ? true : false;
+		return !!W.jQuery;
 	}, function() {
 
 		setInterval(function() {
