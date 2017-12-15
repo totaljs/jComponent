@@ -95,6 +95,7 @@
 	MD.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
 	MD.importcache = 'session';
 	MD.pingdata = {};
+	MD.baseurl = '';
 	MD.jsonconverter = {
 		'text json': function (text) {
 			return PARSE(text);
@@ -1107,6 +1108,11 @@
 				delete options.headers['X-Requested-With'];
 				if (isCredentials)
 					options.xhrFields = { withCredentials: true };
+			} else if (MD.baseurl) {
+				if (typeof(MD.baseurl) === 'function')
+					url = MD.baseurl(url);
+				else
+					url = MD.baseurl + url;
 			}
 
 			var custom = url.match(/\([a-z0-9\-.,]+\)/i);

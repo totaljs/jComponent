@@ -950,6 +950,11 @@ MAIN.defaults.environments;
 MAIN.defaults.delay;
 // {Number} sets the delay for keypress real-time binding, default `300`.
 
+MAIN.defaults.baseurl;
+// v13.0.5
+// Can be {Function(url)} needs to return updated url
+// Can be {String} can contain base url which is used in this form "url = baseurl + url"
+
 MAIN.defaults.keypress;
 // {Boolean} enables / disables keypress real-time binding, default `true`.
 
