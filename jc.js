@@ -48,6 +48,8 @@
 	var storage = {};
 	var extensions = {}; // COMPONENT_EXTEND()
 	var cache = {};
+	var fallback = { $: 0 }; // $ === count of new items in fallback
+	var fallbackpending = [];
 	var paths = {}; // saved paths from get() and set()
 	var events = {};
 	var temp = {};
@@ -91,6 +93,7 @@
 	MD.jsoncompress = false;
 	MD.jsondate = true;
 	MD.ajaxerrors = false;
+	MD.fallback = 'https://cdn.totaljs.com/components/j-{0}.html';
 	MD.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 	MD.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
 	MD.importcache = 'session';
@@ -121,7 +124,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v13.0.5';
+	M.version = 'v13.9.0';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -843,24 +846,31 @@
 			statics[url] = 2;
 			var id = 'import' + W.HASH(url);
 
-			AJAX('GET ' + url, function(response) {
+			AJAX('GET ' + url, function(response, err) {
+
+				if (err) {
+					callback && callback();
+					return;
+				}
 
 				url = '$import' + url;
 
 				if (preparator)
 					response = preparator(response);
 
-				response = importscripts(importstyles(response, id), id);
-
+				var is = REGCOM.test(response);
+				response = importscripts(importstyles(response, id), id).trim();
 				target = $(target);
 
-				if (insert === false)
-					target.html(response);
-				else
-					target.append(response);
+				if (response) {
+					if (insert === false)
+						target.html(response);
+					else
+						target.append(response);
+				}
 
 				setTimeout(function() {
-					response && REGCOM.test(response) && compile(target);
+					is && compile(response ? target : null);
 					callback && WAIT(function() {
 						return C.is == false && C.controllers == 0;
 					}, callback);
@@ -2435,7 +2445,6 @@
 
 	function dependencies(declaration, callback, obj, el) {
 
-
 		if (declaration.importing) {
 			WAIT(function() {
 				return declaration.importing !== true;
@@ -2461,7 +2470,7 @@
 		}, function() {
 			declaration.importing = false;
 			callback(obj, el);
-		});
+		}, 3);
 	}
 
 	function compile(container) {
@@ -2522,8 +2531,12 @@
 
 				if (!com) {
 
-					var x = attrcom(el, 'import');
+					if (!fallback[name]) {
+						fallback[name] = 1;
+						fallback.$++;
+					}
 
+					var x = attrcom(el, 'import');
 					if (!x) {
 						!statics['$NE_' + name] && (statics['$NE_' + name] = true);
 						return;
@@ -2544,6 +2557,9 @@
 
 					return;
 				}
+
+				if (fallback[name] === 1)
+					fallback.$--;
 
 				var obj = new COM(com.name);
 				obj.global = com.shared;
@@ -3068,8 +3084,34 @@
 		var next = C.pending.shift();
 		if (next)
 			next();
-		else if (C.ready)
-			C.is = false;
+		else {
+
+			if (C.ready)
+				C.is = false;
+
+			if (MD.fallback && fallback.$) {
+				var arr = Object.keys(fallback);
+				for (var i = 0; i < arr.length; i++) {
+					if (arr[i] !== '$') {
+						var num = fallback[arr[i]];
+						if (num === 1) {
+							fallbackpending.push(arr[i].toLowerCase());
+							fallback[arr[i]] = 2;
+						}
+					}
+				}
+				fallback.$ = 0;
+				fallbackpending.length && downloadfallback();
+			}
+		}
+	}
+
+	function downloadfallback() {
+		setTimeout2('$fallback', function() {
+			fallbackpending.splice(0).wait(function(item, next) {
+				IMPORT(MD.fallback.format(item), next);
+			}, 3);
+		}, 100);
 	}
 
 	function isOperation(name) {
@@ -3182,8 +3224,8 @@
 	function ready() {
 
 		setTimeout2('$ready', function() {
-			mediaquery();
 
+			mediaquery();
 			refresh();
 			initialize();
 
@@ -6232,26 +6274,53 @@
 	var NP = Number.prototype;
 	var DP = Date.prototype;
 
-	AP.wait = AP.waitFor = function(fn, callback, meta) {
-
-		if (meta === undefined)
-			meta = { index: 0, value: null };
+	AP.wait = AP.waitFor = function(onItem, callback, thread, tmp) {
 
 		var self = this;
-		var item = self[meta.index++];
+		var init = false;
 
+		// INIT
+		if (!tmp) {
+
+			if (typeof(callback) !== 'function') {
+				thread = callback;
+				callback = null;
+			}
+
+			tmp = {};
+			tmp.pending = 0;
+			tmp.index = 0;
+			tmp.thread = thread;
+
+			// thread === Boolean then array has to be removed item by item
+			init = true;
+		}
+
+		var item = thread === true ? self.shift() : self[tmp.index++];
 		if (item === undefined) {
-			callback && callback(meta.value);
+			if (!tmp.pending) {
+				callback && callback();
+				tmp.cancel = true;
+			}
 			return self;
 		}
 
-		fn.call(self, item, function(value) {
-			meta.value = value;
-			self.waitFor(fn, callback, meta);
-		}, meta.index);
+		tmp.pending++;
+		onItem.call(self, item, () => setTimeout(next_wait, 1, self, onItem, callback, thread, tmp), tmp.index);
+
+		if (!init || tmp.thread === 1)
+			return self;
+
+		for (var i = 1; i < tmp.thread; i++)
+			self.wait(onItem, callback, 1, tmp);
 
 		return self;
 	};
+
+	function next_wait(self, onItem, callback, thread, tmp) {
+		tmp.pending--;
+		self.wait(onItem, callback, thread, tmp);
+	}
 
 	AP.compare = function(id, b, fields) {
 		var a = this;
