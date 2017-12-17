@@ -124,7 +124,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v13.9.0';
+	M.version = 'v14.0.0';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
