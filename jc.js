@@ -93,7 +93,7 @@
 	MD.jsoncompress = false;
 	MD.jsondate = true;
 	MD.ajaxerrors = false;
-	MD.fallback = 'https://cdn.totaljs.com/components/j-{0}.html';
+	MD.fallback = 'https://raw.githubusercontent.com/totaljs/components/master/0cdn/{1}j-{0}.html';
 	MD.fallbackcache = '';
 	MD.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 	MD.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
@@ -847,9 +847,9 @@
 			statics[url] = 2;
 			var id = 'import' + W.HASH(url);
 
-			var cb = function(response, err) {
+			var cb = function(response) {
 
-				if (err) {
+				if (!response) {
 					callback && callback();
 					return;
 				}
@@ -3120,7 +3120,7 @@
 	function downloadfallback() {
 		setTimeout2('$fallback', function() {
 			fallbackpending.splice(0).wait(function(item, next) {
-				W.IMPORTCACHE(MD.fallback.format(item), MD.fallbackcache, next);
+				W.IMPORTCACHE(MD.fallback.format(item, ''), MD.fallbackcache, next);
 			}, 3);
 		}, 100);
 	}
