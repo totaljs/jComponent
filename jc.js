@@ -5110,7 +5110,7 @@
 
 	PPC.skip = function(path) {
 		var self = this;
-		SKIP(path || self.path);
+		W.SKIP(path || self.path);
 		return self;
 	};
 
@@ -6144,6 +6144,12 @@
 			if (obj.$callback) {
 				C.controllers--;
 				current_ctrl = obj.name;
+
+				if (obj.element) {
+					var tmp = attrcom(obj.element, 'config');
+					tmp && obj.reconfigure(tmp, NOOP);
+				}
+
 				obj.$callback.call(obj, obj, path, element);
 				obj.$callback = null;
 				current_ctrl = null;
@@ -6306,7 +6312,9 @@
 		}
 
 		tmp.pending++;
-		onItem.call(self, item, () => setTimeout(next_wait, 1, self, onItem, callback, thread, tmp), tmp.index);
+		onItem.call(self, item, function() {
+			setTimeout(next_wait, 1, self, onItem, callback, thread, tmp);
+		}, tmp.index);
 
 		if (!init || tmp.thread === 1)
 			return self;
