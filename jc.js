@@ -761,6 +761,11 @@
 			insert = true;
 		}
 
+		if (url.substring(0, 2) === '//')
+			url = location.protocol + url;
+
+		console.log(url);
+
 		var index = url.lastIndexOf(' .');
 		var ext = '';
 
@@ -818,7 +823,7 @@
 		if (ext === '.js') {
 			var scr = d.createElement('script');
 			scr.type = 'text/javascript';
-			// scr.async = true;
+			scr.async = false;
 			scr.onload = function() {
 				statics[url] = 2;
 				callback && callback();
@@ -2538,6 +2543,7 @@
 			all.forEach(function(name) {
 
 				name = name.trim();
+
 				var com = M.$components[name || ''];
 
 				if (!com) {
