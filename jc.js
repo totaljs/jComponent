@@ -94,6 +94,7 @@
 	MD.jsondate = true;
 	MD.ajaxerrors = false;
 	MD.fallback = 'https://cdn.totaljs.com/components/j-{0}.html';
+	MD.fallbackcache = '';
 	MD.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 	MD.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
 	MD.importcache = 'session';
@@ -735,7 +736,7 @@
 		return dirty;
 	};
 
-	W.INJECT = W.IMPORT = M.import = function(url, target, callback, insert, preparator) {
+	W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 		url = url.$env();
 
@@ -846,7 +847,7 @@
 			statics[url] = 2;
 			var id = 'import' + W.HASH(url);
 
-			AJAX('GET ' + url, function(response, err) {
+			var cb = function(response, err) {
 
 				if (err) {
 					callback && callback();
@@ -875,10 +876,20 @@
 						return C.is == false && C.controllers == 0;
 					}, callback);
 				}, 10);
-			});
+			};
+
+			if (expire)
+				AJAXCACHE('GET ' + url, null, cb, expire);
+			else
+				AJAX('GET ' + url, cb);
+
 		});
 
 		return M;
+	};
+
+	W.INJECT = W.IMPORT = M.import = function(url, target, callback, insert, preparator) {
+		return W.IMPORTCACHE(url, null, target, callback, insert, preparator);
 	};
 
 	W.CACHEPATH = M.cachepath = function(path, expire, rebind) {
@@ -3109,7 +3120,7 @@
 	function downloadfallback() {
 		setTimeout2('$fallback', function() {
 			fallbackpending.splice(0).wait(function(item, next) {
-				IMPORT(MD.fallback.format(item), next);
+				W.IMPORTCACHE(MD.fallback.format(item), MD.fallbackcache, next);
 			}, 3);
 		}, 100);
 	}
