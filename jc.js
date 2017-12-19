@@ -58,6 +58,7 @@
 	var schedulers = [];
 	var toggles = [];
 	var middlewares = {};
+	var versions = {};
 	var warnings = {};
 	var schemas = {};
 	var autofill = [];
@@ -95,6 +96,7 @@
 	MD.ajaxerrors = false;
 	MD.fallback = 'https://cdn.componentator.com/j-{0}.html';
 	MD.fallbackcache = '';
+	MD.version = '';
 	MD.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 	MD.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
 	MD.importcache = 'session';
@@ -2059,7 +2061,7 @@
 	};
 
 	M.findByName = function(name, path, callback) {
-		return M.findByProperty('name', name, path, callback);
+		return name.lastIndexOf('@') === -1 ? M.findByProperty('$name', name, path, callback) : M.findByProperty('name', name, path, callback);
 	};
 
 	M.findById = function(id, path, callback) {
@@ -2544,7 +2546,14 @@
 
 				name = name.trim();
 
-				var com = M.$components[name || ''];
+				if (name.lastIndexOf('@') === -1) {
+					if (versions[name])
+						name += '@' + versions[name];
+					else if (MD.version)
+						name += '@' + MD.version;
+				}
+
+				var com = M.$components[name];
 
 				if (!com) {
 
@@ -4112,7 +4121,11 @@
 		self.$released = false;
 		self.$bindreleased = true;
 
+		var version = name.lastIndexOf('@');
+
 		self.name = name;
+		self.$name = version === -1 ? name : name.substring(0, version);
+		self.version = version === -1 ? '' : name.substring(version + 1);
 		self.path;
 		self.type;
 		self.id;
@@ -5898,6 +5911,23 @@
 		return false;
 	};
 
+	W.VERSION = function(name, version) {
+		var keys = name.split(',');
+		for (var i = 0; i < keys.length; i++) {
+			var key = keys[i].trim();
+
+			if (!version) {
+				var tmp = key.indexOf('@');
+				if (tmp === -1)
+					continue;
+				version = key.substring(tmp + 1);
+				key = key.substring(0, tmp);
+			}
+
+			version && key && (versions[key] = version);
+		}
+	};
+
 	W.FIND = function(value, many, noCache, callback) {
 
 		var isWaiting = false;
@@ -6346,57 +6376,6 @@
 		tmp.pending--;
 		self.wait(onItem, callback, thread, tmp);
 	}
-
-	AP.compare = function(id, b, fields) {
-		var a = this;
-		var update = [];
-		var append = [];
-		var remove = [];
-		var il = a.length;
-		var jl = b.length;
-
-		for (var i = 0; i < il; i++) {
-			var aa = a[i];
-			var is = false;
-
-			for (var j = 0; j < jl; j++) {
-				var bb = b[j];
-				if (bb[id] !== aa[id])
-					continue;
-				STRINGIFY(aa, false, fields) !== STRINGIFY(bb, false, fields) && update.push({ oldIndex: i, newIndex: j, oldItem: aa, newItem: bb });
-				is = true;
-				break;
-			}
-
-			!is && remove.push({ oldIndex: i, newIndex: j, oldItem: aa, newItem: bb });
-		}
-
-		for (var i = 0; i < jl; i++) {
-			var aa = b[i];
-			var is = true;
-
-			for (var j = 0; j < il; j++) {
-				var bb = a[j];
-				if (bb[id] === aa[id]) {
-					is = false;
-					break;
-				}
-			}
-
-			is && append.push({ oldIndex: null, newIndex: i, oldItem: null, newItem: aa });
-		}
-
-		var pr = (remove.length / il) * 100;
-		var pu = (update.length / il) * 100;
-
-		return {
-			change: !!(append.length || remove.length || update.length),
-			redraw: pr > 60 || pu > 60,
-			append: append,
-			remove: remove,
-			update: update
-		};
-	};
 
 	AP.async = function(context, callback) {
 
