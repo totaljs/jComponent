@@ -766,8 +766,6 @@
 		if (url.substring(0, 2) === '//')
 			url = location.protocol + url;
 
-		console.log(url);
-
 		var index = url.lastIndexOf(' .');
 		var ext = '';
 
@@ -1155,7 +1153,7 @@
 			}
 
 			var output = {};
-			output.url = options.url;
+			output.url = options.url || url;
 			output.process = true;
 			output.error = false;
 			output.upload = false;
