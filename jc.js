@@ -141,6 +141,7 @@
 
 	C.is = false;
 	C.recompile = false;
+	C.importing = 0;
 	C.pending = [];
 	C.init = [];
 	C.imports = {};
@@ -2578,15 +2579,20 @@
 					}
 
 					C.imports[x] = 1;
+					C.importing++;
+
 					M.import(x, function() {
+						C.importing--;
 						C.imports[x] = 2;
 					});
 
 					return;
 				}
 
-				if (fallback[name] === 1)
+				if (fallback[name] === 1) {
 					fallback.$--;
+					delete fallback[name];
+				}
 
 				var obj = new COM(com.name);
 				obj.global = com.shared;
@@ -2772,12 +2778,6 @@
 			sc.$initialized = true;
 
 			if (sc.$processed) {
-				/*
-				if (sc.$independent)
-					absolute = p;
-				else
-					absolute += (absolute ? '.' : '') + p;
-				*/
 				absolute = p;
 				continue;
 			}
@@ -2868,6 +2868,7 @@
 			return;
 
 		var canCompile = false;
+		C.importing++;
 
 		async(arr, function(item, next) {
 
@@ -2903,6 +2904,7 @@
 			}, item.expire);
 
 		}, function() {
+			C.importing--;
 			clear('valid', 'dirty', 'find');
 			count && canCompile && compile();
 		});
@@ -3116,7 +3118,7 @@
 			if (C.ready)
 				C.is = false;
 
-			if (MD.fallback && fallback.$) {
+			if (MD.fallback && fallback.$ && !C.importing) {
 				var arr = Object.keys(fallback);
 				for (var i = 0; i < arr.length; i++) {
 					if (arr[i] !== '$') {
@@ -3134,6 +3136,12 @@
 	}
 
 	function downloadfallback() {
+
+		if (C.importing) {
+			setTimeout(downloadfallback, 1000);
+			return;
+		}
+
 		setTimeout2('$fallback', function() {
 			fallbackpending.splice(0).wait(function(item, next) {
 				W.IMPORTCACHE(MD.fallback.format(item), MD.fallbackcache, next);
