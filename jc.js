@@ -1146,6 +1146,7 @@
 			var custom = url.match(/\([a-z0-9\-.,]+\)/i);
 			if (custom) {
 				url = url.replace(custom, '').replace(/\s+/g, '');
+				options.url = url;
 				custom = custom.toString().replace(/\(|\)/g, '').split(',');
 				for (var i = 0; i < custom.length; i++) {
 					var opt = ajaxconfig[custom[i].trim()];
@@ -1154,12 +1155,14 @@
 			}
 
 			var output = {};
-			output.url = url;
+			output.url = options.url;
 			output.process = true;
 			output.error = false;
 			output.upload = false;
 			output.method = method;
 			output.data = data;
+
+			delete options.url;
 
 			options.success = function(r, s, req) {
 				output.response = r;
@@ -1208,7 +1211,7 @@
 				}
 			};
 
-			$.ajax(makeurl(url), options);
+			$.ajax(makeurl(output.url), options);
 
 		}, timeout || 0);
 
@@ -5911,20 +5914,18 @@
 		return false;
 	};
 
-	W.VERSION = function(name, version) {
-		var keys = name.split(',');
-		for (var i = 0; i < keys.length; i++) {
-			var key = keys[i].trim();
-
-			if (!version) {
+	W.VERSION = function() {
+		for (var j = 0; j < arguments.length; j++) {
+			var keys = arguments[j].split(',');
+			for (var i = 0; i < keys.length; i++) {
+				var key = keys[i].trim();
 				var tmp = key.indexOf('@');
 				if (tmp === -1)
 					continue;
-				version = key.substring(tmp + 1);
+				var version = key.substring(tmp + 1);
 				key = key.substring(0, tmp);
+				version && key && (versions[key] = version);
 			}
-
-			version && key && (versions[key] = version);
 		}
 	};
 
