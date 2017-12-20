@@ -2808,6 +2808,18 @@
 				emitwildcard(p, tmp, 1);
 			}
 
+			// Applies classes
+			var cls = attrcom(scope, 'class');
+			if (cls) {
+				(function(cls) {
+					cls = cls.split(' ');
+					setTimeout(function() {
+						for (var i = 0, length = cls.length; i < length; i++)
+							scope.tclass(cls[i]);
+					}, 5);
+				})(cls);
+			}
+
 			tmp = attrcom(sc, 'init');
 			tmp && W.EXEC(tmp, p, $(sc));
 		}
