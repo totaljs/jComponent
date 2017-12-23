@@ -2548,7 +2548,26 @@
 
 				name = name.trim();
 
-				if (name.lastIndexOf('@') === -1) {
+				var is = false;
+
+				if (name.indexOf('|') !== -1) {
+
+					// Multiple versions
+					var keys = name.split('|');
+					for (var i = 0; i < keys.length; i++) {
+						var key = keys[i].trim();
+						if (key && M.$components[key]) {
+							name = key;
+							is = true;
+							break;
+						}
+					}
+
+					if (!is)
+						name = keys[0].trim();
+				}
+
+				if (!is && name.lastIndexOf('@') === -1) {
 					if (versions[name])
 						name += '@' + versions[name];
 					else if (MD.version)
