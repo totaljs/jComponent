@@ -5369,6 +5369,15 @@
 			config = null;
 		}
 
+		// Multiple versions
+		if (name.indexOf(',') !== -1) {
+			name.split(',').forEach(function(item, index) {
+				item = item.trim();
+				item && W.COMPONENT(item, config, declaration, index ? null : dependencies);
+			});
+			return;
+		}
+
 		M.$components[name] && warn('Components: Overwriting component:', name);
 		var a = M.$components[name] = { name: name, config: config, declaration: declaration, shared: {}, dependencies: dependencies instanceof Array ? dependencies : null };
 		M.emit('component.compile', name, a);
