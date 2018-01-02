@@ -84,7 +84,7 @@
 	W.EMPTYOBJECT = {};
 	W.DATETIME = new Date();
 
-	var MD = M.defaults = {};
+	var MD = W.DEF = M.defaults = {};
 	MD.environment = {};
 	MD.delay = 555;
 	MD.delaywatcher = 555;

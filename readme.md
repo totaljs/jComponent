@@ -2687,6 +2687,8 @@ READY.push(function() {
 MAIN;          // jComponent main instance
 M;             // jComponent main instance
 
+DEF;           // +v14.0.0 alias for jComponent defaults "M.defaults"
+
 A;             // jComponent applications controller
 APPS;          // jComponent applications controller
 
