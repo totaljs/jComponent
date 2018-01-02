@@ -7300,7 +7300,7 @@
 		return item === undefined ? def : item;
 	};
 
-	AP.quicksort = function(name, asc, maxlength) {
+	AP.quicksort = function(name, asc) {
 
 		var self = this;
 		var length = self.length;
@@ -7311,9 +7311,6 @@
 			asc = name;
 			name = undefined;
 		}
-
-		if (maxlength === undefined)
-			maxlength = 5;
 
 		if (asc === undefined)
 			asc = true;
@@ -7349,7 +7346,7 @@
 
 			// String
 			if (type === 1) {
-				return va && vb ? (asc ? LCOMPARER(va.substring(0, maxlength), vb.substring(0, maxlength)) : LCOMPARER(vb.substring(0, maxlength), va.substring(0, maxlength))) : 0;
+				return va && vb ? (asc ? LCOMPARER(va, vb) : LCOMPARER(vb, va)) : 0;
 			} else if (type === 2) {
 				return va > vb ? (asc ? 1 : -1) : va < vb ? (asc ? -1 : 1) : 0;
 			} else if (type === 3) {
