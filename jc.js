@@ -249,7 +249,13 @@
 
 		if (typeof(value) === 'function') {
 			!M.$formatter && (M.$formatter = []);
-			M.$formatter.push(value);
+
+			// Prepend
+			if (path === true)
+				M.$formatter.unshift(value);
+			else
+				M.$formatter.push(value);
+
 			return M;
 		}
 
@@ -269,7 +275,13 @@
 
 		if (typeof(value) === 'function') {
 			!M.$parser && (M.$parser = []);
-			M.$parser.push(value);
+
+			// Prepend
+			if (path === true)
+				M.$parser.unshift(value);
+			else
+				M.$parser.push(value);
+
 			return this;
 		}
 
@@ -5104,13 +5116,16 @@
 		return self;
 	};
 
-	PPC.formatter = function(value) {
+	PPC.formatter = function(value, prepend) {
 
 		var self = this;
 
 		if (typeof(value) === 'function') {
 			!self.$formatter && (self.$formatter = []);
-			self.$formatter.push(value);
+			if (prepend === true)
+				self.$formatter.unshift(value);
+			else
+				self.$formatter.push(value);
 			return self;
 		}
 
@@ -5129,14 +5144,19 @@
 		return value;
 	};
 
-	PPC.parser = function(value) {
+	PPC.parser = function(value, prepend) {
 
 		var self = this;
 		var type = typeof(value);
 
 		if (type === 'function') {
 			!self.$parser && (self.$parser = []);
-			self.$parser.push(value);
+
+			if (prepend === true)
+				self.$parser.unshift(value);
+			else
+				self.$parser.push(value);
+
 			return self;
 		}
 

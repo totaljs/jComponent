@@ -812,6 +812,8 @@ COMPONENT('my-component-name', function(instance, config) {
     // Appends a new formatter. The formatter formats the model value for the render.
     // E.g. date. Works only with components which contain `<input data-jc-bind`,
     // `<textarea data-jc-bind` or `<select data-jc-bind`.
+    // +v14.0.0 supports "prepend" argument: instance.formatter(fn, [prepend]);
+
 
 
     instance.formatter(value);
@@ -827,7 +829,8 @@ COMPONENT('my-component-name', function(instance, config) {
     // Appends a new parser. The parser parses the value from the `input`, `textarea`
     // or `selectfor`. E.g. date. Works only with components which contain
     // `<input data-jc-bind`, `<textarea data-jc-bind` or
-    // `<select data-jc-bind`.
+    // `<select data-jc-bind`
+    // +v14.0.0 supports "prepend" argument: instance.parser(fn, [prepend]);
 
 
     instance.parser(value);
@@ -1011,6 +1014,7 @@ MAIN.parser(function(path, value, type) { // Example
     }
     return value;
 });
+// +v14.0.0 supports "prepend" argument MAIN.parser(fn, [prepend])
 
 var value = MAIN.parser('a-value', 'my.custom.path', 'number');
 // value will be contain parsed `a-value`
@@ -1023,6 +1027,7 @@ MAIN.formatter(function(path, value, type) { // Example
         return value.format('dd.MM.yyyy');
     return value;
 });
+// +v14.0.0 supports "prepend" argument MAIN.formatter(fn, [prepend])
 
 var value = MAIN.formatter('a-value', 'my.custom.path', 'number');
 // value will be contain formatted `a-value`
