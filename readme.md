@@ -1764,11 +1764,12 @@ STRINGIFY(obj, [trim]);
 // +v8.0.0
 
 
-PARSE(obj, [date]);
+PARSE(str, [date]);
 // The method parses JSON string (safe) into the new object.
 // {date} optional argument (default: true) converts date fields to Date instance.
 // returns {Object} or {null} (when the value isn't a JSON)
 // +v8.0.0
+// +v14.0.0 "str" can be string a jQuery selector which begins with "." or "#"
 
 
 ON(eventname, fn(a, b, n));

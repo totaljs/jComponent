@@ -5809,6 +5809,12 @@
 	};
 
 	W.PARSE = function(value, date) {
+
+		// Is selector?
+		var c = value.substring(0, 1);
+		if (c === '#' || c === '.')
+			return W.PARSE($(value).html(), date);
+
 		date === undefined && (date = M.defaults.jsondate);
 		try {
 			return JSON.parse(value, function(key, value) {
