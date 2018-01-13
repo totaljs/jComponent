@@ -11,7 +11,6 @@
 	var REGGROUP = /\{[a-z0-9\-,\s]+\}/i;
 	var REGBACKUP = /^backup\s/i;
 	var REGSEARCH = /[^a-zA-Zá-žÁ-Žа-яА-Я\d\s:]/g;
-	var ATTRSCOPE = '[data-jc-scope]';
 	var ATTRSCOPECTRL = '[data-jc-controller]';
 	var ATTRCOM = '[data-jc]';
 	var ATTRURL = '[data-jc-url]';
@@ -889,7 +888,9 @@
 				}
 
 				setTimeout(function() {
-					is && compile(response ? target : null);
+					// is && compile(response ? target : null);
+					// because of controllers and scopes
+					is && compile();
 					callback && WAIT(function() {
 						return C.is == false && C.controllers == 0;
 					}, callback);
@@ -2367,7 +2368,7 @@
 		return el.getAttribute ? el.getAttribute('data-jc' + name) : el.attrd('jc' + name);
 	}
 
-	function crawler(container, onComponent, level, controller) {
+	function crawler(container, onComponent, level, controller, scopes) {
 
 		if (container)
 			container = $(container).get(0);
@@ -2377,14 +2378,21 @@
 		if (!container)
 			return;
 
+		if (!scopes)
+			scopes = [];
+
 		var released = container ? attrcom(container, 'released') === 'true' : false;
 
 		var tmp = attrcom(container, 'controller');
 		if (tmp)
 			controller = tmp;
 
+		tmp = attrcom(container, 'scope');
+		if (tmp)
+			scopes.push(container);
+
 		var name = attrcom(container);
-		!container.$com && name != null && onComponent(name, container, 0, controller);
+		!container.$com && name != null && onComponent(name, container, 0, controller, scopes);
 
 		var arr = container.childNodes;
 		var sub = [];
@@ -2401,20 +2409,19 @@
 				if (!el.tagName)
 					continue;
 
-
 				el.childNodes.length && el.tagName !== 'SCRIPT' && REGCOM.test(el.innerHTML) && sub.push(el);
 
 				if (el.$com === undefined) {
 					released && el.setAttribute(ATTRREL, 'true');
 					name = attrcom(el);
-					name != null && onComponent(name || '', el, level, controller);
+					name != null && onComponent(name || '', el, level, controller, scopes);
 				}
 			}
 		}
 
 		for (var i = 0, length = sub.length; i < length; i++) {
 			el = sub[i];
-			el && crawler(el, onComponent, level, controller, released);
+			el && crawler(el, onComponent, level, controller, scopes);
 		}
 	}
 
@@ -2541,7 +2548,7 @@
 
 		var has = false;
 
-		crawler(container, function(name, dom, level, controller) {
+		crawler(container, function(name, dom, level, controller, scope) {
 
 			var el = $(dom);
 			has = true;
@@ -2554,7 +2561,6 @@
 
 			var instances = [];
 			var all = name.split(',');
-			var scope = el.closest(ATTRSCOPE);
 
 			all.forEach(function(name) {
 
@@ -2628,6 +2634,7 @@
 				var obj = new COM(com.name);
 				obj.global = com.shared;
 				obj.element = el;
+				obj.dom = el.get(0);
 				obj.setPath(attrcom(el, 'path') || obj._id, 1);
 				obj.config = {};
 
@@ -2666,7 +2673,7 @@
 					}
 
 					obj.scope = output.elements;
-					obj.$controller = attrcom(scope, 'controller') || controller;
+					obj.$controller = attrcom(scope[scope.length - 1], 'controller') || controller;
 					obj.pathscope = output.path;
 				}
 
@@ -2770,10 +2777,11 @@
 		}, nextpending);
 	}
 
-	function initscopes(scope) {
+	function initscopes(scopes) {
 
-		if (scope[0].$scopedata)
-			return scope[0].$scopedata;
+		var scope = scopes[scopes.length - 1];
+		if (scope.$scopedata)
+			return scope.$scopedata;
 
 		var path = attrcom(scope, 'scope');
 		var independent = path.substring(0, 1) === '!';
@@ -2784,17 +2792,8 @@
 		var arr = [scope];
 
 		if (!independent) {
-			var index = 0;
-			var parent = scope;
-			while (true) {
-				index++;
-				if (index > 2)
-					break;
-				parent = parent.parent().closest(ATTRSCOPE);
-				if (!parent.length)
-					break;
-				arr.push(parent);
-			}
+			for (var i = 0, length = scopes.length - 1; i < length; i++)
+				arr.push(scopes[i]);
 		}
 
 		var absolute = '';
@@ -2803,7 +2802,7 @@
 
 		for (var i = 0, length = arr.length; i < length; i++) {
 
-			var sc = arr[i][0];
+			var sc = arr[i];
 			var p = sc.$scope || attrcom(sc, 'scope');
 
 			sc.$initialized = true;
@@ -2840,13 +2839,14 @@
 			}
 
 			// Applies classes
-			var cls = attrcom(scope, 'class');
+			var cls = attrcom(sc, 'class');
 			if (cls) {
 				(function(cls) {
 					cls = cls.split(' ');
 					setTimeout(function() {
+						var el = $(sc);
 						for (var i = 0, length = cls.length; i < length; i++)
-							scope.tclass(cls[i]);
+							el.tclass(cls[i]);
 					}, 5);
 				})(cls);
 			}
@@ -2855,7 +2855,7 @@
 			tmp && W.EXEC(tmp, p, $(sc));
 		}
 
-		return scope[0].$scopedata;
+		return scope.$scopedata;
 	}
 
 	W.LOG = function() {
@@ -3714,6 +3714,7 @@
 			component.element.find('*').off();
 			component.element.remove();
 			component.element = null;
+			component.dom = null;
 			component.$removed = 2;
 			component.path = null;
 			component.setter = null;
@@ -3796,6 +3797,7 @@
 	function CONTAINER(element, mapping, config) {
 		var t = this;
 		t.element = typeof(element) === 'string' ? $(element.$env()) : element;
+		t.dom = t.element.get(0);
 		t.mapping = mapping;
 		t.config = {};
 		config && t.reconfigure(config, NOOP);
@@ -3887,6 +3889,7 @@
 			var clone = t.$backup.clone(true);
 			t.element.replaceWith(clone).remove();
 			t.element = clone;
+			t.dom = t.element.get(0);
 			t.refresh();
 		}
 		return t;
@@ -3898,6 +3901,7 @@
 		t.group = group;
 		t.container = container;
 		t.element = el;
+		t.dom = el.get(0);
 		t.selector = selector;
 		t.length = el.length;
 		!t.length && t.$refresh();
@@ -3917,6 +3921,7 @@
 			var clone = t.$backup.clone(true);
 			t.element.replaceWith(clone).remove();
 			t.element = clone;
+			t.dom = t.element.get(0);
 		}
 		return t;
 	};
@@ -3936,6 +3941,7 @@
 	PPP.refresh = function() {
 		var self = this;
 		self.element = typeof(self.selector) === 'function' ? self.selector(self.container.element) : self.container.element.find(self.selector);
+		self.dom = self.element.get(0);
 		self.length = self.element.length;
 		return self;
 	};
@@ -3944,6 +3950,7 @@
 		var self = this;
 		self.element.replaceWith(el);
 		self.element = el;
+		self.dom = el.get(0);
 		return self;
 	};
 
@@ -4006,6 +4013,7 @@
 		self.scope = '';
 		self.name = name;
 		self.element = null;
+		self.dom = null;
 		self.removed = false;
 	}
 
@@ -4522,7 +4530,8 @@
 			self.attrd('jc-replaced', 'true');
 
 		self.element = $(el);
-		self.element.get(0).$com = self;
+		self.dom = self.element.get(0);
+		self.dom.$com = self;
 		self.attrd('jc', self.name);
 		ctrl && self.attrd('jc-controller', ctrl);
 		scope && self.attrd('jc-scope', scope);
@@ -6258,8 +6267,10 @@
 			if (path)
 				obj.scope = path;
 
-			if (element)
+			if (element) {
 				obj.element = element;
+				obj.dom = element.get(0);
+			}
 
 			if (obj.$callback) {
 				C.controllers--;
