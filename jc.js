@@ -7546,12 +7546,12 @@
 		$.fn.scope = function() {
 			var data = this.get(0).$scopedata;
 			if (data)
-				return data;
+				return data.path;
 			var el = this.closest('[data-jc-scope]');
 			if (el.length) {
 				data = el.get(0).$scopedata;
 				if (data)
-					return data;
+					return data.path;
 			}
 			return '';
 		};
