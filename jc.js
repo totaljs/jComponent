@@ -7543,6 +7543,19 @@
 			}
 		}, 3500);
 
+		$.fn.scope = function() {
+			var data = this.get(0).$scopedata;
+			if (data)
+				return data;
+			var el = this.closest('[data-jc-scope]');
+			if (el.length) {
+				data = el.get(0).$scopedata;
+				if (data)
+					return data;
+			}
+			return '';
+		};
+
 		$.fn.aclass = function(a) {
 			return this.addClass(a);
 		};

@@ -2172,6 +2172,10 @@ if ($('selector').hclass('hasthisclass'))
 // +v11.2.0
 $('selector').attrd('title');
 
+// Gets a scope path
+// +v14.0.0
+// returns {String}
+$('selector').scope();
 ```
 
 ## Extending components
