@@ -843,6 +843,7 @@
 			};
 			scr.src = url;
 			d.getElementsByTagName('head')[0].appendChild(scr);
+			M.emit('import', url, $(scr));
 			return M;
 		}
 
@@ -854,6 +855,7 @@
 			d.getElementsByTagName('head')[0].appendChild(stl);
 			statics[url] = 2;
 			callback && setTimeout(callback, 200);
+			M.emit('import', url, $(stl));
 			return M;
 		}
 
@@ -894,6 +896,7 @@
 					callback && WAIT(function() {
 						return C.is == false && C.controllers == 0;
 					}, callback);
+					M.emit('import', url, target);
 				}, 10);
 			};
 

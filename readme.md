@@ -1409,6 +1409,14 @@ ON('error', function(data) {
 });
 
 
+ON('import', function(url, target) {
+    // Is executed when IMPORT() is performed
+    // +v14.0.0
+
+    // url {String}
+    // target {jQuery Element}
+});
+
 OFF('error', [path], [fn]);
 // Removes events
 // +v10.1.0
