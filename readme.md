@@ -594,11 +594,13 @@ COMPONENT('my-component-name', function(instance, config) {
     // Increments the value in the model.
     // path {String}: default: instance.path
     // type {Number}: default 1
+    // type {String}: +v14.0.0 can be used a string type
 
 
     instance.extend([path], value, [type]);
     instance.extend({ price: 0, name: 'jComponent' }); // example
     // Extends the value in the model. Only for objects.
+    // type {String}: +v14.0.0 can be used a string type
 
 
     instance.push([path], value, [type]);
@@ -607,6 +609,7 @@ COMPONENT('my-component-name', function(instance, config) {
     // Push the value (can be an Array) in the model. Only for arrays.
     // path {String}: default: instance.path
     // type {Number}: default 1
+    // type {String}: +v14.0.0 can be used a string type
 
 
     instance.attr(name, [value]);
@@ -1474,21 +1477,33 @@ CACHEPATH();
 REWRITE(path, value);
 // +v4.0.0 alias for MAIN.rewrite();
 
-SET(path, value, [sleep], [reset]);
+SET(path, value, [sleep/type], [reset]);
 // Sets the value into the model. `reset` argument resets the state
 // (dirty and validation).
+// @type {Number} change type according "instance.state" types
+// @type {String} +v14.0.0 can be defined own string type
+// IMPORTANT: type doesn't work with @reset
 
-EXTEND(path, value, [sleep], [reset]);
+EXTEND(path, value, [sleep/type], [reset]);
 // Extends the value in the model. `reset` argument resets the state
 // (dirty and validation).
+// @type {Number} change type according "instance.state" types
+// @type {String} +v14.0.0 can be defined own string type
+// IMPORTANT: type doesn't work with @reset
 
-PUSH(path, value, [sleep], [reset]);
+PUSH(path, value, [sleep/type], [reset]);
 // Push the value in the model (array). `reset` argument resets the state
 // (dirty and validation).
+// @type {Number} change type according "instance.state" types
+// @type {String} +v14.0.0 can be defined own string type
+// IMPORTANT: type doesn't work with @reset
 
-UPDATE(path, [sleep], [reset]);
+UPDATE(path, [sleep/type], [reset]);
 // Updates components setter according the path. `reset` argument resets the state
 // (dirty and validation).
+// @type {Number} change type according "instance.state" types
+// @type {String} +v14.0.0 can be defined own string type
+// IMPORTANT: type doesn't work with @reset
 
 NOTIFY(path1, path2, ...);
 // Notifies components setter according to the path (only fixed path).

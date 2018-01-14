@@ -1731,7 +1731,8 @@
 		if (n)
 			M.set(path, arr, type);
 		else if (is)
-			M.update(path, type);
+			M.update(path, undefined, type);
+
 		return M;
 	};
 
@@ -5853,9 +5854,10 @@
 
 	W.NOOP = function(){};
 	W.SET = function(path, value, timeout, reset) {
-		if (typeof(timeout) === 'boolean')
+		var t = typeof(timeout);
+		if (t === 'boolean')
 			return M.set(path, value, timeout);
-		if (!timeout || timeout < 5) // TYPE
+		if (!timeout || timeout < 10 || t !== 'number') // TYPE
 			return M.set(path, value, timeout);
 		setTimeout(function() {
 			M.set(path, value, reset);
@@ -5864,9 +5866,10 @@
 	};
 
 	W.INC = function(path, value, timeout, reset) {
-		if (typeof(timeout) === 'boolean')
+		var t = typeof(timeout);
+		if (t === 'boolean')
 			return M.inc(path, value, timeout);
-		if (!timeout || timeout < 5)
+		if (!timeout || timeout < 10 || t !== 'number') // TYPE
 			return M.inc(path, value, timeout);
 		setTimeout(function() {
 			M.inc(path, value, reset);
@@ -5875,9 +5878,10 @@
 	};
 
 	W.EXTEND = function(path, value, timeout, reset) {
-		if (typeof(timeout) === 'boolean')
+		var t = typeof(timeout);
+		if (t === 'boolean')
 			return M.extend(path, value, timeout);
-		if (!timeout || timeout < 5)
+		if (!timeout || timeout < 10 || t !== 'number') // TYPE
 			return M.extend(path, value, timeout);
 		setTimeout(function() {
 			M.extend(path, value, reset);
@@ -5886,9 +5890,10 @@
 	};
 
 	W.PUSH = function(path, value, timeout, reset) {
-		if (typeof(timeout) === 'boolean')
+		var t = typeof(timeout);
+		if (t === 'boolean')
 			return M.push(path, value, timeout);
-		if (!timeout || timeout < 5)
+		if (!timeout || timeout < 10 || t !== 'number') // TYPE
 			return M.push(path, value, timeout);
 		setTimeout(function() {
 			M.push(path, value, reset);
