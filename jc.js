@@ -2378,11 +2378,10 @@
 		if (!container)
 			return;
 
-		if (!scopes)
+		if (level == null || level === 0)
 			scopes = [];
 
 		var released = container ? attrcom(container, 'released') === 'true' : false;
-
 		var tmp = attrcom(container, 'controller');
 		if (tmp)
 			controller = tmp;
@@ -2790,10 +2789,12 @@
 			path = path.substring(1);
 
 		var arr = [scope];
-
 		if (!independent) {
-			for (var i = 0, length = scopes.length - 1; i < length; i++)
+			for (var i = scopes.length - 1; i > -1; i--) {
 				arr.push(scopes[i]);
+				if (scopes[i].getAttribute('data-jc-scope').substring(0, 1) === '!')
+					break;
+			}
 		}
 
 		var absolute = '';
@@ -2827,7 +2828,7 @@
 				absolute += (absolute ? '.' : '') + p;
 
 			sc.$scope = absolute;
-			sc.$scopedata = { path: absolute, elements: arr.slice(0, i + 1) };
+			sc.$scopedata = { path: absolute, elements: arr.slice(0, i + 1), independent: sc.$independent };
 
 			var tmp = attrcom(sc, 'value');
 			if (tmp) {
