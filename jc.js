@@ -70,6 +70,7 @@
 	var skips = {};
 	var $ready = setTimeout(load, 2);
 	var $loaded = false;
+	var $domready = false;
 	var schedulercounter = 0;
 	var mediaqueriescounter = 0;
 	var knockknockcounter = 0;
@@ -2818,21 +2819,21 @@
 			}
 
 			sc.$processed = true;
-			sc.$independent = p.substring(0, 1) === '!';
+			sc.$isolated = p.substring(0, 1) === '!';
 
-			if (sc.$independent)
+			if (sc.$isolated)
 				p = p.substring(1);
 
 			if (!p || p === '?')
 				p = GUID(25).replace(/\d/g, '');
 
-			if (sc.$independent)
+			if (sc.$isolated)
 				absolute = p;
 			else
 				absolute += (absolute ? '.' : '') + p;
 
 			sc.$scope = absolute;
-			sc.$scopedata = { path: absolute, elements: arr.slice(0, i + 1), independent: sc.$independent };
+			sc.$scopedata = { path: absolute, elements: arr.slice(0, i + 1), isolated: sc.$isolated };
 
 			var tmp = attrcom(sc, 'value');
 			if (tmp) {
@@ -3158,10 +3159,11 @@
 	}
 
 	function nextpending() {
+
 		var next = C.pending.shift();
 		if (next)
 			next();
-		else {
+		else if ($domready) {
 
 			if (C.ready)
 				C.is = false;
@@ -3192,7 +3194,10 @@
 
 		setTimeout2('$fallback', function() {
 			fallbackpending.splice(0).wait(function(item, next) {
-				W.IMPORTCACHE(MD.fallback.format(item), MD.fallbackcache, next);
+				if (M.$components[item])
+					next();
+				else
+					W.IMPORTCACHE(MD.fallback.format(item), MD.fallbackcache, next);
 			}, 3);
 		}, 100);
 	}
@@ -7851,6 +7856,7 @@
 			});
 
 			setTimeout(compile, 2);
+			$domready = true;
 		});
 	}, 100);
 
