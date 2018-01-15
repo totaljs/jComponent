@@ -7569,17 +7569,30 @@
 			}
 		}, 3500);
 
-		$.fn.scope = function() {
+		$.fn.scope = function(obj) {
 			var data = this.get(0).$scopedata;
 			if (data)
-				return data.path;
+				return obj ? data : data.path;
 			var el = this.closest('[data-jc-scope]');
 			if (el.length) {
 				data = el.get(0).$scopedata;
 				if (data)
-					return data.path;
+					return obj ? data : data.path;
 			}
 			return '';
+		};
+
+		$.fn.controller = function() {
+			var a = 'jc-controller';
+			var n = this.attrd(a);
+			if (n)
+				return CONTROLLER(n);
+			var el = this.closest('[data-' + a + ']');
+			if (el.length) {
+				n = el.attrd(a);
+				if (n)
+					return CONTROLLER(n);
+			}
 		};
 
 		$.fn.aclass = function(a) {

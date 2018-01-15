@@ -2200,6 +2200,12 @@ $('selector').attrd('title');
 // +v14.0.0
 // returns {String}
 $('selector').scope();
+$('selector').scope(true); // returns scope data object {Object}
+
+// Gets a parent controller
+// +v14.0.0
+// returns {Object}
+$('selector').controller();
 ```
 
 ## Extending components
