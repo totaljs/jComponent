@@ -2425,7 +2425,7 @@
 
 		for (var i = 0, length = sub.length; i < length; i++) {
 			el = sub[i];
-			el && crawler(el, onComponent, level, controller, scopes);
+			el && crawler(el, onComponent, level, controller, scopes && scopes.length ? scopes : []);
 		}
 	}
 
@@ -7575,6 +7575,10 @@
 		}, 3500);
 
 		$.fn.scope = function(obj) {
+
+			if (!this.length)
+				return obj ? null : '';
+
 			var data = this.get(0).$scopedata;
 			if (data)
 				return obj ? data : data.path;
@@ -7584,10 +7588,12 @@
 				if (data)
 					return obj ? data : data.path;
 			}
-			return '';
+			return obj ? null : '';
 		};
 
 		$.fn.controller = function() {
+			if (!this.length)
+				return;
 			var a = 'jc-controller';
 			var n = this.attrd(a);
 			if (n)
