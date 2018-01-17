@@ -1490,10 +1490,12 @@
 			// watches
 			length = path.length;
 
-			Object.keys(events).forEach(function(key) {
+			var keys = Object.keys(events);
+			for (var i = 0, length = keys.length; i < length; i++) {
+				var key = keys[i];
 				if (key === path || key.substring(0, length + 1) === path + '.')
 					updates[key] = get(key);
-			});
+			}
 
 			emitonly('watch', updates, type, path);
 		});
@@ -3243,13 +3245,12 @@
 
 		var unique = {};
 		var keys = Object.keys(paths);
-
 		for (var a = 0, al = keys.length; a < al; a++) {
 			var arr = keys[a].split('.');
 			var p = '';
 			for (var b = 0, bl = arr.length; b < bl; b++) {
 				p += (p ? '.' : '') + arr[b];
-				unique[p] = paths[p];
+				unique[p] = paths[p] === undefined ? GET(p) : paths[p];
 			}
 		}
 
