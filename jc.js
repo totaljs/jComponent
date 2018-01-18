@@ -1491,7 +1491,7 @@
 			length = path.length;
 
 			var keys = Object.keys(events);
-			for (var i = 0, length = keys.length; i < length; i++) {
+			for (var i = 0, il = keys.length; i < il; i++) {
 				var key = keys[i];
 				if (key === path || key.substring(0, length + 1) === path + '.')
 					updates[key] = get(key);
