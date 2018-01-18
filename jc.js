@@ -1251,8 +1251,8 @@
 		}
 
 		if (typeof(timeout) === 'boolean') {
+			clear = timeout === true;
 			timeout = 0;
-			clear = true;
 		}
 
 		var index = url.indexOf(' ');
