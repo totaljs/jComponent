@@ -964,7 +964,7 @@
 		return M;
 	};
 
-	W.USAGE = M.usage = function(name, expire, path, callback) {
+	W.LASTMODIFICATION = W.USAGE = M.usage = function(name, expire, path, callback) {
 
 		var type = typeof(expire);
 		if (type === 'string') {

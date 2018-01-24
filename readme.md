@@ -1855,6 +1855,12 @@ SKIP(pathA, [pathB], [pathN]);
 SKIP('users.form.firstname', 'users.form.lastname');
 // or
 SKIP('users.form.firstname, users.form.lastname', 'users.stats.logins, users.stats.orders');
+
+
+LASTMODIFICATION(property, date, [path], callback);
+// +v14.0.0
+// Alias for M.usage()
+// returns {Array of Components} if callback is not specific
 ```
 
 ## Device Width
