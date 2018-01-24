@@ -969,7 +969,7 @@
 		var type = typeof(expire);
 		if (type === 'string') {
 			var dt = W.DATETIME = new Date();
-			expire = dt.add('-' + expire).getTime();
+			expire = dt.add('-' + expire.env()).getTime();
 		} else if (type === 'number')
 			expire = Date.now() - expire;
 
@@ -982,7 +982,7 @@
 
 		if (path) {
 			M.findByPath(path, function(c) {
-				if (c.usage[name] > expire)
+				if (c.usage[name] < expire)
 					return;
 				if (callback)
 					callback(c);
@@ -991,7 +991,7 @@
 			});
 		} else {
 			M.components.forEach(function(c) {
-				if (c.usage[name] > expire)
+				if (c.usage[name] < expire)
 					return;
 				if (callback)
 					callback(c);
