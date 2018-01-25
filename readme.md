@@ -7,15 +7,15 @@
 
 # jQuery reusable component library
 
-> __Download__: more than 80 jComponents for free for everyone <https://componentator.com>
+> __Download__: more than 80 jComponents free for everyone <https://componentator.com>
 
 - Current version: `v14.1.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
 - works with [Bootstrap](http://getbootstrap.com/), [Foundation](http://foundation.zurb.com/), [Pure](http://purecss.io/), [Material Design](http://www.getmdl.io/) and others
-- you can wrap thousands plugins of jQuery via jComponent
-- best of use with [www.totaljs.com - Web framework for Node.js](http://www.totaljs.com)
+- you can wrap thousands of jQuery plugins via jComponent
+- best to use with [www.totaljs.com - Web framework for Node.js](http://www.totaljs.com)
 - [Download UI components](https://componentator.com)
 - [NEW: __Documentation__](https://wiki.totaljs.com/jcomponent/)
 
@@ -42,7 +42,7 @@ jComponent offers 3 libraries for development rich web applications:
 
 If you want to use jComponent on your presentation website - use `jc.min.js` only. If you create a rich web application, then use `jcta.min.js` because it contains template engine and for __SPA__ use `jctajr.min.js` because it contains template engine and HTML 5 history API.
 
-The components work is the browser `window.` scope. So each path in the form of `path.to.something` is automatically routed into `window.path.to.something`. The library automatically creates values according the binding path.
+The components root scope is the browser `window.`. So each path in the form of `path.to.something` is automatically routed to `window.path.to.something`. The library automatically creates values according to the binding path.
 
 The library can be loaded with `async` attribute.
 
@@ -56,7 +56,7 @@ The library can be loaded with `async` attribute.
 
 ## HTML definition
 
-The library searches all components according `data-component` attribute which must contain a component name and [the component must be defined in JavaScript](#component).
+The library finds all components by the `data-component` attributes which must contain a component name and [the component must be defined in JavaScript](#component).
 
 __IMPORTANT__: +v8.0.0 supports shorter names of attributes e.g. `data-jc=""` instead of `data-component=""` or `data-jc-path` instead of `data-component-path`.
 
@@ -89,11 +89,11 @@ Binding is represented as `data-jc-path` attribute. jComponent has own buil-in m
 ```html
 <div data-jc="textbox" data-jc-path="contactform.name">Name</div>
 
-<!-- empty "data-jc" can write only raw output according binding path -->
+<!-- empty "data-jc" can write only raw output according to the binding path -->
 <div data-jc="" data-jc-path="contactform.name"></div>
 ```
 
-The value `contactform.name` is linked to `window.contactform.name` (`window` is meant as a browser window instance). The library automatically creates value in __window scope__ if the value doesn't exist.
+The value `contactform.name` is linked to `window.contactform.name` (the `window` is a browser window instance). The library automatically creates value in __window scope__ if the value doesn't exist.
 
 ---
 
@@ -109,14 +109,14 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 <element data-jc-path="" />
 <!--
     It's not required. The attribute contains the binding path for binding values between
-    the component and a model, e.g. `form.name` (is binded to `window.form.name`) or
-    `user.age` (is binded to `window.user.age`).
+    the component and the model, e.g. `form.name` (is bound to `window.form.name`) or
+    `user.age` (is bound to `window.user.age`).
 -->
 
 <element data-jc-type="" />
 <!--
     It's not required. The attribute can contain a type of the component and you must define
-    own types manually e.g. `date`. jComponent internally supports `number` and `currency` type, so each string value is automatically converted into the `Number`.
+    custom types manually e.g. `date`. jComponent internally supports `number` and `currency` type, so each string value is automatically converted to the `Number`.
 -->
 
 <element data-jc-id="" />
@@ -126,13 +126,13 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
 <element data-jc-class="" />
 <!--
-    When is the component ready then the library automatically toggles the element
-    `class` according this attribute. It's not required.
+    It's not required. When the component is ready the library automatically toggles the element
+    `class` according to this attribute.
 -->
 
 <element data-jc-import="" />
 <!--
-    Must contain a valid URL address and the element must contatin data-jc="" attribute. This attribute download HTML or JS content and evaluates its. E.g. jComponent downloads
+    Must contain a valid URL address and the element must contain data-jc="" attribute. This attribute downloads HTML or JS content and evaluates it. E.g. jComponent downloads
     the content !!! only onetime !!! but the content can be used in many components.
 
     E.g.:
@@ -148,7 +148,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 
 <element data-jc-init="" />
 <!--
-    It's not required and must contain name of the function which is executed when the
+    It's not required. It must contain name of the function which is executed when the
     component is ready. `function init(component) {}`.
 -->
 
@@ -156,7 +156,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 <!--
     It's not required and can contain only URL address to the component template. The
     library automatically downloads the content and sends it to the component (into
-    the `make` delegate). IMPORTANT: uf the value starts with `.` or `#` or contains `[` then
+    the `make` delegate). IMPORTANT: if the value starts with `.` or `#` or contains `[` then
     jComponent uses DOM selector and the HTML of the selector will be the template.
 -->
 
@@ -253,7 +253,7 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
     rewrites `$` char in all attributes [data-jc-path] of all injected components
     according to `data-jc-path`.
 
-    If the URL starts with `ONCE http://...` then the content will downloaded only one time.
+    If the URL starts with `ONCE http://...` then the content will be downloaded only one time.
 
     - attribute "data-jc-cache" (+v9.1.0) is optional and default value is "session"
 -->
@@ -261,10 +261,10 @@ The value `contactform.name` is linked to `window.contactform.name` (`window` is
 <element data-jc-bind="" />
 <!--
     This attribute can be used only in `<input`, `<textarea` and `<select` tags. If the
-    component contains a said tag then the attribute ensures two way binding between
+    component contains a said tag then the attribute ensures two way data binding between
     the input (in component) and the model. You don't need to declare `setter` and
-    `getter` because the library to create it automatically. The value of this attribute
-    is empty like this `data-jc-bind=""`.
+    `getter` because the library will create it automatically. The value of this attribute
+    is empty `data-jc-bind=""`.
 -->
 
 <element data-jc-keypress="" />
@@ -348,7 +348,7 @@ COMPONENT('my-component-name', function(instance, config) {
 
     instance.path;
     // This property contains a binding path, it's read-only. The library
-    // binds value between component and the scope / model according this path.
+    // binds value between component and the scope / model according to this path.
 
     instance.id;
     // This property contains the component identificator from 'data-jc-id`
@@ -360,8 +360,8 @@ COMPONENT('my-component-name', function(instance, config) {
 
     instance.template;
     // This property contains the current `String` template. You can change the value
-    // of this property for anything. This property can contain URL address and the
-    // library download the template automatically.
+    // of this property to anything. This property can contain URL address and the
+    // library downloads the template automatically.
 
     instances.config;
     // {Object} contains parsed configuration from "data-jc-config" attribute
@@ -397,7 +397,7 @@ COMPONENT('my-component-name', function(instance, config) {
     // works only with instance.exec().
 
     instance.removed;
-    // Returns {Boolean} and it indicates whether the element is removed or no
+    // Returns {Boolean} and it indicates whether the element is removed or not.
 });
 ```
 
@@ -409,26 +409,26 @@ COMPONENT('my-component-name', function(instance, config) {
     // var instance = this;
 
     instance.init = function() {
-        // Is executed onetime for all same components.
+        // Is executed once the component is initialized.
     };
 
     instance.prerender = function(template) {
         // A prerender delegate is executed when the `data-jc-template` attribute
-        // contains URL to template. Is executed once.
+        // contains URL to template. It's executed once.
 
         this.template = Tangular.compile(template);
     });
 
 
     instance.make = function(template) {
-        // This delegate is executed when the component is creating an own instance.
+        // This delegate is executed when the component instance is created.
         // Is executed once.
 
         // if instance.prerender is not defined then the template will be {String}
-        // (only when the template will be defined).
+        // (only when the template is defined).
         this.template = Tangular.compile(template);
 
-        // If you return "true" then jComponent compiles new components now.
+        // Return "true" to tell jComponent to compile new nested components if there are any.
         // return true;
     };
 
@@ -440,7 +440,7 @@ COMPONENT('my-component-name', function(instance, config) {
 
     instance.configure = function(key, value) {
         // +v11.1.0
-        // it executed if "instance.reconfigure()" parses some value and "callback" argument is not defined
+        // it is executed if "instance.reconfigure()" parses some values and "callback" argument is not defined
     };
 
 
@@ -465,7 +465,7 @@ COMPONENT('my-component-name', function(instance, config) {
 
     instance.state = function(type, who) {
         // This delegate watches the value state. In this delegate you can change
-        // the `design` of the component according the value state.
+        // the `design` of the component according to the value state.
 
         // type === 0 : init
         // type === 1 : manually
@@ -485,10 +485,10 @@ COMPONENT('my-component-name', function(instance, config) {
 
     instance.setter = function(value, path, type) {
         // This delegate is executed when the value in the model is changed.
-        // This delegate has an own implementation for the components which
+        // This delegate has its own implementation for the components which
         // contain `<input data-jc-bind` or `<textarea data-jc-bind`
         // or `<select data-jc-bind` elements. If the value is changed
-        // according `data-jc-path` then the library executes this delegate.
+        // according to the `data-jc-path` then the library executes this delegate.
 
         // Argument: value
         // value === new value
@@ -517,10 +517,10 @@ COMPONENT('my-component-name', function(instance, config) {
         // The library executes this delegate when the `<input data-jc-bind`,
         // `<textarea data-jc-bind` or `<select data-jc-bind` change
         // the value in the current component. `getter` means --> get value
-        // from the input. This delegate has an own implementation, but you can
+        // from the input. This delegate has its own implementation, but you can
         // rewrite it like that:
 
-        // Sets a new value to the model according the binding path:
+        // Sets a new value to the model according to the binding path:
         instance.set(value);
     };
 
@@ -899,18 +899,18 @@ COMPONENT('my-component-name', function(instance, config) {
     // var instance = this;
 
     instance.on('#component-id', function(component) {
-        // This event is executed when is ready a new component
-        // with the `data-jc-id` attribute.
+        // This event is executed when a new component
+        // with the `data-jc-id` attribute is ready.
     });
 
     instance.on('@component-name', function(component) {
-        // This event is executed when is ready component.
+        // This event is executed when a component is ready.
         // If the HTML contains multiple components with the same name then
-        // the event is executed more times.
+        // the event is executed multiple times.
     });
 
     // WATCHING
-    // Watchs all changes
+    // Watches all changes
     instance.on('watch', '*', function(path, value, type) {
         // type === 0 : init
         // type === 1 : manually
@@ -918,7 +918,7 @@ COMPONENT('my-component-name', function(instance, config) {
         // type === 3 : by default
     });
 
-    // Watchs all changes
+    // Watches all changes
     instance.on('watch', 'model.user.name', function(path, value, type) {
         // type === 0 : init
         // type === 1 : manually
@@ -1254,7 +1254,7 @@ AJAX('METHOD URL', data, [callback(response, status, output) or path], [sleep], 
 // Is same as GET(), POST(), PUT(), DELETE(). When is throwed an error then
 // "response" is the empty object {}
 AJAXCACHE('METHOD URL', data, [callback(response, isFromCache) or path], [expire], [sleep], [clear]);
-// Is same as POSTCACHE, GETCACHE and now supports PUT, DELETE. If the callback is the
+// Is same as POSTCACHE, GETCACHE and now also supports PUT, DELETE. If the callback is the
 // function then the second argument will be `fromCache {Boolean}`.
 
 
@@ -2214,11 +2214,11 @@ $('selector').scope(true); // returns scope data object {Object}
 // returns {Object}
 $('selector').controller();
 
-// Same functionality like than FIND() method but this method finds components in this element
+// Same functionality like FIND() method but it only finds components in this element
 // +v14.1.0
 $('selector').FIND([selector], [many], [callback], [timeout]);
 
-// Same functionality like than SETTER() method but this method finds components in this element
+// Same functionality like SETTER() method but it only finds components in this element
 // +v14.1.0
 $('selector').SETTER([wait], selector, method_name, [valueA], [valueB], [valueN]);
 ```
