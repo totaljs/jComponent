@@ -9,7 +9,7 @@
 
 > __Download__: more than 80 jComponents for free for everyone <https://componentator.com>
 
-- Current version: `v13.0.5`
+- Current version: `v14.1.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -1664,9 +1664,10 @@ RECONFIGURE(selector, value);
 SETTER('#loading', 'hide', 1000);
 SETTER('textbox', 'set', 'NEW VALUE')('dropdown', 'set', 1)('checkbox', 'set', true);
 SETTER(true, 'textbox', 'set', 'NEW VALUE'); // waits for some `textbox` (waits only for 1 available instance)
-SETTER([wait], selector, propORmethodName, [valueA], [valueB], [valueN]);
+SETTER([wait], selector, method_name, [valueA], [valueB], [valueN]);
 // Returns SETTER.
-// +v4.0.0, [wait] +v9.0.0
+// +v4.0.0
+// +v9.0.0: [wait]
 
 SETTER($('#container'), 'reconfigure', 'icon:home');
 // +v11.4.0 supports jQuery element or DOM element
@@ -2212,6 +2213,14 @@ $('selector').scope(true); // returns scope data object {Object}
 // +v14.0.0
 // returns {Object}
 $('selector').controller();
+
+// Same functionality like than FIND() method but this method finds components in this element
+// +v14.1.0
+$('selector').FIND([selector], [many], [callback], [timeout]);
+
+// Same functionality like than SETTER() method but this method finds components in this element
+// +v14.1.0
+$('selector').SETTER([wait], selector, method_name, [valueA], [valueB], [valueN]);
 ```
 
 ## Extending components

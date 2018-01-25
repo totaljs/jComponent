@@ -127,7 +127,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v14.0.0';
+	M.version = 'v14.1.0';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2082,52 +2082,6 @@
 		return isCallback ? M : com;
 	};
 
-	M.findByName = function(name, path, callback) {
-		return name.lastIndexOf('@') === -1 ? M.findByProperty('$name', name, path, callback) : M.findByProperty('name', name, path, callback);
-	};
-
-	M.findById = function(id, path, callback) {
-		return M.findByProperty('id', id, path, callback);
-	};
-
-	M.findByProperty = function(prop, value, path, callback) {
-
-		var tp = typeof(path);
-		if (tp === 'function' || tp === 'boolean') {
-			callback = path;
-			path = undefined;
-		}
-
-		var tc = typeof(callback);
-		var isCallback = tc === 'function';
-		var isMany = tc === 'boolean';
-
-		var com;
-
-		if (isMany) {
-			callback = undefined;
-			com = [];
-		}
-
-		M.each(function(component) {
-
-			if (component[prop] !== value)
-				return;
-
-			if (isCallback)
-				return callback(component);
-
-			if (!isMany) {
-				com = component;
-				return true; // stop
-			}
-
-			com.push(component);
-		}, ctrl_path(path));
-
-		return isCallback ? M : com;
-	};
-
 	M.each = function(fn, path, watch, fix) {
 
 		var isAsterix = path ? path.lastIndexOf('*') !== -1 : false;
@@ -2429,6 +2383,100 @@
 			el = sub[i];
 			el && crawler(el, onComponent, level, controller, scopes && scopes.length ? scopes : []);
 		}
+	}
+
+	function findcomponent(container, selector, callback) {
+
+		var s = (selector ? selector.split(' ') : EMPTYARRAY);
+		var path = '';
+		var name = '';
+		var id = '';
+		var version = '';
+		var index;
+
+		for (var i = 0, length = s.length; i < length; i++) {
+			switch (s[i].substring(0, 1)) {
+				case '*':
+					break;
+				case '.':
+					// path
+					path = s[i].substring(1);
+					break;
+				case '#':
+					// id;
+					id = s[i].substring(1);
+					index = id.indexOf('[');
+					if (index !== -1) {
+						path = id.substring(index + 1, id.length - 1).trim();
+						id = id.substring(0, index);
+					}
+					break;
+				default:
+					// name
+					name = s[i];
+					index = name.indexOf('[');
+
+					if (index !== -1) {
+						path = name.substring(index + 1, name.length - 1).trim();
+						name = name.substring(0, index);
+					}
+
+					index = name.lastIndexOf('@');
+
+					if (index !== -1) {
+						version = name.substring(index + 1);
+						name = name.substring(0, index);
+					}
+
+					break;
+			}
+		}
+
+		var arr = callback ? undefined : [];
+		if (container) {
+			var stop = false;
+			container.find('[data-jc]').each(function() {
+				var com = this.$com;
+
+				if (stop || !com || !com.$loaded || com.$removed || (id && com.id !== id) || (name && com.$name !== name) || (version && com.$version !== version))
+					return;
+
+				if (path) {
+					if (com.path !== path) {
+						if (!com.pathscope || ((com.pathscope + '.' + path) !== com.path))
+							return;
+					}
+				}
+
+				if (callback) {
+					if (callback(com) === false)
+						stop = true;
+				} else
+					arr.push(com);
+			});
+		} else {
+			for (var i = 0, length = M.components.length; i < length; i++) {
+				var com = M.components[i];
+
+				if (!com || !com.$loaded || com.$removed || (id && com.id !== id) || (name && com.$name !== name) || (version && com.$version !== version))
+					return;
+
+				if (path) {
+					if (com.path !== path) {
+						if (!com.pathscope || ((com.pathscope + '.' + path) !== com.path))
+							return;
+					}
+				}
+
+				if (callback) {
+					if (callback(com) === false)
+						break;
+				} else
+					arr.push(com);
+			}
+		}
+
+		return arr;
 	}
 
 	function findcontrol(container, onElement, level) {
@@ -2835,7 +2883,7 @@
 				absolute += (absolute ? '.' : '') + p;
 
 			sc.$scope = absolute;
-			sc.$scopedata = { path: absolute, elements: arr.slice(0, i + 1), isolated: sc.$isolated };
+			sc.$scopedata = { path: absolute, elements: arr.slice(0, i + 1), isolated: sc.$isolated, element: $(arr[0]) };
 
 			var tmp = attrcom(sc, 'value');
 			if (tmp) {
@@ -6059,34 +6107,10 @@
 
 		// Element
 		if (typeof(value) === 'object') {
-
 			if (!(value instanceof jQuery))
 				value = $(value);
-
-			var selector = value.find('[data-jc]');
-
-			if (many) {
-				var arr = [];
-				selector.each(function() {
-					var com = this.$com;
-					com && !com.$removed && arr.push(this.$com);
-				});
-				return arr;
-			}
-
-			var index = 0;
-
-			while (true) {
-				var item = selector[index++];
-				if (item) {
-					var com = item.$com;
-					if (com && !com.$removed)
-						return com;
-				} else
-					break;
-			}
-
-			return null;
+			var output = findcomponent(value, '');
+			return many ? output : output[0];
 		}
 
 		var key, output;
@@ -6098,19 +6122,10 @@
 				return output;
 		}
 
-		if (value.charCodeAt(0) === 46) {
-			output = M.findByPath(value.substring(1), many);
-			!noCache && (cache[key] = output);
-			return output;
-		}
-
-		if (value.charCodeAt(0) === 35) {
-			output = M.findById(value.substring(1), undefined, many);
-			!noCache && (cache[key] = output);
-			return output;
-		}
-
-		output = M.findByName(value, undefined, many);
+		var r = findcomponent(null, value);
+		if (!many)
+			r = r[0];
+		output = r;
 		!noCache && (cache[key] = output);
 		return output;
 	};
@@ -7569,11 +7584,80 @@
 				}
 
 				var dt = now.add(item.expire);
-				FIND(item.selector, true).forEach(function(component) {
+				W.FIND(item.selector, true).forEach(function(component) {
 					component && component.usage.compare(item.name, dt) && item.callback(component);
 				});
 			}
 		}, 3500);
+
+		$.fn.FIND = function(selector, many, callback, timeout) {
+
+			if (typeof(many) === 'function') {
+				timeout = callback;
+				callback = many;
+				many = undefined;
+			}
+
+			var self = this;
+			var output = findcomponent(self, selector);
+			if (typeof(callback) === 'function') {
+
+				if (output.length) {
+					callback.call(output, output);
+					return self;
+				}
+
+				W.WAIT(function() {
+					var val = self.FIND(selector, many);
+					return val instanceof Array ? val.length > 0 : !!val;
+				}, function(err) {
+					// timeout
+					if (!err) {
+						var val = self.FIND(selector, many);
+						callback.call(val ? val : W, val);
+					}
+				}, 500, timeout);
+
+				return self;
+			}
+
+			return many ? output : output[0];
+		};
+
+		$.fn.SETTER = function(selector, name) {
+
+			var self = this;
+			var arg = [];
+			var beg = selector === true ? 3 : 2;
+
+			for (var i = beg; i < arguments.length; i++)
+				arg.push(arguments[i]);
+
+			if (beg === 3) {
+				selector = name;
+				name = arguments[2];
+				self.FIND(selector, true, function(arr) {
+					for (var i = 0, length = arr.length; i < length; i++) {
+						var o = arr[i];
+						if (typeof(o[name]) === 'function')
+							o[name].apply(o, arg);
+						else
+							o[name] = arg[0];
+					}
+				});
+			} else {
+				var arr = self.FIND(selector, true);
+				for (var i = 0, length = arr.length; i < length; i++) {
+					var o = arr[i];
+					if (typeof(o[name]) === 'function')
+						o[name].apply(o, arg);
+					else
+						o[name] = arg[0];
+				}
+			}
+
+			return self;
+		};
 
 		$.fn.scope = function(obj) {
 
