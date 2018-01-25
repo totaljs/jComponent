@@ -2457,14 +2457,12 @@
 		} else {
 			for (var i = 0, length = M.components.length; i < length; i++) {
 				var com = M.components[i];
-
 				if (!com || !com.$loaded || com.$removed || (id && com.id !== id) || (name && com.$name !== name) || (version && com.$version !== version))
-					return;
-
+					continue;
 				if (path) {
 					if (com.path !== path) {
 						if (!com.pathscope || ((com.pathscope + '.' + path) !== com.path))
-							return;
+							continue;
 					}
 				}
 
