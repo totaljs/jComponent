@@ -2203,11 +2203,10 @@ if ($('selector').hclass('hasthisclass'))
 // +v11.2.0
 $('selector').attrd('title');
 
-// Gets a scope path
+// Gets a scope data
 // +v14.0.0
-// returns {String}
+// returns {Object}
 $('selector').scope();
-$('selector').scope(true); // returns scope data object {Object}
 
 // Gets a parent controller
 // +v14.0.0
@@ -2221,6 +2220,29 @@ $('selector').FIND([selector], [many], [callback], [timeout]);
 // Same functionality like SETTER() method but it only finds components in this element
 // +v14.1.0
 $('selector').SETTER([wait], selector, method_name, [valueA], [valueB], [valueN]);
+```
+
+## Scope
+
+```javascript
+var scope = $('selector').scope();
+
+// Methods:
+scope.FIND(); // alias to FIND() but for scope element only
+scope.SETTER(); // alias to SETTER() but for scope element only
+scope.default([path], [timeout], [reset]); // alias to DEFAULT() but for scope path only
+scope.reset([path], [timeout]); // alias to RESET() but for scope path only
+scope.set(path, value, [timeout]); // alias to SET() but for scope path only
+scope.update([path], [timeout], [reset]); // alias to UPDATE() but for scope path only
+scope.get([path]); // Reads data according to the scope path
+scope.can([except]); // alias to CAN() but for scope components only
+scope.errors([except], [highlight]); // alias to ERRORS() but for scope components only
+
+// Elements:
+scope.elements; // {Array Object} of DOM elements (scope > scope > scope)
+scope.element;  // {Object} Current scope element
+scope.path;     // {String} Scope path
+scope.isolated; // {Boolean} determines if the scope is isolated/independent
 ```
 
 ## Extending components

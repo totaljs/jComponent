@@ -2695,17 +2695,18 @@
 
 				var tmp = attrcom(el, 'config');
 				tmp && obj.reconfigure(tmp, NOOP);
+
+				obj.$init = attrcom(el, 'init') || null;
+				obj.type = attrcom(el, 'type') || '';
+				obj.id = attrcom(el, 'id') || obj._id;
+				obj.siblings = all.length > 1;
+
 				com.declaration.call(obj, obj, obj.config);
 
 				if (obj.init && !statics[name]) {
 					statics[name] = true;
 					obj.init();
 				}
-
-				obj.$init = attrcom(el, 'init') || null;
-				obj.type = attrcom(el, 'type') || '';
-				obj.id = attrcom(el, 'id') || obj._id;
-				obj.siblings = all.length > 1;
 
 				dom.$com = obj;
 
@@ -2881,7 +2882,46 @@
 				absolute += (absolute ? '.' : '') + p;
 
 			sc.$scope = absolute;
-			sc.$scopedata = { path: absolute, elements: arr.slice(0, i + 1), isolated: sc.$isolated, element: $(arr[0]) };
+			var d = { path: absolute, elements: arr.slice(0, i + 1), isolated: sc.$isolated, element: $(arr[0]) };
+			sc.$scopedata = d;
+			d.FIND = function(selector, many, callback, timeout) {
+				return this.element.FIND(selector, many, callback, timeout);
+			};
+			d.SETTER = function(selector, name) {
+				return this.element.SETTER(selector, name);
+			};
+			d.reset = function(path, timeout) {
+				if (path > 0) {
+					timeout = path;
+					path = '';
+				}
+				return W.RESET(this.path + '.' + (path ? + path : '*'), timeout);
+			};
+			d.default = function(path, timeout) {
+				if (path > 0) {
+					timeout = path;
+					path = '';
+				}
+				return W.DEFAULT(this.path + '.' + (path ? path : '*'), timeout);
+			};
+			d.set = function(path, value, timeout, reset) {
+				return W.SET(this.path + (path ? '.' + path : ''), value, timeout, reset);
+			};
+			d.push = function(path, value, timeout, reset) {
+				return W.PUSH(this.path + (path ? '.' + path : ''), value, timeout, reset);
+			};
+			d.update = function(path, timeout, reset) {
+				return W.UPDATE(this.path + (path ? '.' + path : ''), timeout, reset);
+			};
+			d.get = function(path) {
+				return W.GET(this.path + (path ? '.' + path : ''));
+			};
+			d.can = function(except) {
+				return W.CAN(this.path + '.*', except);
+			};
+			d.errors = function(except, highlight) {
+				return W.ERRORS(this.path + '.*', except, highlight);
+			};
 
 			var tmp = attrcom(sc, 'value');
 			if (tmp) {
@@ -6660,7 +6700,7 @@
 		return output;
 	};
 
-	SP.params = function(obj) {
+	SP.params = SP.arg = function(obj) {
 		return this.replace(REGPARAMS, function(id) {
 			return get(id.substring(1, id.length - 1), obj);
 		});
@@ -7657,21 +7697,21 @@
 			return self;
 		};
 
-		$.fn.scope = function(obj) {
+		$.fn.scope = function() {
 
 			if (!this.length)
-				return obj ? null : '';
+				return null;
 
 			var data = this.get(0).$scopedata;
 			if (data)
-				return obj ? data : data.path;
+				return data;
 			var el = this.closest('[data-jc-scope]');
 			if (el.length) {
 				data = el.get(0).$scopedata;
 				if (data)
-					return obj ? data : data.path;
+					return data;
 			}
-			return obj ? null : '';
+			return null;
 		};
 
 		$.fn.controller = function() {
