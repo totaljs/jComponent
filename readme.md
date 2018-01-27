@@ -888,6 +888,12 @@ COMPONENT('my-component-name', function(instance, config) {
     instance.replace(el);
     // Replace a component element
     // +v9.0.0
+
+    instance.notmodified([fields])
+    // @fields {String Array} optional and determines which fields will be compared
+    // Determines if the value is modified according to "data-jc-path"
+    // return {Boolean}
+    // +v14.1.0
 });
 ```
 
@@ -2569,7 +2575,6 @@ attrs.attr('maxlength', 30);
 attrs.attr('readonly');
 console.log(attrs.join(' '));
 
-
 // Array.prototype.quicksort(property, [asc], [maxlength])
 // +v9.0.0
 // The method sorts array
@@ -2578,7 +2583,6 @@ console.log(attrs.join(' '));
 var arr = [{ name: 'Peter' }, { name: 'Anka' }, { name: 'Lucia' }, { name: 'Betty' }];
 arr.quicksort('name');
 arr.quicksort('name', false);
-
 
 // setTimeout2(key, function, timeout, [limit])
 // Clears timeout according the "key" (if exists) argument and registers new.

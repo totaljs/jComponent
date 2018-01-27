@@ -1355,7 +1355,7 @@
 		return M.dirty(path, except) || !M.valid(path, except);
 	};
 
-	W.INVALID = M.invalid = function(path, onlyComponent) {
+	W.INVALID = function(path, onlyComponent) {
 		path = ctrl_path(path);
 		if (!path)
 			return M;
@@ -1364,7 +1364,7 @@
 		return M;
 	};
 
-	W.BLOCKED = M.blocked = function(name, timeout, callback) {
+	W.BLOCKED = function(name, timeout, callback) {
 		var key = name;
 		var item = blocked[key];
 		var now = Date.now();
@@ -4421,6 +4421,11 @@
 		}
 	}
 
+	PPC.notmodified = function(fields) {
+		var t = this;
+		return W.NOTMODIFIED(t._id, t.get(), fields);
+	};
+
 	PPC.$waiter = PPP.$waiter = PPVC.$waiter = PCTRL.$waiter = function(prop, callback) {
 
 		var t = this;
@@ -5104,7 +5109,7 @@
 	};
 
 	PPC.invalid = function() {
-		return M.invalid(this.path, this);
+		return W.INVALID(this.path, this);
 	};
 
 	PPC.valid = function(value, noEmit) {
@@ -6378,7 +6383,7 @@
 		return self;
 	};
 
-	PCTRL.remove = PCTRL.kill = PCTRL.destroy = function() {
+	PCTRL.remove = PCTRL.kill = function() {
 
 		var self = this;
 
