@@ -2275,8 +2275,13 @@
 		if (!container)
 			return;
 
-		if (level == null || level === 0)
+		if (level == null || level === 0) {
 			scopes = [];
+			if (container !== document.body) {
+				var scope = $(container).closest('[data-jc-scope]');
+				scope && scope.length && scopes.push(scope.get(0));
+			}
+		}
 
 		var released = container ? attrcom(container, 'released') === 'true' : false;
 		var tmp = attrcom(container, 'controller');
@@ -2661,7 +2666,7 @@
 						obj.path = '';
 					}
 
-					obj.scope = output.elements;
+					obj.scope = output;
 					obj.$controller = attrcom(scope[scope.length - 1], 'controller') || controller;
 					obj.pathscope = output.path;
 				}

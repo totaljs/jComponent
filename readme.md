@@ -383,7 +383,8 @@ COMPONENT('my-component-name', function(instance, config) {
     // instance.usage.convert('minutes')
 
     instance.scope;
-    // +v11.0.0 The property contains plain array of all jQuery elements of scopes.
+    // REMOVED: +v11.0.0 The property contains plain array of all jQuery elements of scopes.
+    // +v14.1.1 The property returns a scope object
 
     instance.pathscope;
     // The property contains value of data-jc-scope element if exists.
