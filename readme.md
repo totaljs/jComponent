@@ -1617,7 +1617,7 @@ UPLOAD('/api/', formdata, function(response, err) { console.log(response); }); /
 // Uploads formdata and receive `JSON` from the server. When is throwed an error then
 // "response" is the empty object {}
 // +v11.2.0 supports environments e.g. UPLOAD('[adminurl]') replaces '[adminurl]' for ENV('adminurl') --> in url
-// +v12.0.2 supports methods, custom headers and middleware like AJAX()
+// +v12.0.2 supports methods and custom headers like AJAX()
 
 // +v11.0.0
 PING('METHOD URL', [interval]);
@@ -1628,32 +1628,6 @@ PING('METHOD URL', [interval]);
 // +v11.0.0 "M.defaults.pingdata = {}" can contain some data which they are sending as QueryString
 // +v11.2.0 supports environments e.g. PING('[adminurl]') replaces '[adminurl]' for ENV('adminurl') --> in url
 
-// +v4.0.0
-// Middleware
-
-// Registers MIDDLEWARE
-// MIDDLEWARE(name, fn(next, value, [path]));
-MIDDLEWARE('A-NAME', function(next, value, path) {
-    value.count++;
-    this.customvariable1 = true;
-    next();
-    // or for non-object values e.g. String, Number, Boolean
-    // next(NEW_VALUE);
-});
-
-MIDDLEWARE('B-NAME', function(next, value, path) {
-    value.count++;
-    this.customvariable2 = true;
-    // or for non-object values e.g. String, Number, Boolean
-    // next(NEW_VALUE);
-});
-
-// Executing middleware
-// MIDDLEWARE([String Array], [value], [callback])
-MIDDLEWARE(['A-NAME', 'B-NAME'], { count: 0 }, function(value, path) {
-    console.log(value);
-    console.log(this);
-});
 
 SCHEDULE();
 // Alias for MAIN.schedule();
@@ -1690,32 +1664,6 @@ EXEC('CONTROLLER/method_name', 'hide', 1000);
 EXEC('@CONTROLLER.method_name', 'hide', 1000);
 // Executes method in a controller
 // +v11.0.0
-
-// Registers a new workflow. Each workflow can have multiple implementation
-// and each implementation will be executed after another.
-// +v4.1.0
-WORKFLOW('name', function() {
-    // The function can have arguments
-    console.log('1');
-});
-
-WORKFLOW('name', function() {
-    console.log('2');
-});
-
-WORKFLOW('name', function() {
-    console.log('3');
-});
-
-// executing
-WORKFLOW('name')();
-// Output:
-// 1
-// 2
-// 3
-
-WORKFLOW('undefined')();
-// OUTPUT: nothing (without exception)
 
 
 // Creates a singleton instance.
@@ -2717,21 +2665,6 @@ arr.async({ counter: 0 }, function(response) {
     // or
     // console.log(this);
 });
-```
-
-## +v4.0.0 Middleware everywhere
-
-- middleware for all setters
-
-```html
-<div data-jc="your_component" data-jc-path="path.to.property #MIDDLEWARE1 #MIDDLEWARE 2"></div>
-```
-
-```javascript
-AJAX('GET /api/users/ #MIDDLEWARE1 #MIDDLEWARE2 #MIDDLEWARE3', 'users');
-SET('path.to.property #MIDDLEWARE1 #MIDDLEWARE2', 'new value');
-UPDATE('path.to.property #MIDDLEWARE1 #MIDDLEWARE2');
-REWRITE('path.to.property #MIDDLEWARE1 #MIDDLEWARE2', 'new value');
 ```
 
 ## +v4.0.0 Async loading components

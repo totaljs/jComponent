@@ -11,6 +11,7 @@
 	var REGGROUP = /\{[a-z0-9\-,\s]+\}/i;
 	var REGBACKUP = /^backup\s/i;
 	var REGSEARCH = /[^a-zA-Zá-žÁ-Žа-яА-Я\d\s:]/g;
+	var REGWILDCARD = /\.\*/;
 	var ATTRSCOPECTRL = '[data-jc-controller]';
 	var ATTRCOM = '[data-jc]';
 	var ATTRURL = '[data-jc-url]';
@@ -56,7 +57,6 @@
 	var singletons = {};
 	var schedulers = [];
 	var toggles = [];
-	var middlewares = {};
 	var versions = {};
 	var warnings = {};
 	var schemas = {};
@@ -64,7 +64,6 @@
 	var defaults = {};
 	var waits = {};
 	var operations = {};
-	var workflows = {};
 	var statics = {};
 	var ajaxconfig = {};
 	var skips = {};
@@ -127,7 +126,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v14.1.0';
+	M.version = 'v14.1.1';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -332,15 +331,6 @@
 
 		url = url.substring(index).trim().$env();
 
-		// middleware
-		index = url.indexOf(' #');
-		var mid = '';
-
-		if (index !== -1) {
-			mid = url.substring(index);
-			url = url.substring(0, index);
-		}
-
 		if (typeof(callback) === 'number') {
 			timeout = callback;
 			callback = undefined;
@@ -391,14 +381,11 @@
 					r = output.response = self.status + ': ' + self.statusText;
 
 				if (!output.error || M.defaults.ajaxerrors) {
-					middleware(mid, r, 1, function(path, value) {
-						typeof(callback) === 'string' ? remap(callback.env(), value) : (callback && callback(value, null, output));
-					});
-					return;
+					typeof(callback) === 'string' ? remap(callback.env(), r) : (callback && callback(r, null, output));
+				} else {
+					M.emit('error', output);
+					output.process && typeof(callback) === 'function' && callback({}, r, output);
 				}
-
-				M.emit('error', output);
-				output.process && typeof(callback) === 'function' && callback({}, r, output);
 
 			}, false);
 
@@ -1118,15 +1105,6 @@
 
 		url = url.substring(index).trim().$env();
 
-		// middleware
-		index = url.indexOf(' #');
-		var mid = '';
-
-		if (index !== -1) {
-			mid = url.substring(index);
-			url = url.substring(0, index);
-		}
-
 		setTimeout(function() {
 
 			if (method === 'GET' && data)
@@ -1186,12 +1164,12 @@
 				output.text = s;
 				output.headers = parseHeaders(req.getAllResponseHeaders());
 				M.emit('response', output);
-				(output.process && !output.cancel) && middleware(mid, output.response, 1, function(path, value) {
+				if (output.process && !output.cancel) {
 					if (typeof(callback) === 'string')
-						remap(callback, value);
+						remap(callback, output.response);
 					else
-						callback && callback.call(output, value, undefined, output);
-				});
+						callback && callback.call(output, output.response, undefined, output);
+				}
 			};
 
 			options.error = function(req, s) {
@@ -1215,12 +1193,10 @@
 					return;
 
 				if (M.defaults.ajaxerrors) {
-					middleware(mid, output.response, 1, function(path, value) {
-						if (typeof(callback) === 'string')
-							remap(callback, value);
-						else
-							callback && callback.call(output, value, output.status, output);
-					});
+					if (typeof(callback) === 'string')
+						remap(callback, output.response);
+					else
+						callback && callback.call(output, output.response, output.status, output);
 				} else {
 					M.emit('error', output);
 					typeof(callback) === 'function' && callback.call(output, output.response, output.status, output);
@@ -1394,112 +1370,106 @@
 		if (is)
 			path = path.substring(1);
 
-		path = path.replace(/\.\*/, '');
-		middleware(path, undefined, type, function(path) {
+		path = path.replace(REGWILDCARD, '');
+		if (!path)
+			return M;
 
-			if (!path)
+		var state = [];
+		var updates = {};
+
+		// Array prevention
+		var search = path;
+
+		if (type === undefined)
+			type = 1; // manually
+
+		var A = search.split('.');
+		var AL = A.length;
+		var isarr = path.indexOf('[') !== -1;
+
+		M.each(function(component) {
+
+			if (!component.path || component.disabled)
 				return;
 
-			var state = [];
-			var updates = {};
+			var isnot = true;
 
-			// Array prevention
-			var search = path;
-
-			if (type === undefined)
-				type = 1; // manually
-
-			var A = search.split('.');
-			var AL = A.length;
-			var isarr = path.indexOf('[') !== -1;
-
-			M.each(function(component) {
-
-				if (!component.path || component.disabled)
+			for (var i = 0; i < AL; i++) {
+				var item = component.$$path[i];
+				if (!item)
 					return;
-
-				var isnot = true;
-
-				for (var i = 0; i < AL; i++) {
-					var item = component.$$path[i];
-					if (!item)
+				if (isarr) {
+					if (item.raw !== A[i])
 						return;
-					if (isarr) {
-						if (item.raw !== A[i])
-							return;
-					} else {
-						if (item.path && item.path !== A[i])
-							return;
-						if (item.is)
-							isnot = false;
-					}
+				} else {
+					if (item.path && item.path !== A[i])
+						return;
+					if (item.is)
+						isnot = false;
 				}
-
-				if (isnot && component.$path && component.$path !== path)
-					return;
-
-				var result = component.get();
-				if (component.setter) {
-					component.$skip = false;
-					middleware(component.middleware, result, type, function(tmp, value) {
-						component.setterX(value, path, type);
-					});
-					component.$interaction(type);
-				}
-
-				component.$ready = true;
-
-				if (reset === true) {
-
-					if (!component.$dirty_disabled) {
-						component.$dirty = true;
-						component.$interaction(101);
-					}
-
-					if (!component.$valid_disabled) {
-						component.$valid = true;
-						component.$validate = false;
-						if (component.validate) {
-							component.$valid = component.validate(result);
-							component.$interaction(102);
-						}
-					}
-
-					findcontrol(component.element.get(0), function(el) {
-						if (el.$com !== component)
-							el.$com = component;
-						el.$value = el.$value2 = undefined;
-					});
-
-				} else if (component.validate && !component.$valid_disabled)
-					component.valid(component.validate(result), true);
-
-				component.state && state.push(component);
-				updates[component.path] = result;
-
-			}, is ? path : undefined, undefined, is);
-
-			reset && clear('dirty', 'valid');
-
-			if (!updates[path])
-				updates[path] = get(path);
-
-			for (var i = 0, length = state.length; i < length; i++)
-				state[i].state(1, 4);
-
-			// watches
-			length = path.length;
-
-			var keys = Object.keys(events);
-			for (var i = 0, il = keys.length; i < il; i++) {
-				var key = keys[i];
-				if (key === path || key.substring(0, length + 1) === path + '.')
-					updates[key] = get(key);
 			}
 
-			emitonly('watch', updates, type, path);
-		});
+			if (isnot && component.$path && component.$path !== path)
+				return;
 
+			var result = component.get();
+			if (component.setter) {
+				component.$skip = false;
+				component.setterX(result, path, type);
+				component.$interaction(type);
+			}
+
+			component.$ready = true;
+
+			if (reset === true) {
+
+				if (!component.$dirty_disabled) {
+					component.$dirty = true;
+					component.$interaction(101);
+				}
+
+				if (!component.$valid_disabled) {
+					component.$valid = true;
+					component.$validate = false;
+					if (component.validate) {
+						component.$valid = component.validate(result);
+						component.$interaction(102);
+					}
+				}
+
+				findcontrol(component.element.get(0), function(el) {
+					if (el.$com !== component)
+						el.$com = component;
+					el.$value = el.$value2 = undefined;
+				});
+
+			} else if (component.validate && !component.$valid_disabled)
+				component.valid(component.validate(result), true);
+
+			component.state && state.push(component);
+			updates[component.path] = result;
+
+		}, is ? path : undefined, undefined, is);
+
+		reset && clear('dirty', 'valid');
+
+		if (!updates[path])
+			updates[path] = get(path);
+
+		for (var i = 0, length = state.length; i < length; i++)
+			state[i].state(1, 4);
+
+		// watches
+		length = path.length;
+
+		var keys = Object.keys(events);
+		for (var i = 0, il = keys.length; i < il; i++) {
+			var key = keys[i];
+			if (key === path || key.substring(0, length + 1) === path + '.')
+				updates[key] = get(key);
+		}
+
+		emitonly('watch', updates, type, path);
 		return M;
 	};
 
@@ -1564,16 +1534,14 @@
 		return M;
 	};
 
-	W.REWRITE = M.rewrite = function(path, val) {
+	W.REWRITE = M.rewrite = function(path, value, type) {
 		path = ctrl_path(path);
-		path && middleware(path, val, 1, helper_rewrite);
+		if (path) {
+			set(path, value, type);
+			emitwildcard(path, value, type);
+		}
 		return M;
 	};
-
-	function helper_rewrite(path, value) {
-		set(path, value, 1);
-		emitwildcard(path, value, 1);
-	}
 
 	M.inc = function(path, value, type) {
 
@@ -1598,115 +1566,101 @@
 
 	// 1 === manually
 	// 2 === by input
-	M.set = function(path, val, type) {
+	M.set = function(path, value, type) {
 
 		path = ctrl_path(path);
 		if (!path)
 			return M;
 
-		middleware(path, val, type, function(path, value) {
+		var is = path.charCodeAt(0) === 33;
+		if (is)
+			path = path.substring(1);
 
-			var is = path.charCodeAt(0) === 33;
-			if (is)
-				path = path.substring(1);
+		if (path.charCodeAt(0) === 43) {
+			path = path.substring(1);
+			return M.push(path, value, type);
+		}
 
-			if (path.charCodeAt(0) === 43) {
-				path = path.substring(1);
-				return M.push(path, value, type);
+		if (!path)
+			return M;
+
+		var isUpdate = (typeof(value) === 'object' && !(value instanceof Array) && value != null);
+		var reset = type === true;
+		if (reset)
+			type = 1;
+
+		set(path, value, type);
+
+		if (isUpdate)
+			return M.update(path, reset, type, true);
+
+		var result = get(path);
+		var state = [];
+
+		if (type === undefined)
+			type = 1;
+
+		var A = path.split('.');
+		var AL = A.length;
+
+		M.each(function(component) {
+
+			if (!component.path || component.disabled)
+				return;
+
+			for (var i = 0; i < AL; i++) {
+				var item = component.$$path[i];
+				if (item && item.raw !== A[i])
+					return;
 			}
 
-			if (!path)
-				return M;
+			if (component.$path && component.$path !== path)
+				return;
 
-			var isUpdate = (typeof(value) === 'object' && !(value instanceof Array) && value != null);
-			var reset = type === true;
-			if (reset)
-				type = 1;
-
-			set(path, value, type);
-
-			if (isUpdate)
-				return M.update(path, reset, type, true);
-
-			// Is changed value by e.g. middleware?
-			// If yes the control/input will be redrawn
-			var isChanged = val !== value;
-			var result = get(path);
-			var state = [];
-
-			if (type === undefined)
-				type = 1;
-
-			var A = path.split('.');
-			var AL = A.length;
-
-			M.each(function(component) {
-
-				if (!component.path || component.disabled)
-					return;
-
-				for (var i = 0; i < AL; i++) {
-					var item = component.$$path[i];
-					if (item && item.raw !== A[i])
-						return;
+			if (component.path === path) {
+				if (component.setter) {
+					component.setterX(result, path, type);
+					component.$interaction(type);
 				}
+			} else {
+				if (component.setter) {
+					component.setterX(get(component.path), path, type);
+					component.$interaction(type);
+				}
+			}
 
-				if (component.$path && component.$path !== path)
-					return;
+			component.$ready = true;
+			component.state && state.push(component);
 
-				if (component.path === path) {
-					if (component.setter) {
-						if (isChanged)
-							component.$skip = false;
-						middleware(component.middleware, result, type, function(tmp, value) {
-							component.setterX(value, path, type);
-						});
-						component.$interaction(type);
-					}
-				} else {
-					if (component.setter) {
-						if (isChanged)
-							component.$skip = false;
-						middleware(component.middleware, get(component.path), type, function(tmp, value) {
-							component.setterX(value, path, type);
-						});
-						component.$interaction(type);
+			if (reset) {
+				if (!component.$dirty_disabled)
+					component.$dirty = true;
+				if (!component.$valid_disabled) {
+					component.$valid = true;
+					component.$validate = false;
+					if (component.validate) {
+						component.$valid = component.validate(result);
+						component.$interaction(102);
 					}
 				}
 
-				component.$ready = true;
-				component.state && state.push(component);
+				findcontrol(component.element.get(0), function(el) {
+					if (el.$com !== component)
+						el.$com = component;
+					el.$value = el.$value2 = undefined;
+				});
 
-				if (reset) {
-					if (!component.$dirty_disabled)
-						component.$dirty = true;
-					if (!component.$valid_disabled) {
-						component.$valid = true;
-						component.$validate = false;
-						if (component.validate) {
-							component.$valid = component.validate(result);
-							component.$interaction(102);
-						}
-					}
+			} else if (component.validate && !component.$valid_disabled)
+				component.valid(component.validate(result), true);
 
-					findcontrol(component.element.get(0), function(el) {
-						if (el.$com !== component)
-							el.$com = component;
-						el.$value = el.$value2 = undefined;
-					});
+		}, path, true, is);
 
-				} else if (component.validate && !component.$valid_disabled)
-					component.valid(component.validate(result), true);
+		reset && clear('dirty', 'valid');
 
-			}, path, true, is);
+		for (var i = 0, length = state.length; i < length; i++)
+			state[i].state(type, 5);
 
-			reset && clear('dirty', 'valid');
-
-			for (var i = 0, length = state.length; i < length; i++)
-				state[i].state(type, 5);
-
-			emit('watch', path, undefined, type, is);
-		});
+		emit('watch', path, undefined, type, is);
 		return M;
 	};
 
@@ -2245,24 +2199,6 @@
 			mq.oldH = ch;
 			mq.fn(cw, ch, type, mq.id);
 		}
-	}
-
-	function middleware(path, value, type, callback) {
-
-		var index = path.indexOf(' #');
-		if (index === -1) {
-			callback(path, value);
-			return;
-		}
-
-		var a = path.substring(0, index);
-
-		if (value === undefined)
-			value = get(a);
-
-		W.MIDDLEWARE(path.substring(index + 1).trim().replace(/#/g, '').split(' '), value, function(value) {
-			callback(a, value);
-		}, a);
 	}
 
 	function compare(a, b, type, ak, bk, isarray) {
@@ -3187,10 +3123,8 @@
 					obj.$interaction(0);
 				else {
 					obj.$binded = true;
-					middleware(obj.path + obj.middleware, value, 0, function(path, value) {
-						obj.setterX(value, obj.path, 0);
-						obj.$interaction(0);
-					});
+					obj.setterX(value, obj.path, 0);
+					obj.$interaction(0);
 				}
 			}
 		} else
@@ -3605,9 +3539,7 @@
 			path = path.substring(index + 3).trim();
 		}
 
-		middleware(path, value, 1, function(path, value) {
-			M.set(path, value);
-		});
+		M.set(path, value);
 	}
 
 	function set(path, value) {
@@ -4274,7 +4206,6 @@
 		self.$ready = false;
 		self.$path;
 		self.trim = true;
-		self.middleware = ''; // internal
 		self.$released = false;
 		self.$bindreleased = true;
 
@@ -4910,7 +4841,6 @@
 		if (isOperation(path)) {
 			self.$$path = self.$path = EMPTYARRAY;
 			self.path = path;
-			self.middleware = '';
 			return self;
 		}
 
@@ -4923,14 +4853,6 @@
 			fixed = path;
 		}
 
-		var index = path.indexOf(' #');
-
-		if (index !== -1) {
-			self.middleware = path.substring(index);
-			path = path.substring(0, index);
-		} else if (type !== 2)
-			self.middleware = '';
-
 		self.path = path;
 		self.$path = fixed;
 		var arr = path.split('.');
@@ -4939,7 +4861,7 @@
 		for (var i = 0, length = arr.length; i < length; i++) {
 			var item = arr[i];
 			var raw = item;
-			index = item.indexOf('[');
+			var index = item.indexOf('[');
 			if (index !== -1)
 				item = item.substring(0, index);
 			pre.push({ path: item, raw: raw, is: index !== -1 });
@@ -5545,30 +5467,6 @@
 		return w >= d.md.min && w <= d.md.max ? 'md' : w >= d.sm.min && w <= d.sm.max ? 'sm' : w > d.lg.min ? 'lg' : w <= d.xs.max ? 'xs' : '';
 	};
 
-	W.WORKFLOW = function(name, fn) {
-
-		if (!fn) {
-			if (!workflows)
-				return NOOP;
-			var w = workflows[name];
-			if (!(w instanceof Array))
-				return NOOP;
-			return function() {
-				for (var i = 0, length = w.length; i < length; i++)
-					w[i].apply(this, arguments);
-			};
-		}
-
-		if (!workflows)
-			workflows = {};
-
-		var w = workflows[name];
-		if (w)
-			w.push(fn);
-		else
-			workflows[name] = [fn];
-	};
-
 	W.MEDIAQUERY = function(query, element, fn) {
 
 		if (typeof(query) === 'number') {
@@ -5659,38 +5557,6 @@
 
 		mediaqueries.push(obj);
 		return obj.id;
-	};
-
-	W.MIDDLEWARE = function(name, value, callback, path) {
-
-		if (!(name instanceof Array)) {
-			middlewares[name] = value;
-			return;
-		}
-
-		if (typeof(callback) !== 'function') {
-			var tmp = callback;
-			callback = value;
-			value = tmp;
-		}
-
-		var context = {};
-		name.waitFor(function(name, next) {
-
-			var mid = middlewares[name];
-
-			if (mid) {
-				mid.call(context, next, value, path);
-				return;
-			}
-
-			!warnings[name] && warn('Components: Middleware "{0}" not found.'.format(name));
-			warnings[name] = true;
-
-			next();
-		}, function(val) {
-			callback && callback.call(context, val !== undefined ? val : value, path);
-		});
 	};
 
 	W.FN = function(exp) {
