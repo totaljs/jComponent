@@ -5876,6 +5876,7 @@
 	W.UPTODATE = function(period, url, callback, condition) {
 
 		if (typeof(url) === 'function') {
+			condition = callback;
 			callback = url;
 			url = '';
 		}
