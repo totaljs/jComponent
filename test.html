@@ -21,7 +21,7 @@
 	<div data-jc-scope="!users">
 		<div data-jc="a" data-jc-path="grid"></div>
 		<div data-jc-scope="form">
-			<div data-jc="a" data-jc-path="name #A"></div>
+			<div data-jc="a" data-jc-path="name"></div>
 			<div data-jc="a" data-jc-path="age"></div>
 			<div data-jc="a" data-jc-path="year"></div>
 		</div>
@@ -77,17 +77,6 @@
 			};
 		});
 
-		MIDDLEWARE('A', function(next, value, path, type) {
-			console.log('M:', value, path);
-			if (typeof(value) === 'object') {
-				value.value = 3;
-				next();
-			} else {
-				next('MIDDLEWARE VALUE');
-			}
-			// next('petersirka@gmail.com');
-		});
-
 		ON('pages#refresh', a);
 		ON('pages#refresh', b);
 
@@ -125,6 +114,7 @@
 			};
 		});
 */
+
 	</script>
 
 </body>
