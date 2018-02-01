@@ -9,7 +9,7 @@
 
 > __Download__: more than 80 jComponents free for everyone <https://componentator.com>
 
-- Current version: `v14.1.0`
+- Current version: `v14.1.1`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -1621,14 +1621,15 @@ UPLOAD('/api/', formdata, function(response, err) { console.log(response); }); /
 // +v12.0.2 supports methods and custom headers like AJAX()
 
 // +v11.0.0
-PING('METHOD URL', [interval]);
+PING('METHOD URL', [interval], [execute]);
 // Ping pings an URL in the specific interval (default: 30000 (30 seconds)).
 // The function returns setInterval identificator.
 // Ping request contains custom header `X-Ping`: `CURRENT RELATIVE URL ADDRESS`
 // +v11.0.0 (IMPORTANT) A response (String) will be evaluted as JAVASCRIPT
 // +v11.0.0 "M.defaults.pingdata = {}" can contain some data which they are sending as QueryString
 // +v11.2.0 supports environments e.g. PING('[adminurl]') replaces '[adminurl]' for ENV('adminurl') --> in url
-
+// +v14.1.1 supports [execute] argument and the method performs the request immediately
+// +v14.1.1 headers are lower-case + new headers "x-cookies" ("1" = true, "0" = false) and "x-referrer"
 
 SCHEDULE();
 // Alias for MAIN.schedule();
@@ -1763,10 +1764,11 @@ EMIT(eventname, [arg1], [arg2], [arg..N]);
 
 UPTODATE('1 day');
 UPTODATE('1 day', '/products/');
-// UPTODATE(perid, [url], [callback])
+// UPTODATE(perid, [url], [callback(timeout_id)], [condition])
 // Performs a refresh, great feature for SPA applications
 // +v9.0.0
 // +v11.2.0 supports environments e.g. UPTODATE('[adminurl]') replaces '[adminurl]' for ENV('adminurl') --> in url
+// +v14.1.1 supports [condition] argument and [timeout_id] param (for prevent redirecting) in [callback] function
 
 var can = CAN('users.form.*');
 can && submit();

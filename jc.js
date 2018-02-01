@@ -5873,7 +5873,7 @@
 		return M.default(path, timeout, null, reset);
 	};
 
-	W.UPTODATE = function(period, url, callback) {
+	W.UPTODATE = function(period, url, callback, condition) {
 
 		if (typeof(url) === 'function') {
 			callback = url;
@@ -5882,22 +5882,29 @@
 
 		var dt = new Date().add(period);
 		ON('knockknock', function() {
-			if (dt > W.DATETIME || document.hasFocus())
+			if (dt > W.DATETIME)
 				return;
-			setTimeout(function() {
+			if (!condition || !condition())
+				return;
+			var id = setTimeout(function() {
 				if (url)
 					W.location.href = url.$env();
 				else
 					W.location.reload(true);
 			}, 5000);
-			callback && callback();
+			callback && callback(id);
 		});
 	};
 
-	W.PING = function(url, timeout) {
+	W.PING = function(url, timeout, execute) {
 
 		if (navigator.onLine != null && !navigator.onLine)
 			return;
+
+		if (typeof(timeout) === 'boolean') {
+			execute = timeout;
+			timeout = 0;
+		}
 
 		url = url.$env();
 
@@ -5921,7 +5928,7 @@
 		}
 
 		options.type = method;
-		options.headers = { 'X-Ping': location.pathname };
+		options.headers = { 'x-ping': location.pathname, 'x-cookies': navigator.cookieEnabled ? '1' : '0', 'x-referrer': document.referrer };
 
 		options.success = function(r) {
 			if (r) {
@@ -5936,6 +5943,8 @@
 				location.reload(true);
 			}, 2000);
 		};
+
+		execute && $.ajax(makeurl(url), options);
 
 		return setInterval(function() {
 			$.ajax(makeurl(url), options);
