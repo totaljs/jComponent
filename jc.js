@@ -6055,10 +6055,11 @@
 	};
 
 	W.UPDATE = function(path, timeout, reset) {
-		if (typeof(timeout) === 'boolean')
+		var t = typeof(timeout);
+		if (t === 'boolean')
 			return M.update(path, timeout);
-		if (!timeout)
-			return M.update(path, reset);
+		if (!timeout || timeout < 10 || t !== 'number') // TYPE
+			return M.update(path, reset, timeout);
 		setTimeout(function() {
 			M.update(path, reset);
 		}, timeout);
