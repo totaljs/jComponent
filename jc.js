@@ -4120,6 +4120,11 @@
 			path = '';
 		}
 
+		if (reset != null && typeof(reset) !== 'boolean') {
+			type = reset;
+			reset = true;
+		}
+
 		M.update(self.path(path), reset, type);
 		return self;
 	};
@@ -4193,6 +4198,13 @@
 		return get(self.path(path));
 	};
 
+	PCTRL.FIND = function(selector, many, callback, timeout) {
+		return this.element.FIND(selector, many, callback, timeout);
+	};
+
+	PCTRL.SETTER = function(selector, name) {
+		return this.element.SETTER(selector, name);
+	};
 
 	// ===============================================================
 	// COMPONENT DECLARATION
