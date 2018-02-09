@@ -1819,6 +1819,33 @@ LASTMODIFICATION(property, date, [path], callback);
 // +v14.0.0
 // Alias for M.usage()
 // returns {Array of Components} if callback is not specific
+
+
+// Transformations
+// v14.1.1
+CREATETRANSFORM('uppercase', function(value, next) {
+    next(value.toUpperCase());
+});
+
+CREATETRANSFORM('twice', function(value, next) {
+    next(value + value);
+});
+
+// Run transform
+TRANSFORM('uppercase, twice', 'peter', function(value) {
+    console.log(value);
+});
+
+// or
+TRANSFORM('uppercase, twice', 'peter', 'path.to.bind');
+
+// or for AJAX with a path
+AJAX('GET /api/something/', TRANSFORM('uppercase, twice', 'path.to.bind'));
+
+// or for AJAX with a function
+AJAX('GET /api/something/', TRANSFORM('uppercase, twice', function(value) {
+    console.log(value);
+}));
 ```
 
 ## Device Width

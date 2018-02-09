@@ -160,16 +160,20 @@
 
 	M.compile = compile;
 
+	W.CREATETRANSFORM = function(name, callback) {
+		M.transforms[name] = callback;
+		return W;
+	};
+
 	W.TRANSFORM = function(name, value, callback) {
 
 		var m = M.transforms;
 
-		if (callback === undefined) {
-			if (value == null)
-				delete m[name];
-			else
-				m[name] = value;
-			return W;
+		if (arguments.length === 2) {
+			// name + value (is callback)
+			return function(val) {
+				W.TRANSFORM(name, val, value);
+			};
 		}
 
 		var cb = function() {
