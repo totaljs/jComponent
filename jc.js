@@ -135,6 +135,7 @@
 	M.components = [];
 	M.$formatter = [];
 	M.$parser = [];
+	M.transforms = {};
 	L.items = M.controllers = {};
 	M.compiler = C;
 
@@ -158,6 +159,56 @@
 	W.MAN.set = set;
 
 	M.compile = compile;
+
+	W.TRANSFORM = function(name, value, callback) {
+
+		var m = M.transforms;
+
+		if (callback === undefined) {
+			if (value == null)
+				delete m[name];
+			else
+				m[name] = value;
+			return W;
+		}
+
+		var cb = function() {
+			if (typeof(callback) === 'string')
+				SET(callback, value);
+			else
+				callback(value);
+		};
+
+		var keys = name.split(',');
+		var async = [];
+		var context = {};
+
+		context.value = value;
+
+		for (var i = 0, length = keys.length; i < length; i++) {
+			var key = keys[i].trim();
+			key && m[key] && async.push(m[key]);
+		}
+
+		if (async.length === 1)
+			async[0].call(context, value, function(val) {
+				if (val !== undefined)
+					value = val;
+				cb();
+			});
+		else if (async.length) {
+			async.wait(function(fn, next) {
+				fn.call(context, value, function(val) {
+					if (val !== undefined)
+						value = val;
+					next();
+				});
+			}, cb);
+		} else
+			cb();
+
+		return W;
+	};
 
 	// ===============================================================
 	// MAIN FUNCTIONS
