@@ -4426,6 +4426,7 @@
 
 	PPC.notmodified = function(fields) {
 		var t = this;
+		typeof(fields) === 'string' && (fields = [fields]);
 		return W.NOTMODIFIED(t._id, t.get(), fields);
 	};
 
