@@ -1846,6 +1846,10 @@ AJAX('GET /api/something/', TRANSFORM('uppercase, twice', 'path.to.bind'));
 AJAX('GET /api/something/', TRANSFORM('uppercase, twice', function(value) {
     console.log(value);
 }));
+
+CLEARCACHE();
+// Removes localStorage cache
+
 ```
 
 ## Device Width
@@ -2101,6 +2105,7 @@ CONTROLLER('Users', function(instance) {
     instance.watch('path', fn(path, value, type), init); // +v11.5.0 Enables watching of property within controller's scope
     instance.unwatch('path', [fn]);               // +v11.5.0 Unbinds watching
     instance.change([path], [isChange]);          // +v12.0.4 Can perform a change
+    instance.released();                          // +14.1.1 determines released state (the parent component must support releasing)
 
     instance.FIND(selector, [many], [callback], [timeout]);  // +v14.1.1 performs FIND() for the controller elements
     instance.SETTER(selector, name, [arg1], [argN]);         // +v14.1.1 performs SETTER() for the controller elements

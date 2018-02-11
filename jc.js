@@ -1351,6 +1351,17 @@
 		return M;
 	};
 
+	W.CLEARCACHE = function() {
+		if (!W.isPRIVATEMODE) {
+			var rem = localStorage.removeItem;
+			var k = M.$localstorage;
+			rem(k);
+			rem(k + '.cache');
+			rem(k + '.blocked');
+		}
+		return M;
+	};
+
 	W.ERRORS = M.errors = function(path, except, highlight) {
 
 		if (path instanceof Array) {
@@ -3278,8 +3289,10 @@
 			fallbackpending.splice(0).wait(function(item, next) {
 				if (M.$components[item])
 					next();
-				else
+				else {
+					WARN('jComponent download: ' + item);
 					W.IMPORTCACHE(MD.fallback.format(item), MD.fallbackcache, next);
+				}
 			}, 3);
 		}, 100);
 	}
@@ -5835,6 +5848,9 @@
 		var tf = typeof(fields);
 		return JSON.stringify(obj, function(key, value) {
 
+			if (!key)
+				return value;
+
 			if (fields) {
 				if (fields instanceof Array) {
 					if (fields.indexOf(key) === -1)
@@ -5854,6 +5870,7 @@
 				} else if (value === false || value == null)
 					return undefined;
 			}
+
 			return value;
 		});
 	};
@@ -6040,7 +6057,8 @@
 		if (fields)
 			path = path.concat('#', fields);
 
-		var hash = W.HASH(W.STRINGIFY(value, false, fields));
+		var s = W.STRINGIFY(value, false, fields);
+		var hash = W.HASH(s);
 		var key = 'notmodified.' + path;
 
 		if (cache[key] === hash)
@@ -6374,6 +6392,13 @@
 			clear();
 			setTimeout(cleaner, 500);
 		}, 1000, self.scope);
+	};
+
+	PCTRL.released = function() {
+		var self = this;
+		if (!self.$parent)
+			self.$parent = $(self.element.closest('[data-jc-released]').get(0));
+		return self.$parent.attrd('jc-released') === 'true';
 	};
 
 	PCTRL.exec = function(name, a, b, c, d, e) {
