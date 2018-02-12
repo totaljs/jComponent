@@ -126,7 +126,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v14.1.1';
+	M.version = 'v14.1.2';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7551,6 +7551,8 @@
 		}
 
 		if (type === 'median') {
+			if (!output)
+				output = [0];
 			output.sort(function(a, b) {
 				return a - b;
 			});
