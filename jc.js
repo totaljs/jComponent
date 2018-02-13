@@ -21,6 +21,7 @@
 	var SELINPUT = 'input,textarea,select';
 	var DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
 	var ACTRLS = { INPUT: true, TEXTAREA: true, SELECT: true };
+	var OK = Object.keys;
 
 	var LCOMPARER = window.Intl ? window.Intl.Collator().compare : function(a, b) {
 		return a.localeCompare(b);
@@ -221,7 +222,7 @@
 	M.ENV = W.ENV = function(name, value) {
 
 		if (typeof(name) === 'object') {
-			name && Object.keys(name).forEach(function(key) {
+			name && OK(name).forEach(function(key) {
 				M.defaults.environment[key] = name[key];
 				M.emit('environment', key, name[key]);
 			});
@@ -458,12 +459,12 @@
 
 			xhr.open(method, makeurl(url));
 
-			var keys = Object.keys(M.defaults.headers);
+			var keys = OK(M.defaults.headers);
 			for (var i = 0; i < keys.length; i++)
 				xhr.setRequestHeader(keys[i].env(), M.defaults.headers[keys[i]].env());
 
 			if (headers) {
-				var keys = Object.keys(headers);
+				var keys = OK(headers);
 				for (var i = 0; i < keys.length; i++)
 					xhr.setRequestHeader(keys[i], headers[keys[i]]);
 			}
@@ -566,7 +567,7 @@
 		else if (fn)
 			type = 6;
 
-		Object.keys(events).forEach(function(p) {
+		OK(events).forEach(function(p) {
 
 			var evt = events[p];
 			if (type > 2 && type < 5) {
@@ -574,7 +575,7 @@
 					return false;
 			}
 
-			Object.keys(evt).forEach(function(key) {
+			OK(evt).forEach(function(key) {
 				evt[key] = evt[key].remove(function(item) {
 					if (type === 1)
 						return item.owner === owner;
@@ -595,7 +596,7 @@
 					delete evt[key];
 			});
 
-			if (!Object.keys(evt).length)
+			if (!OK(evt).length)
 				delete events[p];
 		});
 
@@ -1074,7 +1075,7 @@
 		} else
 			query = {};
 
-		var keys = Object.keys(values);
+		var keys = OK(values);
 
 		for (var i = 0, length = keys.length; i < length; i++) {
 			var key = keys[i];
@@ -1528,7 +1529,7 @@
 		// watches
 		length = path.length;
 
-		var keys = Object.keys(events);
+		var keys = OK(events);
 		for (var i = 0, il = keys.length; i < il; i++) {
 			var key = keys[i];
 			if (key === path || key.substring(0, length + 1) === path + '.')
@@ -1567,7 +1568,7 @@
 			component.$interaction(1);
 		});
 
-		Object.keys(events).forEach(function(key) {
+		OK(events).forEach(function(key) {
 
 			var is = false;
 			for (var i = 0; i < length; i++) {
@@ -2178,7 +2179,7 @@
 	// ===============================================================
 
 	L.emit = function(a, b, c, d, e) {
-		Object.keys(M.controllers).forEach(function(key) {
+		OK(M.controllers).forEach(function(key) {
 			var c = M.controllers[key];
 			c.emit.call(c, a, b, c, d, e);
 		});
@@ -2186,7 +2187,7 @@
 	};
 
 	L.remove = function(name) {
-		Object.keys(M.controllers).forEach(function(key) {
+		OK(M.controllers).forEach(function(key) {
 			if (!name || key === name)
 				M.controllers[key].remove();
 		});
@@ -2532,7 +2533,7 @@
 
 		if (storage) {
 			var obj = storage['$jcpath'];
-			obj && Object.keys(obj.value).forEach(function(key) {
+			obj && OK(obj.value).forEach(function(key) {
 				M.set(key, obj.value[key], true);
 			});
 		}
@@ -3262,7 +3263,7 @@
 				C.is = false;
 
 			if (MD.fallback && fallback.$ && !C.importing) {
-				var arr = Object.keys(fallback);
+				var arr = OK(fallback);
 				for (var i = 0; i < arr.length; i++) {
 					if (arr[i] !== '$') {
 						var num = fallback[arr[i]];
@@ -3290,7 +3291,7 @@
 				if (M.$components[item])
 					next();
 				else {
-					WARN('jComponent download: ' + item);
+					warn('Downloading: ' + item);
 					W.IMPORTCACHE(MD.fallback.format(item), MD.fallbackcache, next);
 				}
 			}, 3);
@@ -3337,7 +3338,7 @@
 	function emitonly(name, paths, type, path) {
 
 		var unique = {};
-		var keys = Object.keys(paths);
+		var keys = OK(paths);
 		for (var a = 0, al = keys.length; a < al; a++) {
 			var arr = keys[a].split('.');
 			var p = '';
@@ -3349,7 +3350,7 @@
 
 		emitwildcard(path, unique[path], type);
 
-		Object.keys(unique).forEach(function(key) {
+		OK(unique).forEach(function(key) {
 			tmp_emit2[1] = unique[key];
 			emit2(name, key, tmp_emit2);
 		});
@@ -3713,7 +3714,7 @@
 			return;
 		}
 
-		var arr = Object.keys(cache);
+		var arr = OK(cache);
 
 		for (var i = 0, length = arr.length; i < length; i++) {
 			var key = arr[i];
@@ -3734,7 +3735,7 @@
 
 	function cleaner() {
 
-		var aks = Object.keys(events);
+		var aks = OK(events);
 		var is = true;
 
 		for (var a = 0, al = aks.length; a < al; a++) {
@@ -3744,7 +3745,7 @@
 			if (!events[ak])
 				continue;
 
-			var bks = Object.keys(events[ak]);
+			var bks = OK(events[ak]);
 
 			for (var b = 0, bl = bks.length; b < bl; b++) {
 
@@ -3772,7 +3773,7 @@
 
 					if (!events[ak][bk].length) {
 						delete events[ak][bk];
-						if (!Object.keys(events[ak]).length)
+						if (!OK(events[ak]).length)
 							delete events[ak];
 					}
 
@@ -3795,8 +3796,11 @@
 				continue;
 			}
 
-			if (!component.$removed || component.$removed === 2)
+			if (!component.$removed || component.$removed === 2) {
+				// Clears temporary cache for parent components
+				component.$parent = component.$main = undefined;
 				continue;
+			}
 
 			if (component.element && component.element.closest(document.documentElement).length) {
 				if (!component.attr(ATTRDEL)) {
@@ -3921,7 +3925,7 @@
 	PPVC.refresh = function() {
 
 		var self = this;
-		var keys = Object.keys(self.mapping);
+		var keys = OK(self.mapping);
 		for (var i = 0, length = keys.length; i < length; i++) {
 			var key = keys[i];
 
@@ -3961,7 +3965,7 @@
 	PPVC.backup = function(elements) {
 		var t = this;
 		if (elements) {
-			var keys = Object.keys(t.mapping);
+			var keys = OK(t.mapping);
 			for (var i = 0, length = keys.length; i < length; i++) {
 				var key = keys[i];
 				var o = t[key];
@@ -3976,7 +3980,7 @@
 	PPVC.restore = function(elements) {
 		var t = this;
 		if (elements) {
-			var keys = Object.keys(t.mapping);
+			var keys = OK(t.mapping);
 			var count = 0;
 			for (var i = 0, length = keys.length; i < length; i++) {
 				var key = keys[i];
@@ -4335,8 +4339,10 @@
 			if (!self.setter)
 				return;
 
-			var cache = self.$bindcache;
+			if (self.$bindexact && self.path !== path && self.path.indexOf(path + '.') === -1 && type)
+				return;
 
+			var cache = self.$bindcache;
 			if (arguments.length) {
 
 				if (skips[self.path]) {
@@ -4347,7 +4353,11 @@
 					}
 				}
 
-				if (!self.$bindreleased) {
+				if (self.$bindreleased) {
+					// Binds value directly
+					self.setter(value, path, type);
+					self.setter2 && self.setter2(value, path, type);
+				} else {
 					if (self.$released) {
 						cache.is = true;
 						cache.value = value;
@@ -4362,10 +4372,6 @@
 							self.setterX();
 						}
 					}
-				} else {
-					// Binds value directly
-					self.setter(value, path, type);
-					self.setter2 && self.setter2(value, path, type);
 				}
 
 			} else if (!self.$released && cache && cache.is) {
@@ -4429,7 +4435,7 @@
 
 	function removewaiter(obj) {
 		if (obj.$W) {
-			var keys = Object.keys(obj.$W);
+			var keys = OK(obj.$W);
 			for (var i = 0, length = keys.length; i < length; i++) {
 				var v = obj.$W[keys[i]];
 				v.id && clearInterval(v.id);
@@ -4449,7 +4455,7 @@
 
 		if (prop === true) {
 			if (t.$W) {
-				var keys = Object.keys(t.$W);
+				var keys = OK(t.$W);
 				for (var i = 0; i < keys.length; i++) {
 					var k = keys[i];
 					var o = t.$W[k];
@@ -4468,7 +4474,7 @@
 			return;
 		} else if (prop === false) {
 			if (t.$W) {
-				var keys = Object.keys(t.$W);
+				var keys = OK(t.$W);
 				for (var i = 0; i < keys.length; i++) {
 					var a = t.$W[keys[i]];
 					a && clearInterval(a.id);
@@ -4860,6 +4866,11 @@
 		return self;
 	};
 
+	PPC.bindexact = PPC.bindExact = function(enable) {
+		this.$bindexact = enable == null || enable === true;
+		return this;
+	};
+
 	PPC.bindVisible = PPC.bindvisible = function(timeout) {
 		var self = this;
 		self.$bindreleased = false;
@@ -4983,6 +4994,15 @@
 		return this;
 	};
 
+	PPC.main = PCTRL.main = function() {
+		var self = this;
+		if (self.$main === undefined) {
+			var tmp = self.closest('[data-jc]').get(0);
+			self.$main = tmp ? tmp.$com : null;
+		}
+		return self.$main;
+	};
+
 	PPC.rcwatch = PCTRL.rcwatch = function(path, value) {
 		return value ? this.reconfigure(value) : this;
 	};
@@ -4992,7 +5012,7 @@
 		var self = this;
 
 		if (typeof(value) === 'object') {
-			Object.keys(value).forEach(function(k) {
+			OK(value).forEach(function(k) {
 				var prev = self.config[k];
 				if (!init && self.config[k] !== value[k])
 					self.config[k] = value[k];
@@ -6365,9 +6385,9 @@
 		delete M.controllers[self.name];
 
 		// Remove all global events
-		Object.keys(events).forEach(function(e) {
+		OK(events).forEach(function(e) {
 			var evt = events[e];
-			Object.keys(evt).forEach(function(key) {
+			OK(evt).forEach(function(key) {
 				evt[key] = evt[key].remove('controller', self.name);
 				if (!evt[key].length)
 					delete events[''][key];

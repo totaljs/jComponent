@@ -737,6 +737,10 @@ COMPONENT('my-component-name', function(instance, config) {
     // setter will be executed if the "released" state will be "false"
     // +v13.0.0
 
+    instance.bindexact();
+    // setter will be executed if the modification "path" is same or parent path has been changed
+    // +v14.1.2
+
     instance.width([callback(width)]);
     // Gets a width of the element. "callback" can wait for a width (async)
     // Returns {Number}
@@ -756,6 +760,10 @@ COMPONENT('my-component-name', function(instance, config) {
     // Returns if "true" if the element is visible. "callback" can wait for a "visible" state.
     // Returns {Boolean}
     // +v13.0.0
+
+    instance.main();
+    // returns a parent component instance
+    // +v14.1.2
 
     // instance.reset()
     // Resets `instance.dirty(false)` and `instance.valid(false)`.
