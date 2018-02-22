@@ -1819,12 +1819,11 @@
 			return M;
 		}
 
-		clear();
 		M.each(function(obj) {
 			obj.remove(true);
 		}, ctrl_path(path));
 
-		setTimeout2('$cleaner', cleaner, 100);
+		setTimeout2('$cleaner', cleaner2, 100);
 		return M;
 	};
 
@@ -2930,6 +2929,19 @@
 			d.errors = function(except, highlight) {
 				return W.ERRORS(this.path + '.*', except, highlight);
 			};
+			d.remove = function() {
+				var self = this;
+				var arr = MAIN.components;
+				for (var i = 0; i < arr.length; i++) {
+					var a = arr[i];
+					a.scope && a.scope.path === self.path && a.remove(true);
+				}
+				var e = self.element;
+				e.find('*').off();
+				e.off();
+				e.remove();
+				setTimeout2('$cleaner', cleaner2, 100);
+			};
 
 			var tmp = attrcom(sc, 'value');
 			if (tmp) {
@@ -3731,6 +3743,11 @@
 			if (remove)
 				delete cache[key];
 		}
+	}
+
+	function cleaner2() {
+		clear();
+		cleaner();
 	}
 
 	function cleaner() {
@@ -5220,10 +5237,7 @@
 		self.$removed = 1;
 		self.removed = true;
 		M.off('com' + self._id + '#');
-		if (!noClear) {
-			clear();
-			setTimeout2('$cleaner', cleaner, 100);
-		}
+		!noClear && setTimeout2('$cleaner', cleaner2, 100);
 		return true;
 	};
 
@@ -6409,8 +6423,7 @@
 			if (scope)
 				delete window[scope];
 			self.element && self.element.remove();
-			clear();
-			setTimeout(cleaner, 500);
+			setTimeout(cleaner2, 500);
 		}, 1000, self.scope);
 	};
 

@@ -2237,6 +2237,7 @@ scope.update([path], [timeout], [reset]); // alias to UPDATE() but for scope pat
 scope.get([path]); // Reads data according to the scope path
 scope.can([except]); // alias to CAN() but for scope components only
 scope.errors([except], [highlight]); // alias to ERRORS() but for scope components only
+scope.remove(); // +v14.1.3 Removes this scope
 
 // Elements:
 scope.elements; // {Array Object} of DOM elements (scope > scope > scope)
