@@ -2107,19 +2107,14 @@
 		var isAsterix = path ? path.lastIndexOf('*') !== -1 : false;
 		if (isAsterix)
 			path = path.replace('.*', '');
-		var $path;
 
-		if (!path)
-			$path = [];
-		else
-			$path = path.split('.');
-
-		var index = 0;
+		var $path = path ? path.split('.') : EMPTYARRAY;
 		var is = path ? path.indexOf('[') !== -1 : false;
+		var index = 0;
 
 		for (var i = 0, length = M.components.length; i < length; i++) {
-			var component = M.components[i];
 
+			var component = M.components[i];
 			if (!component || !component.$loaded || component.$removed || (fix && component.path !== path))
 				continue;
 
@@ -2498,9 +2493,7 @@
 
 		for (var i = 0, length = arr.length; i < length; i++) {
 			var el = arr[i];
-			if (el) {
-				if (!el.tagName)
-					continue;
+			if (el && el.tagName) {
 				el.childNodes.length && el.tagName !== 'SCRIPT' && el.getAttribute('data-jc') == null && sub.push(el);
 				if (ACTRLS[el.tagName] && el.getAttribute('data-jc-bind') != null && onElement(el) === false)
 					return;
