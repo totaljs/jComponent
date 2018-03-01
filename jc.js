@@ -1009,6 +1009,11 @@
 		return M;
 	};
 
+	W.MODIFY = function(path, callback, timeout, reset) {
+		W.SET(path, callback(GET(path)), timeout, reset);
+		return M;
+	};
+
 	W.LASTMODIFICATION = W.USAGE = M.usage = function(name, expire, path, callback) {
 
 		var type = typeof(expire);
@@ -2727,9 +2732,9 @@
 
 					var output = initscopes(scope);
 
-					if (obj.path && code !== 33 && code !== 35)
+					if (obj.path && code !== 33 && code !== 35) {
 						obj.setPath(obj.path === '?' ? output.path : (obj.path.indexOf('?') === -1 ? output.path + '.' + obj.path : obj.path.replace(/\?/g, output.path)), 2);
-					else {
+					} else {
 						obj.$$path = EMPTYARRAY;
 						obj.path = '';
 					}
@@ -2968,7 +2973,10 @@
 			}
 
 			tmp = attrcom(sc, 'init');
-			tmp && W.EXEC(tmp, p, $(sc));
+			if (tmp) {
+				tmp = GET(tmp);
+				tmp && tmp.call(d, p, $(sc));
+			}
 		}
 
 		return scope.$scopedata;
@@ -4966,7 +4974,7 @@
 			}
 
 			self.$format = is ? GET(name) : FN(name);
-		} else
+		} else if (!type)
 			self.$format = null;
 
 		// Temporary
