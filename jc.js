@@ -114,6 +114,8 @@
 	W.MONTHS = M.months = 'January,February,March,April,May,June,July,August,September,October,November,December'.split(',');
 	W.DAYS = M.days = 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'.split(',');
 
+	M.skipproxy = '';
+
 	var MV = M.validators = {};
 	MV.url = /^(https?:\/\/(?:www\.|(?!www))[^\s.#!:?+=&@!$'~*,;/()[\]]+\.[^\s#!?+=&@!$'~*,;()[\]\\]{2,}\/?|www\.[^\s#!:.?+=&@!$'~*,;/()[\]]+\.[^\s#!?+=&@!$'~*,;()[\]\\]{2,}\/?)/i;
 	MV.phone = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/im;
@@ -127,7 +129,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v14.1.2';
+	M.version = 'v14.2.0';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1454,6 +1456,8 @@
 		var AL = A.length;
 		var isarr = path.indexOf('[') !== -1;
 
+		M.skipproxy = path;
+
 		M.each(function(component) {
 
 			if (!component.path || component.disabled)
@@ -1568,8 +1572,10 @@
 			component.$interaction(1);
 		});
 
-		OK(events).forEach(function(key) {
+		var keys = OK(events);
 
+		for (var a = 0, al = keys.length; a < al; a++) {
+			var key = keys[a];
 			var is = false;
 			for (var i = 0; i < length; i++) {
 				if (key === arg[i]) {
@@ -1579,13 +1585,13 @@
 			}
 
 			if (!is)
-				return;
+				continue;
 
 			tmp_emit2[0] = key;
 			tmp_emit2[1] = get(key);
 			tmp_emit2[2] = 1;
 			emit2('watch', key, tmp_emit2);
-		});
+		}
 
 		return M;
 	};
@@ -1604,6 +1610,7 @@
 	W.REWRITE = M.rewrite = function(path, value, type) {
 		path = ctrl_path(path);
 		if (path) {
+			M.skipproxy = path;
 			set(path, value, type);
 			emitwildcard(path, value, type);
 		}
@@ -1634,8 +1641,8 @@
 	// 1 === manually
 	// 2 === by input
 	M.set = function(path, value, type) {
-
 		path = ctrl_path(path);
+
 		if (!path)
 			return M;
 
@@ -1656,6 +1663,7 @@
 		if (reset)
 			type = 1;
 
+		M.skipproxy = path;
 		set(path, value, type);
 
 		if (isUpdate)
@@ -1742,6 +1750,7 @@
 		}
 
 		var is = true;
+		M.skipproxy = path;
 
 		if (value instanceof Array) {
 			if (value.length)
@@ -3355,10 +3364,11 @@
 
 		emitwildcard(path, unique[path], type);
 
-		OK(unique).forEach(function(key) {
-			tmp_emit2[1] = unique[key];
-			emit2(name, key, tmp_emit2);
-		});
+		keys = OK(unique);
+		for (var a = 0, al = keys.length; a < al; a++) {
+			tmp_emit2[1] = unique[keys[a]];
+			emit2(name, keys[a], tmp_emit2);
+		}
 	}
 
 	function emit(name, path) {
@@ -4363,6 +4373,9 @@
 					}
 				}
 
+				if (self.$format)
+					value = self.$format(value, path, type);
+
 				if (self.$bindreleased) {
 					// Binds value directly
 					self.setter(value, path, type);
@@ -4478,7 +4491,7 @@
 								o.callback[i].call(t, v);
 							delete t.$W[prop];
 						}
-					}, M.defaults.delaywatcher, t, k);
+					}, MD.delaywatcher, t, k);
 				}
 			}
 			return;
@@ -4516,7 +4529,7 @@
 						o.callback[i].call(t, v);
 					delete t.$W[prop];
 				}
-			}, M.defaults.delaywatcher, t, prop);
+			}, MD.delaywatcher, t, prop);
 		}
 		return t;
 	};
@@ -4939,6 +4952,22 @@
 		// type 2: scope
 
 		var self = this;
+		var index = path.indexOf('-->');
+		if (index !== -1) {
+			var name = path.substring(index + 3).trim();
+			path = path.substring(0, index).trim();
+
+			var is = name.indexOf('=>') === -1;
+			if (is) {
+				if (name.indexOf('.') !== -1) {
+					name = '(value,path,type)=>' + name;
+					is = false;
+				}
+			}
+
+			self.$format = is ? GET(name) : FN(name);
+		} else
+			self.$format = null;
 
 		// Temporary
 		if (path.charCodeAt(0) === 37)
@@ -7594,6 +7623,61 @@
 		}
 
 		return output;
+	};
+
+	var BLACKLIST = { sort: 1, reverse: 1, splice: 1, slice: 1, pop: 1, unshift: 1, shift: 1, push: 1 };
+
+	W.CREATE = function(path, callback) {
+
+		if (callback == null) {
+			callback = function(key) {
+				var p = path + (key ? '.' + key : '');
+				if (M.skipproxy === p) {
+					M.skipproxy = '';
+					return;
+				}
+				setTimeout(function() {
+					if (M.skipproxy === p)
+						M.skipproxy = '';
+					else
+						W.NOTIFY(p, true);
+				}, MD.delaybinder);
+			};
+		}
+
+		var blocked = false;
+		var obj = {};
+		var handler = {
+			get: function(target, property, receiver) {
+				try {
+					return new Proxy(target[property], handler);
+				} catch (err) {
+					return Reflect.get(target, property, receiver);
+				}
+			},
+			defineProperty: function(target, property, descriptor) {
+				!blocked && callback(property, descriptor);
+				return Reflect.defineProperty(target, property, descriptor);
+			},
+			deleteProperty: function(target, property) {
+				!blocked && callback(property);
+				return Reflect.deleteProperty(target, property);
+			},
+			apply: function(target, thisArg, argumentsList) {
+				if (BLACKLIST[target.name]) {
+					blocked = true;
+					var result = Reflect.apply(target, thisArg, argumentsList);
+					callback('', argumentsList[0]);
+					blocked = false;
+					return result;
+				}
+				return Reflect.apply(target, thisArg, argumentsList);
+			}
+		};
+
+		M.skipproxy = path;
+		SET(path, obj);
+		return new Proxy(obj, handler);
 	};
 
 	// Waits for jQuery

@@ -9,7 +9,7 @@
 
 > __Download__: more than 80 jComponents free for everyone <https://componentator.com>
 
-- Current version: `v14.1.2`
+- Current version: `v14.2.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -91,6 +91,13 @@ Binding is represented as `data-jc-path` attribute. jComponent has own buil-in m
 
 <!-- empty "data-jc" can write only raw output according to the binding path -->
 <div data-jc="" data-jc-path="contactform.name"></div>
+
+<!-- +v14.2.0 -->
+<!-- CUSTOM VALUE FORMATTER -->
+<div data-jc="" data-jc-path="contactform.name --> (value, path, type) => value.toUpperCase()"></div>
+
+<!-- OR –->
+<div data-jc="" data-jc-path="contactform.name --> path + ' ' + value.toUpperCase()"></div>
 ```
 
 The value `contactform.name` is linked to `window.contactform.name` (the `window` is a browser window instance). The library automatically creates value in __window scope__ if the value doesn't exist.
@@ -1858,6 +1865,18 @@ AJAX('GET /api/something/', TRANSFORM('uppercase, twice', function(value) {
 CLEARCACHE();
 // Removes localStorage cache
 
+
+CREATE(path, [callback(path, value)])
+// +v14.2.0
+// Creates a auto-watch scope
+// Can I use? https://caniuse.com/#feat=proxy
+// It doesn't work in Internet Explorer!!!!!
+
+var common = CREATE('common');
+
+common.form = 'users';
+// It notifies all components with this path automatically
+// So you don't need to use UPDATE() or SET()
 ```
 
 ## Device Width
