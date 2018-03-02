@@ -66,6 +66,7 @@
 	var waits = {};
 	var operations = {};
 	var statics = {};
+	var proxy = {};
 	var ajaxconfig = {};
 	var skips = {};
 	var $ready = setTimeout(load, 2);
@@ -1516,7 +1517,6 @@
 				findcontrol(component.element.get(0), function(el) {
 					if (el.$com !== component)
 						el.$com = component;
-					el.$value = el.$value2 = undefined;
 				});
 
 			} else if (component.validate && !component.$valid_disabled)
@@ -1727,7 +1727,6 @@
 				findcontrol(component.element.get(0), function(el) {
 					if (el.$com !== component)
 						el.$com = component;
-					el.$value = el.$value2 = undefined;
 				});
 
 			} else if (component.validate && !component.$valid_disabled)
@@ -2004,7 +2003,6 @@
 			findcontrol(obj.element.get(0), function(t) {
 				if (t.$com !== obj)
 					t.$com = obj;
-				t.$value = t.$value2 = undefined;
 			});
 
 			if (!obj.$dirty_disabled)
@@ -2057,7 +2055,6 @@
 			findcontrol(obj.element.get(0), function(t) {
 				if (t.$com !== obj)
 					t.$com = obj;
-				t.$value2 = t.$value = undefined;
 			});
 
 			if (!obj.$dirty_disabled) {
@@ -2938,11 +2935,22 @@
 			};
 			d.remove = function() {
 				var self = this;
-				var arr = MAIN.components;
+				var arr = M.components;
+
 				for (var i = 0; i < arr.length; i++) {
 					var a = arr[i];
 					a.scope && a.scope.path === self.path && a.remove(true);
 				}
+
+				if (self.isolated) {
+					arr = Object.keys(proxy);
+					for (var i = 0; i < arr.length; i++) {
+						var a = arr[i];
+						if (a.substring(0, self.path.length) === self.path)
+							delete proxy[a];
+					}
+				}
+
 				var e = self.element;
 				e.find('*').off();
 				e.off();
@@ -4385,6 +4393,14 @@
 					value = self.$format(value, path, type);
 
 				if (self.$bindreleased) {
+
+					if (self.$bindchanges) {
+						var hash = W.HASH(value);
+						if (hash === self.$valuehash)
+							return;
+						self.$valuehash = hash;
+					}
+
 					// Binds value directly
 					self.setter(value, path, type);
 					self.setter2 && self.setter2(value, path, type);
@@ -4411,6 +4427,14 @@
 				cache.bt = setTimeout(function(self) {
 					var cache = self.$bindcache;
 					cache.bt = 0; // reset timer id
+
+					if (self.$bindchanges) {
+						var hash = W.HASH(value);
+						if (hash === self.$valuehash)
+							return;
+						self.$valuehash = hash;
+					}
+
 					self.setter(cache.value, cache.path, cache.type);
 					self.setter2 && self.setter2(cache.value, cache.path, cache.type);
 				}, self.$bindtimeout, self);
@@ -4897,12 +4921,17 @@
 		return self;
 	};
 
+	PPC.bindchanges = PPC.bindChanges = function(enable) {
+		this.$bindchanges = enable == null || enable === true;
+		return this;
+	};
+
 	PPC.bindexact = PPC.bindExact = function(enable) {
 		this.$bindexact = enable == null || enable === true;
 		return this;
 	};
 
-	PPC.bindVisible = PPC.bindvisible = function(timeout) {
+	PPC.bindvisible = PPC.bindVisible = function(timeout) {
 		var self = this;
 		self.$bindreleased = false;
 		self.$bindtimeout = timeout || M.defaults.delaybinder;
@@ -6235,7 +6264,14 @@
 	W.HASH = function(s) {
 		if (!s)
 			return 0;
-		if (typeof(s) !== 'string')
+		var type = typeof(s);
+		if (type === 'number')
+			return s;
+		else if (type === 'boolean')
+			return s ? 1 : 0;
+		else if (s instanceof Date)
+			return s.getTime();
+		else if (type === 'object')
 			s = STRINGIFY(s);
 		var hash = 0, i, char;
 		if (!s.length)
@@ -7062,9 +7098,14 @@
 		return dt;
 	};
 
-	DP.format = function(format) {
+	DP.toUTC = function(ticks) {
+		var dt = this.getTime() + this.getTimezoneOffset() * 60000;
+		return ticks ? dt : new Date(dt);
+	};
 
-		var self = this;
+	DP.format = function(format, utc) {
+
+		var self = utc ? this.toUTC() : this;
 
 		if (!format)
 			return self.getFullYear() + '-' + (self.getMonth() + 1).toString().padLeft(2, '0') + '-' + self.getDate().toString().padLeft(2, '0') + 'T' + self.getHours().toString().padLeft(2, '0') + ':' + self.getMinutes().toString().padLeft(2, '0') + ':' + self.getSeconds().toString().padLeft(2, '0') + '.' + self.getMilliseconds().toString().padLeft(3, '0') + 'Z';
@@ -7635,9 +7676,15 @@
 
 	var BLACKLIST = { sort: 1, reverse: 1, splice: 1, slice: 1, pop: 1, unshift: 1, shift: 1, push: 1 };
 
-	W.CREATE = function(path, callback) {
+	W.CREATE = function(path) {
 
-		if (callback == null) {
+		var is = false;
+		var callback;
+
+		if (typeof(path) === 'string') {
+			if (proxy[path])
+				return proxy[path];
+			is = true;
 			callback = function(key) {
 				var p = path + (key ? '.' + key : '');
 				if (M.skipproxy === p) {
@@ -7651,10 +7698,12 @@
 						W.NOTIFY(p, true);
 				}, MD.delaybinder);
 			};
-		}
+
+		} else
+			callback = path;
 
 		var blocked = false;
-		var obj = {};
+		var obj = path ? (GET(path) || {}) : {};
 		var handler = {
 			get: function(target, property, receiver) {
 				try {
@@ -7683,9 +7732,14 @@
 			}
 		};
 
-		M.skipproxy = path;
-		SET(path, obj);
-		return new Proxy(obj, handler);
+		var o = new Proxy(obj, handler);
+
+		if (is) {
+			M.skipproxy = path;
+			GET(path) === undefined && SET(path, obj, true);
+			return proxy[path] = o;
+		} else
+			return o;
 	};
 
 	// Waits for jQuery
