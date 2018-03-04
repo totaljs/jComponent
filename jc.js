@@ -2893,70 +2893,12 @@
 				absolute += (absolute ? '.' : '') + p;
 
 			sc.$scope = absolute;
-			var d = { path: absolute, elements: arr.slice(0, i + 1), isolated: sc.$isolated, element: $(arr[0]) };
+			var d = new Scope();
+			d.path = absolute;
+			d.elements = arr.slice(0, i + 1);
+			d.isolated = sc.$isolated;
+			d.element = $(arr[0]);
 			sc.$scopedata = d;
-			d.FIND = function(selector, many, callback, timeout) {
-				return this.element.FIND(selector, many, callback, timeout);
-			};
-			d.SETTER = function(selector, name) {
-				return this.element.SETTER(selector, name);
-			};
-			d.reset = function(path, timeout) {
-				if (path > 0) {
-					timeout = path;
-					path = '';
-				}
-				return W.RESET(this.path + '.' + (path ? + path : '*'), timeout);
-			};
-			d.default = function(path, timeout) {
-				if (path > 0) {
-					timeout = path;
-					path = '';
-				}
-				return W.DEFAULT(this.path + '.' + (path ? path : '*'), timeout);
-			};
-			d.set = function(path, value, timeout, reset) {
-				return W.SET(this.path + (path ? '.' + path : ''), value, timeout, reset);
-			};
-			d.push = function(path, value, timeout, reset) {
-				return W.PUSH(this.path + (path ? '.' + path : ''), value, timeout, reset);
-			};
-			d.update = function(path, timeout, reset) {
-				return W.UPDATE(this.path + (path ? '.' + path : ''), timeout, reset);
-			};
-			d.get = function(path) {
-				return W.GET(this.path + (path ? '.' + path : ''));
-			};
-			d.can = function(except) {
-				return W.CAN(this.path + '.*', except);
-			};
-			d.errors = function(except, highlight) {
-				return W.ERRORS(this.path + '.*', except, highlight);
-			};
-			d.remove = function() {
-				var self = this;
-				var arr = M.components;
-
-				for (var i = 0; i < arr.length; i++) {
-					var a = arr[i];
-					a.scope && a.scope.path === self.path && a.remove(true);
-				}
-
-				if (self.isolated) {
-					arr = Object.keys(proxy);
-					for (var i = 0; i < arr.length; i++) {
-						var a = arr[i];
-						if (a.substring(0, self.path.length) === self.path)
-							delete proxy[a];
-					}
-				}
-
-				var e = self.element;
-				e.find('*').off();
-				e.off();
-				e.remove();
-				setTimeout2('$cleaner', cleaner2, 100);
-			};
 
 			var tmp = attrcom(sc, 'value');
 			if (tmp) {
@@ -4145,6 +4087,80 @@
 	};
 
 	// ===============================================================
+	// SCOPE
+	// ===============================================================
+
+	function Scope() {
+	}
+
+	var SCP = Scope.prototype;
+
+	SCP.reset = function(path, timeout) {
+		if (path > 0) {
+			timeout = path;
+			path = '';
+		}
+		return W.RESET(this.path + '.' + (path ? + path : '*'), timeout);
+	};
+
+	SCP.default = function(path, timeout) {
+		if (path > 0) {
+			timeout = path;
+			path = '';
+		}
+		return W.DEFAULT(this.path + '.' + (path ? path : '*'), timeout);
+	};
+
+	SCP.set = function(path, value, timeout, reset) {
+		return W.SET(this.path + (path ? '.' + path : ''), value, timeout, reset);
+	};
+
+	SCP.push = function(path, value, timeout, reset) {
+		return W.PUSH(this.path + (path ? '.' + path : ''), value, timeout, reset);
+	};
+
+	SCP.update = function(path, timeout, reset) {
+		return W.UPDATE(this.path + (path ? '.' + path : ''), timeout, reset);
+	};
+
+	SCP.get = function(path) {
+		return W.GET(this.path + (path ? '.' + path : ''));
+	};
+
+	SCP.can = function(except) {
+		return W.CAN(this.path + '.*', except);
+	};
+
+	SCP.errors = function(except, highlight) {
+		return W.ERRORS(this.path + '.*', except, highlight);
+	};
+
+	SCP.remove = function() {
+		var self = this;
+		var arr = M.components;
+
+		for (var i = 0; i < arr.length; i++) {
+			var a = arr[i];
+			a.scope && a.scope.path === self.path && a.remove(true);
+		}
+
+		if (self.isolated) {
+			arr = Object.keys(proxy);
+			for (var i = 0; i < arr.length; i++) {
+				var a = arr[i];
+				if (a.substring(0, self.path.length) === self.path)
+					delete proxy[a];
+			}
+		}
+
+		var e = self.element;
+		e.find('*').off();
+		e.off();
+		e.remove();
+		setTimeout2('$cleaner', cleaner2, 100);
+	};
+
+	// ===============================================================
 	// CONTROLLER DECLARATION
 	// ===============================================================
 
@@ -4306,13 +4322,14 @@
 		return get(self.path(path));
 	};
 
-	PCTRL.FIND = function(selector, many, callback, timeout) {
+	SCP.FIND = PCTRL.FIND = function(selector, many, callback, timeout) {
 		return this.element.FIND(selector, many, callback, timeout);
 	};
 
-	PCTRL.SETTER = function(selector, name) {
+	SCP.SETTER = PCTRL.SETTER = function(selector, name) {
 		return this.element.SETTER(selector, name);
 	};
+
 
 	// ===============================================================
 	// COMPONENT DECLARATION
@@ -5045,7 +5062,7 @@
 		return self;
 	};
 
-	PPVC.attr = PPC.attr = PPP.attr = PCTRL.attr = function(name, value) {
+	PPVC.attr = PPC.attr = PPP.attr = PCTRL.attr = SCP.attr = function(name, value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.attr(name);
@@ -5053,7 +5070,7 @@
 		return this;
 	};
 
-	PPVC.attrd = PPC.attrd = PPP.attrd = PCTRL.attrd = function(name, value) {
+	PPVC.attrd = PPC.attrd = PPP.attrd = PCTRL.attrd = SCP.attrd = function(name, value) {
 		name = 'data-' + name;
 		var el = this.element;
 		if (value === undefined)
@@ -5062,7 +5079,7 @@
 		return this;
 	};
 
-	PPVC.css = PPC.css = PPP.css = PCTRL.css = function(name, value) {
+	PPVC.css = PPC.css = PPP.css = PCTRL.css = SCP.css = function(name, value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.css(name);
@@ -5070,7 +5087,7 @@
 		return this;
 	};
 
-	PPC.main = PCTRL.main = function() {
+	PPC.main = PCTRL.main = SCP.main = function() {
 		var self = this;
 		if (self.$main === undefined) {
 			var tmp = self.closest('[data-jc]').get(0);
@@ -5125,11 +5142,11 @@
 		return self;
 	};
 
-	PPVC.closest = PPC.closest = PPP.closest = PCTRL.closest = function(sel) {
+	PPVC.closest = PPC.closest = PPP.closest = PCTRL.closest = SCP.closest = function(sel) {
 		return this.element.closest(sel);
 	};
 
-	PPVC.parent = PPC.parent = PPP.parent = PCTRL.parent = function(sel) {
+	PPVC.parent = PPC.parent = PPP.parent = PCTRL.parent = SCP.parent = function(sel) {
 		return this.element.parent(sel);
 	};
 
@@ -5159,7 +5176,7 @@
 		return el;
 	};
 
-	PPVC.append = PPC.append = PPP.append = PCTRL.append = function(value) {
+	PPVC.append = PPC.append = PPP.append = PCTRL.append = SCP.append = function(value) {
 		var el = this.element;
 		if (value instanceof Array)
 			value = value.join('');
@@ -5168,17 +5185,17 @@
 		return value ? el.append(value) : el;
 	};
 
-	PPVC.event = PPC.event = PPP.event = PPP.on = PCTRL.event = function() {
+	PPVC.event = PPC.event = PPP.event = PPP.on = PCTRL.event = SCP.event = function() {
 		var self = this;
 		self.element.on.apply(self.element, arguments);
 		return self;
 	};
 
-	PPVC.find = PPC.find = PPP.find = PCTRL.find = function(selector) {
+	PPVC.find = PPC.find = PPP.find = PCTRL.find = SCP.find = function(selector) {
 		return this.element.find(selector);
 	};
 
-	PPC.virtualize = PCTRL.virtualize = function(mapping, config) {
+	PPC.virtualize = PCTRL.virtualize = SCP.virtualize = function(mapping, config) {
 		return W.VIRTUALIZE(this.element, mapping, config);
 	};
 
