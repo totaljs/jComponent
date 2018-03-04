@@ -5090,7 +5090,7 @@
 	PPC.main = PCTRL.main = SCP.main = function() {
 		var self = this;
 		if (self.$main === undefined) {
-			var tmp = self.closest('[data-jc]').get(0);
+			var tmp = self.parent().closest('[data-jc]').get(0);
 			self.$main = tmp ? tmp.$com : null;
 		}
 		return self.$main;
