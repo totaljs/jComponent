@@ -11,6 +11,7 @@
 	var REGGROUP = /\{[a-z0-9\-,\s]+\}/i;
 	var REGBACKUP = /^backup\s/i;
 	var REGSEARCH = /[^a-zA-Zá-žÁ-Žа-яА-Я\d\s:]/g;
+	var REGMETA = /_{2,}/;
 	var REGWILDCARD = /\.\*/;
 	var ATTRSCOPECTRL = '[data-jc-controller]';
 	var ATTRCOM = '[data-jc]';
@@ -130,7 +131,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v14.2.0';
+	M.version = 'v14.2.1';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2616,6 +2617,13 @@
 			var el = $(dom);
 			has = true;
 
+			var meta = name.split(REGMETA);
+			if (meta.length) {
+				meta = meta.trim(true);
+				name = meta[0];
+			} else
+				meta = null;
+
 			// Check singleton instance
 			if (statics['$ST_' + name]) {
 				remove(el);
@@ -2698,13 +2706,13 @@
 				obj.global = com.shared;
 				obj.element = el;
 				obj.dom = el.get(0);
-				obj.setPath(attrcom(el, 'path') || obj._id, 1);
+				obj.setPath(attrcom(el, 'path') || (meta ? meta[1] : '') || obj._id, 1);
 				obj.config = {};
 
 				// Default config
 				com.config && obj.reconfigure(com.config, NOOP);
 
-				var tmp = attrcom(el, 'config');
+				var tmp = attrcom(el, 'config') || (meta ? meta[2] : '');
 				tmp && obj.reconfigure(tmp, NOOP);
 
 				obj.$init = attrcom(el, 'init') || null;
@@ -2713,6 +2721,7 @@
 				obj.siblings = all.length > 1;
 
 				com.declaration.call(obj, obj, obj.config);
+				meta[3] && el.attrd('jc-value', meta[3]);
 
 				if (obj.init && !statics[name]) {
 					statics[name] = true;
@@ -6983,13 +6992,14 @@
 		return isNaN(val) ? def || 0 : val;
 	};
 
-	AP.trim = function() {
+	AP.trim = function(empty) {
 		var self = this;
 		var output = [];
 		for (var i = 0, length = self.length; i < length; i++) {
 			if (typeof(self[i]) === 'string')
 				self[i] = self[i].trim();
-			self[i] && output.push(self[i]);
+			if (empty || self[i])
+				output.push(self[i]);
 		}
 		return output;
 	};

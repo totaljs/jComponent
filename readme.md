@@ -102,6 +102,25 @@ Binding is represented as `data-jc-path` attribute. jComponent has own buil-in m
 
 The value `contactform.name` is linked to `window.contactform.name` (the `window` is a browser window instance). The library automatically creates value in __window scope__ if the value doesn't exist.
 
+## `v14.2.1` Much simple declaration
+
+- separator can be `__` or `___` or `_____` and can contain spaces between values
+
+```html
+<div data-jc="component __ path __ config __ default value"></div>
+
+Examples:
+
+<div data-jc="textbox___form.name___required:true;maxlength:30"></div>
+<div data-jc="textbox" data-jc-path="form.name" data-jc-config="required:true;maxlength:30"></div>
+
+<div data-jc="textbox___form.name___required:true;maxlength:30___'Peter'"></div>
+<div data-jc="textbox" data-jc-path="form.name" data-jc-config="required:true;maxlength:30" data-jc-value="'Peter'"></div>
+
+<div data-jc="textbox __ form.name __ required:true;maxlength:30 __ 'Peter'"></div>
+<div data-jc="textbox" data-jc-path="form.name" data-jc-config="required:true;maxlength:30" data-jc-value="'Peter'"></div>
+```
+
 ---
 
 ## HTML attributes
