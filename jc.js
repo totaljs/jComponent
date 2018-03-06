@@ -7763,7 +7763,7 @@
 
 		if (is) {
 			M.skipproxy = path;
-			GET(path) === undefined && SET(path, obj, true);
+			GET(path) == null && SET(path, obj, true);
 			return proxy[path] = o;
 		} else
 			return o;
