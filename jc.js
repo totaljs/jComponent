@@ -2386,9 +2386,11 @@
 				el.childNodes.length && el.tagName !== 'SCRIPT' && REGCOM.test(el.innerHTML) && sub.push(el);
 
 				if (el.$com === undefined) {
-					released && el.setAttribute(ATTRREL, 'true');
 					name = attrcom(el);
-					name != null && onComponent(name || '', el, level, controller, scopes);
+					if (name != null) {
+						released && el.setAttribute(ATTRREL, 'true');
+						onComponent(name || '', el, level, controller, scopes);
+					}
 				}
 			}
 		}
