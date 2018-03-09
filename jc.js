@@ -131,7 +131,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v14.2.1';
+	M.version = 'v14.3.0';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -638,8 +638,8 @@
 
 	M.used = function(path) {
 		M.each(function(obj) {
-			obj.used();
-		}, path, true);
+			!obj.disabled && obj.used();
+		}, path);
 		return M;
 	};
 
@@ -677,42 +677,48 @@
 		var valid = true;
 		var arr = value !== undefined ? [] : null;
 
-		M.each(function(obj, index, isAsterix) {
+		var index = path.lastIndexOf('.*');
+		var wildcard = index !== -1;
+		if (index !== -1)
+			path = path.substring(0, index);
 
-			if (isExcept && except.indexOf(obj.path) !== -1)
-				return;
+		path = ctrl_path(path);
 
-			if (obj.disabled || obj.$valid_disabled) {
-				arr && obj.state && arr.push(obj);
-				return;
+		var all = M.components;
+		for (var i = 0, length = all.length; i < length; i++) {
+			var com = all[i];
+
+			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path) || (isExcept && com.$except(except)))
+				continue;
+
+			if (flags && ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':disabled')) || (flags.disabled && com.find(SELINPUT).is(':enabled'))))
+				continue;
+
+			if (com.disabled || com.$valid_disabled) {
+				arr && com.state && arr.push(com);
+				continue;
 			}
-
-			if (flags && ((flags.visible && !obj.visible()) || (flags.hidden && !obj.hidden()) || (flags.enabled && obj.find(SELINPUT).is(':disabled')) || (flags.disabled && obj.find(SELINPUT).is(':enabled'))))
-				return;
 
 			if (value === undefined) {
-				if (obj.$valid === false)
+				if (com.$valid === false)
 					valid = false;
-				return;
+				continue;
 			}
 
-			obj.state && arr.push(obj);
+			com.state && arr.push(com);
 
 			if (!onlyComponent) {
-				if (isAsterix || obj.path === path) {
-					obj.$valid = value;
-					obj.$validate = false;
-					obj.$interaction(102);
+				if (wildcard || com.path === path) {
+					com.$valid = value;
+					com.$interaction(102);
 				}
-			} else if (onlyComponent._id === obj._id) {
-				obj.$valid = value;
-				obj.$interaction(102);
+			} else if (onlyComponent._id === com._id) {
+				com.$valid = value;
+				com.$interaction(102);
 			}
-
-			if (obj.$valid === false)
+			if (com.$valid === false)
 				valid = false;
-
-		}, path, true);
+		}
 
 		clear('valid');
 		cache[key] = valid;
@@ -736,7 +742,6 @@
 
 		var dirty = true;
 		var arr = value !== undefined ? [] : null;
-
 		var flags;
 
 		if (isExcept) {
@@ -754,41 +759,48 @@
 			isExcept = except.length > 0;
 		}
 
-		M.each(function(obj, index, isAsterix) {
+		var index = path.lastIndexOf('.*');
+		var wildcard = index !== -1;
+		if (index !== -1)
+			path = path.substring(0, index);
 
-			if (isExcept && except.indexOf(obj.path) !== -1)
-				return;
+		path = ctrl_path(path);
 
-			if (obj.disabled || obj.$dirty_disabled) {
-				arr && obj.state && arr.push(obj);
-				return;
+		var all = M.components;
+		for (var i = 0, length = all.length; i < length; i++) {
+			var com = all[i];
+
+			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path) || (isExcept && com.$except(except)))
+				continue;
+
+			if (flags && ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':disabled')) || (flags.disabled && com.find(SELINPUT).is(':enabled'))))
+				continue;
+
+			if (com.disabled || com.$dirty_disabled) {
+				arr && com.state && arr.push(com);
+				continue;
 			}
-
-			if (flags && ((flags.visible && !obj.visible()) || (flags.hidden && !obj.hidden()) || (flags.enabled && obj.find(SELINPUT).is(':disabled')) || (flags.disabled && obj.find(SELINPUT).is(':enabled'))))
-				return;
 
 			if (value === undefined) {
-				if (obj.$dirty === false)
+				if (com.$dirty === false)
 					dirty = false;
-				return;
+				continue;
 			}
 
-			obj.state && arr.push(obj);
+			com.state && arr.push(com);
 
 			if (!onlyComponent) {
-				if (isAsterix || obj.path === path) {
-					obj.$dirty = value;
-					obj.$interaction(101);
+				if (wildcard || com.path === path) {
+					com.$dirty = value;
+					com.$interaction(101);
 				}
-			} else if (onlyComponent._id === obj._id) {
-				obj.$dirty = value;
-				obj.$interaction(101);
+			} else if (onlyComponent._id === com._id) {
+				com.$dirty = value;
+				com.$interaction(101);
 			}
-
-			if (obj.$dirty === false)
+			if (com.$dirty === false)
 				dirty = false;
-
-		}, path, true);
+		}
 
 		clear('dirty');
 		cache[key] = dirty;
@@ -1387,9 +1399,7 @@
 		var arr = [];
 
 		M.each(function(obj) {
-			if (except && except.indexOf(obj.path) !== -1)
-				return;
-			if (obj.$valid === false && !obj.$valid_disabled)
+			if (!obj.disabled && (!except || !obj.$except(except)) && obj.$valid === false && !obj.$valid_disabled)
 				arr.push(obj);
 		}, ctrl_path(path));
 
@@ -1409,10 +1419,10 @@
 
 	W.INVALID = function(path, onlyComponent) {
 		path = ctrl_path(path);
-		if (!path)
-			return M;
-		M.dirty(path, false, onlyComponent, true);
-		M.valid(path, false, onlyComponent);
+		if (path) {
+			M.dirty(path, false, onlyComponent, true);
+			M.valid(path, false, onlyComponent);
+		}
 		return M;
 	};
 
@@ -1453,80 +1463,52 @@
 		var state = [];
 		var updates = {};
 
-		// Array prevention
-		var search = path;
-
 		if (type === undefined)
 			type = 1; // manually
 
-		var A = search.split('.');
-		var AL = A.length;
-		var isarr = path.indexOf('[') !== -1;
-
 		M.skipproxy = path;
 
-		M.each(function(component) {
+		var all = M.components;
+		for (var i = 0, length = all.length; i < length; i++) {
+			var com = all[i];
 
-			if (!component.path || component.disabled)
-				return;
+			if (!com || com.disabled || com.$removed || !com.$loaded || !com.path || !com.$compare(path))
+				continue;
 
-			var isnot = true;
-
-			for (var i = 0; i < AL; i++) {
-				var item = component.$$path[i];
-				if (!item)
-					return;
-				if (isarr) {
-					if (item.raw !== A[i])
-						return;
-				} else {
-					if (item.path && item.path !== A[i])
-						return;
-					if (item.is)
-						isnot = false;
-				}
+			var result = com.get();
+			if (com.setter) {
+				com.$skip = false;
+				com.setterX(result, path, type);
+				com.$interaction(type);
 			}
 
-			if (isnot && component.$path && component.$path !== path)
-				return;
-
-			var result = component.get();
-			if (component.setter) {
-				component.$skip = false;
-				component.setterX(result, path, type);
-				component.$interaction(type);
-			}
-
-			component.$ready = true;
+			if (!com.$ready)
+				com.$ready = true;
 
 			if (reset === true) {
 
-				if (!component.$dirty_disabled) {
-					component.$dirty = true;
-					component.$interaction(101);
+				if (!com.$dirty_disabled) {
+					com.$dirty = true;
+					com.$interaction(101);
 				}
 
-				if (!component.$valid_disabled) {
-					component.$valid = true;
-					component.$validate = false;
-					if (component.validate) {
-						component.$valid = component.validate(result);
-						component.$interaction(102);
+				if (!com.$valid_disabled) {
+					com.$valid = true;
+					com.$validate = false;
+					if (com.validate) {
+						com.$valid = com.validate(result);
+						com.$interaction(102);
 					}
 				}
 
-				findcontrol(component.element.get(0), function(el) {
-					if (el.$com !== component)
-						el.$com = component;
-				});
+				findcontrol2(com);
 
-			} else if (component.validate && !component.$valid_disabled)
-				component.valid(component.validate(result), true);
+			} else if (com.validate && !com.$valid_disabled)
+				com.valid(com.validate(result), true);
 
-			component.state && state.push(component);
-			updates[component.path] = result;
-
-		}, is ? path : undefined, undefined, is);
+			com.state && state.push(com);
+			updates[com.path] = result;
+		}
 
 		reset && clear('dirty', 'valid');
 
@@ -1553,30 +1535,28 @@
 	W.NOTIFY = M.notify = function() {
 
 		var arg = arguments;
-		var length = arguments.length;
+		var all = M.components;
 
-		M.each(function(component) {
+		for (var i = 0, length = all.length; i < length; i++) {
+			var com = all[i];
+			if (!com || com.$removed || com.disabled || !com.$loaded || !com.path)
+				continue;
 
-			if (!component.path || component.disabled)
-				return;
-
-			var is = false;
-
-			for (var i = 0; i < length; i++) {
-				if (component.path === arg[i]) {
-					is = true;
+			var is = 0;
+			for (var j = 0; j < arg.length; j++) {
+				if (com.path === arg[j]) {
+					is = 1;
 					break;
 				}
 			}
 
-			if (!is)
-				return;
-
-			var val = component.get();
-			component.setter && component.setterX(val, component.path, 1);
-			component.state && component.state(1, 6);
-			component.$interaction(1);
-		});
+			if (is) {
+				var val = com.get();
+				com.setter && com.setterX(val, com.path, 1);
+				com.state && com.state(1, 6);
+				com.$interaction(1);
+			}
+		}
 
 		var keys = OK(events);
 
@@ -1681,59 +1661,48 @@
 		if (type === undefined)
 			type = 1;
 
-		var A = path.split('.');
-		var AL = A.length;
+		var all = M.components;
+		for (var i = 0, length = all.length; i < length; i++) {
+			var com = all[i];
+			if (!com || com.disabled || com.$removed || !com.$loaded || !com.path || !com.$compare(path))
+				continue;
 
-		M.each(function(component) {
-
-			if (!component.path || component.disabled)
-				return;
-
-			for (var i = 0; i < AL; i++) {
-				var item = component.$$path[i];
-				if (item && item.raw !== A[i])
-					return;
-			}
-
-			if (component.$path && component.$path !== path)
-				return;
-
-			if (component.path === path) {
-				if (component.setter) {
-					component.setterX(result, path, type);
-					component.$interaction(type);
-				}
-			} else {
-				if (component.setter) {
-					component.setterX(get(component.path), path, type);
-					component.$interaction(type);
+			if (com.setter) {
+				if (com.path === path) {
+					if (com.setter) {
+						com.setterX(result, path, type);
+						com.$interaction(type);
+					}
+				} else {
+					if (com.setter) {
+						com.setterX(get(com.path), path, type);
+						com.$interaction(type);
+					}
 				}
 			}
 
-			component.$ready = true;
-			component.state && state.push(component);
+			if (!com.$ready)
+				com.$ready = true;
+
+			com.state && state.push(com);
 
 			if (reset) {
-				if (!component.$dirty_disabled)
-					component.$dirty = true;
-				if (!component.$valid_disabled) {
-					component.$valid = true;
-					component.$validate = false;
-					if (component.validate) {
-						component.$valid = component.validate(result);
-						component.$interaction(102);
+				if (!com.$dirty_disabled)
+					com.$dirty = true;
+				if (!com.$valid_disabled) {
+					com.$valid = true;
+					com.$validate = false;
+					if (com.validate) {
+						com.$valid = com.validate(result);
+						com.$interaction(102);
 					}
 				}
 
-				findcontrol(component.element.get(0), function(el) {
-					if (el.$com !== component)
-						el.$com = component;
-				});
+				findcontrol2(com);
 
-			} else if (component.validate && !component.$valid_disabled)
-				component.valid(component.validate(result), true);
-
-		}, path, true, is);
+			} else if (com.validate && !com.$valid_disabled)
+				com.valid(com.validate(result), true);
+		}
 
 		reset && clear('dirty', 'valid');
 
@@ -1875,10 +1844,9 @@
 		var arr = [];
 		var valid = true;
 
-		path = ctrl_path(path);
+		path = ctrl_path(path.replace(REGWILDCARD, ''));
 
 		var flags;
-
 		if (except) {
 			var is = false;
 			flags = {};
@@ -1894,29 +1862,28 @@
 			!except.length && (except = null);
 		}
 
-		M.each(function(obj) {
+		var all = M.components;
+		for (var i = 0, length = all.length; i < length; i++) {
+			var com = all[i];
+			if (!com || com.$removed || com.disabled || !com.$loaded || !com.path || !com.$compare(path))
+				continue;
 
-			if (obj.disabled || (except && except.indexOf(obj.path) !== -1))
-				return;
+			if (flags && ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':disabled')) || (flags.disabled && com.find(SELINPUT).is(':enabled'))))
+				continue;
 
-			if (flags && ((flags.visible && !obj.visible()) || (flags.hidden && !obj.hidden()) || (flags.enabled && obj.find(SELINPUT).is(':disabled')) || (flags.disabled && obj.find(SELINPUT).is(':enabled'))))
-				return;
+			com.state && arr.push(com);
 
-			obj.state && arr.push(obj);
+			if (com.$valid_disabled)
+				continue;
 
-			if (obj.$valid_disabled)
-				return;
-
-			obj.$validate = true;
-
-			if (obj.validate) {
-				obj.$valid = obj.validate(get(obj.path));
-				obj.$interaction(102);
-				if (!obj.$valid)
+			com.$validate = true;
+			if (com.validate) {
+				com.$valid = com.validate(get(com.path));
+				com.$interaction(102);
+				if (!com.$valid)
 					valid = false;
 			}
-
-		}, path);
+		}
 
 		clear('valid');
 		state(arr, 1, 1);
@@ -1970,7 +1937,7 @@
 		if (reset === undefined)
 			reset = true;
 
-		path = ctrl_path(path);
+		path = ctrl_path(path).replace(REGWILDCARD, '');
 
 		// Reset scope
 		var key = path.replace(/\.\*$/, '');
@@ -1984,41 +1951,38 @@
 		}
 
 		var arr = [];
+		var all = M.components;
 
-		M.each(function(obj) {
+		for (var i = 0, length = all.length; i < length; i++) {
+			var com = all[i];
 
-			if (obj.disabled)
-				return;
+			if (!com || com.$removed || com.disabled || !com.$loaded || !com.path || !com.$compare(path))
+				continue;
 
-			if (obj.state)
-				arr.push(obj);
+			if (com.state)
+				arr.push(com);
 
-			if (onlyComponent && onlyComponent._id !== obj._id)
-				return;
+			if (onlyComponent && onlyComponent._id !== com._id)
+				continue;
 
-			obj.$default && obj.path && obj.set(obj.path, obj.$default(), 3);
+			com.$default && com.set(com.path, com.$default(), 3);
 
 			if (!reset)
 				return;
 
-			findcontrol(obj.element.get(0), function(t) {
-				if (t.$com !== obj)
-					t.$com = obj;
-			});
+			findcontrol2(com);
 
-			if (!obj.$dirty_disabled)
-				obj.$dirty = true;
-
-			if (!obj.$valid_disabled) {
-				obj.$valid = true;
-				obj.$validate = false;
-				if (obj.validate) {
-					obj.$valid = obj.validate(obj.get());
-					obj.$interaction(102);
+			if (!com.$dirty_disabled)
+				com.$dirty = true;
+			if (!com.$valid_disabled) {
+				com.$valid = true;
+				com.$validate = false;
+				if (com.validate) {
+					com.$valid = com.validate(com.get());
+					com.$interaction(102);
 				}
 			}
-
-		}, path);
+		}
 
 		emit('default', path);
 
@@ -2040,38 +2004,37 @@
 			return M;
 		}
 
+		path = ctrl_path(path).replace(REGWILDCARD, '');
+
 		var arr = [];
-		path = ctrl_path(path);
+		var all = M.components;
 
-		M.each(function(obj) {
+		for (var i = 0, length = all.length; i < length; i++) {
+			var com = all[i];
+			if (!com || com.$removed || com.disabled || !com.$loaded || !com.path || !com.$compare(path))
+				continue;
 
-			if (obj.disabled)
-				return;
+			com.state && arr.push(com);
 
-			obj.state && arr.push(obj);
+			if (onlyComponent && onlyComponent._id !== com._id)
+				continue;
 
-			if (onlyComponent && onlyComponent._id !== obj._id)
-				return;
+			findcontrol2(com);
 
-			findcontrol(obj.element.get(0), function(t) {
-				if (t.$com !== obj)
-					t.$com = obj;
-			});
-
-			if (!obj.$dirty_disabled) {
-				obj.$dirty = true;
-				obj.$interaction(101);
+			if (!com.$dirty_disabled) {
+				com.$dirty = true;
+				com.$interaction(101);
 			}
 
-			if (!obj.$valid_disabled) {
-				obj.$valid = true;
-				obj.$validate = false;
-				if (obj.validate) {
-					obj.$valid = obj.validate(obj.get());
-					obj.$interaction(102);
+			if (!com.$valid_disabled) {
+				com.$valid = true;
+				com.$validate = false;
+				if (com.validate) {
+					com.$valid = com.validate(com.get());
+					com.$interaction(102);
 				}
 			}
-		}, path);
+		}
 
 		clear('valid', 'dirty');
 		state(arr, 1, 3);
@@ -2091,65 +2054,42 @@
 		var isCallback = tc === 'function';
 		var isMany = tc === 'boolean';
 
-		var com;
-
+		var selected;
 		if (isMany) {
 			callback = undefined;
-			com = [];
+			selected = [];
 		}
 
-		M.each(function(component) {
-
-			if (isCallback)
-				return callback(component);
-
-			if (!isMany) {
-				com = component;
-				return true; // stop
+		var all = M.components;
+		for (var i = 0, length = all.length; i < length; i++) {
+			var com = all[i];
+			if (!com || com.$removed || !com.$loaded || !com.path || com.path !== path)
+				continue;
+			if (isCallback) {
+				var o = callback(com);
+				if (o === true)
+					return;
 			}
+			if (isMany)
+				selected.push(com);
+			else
+				return com;
+		}
 
-			com.push(component);
-		}, ctrl_path(path));
-
-		return isCallback ? M : com;
+		return isCallback ? M : selected;
 	};
 
-	M.each = function(fn, path, watch, fix) {
-
-		var isAsterix = path ? path.lastIndexOf('*') !== -1 : false;
-		if (isAsterix)
+	M.each = function(fn, path) {
+		var wildcard = path ? path.lastIndexOf('*') !== -1 : false;
+		if (wildcard)
 			path = path.replace('.*', '');
-
-		var $path = path ? path.split('.') : EMPTYARRAY;
-		var is = path ? path.indexOf('[') !== -1 : false;
+		var all = M.components;
 		var index = 0;
-
-		for (var i = 0, length = M.components.length; i < length; i++) {
-
-			var component = M.components[i];
-			if (!component || !component.$loaded || component.$removed || (fix && component.path !== path))
+		for (var i = 0, length = all.length; i < length; i++) {
+			var com = all[i];
+			if (!com || !com.$loaded || com.$removed || (path && (!com.path || !com.$compare(path))))
 				continue;
-
-			if (path) {
-				if (!component.path)
-					continue;
-				if (isAsterix) {
-					var a = compare($path, component.$$path, 0, path, component.path, is);
-					if (!a)
-						continue;
-				} else {
-					if (path !== component.path) {
-						if (watch) {
-							var a = compare($path, component.$$path, 2, path, component.path || '', is);
-							if (!a)
-								continue;
-						} else
-							continue;
-					}
-				}
-			}
-
-			var stop = fn(component, index++, isAsterix);
+			var stop = fn(com, index++, wildcard);
 			if (stop === true)
 				return M;
 		}
@@ -2271,65 +2211,6 @@
 			mq.oldW = cw;
 			mq.oldH = ch;
 			mq.fn(cw, ch, type, mq.id);
-		}
-	}
-
-	function compare(a, b, type, ak, bk, isarray) {
-
-		// type 0 === wildcard
-		// type 1 === fix path
-		// type 2 === in path
-
-		var key = type + '=' + ak + '=' + bk;
-		var r = temp[key];
-		if (r !== undefined)
-			return r;
-
-		if (type === 0) {
-			for (var i = 0, length = a.length; i < length; i++) {
-				if (b[i] === undefined)
-					continue;
-				if (isarray) {
-					if (a[i] !== b[i].raw) {
-						temp[key] = false;
-						return false;
-					}
-				} else {
-					if (a[i] !== b[i].path) {
-						temp[key] = false;
-						return false;
-					}
-				}
-			}
-
-			temp[key] = true;
-			return true;
-		}
-
-		if (type === 1) {
-			if (a.length !== b.length)
-				return false;
-			for (var i = 0, length = b.length; i < length; i++) {
-				if (a[i] !== b[i].raw) {
-					temp[key] = false;
-					return false;
-				}
-			}
-			temp[key] = true;
-			return true;
-		}
-
-		if (type === 2) {
-			for (var i = 0, length = a.length; i < length; i++) {
-				if (b[i] === undefined)
-					continue;
-				if (a[i] !== b[i].raw) {
-					temp[key] = false;
-					return false;
-				}
-			}
-			temp[key] = true;
-			return true;
 		}
 	}
 
@@ -2491,6 +2372,24 @@
 		}
 
 		return arr;
+	}
+
+	function findcontrol2(com, input) {
+
+		if (com.$inputcontrol) {
+			if (com.$inputcontrol % 2 !== 0) {
+				com.$inputcontrol++;
+				return;
+			}
+		}
+
+		var target = input ? input : com.element;
+		findcontrol(target.get(0), function(el) {
+			if (!el.$com || el.$com !== com) {
+				el.$com = com;
+				com.$inputcontrol = 1;
+			}
+		});
 	}
 
 	function findcontrol(container, onElement, level) {
@@ -3117,9 +3016,7 @@
 		} else
 			collection = el;
 
-		findcontrol(collection.get(0), function(el) {
-			!el.$com && (el.$com = obj);
-		});
+		findcontrol2(obj, collection);
 
 		obj.released && obj.released(obj.$released);
 		M.components.push(obj);
@@ -4516,6 +4413,27 @@
 
 	var PPC = COM.prototype;
 
+	PPC.$except = function(except) {
+		var p = self.$path;
+		for (var a = 0; a < except.length; a++) {
+			for (var b = 0; b < p.length; b++) {
+				if (except[a] === p[b])
+					return true;
+			}
+		}
+		return false;
+	};
+
+	PPC.$compare = function(path, fix) {
+		var self = this;
+		if (fix)
+			return self.path === path;
+		for (var i = 0, length = self.$path.length; i < length; i++) {
+			if (self.$path[i] === path)
+				return true;
+		}
+	};
+
 	function removewaiter(obj) {
 		if (obj.$W) {
 			var keys = OK(obj.$W);
@@ -5018,6 +4936,7 @@
 
 		var self = this;
 		var index = path.indexOf('-->');
+
 		if (index !== -1) {
 			var name = path.substring(index + 3).trim();
 			path = path.substring(0, index).trim();
@@ -5029,10 +4948,11 @@
 					is = false;
 				}
 			}
-
 			self.$format = is ? GET(name) : FN(name);
 		} else if (!type)
 			self.$format = null;
+
+		var arr = [];
 
 		// Temporary
 		if (path.charCodeAt(0) === 37)
@@ -5040,35 +4960,32 @@
 
 		// Operations
 		if (isOperation(path)) {
-			self.$$path = self.$path = EMPTYARRAY;
-			self.path = path;
+			self.$path = null;
 			return self;
 		}
 
 		path = path.env(true);
 
-		var fixed = null;
-
+		// !path = fixed path
 		if (path.charCodeAt(0) === 33) {
-			path = path.substring(1);
-			fixed = path;
+			arr.push(path.substring(1));
+			return self;
+		}
+
+		var p = path.split('.');
+		var s = [];
+		for (var j = 0; j < p.length; j++) {
+			var b = p[j].lastIndexOf('[');
+			if (b !== -1) {
+				var c = s.join('.');
+				arr.push(c + (c ? '.' : '') + p[j].substring(0, b));
+			}
+			s.push(p[j]);
+			arr.push(s.join('.'));
 		}
 
 		self.path = path;
-		self.$path = fixed;
-		var arr = path.split('.');
-		var pre = [];
-
-		for (var i = 0, length = arr.length; i < length; i++) {
-			var item = arr[i];
-			var raw = item;
-			var index = item.indexOf('[');
-			if (index !== -1)
-				item = item.substring(0, index);
-			pre.push({ path: item, raw: raw, is: index !== -1 });
-		}
-
-		self.$$path = pre;
+		self.$path = arr;
 		type !== 1 && C.ready && refresh();
 		return self;
 	};
@@ -5445,60 +5362,53 @@
 	};
 
 	PPC.set = function(path, value, type) {
-
 		var self = this;
-
 		if (value === undefined) {
 			value = path;
 			path = self.path;
 		}
-
 		path && M.set(path, value, type);
 		return self;
 	};
 
 	PPC.inc = function(path, value, type) {
-
+		var self = this;
 		if (value === undefined) {
 			value = path;
-			path = this.path;
+			path = self.path;
 		}
-
 		path && M.inc(path, value, type);
-		return this;
+		return self;
 	};
 
 	PPC.extend = function(path, value, type) {
-
+		var self = this;
 		if (value === undefined) {
 			value = path;
-			path = this.path;
+			path = self.path;
 		}
-
 		path && M.extend(path, value, type);
-		return this;
+		return self;
 	};
 
 	PPC.rewrite = function(path, value) {
-
+		var self = this;
 		if (value === undefined) {
 			value = path;
-			path = this.path;
+			path = self.path;
 		}
-
 		path && M.rewrite(path, value);
-		return this;
+		return self;
 	};
 
 	PPC.push = function(path, value, type) {
-
+		var self = this;
 		if (value === undefined) {
 			value = path;
-			path = this.path;
+			path = self.path;
 		}
-
 		path && M.push(path, value, type);
-		return this;
+		return self;
 	};
 
 	// ===============================================================
@@ -6162,8 +6072,8 @@
 		var output = [];
 		M.each(function(obj) {
 			if (!(obj.disabled || obj.$dirty_disabled))
-				obj.$dirty === false && output.push(obj.path);
-		}, path, true);
+				!obj.$dirty === false && output.push(obj.path);
+		}, ctrl_path(path));
 		return output;
 	};
 
