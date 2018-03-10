@@ -54,6 +54,7 @@
 	var fallbackpending = [];
 	var paths = {}; // saved paths from get() and set()
 	var events = {};
+	var eventskeys = [];
 	var temp = {};
 	var mediaqueries = [];
 	var singletons = {};
@@ -531,6 +532,8 @@
 			events[path][name] = [];
 
 		events[path][name].push({ fn: fn, path: fixed, owner: owner, controller: current_ctrl });
+		eventskeys = OK(events);
+
 		init && fn.call(M, path, get(path), true);
 		(!C.ready && (name === 'ready' || name === 'init')) && fn();
 		return M;
@@ -604,6 +607,7 @@
 				delete events[p];
 		});
 
+		eventskeys = OK(events);
 		return M;
 	};
 
@@ -1521,9 +1525,8 @@
 		// watches
 		length = path.length;
 
-		var keys = OK(events);
-		for (var i = 0, il = keys.length; i < il; i++) {
-			var key = keys[i];
+		for (var i = 0, il = eventskeys.length; i < il; i++) {
+			var key = eventskeys[i];
 			if (key === path || key.substring(0, length + 1) === path + '.')
 				updates[key] = get(key);
 		}
@@ -1558,10 +1561,8 @@
 			}
 		}
 
-		var keys = OK(events);
-
-		for (var a = 0, al = keys.length; a < al; a++) {
-			var key = keys[a];
+		for (var a = 0, al = eventskeys.length; a < al; a++) {
+			var key = eventskeys[a];
 			var is = false;
 			for (var i = 0; i < length; i++) {
 				if (key === arg[i]) {
@@ -1662,8 +1663,10 @@
 			type = 1;
 
 		var all = M.components;
+
 		for (var i = 0, length = all.length; i < length; i++) {
 			var com = all[i];
+
 			if (!com || com.disabled || com.$removed || !com.$loaded || !com.path || !com.$compare(path))
 				continue;
 
@@ -1731,8 +1734,7 @@
 				arr.push.apply(arr, value);
 			else
 				is = false;
-		}
-		else
+		} else
 			arr.push(value);
 
 		if (n)
@@ -3632,7 +3634,6 @@
 				continue;
 
 			var bks = OK(events[ak]);
-
 			for (var b = 0, bl = bks.length; b < bl; b++) {
 
 				var bk = bks[b];
@@ -3668,6 +3669,8 @@
 				}
 			}
 		}
+
+		eventskeys = OK(events);
 
 		var index = 0;
 		var length = M.components.length;
@@ -4053,7 +4056,7 @@
 		}
 
 		if (self.isolated) {
-			arr = Object.keys(proxy);
+			arr = OK(proxy);
 			for (var i = 0; i < arr.length; i++) {
 				var a = arr[i];
 				if (a.substring(0, self.path.length) === self.path)
@@ -5268,8 +5271,8 @@
 
 		var self = this;
 		events[path][name].push({ fn: fn, context: self, id: self._id, owner: 'com' + self._id, path: fixed });
+		eventskeys = OK(events);
 		init && fn.call(M, path, get(path));
-
 		return self;
 	};
 
@@ -6410,6 +6413,7 @@
 				if (!evt[key].length)
 					delete events[''][key];
 			});
+			eventskeys = OK(events);
 		});
 
 		// Remove events
