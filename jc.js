@@ -3777,12 +3777,10 @@
 	// 4. update
 	// 5. set
 	function state(arr, type, who) {
-		if (!arr || !arr.length)
-			return;
-		setTimeout(function() {
+		arr && arr.length && setTimeout(function() {
 			for (var i = 0, length = arr.length; i < length; i++)
 				arr[i].state(type, who);
-		}, 2);
+		}, 2, arr);
 	}
 
 	// ===============================================================
@@ -4431,6 +4429,13 @@
 		var self = this;
 		if (fix)
 			return self.path === path;
+
+		if (path.length > self.path.length) {
+			var index = path.lastIndexOf('.', self.path.length);
+			if (index !== -1)
+				path = path.substring(0, index);
+		}
+
 		for (var i = 0, length = self.$path.length; i < length; i++) {
 			if (self.$path[i] === path)
 				return true;
