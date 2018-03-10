@@ -4432,8 +4432,7 @@
 
 		if (path.length > self.path.length) {
 			var index = path.lastIndexOf('.', self.path.length);
-			if (index !== -1)
-				path = path.substring(0, index);
+			return index === -1 ? false : self.path === path.substring(0, index);
 		}
 
 		for (var i = 0, length = self.$path.length; i < length; i++) {
