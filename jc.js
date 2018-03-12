@@ -54,6 +54,7 @@
 	var fallbackpending = [];
 	var paths = {}; // saved paths from get() and set()
 	var events = {};
+	var watches = [];
 	var eventskeys = [];
 	var temp = {};
 	var mediaqueries = [];
@@ -80,6 +81,7 @@
 
 	var tmp_emit2 = [null, null, null];
 	var current_ctrl = null;
+	var current_owner = null;
 
 	W.MAIN = W.M = W.jC = W.COM = M;
 	W.CONTROLLERS = L;
@@ -498,12 +500,19 @@
 		}
 
 		path = ctrl_path(path);
-		ON('watch', path, fn);
-		init && fn.call(M, path, get(path), 0);
+		ON('watch', path, fn, init);
 		return M;
 	};
 
-	W.ON = M.on = function(name, path, fn, init) {
+	W.ON = M.on = function(name, path, fn, init, context) {
+
+		var owner = null;
+		var index = name.indexOf('#');
+
+		if (index) {
+			owner = name.substring(0, index).trim();
+			name = name.substring(index + 1).trim();
+		}
 
 		if (typeof(path) === 'function') {
 			fn = path;
@@ -517,25 +526,47 @@
 			fixed = path;
 		}
 
-		var owner = null;
-		var index = name.indexOf('#');
+		var obj = { name: name, fn: fn, owner: owner || current_owner, controller: current_ctrl, context: context };
 
-		if (index) {
-			owner = name.substring(0, index).trim();
-			name = name.substring(index + 1).trim();
+		if (name === 'watch') {
+
+			var arr = [];
+
+			// Temporary
+			if (path.charCodeAt(0) === 37)
+				path = 'jctmp.' + path.substring(1);
+
+			path = path.env(true);
+
+			// !path = fixed path
+			if (path.charCodeAt(0) === 33) {
+				path = path.substring(1);
+				arr.push(path);
+			} else {
+				var p = path.split('.');
+				var s = [];
+				for (var j = 0; j < p.length; j++) {
+					var b = p[j].lastIndexOf('[');
+					if (b !== -1) {
+						var c = s.join('.');
+						arr.push(c + (c ? '.' : '') + p[j].substring(0, b));
+					}
+					s.push(p[j]);
+					arr.push(s.join('.'));
+				}
+			}
+
+			obj.path = path;
+			obj.$path = arr;
+			watches.push(obj);
+			init && fn.call(context || M, path, get(path), 0);
+		} else {
+			if (events[name])
+				events[name].push(obj);
+			else
+				events[name] = [obj];
+			(!C.ready && (name === 'ready' || name === 'init')) && fn();
 		}
-
-		if (!events[path]) {
-			events[path] = {};
-			events[path][name] = [];
-		} else if (!events[path][name])
-			events[path][name] = [];
-
-		events[path][name].push({ fn: fn, path: fixed, owner: owner, controller: current_ctrl });
-		eventskeys = OK(events);
-
-		init && fn.call(M, path, get(path), true);
-		(!C.ready && (name === 'ready' || name === 'init')) && fn();
 		return M;
 	};
 
@@ -571,53 +602,51 @@
 			type = 4;
 		else if (name && path && fn)
 			type = 5;
+		else if (name && path)
+			type = 7;
 		else if (fn)
 			type = 6;
 
-		OK(events).forEach(function(p) {
-
-			var evt = events[p];
-			if (type > 2 && type < 5) {
-				if (p !== path)
-					return false;
-			}
-
-			OK(evt).forEach(function(key) {
-				evt[key] = evt[key].remove(function(item) {
-					if (type === 1)
-						return item.owner === owner;
-					else if (type === 2)
-						return key === name && item.owner === owner;
-					else if (type === 3)
-						return key === name && item.owner === owner;
-					else if (type === 4)
-						return key === name && item.owner === owner && item.fn === fn;
-					else if (type === 5 || type === 6)
-						return key === name && item.fn === fn;
-					else if (type === 6)
-						return item.fn === fn;
-					return key === name;
-				});
-
-				if (!evt[key].length)
-					delete evt[key];
+		var cleararr = function(arr, key) {
+			return arr.remove(function(item) {
+				if (type > 2 && type < 5) {
+					if (item.path !== path)
+						return false;
+				}
+				var v = false;
+				if (type === 1)
+					v = item.owner === owner;
+				else if (type === 2)
+					v = key === name && item.owner === owner;
+				else if (type === 3)
+					v = key === name && item.owner === owner;
+				else if (type === 4)
+					v = key === name && item.owner === owner && item.fn === fn;
+				else if (type === 5 || type === 6)
+					v = key === name && item.fn === fn;
+				else if (type === 6)
+					v = item.fn === fn;
+				else if (type === 7)
+					v = key === name && item.path === path;
+				else
+					v = key === name;
+				return v;
 			});
+		};
 
-			if (!OK(evt).length)
+		OK(events).forEach(function(p) {
+			events[p] = cleararr(events[p], p);
+			if (!events[p].length)
 				delete events[p];
 		});
 
-		eventskeys = OK(events);
+		watches = cleararr(watches, 'watch');
 		return M;
 	};
 
 	W.EMIT = M.emit = function(name) {
 
-		var e = events[''];
-		if (!e)
-			return false;
-
-		e = events[''][name];
+		var e = events[name];
 		if (!e)
 			return false;
 
@@ -628,9 +657,10 @@
 
 		for (var i = 0, length = e.length; i < length; i++) {
 			var context = e[i].context;
-			if (context !== undefined && (context === null || context.$removed))
-				continue;
-			e[i].fn.apply(context || window, args);
+			// if (context !== undefined && (context === null || context.$removed))
+			// continue;
+			if (!(context === null || context.$removed))
+				e[i].fn.apply(context || window, args);
 		}
 
 		return true;
@@ -1531,7 +1561,7 @@
 				updates[key] = get(key);
 		}
 
-		emitonly('watch', updates, type, path);
+		emitwatch(path, get(path), type);
 		return M;
 	};
 
@@ -1561,24 +1591,8 @@
 			}
 		}
 
-		for (var a = 0, al = eventskeys.length; a < al; a++) {
-			var key = eventskeys[a];
-			var is = false;
-			for (var i = 0; i < length; i++) {
-				if (key === arg[i]) {
-					is = true;
-					break;
-				}
-			}
-
-			if (!is)
-				continue;
-
-			tmp_emit2[0] = key;
-			tmp_emit2[1] = get(key);
-			tmp_emit2[2] = 1;
-			emit2('watch', key, tmp_emit2);
-		}
+		for (var j = 0; j < arg.length; j++)
+			emitwatch(arg[j], GET(arg[j]), 1);
 
 		return M;
 	};
@@ -1599,7 +1613,7 @@
 		if (path) {
 			M.skipproxy = path;
 			set(path, value, type);
-			emitwildcard(path, value, type);
+			emitwatch(path, value, type);
 		}
 		return M;
 	};
@@ -1712,7 +1726,7 @@
 		for (var i = 0, length = state.length; i < length; i++)
 			state[i].state(type, 5);
 
-		emit('watch', path, undefined, type, is);
+		emitwatch(path, result, type);
 		return M;
 	};
 
@@ -1889,7 +1903,7 @@
 
 		clear('valid');
 		state(arr, 1, 1);
-		emit('validate', path);
+		// emit('validate', path);
 		return valid;
 	};
 
@@ -1917,8 +1931,7 @@
 
 		clear('valid');
 		state(arr, 1, 1);
-		emit('validate', com.path);
-
+		// emit('validate', com.path);
 		return valid;
 	};
 
@@ -1986,12 +1999,12 @@
 			}
 		}
 
-		emit('default', path);
+		// emit('default', path);
 
 		if (reset) {
 			clear('valid', 'dirty');
 			state(arr, 3, 3);
-			emit('reset', path);
+			// emit('reset', path);
 		}
 
 		return M;
@@ -2040,7 +2053,7 @@
 
 		clear('valid', 'dirty');
 		state(arr, 1, 3);
-		emit('reset', path);
+		// emit('reset', path);
 		return M;
 	};
 
@@ -2806,6 +2819,7 @@
 
 			sc.$scope = absolute;
 			var d = new Scope();
+			d._id = d.id = GUID(10);
 			d.path = absolute;
 			d.elements = arr.slice(0, i + 1);
 			d.isolated = sc.$isolated;
@@ -2837,7 +2851,12 @@
 			tmp = attrcom(sc, 'init');
 			if (tmp) {
 				tmp = GET(tmp);
-				tmp && tmp.call(d, p, $(sc));
+				if (tmp) {
+					var a = current_owner;
+					current_owner = 'scope' + d._id;
+					tmp.call(d, p, $(sc));
+					current_owner = a;
+				}
 			}
 		}
 
@@ -3162,22 +3181,20 @@
 	}
 
 	function downloadfallback() {
-
 		if (C.importing) {
 			setTimeout(downloadfallback, 1000);
-			return;
+		} else {
+			setTimeout2('$fallback', function() {
+				fallbackpending.splice(0).wait(function(item, next) {
+					if (M.$components[item])
+						next();
+					else {
+						warn('Downloading: ' + item);
+						W.IMPORTCACHE(MD.fallback.format(item), MD.fallbackcache, next);
+					}
+				}, 3);
+			}, 100);
 		}
-
-		setTimeout2('$fallback', function() {
-			fallbackpending.splice(0).wait(function(item, next) {
-				if (M.$components[item])
-					next();
-				else {
-					warn('Downloading: ' + item);
-					W.IMPORTCACHE(MD.fallback.format(item), MD.fallbackcache, next);
-				}
-			}, 3);
-		}, 100);
 	}
 
 	function isOperation(name) {
@@ -3192,99 +3209,24 @@
 		return !(path === '"' || path === '\'');
 	}
 
-	function emit2(name, path, args) {
-
-		var e = events[path];
-		if (!e)
-			return false;
-
-		e = e[name];
-		if (!e)
-			return false;
-
-		for (var i = 0, length = e.length; i < length; i++) {
-			var ev = e[i];
-			(!ev.path || ev.path === path) && ev.fn.apply(ev.context, args);
-		}
-
-		return true;
-	}
-
-	function emitwildcard(path, value, type) {
-		tmp_emit2[0] = path;
-		tmp_emit2[1] = value;
-		tmp_emit2[2] = type;
-		emit2('watch', '*', tmp_emit2);
-	}
-
-	function emitonly(name, paths, type, path) {
-
-		var unique = {};
-		var keys = OK(paths);
-		for (var a = 0, al = keys.length; a < al; a++) {
-			var arr = keys[a].split('.');
-			var p = '';
-			for (var b = 0, bl = arr.length; b < bl; b++) {
-				p += (p ? '.' : '') + arr[b];
-				unique[p] = paths[p] === undefined ? GET(p) : paths[p];
+	function emitwatch(path, value, type) {
+		for (var i = 0, length = watches.length; i < length; i++) {
+			var self = watches[i];
+			if (self.path === '*') {
+				self.fn.call(self.context, path, value, type);
+			} else if (path.length > self.path.length) {
+				var index = path.lastIndexOf('.', self.path.length);
+				if (index === -1 ? false : self.path === path.substring(0, index))
+					self.fn.call(self.context, path, GET(self.path), type);
+			} else {
+				for (var j = 0, jl = self.$path.length; j < jl; j++) {
+					if (self.$path[j] === path) {
+						self.fn.call(self.context, path, GET(self.path), type);
+						break;
+					}
+				}
 			}
 		}
-
-		emitwildcard(path, unique[path], type);
-
-		keys = OK(unique);
-		for (var a = 0, al = keys.length; a < al; a++) {
-			tmp_emit2[1] = unique[keys[a]];
-			emit2(name, keys[a], tmp_emit2);
-		}
-	}
-
-	function emit(name, path) {
-
-		if (!path)
-			return;
-
-		var arr = path.split('.');
-		var args = [];
-		var is = name === 'watch';
-		var length = is ? 3 : arguments.length;
-
-		for (var i = is ? 1 : 2; i < length; i++)
-			args.push(arguments[i]);
-
-		if (is)
-			args.push(arguments[3]);
-
-		if (is) {
-			tmp_emit2[0] = path;
-			tmp_emit2[1] = get(path);
-			tmp_emit2[2] = arguments[3];
-			emit2(name, '*', tmp_emit2);
-		}
-
-		var p = '';
-		for (var i = 0, length = arr.length; i < length; i++) {
-
-			var k = arr[i];
-			var a = arr[i];
-
-			if (k === '*')
-				continue;
-
-			if (a.substring(a.length - 1, a.length) === ']') {
-				var beg = a.lastIndexOf('[');
-				a = a.substring(0, beg);
-			}
-
-			p += (i ? '.' : '');
-
-			args[1] = get(p + k);
-			emit2(name, p + k, args);
-			k !== a && emit2(name, p + a, args);
-			p += k;
-		}
-
-		return true;
 	}
 
 	function ready() {
@@ -3317,7 +3259,6 @@
 							if (tmp && com.get() !== tmp) {
 								com.dirty(false, true);
 								com.set(tmp, undefined, 0);
-								emitwildcard(com.path, tmp, 0);
 							}
 						}
 						return true;
@@ -3623,65 +3564,63 @@
 
 	function cleaner() {
 
-		var aks = OK(events);
+		var keys = OK(events);
 		var is = true;
+		var length = keys.length;
+		var index;
 
-		for (var a = 0, al = aks.length; a < al; a++) {
+		for (var i = 0; i < length; i++) {
+			var key = keys[i];
+			index = 0;
+			var arr = events[key];
+			while (true) {
 
-			var ak = aks[a];
+				var item = arr[index++];
+				if (item === undefined)
+					break;
 
-			if (!events[ak])
-				continue;
-
-			var bks = OK(events[ak]);
-			for (var b = 0, bl = bks.length; b < bl; b++) {
-
-				var bk = bks[b];
-				var arr = events[ak][bk];
-
-				if (!arr)
+				if (item.context == null || (item.context.element && item.context.element.closest(document.documentElement).length))
 					continue;
 
-				var index = 0;
+				item.context && item.context.element && item.context.element.remove();
+				item.context.$removed = true;
+				item.context = null;
+				arr.splice(index - 1, 1);
 
-				while (true) {
+				if (!arr.length)
+					delete events[key];
 
-					var item = arr[index++];
-					if (item === undefined)
-						break;
-
-					if (item.context == null || (item.context.element && item.context.element.closest(document.documentElement).length))
-						continue;
-
-					item.context && item.context.element && item.context.element.remove();
-					item.context.$removed = true;
-					item.context = null;
-					events[ak][bk].splice(index - 1, 1);
-
-					if (!events[ak][bk].length) {
-						delete events[ak][bk];
-						if (!OK(events[ak]).length)
-							delete events[ak];
-					}
-
-					index -= 2;
-					is = true;
-				}
+				index -= 2;
+				is = true;
 			}
 		}
 
-		eventskeys = OK(events);
+		index = 0;
+		while (true) {
+			var item = watches[index++];
+			if (item === undefined)
+				break;
+			if (item.context == null || (item.context.element && item.context.element.closest(document.documentElement).length))
+				continue;
+			item.context && item.context.element && item.context.element.remove();
+			item.context.$removed = true;
+			item.context = null;
+			watches.splice(index - 1, 1);
+			index -= 2;
+			is = true;
+		}
 
-		var index = 0;
-		var length = M.components.length;
+		var all = M.components;
+		index = 0;
+		length = all.length;
 
 		while (index < length) {
 
-			var component = M.components[index++];
+			var component = all[index++];
 			if (!component) {
 				index--;
-				M.components.splice(index, 1);
-				length = M.components.length;
+				all.splice(index, 1);
+				length = all.length;
 				continue;
 			}
 
@@ -3719,7 +3658,7 @@
 			component.make = null;
 
 			index--;
-			M.components.splice(index, 1);
+			all.splice(index, 1);
 			length = M.components.length;
 			is = true;
 		}
@@ -3999,10 +3938,21 @@
 	// SCOPE
 	// ===============================================================
 
-	function Scope() {
-	}
+	function Scope() {}
 
 	var SCP = Scope.prototype;
+
+	SCP.unwatch = function(path, fn) {
+		var self = this;
+		M.off('scope' + self._id + '#watch', self.path + (path ? '.' + path : ''), fn);
+		return self;
+	};
+
+	SCP.watch = function(path, fn, init) {
+		var self = this;
+		M.on('scope' + self._id + '#watch', self.path + (path ? '.' + path : ''), fn, init, self);
+		return self;
+	};
 
 	SCP.reset = function(path, timeout) {
 		if (path > 0) {
@@ -4062,6 +4012,7 @@
 			}
 		}
 
+		M.off('scope' + self._id + '#watch');
 		var e = self.element;
 		e.find('*').off();
 		e.off();
@@ -4113,8 +4064,7 @@
 	PCTRL.watch = function(path, fn, init) {
 		var self = this;
 		path = self.path(path);
-		M.on('ctrl' + self.name + '#watch', path, fn);
-		init && fn.call(self, path, get(path), 0);
+		M.on('ctrl' + self.name + '#watch', path, fn, init);
 		return self;
 	};
 
@@ -4975,20 +4925,20 @@
 
 		// !path = fixed path
 		if (path.charCodeAt(0) === 33) {
-			arr.push(path.substring(1));
-			return self;
-		}
-
-		var p = path.split('.');
-		var s = [];
-		for (var j = 0; j < p.length; j++) {
-			var b = p[j].lastIndexOf('[');
-			if (b !== -1) {
-				var c = s.join('.');
-				arr.push(c + (c ? '.' : '') + p[j].substring(0, b));
+			path = path.substring(1);
+			arr.push(path);
+		} else {
+			var p = path.split('.');
+			var s = [];
+			for (var j = 0; j < p.length; j++) {
+				var b = p[j].lastIndexOf('[');
+				if (b !== -1) {
+					var c = s.join('.');
+					arr.push(c + (c ? '.' : '') + p[j].substring(0, b));
+				}
+				s.push(p[j]);
+				arr.push(s.join('.'));
 			}
-			s.push(p[j]);
-			arr.push(s.join('.'));
 		}
 
 		self.path = path;
@@ -5159,8 +5109,7 @@
 		} else
 			path = ctrl_path(path);
 
-		self.on('watch', path, fn);
-		init && fn.call(self, path, self.get(path), 0);
+		self.on('watch', path, fn, init);
 		return self;
 	};
 
@@ -5253,30 +5202,14 @@
 	};
 
 	PPC.on = function(name, path, fn, init) {
-
 		if (typeof(path) === 'function') {
 			init = fn;
 			fn = path;
 			path = '';
 		} else
 			path = path.replace('.*', '');
-
-		var fixed = null;
-		if (path.charCodeAt(0) === 33) {
-			path = path.substring(1);
-			fixed = path;
-		}
-
-		if (!events[path]) {
-			events[path] = {};
-			events[path][name] = [];
-		} else if (!events[path][name])
-			events[path][name] = [];
-
 		var self = this;
-		events[path][name].push({ fn: fn, context: self, id: self._id, owner: 'com' + self._id, path: fixed });
-		eventskeys = OK(events);
-		init && fn.call(M, path, get(path));
+		M.on('com' + self._id + '#' + name, path, fn, init, self);
 		return self;
 	};
 
