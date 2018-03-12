@@ -650,10 +650,9 @@
 
 		for (var i = 0, length = e.length; i < length; i++) {
 			var context = e[i].context;
-			// if (context !== undefined && (context === null || context.$removed))
-			// continue;
-			if (!(context === null || context.$removed))
-				e[i].fn.apply(context || window, args);
+			if (context !== undefined && (context === null || context.$removed))
+				continue;
+			e[i].fn.apply(context || window, args);
 		}
 
 		return true;
