@@ -79,7 +79,6 @@
 	var mediaqueriescounter = 0;
 	var knockknockcounter = 0;
 
-	var tmp_emit2 = [null, null, null];
 	var current_ctrl = null;
 	var current_owner = null;
 
@@ -519,12 +518,6 @@
 			path = name === 'watch' ? '*' : '';
 		} else
 			path = path.replace('.*', '');
-
-		var fixed = null;
-		if (path.charCodeAt(0) === 33) {
-			path = path.substring(1);
-			fixed = path;
-		}
 
 		var obj = { name: name, fn: fn, owner: owner || current_owner, controller: current_ctrl, context: context };
 
@@ -1962,7 +1955,6 @@
 		if (fn) {
 			tmp = fn();
 			set(key, tmp);
-			emitwildcard(key, tmp, 3);
 		}
 
 		var arr = [];
@@ -2832,7 +2824,7 @@
 				defaults['#' + W.HASH(p)] = fn; // store by path (DEFAULT() --> can reset scope object)
 				tmp = fn();
 				set(p, tmp);
-				emitwildcard(p, tmp, 1);
+				emitwatch(p, tmp, 1);
 			}
 
 			// Applies classes
@@ -3088,7 +3080,7 @@
 					if (value === undefined) {
 						value = obj.$default();
 						set(obj.path, value);
-						emitwildcard(obj.path, value, 0);
+						emitwatch(obj.path, value, 0);
 					}
 				}
 
@@ -3121,8 +3113,9 @@
 			obj.$init = undefined;
 		}, 5);
 
-		el.trigger('component');
-		el.off('component');
+		var n = 'component';
+		el.trigger(n);
+		el.off(n);
 
 		var cls = attrcom(el, 'class');
 		cls && (function(cls) {
@@ -3141,7 +3134,7 @@
 
 		obj.id && M.emit('#' + obj.id, obj);
 		M.emit('@' + obj.name, obj);
-		M.emit('component', obj);
+		M.emit(n, obj);
 	}
 
 	function async(arr, fn, done) {
