@@ -1629,6 +1629,7 @@
 
 	// 1 === manually
 	// 2 === by input
+	// 3 === default
 	M.set = function(path, value, type) {
 		path = ctrl_path(path);
 
@@ -1689,7 +1690,7 @@
 			if (!com.$ready)
 				com.$ready = true;
 
-			com.state && state.push(com);
+			type !== 3 && com.state && state.push(com);
 
 			if (reset) {
 				if (!com.$dirty_disabled)
@@ -4242,7 +4243,7 @@
 
 		self.stateX = function(type, what) {
 			var key = type + 'x' + what;
-			if (self.$state !== key) {
+			if (!self.$bindchanges || self.$state !== key) {
 				self.$state = key;
 				self.state(type, what);
 			}
