@@ -104,9 +104,10 @@
 	MD.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
 	MD.importcache = 'session';
 	MD.pingdata = {};
-	MD.baseurl = '';
+	MD.baseurl = ''; // String or Function
+	MD.makeurl = null; // Function
 	MD.jsonconverter = {
-		'text json': function (text) {
+		'text json': function(text) {
 			return PARSE(text);
 		}
 	};
@@ -417,7 +418,7 @@
 				var self = this;
 				var r = self.responseText;
 				try {
-					r = PARSE(r, M.defaults.jsondate);
+					r = PARSE(r, MD.jsondate);
 				} catch (e) {}
 
 				if (progress) {
@@ -441,7 +442,7 @@
 				if (!r && output.error)
 					r = output.response = self.status + ': ' + self.statusText;
 
-				if (!output.error || M.defaults.ajaxerrors) {
+				if (!output.error || MD.ajaxerrors) {
 					typeof(callback) === 'string' ? remap(callback.env(), r) : (callback && callback(r, null, output));
 				} else {
 					M.emit('error', output);
@@ -464,9 +465,9 @@
 
 			xhr.open(method, makeurl(url));
 
-			var keys = OK(M.defaults.headers);
+			var keys = OK(MD.headers);
 			for (var i = 0; i < keys.length; i++)
-				xhr.setRequestHeader(keys[i].env(), M.defaults.headers[keys[i]].env());
+				xhr.setRequestHeader(keys[i].env(), MD.headers[keys[i]].env());
 
 			if (headers) {
 				var keys = OK(headers);
@@ -879,18 +880,15 @@
 				url = url.substring(1);
 
 			if (statics[url]) {
-
-				if (!callback)
-					return M;
-
-				if (statics[url] === 2) {
-					callback();
-					return M;
+				if (callback) {
+					if (statics[url] === 2)
+						callback();
+					else {
+						WAIT(function() {
+							return statics[url] === 2;
+						}, callback);
+					}
 				}
-
-				WAIT(function() {
-					return statics[url] === 2;
-				}, callback);
 				return M;
 			}
 
@@ -926,7 +924,7 @@
 				callback && callback();
 				W.jQuery && setTimeout(compile, 300);
 			};
-			scr.src = url;
+			scr.src = makeurl(url, true);
 			d.getElementsByTagName('head')[0].appendChild(scr);
 			M.emit('import', url, $(scr));
 			return M;
@@ -936,7 +934,7 @@
 			var stl = d.createElement('link');
 			stl.type = 'text/css';
 			stl.rel = 'stylesheet';
-			stl.href = url;
+			stl.href = makeurl(url, true);
 			d.getElementsByTagName('head')[0].appendChild(stl);
 			statics[url] = 2;
 			callback && setTimeout(callback, 200);
@@ -1215,8 +1213,8 @@
 				url += '?' + (typeof(data) === 'string' ? data : jQuery.param(data, true));
 
 			var options = {};
-			options.type = method;
-			options.converters = M.defaults.jsonconverter;
+			options.method = method;
+			options.converters = MD.jsonconverter;
 
 			if (method !== 'GET') {
 				if (typeof(data) === 'string') {
@@ -1227,7 +1225,7 @@
 				}
 			}
 
-			options.headers = $.extend(headers, M.defaults.headers);
+			options.headers = $.extend(headers, MD.headers);
 
 			if (url.match(/http:\/\/|https:\/\//i)) {
 				options.crossDomain = true;
@@ -1252,8 +1250,22 @@
 				}
 			}
 
+			if (!options.url)
+				options.url = url;
+
+			options.data = data;
+			M.emit('request', options);
+
+			if (options.cancel)
+				return;
+
+			data = options.data;
+			options.type = options.method;
+			delete options.method;
+			delete options.data;
+
 			var output = {};
-			output.url = options.url || url;
+			output.url = options.url;
 			output.process = true;
 			output.error = false;
 			output.upload = false;
@@ -1287,7 +1299,7 @@
 
 				if (ct && ct.indexOf('/json') !== -1) {
 					try {
-						output.response = PARSE(output.response, M.defaults.jsondate);
+						output.response = PARSE(output.response, MD.jsondate);
 					} catch (e) {}
 				}
 
@@ -1296,7 +1308,7 @@
 				if (output.cancel || !output.process)
 					return;
 
-				if (M.defaults.ajaxerrors) {
+				if (MD.ajaxerrors) {
 					if (typeof(callback) === 'string')
 						remap(callback, output.response);
 					else
@@ -1464,7 +1476,7 @@
 		if (typeof(timeout) === 'string')
 			timeout = timeout.env().parseExpire();
 
-		var local = M.defaults.localstorage && timeout > 10000;
+		var local = MD.localstorage && timeout > 10000;
 		blocked[key] = now + timeout;
 		!W.isPRIVATEMODE && local && localStorage.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
 		callback && callback();
@@ -1828,7 +1840,7 @@
 		var b = declaration.substring(declaration.length - 1);
 
 		if ((a === '"' && b === '"') || (a === '[' && b === ']') || (a === '{' && b === '}')) {
-			var d = PARSE(declaration, M.defaults.jsondate);
+			var d = PARSE(declaration, MD.jsondate);
 			schemas[name] = d;
 			return d;
 		}
@@ -2146,7 +2158,7 @@
 		var $w = $(W);
 		var w = $w.width();
 		var h = $w.height();
-		var d = M.defaults.devices;
+		var d = MD.devices;
 
 		for (var i = 0, length = mediaqueries.length; i < length; i++) {
 			var mq = mediaqueries[i];
@@ -2414,7 +2426,7 @@
 
 	function load() {
 		clearTimeout($ready);
-		if (M.defaults.localstorage) {
+		if (MD.localstorage) {
 			var cache;
 			try {
 				cache = localStorage.getItem(M.$localstorage + '.cache');
@@ -2885,7 +2897,7 @@
 			item.callback = attrcom(el, 'init');
 			item.path = attrcom(el, 'path');
 			item.toggle = (attrcom(el, 'class') || '').split(' ');
-			item.expire = attrcom(el, 'cache') || M.defaults.importcache;
+			item.expire = attrcom(el, 'cache') || MD.importcache;
 			arr.push(item);
 		});
 
@@ -2983,20 +2995,27 @@
 			return item.value;
 	}
 
-	function makeurl(url) {
-		var index = url.indexOf('?');
-		var builder = [];
+	function makeurl(url, make) {
 
-		M.$version && builder.push('version=' + encodeURIComponent(M.$version));
-		M.$language && builder.push('language=' + encodeURIComponent(M.$language));
+		MD.makeurl && (url = MD.makeurl(url));
+
+		if (make)
+			return url;
+
+		var builder = [];
+		var en = encodeURIComponent;
+
+		M.$version && builder.push('version=' + en(M.$version));
+		M.$language && builder.push('language=' + en(M.$language));
 
 		if (!builder.length)
 			return url;
 
-		if (index !== -1)
-			url += '&';
-		else
+		var index = url.indexOf('?');
+		if (index == -1)
 			url += '?';
+		else
+			url += '&';
 
 		return url + builder.join('&');
 	}
@@ -3655,7 +3674,7 @@
 			}
 		}
 
-		M.defaults.localstorage && is2 && !W.isPRIVATEMODE && localStorage.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
+		MD.localstorage && is2 && !W.isPRIVATEMODE && localStorage.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
 
 		for (var key in storage) {
 			var item = storage[key];
@@ -3670,7 +3689,7 @@
 	}
 
 	function save() {
-		!W.isPRIVATEMODE && M.defaults.localstorage && localStorage.setItem(M.$localstorage + '.cache', JSON.stringify(storage));
+		!W.isPRIVATEMODE && MD.localstorage && localStorage.setItem(M.$localstorage + '.cache', JSON.stringify(storage));
 	}
 
 	function refresh() {
@@ -4821,7 +4840,7 @@
 	PPC.bindvisible = PPC.bindVisible = function(timeout) {
 		var self = this;
 		self.$bindreleased = false;
-		self.$bindtimeout = timeout || M.defaults.delaybinder;
+		self.$bindtimeout = timeout || MD.delaybinder;
 		self.$bindcache = {};
 		return self;
 	};
@@ -5504,7 +5523,7 @@
 		if (!el)
 			el = $(W);
 		var w = el.width();
-		var d = M.defaults.devices;
+		var d = MD.devices;
 		return w >= d.md.min && w <= d.md.max ? 'md' : w >= d.sm.min && w <= d.sm.max ? 'sm' : w > d.lg.min ? 'lg' : w <= d.xs.max ? 'xs' : '';
 	};
 
@@ -5532,7 +5551,7 @@
 			return ids;
 		}
 
-		var d = M.defaults.devices;
+		var d = MD.devices;
 
 		if (query === 'md')
 			query = 'min-width:{0}px and max-width:{1}px'.format(d.md.min, d.md.max);
@@ -5799,7 +5818,7 @@
 	};
 
 	W.STRINGIFY = function(obj, compress, fields) {
-		compress === undefined && (compress = M.defaults.jsoncompress);
+		compress === undefined && (compress = MD.jsoncompress);
 		var tf = typeof(fields);
 		return JSON.stringify(obj, function(key, value) {
 
@@ -5837,7 +5856,7 @@
 		if (c === '#' || c === '.')
 			return W.PARSE($(value).html(), date);
 
-		date === undefined && (date = M.defaults.jsondate);
+		date === undefined && (date = MD.jsondate);
 		try {
 			return JSON.parse(value, function(key, value) {
 				return typeof(value) === 'string' && date && value.isJSONDate() ? new Date(value) : value;
@@ -5958,7 +5977,7 @@
 		}
 
 		var options = {};
-		var data = $.param(M.defaults.pingdata);
+		var data = $.param(MD.pingdata);
 
 		if (data) {
 			index = url.lastIndexOf('?');
@@ -7102,7 +7121,7 @@
 		}
 
 		if (separator === undefined)
-			separator = M.defaults.thousandsseparator;
+			separator = MD.thousandsseparator;
 
 		if (index !== -1) {
 			dec = num.substring(index + 1);
@@ -7125,7 +7144,7 @@
 		}
 
 		if (dec.length && separatorDecimal === undefined)
-			separatorDecimal = M.defaults.decimalseparator;
+			separatorDecimal = MD.decimalseparator;
 
 		return minus + output + (dec.length ? separatorDecimal + dec : '');
 	};
@@ -7928,13 +7947,13 @@
 					if (tmp)
 						self.$jckeypress = tmp === 'true';
 					else
-						self.$jckeypress = M.defaults.keypress;
+						self.$jckeypress = MD.keypress;
 					if (self.$jckeypress === false)
 						return;
 				}
 
 				if (self.$jcdelay === undefined)
-					self.$jcdelay = +(attrcom(self, 'keypress-delay') || M.defaults.delay);
+					self.$jcdelay = +(attrcom(self, 'keypress-delay') || MD.delay);
 
 				if (self.$jconly === undefined)
 					self.$jconly = attrcom(self, 'keypress-only') === 'true';

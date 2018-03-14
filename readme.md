@@ -9,7 +9,7 @@
 
 > __Download__: more than 80 jComponents free for everyone <https://componentator.com>
 
-- Current version: `v14.3.0`
+- Current version: `v14.3.1`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -490,7 +490,7 @@ COMPONENT('my-component-name', function(instance, config) {
     };
 
 
-    instance.state = function(type, who) {
+    instance.state = function(type, what) {
         // This delegate watches the value state. In this delegate you can change
         // the `design` of the component according to the value state.
 
@@ -499,12 +499,12 @@ COMPONENT('my-component-name', function(instance, config) {
         // type === 2 : by input
         // type === 3 : by default
 
-        // who  === 1 : valid
-        // who  === 2 : dirty
-        // who  === 3 : reset
-        // who  === 4 : update
-        // who  === 5 : set
-        // who  === 6 : notify
+        // what  === 1 : valid
+        // what  === 2 : dirty
+        // what  === 3 : reset
+        // what  === 4 : update
+        // what  === 5 : set
+        // what  === 6 : notify
 
         instance.element.tclass('error', instance.isInvalid());
     };
@@ -1002,6 +1002,11 @@ MAIN.defaults.baseurl;
 // Can be {Function(url)} needs to return updated url
 // Can be {String} can contain base url which is used in this form "url = baseurl + url"
 
+MAIN.defaults.makeurl;
+// v14.3.1
+// This delegate is executed before a request is created
+// Can be {Function(url)} needs to return updated url
+
 MAIN.defaults.keypress;
 // {Boolean} enables / disables keypress real-time binding, default `true`.
 
@@ -1419,6 +1424,19 @@ ON('knockknock', function(counter) {
     // +v9.0.0
 });
 
+ON('request', function(options) {
+    // Is executed before AJAX request
+    // +v14.3.1
+
+    // options.url      : {String}
+    // options.method   : {String} method
+    // options.headers  : {Object} HTTP headers with lower-case keys
+    // options.data     : {Object/String} Request data (sent)
+
+    // Next processing will be canceled
+    // options.cancel = true;
+});
+
 ON('response', function(data) {
     // Is executed for each AJAX response
     // +v9.0.0
@@ -1433,7 +1451,7 @@ ON('response', function(data) {
     // data.headers  : {Object} HTTP headers with lower-case keys
     // data.data     : {Object/String} Request data (sent)
 
-    // Next processing can be canceled like this:
+    // Next processing will be canceled:
     data.process = false;
     // or +v10.0.0
     data.cancel = true;
