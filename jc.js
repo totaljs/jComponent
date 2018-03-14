@@ -55,7 +55,6 @@
 	var paths = {}; // saved paths from get() and set()
 	var events = {};
 	var watches = [];
-	var eventskeys = [];
 	var temp = {};
 	var mediaqueries = [];
 	var singletons = {};
@@ -89,7 +88,7 @@
 	W.DATETIME = new Date();
 
 	var MD = W.DEF = M.defaults = {};
-	MD.environment = {};
+	var ENV = MD.environment = {};
 	MD.delay = 555;
 	MD.delaywatcher = 555;
 	MD.delaybinder = 200;
@@ -133,7 +132,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v14.3.0';
+	M.version = 'v14.3.1';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -229,7 +228,7 @@
 
 		if (typeof(name) === 'object') {
 			name && OK(name).forEach(function(key) {
-				M.defaults.environment[key] = name[key];
+				ENV[key] = name[key];
 				M.emit('environment', key, name[key]);
 			});
 			return name;
@@ -237,11 +236,11 @@
 
 		if (value !== undefined) {
 			M.emit('environment', name, value);
-			M.defaults.environment[name] = value;
+			ENV[name] = value;
 			return value;
 		}
 
-		return M.defaults.environment[name];
+		return ENV[name];
 	};
 
 	M.environment = function(name, version, language, env) {
@@ -1109,9 +1108,11 @@
 
 	M.createURL = function(url, values) {
 
+		var l = location;
+
 		if (typeof(url) === 'object') {
 			values = url;
-			url = location.pathname + location.search;
+			url = l.pathname + l.search;
 		}
 
 		var query;
@@ -1487,7 +1488,6 @@
 			return M;
 
 		var state = [];
-		var updates = {};
 
 		if (type === undefined)
 			type = 1; // manually
@@ -1533,25 +1533,12 @@
 				com.valid(com.validate(result), true);
 
 			com.state && state.push(com);
-			updates[com.path] = result;
 		}
 
 		reset && clear('dirty', 'valid');
 
-		if (!updates[path])
-			updates[path] = get(path);
-
 		for (var i = 0, length = state.length; i < length; i++)
-			state[i].state(1, 4);
-
-		// watches
-		length = path.length;
-
-		for (var i = 0, il = eventskeys.length; i < il; i++) {
-			var key = eventskeys[i];
-			if (key === path || key.substring(0, length + 1) === path + '.')
-				updates[key] = get(key);
-		}
+			state[i].stateX(1, 4);
 
 		emitwatch(path, get(path), type);
 		return M;
@@ -1578,7 +1565,7 @@
 			if (is) {
 				var val = com.get();
 				com.setter && com.setterX(val, com.path, 1);
-				com.state && com.state(1, 6);
+				com.state && com.stateX(1, 6);
 				com.$interaction(1);
 			}
 		}
@@ -1716,7 +1703,7 @@
 		reset && clear('dirty', 'valid');
 
 		for (var i = 0, length = state.length; i < length; i++)
-			state[i].state(type, 5);
+			state[i].stateX(type, 5);
 
 		emitwatch(path, result, type);
 		return M;
@@ -1901,17 +1888,16 @@
 
 	M.validate2 = function(com) {
 
-		var arr = [];
 		var valid = true;
 
 		if (com.disabled)
 			return valid;
 
-		com.state && arr.push(com);
-
 		if (com.$valid_disabled)
 			return valid;
 
+		var arr = [];
+		com.state && arr.push(com);
 		com.$validate = true;
 
 		if (com.validate) {
@@ -3098,7 +3084,7 @@
 			obj.$valid = obj.validate(obj.get(), true);
 
 		obj.done && setTimeout(obj.done, 20);
-		obj.state && obj.state(0, 3);
+		obj.state && obj.stateX(0, 3);
 
 		obj.$init && setTimeout(function() {
 			if (isOperation(obj.$init)) {
@@ -3701,16 +3687,16 @@
 		}, 200);
 	}
 
-	// who:
+	// what:
 	// 1. valid
 	// 2. dirty
 	// 3. reset
 	// 4. update
 	// 5. set
-	function state(arr, type, who) {
+	function state(arr, type, what) {
 		arr && arr.length && setTimeout(function() {
 			for (var i = 0, length = arr.length; i < length; i++)
-				arr[i].state(type, who);
+				arr[i].stateX(type, what);
 		}, 2, arr);
 	}
 
@@ -4238,12 +4224,17 @@
 				self.set(self.path, value, 2);
 		};
 
+		self.stateX = function(type, what) {
+			var key = type + 'x' + what;
+			if (self.$state !== key) {
+				self.$state = key;
+				self.state(type, what);
+			}
+		};
+
 		self.setterX = function(value, path, type) {
 
-			if (!self.setter)
-				return;
-
-			if (self.$bindexact && self.path !== path && self.path.indexOf(path + '.') === -1 && type)
+			if (!self.setter || (self.$bindexact && self.path !== path && self.path.indexOf(path + '.') === -1 && type))
 				return;
 
 			var cache = self.$bindcache;
@@ -4369,6 +4360,7 @@
 
 	PPC.$compare = function(path, fix) {
 		var self = this;
+
 		if (fix)
 			return self.path === path;
 
@@ -5123,7 +5115,7 @@
 		self.$validate = false;
 		self.$interaction(102);
 		clear('valid');
-		!noEmit && self.state && self.state(1, 1);
+		!noEmit && self.state && self.stateX(1, 1);
 		return self;
 	};
 
@@ -5157,7 +5149,7 @@
 		self.$dirty = value;
 		self.$interaction(101);
 		clear('dirty');
-		!noEmit && self.state && self.state(2, 2);
+		!noEmit && self.state && self.stateX(2, 2);
 		return self;
 	};
 
@@ -6342,7 +6334,6 @@
 				if (!evt[key].length)
 					delete events[''][key];
 			});
-			eventskeys = OK(events);
 		});
 
 		// Remove events
@@ -6581,16 +6572,17 @@
 		var self = this;
 		if (search) {
 			return self.replace(REGENV, function(val) {
-				return M.defaults.environment[val.substring(1, val.length - 1)] || val;
+				return ENV[val.substring(1, val.length - 1)] || val;
 			});
 		}
 		var l = self.length - 1;
-		return (self.charCodeAt(0) === 91 && self.charCodeAt(l) === 93 ? (M.defaults.environment[self.substring(1, l)] || self) : self).toString();
+		return (self.charCodeAt(0) === 91 && self.charCodeAt(l) === 93 ? (ENV[self.substring(1, l)] || self) : self).toString();
 	};
 
 	SP.$env = function() {
+		var self = this;
 		var index = this.indexOf('?');
-		return index === -1 ? this.env(true) : this.substring(0, index).env(true) + this.substring(index);
+		return index === -1 ? self.env(true) : self.substring(0, index).env(true) + self.substring(index);
 	};
 
 	SP.parseConfig = SP.$config = function(def, callback) {
@@ -6784,36 +6776,29 @@
 			if (code > 31 && code < 48) {
 				if (builder.substring(builder.length - 1, builder.length) !== '-')
 					builder += '-';
-				continue;
-			}
-
-			if (code > 47 && code < 58) {
+			} else if (code > 47 && code < 58)
 				builder += c;
-				continue;
-			}
-
-			if (code > 94 && code < 123) {
+			else if (code > 94 && code < 123)
 				builder += c;
-				continue;
-			}
 		}
+
 		var l = builder.length - 1;
 		return builder[l] === '-' ? builder.substring(0, l) : builder;
 	};
 
 	SP.isEmail = function() {
 		var str = this;
-		return str.length <= 4 ? false : M.validators.email.test(str);
+		return str.length <= 4 ? false : MV.email.test(str);
 	};
 
 	SP.isPhone = function() {
 		var str = this;
-		return str.length < 6 ? false : M.validators.phone.test(str);
+		return str.length < 6 ? false : MV.phone.test(str);
 	};
 
 	SP.isURL = function() {
 		var str = this;
-		return str.length <= 7 ? false : M.validators.url.test(str);
+		return str.length <= 7 ? false : MV.url.test(str);
 	};
 
 	SP.parseInt = function(def) {
@@ -6971,7 +6956,8 @@
 	};
 
 	DP.toUTC = function(ticks) {
-		var dt = this.getTime() + this.getTimezoneOffset() * 60000;
+		var self = this;
+		var dt = self.getTime() + self.getTimezoneOffset() * 60000;
 		return ticks ? dt : new Date(dt);
 	};
 
@@ -7930,8 +7916,9 @@
 
 				// realtime binding
 				var self = this;
+				var com = self.$com;
 
-				if (!self.$com || self.$com.$removed || !self.$com.getter || self.$jckeypress === false)
+				if (!com || com.$removed || !com.getter || self.$jckeypress === false)
 					return;
 
 				self.$jcevent = 2;
@@ -7957,29 +7944,32 @@
 			});
 
 			$(document).on('focus blur', 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind]', function(e) {
-				var self = this;
 
-				if (!self.$com || self.$com.$removed || !self.$com.getter)
+				var self = this;
+				var com = self.$com;
+
+				if (!com || com.$removed || !com.getter)
 					return;
 
 				if (e.type === 'focusin')
 					self.$jcevent = 1;
 				else if (self.$jcevent === 1) {
-					self.$com.dirty(false, true);
-					self.$com.getter(self.value, true, true, true);
+					com.dirty(false, true);
+					com.getter(self.value, true, true, true);
 				}
 			});
 
 			$(document).on('change', 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind]', function() {
 
 				var self = this;
+				var com = self.$com;
 
-				if (self.$jconly || !self.$com || self.$com.$removed || !self.$com.getter)
+				if (self.$jconly || !com || com.$removed || !com.getter)
 					return;
 
 				if (self.$jckeypress === false) {
 					// bind + validate
-					self.$com.getter(self.value, false, true);
+					com.getter(self.value, false, true);
 					return;
 				}
 
@@ -7987,26 +7977,26 @@
 					case 'SELECT':
 						var sel = self[self.selectedIndex];
 						self.$jcevent = 2;
-						self.$com.dirty(false, true);
-						self.$com.getter(sel.value, false, true);
+						com.dirty(false, true);
+						com.getter(sel.value, false, true);
 						return;
 					case 'INPUT':
 						if (self.type === 'checkbox' || self.type === 'radio') {
 							self.$jcevent = 2;
-							self.$com.dirty(false, true);
-							self.$com.getter(self.checked, false, true);
+							com.dirty(false, true);
+							com.getter(self.checked, false, true);
 							return;
 						}
 						break;
 				}
 
 				if (self.$jctimeout) {
-					self.$com.dirty(false, true);
-					self.$com.getter(self.value, true, true);
+					com.dirty(false, true);
+					com.getter(self.value, true, true);
 					clearTimeout(self.$jctimeout);
 					self.$jctimeout = 0;
 				} else
-					self.$com.setter && self.$com.setterX(self.$com.get(), self.path, 2);
+					com.setter && com.setterX(com.get(), self.path, 2);
 
 			});
 
@@ -8016,12 +8006,13 @@
 	}, 100);
 
 	function keypressdelay(self) {
+		var com = self.$com;
 		// Reset timeout
 		self.$jctimeout = 0;
-		// Is not dirty
-		self.$com.dirty(false, true);
+		// It's not dirty
+		com.dirty(false, true);
 		// Binds a value
-		self.$com.getter(self.value, true, true);
+		com.getter(self.value, true, true);
 	}
 
 	M.$parser.push(function(path, value, type) {
@@ -8030,20 +8021,17 @@
 			case 'number':
 			case 'currency':
 			case 'float':
-
-				if (typeof(value) === 'string')
-					value = value.replace(REGEMPTY, '').replace(REGCOMMA, '.');
-				var v = +value;
+				var v = +(typeof(value) == 'string' ? value.replace(REGEMPTY, '').replace(REGCOMMA, '.') : value);
 				return isNaN(v) ? null : v;
 
 			case 'date':
 			case 'datetime':
 
-				if (value instanceof Date)
-					return value;
-
 				if (!value)
 					return null;
+
+				if (value instanceof Date)
+					return value;
 
 				value = value.parseDate();
 				return value && value.getTime() ? value : null;
