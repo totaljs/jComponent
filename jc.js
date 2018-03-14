@@ -1253,16 +1253,13 @@
 			if (!options.url)
 				options.url = url;
 
-			options.data = data;
 			M.emit('request', options);
 
 			if (options.cancel)
 				return;
 
-			data = options.data;
 			options.type = options.method;
 			delete options.method;
-			delete options.data;
 
 			var output = {};
 			output.url = options.url;
