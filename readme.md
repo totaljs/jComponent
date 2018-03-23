@@ -995,7 +995,10 @@ MAIN.defaults.environments;
 // +v11.2.0
 
 MAIN.defaults.delay;
-// {Number} sets the delay for keypress real-time binding, default `300`.
+// {Number} sets a delay for keypress real-time binding, default `300`.
+
+MAIN.defaults.delayrepeat;
+// {Number} sets a delay for repeating of AJAX requests
 
 MAIN.defaults.baseurl;
 // v13.0.5
@@ -1323,6 +1326,10 @@ AJAXCONFIG('custom', function(req) {
 
 // +v11.0.0 status can be 999 and this is unspecific network error.
 // +v11.2.0 supports environments e.g. AJAX('GET [adminurl]') replaces '[adminurl]' for ENV('adminurl') --> in url and headers
+
+// +v14.3.1 supports REPEAT mode for important requests
+// If the request ends with unexpected network error then the jComponent re-execute AJAX request again
+// AJAX('GET /api/ REPEAT', ...);
 
 MAIN.evaluate(path, expression, [path_is_value]);
 MAIN.evaluate('model.age', 'value > 20 && value < 30'); // Example

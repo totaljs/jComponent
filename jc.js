@@ -92,6 +92,7 @@
 	MD.delay = 555;
 	MD.delaywatcher = 555;
 	MD.delaybinder = 200;
+	MD.delayrepeat = 2000;
 	MD.keypress = true;
 	MD.localstorage = true;
 	MD.jsoncompress = false;
@@ -1179,6 +1180,7 @@
 
 		var td = typeof(data);
 		var tmp;
+		var arg = EMPTYARRAY;
 
 		if (!callback && (td === 'function' || td === 'string')) {
 			timeout = callback;
@@ -1189,6 +1191,19 @@
 		var index = url.indexOf(' ');
 		if (index === -1)
 			return M;
+
+		var repeat = false;
+
+		url = url.replace(/\srepeat/i, function() {
+			repeat = true;
+			return '';
+		});
+
+		if (repeat) {
+			arg = [];
+			for (var i = 0; i < arguments.length; i++)
+				arg.push(arguments[i]);
+		}
 
 		var method = url.substring(0, index).toUpperCase();
 		var isCredentials = method.substring(0, 1) === '!';
@@ -1286,6 +1301,15 @@
 			};
 
 			options.error = function(req, s) {
+
+				if (!req.status && repeat) {
+					// internal error
+					// internet doesn't work
+					setTimeout(function() {
+						W.AJAX.apply(M, arg);
+					}, MD.delayrepeat);
+					return;
+				}
 
 				output.response = req.responseText;
 				output.status = req.status || 999;
