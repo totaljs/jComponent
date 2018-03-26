@@ -1306,6 +1306,7 @@
 					// internal error
 					// internet doesn't work
 					setTimeout(function() {
+						arg[0] += ' REPEAT';
 						W.AJAX.apply(M, arg);
 					}, MD.delayrepeat);
 					return;
