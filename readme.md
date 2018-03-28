@@ -1921,6 +1921,15 @@ var common = CREATE('common');
 common.form = 'users';
 // It notifies all components with this path automatically
 // So you don't need to use UPDATE() or SET()
+
+var params = READPARAMS();
+// returns {Object}
+// Reads params from URL address
+
+var params = MAKEPARAMS('/your-url/', { q: 'Google' });
+var params = MAKEPARAMS({ q: 'Google' });
+// returns {String}
+// Makes URL params
 ```
 
 ## Device Width

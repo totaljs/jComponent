@@ -1105,11 +1105,12 @@
 		return obj;
 	};
 
-	M.createURL = function(url, values) {
+	M.createURL = W.MAKEPARAMS = function(url, values, type) {
 
 		var l = location;
 
 		if (typeof(url) === 'object') {
+			type = values;
 			values = url;
 			url = l.pathname + l.search;
 		}
@@ -1129,17 +1130,17 @@
 			query[key] = values[key];
 		}
 
-		var val = $.param(query, true);
+		var val = $.param(query, type == null || type === true);
 		return url + (val ? '?' + val : '');
 	};
 
-	M.parseQuery = function(value) {
+	M.parseQuery = M.READPARAMS = function(value) {
 
 		if (!value)
 			value = location.search;
 
 		if (!value)
-			return EMPTYOBJECT;
+			return {};
 
 		var index = value.indexOf('?');
 		if (index !== -1)
