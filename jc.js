@@ -1134,7 +1134,7 @@
 		return url + (val ? '?' + val : '');
 	};
 
-	M.parseQuery = M.READPARAMS = function(value) {
+	M.parseQuery = W.READPARAMS = function(value) {
 
 		if (!value)
 			value = location.search;
