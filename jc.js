@@ -13,6 +13,7 @@
 	var REGSEARCH = /[^a-zA-Zá-žÁ-Žа-яА-Я\d\s:]/g;
 	var REGMETA = /_{2,}/;
 	var REGWILDCARD = /\.\*/;
+	var REGISARR = /\[\d+\]$/;
 	var ATTRSCOPECTRL = '[data-jc-controller]';
 	var ATTRCOM = '[data-jc]';
 	var ATTRURL = '[data-jc-url]';
@@ -3222,14 +3223,6 @@
 		return name.charCodeAt(0) === 35;
 	}
 
-	function isArray(path) {
-		var index = path.lastIndexOf('[');
-		if (index === -1)
-			return false;
-		path = path.substring(index + 1, path.length - 1).substring(0, 1);
-		return !(path === '"' || path === '\'');
-	}
-
 	function emitwatch(path, value, type) {
 		for (var i = 0, length = watches.length; i < length; i++) {
 			var self = watches[i];
@@ -3487,28 +3480,15 @@
 			return;
 		}
 
-		var arr = path.split('.');
+		var arr = parsepath(path);
 		var builder = [];
-		var p = '';
 
-		for (var i = 0, length = arr.length; i < length; i++) {
-			p += (p !== '' ? '.' : '') + arr[i];
-			var type = isArray(arr[i]) ? '[]' : '{}';
-
-			if (i !== length - 1) {
-				builder.push('if(typeof(w.' + p + ')!=="object"||w.' + p + '===null)w.' + p + '=' + type);
-				continue;
-			}
-
-			if (type === '{}')
-				break;
-
-			p = p.substring(0, p.lastIndexOf('['));
-			builder.push('if(!(w.' + p + ' instanceof Array))w.' + p + '=' + type);
-			break;
+		for (var i = 0; i < arr.length - 1; i++) {
+			var type = arr[i + 1] ? (REGISARR.test(arr[i + 1]) ? '[]' : '{}') : '{}';
+			builder.push('if(typeof(' + arr[i] + ')!==\'object\'||' + arr[i] + '==null)w.' + arr[i] + '=' + type + ';');
 		}
 
-		var fn = (new Function('w', 'a', 'b', builder.join(';') + ';var v=typeof(a)===\'function\'?a(MAIN.compiler.get(b)):a;w.' + path.replace(/'/, '\'') + '=v;return v'));
+		var fn = (new Function('w', 'a', 'b', builder.join(';') + ';var v=typeof(a)===\'function\'?a(MAIN.compiler.get(b)):a;w.' + arr[arr.length - 1] + '=v;return v'));
 		paths[key] = fn;
 		fn(W, value, path);
 		return C;
@@ -3533,21 +3513,45 @@
 		if (path.indexOf('?') !== -1)
 			return;
 
-		var arr = path.split('.');
+		var arr = parsepath(path);
 		var builder = [];
-		var p = '';
 
-		for (var i = 0, length = arr.length - 1; i < length; i++) {
-			var tmp = arr[i];
-			var index = tmp.lastIndexOf('[');
-			index !== -1 && builder.push('if(!w.' + (p ? p + '.' : '') + tmp.substring(0, index) + ')return');
-			p += (p !== '' ? '.' : '') + arr[i];
-			builder.push('if(!w.' + p + ')return');
-		}
+		for (var i = 0, length = arr.length - 1; i < length; i++)
+			builder.push('if(!w.' + arr[i] + ')return');
 
-		var fn = (new Function('w', builder.join(';') + ';return w.' + path.replace(/'/, '\'')));
+		var fn = (new Function('w', builder.join(';') + ';return w.' + arr[arr.length - 1]));
 		paths[key] = fn;
 		return fn(scope || W);
+	}
+
+	function parsepath(path) {
+
+		var arr = path.split('.');
+		var builder = [];
+		var all = [];
+
+		for (var i = 0; i < arr.length; i++) {
+			var p = arr[i];
+			var index = p.indexOf('[');
+			if (index === -1) {
+				if (p.indexOf('-') === -1) {
+					all.push(p);
+					builder.push(all.join('.'));
+				} else {
+					var a = all.splice(all.length - 1);
+					all.push(a + '[\'' + p + '\']');
+					builder.push(all.join('.'));
+				}
+			} else {
+				all.push(p.substring(0, index));
+				builder.push(all.join('.'));
+				all.splice(all.length - 1);
+				all.push(p);
+				builder.push(all.join('.'));
+			}
+		}
+
+		return builder;
 	}
 
 	C.get = get;
