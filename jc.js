@@ -5,7 +5,7 @@
 	var REGSCRIPT = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGENV = /(\[.*?\])/gi;
-	var REGPARAMS = /\{[a-z0-9]+\}/gi;
+	var REGPARAMS = /\{{1,2}[a-z0-9_.-\s]+\}{1,2}/gi;
 	var REGEMPTY = /\s/g;
 	var REGCOMMA = /,/g;
 	var REGGROUP = /\{[a-z0-9\-,\s]+\}/i;
@@ -135,7 +135,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v14.3.1';
+	M.version = 'v14.3.2';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -6690,8 +6690,11 @@
 	};
 
 	SP.params = SP.arg = function(obj) {
-		return this.replace(REGPARAMS, function(id) {
-			return get(id.substring(1, id.length - 1), obj);
+		return this.replace(REGPARAMS, function(text) {
+			// Is double?
+			var l = text.charCodeAt(1) === 123 ? 2 : 1;
+			var val = get(text.substring(l, text.length - l).trim(), obj);
+			return val == null ? text : val;
 		});
 	};
 
