@@ -3484,11 +3484,18 @@
 		var builder = [];
 
 		for (var i = 0; i < arr.length - 1; i++) {
+			var item = arr[i];
 			var type = arr[i + 1] ? (REGISARR.test(arr[i + 1]) ? '[]' : '{}') : '{}';
-			builder.push('if(typeof(' + arr[i] + ')!==\'object\'||' + arr[i] + '==null)w.' + arr[i] + '=' + type + ';');
+			var p = 'w' + (item.substring(0, 1) === '[' ? '' : '.') + item;
+			builder.push('if(typeof(' + p + ')!==\'object\'||' + p + '==null)' + p + '=' + type + ';');
 		}
 
-		var fn = (new Function('w', 'a', 'b', builder.join(';') + ';var v=typeof(a)===\'function\'?a(MAIN.compiler.get(b)):a;w.' + arr[arr.length - 1] + '=v;return v'));
+		var v = arr[arr.length - 1];
+
+		if (v.substring(0, 1) !== '[')
+			v = '.' + v;
+
+		var fn = (new Function('w', 'a', 'b', builder.join(';') + ';var v=typeof(a)===\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v;return v'));
 		paths[key] = fn;
 		fn(W, value, path);
 		return C;
@@ -3516,10 +3523,18 @@
 		var arr = parsepath(path);
 		var builder = [];
 
-		for (var i = 0, length = arr.length - 1; i < length; i++)
-			builder.push('if(!w.' + arr[i] + ')return');
+		for (var i = 0, length = arr.length - 1; i < length; i++) {
+			var item = arr[i];
+			if (item.substring(0, 1) !== '[')
+				item = '.' + item;
+			builder.push('if(!w' + item + ')return');
+		}
 
-		var fn = (new Function('w', builder.join(';') + ';return w.' + arr[arr.length - 1]));
+		var v = arr[arr.length - 1];
+		if (v.substring(0, 1) !== '[')
+			v = '.' + v;
+
+		var fn = (new Function('w', builder.join(';') + ';return w' + v));
 		paths[key] = fn;
 		return fn(scope || W);
 	}
@@ -3543,11 +3558,18 @@
 					builder.push(all.join('.'));
 				}
 			} else {
-				all.push(p.substring(0, index));
-				builder.push(all.join('.'));
-				all.splice(all.length - 1);
-				all.push(p);
-				builder.push(all.join('.'));
+				if (p.indexOf('-') === -1) {
+					all.push(p.substring(0, index));
+					builder.push(all.join('.'));
+					all.splice(all.length - 1);
+					all.push(p);
+					builder.push(all.join('.'));
+				} else {
+					all.push('[\'' + p.substring(0, index) + '\']');
+					builder.push(all.join(''));
+					all.push(p.substring(index));
+					builder.push(all.join(''));
+				}
 			}
 		}
 
