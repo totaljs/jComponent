@@ -169,7 +169,7 @@
 
 	M.compile = compile;
 
-	W.CREATETRANSFORM = function(name, callback) {
+	W.NEWTRANSFORM = W.CREATETRANSFORM = function(name, callback) {
 		M.transforms[name] = callback;
 		return W;
 	};
