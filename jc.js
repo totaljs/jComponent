@@ -5125,7 +5125,13 @@
 
 	PPVC.event = PPC.event = PPP.event = PPP.on = PCTRL.event = SCP.event = function() {
 		var self = this;
-		self.element.on.apply(self.element, arguments);
+		if (self.element)
+			self.element.on.apply(self.element, arguments);
+		else {
+			setTimeout(function(arg) {
+				self.event(self, arg);
+			}, 500, arguments);
+		}
 		return self;
 	};
 
