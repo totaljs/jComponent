@@ -4232,10 +4232,13 @@
 		return this.element.FIND(selector, many, callback, timeout);
 	};
 
-	SCP.SETTER = PCTRL.SETTER = function(selector, name) {
-		return this.element.SETTER(selector, name);
+	SCP.SETTER = PCTRL.SETTER = function(a, b, c, d, e, f, g) {
+		return this.element.SETTER(a, b, c, d, e, f, g);
 	};
 
+	SCP.RECONFIGURE = PCTRL.RECONFIGURE = function(selector, name) {
+		return this.element.RECONFIGURE(selector, name);
+	};
 
 	// ===============================================================
 	// COMPONENT DECLARATION
@@ -5039,7 +5042,6 @@
 	};
 
 	PPC.reconfigure = PPVC.reconfigure = PCTRL.reconfigure = function(value, callback, init) {
-
 		var self = this;
 
 		if (typeof(value) === 'object') {
@@ -7785,6 +7787,10 @@
 			}
 
 			return self;
+		};
+
+		$.fn.RECONFIGURE = function(selector, value) {
+			return this.SETTER(selector, 'reconfigure', value);
 		};
 
 		$.fn.scope = function() {
