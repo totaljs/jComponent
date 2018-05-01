@@ -2499,7 +2499,7 @@
 			if (typeof(item) === 'function')
 				item(next);
 			else
-				IMPORT(item, next);
+				IMPORT('once ' + item, next);
 		}, function() {
 			declaration.importing = false;
 			callback(obj, el);
