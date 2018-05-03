@@ -575,7 +575,7 @@
 			obj.path = path;
 			obj.$path = arr;
 			watches.push(obj);
-			init && fn.call(context || M, path, get(path), 0);
+			init && fn.call(context || M, path, obj.format ? obj.format(get(path), path, 0) : get(path), 0);
 		} else {
 			if (events[name])
 				events[name].push(obj);
