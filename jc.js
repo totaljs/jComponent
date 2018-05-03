@@ -24,6 +24,7 @@
 	var DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
 	var ACTRLS = { INPUT: true, TEXTAREA: true, SELECT: true };
 	var OK = Object.keys;
+	var A = '-->';
 
 	var LCOMPARER = window.Intl ? window.Intl.Collator().compare : function(a, b) {
 		return a.localeCompare(b);
@@ -135,7 +136,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v14.3.2';
+	M.version = 'v14.3.3';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -492,6 +493,10 @@
 		return M;
 	};
 
+	W.UNWATCH = function(path, fn) {
+		return OFF('watch', path, fn);
+	};
+
 	W.WATCH = M.watch = function(path, fn, init) {
 
 		if (typeof(path) === 'function') {
@@ -524,8 +529,24 @@
 		var obj = { name: name, fn: fn, owner: owner || current_owner, controller: current_ctrl, context: context };
 
 		if (name === 'watch') {
-
 			var arr = [];
+			index = path.indexOf(A);
+
+			if (index !== -1) {
+				var n = path.substring(index + 3).trim();
+				path = path.substring(0, index).trim();
+				var is = n.indexOf('=>') === -1;
+				if (is) {
+					if (n.indexOf('.') !== -1) {
+						n = '(value,path,type)=>' + n;
+						is = false;
+					}
+				}
+				obj.format = is ? GET(n) : FN(n);
+			}
+
+			if (path.substring(path.length - 1) === '.')
+				path = path.substring(0, path.length - 1);
 
 			// Temporary
 			if (path.charCodeAt(0) === 37)
@@ -582,8 +603,14 @@
 			name = name.substring(index + 1).trim();
 		}
 
-		if (path)
-			path = path.replace('.*', '');
+		if (path) {
+			path = path.replace('.*', '').trim();
+			index = path.indexOf(A);
+			if (index !== -1)
+				path = path.substring(0, index).trim();
+			if (path.substring(path.length - 1) === '.')
+				path = path.substring(0, path.length - 1);
+		}
 
 		var type = 0;
 
@@ -3227,15 +3254,18 @@
 		for (var i = 0, length = watches.length; i < length; i++) {
 			var self = watches[i];
 			if (self.path === '*') {
-				self.fn.call(self.context, path, value, type);
+				self.fn.call(self.context, path, self.format ? self.format(value, path, type) : value, type);
 			} else if (path.length > self.path.length) {
 				var index = path.lastIndexOf('.', self.path.length);
-				if (index === -1 ? false : self.path === path.substring(0, index))
-					self.fn.call(self.context, path, GET(self.path), type);
+				if (index === -1 ? false : self.path === path.substring(0, index)) {
+					var val = GET(self.path);
+					self.fn.call(self.context, path, self.format ? self.format(val, path, type) : val, type);
+				}
 			} else {
 				for (var j = 0, jl = self.$path.length; j < jl; j++) {
 					if (self.$path[j] === path) {
-						self.fn.call(self.context, path, GET(self.path), type);
+						var val = GET(self.path);
+						self.fn.call(self.context, path, self.format ? self.format(val, path, type) : val, type);
 						break;
 					}
 				}
@@ -3444,7 +3474,7 @@
 
 	function remap(path, value) {
 
-		var index = path.replace('-->', '->').indexOf('->');
+		var index = path.replace(A, '->').indexOf('->');
 
 		if (index !== -1) {
 			value = value[path.substring(0, index).trim()];
@@ -4948,7 +4978,7 @@
 		// type 2: scope
 
 		var self = this;
-		var index = path.indexOf('-->');
+		var index = path.indexOf(A);
 
 		if (index !== -1) {
 			var name = path.substring(index + 3).trim();
@@ -5679,6 +5709,9 @@
 
 	W.FN = function(exp) {
 		var index = exp.indexOf('=>');
+		if (index === -1)
+			return exp;
+
 		var arg = exp.substring(0, index).trim();
 		var val = exp.substring(index + 2).trim();
 		var is = false;

@@ -9,7 +9,7 @@
 
 > __Download__: more than 80 jComponents free for everyone <https://componentator.com>
 
-- Current version: `v14.3.1`
+- Current version: `v14.3.3`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -902,6 +902,10 @@ COMPONENT('my-component-name', function(instance, config) {
     });
     // This delegate watches all changes according the model.
 
+    instance.watch('other.path.to.property --> value.toUpperCase()', function(path, value, type) {});
+    instance.watch('other.path.to.property --> (value, path, type) => value.toUpperCase()', function(path, value, type) {});
+    instance.watch('other.path.to.property --> function_name', function(path, value, type) {});
+    // +v14.3.3 supports inline helpers for transformating values
 
     instance.unwatch([path], [function]);
     // +v11.1.0
