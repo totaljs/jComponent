@@ -2824,7 +2824,7 @@ jComponent `+v14.5.0` contains a simple alternative to `j-Binder` in the core of
 ```html
 <div data-bind="path.to.property__COMMAND:VALUE__COMMAND:VALUE__etc.."></div>
 
-<!-- Shows the element where the user.age will be greater than 18 and then renders value -->
+<!-- Shows the element if the user.age will be greater than 18 and then renders value -->
 <div data-bind="user.age__show:value > 18__html:value"></div>
 
 <!-- OR -->
@@ -2834,7 +2834,6 @@ jComponent `+v14.5.0` contains a simple alternative to `j-Binder` in the core of
 <!-- OR -->
 <div data-bind="user.age___show:value < 18___html:v => v"></div>
 
-<!-- Shows the element if the "user.age" will be greater than 18 + renders age as HTML -->
 <div data-bind="user__template:true">
     <script type="text/html">
         <h1>Tangular template</h1>
