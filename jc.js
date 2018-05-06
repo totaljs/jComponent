@@ -1,7 +1,7 @@
 (function() {
 
 	// Constants
-	var REGCOM = /(data-jc|data-jc-controller)=|COMPONENT\(/;
+	var REGCOM = /(data-jc|data-jc-controller|data-bind|bind)=|COMPONENT\(/;
 	var REGSCRIPT = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGENV = /(\[.*?\])/gi;
@@ -20,9 +20,12 @@
 	var ATTRDATA = 'jc';
 	var ATTRDEL = 'data-jc-removed';
 	var ATTRREL = 'data-jc-released';
+	var ATTRSCOPE = 'data-jc-scope';
+	var ATTRCTRL = 'jc-controller';
 	var SELINPUT = 'input,textarea,select';
 	var DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
 	var ACTRLS = { INPUT: true, TEXTAREA: true, SELECT: true };
+	var DEFMODEL = { value: null };
 	var OK = Object.keys;
 	var A = '-->';
 
@@ -79,6 +82,8 @@
 	var schedulercounter = 0;
 	var mediaqueriescounter = 0;
 	var knockknockcounter = 0;
+	var binders = {};
+	var bindersnew = [];
 
 	var current_ctrl = null;
 	var current_owner = null;
@@ -136,7 +141,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v14.3.3';
+	M.version = 'v14.5.0';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2278,7 +2283,7 @@
 	function crawler(container, onComponent, level, controller, scopes) {
 
 		if (container)
-			container = $(container).get(0);
+			container = $(container)[0];
 		else
 			container = document.body;
 
@@ -2288,7 +2293,7 @@
 		if (level == null || level === 0) {
 			scopes = [];
 			if (container !== document.body) {
-				var scope = $(container).closest('[data-jc-scope]');
+				var scope = $(container).closest('[' + ATTRSCOPE + ']');
 				scope && scope.length && scopes.push(scope.get(0));
 			}
 		}
@@ -2313,6 +2318,8 @@
 		else
 			level++;
 
+		var binders;
+
 		for (var i = 0, length = arr.length; i < length; i++) {
 			var el = arr[i];
 			if (el) {
@@ -2329,12 +2336,27 @@
 						onComponent(name || '', el, level, controller, scopes);
 					}
 				}
+
+				if (!el.$jcbind) {
+					var b = el.getAttribute('data-bind') || el.getAttribute('bind');
+					if (b) {
+						!binders && (binders = []);
+						binders.push({ el: el, b: b });
+					}
+				}
 			}
 		}
 
 		for (var i = 0, length = sub.length; i < length; i++) {
 			el = sub[i];
 			el && crawler(el, onComponent, level, controller, scopes && scopes.length ? scopes : []);
+		}
+
+		if (binders) {
+			for (var i = 0; i < binders.length; i++) {
+				var a = binders[i];
+				a.el.$jcbind = parsebinder(a.el, a.b, scopes);
+			}
 		}
 	}
 
@@ -2794,6 +2816,9 @@
 
 		}, undefined);
 
+		// perform binder
+		rebindbinder();
+
 		if (!has || !C.pending.length)
 			C.is = false;
 
@@ -2823,7 +2848,7 @@
 		if (!independent) {
 			for (var i = scopes.length - 1; i > -1; i--) {
 				arr.push(scopes[i]);
-				if (scopes[i].getAttribute('data-jc-scope').substring(0, 1) === '!')
+				if (scopes[i].getAttribute(ATTRSCOPE).substring(0, 1) === '!')
 					break;
 			}
 		}
@@ -3502,8 +3527,11 @@
 
 		var key = '+' + path;
 
-		if (paths[key])
-			return paths[key](W, value, path);
+		if (paths[key]) {
+			var a = paths[key](W, value, path);
+			binders[path] && binderbind(path);
+			return a;
+		}
 
 		if (path.indexOf('?') !== -1) {
 			path = '';
@@ -3528,6 +3556,7 @@
 		var fn = (new Function('w', 'a', 'b', builder.join(';') + ';var v=typeof(a)===\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v;return v'));
 		paths[key] = fn;
 		fn(W, value, path);
+		binders[path] && binderbind(path);
 		return C;
 	}
 
@@ -3645,11 +3674,12 @@
 		var is = true;
 		var length = keys.length;
 		var index;
+		var arr;
 
 		for (var i = 0; i < length; i++) {
 			var key = keys[i];
 			index = 0;
-			var arr = events[key];
+			arr = events[key];
 			while (true) {
 
 				var item = arr[index++];
@@ -3701,13 +3731,15 @@
 				continue;
 			}
 
+			var c = component.element;
+
 			if (!component.$removed || component.$removed === 2) {
 				// Clears temporary cache for parent components
 				component.$parent = component.$main = undefined;
 				continue;
 			}
 
-			if (component.element && component.element.closest(document.documentElement).length) {
+			if (c && c.closest(document.documentElement).length) {
 				if (!component.attr(ATTRDEL)) {
 					if (component.$parser && !component.$parser.length)
 						component.$parser = undefined;
@@ -3721,10 +3753,9 @@
 			M.emit('component.destroy', component.name, component);
 
 			component.destroy && component.destroy();
-			component.element.off();
-			component.element.find('*').off();
-			component.element.remove();
-			component.element = null;
+			c.off();
+			c.find('*').off();
+			c.remove();
 			component.dom = null;
 			component.$removed = 2;
 			component.path = null;
@@ -3740,9 +3771,32 @@
 			is = true;
 		}
 
+		keys = Object.keys(binders);
+		for (var i = 0; i < keys.length; i++) {
+			arr = binders[keys[i]];
+			var j = 0;
+			while (true) {
+				var o = arr[j++];
+				if (!o)
+					break;
+				if (o.el.closest(document.documentElement).length)
+					continue;
+				var e = o.el;
+				if (!e[0].$br) {
+					e.off();
+					e.find('*').off();
+					e[0].$br = 1;
+				}
+				j--;
+				arr.splice(j, 1);
+			}
+			if (!arr.length)
+				delete binders[keys[i]];
+		}
+
 		clear('find');
 
-		W.DATETIME = new Date();
+		W.DATETIME = W.NOW = new Date();
 		var now = W.DATETIME.getTime();
 		var is2 = false;
 		var is3 = false;
@@ -4685,13 +4739,13 @@
 			C.recompile = true;
 
 		var prev = self.element;
-		var ctrl = prev.attrd('jc-controller');
+		var ctrl = prev.attrd(ATTRCTRL);
 		var scope = prev.attrd('jc-scope');
 
 		self.element.removeAttr('data-jc');
 		self.element.get(0).$com = null;
-		ctrl && self.element.removeAttr('data-jc-controller');
-		scope && self.element.removeAttr('data-jc-scope');
+		ctrl && self.element.removeAttr('data-' + ATTRCTRL);
+		scope && self.element.removeAttr(ATTRSCOPE);
 
 		if (remove)
 			prev.off().remove();
@@ -4702,7 +4756,7 @@
 		self.dom = self.element.get(0);
 		self.dom.$com = self;
 		self.attrd('jc', self.name);
-		ctrl && self.attrd('jc-controller', ctrl);
+		ctrl && self.attrd(ATTRCTRL, ctrl);
 		scope && self.attrd('jc-scope', scope);
 		self.siblings = false;
 		return self;
@@ -5579,6 +5633,8 @@
 				declaration.call(m, m);
 			}
 		}
+
+		W.RECOMPILE();
 	};
 
 	W.COMPONENT = function(name, config, declaration, dependencies) {
@@ -6342,8 +6398,19 @@
 		}, interval || 500);
 	};
 
+	var $recompile;
+
 	W.COMPILE = function(container) {
+		clearTimeout($recompile);
 		return compile(container);
+	};
+
+	W.RECOMPILE = function() {
+		$recompile && clearTimeout($recompile);
+		$recompile = setTimeout(function() {
+			W.COMPILE();
+			$recompile = null;
+		}, 700);
 	};
 
 	W.SCOPE = function(name, fn) {
@@ -7834,7 +7901,7 @@
 			var data = this.get(0).$scopedata;
 			if (data)
 				return data;
-			var el = this.closest('[data-jc-scope]');
+			var el = this.closest('[' + ATTRSCOPE + ']');
 			if (el.length) {
 				data = el.get(0).$scopedata;
 				if (data)
@@ -7846,7 +7913,7 @@
 		$.fn.controller = function() {
 			if (!this.length)
 				return;
-			var a = 'jc-controller';
+			var a = ATTRCTRL;
 			var n = this.attrd(a);
 			if (n)
 				return CONTROLLER(n);
@@ -8156,5 +8223,273 @@
 
 		return value;
 	});
+
+	function binderbind(path) {
+		var arr = binders[path];
+		for (var i = 0; i < arr.length; i++) {
+			var item = arr[i];
+			item.exec(GET(item.path), path);
+		}
+	}
+
+	var $rebinder;
+
+	function rebindbinder() {
+		$rebinder && clearTimeout($rebinder);
+		$rebinder = setTimeout(function() {
+			var arr = bindersnew.splice(0);
+			for (var i = 0; i < arr.length; i++) {
+				var item = arr[i];
+				!item.init && item.exec(GET(item.path), item.path);
+			}
+		}, 50);
+	}
+
+	function rebinddecode(val) {
+		return val.replace(/&#39;/g, '\'');
+	}
+
+	function parsebinder(el, b, scopes) {
+
+		var meta = b.split(REGMETA);
+		var obj = {};
+		var path;
+		var index;
+		var cls = [];
+
+		obj.el = $(el);
+
+		for (var i = 0; i < meta.length; i++) {
+			var item = meta[i].trim();
+			if (item) {
+
+				if (i) {
+
+					index = item.indexOf(':');
+					if (index === -1)
+						continue;
+
+					var k = item.substring(0, index).trim();
+					var v = item.substring(index + 1).trim();
+
+					if (k === 'selector') {
+						obj[k] = v;
+						continue;
+					}
+
+					var fn = k !== 'template' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v)) : GET(v) : 1;
+
+					if (!fn)
+						return null;
+
+					var keys = k.split('+');
+					for (var j = 0; j < keys.length; j++) {
+
+						k = keys[j].trim();
+
+						var clstype = k.substring(0, 1);
+						if (clstype === '.') {
+							cls.push({ name: k.substring(1), fn: fn });
+							k = 'class';
+						}
+
+						var v = item.substring(index + 1).trim();
+						switch (k) {
+							case 'visible':
+								k = 'show';
+								break;
+							case 'hidden':
+								k = 'hide';
+								break;
+							case 'exec':
+								k = 'change';
+								break;
+							case 'disabled':
+								k = 'disable';
+								break;
+							case 'value':
+								k = 'val';
+								break;
+							case 'disable':
+							case 'change':
+							case 'hide':
+							case 'href':
+							case 'html':
+							case 'checked':
+							case 'show':
+							case 'src':
+							case 'text':
+							case 'val':
+							case 'title':
+							case 'selector':
+								break;
+							case 'template':
+								var scr = obj.el.find('script');
+								if (!scr.length)
+									scr = obj.el;
+								fn = Tangular.compile(scr.html());
+								break;
+						}
+
+						if (k !== 'class')
+							obj[k] = fn;
+					}
+
+				} else {
+					// path
+					path = item;
+
+					if (meta.length === 1) {
+						var fn = GET(path);
+						fn && fn.call(obj.el, obj.el);
+						return fn ? fn : null;
+					}
+
+					index = path.indexOf(A);
+
+					if (index !== -1) {
+						var n = path.substring(index + 3).trim();
+						path = path.substring(0, index).trim();
+						var is = n.indexOf('=>') === -1;
+						if (is) {
+							if (isValue(n) !== -1) {
+								n = '(value,path)=>' + n;
+								is = false;
+							}
+						}
+						obj.format = is ? GET(n) : FN(n);
+					}
+
+					if (path.substring(path.length - 1) === '.')
+						path = path.substring(0, path.length - 1);
+				}
+			}
+		}
+
+		if (cls.length)
+			obj.classes = cls;
+
+		path = path.replace('%', 'jctmp.');
+
+		if (path.indexOf('?') !== -1) {
+			var scope = scopes[scopes.length - 1];
+			if (scope && scope.$scopedata) {
+				var data = scope.$scopedata;
+				if (data == null)
+					return;
+				path = path.replace(/\?/g, data.path);
+			} else
+				return;
+		}
+
+		var arr = path.split('.');
+		var p = '';
+
+		for (var i = 0, length = arr.length; i < length; i++) {
+			p += (p ? '.' : '') + arr[i];
+			if (binders[p])
+				binders[p].push(obj);
+			else
+				binders[p] = [obj];
+		}
+
+		obj.path = path;
+		obj.init = 0;
+		obj.exec = function(value, path) {
+
+			var item = this;
+			var el = item.el;
+
+			item.selector && (el = el.find(item.selector));
+
+			if (!el.length)
+				return;
+
+			if (!item.init)
+				item.init = 1;
+
+			if (item.format)
+				value = item.format(value, path);
+
+			var tmp;
+
+			if (item.show) {
+				tmp = item.show.call(item.el, value, path, item.el);
+				el.tclass('hidden', !tmp);
+				if (!tmp)
+					return;
+			}
+
+			if (item.hide) {
+				tmp = item.hide.call(el, value, path, el);
+				el.hclass('hidden', !tmp);
+				if (!tmp)
+					return;
+			}
+
+			if (item.classes) {
+				for (var i = 0; i < item.classes.length; i++) {
+					var cls = item.classes[i];
+					el.tclass(cls.name, !!cls.fn.call(el, value, path, el));
+				}
+			}
+
+			if (item.title) {
+				tmp = item.title.call(el, value, path, el);
+				el.attr('title', tmp == null ? '' : tmp);
+			}
+
+			if (item.href) {
+				tmp = item.href.call(el, value, path, el);
+				el.attr('href', tmp == null ? '' : tmp);
+			}
+
+			if (item.src) {
+				tmp = item.src.call(el, value, path, el);
+				el.attr('src', tmp == null ? '' : tmp);
+			}
+
+			if (item.disable) {
+				tmp = item.disable.call(el, value, path, el);
+				el.prop('disable', tmp);
+			}
+
+			if (item.checked) {
+				tmp = item.checked.call(el, value, path, el);
+				el.prop('checked', tmp);
+			}
+
+			if (item.html) {
+				tmp = item.html.call(el, value, path, el);
+				el.html(tmp == null ? '' : tmp);
+			}
+
+			if (item.text) {
+				tmp = item.text.call(el, value, path, el);
+				el.text(tmp == null ? '' : tmp);
+			}
+
+			if (item.val) {
+				tmp = item.val.call(el, value, path, el);
+				el.val(tmp == null ? '' : tmp);
+			}
+
+			if (item.template) {
+				DEFMODEL.value = value;
+				DEFMODEL.path = path;
+				el.html(item.template(DEFMODEL));
+			}
+
+			item.change && item.change.call(el, value, path, el);
+		};
+
+		bindersnew.push(obj);
+		return obj;
+	}
+
+	function isValue(val) {
+		var index = val.indexOf('value');
+		return index !== -1 ? (((/\W/).test(val)) || val === 'value') : false;
+	}
 
 })();

@@ -9,7 +9,7 @@
 
 > __Download__: more than 80 jComponents free for everyone <https://componentator.com>
 
-- Current version: `v14.3.3`
+- Current version: `v14.5.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -2817,6 +2817,65 @@ READY.push(function() {
 });
 ```
 
+## `+v14.5.0` Direct binding
+
+jComponent `+v14.5.0` contains a simple alternative to `j-Binder` in the core of library.
+
+```html
+<div data-bind="path.to.property__COMMAND:VALUE__COMMAND:VALUE__etc.."></div>
+
+<!-- Shows the element where the user.age will be greater than 18 and then renders value -->
+<div data-bind="user.age__show:value > 18__html:value"></div>
+
+<!-- OR -->
+<div data-bind="user.age __ show:value < 18 __ html:v => v"></div>
+<!-- OR -->
+<div data-bind="user.age ___ show:value < 18 ___ html:v => v"></div>
+<!-- OR -->
+<div data-bind="user.age___show:value < 18___html:v => v"></div>
+
+<!-- Shows the element if the "user.age" will be greater than 18 + renders age as HTML -->
+<div data-bind="user__template:true">
+    <script type="text/html">
+        <h1>Tangular template</h1>
+        <div>Name: {{ value.name }}</div>
+        <div>Age: {{ value.age }}</div>
+    </script>
+</div>
+```
+
+__Commands__:
+
+- `show` toggles `hidden` class if the condition will be valid
+- `hide` toggles `hidden` class if the condition will be valid
+- `html` renders a value as HTML (condition must return `string`)
+- `text` renders a value as TEXT without tags (condition must return `string`)
+- `title` sets `title` attribute (condition must return `string`)
+- `disable` sets `disabled` attribute (condition must return `boolean`)
+- `checked` sets `checked` attribute (condition must return `boolean`)
+- `src` sets `src` attribute (condition must return `string`)
+- `href` sets `href` attribute (condition must return `string`)
+- `value` sets `value` attribute (condition must return `string`)
+- `template` can contain `boolean` and it expects `<script type="text/html">` which will be compiled and used as Tangular template
+- `change` executes a method `function(value, path, jQueryElement)` in `jQueryElement` context (must contain a name of method)
+- `.YOUR_CLASS_NAME` toggles class (condition must return `boolean`)
+- `selector` can contain jQuery selector and `bind` will be performed for this selector only
+
+__Linking commands__:
+
+```html
+<div data-bind="path.to.property__COMMAND + COMMAND + COMMAND:VALUE"></div>
+<div data-bind="user.age__visible + .selected:age => age > 18__html:value">
+```
+
+__Value types__:
+
+- arrow function in the form `COMMAND:(value,path,jelement)=>value.toUpperCase()` or `COMMAND:n=>n.toUpperCase()`
+- direct value `COMMAND:value.toUpperCase()` or `COMMAND:value` or `COMMAND:value > 10`
+- link to method: `COMMAND:upper_value` but `function upper_value(value, path, element)` must be defined
+
+You can type multiple commands in a row.
+
 ## Reserved keywords
 
 ```javascript
@@ -2824,9 +2883,6 @@ MAIN;          // jComponent main instance
 M;             // jComponent main instance
 
 DEF;           // +v14.0.0 alias for jComponent defaults "M.defaults"
-
-A;             // jComponent applications controller
-APPS;          // jComponent applications controller
 
 CONTROLLERS;   // jComponent controllers controller (+v11.0.0)
 
