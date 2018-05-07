@@ -8256,6 +8256,7 @@
 		var path;
 		var index;
 		var cls = [];
+		var sub = {};
 
 		obj.el = $(el);
 
@@ -8286,6 +8287,14 @@
 					for (var j = 0; j < keys.length; j++) {
 
 						k = keys[j].trim();
+
+						var s;
+
+						index = k.indexOf(' ');
+						if (index !== -1) {
+							s = k.substring(index + 1);
+							k = k.substring(0, index);
+						}
 
 						var clstype = k.substring(0, 1);
 						if (clstype === '.') {
@@ -8331,8 +8340,23 @@
 								break;
 						}
 
-						if (k !== 'class')
-							obj[k] = fn;
+						if (s) {
+							if (!sub[s])
+								sub[s] = {};
+
+							if (k !== 'class')
+								sub[s][k] = fn;
+							else {
+								var p = cls.pop();
+								if (sub[s].cls)
+									sub[s].cls.push(p);
+								else
+									sub[s].cls = [p];
+							}
+						} else {
+							if (k !== 'class')
+								obj[k] = fn;
+						}
 					}
 
 				} else {
@@ -8366,6 +8390,16 @@
 			}
 		}
 
+		var keys = Object.keys(sub);
+		for (var i = 0; i < keys.length; i++) {
+			var key = keys[i];
+			if (!obj.child)
+				obj.child = [];
+			var o = sub[key];
+			o.selector = key;
+			obj.child.push(o);
+		}
+
 		if (cls.length)
 			obj.classes = cls;
 
@@ -8395,12 +8429,28 @@
 
 		obj.path = path;
 		obj.init = 0;
-		obj.exec = function(value, path) {
+		obj.exec = function(value, path, index) {
 
 			var item = this;
 			var el = item.el;
 
-			item.selector && (el = el.find(item.selector));
+			if (index != null) {
+				if (item.child == null)
+					return;
+				item = item.child[index];
+				if (item == null)
+					return;
+			}
+
+			if (item.selector) {
+				if (item.cache)
+					el = item.cache;
+				else {
+					el = el.find(item.selector);
+					if (el.length)
+						item.cache = el;
+				}
+			}
 
 			if (!el.length)
 				return;
@@ -8481,6 +8531,12 @@
 			}
 
 			item.change && item.change.call(el, value, path, el);
+
+			if (index == null && item.child) {
+				for (var i = 0; i < item.child.length; i++)
+					item.exec(value, path, i);
+			}
+
 		};
 
 		bindersnew.push(obj);

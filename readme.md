@@ -2864,7 +2864,17 @@ __Linking commands__:
 
 ```html
 <div data-bind="path.to.property__COMMAND + COMMAND + COMMAND:VALUE"></div>
-<div data-bind="user.age__visible + .selected:age => age > 18__html:value">
+<div data-bind="user.age__visible + .selected:age => age > 18__html:value"></div>
+```
+
+__Commands and nested jQuery selectors__:
+
+```html
+<div data-bind="path.to.property__COMMAND SELECTOR:VALUE"></div>
+<div data-bind="user.age__visible b:value<18__html .age:value">
+    <div class="age"></div>
+    <b class="red">You are too young!</b>
+</div>
 ```
 
 __Value types__:
