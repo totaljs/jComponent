@@ -8257,28 +8257,28 @@
 		var index;
 		var cls = [];
 		var sub = {};
-
-		obj.el = $(el);
+		var e = obj.el = $(el);
 
 		for (var i = 0; i < meta.length; i++) {
 			var item = meta[i].trim();
 			if (item) {
-
 				if (i) {
 
-					index = item.indexOf(':');
-					if (index === -1)
-						continue;
-
-					var k = item.substring(0, index).trim();
-					var v = item.substring(index + 1).trim();
+					if (item !== 'template' && item !== '!template') {
+						index = item.indexOf(':');
+						if (index === -1)
+							continue;
+						var k = item.substring(0, index).trim();
+						var v = item.substring(index + 1).trim();
+					} else
+						k = item;
 
 					if (k === 'selector') {
 						obj[k] = v;
 						continue;
 					}
 
-					var fn = k !== 'template' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v)) : GET(v) : 1;
+					var fn = k !== 'template' && k !== '!template' && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v)) : GET(v) : 1;
 
 					if (!fn)
 						return null;
@@ -8289,6 +8289,8 @@
 						k = keys[j].trim();
 
 						var s;
+						var notnull = false;
+						var backup = false;
 
 						index = k.indexOf(' ');
 						if (index !== -1) {
@@ -8296,13 +8298,23 @@
 							k = k.substring(0, index);
 						}
 
-						var clstype = k.substring(0, 1);
-						if (clstype === '.') {
+						var c = k.substring(0, 1);
+
+						// not null
+						if (c === '!') {
+							k = k.substring(1);
+							c = k.substring(0, 1);
+							notnull = true;
+						}
+
+						if (c === '.') {
 							cls.push({ name: k.substring(1), fn: fn });
 							k = 'class';
 						}
 
-						var v = item.substring(index + 1).trim();
+						if (notnull && typeof(fn) === 'function')
+							fn.$nn = 1;
+
 						switch (k) {
 							case 'visible':
 								k = 'show';
@@ -8313,39 +8325,58 @@
 							case 'exec':
 								k = 'change';
 								break;
-							case 'disabled':
-								k = 'disable';
+							case 'disable':
+								k = 'disabled';
+								backup = true;
 								break;
 							case 'value':
 								k = 'val';
+								backup = true;
 								break;
-							case 'disable':
-							case 'change':
-							case 'hide':
+							case 'default':
+								k = 'def';
+								break;
 							case 'href':
-							case 'html':
-							case 'checked':
-							case 'show':
 							case 'src':
-							case 'text':
 							case 'val':
 							case 'title':
+							case 'html':
+							case 'text':
+							case 'disabled':
+							case 'checked':
+								backup = true;
+								break;
+							case 'def':
+							case 'change':
+							case 'hide':
+							case 'show':
 							case 'selector':
 								break;
 							case 'template':
-								var scr = obj.el.find('script');
+								var scr = e.find('script');
 								if (!scr.length)
-									scr = obj.el;
+									scr = e;
 								fn = Tangular.compile(scr.html());
+								if (notnull)
+									fn.$nn = 1;
 								break;
 						}
 
+						if (k === 'def')
+							fn = new Function('return ' + v)();
+
+						if (backup && notnull) {
+							obj[k + 'bk'] = k == 'src' ? e.attr(k) : k == 'href' ? e.attr(k) : (k == 'html' || k == 'text') ? e.html() : k == 'val' ? e.val() : k == 'title' ? e.attr(k) : k == 'disabled' ? e.prop(k) : k === 'checked' ? e.prop(k) : '';
+						}
+
 						if (s) {
+
 							if (!sub[s])
 								sub[s] = {};
 
 							if (k !== 'class')
 								sub[s][k] = fn;
+
 							else {
 								var p = cls.pop();
 								if (sub[s].cls)
@@ -8432,6 +8463,7 @@
 		obj.exec = function(value, path, index) {
 
 			var item = this;
+
 			var el = item.el;
 
 			if (index != null) {
@@ -8458,23 +8490,27 @@
 			if (!item.init)
 				item.init = 1;
 
+			if (item.def && value == null)
+				value = item.def;
+
 			if (item.format)
 				value = item.format(value, path);
 
 			var tmp;
+			var can = true;
 
-			if (item.show) {
+			if (item.show && (value || (value == null && !item.show.$nn))) {
 				tmp = item.show.call(item.el, value, path, item.el);
 				el.tclass('hidden', !tmp);
 				if (!tmp)
-					return;
+					can = false;
 			}
 
-			if (item.hide) {
+			if (item.hide && (value || (value == null && !item.hide.$nn))) {
 				tmp = item.hide.call(el, value, path, el);
-				el.tclass('hidden', !tmp);
-				if (!tmp)
-					return;
+				el.tclass('hidden', tmp);
+				if (tmp)
+					can = false;
 			}
 
 			if (item.classes) {
@@ -8484,55 +8520,83 @@
 				}
 			}
 
-			if (item.title) {
-				tmp = item.title.call(el, value, path, el);
-				el.attr('title', tmp == null ? '' : tmp);
+			if (can) {
+
+				if (item.html) {
+					if (value != null || !item.html.$nn) {
+						tmp = item.html.call(el, value, path, el);
+						el.html(tmp == null ? (item.htmlbk || '') : tmp);
+					} else
+						el.html(item.htmlbk || '');
+				}
+
+				if (item.text) {
+					if (value != null || !item.text.$nn) {
+						tmp = item.text.call(el, value, path, el);
+						el.text(tmp == null ? (item.htmlbk || '') : tmp);
+					} else
+						el.html(item.htmlbk || '');
+				}
+
+				if (item.val) {
+					if (value != null || !item.val.$nn) {
+						tmp = item.val.call(el, value, path, el);
+						el.val(tmp == null ? (item.valbk || '') : tmp);
+					} else
+						el.val(item.valbk || '');
+				}
+
+				if (item.template && (value != null || !item.template.$nn)) {
+					DEFMODEL.value = value;
+					DEFMODEL.path = path;
+					el.html(item.template(DEFMODEL));
+				}
+
+				if (item.disabled) {
+					if (value != null || !item.disabled.$nn) {
+						tmp = item.disabled.call(el, value, path, el);
+						el.prop('disabled', tmp == true);
+					} else
+						el.prop('disabled', item.disablebk == true);
+				}
+
+				if (item.checked) {
+					if (value != null || !item.checked.$nn) {
+						tmp = item.checked.call(el, value, path, el);
+						el.prop('checked', tmp == true);
+					} else
+						el.prop('checked', item.checkedbk == true);
+				}
+
+				if (item.title) {
+					if (value != null || !item.title.$nn) {
+						tmp = item.title.call(el, value, path, el);
+						el.attr('title', tmp == null ? (item.titlebk || '') : tmp);
+					} else
+						el.attr('title', item.titlebk || '');
+				}
+
+				if (item.href) {
+					if (value != null || !item.href.$nn) {
+						tmp = item.href.call(el, value, path, el);
+						el.attr('href', tmp == null ? (item.hrefbk || '') : tmp);
+					} else
+						el.attr(item.hrefbk || '');
+				}
+
+				if (item.src) {
+					if (value != null || !item.src.$nn) {
+						tmp = item.src.call(el, value, path, el);
+						el.attr('src', tmp == null ? (item.srcbk || '') : tmp);
+					} else
+						el.attr('src', item.srcbk || '');
+				}
 			}
 
-			if (item.href) {
-				tmp = item.href.call(el, value, path, el);
-				el.attr('href', tmp == null ? '' : tmp);
-			}
+			if (item.change && (value != null || !item.change.$nn))
+				item.change.call(el, value, path, el);
 
-			if (item.src) {
-				tmp = item.src.call(el, value, path, el);
-				el.attr('src', tmp == null ? '' : tmp);
-			}
-
-			if (item.disable) {
-				tmp = item.disable.call(el, value, path, el);
-				el.prop('disable', tmp);
-			}
-
-			if (item.checked) {
-				tmp = item.checked.call(el, value, path, el);
-				el.prop('checked', tmp);
-			}
-
-			if (item.html) {
-				tmp = item.html.call(el, value, path, el);
-				el.html(tmp == null ? '' : tmp);
-			}
-
-			if (item.text) {
-				tmp = item.text.call(el, value, path, el);
-				el.text(tmp == null ? '' : tmp);
-			}
-
-			if (item.val) {
-				tmp = item.val.call(el, value, path, el);
-				el.val(tmp == null ? '' : tmp);
-			}
-
-			if (item.template) {
-				DEFMODEL.value = value;
-				DEFMODEL.path = path;
-				el.html(item.template(DEFMODEL));
-			}
-
-			item.change && item.change.call(el, value, path, el);
-
-			if (index == null && item.child) {
+			if (can && index == null && item.child) {
 				for (var i = 0; i < item.child.length; i++)
 					item.exec(value, path, i);
 			}

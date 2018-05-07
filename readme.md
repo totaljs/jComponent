@@ -2819,22 +2819,18 @@ READY.push(function() {
 
 ## `+v14.5.0` Direct binding
 
-jComponent `+v14.5.0` contains a simple alternative to `j-Binder` in the core of library.
+jComponent `+v14.5.0` contains a simple alternative to `j-Binder` in the core of library. Supports scopes!
 
 ```html
 <div data-bind="path.to.property__COMMAND:VALUE__COMMAND:VALUE__etc.."></div>
 
+<!-- Adds a scope path instead of "?" question mark -->
+<div data-bind="?.to.property__COMMAND:VALUE__COMMAND:VALUE__etc.."></div>
+
 <!-- Shows the element if the user.age will be greater than 18 and then renders value -->
 <div data-bind="user.age__show:value > 18__html:value"></div>
 
-<!-- OR -->
-<div data-bind="user.age __ show:value < 18 __ html:v => v"></div>
-<!-- OR -->
-<div data-bind="user.age ___ show:value < 18 ___ html:v => v"></div>
-<!-- OR -->
-<div data-bind="user.age___show:value < 18___html:v => v"></div>
-
-<div data-bind="user__template:true">
+<div data-bind="user__template__visible:user">
     <script type="text/html">
         <h1>Tangular template</h1>
         <div>Name: {{ value.name }}</div>
@@ -2850,15 +2846,17 @@ __Commands__:
 - `html` renders a value as HTML (condition must return `string`)
 - `text` renders a value as TEXT without tags (condition must return `string`)
 - `title` sets `title` attribute (condition must return `string`)
-- `disable` sets `disabled` attribute (condition must return `boolean`)
+- `disabled` sets `disabled` attribute (condition must return `boolean`)
 - `checked` sets `checked` attribute (condition must return `boolean`)
 - `src` sets `src` attribute (condition must return `string`)
 - `href` sets `href` attribute (condition must return `string`)
 - `value` sets `value` attribute (condition must return `string`)
-- `template` can contain `boolean` and it expects `<script type="text/html">` which will be compiled and used as Tangular template
+- `template` (without value) it expects `<script type="text/html">` which will be compiled and used as Tangular template
 - `change` executes a method `function(value, path, jQueryElement)` in `jQueryElement` context (must contain a name of method)
 - `.YOUR_CLASS_NAME` toggles class (condition must return `boolean`)
 - `selector` can contain jQuery selector and `bind` will be performed for this selector only
+- `def` sets a default value, value will be evaluated as JavaScript code
+- `!COMMAND` evaluating will be performed if the value won't be `null` or `undefined`
 
 __Linking commands__:
 
