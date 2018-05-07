@@ -8472,7 +8472,7 @@
 
 			if (item.hide) {
 				tmp = item.hide.call(el, value, path, el);
-				el.hclass('hidden', !tmp);
+				el.tclass('hidden', !tmp);
 				if (!tmp)
 					return;
 			}
