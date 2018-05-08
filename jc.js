@@ -5147,7 +5147,7 @@
 		return value ? this.reconfigure(value) : this;
 	};
 
-	PPC.reconfigure = PCTRL.reconfigure = function(value, callback, init) {
+	PPC.reconfigure = PPVC.reconfigure = PCTRL.reconfigure = function(value, callback, init) {
 		var self = this;
 
 		if (typeof(value) === 'object') {
