@@ -5197,7 +5197,7 @@
 			if (!init && self.config[k] !== v)
 				self.config[k] = v;
 
-			self.data(k, value[k]);
+			self.data(k, v);
 
 			if (callback)
 				callback(k, v, init, init ? undefined : prev);
