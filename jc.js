@@ -2531,7 +2531,7 @@
 
 				obj.$init = attrcom(el, 'init') || null;
 				obj.type = attrcom(el, 'type') || '';
-				obj.id = attrcom(el, 'id') || obj._id;
+				obj.id = obj.ID = attrcom(el, 'id') || obj._id;
 				obj.siblings = all.length > 1;
 
 				com.declaration.call(obj, obj, obj.config);
@@ -2725,7 +2725,7 @@
 
 			sc.$scope = absolute;
 			var d = new Scope();
-			d._id = d.id = GUID(10);
+			d._id = d.ID = d.id = GUID(10);
 			d.path = absolute;
 			d.elements = arr.slice(0, i + 1);
 			d.isolated = sc.$isolated;
@@ -7697,6 +7697,16 @@
 			W.EMIT('knockknock', knockknockcounter++);
 		}, 60000);
 
+		function resize() {
+			var w = $(window);
+			W.WW = w.width();
+			W.WH = w.height();
+			mediaquery();
+		}
+
+		resize();
+
+		$(document).on('resize', resize);
 		$(document).ready(function() {
 
 			if ($ready) {
@@ -7704,9 +7714,7 @@
 				load();
 			}
 
-			$(W).on('resize', mediaquery);
 			$(W).on('orientationchange', mediaquery);
-			mediaquery();
 
 			$(document).on('input', 'input[data-jc-bind],textarea[data-jc-bind]', function() {
 
