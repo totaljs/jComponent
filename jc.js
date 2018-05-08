@@ -92,7 +92,7 @@
 	W.CONTROLLERS = L;
 	W.EMPTYARRAY = [];
 	W.EMPTYOBJECT = {};
-	W.DATETIME = new Date();
+	W.DATETIME = W.NOW = new Date();
 
 	var MD = W.DEF = M.defaults = {};
 	var ENV = MD.environment = {};
@@ -302,7 +302,7 @@
 		set: function (name, value, expire) {
 			var type = typeof(expire);
 			if (type === 'number') {
-				var date = W.DATETIME;
+				var date = W.NOW;
 				date.setTime(date.getTime() + (expire * 24 * 60 * 60 * 1000));
 				expire = date;
 			} else if (type === 'string')
@@ -1089,7 +1089,7 @@
 
 		var type = typeof(expire);
 		if (type === 'string') {
-			var dt = W.DATETIME = new Date();
+			var dt = W.DATETIME = W.NOW = new Date();
 			expire = dt.add('-' + expire.env()).getTime();
 		} else if (type === 'number')
 			expire = Date.now() - expire;
@@ -2521,7 +2521,6 @@
 			});
 		}
 
-		W.jQuery && setTimeout(compile, 2);
 		M.loaded = true;
 	}
 
@@ -2612,10 +2611,9 @@
 			var instances = [];
 			var all = name.split(',');
 
-			all.forEach(function(name) {
+			for (var y = 0; y < all.length; y++) {
 
-				name = name.trim();
-
+				var name = all[y].trim();
 				var is = false;
 
 				if (name.indexOf('|') !== -1) {
@@ -2654,15 +2652,15 @@
 					var x = attrcom(el, 'import');
 					if (!x) {
 						!statics['$NE_' + name] && (statics['$NE_' + name] = true);
-						return;
+						continue;
 					}
 
 					if (C.imports[x] === 1)
-						return;
+						continue;
 
 					if (C.imports[x] === 2) {
 						!statics['$NE_' + name] && (statics['$NE_' + name] = true);
-						return;
+						continue;
 					}
 
 					C.imports[x] = 1;
@@ -2673,7 +2671,7 @@
 						C.imports[x] = 2;
 					});
 
-					return;
+					continue;
 				}
 
 				if (fallback[name] === 1) {
@@ -2741,8 +2739,10 @@
 				if (attrcom(el, 'released') === 'true')
 					obj.$released = true;
 
-				if (attrcom(el, 'url'))
-					return warn('Components: You have to use "data-jc-template" attribute instead of "data-jc-url" for the component: {0}[{1}].'.format(obj.name, obj.path));
+				if (attrcom(el, 'url')) {
+					warn('Components: You have to use "data-jc-template" attribute instead of "data-jc-url" for the component: {0}[{1}].'.format(obj.name, obj.path));
+					continue;
+				}
 
 				if (typeof(template) === 'string') {
 					var fn = function(data) {
@@ -2757,19 +2757,22 @@
 					var c = template.substring(0, 1);
 					if (c === '.' || c === '#' || c === '[') {
 						fn($(template).html());
-						return;
+						continue;
 					}
 
 					var k = 'TE' + W.HASH(template);
 					var a = statics[k];
-					if (a)
-						return fn(a);
+					if (a) {
+						fn(a);
+						continue;
+					}
 
 					$.get(makeurl(template), function(response) {
 						statics[k] = response;
 						fn(response);
 					});
-					return;
+
+					continue;
 				}
 
 				if (typeof(obj.make) === 'string') {
@@ -2781,7 +2784,7 @@
 							el.html(obj.make);
 							init(el, obj);
 						}, obj, el);
-						return;
+						continue;
 					}
 
 					$.get(makeurl(obj.make), function(data) {
@@ -2793,7 +2796,7 @@
 						}, obj, el);
 					});
 
-					return;
+					continue;
 				}
 
 				if (com.dependencies) {
@@ -2808,7 +2811,7 @@
 						init(el, obj);
 					}, 5, init, el, obj);
 				}
-			});
+			}
 
 			// A reference to instance
 			if (instances.length > 0)
@@ -3406,6 +3409,10 @@
 				for (var i = 0, length = arr.length; i < length; i++)
 					arr[i](count);
 				C.ready = undefined;
+				compile();
+				setTimeout(compile, 3000);
+				setTimeout(compile, 6000);
+				setTimeout(compile, 9000);
 			}
 
 		}, 100);
@@ -3668,10 +3675,21 @@
 		cleaner();
 	}
 
+	function inDOM(el) {
+		if (el.nodeName === 'BODY')
+			return true;
+		var parent = el.parentNode;
+		while (parent) {
+			if (parent.nodeName === 'BODY')
+				return true;
+			parent = parent.parentNode;
+		}
+	}
+
 	function cleaner() {
 
 		var keys = OK(events);
-		var is = true;
+		var is = false;
 		var length = keys.length;
 		var index;
 		var arr;
@@ -3686,7 +3704,7 @@
 				if (item === undefined)
 					break;
 
-				if (item.context == null || (item.context.element && item.context.element.closest(document.documentElement).length))
+				if (item.context == null || (item.context.element && inDOM(item.context.element[0])))
 					continue;
 
 				item.context && item.context.element && item.context.element.remove();
@@ -3707,7 +3725,7 @@
 			var item = watches[index++];
 			if (item === undefined)
 				break;
-			if (item.context == null || (item.context.element && item.context.element.closest(document.documentElement).length))
+			if (item.context == null || (item.context.element && inDOM(item.context.element[0])))
 				continue;
 			item.context && item.context.element && item.context.element.remove();
 			item.context.$removed = true;
@@ -3724,6 +3742,7 @@
 		while (index < length) {
 
 			var component = all[index++];
+
 			if (!component) {
 				index--;
 				all.splice(index, 1);
@@ -3733,13 +3752,7 @@
 
 			var c = component.element;
 
-			if (!component.$removed || component.$removed === 2) {
-				// Clears temporary cache for parent components
-				component.$parent = component.$main = undefined;
-				continue;
-			}
-
-			if (c && c.closest(document.documentElement).length) {
+			if (c && inDOM(c[0])) {
 				if (!component.attr(ATTRDEL)) {
 					if (component.$parser && !component.$parser.length)
 						component.$parser = undefined;
@@ -3749,13 +3762,22 @@
 				}
 			}
 
-			M.emit('destroy', component.name, component);
-			M.emit('component.destroy', component.name, component);
+			if (!component.$removed || component.$removed === 2) {
+				// Clears temporary cache for parent components
+				component.$parent = component.$main = undefined;
+				continue;
+			}
+			W.EMIT('destroy', component.name, component);
+			W.EMIT('component.destroy', component.name, component);
 
 			component.destroy && component.destroy();
-			c.off();
-			c.find('*').off();
-			c.remove();
+
+			if (c[0].nodeName !== 'BODY') {
+				c.off();
+				c.find('*').off();
+				c.remove();
+			}
+
 			component.$data = null;
 			component.dom = null;
 			component.$removed = 2;
@@ -3780,7 +3802,7 @@
 				var o = arr[j++];
 				if (!o)
 					break;
-				if (o.el.closest(document.documentElement).length)
+				if (inDOM(o.el[0]))
 					continue;
 				var e = o.el;
 				if (!e[0].$br) {
@@ -3798,7 +3820,7 @@
 		clear('find');
 
 		W.DATETIME = W.NOW = new Date();
-		var now = W.DATETIME.getTime();
+		var now = W.NOW.getTime();
 		var is2 = false;
 		var is3 = false;
 
@@ -3820,7 +3842,10 @@
 		}
 
 		is3 && save();
-		is && refresh();
+		if (is) {
+			refresh();
+			setTimeout(compile, 2000);
+		}
 	}
 
 	function save() {
@@ -5149,28 +5174,18 @@
 
 	PPC.reconfigure = PPVC.reconfigure = PCTRL.reconfigure = function(value, callback, init) {
 		var self = this;
-
 		if (typeof(value) === 'object') {
 			OK(value).forEach(function(k) {
-
 				var prev = self.config[k];
-
 				if (!init && self.config[k] !== value[k])
 					self.config[k] = value[k];
-
-				self.data(k, value[k]);
-
 				if (callback)
 					callback(k, value[k], init, init ? undefined : prev);
 				else if (self.configure)
 					self.configure(k, value[k], init, init ? undefined : prev);
-
+				self.data && self.data('config.' + k, value[k]);
 			});
-			return self;
-		}
-
-		// Variable
-		if (value.substring(0, 1) === '=') {
+		} else if (value.substring(0, 1) === '=') {
 			value = value.substring(1);
 			if (self.watch) {
 				self.$rcwatch && self.unwatch(self.$rcwatch, self.rcwatch);
@@ -5178,24 +5193,20 @@
 				self.$rcwatch = value;
 			}
 			self.reconfigure(get(value), callback, init);
-			return self;
+		} else {
+			value.$config(function(k, v) {
+				var prev = self.config[k];
+				if (!init && self.config[k] !== v)
+					self.config[k] = v;
+				self.data && self.data('config.' + k, v);
+				if (callback)
+					callback(k, v, init, init ? undefined : prev);
+				else if (self.configure)
+					self.configure(k, v, init, init ? undefined : prev);
+			});
 		}
 
-		value.$config(function(k, v) {
-
-			var prev = self.config[k];
-
-			if (!init && self.config[k] !== v)
-				self.config[k] = v;
-
-			self.data(k, v);
-
-			if (callback)
-				callback(k, v, init, init ? undefined : prev);
-			else if (self.configure)
-				self.configure(k, v, init, init ? undefined : prev);
-		});
-
+		self.data && self.data('config', self.config);
 		return self;
 	};
 
@@ -5546,7 +5557,7 @@
 
 	USAGE.prototype.compare = function(type, dt) {
 		if (typeof(dt) === 'string' && dt.substring(0, 1) !== '-')
-			dt = W.DATETIME.add('-' + dt);
+			dt = W.NOW.add('-' + dt);
 		var val = this[type];
 		return val === 0 ? false : val < dt.getTime();
 	};
@@ -6122,7 +6133,7 @@
 
 		var dt = new Date().add(period);
 		ON('knockknock', function() {
-			if (dt > W.DATETIME)
+			if (dt > W.NOW)
 				return;
 			if (!condition || !condition())
 				return;
@@ -7526,7 +7537,7 @@
 		parsed.push(+time[2]); // seconds
 		parsed.push(+time[3]); // miliseconds
 
-		var def = W.DATETIME = new Date();
+		var def = W.DATETIME = W.NOW = new Date();
 
 		for (var i = 0, length = parsed.length; i < length; i++) {
 			if (isNaN(parsed[i]))
@@ -7833,7 +7844,7 @@
 
 			schedulercounter++;
 			var now = new Date();
-			W.DATETIME = now;
+			W.DATETIME = W.NOW = now;
 			for (var i = 0, length = schedulers.length; i < length; i++) {
 				var item = schedulers[i];
 				if (item.type === 'm') {
@@ -8111,7 +8122,7 @@
 		$.components = M;
 
 		setInterval(function() {
-			W.DATETIME = new Date();
+			W.DATETIME = W.NOW = new Date();
 			var c = M.components;
 			for (var i = 0, length = c.length; i < length; i++)
 				c[i].knockknock && c[i].knockknock(knockknockcounter);
