@@ -1897,6 +1897,18 @@ var params = MAKEPARAMS({ q: 'Google' });
 WIDTH();
 console.log(WIDTH());
 // returns: xs, sm, md or lg
+
+
+WW;
+// +v14.5.0
+// current window width
+// returns {Number}
+
+
+WH;
+// +v14.5.0
+// current window height
+// returns {Number}
 ```
 
 ## Simple Media Query Evaluator
