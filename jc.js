@@ -3503,6 +3503,15 @@
 		cleaner();
 	}
 
+	function inDOM(el) {
+		var parent = el.parentNode;
+		while (parent) {
+			if (parent.nodeName === 'BODY')
+				return true;
+			parent = parent.parentNode;
+		}
+	}
+
 	function cleaner() {
 
 		var keys = OK(events);
@@ -3521,7 +3530,7 @@
 				if (item === undefined)
 					break;
 
-				if (item.context == null || (item.context.element && item.context.element.closest(document.documentElement).length))
+				if (item.context == null || (item.context.element && inDOM(item.context.element[0])))
 					continue;
 
 				item.context && item.context.element && item.context.element.remove();
@@ -3542,7 +3551,7 @@
 			var item = watches[index++];
 			if (item === undefined)
 				break;
-			if (item.context == null || (item.context.element && item.context.element.closest(document.documentElement).length))
+			if (item.context == null || (item.context.element && inDOM(item.context.element[0])))
 				continue;
 			item.context && item.context.element && item.context.element.remove();
 			item.context.$removed = true;
@@ -3574,7 +3583,7 @@
 				continue;
 			}
 
-			if (c && c.closest(document.documentElement).length) {
+			if (c && inDOM(c[0])) {
 				if (!component.attr(ATTRDEL)) {
 					if (component.$parser && !component.$parser.length)
 						component.$parser = undefined;
@@ -3615,7 +3624,7 @@
 				var o = arr[j++];
 				if (!o)
 					break;
-				if (o.el.closest(document.documentElement).length)
+				if (inDOM(o.el[0]))
 					continue;
 				var e = o.el;
 				if (!e[0].$br) {
@@ -4141,7 +4150,7 @@
 			data.value = value;
 			for (var i = 0; i < data.items.length; i++) {
 				var o = data.items[i];
-				o.exec(value, key);
+				o.el[0].parentNode && o.exec(value, key);
 			}
 		} else
 			self.$data[key] = { value: value, items: [] };
