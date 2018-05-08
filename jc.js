@@ -2684,14 +2684,14 @@
 				var obj = new COM(com.name);
 				obj.global = com.shared;
 				obj.element = el;
-				obj.dom = el.get(0);
-				obj.setPath(attrcom(el, 'path') || (meta ? meta[1] : '') || obj._id, 1);
+				obj.dom = el[0];
+				obj.setPath(attrcom(el, 'path') || (meta ? meta[1] === 'null' ? '' : meta[1] : '') || obj._id, 1);
 				obj.config = {};
 
 				// Default config
 				com.config && obj.reconfigure(com.config, NOOP);
 
-				var tmp = attrcom(el, 'config') || (meta ? meta[2] : '');
+				var tmp = attrcom(el, 'config') || (meta ? meta[2] === 'null' ? '' : meta[2] : '');
 				tmp && obj.reconfigure(tmp, NOOP);
 
 				obj.$init = attrcom(el, 'init') || null;
@@ -3025,7 +3025,7 @@
 	}
 
 	function remove(el) {
-		var dom = el.get(0);
+		var dom = el[0];
 		dom.$com = null;
 		el.attr(ATTRDEL, true);
 		el.remove();
@@ -3099,7 +3099,7 @@
 
 	function init(el, obj) {
 
-		var dom = el.get(0);
+		var dom = el[0];
 		var type = dom.tagName;
 		var collection;
 
@@ -3115,7 +3115,7 @@
 		obj.released && obj.released(obj.$released);
 		M.components.push(obj);
 		C.init.push(obj);
-		type !== 'BODY' && REGCOM.test(el.get(0).innerHTML) && compile(el);
+		type !== 'BODY' && REGCOM.test(el[0].innerHTML) && compile(el);
 		ready();
 	}
 
@@ -3202,14 +3202,14 @@
 		cls && (function(cls) {
 			setTimeout(function() {
 				cls = cls.split(' ');
-				var tmp = el.get(0).$jclass || {};
+				var tmp = el[0].$jclass || {};
 				for (var i = 0, length = cls.length; i < length; i++) {
 					if (!tmp[cls[i]]) {
 						el.tclass(cls[i]);
 						tmp[cls[i]] = true;
 					}
 				}
-				el.get(0).$jclass = tmp;
+				el[0].$jclass = tmp;
 			}, 5);
 		})(cls);
 
@@ -3756,6 +3756,7 @@
 			c.off();
 			c.find('*').off();
 			c.remove();
+			component.$data = null;
 			component.dom = null;
 			component.$removed = 2;
 			component.path = null;
@@ -3964,7 +3965,7 @@
 		t.group = group;
 		t.container = container;
 		t.element = el;
-		t.dom = el.get(0);
+		t.dom = el[0];
 		t.selector = selector;
 		t.length = el.length;
 		!t.length && t.$refresh();
@@ -4013,7 +4014,7 @@
 		var self = this;
 		self.element.replaceWith(el);
 		self.element = el;
-		self.dom = el.get(0);
+		self.dom = el[0];
 		return self;
 	};
 
@@ -4343,6 +4344,7 @@
 		self.trim = true;
 		self.$released = false;
 		self.$bindreleased = true;
+		self.$data = {};
 
 		var version = name.lastIndexOf('@');
 
@@ -4417,6 +4419,7 @@
 					}
 
 					// Binds value directly
+					self.data('', value);
 					self.setter(value, path, type);
 					self.setter2 && self.setter2(value, path, type);
 				} else {
@@ -4450,6 +4453,7 @@
 						self.$valuehash = hash;
 					}
 
+					self.data('', cache.value);
 					self.setter(cache.value, cache.path, cache.type);
 					self.setter2 && self.setter2(cache.value, cache.path, cache.type);
 				}, self.$bindtimeout, self);
@@ -4502,6 +4506,24 @@
 	}
 
 	var PPC = COM.prototype;
+
+	PPC.data = function(key, value) {
+		if (!key)
+			key = '@';
+		var self = this;
+		var data = self.$data[key];
+		if (value === undefined)
+			return data ? data.value : null;
+		if (data) {
+			data.value = value;
+			for (var i = 0; i < data.items.length; i++) {
+				var o = data.items[i];
+				o.exec(value, key);
+			}
+		} else
+			self.$data[key] = { value: value, items: [] };
+		return value;
+	};
 
 	PPC.$except = function(except) {
 		var p = self.$path;
@@ -5130,6 +5152,12 @@
 
 		if (typeof(value) === 'object') {
 			OK(value).forEach(function(k) {
+
+				if (k.substring(0, 1) === '@') {
+					self.data(k.substring(1), value[k]);
+					return;
+				}
+
 				var prev = self.config[k];
 				if (!init && self.config[k] !== value[k])
 					self.config[k] = value[k];
@@ -5154,6 +5182,10 @@
 		}
 
 		value.$config(function(k, v) {
+			if (k.substring(0, 1) === '@') {
+				self.data(k.substring(1), v);
+				return;
+			}
 			var prev = self.config[k];
 			if (!init && self.config[k] !== v)
 				self.config[k] = v;
@@ -7903,7 +7935,7 @@
 				return data;
 			var el = this.closest('[' + ATTRSCOPE + ']');
 			if (el.length) {
-				data = el.get(0).$scopedata;
+				data = el[0].$scopedata;
 				if (data)
 					return data;
 			}
@@ -8240,7 +8272,12 @@
 			var arr = bindersnew.splice(0);
 			for (var i = 0; i < arr.length; i++) {
 				var item = arr[i];
-				!item.init && item.exec(GET(item.path), item.path);
+				if (!item.init) {
+					if (item.com)
+						item.exec(item.com.data(item.path), item.path);
+					else
+						item.exec(GET(item.path), item.path);
+				}
 			}
 		}, 50);
 	}
@@ -8278,8 +8315,7 @@
 						continue;
 					}
 
-					var fn = k !== 'template' && k !== '!template' && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v)) : GET(v) : 1;
-
+					var fn = k !== 'template' && k !== '!template' && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v)) : v.substring(0, 1) === '@' ? obj.com[v.substring(1)] : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -8417,6 +8453,24 @@
 
 					if (path.substring(path.length - 1) === '.')
 						path = path.substring(0, path.length - 1);
+
+					if (path.substring(0, 1) === '@') {
+						path = path.substring(1);
+						if (!path)
+							path = '@';
+						var parent = el.parentNode;
+						while (parent) {
+							if (parent.$com) {
+								var com = parent.$com;
+								obj.com = com;
+								break;
+							}
+							parent = parent.parentNode;
+						}
+
+						if (!obj.com)
+							return null;
+					}
 				}
 			}
 		}
@@ -8450,12 +8504,17 @@
 		var arr = path.split('.');
 		var p = '';
 
-		for (var i = 0, length = arr.length; i < length; i++) {
-			p += (p ? '.' : '') + arr[i];
-			if (binders[p])
-				binders[p].push(obj);
-			else
-				binders[p] = [obj];
+		if (obj.com) {
+			!com.$data[path] && (com.$data[path] = { value: null, items: [] });
+			com.$data[path].items.push(obj);
+		} else {
+			for (var i = 0, length = arr.length; i < length; i++) {
+				p += (p ? '.' : '') + arr[i];
+				if (binders[p])
+					binders[p].push(obj);
+				else
+					binders[p] = [obj];
+			}
 		}
 
 		obj.path = path;
@@ -8463,7 +8522,6 @@
 		obj.exec = function(value, path, index) {
 
 			var item = this;
-
 			var el = item.el;
 
 			if (index != null) {
@@ -8499,14 +8557,14 @@
 			var tmp;
 			var can = true;
 
-			if (item.show && (value || (value == null && !item.show.$nn))) {
+			if (item.show && (value != null || !item.show.$nn)) {
 				tmp = item.show.call(item.el, value, path, item.el);
 				el.tclass('hidden', !tmp);
 				if (!tmp)
 					can = false;
 			}
 
-			if (item.hide && (value || (value == null && !item.hide.$nn))) {
+			if (item.hide && (value != null || !item.hide.$nn)) {
 				tmp = item.hide.call(el, value, path, el);
 				el.tclass('hidden', tmp);
 				if (tmp)
@@ -8600,7 +8658,6 @@
 				for (var i = 0; i < item.child.length; i++)
 					item.exec(value, path, i);
 			}
-
 		};
 
 		bindersnew.push(obj);
