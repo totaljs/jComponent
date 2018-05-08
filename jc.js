@@ -8,8 +8,6 @@
 	var REGPARAMS = /\{{1,2}[a-z0-9_.-\s]+\}{1,2}/gi;
 	var REGEMPTY = /\s/g;
 	var REGCOMMA = /,/g;
-	var REGGROUP = /\{[a-z0-9\-,\s]+\}/i;
-	var REGBACKUP = /^backup\s/i;
 	var REGSEARCH = /[^a-zA-Zá-žÁ-Žа-яА-Я\d\s:]/g;
 	var REGMETA = /_{2,}/;
 	var REGWILDCARD = /\.\*/;
@@ -67,7 +65,6 @@
 	var toggles = [];
 	var versions = {};
 	var warnings = {};
-	var schemas = {};
 	var autofill = [];
 	var defaults = {};
 	var waits = {};
@@ -141,7 +138,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v14.5.0';
+	M.version = 'v15.0.0';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -169,13 +166,9 @@
 		Object.freeze(EMPTYARRAY);
 	}
 
-	// backward compatibility
-	W.MAN = C;
-	W.MAN.set = set;
-
 	M.compile = compile;
 
-	W.NEWTRANSFORM = W.CREATETRANSFORM = function(name, callback) {
+	W.NEWTRANSFORM = function(name, callback) {
 		M.transforms[name] = callback;
 		return W;
 	};
@@ -233,18 +226,18 @@
 	// MAIN FUNCTIONS
 	// ===============================================================
 
-	M.ENV = W.ENV = function(name, value) {
+	W.ENV = function(name, value) {
 
 		if (typeof(name) === 'object') {
 			name && OK(name).forEach(function(key) {
 				ENV[key] = name[key];
-				M.emit('environment', key, name[key]);
+				W.EMIT('environment', key, name[key]);
 			});
 			return name;
 		}
 
 		if (value !== undefined) {
-			M.emit('environment', name, value);
+			W.EMIT('environment', name, value);
 			ENV[name] = value;
 			return value;
 		}
@@ -256,11 +249,11 @@
 		M.$localstorage = name;
 		M.$version = version || '';
 		M.$language = language || '';
-		env && M.ENV(env);
+		env && W.ENV(env);
 		return M;
 	};
 
-	M.clean = function(timeout) {
+	W.FREE = function(timeout) {
 		setTimeout2('$clean', cleaner, timeout || 10);
 		return M;
 	};
@@ -373,7 +366,7 @@
 		return h;
 	}
 
-	W.UPLOAD = M.upload = function(url, data, callback, timeout, progress) {
+	W.UPLOAD = function(url, data, callback, timeout, progress) {
 
 		if (!url)
 			url = location.pathname;
@@ -442,7 +435,7 @@
 				output.error = self.status > 399;
 				output.headers = parseHeaders(self.getAllResponseHeaders());
 
-				M.emit('response', output);
+				W.EMIT('response', output);
 
 				if (!output.process || output.cancel)
 					return;
@@ -453,7 +446,7 @@
 				if (!output.error || MD.ajaxerrors) {
 					typeof(callback) === 'string' ? remap(callback.env(), r) : (callback && callback(r, null, output));
 				} else {
-					M.emit('error', output);
+					W.EMIT('error', output);
 					output.process && typeof(callback) === 'function' && callback({}, r, output);
 				}
 
@@ -490,19 +483,11 @@
 		return M;
 	};
 
-	M.ready = function(fn) {
-		if (C.ready)
-			C.ready.push(fn);
-		else
-			fn();
-		return M;
-	};
-
 	W.UNWATCH = function(path, fn) {
 		return OFF('watch', path, fn);
 	};
 
-	W.WATCH = M.watch = function(path, fn, init) {
+	W.WATCH = function(path, fn, init) {
 
 		if (typeof(path) === 'function') {
 			init = fn;
@@ -511,11 +496,11 @@
 		}
 
 		path = ctrl_path(path);
-		ON('watch', path, fn, init);
+		W.ON('watch', path, fn, init);
 		return M;
 	};
 
-	W.ON = M.on = function(name, path, fn, init, context) {
+	W.ON = function(name, path, fn, init, context) {
 
 		var owner = null;
 		var index = name.indexOf('#');
@@ -591,7 +576,7 @@
 		return M;
 	};
 
-	W.OFF = M.off = function(name, path, fn) {
+	W.OFF = function(name, path, fn) {
 
 		if (typeof(path) === 'function') {
 			fn = path;
@@ -671,7 +656,7 @@
 		return M;
 	};
 
-	W.EMIT = M.emit = function(name) {
+	W.EMIT = function(name) {
 
 		var e = events[name];
 		if (!e)
@@ -692,7 +677,7 @@
 		return true;
 	};
 
-	W.CHANGE = M.change = function(path, value) {
+	W.CHANGE = function(path, value) {
 		return value === undefined ? !M.dirty(path) : !M.dirty(path, !value);
 	};
 
@@ -960,7 +945,7 @@
 			};
 			scr.src = makeurl(url, true);
 			d.getElementsByTagName('head')[0].appendChild(scr);
-			M.emit('import', url, $(scr));
+			W.EMIT('import', url, $(scr));
 			return M;
 		}
 
@@ -972,7 +957,7 @@
 			d.getElementsByTagName('head')[0].appendChild(stl);
 			statics[url] = 2;
 			callback && setTimeout(callback, 200);
-			M.emit('import', url, $(stl));
+			W.EMIT('import', url, $(stl));
 			return M;
 		}
 
@@ -1013,7 +998,7 @@
 					callback && WAIT(function() {
 						return C.is == false && C.controllers == 0;
 					}, callback);
-					M.emit('import', url, target);
+					W.EMIT('import', url, target);
 				}, 10);
 			};
 
@@ -1031,9 +1016,9 @@
 		return W.IMPORTCACHE(url, null, target, callback, insert, preparator);
 	};
 
-	W.CACHEPATH = M.cachepath = function(path, expire, rebind) {
+	W.CACHEPATH = function(path, expire, rebind) {
 		var key = '$jcpath';
-		M.watch(path, function(p, value) {
+		W.WATCH(path, function(p, value) {
 			var obj = cachestorage(key);
 			if (obj)
 				obj[path] = value;
@@ -1052,7 +1037,7 @@
 	};
 
 
-	W.CACHE = M.cache = function(key, value, expire) {
+	W.CACHE = function(key, value, expire) {
 		return cachestorage(key, value, expire);
 	};
 
@@ -1068,7 +1053,7 @@
 		return w;
 	};
 
-	W.REMOVECACHE = M.removeCache = function(key, isSearching) {
+	W.REMOVECACHE = function(key, isSearching) {
 		if (isSearching) {
 			for (var m in storage) {
 				if (m.indexOf(key) !== -1)
@@ -1102,6 +1087,7 @@
 		var arr = [];
 
 		if (path) {
+			// @TODO: findByPath is removed
 			M.findByPath(path, function(c) {
 				if (c.usage[name] < expire)
 					return;
@@ -1124,21 +1110,7 @@
 		return callback ? M : arr;
 	};
 
-	M.parseCookie = M.parseCookies = function() {
-		var arr = document.cookie.split(';');
-		var obj = {};
-
-		for (var i = 0, length = arr.length; i < length; i++) {
-			var line = arr[i].trim();
-			var index = line.indexOf('=');
-			if (index !== -1)
-				obj[line.substring(0, index)] = decodeURIComponent(line.substring(index + 1));
-		}
-
-		return obj;
-	};
-
-	M.createURL = W.MAKEPARAMS = function(url, values, type) {
+	W.MAKEPARAMS = function(url, values, type) {
 
 		var l = location;
 
@@ -1198,12 +1170,12 @@
 		return obj;
 	};
 
-	W.AJAXCONFIG = M.AJAXCONFIG = function(name, fn) {
+	W.AJAXCONFIG = function(name, fn) {
 		ajaxconfig[name] = fn;
 		return M;
 	};
 
-	W.AJAX = M.AJAX = function(url, data, callback, timeout) {
+	W.AJAX = function(url, data, callback, timeout) {
 
 		if (typeof(url) === 'function') {
 			timeout = callback;
@@ -1302,7 +1274,7 @@
 			if (!options.url)
 				options.url = url;
 
-			M.emit('request', options);
+			W.EMIT('request', options);
 
 			if (options.cancel)
 				return;
@@ -1325,7 +1297,7 @@
 				output.status = req.status || 999;
 				output.text = s;
 				output.headers = parseHeaders(req.getAllResponseHeaders());
-				M.emit('response', output);
+				W.EMIT('response', output);
 				if (output.process && !output.cancel) {
 					if (typeof(callback) === 'string')
 						remap(callback, output.response);
@@ -1359,7 +1331,7 @@
 					} catch (e) {}
 				}
 
-				M.emit('response', output);
+				W.EMIT('response', output);
 
 				if (output.cancel || !output.process)
 					return;
@@ -1370,7 +1342,7 @@
 					else
 						callback && callback.call(output, output.response, output.status, output);
 				} else {
-					M.emit('error', output);
+					W.EMIT('error', output);
 					typeof(callback) === 'function' && callback.call(output, output.response, output.status, output);
 				}
 			};
@@ -1382,11 +1354,11 @@
 		return M;
 	};
 
-	W.AJAXCACHEREVIEW = M.AJAXCACHEREVIEW = function(url, data, callback, expire, timeout, clear) {
-		return M.AJAXCACHE(url, data, callback, expire, timeout, clear, true);
+	W.AJAXCACHEREVIEW = function(url, data, callback, expire, timeout, clear) {
+		return W.AJAXCACHE(url, data, callback, expire, timeout, clear, true);
 	};
 
-	W.AJAXCACHE = M.AJAXCACHE = function(url, data, callback, expire, timeout, clear, review) {
+	W.AJAXCACHE = function(url, data, callback, expire, timeout, clear, review) {
 
 		var tdata = typeof(data);
 
@@ -1424,7 +1396,7 @@
 				if (!review)
 					return;
 
-				M.AJAX(url, data, function(r, err) {
+				W.AJAX(url, data, function(r, err) {
 					if (err)
 						r = err;
 					// Is same?
@@ -1439,7 +1411,7 @@
 				return;
 			}
 
-			M.AJAX(url, data, function(r, err) {
+			W.AJAX(url, data, function(r, err) {
 				if (err)
 					r = err;
 				cacherest(method, uri, data, r, expire);
@@ -1453,7 +1425,7 @@
 		return M;
 	};
 
-	W.SCHEDULE = M.schedule = function(selector, name, expire, callback) {
+	W.SCHEDULE = function(selector, name, expire, callback) {
 		if (expire.substring(0, 1) !== '-')
 			expire = '-' + expire;
 		var arr = expire.split(' ');
@@ -1463,7 +1435,7 @@
 		return id;
 	};
 
-	W.CLEARSCHEDULE = M.clearSchedule = function(id) {
+	W.CLEARSCHEDULE = function(id) {
 		schedulers = schedulers.remove('id', id);
 		return M;
 	};
@@ -1479,7 +1451,7 @@
 		return M;
 	};
 
-	W.ERRORS = M.errors = function(path, except, highlight) {
+	W.ERRORS = function(path, except, highlight) {
 
 		if (path instanceof Array) {
 			except = path;
@@ -1502,12 +1474,12 @@
 		return arr;
 	};
 
-	W.CAN = M.can = function(path, except) {
+	W.CAN = function(path, except) {
 		path = ctrl_path(path);
 		return !M.dirty(path, except) && M.valid(path, except);
 	};
 
-	W.DISABLED = M.disabled = M.disable = function(path, except) {
+	W.DISABLED = function(path, except) {
 		path = ctrl_path(path);
 		return M.dirty(path, except) || !M.valid(path, except);
 	};
@@ -1612,7 +1584,7 @@
 		return M;
 	};
 
-	W.NOTIFY = M.notify = function() {
+	W.NOTIFY = function() {
 
 		var arg = arguments;
 		var all = M.components;
@@ -1655,7 +1627,7 @@
 		return M;
 	};
 
-	W.REWRITE = M.rewrite = function(path, value, type) {
+	W.REWRITE = function(path, value, type) {
 		path = ctrl_path(path);
 		if (path) {
 			M.skipproxy = path;
@@ -1835,75 +1807,7 @@
 		return get(ctrl_path(path), scope);
 	};
 
-	M.remove = function(path) {
-
-		if (path instanceof jQuery) {
-			path.find(ATTRCOM).attr(ATTRDEL, 'true').each(function() {
-				var com = $(this).data(ATTRDATA);
-				if (com) {
-					if (com instanceof Array) {
-						com.forEach(function(o) {
-							o.$removed = true;
-						});
-					} else
-						com.$removed = true;
-				}
-			});
-
-			attrcom(path, 'template') && path.attr(ATTRDEL, 'true');
-
-			var com = path.data(ATTRDATA);
-			if (com) {
-				if (com instanceof Array) {
-					com.forEach(function(o) {
-						o.$removed = true;
-					});
-				} else
-					com.$removed = true;
-			}
-
-			setTimeout2('$cleaner', cleaner, 100);
-			return M;
-		}
-
-		M.each(function(obj) {
-			obj.remove(true);
-		}, ctrl_path(path));
-
-		setTimeout2('$cleaner', cleaner2, 100);
-		return M;
-	};
-
-	M.schema = function(name, declaration) {
-
-		if (!declaration)
-			return CLONE(schemas[name]);
-
-		if (typeof(declaration) === 'object') {
-			schemas[name] = declaration;
-			return declaration;
-		}
-
-		if (typeof(declaration) === 'function') {
-			var f = declaration();
-			schemas[name] = f;
-			return f;
-		}
-
-		if (typeof(declaration) !== 'string')
-			return undefined;
-
-		var a = declaration.substring(0, 1);
-		var b = declaration.substring(declaration.length - 1);
-
-		if ((a === '"' && b === '"') || (a === '[' && b === ']') || (a === '{' && b === '}')) {
-			var d = PARSE(declaration, MD.jsondate);
-			schemas[name] = d;
-			return d;
-		}
-	};
-
-	W.VALIDATE = M.validate = function(path, except) {
+	W.VALIDATE = function(path, except) {
 
 		var arr = [];
 		var valid = true;
@@ -2103,43 +2007,6 @@
 		return M;
 	};
 
-	M.findByPath = function(path, callback) {
-
-		var tp = typeof(path);
-		if (tp === 'function' || tp === 'boolean') {
-			callback = path;
-			path = undefined;
-		}
-
-		var tc = typeof(callback);
-		var isCallback = tc === 'function';
-		var isMany = tc === 'boolean';
-
-		var selected;
-		if (isMany) {
-			callback = undefined;
-			selected = [];
-		}
-
-		var all = M.components;
-		for (var i = 0, length = all.length; i < length; i++) {
-			var com = all[i];
-			if (!com || com.$removed || !com.$loaded || !com.path || com.path !== path)
-				continue;
-			if (isCallback) {
-				var o = callback(com);
-				if (o === true)
-					return;
-			}
-			if (isMany)
-				selected.push(com);
-			else
-				return com;
-		}
-
-		return isCallback ? M : selected;
-	};
-
 	M.each = function(fn, path) {
 		var wildcard = path ? path.lastIndexOf('*') !== -1 : false;
 		if (wildcard)
@@ -2154,30 +2021,6 @@
 			if (stop === true)
 				return M;
 		}
-		return M;
-	};
-
-	W.TEMPLATE = function(url, callback, prepare) {
-
-		if (statics[url]) {
-			if (typeof(callback) === 'string')
-				SET(callback, statics[url]);
-			else
-				callback(statics[url]);
-			return M;
-		}
-
-		M.AJAX('GET ' + url, function(response, err) {
-
-			if (err)
-				response = '';
-
-			var value = statics[url] = prepare ? prepare(response) : response;
-			if (typeof(callback) === 'string')
-				SET(callback, value);
-			else
-				callback(value);
-		});
 		return M;
 	};
 
@@ -2929,14 +2772,6 @@
 		return scope.$scopedata;
 	}
 
-	W.LOG = function() {
-		window.console && console.log.apply(console, arguments);
-	};
-
-	W.WARN = function() {
-		window.console && console.warn.apply(console, arguments);
-	};
-
 	function warn() {
 		W.console && W.console.warn.apply(W.console, arguments);
 	}
@@ -2989,7 +2824,7 @@
 			var key = makeurl(item.url);
 			var can = false;
 
-			M.AJAXCACHE('GET ' + item.url, null, function(response) {
+			W.AJAXCACHE('GET ' + item.url, null, function(response) {
 
 				key = '$import' + key;
 
@@ -3213,9 +3048,9 @@
 			}, 5);
 		})(cls);
 
-		obj.id && M.emit('#' + obj.id, obj);
-		M.emit('@' + obj.name, obj);
-		M.emit(n, obj);
+		obj.id && W.EMIT('#' + obj.id, obj);
+		W.EMIT('@' + obj.name, obj);
+		W.EMIT(n, obj);
 	}
 
 	function async(arr, fn, done) {
@@ -3312,8 +3147,8 @@
 			if (!$loaded) {
 				$loaded = true;
 				clear('valid', 'dirty', 'find');
-				M.emit('init');
-				M.emit('ready');
+				W.EMIT('init');
+				W.EMIT('ready');
 			}
 
 			setTimeout2('$initcleaner', function() {
@@ -3749,8 +3584,8 @@
 				}
 			}
 
-			M.emit('destroy', component.name, component);
-			M.emit('component.destroy', component.name, component);
+			W.EMIT('destroy', component.name, component);
+			W.EMIT('component.destroy', component.name, component);
 
 			component.destroy && component.destroy();
 			c.off();
@@ -3855,218 +3690,6 @@
 	}
 
 	// ===============================================================
-	// VIRTUAL DECLARATION
-	// ===============================================================
-
-	function CONTAINER(element, mapping, config) {
-		var t = this;
-		t.element = typeof(element) === 'string' ? $(element.$env()) : element;
-		t.dom = t.element.get(0);
-		t.mapping = mapping;
-		t.config = {};
-		config && t.reconfigure(config, NOOP);
-		t.refresh();
-		setTimeout(function(t) {
-			t.configure && t.reconfigure(t.config, undefined, true);
-		}, 1, t);
-	}
-
-	var PPVC = CONTAINER.prototype;
-
-	PPVC.clone = function(deep) {
-		var t = this;
-		var c = new CONTAINER(t.element.clone(true), deep ? W.CLONE(t.mapping) : t.mapping, t.config);
-		c.configure = t.configure;
-		return c;
-	};
-
-	PPVC.refresh = function() {
-
-		var self = this;
-		var keys = OK(self.mapping);
-		for (var i = 0, length = keys.length; i < length; i++) {
-			var key = keys[i];
-
-			if (key === 'refresh' || key === 'clone' || key === 'event' || key === 'on' || key === 'emit' || key === 'group') {
-				warn('VIRTUALIZE can\'t contain a field called "{0}" in mapping.'.format(key));
-				continue;
-			}
-
-			var sel = self.mapping[key];
-			var backup = false;
-			var group = null;
-
-			if (typeof(sel) === 'string') {
-				sel = sel.$env();
-				backup = (REGBACKUP).test(sel);
-				if (backup)
-					sel = sel.substring(7);
-				group = sel.match(REGGROUP);
-				if (group) {
-					sel = sel.replace(group, '').trim();
-					group = group.toString().replace(/\{|\}/g, '').split(',').trim();
-				}
-				self.mapping[key] = sel.trim();
-			}
-
-			var val = typeof(sel) === 'function' ? sel(self.element) : self.element.find(sel);
-			if (self[key])
-				self[key].refresh();
-			else {
-				self[key] = new PROPERTY(self, sel, val instanceof jQuery ? val : $(val), group);
-				backup && self[key].backup();
-			}
-		}
-		return self;
-	};
-
-	PPVC.backup = function(elements) {
-		var t = this;
-		if (elements) {
-			var keys = OK(t.mapping);
-			for (var i = 0, length = keys.length; i < length; i++) {
-				var key = keys[i];
-				var o = t[key];
-				if (o.$backup && (elements === true || (o.group && o.group.indexOf(elements) !== -1)))
-					o.backup();
-			}
-		} else
-			t.$backup = t.element.clone(true);
-		return t;
-	};
-
-	PPVC.restore = function(elements) {
-		var t = this;
-		if (elements) {
-			var keys = OK(t.mapping);
-			var count = 0;
-			for (var i = 0, length = keys.length; i < length; i++) {
-				var key = keys[i];
-				var o = t[key];
-				if (o.$backup && (elements === true || (o.group && o.group.indexOf(elements) !== -1))) {
-					count++;
-					o.restore();
-				}
-			}
-			count && t.refresh();
-		} else if (t.$backup) {
-			var clone = t.$backup.clone(true);
-			t.element.replaceWith(clone).remove();
-			t.element = clone;
-			t.dom = t.element.get(0);
-			t.refresh();
-		}
-		return t;
-	};
-
-	function PROPERTY(container, selector, el, group) {
-		var t = this;
-		t.id = 'v' + GUID(10);
-		t.group = group;
-		t.container = container;
-		t.element = el;
-		t.dom = el[0];
-		t.selector = selector;
-		t.length = el.length;
-		!t.length && t.$refresh();
-	}
-
-	var PPP = PROPERTY.prototype;
-
-	PPP.backup = function() {
-		var t = this;
-		t.$backup = t.element.clone(true);
-		return t;
-	};
-
-	PPP.restore = function() {
-		var t = this;
-		if (t.$backup) {
-			var clone = t.$backup.clone(true);
-			t.element.replaceWith(clone).remove();
-			t.element = clone;
-			t.dom = t.element.get(0);
-		}
-		return t;
-	};
-
-	PPP.make = function(fn) {
-		var self = this;
-		if (self.length)
-			fn.call(self, self);
-		else {
-			setTimeout(function(self, fn) {
-				self.make(fn);
-			}, 200, self, fn);
-		}
-		return self;
-	};
-
-	PPP.refresh = function() {
-		var self = this;
-		self.element = typeof(self.selector) === 'function' ? self.selector(self.container.element) : self.container.element.find(self.selector);
-		self.dom = self.element.get(0);
-		self.length = self.element.length;
-		return self;
-	};
-
-	PPP.replace = function(el) {
-		var self = this;
-		self.element.replaceWith(el);
-		self.element = el;
-		self.dom = el[0];
-		return self;
-	};
-
-	PPP.$refresh = function() {
-		var self = this;
-		if (self.length)
-			return self;
-		setTimeout(function(self) {
-			self.refresh();
-			self.$refresh();
-		}, 200, self);
-		return self;
-	};
-
-	PPP.click = function(callback) {
-		var e = this.element;
-		e.off('click touchend');
-		e.on('click touchend', callback);
-		return this;
-	};
-
-	PPP.src = function(url) {
-		var self = this;
-		self.element.attr('src', url);
-		return self;
-	};
-
-	PPP.disable = function(v) {
-		var self = this;
-		if (v === undefined)
-			return self.element.prop('disabled');
-		self.element.prop('disabled', v);
-		return self;
-	};
-
-	PPP.prop = function(k, v) {
-		var self = this;
-		if (v === undefined)
-			return self.element.prop(k);
-		self.element.prop(k, v);
-		return self;
-	};
-
-	PPP.val = function(v) {
-		var self = this;
-		if (v === undefined)
-			return self.element.val();
-		self.element.val(v);
-		return self;
-	};
-
-	// ===============================================================
 	// SCOPE
 	// ===============================================================
 
@@ -4076,13 +3699,13 @@
 
 	SCP.unwatch = function(path, fn) {
 		var self = this;
-		M.off('scope' + self._id + '#watch', self.path + (path ? '.' + path : ''), fn);
+		W.OFF('scope' + self._id + '#watch', self.path + (path ? '.' + path : ''), fn);
 		return self;
 	};
 
 	SCP.watch = function(path, fn, init) {
 		var self = this;
-		M.on('scope' + self._id + '#watch', self.path + (path ? '.' + path : ''), fn, init, self);
+		W.ON('scope' + self._id + '#watch', self.path + (path ? '.' + path : ''), fn, init, self);
 		return self;
 	};
 
@@ -4144,7 +3767,7 @@
 			}
 		}
 
-		M.off('scope' + self._id + '#watch');
+		W.OFF('scope' + self._id + '#watch');
 		var e = self.element;
 		e.find('*').off();
 		e.off();
@@ -4189,14 +3812,14 @@
 
 	PCTRL.unwatch = function(path, fn) {
 		var self = this;
-		M.off('ctrl' + self.name + '#watch', self.path(path), fn);
+		W.OFF('ctrl' + self.name + '#watch', self.path(path), fn);
 		return self;
 	};
 
 	PCTRL.watch = function(path, fn, init) {
 		var self = this;
 		path = self.path(path);
-		M.on('ctrl' + self.name + '#watch', path, fn, init);
+		W.ON('ctrl' + self.name + '#watch', path, fn, init);
 		return self;
 	};
 
@@ -4246,7 +3869,7 @@
 
 	PCTRL.notify = function(path) {
 		var self = this;
-		M.notify(self.path(path));
+		W.NOTIFY(self.path(path));
 		return self;
 	};
 
@@ -4292,7 +3915,7 @@
 		}
 
 		var self = this;
-		M.rewrite(self.path(path), value);
+		W.REWRITE(self.path(path), value);
 		return self;
 	};
 
@@ -4569,7 +4192,7 @@
 		return W.NOTMODIFIED(t._id, t.get(), fields);
 	};
 
-	PPC.$waiter = PPP.$waiter = PPVC.$waiter = PCTRL.$waiter = function(prop, callback) {
+	PPC.$waiter = PCTRL.$waiter = function(prop, callback) {
 
 		var t = this;
 
@@ -4631,7 +4254,7 @@
 		return t;
 	};
 
-	PPC.hidden = PPP.hidden = PPVC.hidden = PCTRL.hidden = function(callback) {
+	PPC.hidden = PCTRL.hidden = function(callback) {
 		var t = this;
 		var v = t.element ? t.element.get(0).offsetParent : null;
 		v = v === null;
@@ -4644,7 +4267,7 @@
 		return v;
 	};
 
-	PPC.visible = PPP.visible = PPVC.visible = PCTRL.visible = function(callback) {
+	PPC.visible = PCTRL.visible = function(callback) {
 		var t = this;
 		var v = t.element ? t.element.get(0).offsetParent : null;
 		v = v !== null;
@@ -4657,7 +4280,7 @@
 		return v;
 	};
 
-	PPC.width = PPP.width = PPVC.width = PCTRL.width = function(callback) {
+	PPC.width = PCTRL.width = function(callback) {
 		var t = this;
 		var v = t.element ? t.element.get(0).offsetWidth : 0;
 		if (callback) {
@@ -4669,7 +4292,7 @@
 		return v;
 	};
 
-	PPC.height = PPP.height = PPVC.height = PCTRL.height = function(callback) {
+	PPC.height = PCTRL.height = function(callback) {
 		var t = this;
 		var v = t.element ? t.element.get(0).offsetHeight : 0;
 		if (callback) {
@@ -4681,7 +4304,7 @@
 		return v;
 	};
 
-	PPC.import = PPP.import = PCTRL.import = function(url, callback, insert, preparator) {
+	PPC.import = PCTRL.import = function(url, callback, insert, preparator) {
 		var self = this;
 		M.import(url, self.element, callback, insert, preparator);
 		return self;
@@ -4865,13 +4488,13 @@
 		return self;
 	};
 
-	PPVC.tclass = PPC.tclass = PPP.tclass = PCTRL.tclass = function(cls, v) {
+	PPC.tclass = PCTRL.tclass = function(cls, v) {
 		var self = this;
 		self.element.tclass(cls, v);
 		return self;
 	};
 
-	PPVC.aclass = PPC.aclass = PPP.aclass = PCTRL.aclass = function(cls, timeout) {
+	PPC.aclass = PCTRL.aclass = function(cls, timeout) {
 		var self = this;
 		if (timeout)
 			setTimeout(function() { self.element.aclass(cls); }, timeout);
@@ -4880,11 +4503,11 @@
 		return self;
 	};
 
-	PPVC.hclass = PPC.hclass = PPP.hclass = PCTRL.hclass = function(cls) {
+	PPC.hclass = PCTRL.hclass = function(cls) {
 		return this.element.hclass(cls);
 	};
 
-	PPVC.rclass = PPC.rclass = PPP.rclass = PCTRL.rclass = function(cls, timeout) {
+	PPC.rclass = PCTRL.rclass = function(cls, timeout) {
 		var self = this;
 		var e = self.element;
 		if (timeout)
@@ -4898,12 +4521,12 @@
 		return self;
 	};
 
-	PPVC.rclass2 = PPC.rclass2 = PPP.rclass2 = PCTRL.rclass2 = function(search) {
+	PPC.rclass2 = PCTRL.rclass2 = function(search) {
 		this.element.rclass2(search);
 		return this;
 	};
 
-	PPVC.classes = PPC.classes = PPP.classes = PCTRL.classes = function(cls) {
+	PPC.classes = PCTRL.classes = function(cls) {
 
 		var key = 'cls.' + cls;
 		var tmp = temp[key];
@@ -4938,7 +4561,7 @@
 		return t;
 	};
 
-	PPC.toggle = PPP.toggle = PCTRL.toggle = function(cls, visible, timeout) {
+	PPC.toggle = PCTRL.toggle = function(cls, visible, timeout) {
 
 		var manual = false;
 		var self = this;
@@ -5109,7 +4732,7 @@
 		return self;
 	};
 
-	PPVC.attr = PPC.attr = PPP.attr = PCTRL.attr = SCP.attr = function(name, value) {
+	PPC.attr = PCTRL.attr = SCP.attr = function(name, value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.attr(name);
@@ -5117,7 +4740,7 @@
 		return this;
 	};
 
-	PPVC.attrd = PPC.attrd = PPP.attrd = PCTRL.attrd = SCP.attrd = function(name, value) {
+	PPC.attrd = PCTRL.attrd = SCP.attrd = function(name, value) {
 		name = 'data-' + name;
 		var el = this.element;
 		if (value === undefined)
@@ -5126,7 +4749,7 @@
 		return this;
 	};
 
-	PPVC.css = PPC.css = PPP.css = PCTRL.css = SCP.css = function(name, value) {
+	PPC.css = PCTRL.css = SCP.css = function(name, value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.css(name);
@@ -5147,7 +4770,7 @@
 		return value ? this.reconfigure(value) : this;
 	};
 
-	PPC.reconfigure = PPVC.reconfigure = PCTRL.reconfigure = function(value, callback, init) {
+	PPC.reconfigure = PCTRL.reconfigure = function(value, callback, init) {
 		var self = this;
 
 		if (typeof(value) === 'object') {
@@ -5198,15 +4821,15 @@
 		return self;
 	};
 
-	PPVC.closest = PPC.closest = PPP.closest = PCTRL.closest = SCP.closest = function(sel) {
+	PPC.closest = PCTRL.closest = SCP.closest = function(sel) {
 		return this.element.closest(sel);
 	};
 
-	PPVC.parent = PPC.parent = PPP.parent = PCTRL.parent = SCP.parent = function(sel) {
+	PPC.parent = PCTRL.parent = SCP.parent = function(sel) {
 		return this.element.parent(sel);
 	};
 
-	PPVC.html = PPC.html = PPP.html = PCTRL.html = function(value) {
+	PPC.html = PCTRL.html = function(value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.html();
@@ -5216,7 +4839,7 @@
 		return value || type === 'number' || type === 'boolean' ? el.empty().append(value) : el.empty();
 	};
 
-	PPVC.text = PPC.text = PPP.text = PCTRL.text = function(value) {
+	PPC.text = PCTRL.text = function(value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.text();
@@ -5226,22 +4849,20 @@
 		return value || type === 'number' || type === 'boolean' ? el.empty().text(value) : el.empty();
 	};
 
-	PPVC.empty = PPC.empty = PPP.empty = PCTRL.empty = function() {
+	PPC.empty = PCTRL.empty = function() {
 		var el = this.element;
 		el.empty();
 		return el;
 	};
 
-	PPVC.append = PPC.append = PPP.append = PCTRL.append = SCP.append = function(value) {
+	PPC.append = PCTRL.append = SCP.append = function(value) {
 		var el = this.element;
 		if (value instanceof Array)
 			value = value.join('');
-		else if (value instanceof CONTAINER)
-			value = value.element;
 		return value ? el.append(value) : el;
 	};
 
-	PPVC.event = PPC.event = PPP.event = PPP.on = PCTRL.event = SCP.event = function() {
+	PPC.event = PCTRL.event = SCP.event = function() {
 		var self = this;
 		if (self.element)
 			self.element.on.apply(self.element, arguments);
@@ -5253,12 +4874,8 @@
 		return self;
 	};
 
-	PPVC.find = PPC.find = PPP.find = PCTRL.find = SCP.find = function(selector) {
+	PPC.find = PCTRL.find = SCP.find = function(selector) {
 		return this.element.find(selector);
-	};
-
-	PPC.virtualize = PCTRL.virtualize = SCP.virtualize = function(mapping, config) {
-		return W.VIRTUALIZE(this.element, mapping, config);
 	};
 
 	PPC.isInvalid = function() {
@@ -5271,7 +4888,7 @@
 
 	PPC.unwatch = function(path, fn) {
 		var self = this;
-		M.off('com' + self._id + '#watch', path, fn);
+		W.OFF('com' + self._id + '#watch', path, fn);
 		return self;
 	};
 
@@ -5321,7 +4938,7 @@
 		var self = this;
 		self.$dirty_disabled = false;
 		self.$dirty = true;
-		M.change(self.path, value === undefined ? true : value, self);
+		W.CHANGE(self.path, value === undefined ? true : value, self);
 		return self;
 	};
 
@@ -5373,7 +4990,7 @@
 		el.attr(ATTRDEL, 'true').find(ATTRCOM).attr(ATTRDEL, 'true');
 		self.$removed = 1;
 		self.removed = true;
-		M.off('com' + self._id + '#');
+		W.OFF('com' + self._id + '#');
 		!noClear && setTimeout2('$cleaner', cleaner2, 100);
 		return true;
 	};
@@ -5386,7 +5003,7 @@
 		} else
 			path = path.replace('.*', '');
 		var self = this;
-		M.on('com' + self._id + '#' + name, path, fn, init, self);
+		W.ON('com' + self._id + '#' + name, path, fn, init, self);
 		return self;
 	};
 
@@ -5453,7 +5070,7 @@
 	};
 
 	PPC.emit = function() {
-		M.emit.apply(M, arguments);
+		W.EMIT.apply(M, arguments);
 		return this;
 	};
 
@@ -5514,7 +5131,7 @@
 			value = path;
 			path = self.path;
 		}
-		path && M.rewrite(path, value);
+		path && W.REWRITE(path, value);
 		return self;
 	};
 
@@ -5589,8 +5206,6 @@
 
 	M.prototypes = function(fn) {
 		var obj = {};
-		obj.Container = PPVC;
-		obj.Property = PPP;
 		obj.Component = PPC;
 		obj.Usage = USAGE.prototype;
 		obj.Controller = PCTRL;
@@ -5688,7 +5303,7 @@
 
 		M.$components[name] && warn('Components: Overwriting component:', name);
 		var a = M.$components[name] = { name: name, config: config, declaration: declaration, shared: {}, dependencies: dependencies instanceof Array ? dependencies : null };
-		M.emit('component.compile', name, a);
+		W.EMIT('component.compile', name, a);
 	};
 
 	W.SINGLETON = function(name, def) {
@@ -6190,7 +5805,7 @@
 		}, timeout || 30000);
 	};
 
-	M.modified = W.MODIFIED = function(path) {
+	W.MODIFIED = function(path) {
 		var output = [];
 		M.each(function(obj) {
 			if (!(obj.disabled || obj.$dirty_disabled))
@@ -6518,7 +6133,7 @@
 		}
 
 		var self = this;
-		M.change(self.path(path), value === undefined ? true : value);
+		W.CHANGE(self.path(path), value === undefined ? true : value);
 		return self;
 	};
 
@@ -6546,7 +6161,7 @@
 		});
 
 		// Remove events
-		M.off('ctrl' + self.name + '#watch');
+		W.OFF('ctrl' + self.name + '#watch');
 
 		// Remove schedulers
 		schedulers = schedulers.remove('controller', self.name);
@@ -6592,13 +6207,6 @@
 		return arr;
 	};
 
-	W.VIRTUALIZE = function(el, map, config) {
-		if (el.element instanceof jQuery)
-			el = el.element;
-		!(el instanceof jQuery) && (el = $(el));
-		return new CONTAINER(el, map, config);
-	};
-
 	COMPONENT('', function() {
 		var self = this;
 		var type = self.element.get(0).tagName;
@@ -6629,7 +6237,7 @@
 	var NP = Number.prototype;
 	var DP = Date.prototype;
 
-	AP.wait = AP.waitFor = function(onItem, callback, thread, tmp) {
+	AP.wait = function(onItem, callback, thread, tmp) {
 
 		var self = this;
 		var init = false;
@@ -6703,43 +6311,6 @@
 
 		c();
 		return this;
-	};
-
-	AP.ticks = function(max, beg) {
-
-		var self = this;
-		var length = self.length;
-		if (length < max)
-			return self;
-
-		var each = Math.round(length / max);
-		var arr = [];
-		var count = 0;
-		var sum = 0;
-
-		if (beg) {
-			for (var i = 0; i < length; i++) {
-				if (sum++ % each === 0) {
-					count++;
-					arr.push(self[i]);
-				}
-
-				if (count === max)
-					break;
-			}
-		} else {
-			for (var i = length - 1; i > -1; i--) {
-				if (sum++ % each === 0) {
-					count++;
-					arr.push(self[i]);
-				}
-
-				if (count === max)
-					break;
-			}
-			arr.reverse();
-		}
-		return arr;
 	};
 
 	AP.take = function(count) {
@@ -8114,7 +7685,7 @@
 			var c = M.components;
 			for (var i = 0, length = c.length; i < length; i++)
 				c[i].knockknock && c[i].knockknock(knockknockcounter);
-			M.emit('knockknock', knockknockcounter++);
+			W.EMIT('knockknock', knockknockcounter++);
 		}, 60000);
 
 		$(document).ready(function() {

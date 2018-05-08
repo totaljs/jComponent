@@ -9,7 +9,7 @@
 
 > __Download__: more than 80 jComponents free for everyone <https://componentator.com>
 
-- Current version: `v14.5.0`
+- Current version: `v15.0.0`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -120,6 +120,8 @@ Examples:
 <div data-jc="textbox __ form.name __ required:true;maxlength:30 __ 'Peter'"></div>
 <div data-jc="textbox" data-jc-path="form.name" data-jc-config="required:true;maxlength:30" data-jc-value="'Peter'"></div>
 ```
+
+- `null` values will be skipped
 
 ---
 
@@ -651,7 +653,7 @@ COMPONENT('my-component-name', function(instance, config) {
 
     instance.import(url, [callback], [insert], [preparator(response)]);
     // Imports resource into the this element
-    // Alias for MAIN.import();
+    // Alias for IMPORT();
     // +v11.0.0
 
 
@@ -1142,50 +1144,10 @@ MAIN.get('@controllername.name'); // +v10.1.0 reads a value according to the con
 // Gets the value from the model.
 
 
-MAIN.findByName(name, [path], [fn(component)]);
-MAIN.findByName(name, [path], [returnArray]);
-MAIN.findByName('my-component'); // Example: Returns only one component
-MAIN.findByName('my-component', true); // Example: Returns array with multiple components
-MAIN.findByName('my-component', function(component) { console.log(component); });  // Example: Crawls all components
-MAIN.findByName('my-component', 'model.*', function(component) { console.log(component); }); // Example: Crawls all components according the path
-// Finds components by `data-jc` attribute.
-
-
-MAIN.findById(name, [path], [fn(component)]);
-MAIN.findById(name, [path], [returnArray]);
-MAIN.findById('my-component'); // Example: Returns only one component
-MAIN.findById('my-component', true); // Example: Returns array with multiple components
-MAIN.findById('my-component', function(component) { console.log(component); }); // Example: Crawls all components
-MAIN.findById('my-component', 'model.*', function(component) { console.log(component); });  // Example: Crawls all components according the path
-// Finds components by `data-jc-id` attribute.
-
-
-MAIN.findByPath([path], [fn(component)]);
-MAIN.findByPath([path], [returnArray]);
-MAIN.findByPath('model'); // Example: Returns only one component
-MAIN.findByPath('model', true); // Example: Returns array with multiple components
-MAIN.findByPath('model', function(component) { console.log(component); });  // Example: Crawls all components
-// Finds components by `data-jc-id` attribute.
-
-
-MAIN.errors(path, [except_paths_arr], [highlight]);
-// +v10.1.0 supports "@controllername.path"
-// +v11.4.0 supports highlighting
-// +v13.0.0 supports an except flags "@hidden" (only hidden components), "@visible" (only visible components), "@disabled" (only disabled inputs in the component), "@enabled" (only enabled inputs in the component) in "except"
-// path {String}
-// except {String Array} excepts paths
-// highlight {Boolean} highlights invalid components (default: false)
-// Returns array of invalid components.
-
-
 MAIN.invalid(path, [except_paths_arr]);
 // +v10.1.0 supports "@controllername.path"
 // +v13.0.0 supports an except flags "@hidden" (only hidden components), "@visible" (only visible components), "@disabled" (only disabled inputs in the component), "@enabled" (only enabled inputs in the component) in "except"
 // Sets the invalid state to all components according the binding path.
-
-MAIN.remove(path);
-MAIN.remove(jquery_element);
-// Removes all components according the binding path.
 
 
 MAIN.import(url, [target], [callback], [insert], [preparator(response)])
@@ -1213,23 +1175,6 @@ MAIN.valid('model.isValid', false); // Example: Setter.
 // Supports wildcard path, e.g. `model.*`.
 
 
-MAIN.can(path, [except_paths_arr]);
-// Combines the dirty and valid method together (e.g. for enabling of buttons)
-// Returns {Boolean}.
-// Opposite of MAIN.disable()
-// Supports wildcard path, e.g. `model.*`.
-// +v10.1.0 supports "@controllername.path"
-// +v13.0.0 supports an except flags "@hidden" (only hidden components), "@visible" (only visible components), "@disabled" (only disabled inputs in the component), "@enabled" (only enabled inputs in the component) in "except"
-
-
-MAIN.disabled(path, [except_paths_arr]);
-// Combines the dirty and valid method together (e.g. for disabling of buttons)
-// Opposite of MAIN.can()
-// Supports wildcard path, e.g. `model.*`.
-// +v10.1.0 supports "@controllername.path"
-// +v13.0.0 supports an except flags "@hidden" (only hidden components), "@visible" (only visible components), "@disabled" (only disabled inputs in the component), "@enabled" (only enabled inputs in the component) in "except"
-
-
 MAIN.cache(key); // Example: Getter.
 MAIN.cache(key, value, expire); // Example: Setter.
 // Gets or Sets the value from the cache. `Expire` in milliseconds or can be a string `5 minutes`.
@@ -1242,14 +1187,6 @@ MAIN.cachepath(path, expire, [rebind]);
 // Returns {Components}.
 // +v9.0.0: added "rebind" argument (default: false)
 // +v10.1.0 supports "@controllername.path"
-
-
-MAIN.validate([path], [except_paths_arr]);
-// Validates all values according the path.
-// Returns {Boolean}.
-// Supports wildcard path, e.g. `model.*`.
-// +v10.1.0 supports "@controllername.path"
-
 
 MAIN.reset([path], [timeout]);
 // Reset the dirty and valid method together (Sets: dirty=true and valid=true)
@@ -1287,12 +1224,6 @@ MAIN.parseCookie();
 MAIN.parseQuery([querystring]);
 MAIN.parseQuery(); // Example: Returns parsed values from the current URL address.
 // Parsers query string (from URL address) and returns {Object}.
-
-
-MAIN.createURL([url], values);
-MAIN.createURL({ sort: 1, pricefrom: 300 }); // append values into the current URL
-MAIN.createURL('/api/query/?priceto=200', { sort: 1 }); // /api/query/?priceto=200&sort=1
-// +v4.0.0 Updates or creates URL from the current URL address and QueryString
 
 
 MAIN.removeCache(key, fulltext);
@@ -1339,27 +1270,6 @@ MAIN.evaluate(path, expression, [path_is_value]);
 MAIN.evaluate('model.age', 'value > 20 && value < 30'); // Example
 MAIN.evaluate(25, 'value > 20 && value < 30', true); // Example
 // Evaluates the expression. The value in the expression is value according the path.
-
-
-MAIN.blocked(name, timeout, [callback]);
-if (MAIN.blocked('submitted', 1000)) { // Example.
-    alert('Try later.')
-    return;
-}
-// Prevention for some operations. It's stored in `localStorage` according
-// `MAIN.defaults.localstorage`.
-// +11.8.0 timeout can contains string e.g. "5 minutes"
-
-
-MAIN.ready(fn);
-MAIN.ready(function(count) { console.log('Components ready:', count); }); // Example.
-// Are the components ready? Has a similar functionality like $.ready().
-
-
-MAIN.clean([timeout]);
-// Cleans all unnecessary components.
-// IMPORTANT: The cleaner is started each 5 minutes.
-
 
 MAIN.usage(property, expire, [path], [callback]);
 MAIN.usage('manually', '5 seconds');
@@ -1638,13 +1548,28 @@ FIND('data-component', true, function(component_array) {
 
 
 BLOCKED(name, timeout, [callback]);
-// Alias for MAIN.blocked();
+if (BLOCKED('submitted', 1000)) { // Example.
+    alert('Try later.')
+    return;
+}
+// Prevention for some operations. It's stored in `localStorage` according
+// `MAIN.defaults.localstorage`.
+// +11.8.0 timeout can contains string e.g. "5 minutes"
+
 
 INVALID(path);
 // Alias for MAIN.invalid();
 
-ERRORS(path);
-// Alias for MAIN.errors();
+
+ERRORS(path, [except_paths_arr], [highlight]);
+// +v10.1.0 supports "@controllername.path"
+// +v11.4.0 supports highlighting
+// +v13.0.0 supports an except flags "@hidden" (only hidden components), "@visible" (only visible components), "@disabled" (only disabled inputs in the component), "@enabled" (only enabled inputs in the component) in "except"
+// path {String}
+// except {String Array} excepts paths
+// highlight {Boolean} highlights invalid components (default: false)
+// Returns array of invalid components.
+
 
 EVALUATE(path, expression, [path_is_value]);
 // Alias for MAIN.evaluate();
@@ -1833,15 +1758,38 @@ UPTODATE('1 day', '/products/');
 // +v11.2.0 supports environments e.g. UPTODATE('[adminurl]') replaces '[adminurl]' for ENV('adminurl') --> in url
 // +v14.1.1 supports [condition] argument and [timeout_id] param (for prevent redirecting) in [callback] function
 
+CAN(path, [except_paths_arr]);
+// Combines the dirty and valid method together (e.g. for enabling of buttons)
+// Returns {Boolean}.
+// Opposite of MAIN.disable()
+// Supports wildcard path, e.g. `model.*`.
+// +v10.1.0 supports "@controllername.path"
+// +v13.0.0 supports an except flags "@hidden" (only hidden components), "@visible" (only visible components), "@disabled" (only disabled inputs in the component), "@enabled" (only enabled inputs in the component) in "except"
+
 var can = CAN('users.form.*');
 can && submit();
 // CAN(path) --> alias for MAIN.can()
 // returns {Boolean}
 
+
+DISABLED(path, [except_paths_arr]);
+// Combines the dirty and valid method together (e.g. for disabling of buttons)
+// Opposite of MAIN.can()
+// Supports wildcard path, e.g. `model.*`.
+// +v10.1.0 supports "@controllername.path"
+// +v13.0.0 supports an except flags "@hidden" (only hidden components), "@visible" (only visible components), "@disabled" (only disabled inputs in the component), "@enabled" (only enabled inputs in the component) in "except"
+
 var disabled = DISABLED('users.form.*');
 !disabled && submit();
 // DISABLED(path) --> alias for MAIN.disabled()
 // returns {Boolean}
+
+
+VALIDATE([path], [except_paths_arr]);
+// Validates all values according the path.
+// Returns {Boolean}.
+// Supports wildcard path, e.g. `model.*`.
+// +v10.1.0 supports "@controllername.path"
 
 var valid = VALIDATE('users.form.*');
 valid && submit();
@@ -1929,6 +1877,13 @@ common.form = 'users';
 var params = READPARAMS();
 // returns {Object}
 // Reads params from URL address
+
+
+
+MAKEPARAMS([url], values);
+MAKEPARAMS({ sort: 1, pricefrom: 300 }); // append values into the current URL
+MAKEPARAMS('/api/query/?priceto=200', { sort: 1 }); // /api/query/?priceto=200&sort=1
+// +v4.0.0 Updates or creates URL from the current URL address and QueryString
 
 var params = MAKEPARAMS('/your-url/', { q: 'Google' });
 var params = MAKEPARAMS({ q: 'Google' });
@@ -2352,107 +2307,6 @@ MAIN.prototypes(function(proto) {
 });
 ```
 
-## Virtualization
-
-Is supported in __v10.0.0__. In short this feature can virtualize `DOM` to a simple object.
-
-```html
-<div id="container">
-    <h1></h1>
-    <p></p>
-    <button data-name="submit"></button>
-</div>
-
-<script>
-    // VIRTUALIZE(element, mapping, [config]);
-    var obj = VIRTUALIZE($('#container'), { caption: 'h1', text: 'p', button: 'button[data-name="submit"]', something: 'jQuery selector' });
-    obj.caption.html('This is caption');
-    obj.text.html('Lorem ipsum dolor sit amet, consectetur adipisicing elit. Necessitatibus, iusto.');
-    obj.button.html('Click me');
-</script>
-```
-
-```javascript
-// Properties
-obj.id;           // {String} obj id
-obj.config;       // {Object} a configuration
-obj.element;      // {jQuery} a current element (jQuery element)
-obj.container;    // {jQuery} container (jQuery element)
-obj.selector;     // {String} a current selector from `VIRUTALIZE()`
-
-// Methods
-obj.find(selector);                      // Alias for "obj.element.find(selector)"
-obj.append(value);                       // Alias for "instance.element.append()"
-obj.html(value);                         // Alias for "instance.element.html()"
-obj.text(value);                         // Alias for "instance.element.text()"
-obj.event(name, [selector], callback);   // Alias for "instance.element.on()"
-obj.toggle(cls, visible, [timeout]);     // Alias for "jQuery.toggleClass()"
-obj.attr(name, [value]);                 // Alias for "jQuery.attr()"
-obj.attrd(name, [value]);                // Alias for "jQuery.attr('data-{name}')"
-obj.css(name, [value]);                  // Alias for "jQuery.css()"
-obj.empty();                             // Alias for "jQuery.empty()"
-obj.click();                             // Performs click+touchend event together
-obj.replace(newEl);                      // Replaces current element to new
-obj.refresh();                           // Refreshes binding to object according to the selector
-obj.make(callback);                      // Executes a callback when the element is attached
-obj.import(url, [callback], [insert], [preparator(response)]); // Alias for MAIN.import();
-obj.aclass(cls);                         // Alias to .addClass()
-obj.rclass(cls);                         // Alias to .removeClass()
-obj.tclass(cls);                         // Alias to .toggleClass()
-obj.hclass(cls);                         // Alias to .hasClass()
-obj.clone([deep]);                       // Clones container to a new virtual element +v12.0.2
-obj.backup([elements]);                  // Back up the element +v12.0.2
-obj.restore([elements]);                 // Restores the element +v12.0.2
-obj.reconfigure(value, [callback(key, value)]); // Parses configuration
-
-// Delegates
-obj.configure;
-```
-
-__Virtualized elements__:
-
-```javascript
-// Properties
-obj.something.container;                 // jQuery container
-obj.something.element;                   // jQuery element
-obj.something.selector;                  // {String} Selector
-obj.something.length;                    // {Number} Count of captured elements
-obj.something.id;                        // {String} Internal identificator
-
-// Delegates
-obj.something.configure = function(key, value) {
-    // It's executed if the "obj.something.reconfigure()" is executed
-};
-
-// Methods
-obj.something.backup();                  // Back up the element +v12.0.2
-obj.something.restore();                 // Restores the element +v12.0.2
-obj.something.refresh();                 // Refreshes element by its selector
-obj.something.replace(el);               // Replaces element to another
-obj.something.click(callback(e));        // Captures "click/touchend" event
-obj.something.src(url);                  // Changes src="" attribute in the current element
-obj.something.classes(classes);          // Changes classes e.g. "-hidden +animation"
-obj.something.aclass(cls);               // Alias to .addClass()
-obj.something.rclass(cls);               // Alias to .removeClass()
-obj.something.tclass(cls);               // Alias to .toggleClass()
-obj.something.hclass(cls);               // Alias to .hasClass()
-obj.something.prop(key, [value]);        // Alias for "jQuery.prop()"
-obj.something.disable([value]);          // Alias for "jQuery.prop('disabled')"
-obj.something.attr(name, [value]);       // Alias for "jQuery.attr()"
-obj.something.attrd(name, [value]);      // Alias for "jQuery.attr('data-{name}')"
-obj.something.css(name, [value]);        // Alias for "jQuery.css()"
-obj.something.find(selector);            // Alias for "element.find(selector)"
-obj.something.append(value);             // Alias for "element.append()"
-obj.something.html(value);               // Alias for "element.html()"
-obj.something.val(value);                // Alias for "element.val()"
-obj.something.event(name, [selector], callback);  // Alias for "element.on()"
-obj.something.import(url, [callback], [insert], [preparator(response)]); // Alias for MAIN.import();
-```
-
-- `VIRTUALIZE()` still returns cached object
-- it waits for non-exist elements
-- it doesn't throw any exception when the element doesn't exist
-
 ## Tools
 
 #### Cookies
@@ -2720,7 +2574,7 @@ __Number formatting__:
 <!-- OUTPUT: 1 234,56 -->
 ```
 
-__Pluralize__
+__Pluralization__
 
 ```html
 {{ count | pluralize('no users', '# user', '# users', '#users') }}
@@ -2915,8 +2769,6 @@ window.READY   // for asynchronous loading scripts
 
 - `MAIN.$components` a list of all registered components
 - `MAIN.components` a list of all instances of all components
-- `MAIN.$apps` a list of all registered apps
-- `MAIN.apps` a list of all instances of all apps
 - `MAIN.controllers` a list of all instances of all controllers
 - Temporary variables: `+v11.2.0` --> `SET('%yourpath', 'value')` (works everywhere)
 
