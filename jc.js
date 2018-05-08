@@ -2294,14 +2294,14 @@
 			scopes = [];
 			if (container !== document.body) {
 				var scope = $(container).closest('[' + ATTRSCOPE + ']');
-				scope && scope.length && scopes.push(scope.get(0));
+				scope && scope.length && scopes.push(scope[0]);
 			}
 		}
 
 		var released = container ? attrcom(container, 'released') === 'true' : false;
 		var tmp = attrcom(container, 'controller');
 		if (tmp)
-			controller = tmp;
+			controller = tmp.split(REGMETA)[0];
 
 		tmp = attrcom(container, 'scope');
 		if (tmp)
@@ -2462,7 +2462,7 @@
 		}
 
 		var target = input ? input : com.element;
-		findcontrol(target.get(0), function(el) {
+		findcontrol(target[0], function(el) {
 			if (!el.$com || el.$com !== com) {
 				el.$com = com;
 				com.$inputcontrol = 1;
@@ -3324,7 +3324,7 @@
 				var arr = autofill.splice(0);
 				for (var i = 0; i < arr.length; i++) {
 					var com = arr[i];
-					!com.$default && findcontrol(com.element.get(0), function(el) {
+					!com.$default && findcontrol(com.element[0], function(el) {
 						var val = $(el).val();
 						if (val) {
 							var tmp = com.parser(val);
@@ -3372,9 +3372,13 @@
 				}
 
 				if (controller) {
+
+					var ctrltmp = controller.split(REGMETA);
+					controller = ctrltmp[0];
+
 					var ctrl = CONTROLLER(controller);
 					if (ctrl)
-						ctrl.$init(t.$scope, scope);
+						ctrl.$init(t.$scope, scope, ctrltmp[1]);
 					else {
 						!warnings[controller] && warn('Components: The controller "{0}" not found.'.format(controller));
 						warnings[controller] = true;
@@ -3886,7 +3890,7 @@
 	function CONTAINER(element, mapping, config) {
 		var t = this;
 		t.element = typeof(element) === 'string' ? $(element.$env()) : element;
-		t.dom = t.element.get(0);
+		t.dom = t.element[0];
 		t.mapping = mapping;
 		t.config = {};
 		config && t.reconfigure(config, NOOP);
@@ -3978,7 +3982,7 @@
 			var clone = t.$backup.clone(true);
 			t.element.replaceWith(clone).remove();
 			t.element = clone;
-			t.dom = t.element.get(0);
+			t.dom = t.element[0];
 			t.refresh();
 		}
 		return t;
@@ -4010,7 +4014,7 @@
 			var clone = t.$backup.clone(true);
 			t.element.replaceWith(clone).remove();
 			t.element = clone;
-			t.dom = t.element.get(0);
+			t.dom = t.element[0];
 		}
 		return t;
 	};
@@ -4030,7 +4034,7 @@
 	PPP.refresh = function() {
 		var self = this;
 		self.element = typeof(self.selector) === 'function' ? self.selector(self.container.element) : self.container.element.find(self.selector);
-		self.dom = self.element.get(0);
+		self.dom = self.element[0];
 		self.length = self.element.length;
 		return self;
 	};
@@ -4185,6 +4189,7 @@
 		var self = this;
 		self.config = {};
 		self.$events = {};
+		self.$data = {};
 		self.scope = '';
 		self.name = name;
 		self.element = null;
@@ -4499,7 +4504,7 @@
 			var a = 'select-one';
 			value = self.formatter(value);
 
-			findcontrol(self.element.get(0), function(t) {
+			findcontrol(self.element[0], function(t) {
 
 				if (t.$com !== self)
 					t.$com = self;
@@ -4532,7 +4537,7 @@
 
 	var PPC = COM.prototype;
 
-	PPC.data = function(key, value) {
+	PPC.data = PCTRL.data = function(key, value) {
 		if (!key)
 			key = '@';
 		var self = this;
@@ -4658,7 +4663,7 @@
 
 	PPC.hidden = PPP.hidden = PPVC.hidden = PCTRL.hidden = function(callback) {
 		var t = this;
-		var v = t.element ? t.element.get(0).offsetParent : null;
+		var v = t.element ? t.element[0].offsetParent : null;
 		v = v === null;
 		if (callback) {
 			if (v)
@@ -4671,7 +4676,7 @@
 
 	PPC.visible = PPP.visible = PPVC.visible = PCTRL.visible = function(callback) {
 		var t = this;
-		var v = t.element ? t.element.get(0).offsetParent : null;
+		var v = t.element ? t.element[0].offsetParent : null;
 		v = v !== null;
 		if (callback) {
 			if (v)
@@ -4684,7 +4689,7 @@
 
 	PPC.width = PPP.width = PPVC.width = PCTRL.width = function(callback) {
 		var t = this;
-		var v = t.element ? t.element.get(0).offsetWidth : 0;
+		var v = t.element ? t.element[0].offsetWidth : 0;
 		if (callback) {
 			if (v)
 				callback.call(t, v);
@@ -4696,7 +4701,7 @@
 
 	PPC.height = PPP.height = PPVC.height = PCTRL.height = function(callback) {
 		var t = this;
-		var v = t.element ? t.element.get(0).offsetHeight : 0;
+		var v = t.element ? t.element[0].offsetHeight : 0;
 		if (callback) {
 			if (v)
 				callback.call(t, v);
@@ -4790,7 +4795,7 @@
 		var scope = prev.attrd('jc-scope');
 
 		self.element.removeAttr('data-jc');
-		self.element.get(0).$com = null;
+		self.element[0].$com = null;
 		ctrl && self.element.removeAttr('data-' + ATTRCTRL);
 		scope && self.element.removeAttr(ATTRSCOPE);
 
@@ -4800,7 +4805,7 @@
 			self.attrd('jc-replaced', 'true');
 
 		self.element = $(el);
-		self.dom = self.element.get(0);
+		self.dom = self.element[0];
 		self.dom.$com = self;
 		self.attrd('jc', self.name);
 		ctrl && self.attrd(ATTRCTRL, ctrl);
@@ -5162,7 +5167,7 @@
 	PPC.main = PCTRL.main = SCP.main = function() {
 		var self = this;
 		if (self.$main === undefined) {
-			var tmp = self.parent().closest('[data-jc]').get(0);
+			var tmp = self.parent().closest('[data-jc]')[0];
 			self.$main = tmp ? tmp.$com : null;
 		}
 		return self.$main;
@@ -6484,7 +6489,7 @@
 
 		var key = 'ctrl$' + obj.name;
 
-		obj.$init = function(path, element) {
+		obj.$init = function(path, element, config) {
 
 			clearTimeout(statics[key]);
 
@@ -6493,7 +6498,8 @@
 
 			if (element) {
 				obj.element = element;
-				obj.dom = element.get(0);
+				obj.dom = element[0];
+				obj.dom.$ctrl = obj;
 			}
 
 			if (obj.$callback) {
@@ -6501,7 +6507,7 @@
 				current_ctrl = obj.name;
 
 				if (obj.element) {
-					var tmp = attrcom(obj.element, 'config');
+					var tmp = config || attrcom(obj.element, 'config');
 					tmp && obj.reconfigure(tmp, NOOP);
 				}
 
@@ -6514,11 +6520,6 @@
 		};
 
 		C.controllers++;
-
-		statics[key] = setTimeout(function() {
-			obj.$init();
-		}, 500);
-
 		return obj.$init;
 	};
 
@@ -6543,6 +6544,7 @@
 
 		removewaiter(self);
 		self.removed = true;
+		self.$data = null;
 		self.emit('destroy');
 		self.destroy && self.destroy();
 		delete M.controllers[self.name];
@@ -6579,7 +6581,7 @@
 	PCTRL.released = function() {
 		var self = this;
 		if (!self.$parent)
-			self.$parent = $(self.element.closest('[data-jc-released]').get(0));
+			self.$parent = $(self.element.closest('[data-jc-released]')[0]);
 		return self.$parent.attrd('jc-released') === 'true';
 	};
 
@@ -6613,7 +6615,7 @@
 
 	COMPONENT('', function() {
 		var self = this;
-		var type = self.element.get(0).tagName;
+		var type = self.element[0].tagName;
 		if (type !== 'INPUT' && type !== 'SELECT' && type !== 'TEXTAREA') {
 			self.readonly();
 			self.setter = function(value) {
@@ -7942,7 +7944,7 @@
 			if (!this.length)
 				return null;
 
-			var data = this.get(0).$scopedata;
+			var data = this[0].$scopedata;
 			if (data)
 				return data;
 			var el = this.closest('[' + ATTRSCOPE + ']');
@@ -8476,14 +8478,34 @@
 
 					if (path.substring(0, 1) === '@') {
 						path = path.substring(1);
+
+						var isCtrl = false;
+						if (path.substring(0, 1) === '@') {
+							isCtrl = true;
+							path = path.substring(1);
+						}
+
 						if (!path)
 							path = '@';
+
 						var parent = el.parentNode;
 						while (parent) {
-							if (parent.$com) {
-								var com = parent.$com;
-								obj.com = com;
-								break;
+							if (isCtrl) {
+								if (parent.$ctrl) {
+									obj.com = parent.$ctrl;
+									if (path === '@' && !obj.com.$dataw) {
+										obj.com.$dataw = 1;
+										obj.com.watch('', function(path, value) {
+											obj.com.data('@', value);
+										});
+									}
+									break;
+								}
+							} else {
+								if (parent.$com) {
+									obj.com = parent.$com;
+									break;
+								}
 							}
 							parent = parent.parentNode;
 						}
@@ -8525,8 +8547,8 @@
 		var p = '';
 
 		if (obj.com) {
-			!com.$data[path] && (com.$data[path] = { value: null, items: [] });
-			com.$data[path].items.push(obj);
+			!obj.com.$data[path] && (obj.com.$data[path] = { value: null, items: [] });
+			obj.com.$data[path].items.push(obj);
 		} else {
 			for (var i = 0, length = arr.length; i < length; i++) {
 				p += (p ? '.' : '') + arr[i];
