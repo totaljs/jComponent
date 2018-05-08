@@ -3503,6 +3503,17 @@
 		cleaner();
 	}
 
+	function inDOM(el) {
+		if (el.nodeName === 'BODY')
+			return true;
+		var parent = el.parentNode;
+		while (parent) {
+			if (parent.nodeName === 'BODY')
+				return true;
+			parent = parent.parentNode;
+		}
+	}
+
 	function cleaner() {
 
 		var keys = OK(events);
@@ -3521,7 +3532,7 @@
 				if (item === undefined)
 					break;
 
-				if (item.context == null || (item.context.element && item.context.element.closest(document.documentElement).length))
+				if (item.context == null || (item.context.element && inDOM(item.context.element[0])))
 					continue;
 
 				item.context && item.context.element && item.context.element.remove();
@@ -3542,7 +3553,7 @@
 			var item = watches[index++];
 			if (item === undefined)
 				break;
-			if (item.context == null || (item.context.element && item.context.element.closest(document.documentElement).length))
+			if (item.context == null || (item.context.element && inDOM(item.context.element[0])))
 				continue;
 			item.context && item.context.element && item.context.element.remove();
 			item.context.$removed = true;
@@ -3559,6 +3570,7 @@
 		while (index < length) {
 
 			var component = all[index++];
+
 			if (!component) {
 				index--;
 				all.splice(index, 1);
@@ -3566,15 +3578,10 @@
 				continue;
 			}
 
+
 			var c = component.element;
 
-			if (!component.$removed || component.$removed === 2) {
-				// Clears temporary cache for parent components
-				component.$parent = component.$main = undefined;
-				continue;
-			}
-
-			if (c && c.closest(document.documentElement).length) {
+			if (c && inDOM(c[0])) {
 				if (!component.attr(ATTRDEL)) {
 					if (component.$parser && !component.$parser.length)
 						component.$parser = undefined;
@@ -3584,13 +3591,22 @@
 				}
 			}
 
+			if (!component.$removed || component.$removed === 2) {
+				// Clears temporary cache for parent components
+				component.$parent = component.$main = undefined;
+				continue;
+			}
 			W.EMIT('destroy', component.name, component);
 			W.EMIT('component.destroy', component.name, component);
 
 			component.destroy && component.destroy();
-			c.off();
-			c.find('*').off();
-			c.remove();
+
+			if (c[0].nodeName !== 'BODY') {
+				c.off();
+				c.find('*').off();
+				c.remove();
+			}
+
 			component.$data = null;
 			component.dom = null;
 			component.$removed = 2;
@@ -3615,7 +3631,7 @@
 				var o = arr[j++];
 				if (!o)
 					break;
-				if (o.el.closest(document.documentElement).length)
+				if (inDOM(o.el[0]))
 					continue;
 				var e = o.el;
 				if (!e[0].$br) {
