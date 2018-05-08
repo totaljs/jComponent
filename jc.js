@@ -2888,7 +2888,7 @@
 
 			sc.$scope = absolute;
 			var d = new Scope();
-			d._id = d.id = GUID(10);
+			d._id = d.ID = d.id = GUID(10);
 			d.path = absolute;
 			d.elements = arr.slice(0, i + 1);
 			d.isolated = sc.$isolated;
@@ -4356,7 +4356,7 @@
 
 	function COM(name) {
 		var self = this;
-		self._id = 'component' + (C.counter++);
+		self._id = self.ID = 'component' + (C.counter++);
 		self.usage = new USAGE();
 		self.$dirty = true;
 		self.$valid = true;
@@ -8129,6 +8129,16 @@
 			M.emit('knockknock', knockknockcounter++);
 		}, 60000);
 
+
+		function resize() {
+			var w = $(window);
+			W.WW = w.width();
+			W.WH = w.height();
+			mediaquery();
+		}
+
+		resize();
+		$(document).on('resize', resize);
 		$(document).ready(function() {
 
 			if ($ready) {
@@ -8136,9 +8146,7 @@
 				load();
 			}
 
-			$(W).on('resize', mediaquery);
 			$(W).on('orientationchange', mediaquery);
-			mediaquery();
 
 			$(document).on('input', 'input[data-jc-bind],textarea[data-jc-bind]', function() {
 
