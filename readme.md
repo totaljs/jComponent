@@ -1651,10 +1651,6 @@ EXEC('CONTROLLER/method_name', 'hide', 1000);
 // +v9.0.0
 // +v12.0.5 supports "WAITING" for a method e.g. EXEC(true, 'CONTROLLER/method_name', 'hide', 1000);
 
-EXEC('@CONTROLLER.method_name', 'hide', 1000);
-// Executes method in a controller
-// +v11.0.0
-
 
 // Creates a singleton instance.
 var obj = SINGLETON('name');
@@ -2729,6 +2725,49 @@ __Linking commands__:
 ```html
 <div data-bind="path.to.property__COMMAND + COMMAND + COMMAND:VALUE"></div>
 <div data-bind="user.age__visible + .selected:age => age > 18__html:value"></div>
+
+<!--
+    Binds a value according to the data-jc-path attribute
+    It works in component scope only
+-->
+<div data-bind="@__COMMAND + COMMAND + COMMAND:VALUE"></div>
+
+<!--
+    Binds a component config
+    It works in component scope only
+-->
+<div data-bind="@config__COMMAND + COMMAND + COMMAND:VALUE"></div>
+
+<!--
+    Binds a value defined via component.data('property', value)
+    It works in component scope only
+-->
+<div data-bind="@property__COMMAND + COMMAND + COMMAND:VALUE"></div>
+
+<!--
+    Binds a value according to the data-jc-path attribute
+    It works in component scope only
+-->
+<div data-bind="@__COMMAND + COMMAND + COMMAND:VALUE"></div>
+
+<!--
+    Binds a component config
+    It works in controller scope only
+-->
+<div data-bind="@@config__COMMAND + COMMAND + COMMAND:VALUE"></div>
+
+<!--
+    Binds a value defined via controller.data('property', value)
+    It works in controller scope only
+-->
+<div data-bind="@@property__COMMAND + COMMAND + COMMAND:VALUE"></div>
+
+<!--
+    Binds a value according to controller scope
+    It works in component scope only
+-->
+<div data-bind="@@__COMMAND + COMMAND + COMMAND:VALUE"></div>
+
 ```
 
 __Commands and nested jQuery selectors__:
