@@ -2531,7 +2531,7 @@
 
 				obj.$init = attrcom(el, 'init') || null;
 				obj.type = attrcom(el, 'type') || '';
-				obj.id = obj.ID = attrcom(el, 'id') || obj._id;
+				obj.id = attrcom(el, 'id') || obj._id;
 				obj.siblings = all.length > 1;
 
 				com.declaration.call(obj, obj, obj.config);
@@ -3974,7 +3974,7 @@
 
 	function COM(name) {
 		var self = this;
-		self._id = 'component' + (C.counter++);
+		self._id = self.ID = 'jc' + (C.counter++);
 		self.usage = new USAGE();
 		self.$dirty = true;
 		self.$valid = true;
