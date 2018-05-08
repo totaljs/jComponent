@@ -4785,18 +4785,18 @@
 		if (typeof(value) === 'object') {
 			OK(value).forEach(function(k) {
 
-				if (k.substring(0, 1) === '@') {
-					self.data(k.substring(1), value[k]);
-					return;
-				}
-
 				var prev = self.config[k];
+
 				if (!init && self.config[k] !== value[k])
 					self.config[k] = value[k];
+
+				self.data(k, value[k]);
+
 				if (callback)
 					callback(k, value[k], init, init ? undefined : prev);
 				else if (self.configure)
 					self.configure(k, value[k], init, init ? undefined : prev);
+
 			});
 			return self;
 		}
@@ -4814,13 +4814,14 @@
 		}
 
 		value.$config(function(k, v) {
-			if (k.substring(0, 1) === '@') {
-				self.data(k.substring(1), v);
-				return;
-			}
+
 			var prev = self.config[k];
+
 			if (!init && self.config[k] !== v)
 				self.config[k] = v;
+
+			self.data(k, value[k]);
+
 			if (callback)
 				callback(k, v, init, init ? undefined : prev);
 			else if (self.configure)
