@@ -5179,6 +5179,7 @@
 
 	PPC.reconfigure = PPVC.reconfigure = PCTRL.reconfigure = function(value, callback, init) {
 		var self = this;
+		var isd = typeof(self.data) === 'function';
 		if (typeof(value) === 'object') {
 			OK(value).forEach(function(k) {
 				var prev = self.config[k];
@@ -5188,7 +5189,7 @@
 					callback(k, value[k], init, init ? undefined : prev);
 				else if (self.configure)
 					self.configure(k, value[k], init, init ? undefined : prev);
-				self.data && self.data('config.' + k, value[k]);
+				isd && self.data('config.' + k, value[k]);
 			});
 		} else if (value.substring(0, 1) === '=') {
 			value = value.substring(1);
@@ -5203,7 +5204,7 @@
 				var prev = self.config[k];
 				if (!init && self.config[k] !== v)
 					self.config[k] = v;
-				self.data && self.data('config.' + k, v);
+				isd && self.data('config.' + k, v);
 				if (callback)
 					callback(k, v, init, init ? undefined : prev);
 				else if (self.configure)
@@ -5211,7 +5212,7 @@
 			});
 		}
 
-		self.data && self.data('config', self.config);
+		isd && self.data('config', self.config);
 		return self;
 	};
 
