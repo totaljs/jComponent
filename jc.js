@@ -6132,10 +6132,6 @@
 		};
 
 		C.controllers++;
-		statics[key] = setTimeout(function() {
-			obj.$init();
-		}, 1000);
-
 		return obj.$init;
 	};
 
