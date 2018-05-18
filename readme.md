@@ -1876,7 +1876,6 @@ var params = READPARAMS();
 // Reads params from URL address
 
 
-
 MAKEPARAMS([url], values);
 MAKEPARAMS({ sort: 1, pricefrom: 300 }); // append values into the current URL
 MAKEPARAMS('/api/query/?priceto=200', { sort: 1 }); // /api/query/?priceto=200&sort=1
@@ -1886,6 +1885,11 @@ var params = MAKEPARAMS('/your-url/', { q: 'Google' });
 var params = MAKEPARAMS({ q: 'Google' });
 // returns {String}
 // Makes URL params
+
+
+TOGGLE(path, [delay], [reset]);
+// +v14.5.0
+// Toggles boolean value
 ```
 
 ## Device Width

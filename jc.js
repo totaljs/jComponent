@@ -5688,6 +5688,13 @@
 	};
 
 	W.NOOP = function(){};
+
+	W.TOGGLE = function(path, timeout, reset) {
+		var v = W.GET(path);
+		W.SET(path, !v, timeout, reset);
+		return M;
+	};
+
 	W.SET = function(path, value, timeout, reset) {
 		var t = typeof(timeout);
 		if (t === 'boolean')
