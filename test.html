@@ -9,61 +9,36 @@
     <meta name="format-detection" content="telephone=no" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="all,follow" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.componentator.com/spa.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script src="jc.js"></script>
-    <style>
-    	.hidden { display: none; }
-    	.selected { color: red; }
-    </style>
 </head>
 <body style="font-family:Arial">
 
-	<br />
-	<br />
-	<br />
-	<div class="container">
+	<div data-jc="textbox__form.value__$binding:2"></div>
+	<div data-bind="form.value__html:value__delay:1000" style="margin:10px 0 0 0"></div>
 
-		<div data-bind="common.age__show + .selected:age => age > 18__html b:value__show b:value>50">
-			Číslo: <b>HODNOTA</b>
-		</div>
-		<div>
-			<div data-jc="aaa__common.age"></div>
-		</div>
+<!--
+
+	<div data-jc="a,b">
+		<br />
+		<br />
+		<br />
+		<br />
 	</div>
 
+
+	<div data-ja="widget" data-ja-id="c">
+		3
+	</div>
+
+	<div data-ja="widget" data-ja-id="d">
+		4
+	</div>
+-->
+
 	<script>
-
-		var common = { age: 300 };
-
-	function indom(el) {
-		var parent = el.parentNode;
-		while (parent) {
-			if (parent.nodeName === 'BODY')
-				return true;
-			parent = parent.parentNode;
-		}
-	}
-
-		COMPONENT('aaa', function(self, config) {
-			self.make = function() {
-				self.data('neviem', 32);
-				self.append('<div>SEM TU 2</div><div data-bind="@__html:value">SEM TU...</div>');
-
-				setInterval(function() {
-					console.log(indom(self.element[0].parentNode));
-				}, 1000);
-
-				setTimeout(function() {
-					self.empty();
-				}, 2000);
-			};
-		});
-
-		function neviem() {
-			console.log(arguments);
-		}
-
+		var form = {};
+		form.value = 'Peter';
 	</script>
 
 </body>
