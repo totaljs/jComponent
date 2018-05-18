@@ -1935,6 +1935,10 @@ var params = MAKEPARAMS('/your-url/', { q: 'Google' });
 var params = MAKEPARAMS({ q: 'Google' });
 // returns {String}
 // Makes URL params
+
+TOGGLE(path, [delay], [reset]);
+// +v14.5.0
+// Toggles boolean value
 ```
 
 ## Device Width
