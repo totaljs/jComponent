@@ -14,27 +14,8 @@
 </head>
 <body style="font-family:Arial">
 
-<div data-ja-url="app.html"></div>
-
-<div data-jc-scope="orders">
-	<div data-jc="a" data-jc-path="grid"></div>
-	<div data-jc-scope="!users">
-		<div data-jc="a" data-jc-path="grid"></div>
-		<div data-jc-scope="form">
-			<div data-jc="a" data-jc-path="name"></div>
-			<div data-jc="a" data-jc-path="age"></div>
-			<div data-jc="a" data-jc-path="year"></div>
-		</div>
-		<div data-jc="a" data-jc-path="pagination"></div>
-	</div>
-	<div data-jc="a" data-jc-path="pagination"></div>
-</div>
-
-<div data-jc="textbox" data-jc-path="form.value-kokotaris"></div>
-
-<div data-ja="widget" data-ja-id="b">
-	2
-</div>
+	<div data-jc="textbox__form.value__$binding:1"></div>
+	<div data-bind="form.value__html:value" style="margin:10px 0 0 0"></div>
 
 <!--
 
@@ -57,62 +38,7 @@
 
 	<script>
 		var form = {};
-		form.value = 2;
-
-		COMPONENT('a', function() {
-			var self = this;
-			self.make = function() {
-			};
-			self.setter = function(value) {
-				console.log('VALUE --->', value);
-			};
-		});
-
-		COMPONENT('b', function() {
-			var self = this;
-			self.make = function() {
-				console.log('B');
-			};
-		});
-
-		ON('pages#refresh', a);
-		ON('pages#refresh', b);
-
-		function a() {
-			console.log('SOM TU: A');
-		}
-
-		function b() {
-			console.log('SOM TU: B');
-		}
-/*
-		CONTROLLER('users', function() {
-			this.scope = 'users';
-
-			console.log(this);
-
-			ON('neviem', function() {
-				console.log('users: event');
-			});
-
-			this.fet = function() {
-				console.log('users: OK');
-			};
-		});
-
-		CONTROLLER('orders', function() {
-			console.log(this);
-
-			ON('neviem', function() {
-				console.log('orders: event');
-			});
-
-			this.fet = function() {
-				console.log('orders: OK');
-			};
-		});
-*/
-
+		form.value = 'Peter';
 	</script>
 
 </body>

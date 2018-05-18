@@ -7733,6 +7733,10 @@
 					var tmp = attrcom(self, 'keypress');
 					if (tmp)
 						self.$jckeypress = tmp === 'true';
+					else if (com.config.$realtime != null)
+						self.$jckeypress = com.config.$realtime === true;
+					else if (com.config.$binding)
+						self.$jckeypress = com.config.$binding === 1;
 					else
 						self.$jckeypress = MD.keypress;
 					if (self.$jckeypress === false)
@@ -7740,10 +7744,10 @@
 				}
 
 				if (self.$jcdelay === undefined)
-					self.$jcdelay = +(attrcom(self, 'keypress-delay') || MD.delay);
+					self.$jcdelay = +(attrcom(self, 'keypress-delay') || com.config.$delay || MD.delay);
 
 				if (self.$jconly === undefined)
-					self.$jconly = attrcom(self, 'keypress-only') === 'true';
+					self.$jconly = attrcom(self, 'keypress-only') === 'true' || com.config.$keypress === true || com.config.$binding === 2;
 
 				self.$jctimeout && clearTimeout(self.$jctimeout);
 				self.$jctimeout = setTimeout(keypressdelay, self.$jcdelay, self);
@@ -7905,7 +7909,7 @@
 						continue;
 					}
 
-					var fn = k !== 'template' && k !== '!template' && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v)) : v.substring(0, 1) === '@' ? obj.com[v.substring(1)] : GET(v) : 1;
+					var fn = k !== 'delay' && k !== 'template' && k !== '!template' && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v)) : v.substring(0, 1) === '@' ? obj.com[v.substring(1)] : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -7961,6 +7965,9 @@
 								break;
 							case 'default':
 								k = 'def';
+								break;
+							case 'delay':
+								fn = +v;
 								break;
 							case 'href':
 							case 'src':
@@ -8129,7 +8136,7 @@
 
 		obj.path = path;
 		obj.init = 0;
-		obj.exec = function(value, path, index) {
+		obj.exec = function(value, path, index, wakeup) {
 
 			var item = this;
 			var el = item.el;
@@ -8154,6 +8161,15 @@
 
 			if (!el.length)
 				return;
+
+			if (!wakeup && item.delay) {
+				item.$delay && clearTimeout(item.$delay);
+				item.$delay = setTimeout(function(obj, value, path, index) {
+					obj.$delay = null;
+					obj.exec(value, path, index, true);
+				}, item.delay, obj, value, path, index);
+				return;
+			}
 
 			if (!item.init)
 				item.init = 1;

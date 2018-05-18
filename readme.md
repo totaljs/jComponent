@@ -321,6 +321,7 @@ Examples:
     +v11.2.0 if you need to use ";" or ":" in a value make sure to properly escape it with backslash "\;".
     +v11.8.0 can contain an "[environment]" key
     +v11.9.0 can contain a link to variable "=path.to.variable"
+    +v14.0.0 internal settings for "input/textarea/select" data-binding $binding:1 (only real-time binding), $binding:2 (after change binding), $delay:300 (binding delay)
 -->
 ```
 
@@ -2718,6 +2719,7 @@ __Commands__:
 - `.YOUR_CLASS_NAME` toggles class (condition must return `boolean`)
 - `selector` can contain jQuery selector and `bind` will be performed for this selector only
 - `def` sets a default value, value will be evaluated as JavaScript code
+- `delay` delays a binding and must contain `Number`
 - `!COMMAND` evaluating will be performed if the value won't be `null` or `undefined`
 
 __Linking commands__:
