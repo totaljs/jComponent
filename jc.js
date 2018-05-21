@@ -968,7 +968,7 @@
 			statics[url] = 2;
 			var id = 'import' + W.HASH(url);
 
-			var cb = function(response) {
+			var cb = function(response, code, output) {
 
 				if (!response) {
 					callback && callback();
@@ -978,7 +978,7 @@
 				url = '$import' + url;
 
 				if (preparator)
-					response = preparator(response);
+					response = preparator(response, output);
 
 				var is = REGCOM.test(response);
 				response = importscripts(importstyles(response, id), id).trim();
