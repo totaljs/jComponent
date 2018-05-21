@@ -6305,6 +6305,47 @@
 		self.wait(onItem, callback, thread, tmp);
 	}
 
+	AP.limit = function(max, fn, callback, index) {
+
+		if (index === undefined)
+			index = 0;
+
+		var current = [];
+		var self = this;
+		var length = index + max;
+
+		for (var i = index; i < length; i++) {
+			var item = self[i];
+
+			if (item !== undefined) {
+				current.push(item);
+				continue;
+			}
+
+			if (!current.length) {
+				callback && callback();
+				return self;
+			}
+
+			fn(current, function() { callback && callback(); }, index, index + max);
+			return self;
+		}
+
+		if (!current.length) {
+			callback && callback();
+			return self;
+		}
+
+		fn(current, function() {
+			if (length < self.length)
+				self.limit(max, fn, callback, length);
+			else
+				callback && callback();
+		}, index, index + max);
+
+		return self;
+	};
+
 	AP.async = function(context, callback) {
 
 		if (typeof(context) === 'function') {
