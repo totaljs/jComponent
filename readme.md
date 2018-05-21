@@ -652,7 +652,7 @@ COMPONENT('my-component-name', function(instance, config) {
     // jQuery.attr();
 
 
-    instance.import(url, [callback], [insert], [preparator(response)]);
+    instance.import(url, [callback], [insert], [preparator(response, meta)]);
     // Imports resource into the this element
     // Alias for IMPORT();
     // +v11.0.0
@@ -1151,7 +1151,7 @@ MAIN.invalid(path, [except_paths_arr]);
 // Sets the invalid state to all components according the binding path.
 
 
-MAIN.import(url, [target], [callback], [insert], [preparator(response)])
+MAIN.import(url, [target], [callback], [insert], [preparator(response, meta)])
 // Imports a HTML content (with components) into the `target` (by default: `document.body`)
 // or can import scripts (.js) or styles (.css). `insert` argument (default: true) wraps
 // If the URL starts with `ONCE http://...` then the content will be downloaded only one time.
@@ -1493,7 +1493,7 @@ DEFAULT(path, [timeout], [reset]);
 // The method sets to all components start with the path an initial value from
 // [data-jc-value] attribute. [reset] by default: `true`.
 
-TEMPLATE(url, callback(template), [prepare(template)]);
+TEMPLATE(url, callback(template), [prepare(template, meta)]);
 // Downloads the HTML content and caches it per session. This method is adapted for multiple
 // executing. The content is downloaded only once. `prepare` argument is optional
 // (and executed once), but if it's declared then must "return" template (e.g. compiled template).
