@@ -983,7 +983,10 @@
 			statics[url] = 2;
 			var id = 'import' + W.HASH(url);
 
-			var cb = function(response) {
+			var cb = function(response, err, meta) {
+
+				if (preparator)
+					response = preparator(response, meta);
 
 				if (!response) {
 					callback && callback();
@@ -991,9 +994,6 @@
 				}
 
 				url = '$import' + url;
-
-				if (preparator)
-					response = preparator(response);
 
 				var is = REGCOM.test(response);
 				response = importscripts(importstyles(response, id), id).trim();
@@ -2167,12 +2167,12 @@
 			return M;
 		}
 
-		M.AJAX('GET ' + url, function(response, err) {
+		M.AJAX('GET ' + url, function(response, err, meta) {
 
 			if (err)
 				response = '';
 
-			var value = statics[url] = prepare ? prepare(response) : response;
+			var value = statics[url] = prepare ? prepare(response, meta) : response;
 			if (typeof(callback) === 'string')
 				SET(callback, value);
 			else
