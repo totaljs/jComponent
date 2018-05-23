@@ -3366,11 +3366,8 @@
 
 		var key = '+' + path;
 
-		if (paths[key]) {
-			var a = paths[key](W, value, path);
-			binders[path] && binderbind(path);
-			return a;
-		}
+		if (paths[key])
+			return paths[key](W, value, path, binders, binderbind);
 
 		if (path.indexOf('?') !== -1) {
 			path = '';
@@ -3379,22 +3376,30 @@
 
 		var arr = parsepath(path);
 		var builder = [];
+		var binder = [];
 
 		for (var i = 0; i < arr.length - 1; i++) {
 			var item = arr[i];
 			var type = arr[i + 1] ? (REGISARR.test(arr[i + 1]) ? '[]' : '{}') : '{}';
 			var p = 'w' + (item.substring(0, 1) === '[' ? '' : '.') + item;
-			builder.push('if(typeof(' + p + ')!==\'object\'||' + p + '==null)' + p + '=' + type + ';');
+			builder.push('if(typeof(' + p + ')!==\'object\'||' + p + '==null)' + p + '=' + type);
+		}
+
+		for (var i = 0; i < arr.length - 1; i++) {
+			var item = arr[i];
+			binder.push('binders[\'' + item + '\']&&binderbind(\'' + item + '\')');
 		}
 
 		var v = arr[arr.length - 1];
 
+		binder.push('binders[\'' + v + '\']&&binderbind(\'' + v + '\')');
+
 		if (v.substring(0, 1) !== '[')
 			v = '.' + v;
 
-		var fn = (new Function('w', 'a', 'b', builder.join(';') + ';var v=typeof(a)===\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v;return v'));
+		var fn = (new Function('w', 'a', 'b', 'binders', 'binderbind', builder.join(';') + ';var v=typeof(a)===\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v;' + binder.join(';') + ';return v'));
 		paths[key] = fn;
-		fn(W, value, path);
+		fn(W, value, path, binders, binderbind);
 		binders[path] && binderbind(path);
 		return C;
 	}
