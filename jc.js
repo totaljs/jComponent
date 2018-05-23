@@ -3387,20 +3387,18 @@
 
 		for (var i = 0; i < arr.length - 1; i++) {
 			var item = arr[i];
-			binder.push('binders[\'' + item + '\']&&binderbind(\'' + item + '\')');
+			binder.push('binders[\'' + item + '\']&&binderbind(\'' + item + '\',\'' + path + '\',$ticks)');
 		}
 
 		var v = arr[arr.length - 1];
-
-		binder.push('binders[\'' + v + '\']&&binderbind(\'' + v + '\')');
+		binder.push('binders[\'' + v + '\']&&binderbind(\'' + v + '\',\'' + path + '\',$ticks)');
 
 		if (v.substring(0, 1) !== '[')
 			v = '.' + v;
 
-		var fn = (new Function('w', 'a', 'b', 'binders', 'binderbind', builder.join(';') + ';var v=typeof(a)===\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v;' + binder.join(';') + ';return v'));
+		var fn = (new Function('w', 'a', 'b', 'binders', 'binderbind', 'var $ticks=Math.random().toString().substring(2,8);' + builder.join(';') + ';var v=typeof(a)===\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v;' + binder.join(';') + ';return v'));
 		paths[key] = fn;
 		fn(W, value, path, binders, binderbind);
-		binders[path] && binderbind(path);
 		return C;
 	}
 
@@ -7903,11 +7901,14 @@
 		return value;
 	});
 
-	function binderbind(path) {
+	function binderbind(path, absolutePath, ticks) {
 		var arr = binders[path];
 		for (var i = 0; i < arr.length; i++) {
 			var item = arr[i];
-			item.exec(GET(item.path), path);
+			if (item.ticks !== ticks) {
+				item.ticks = ticks;
+				item.exec(GET(item.path), absolutePath);
+			}
 		}
 	}
 
