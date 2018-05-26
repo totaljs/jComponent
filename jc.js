@@ -96,6 +96,7 @@
 
 	var MD = W.DEF = M.defaults = {};
 	var ENV = MD.environment = {};
+	MD.scope = W;
 	MD.delay = 555;
 	MD.delaywatcher = 555;
 	MD.delaybinder = 200;
@@ -3539,7 +3540,7 @@
 		var key = '+' + path;
 
 		if (paths[key])
-			return paths[key](W, value, path, binders, binderbind);
+			return paths[key](MD.scope, value, path, binders, binderbind);
 
 		if (path.indexOf('?') !== -1) {
 			path = '';
@@ -3570,7 +3571,7 @@
 
 		var fn = (new Function('w', 'a', 'b', 'binders', 'binderbind', 'var $ticks=Math.random().toString().substring(2,8);' + builder.join(';') + ';var v=typeof(a)===\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v;' + binder.join(';') + ';return v'));
 		paths[key] = fn;
-		fn(W, value, path, binders, binderbind);
+		fn(MD.scope, value, path, binders, binderbind);
 		return C;
 	}
 
@@ -3588,7 +3589,7 @@
 
 		var key = '=' + path;
 		if (paths[key])
-			return paths[key](scope || W);
+			return paths[key](scope || MD.scope);
 
 		if (path.indexOf('?') !== -1)
 			return;
@@ -3609,7 +3610,7 @@
 
 		var fn = (new Function('w', builder.join(';') + ';return w' + v));
 		paths[key] = fn;
-		return fn(scope || W);
+		return fn(scope || MD.scope);
 	}
 
 	function parsepath(path) {
@@ -8382,12 +8383,14 @@
 			if (item) {
 				if (i) {
 
+					var k, v;
+
 					if (item !== 'template' && item !== '!template') {
 						index = item.indexOf(':');
 						if (index === -1)
 							continue;
-						var k = item.substring(0, index).trim();
-						var v = item.substring(index + 1).trim();
+						k = item.substring(0, index).trim();
+						v = item.substring(index + 1).trim();
 					} else
 						k = item;
 
@@ -8396,7 +8399,7 @@
 						continue;
 					}
 
-					var fn = k !== 'delay' && k !== 'template' && k !== '!template' && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v)) : v.substring(0, 1) === '@' ? obj.com[v.substring(1)] : GET(v) : 1;
+					var fn = k !== 'delay' && k !== 'import' && k !== 'class' && k !== 'template' && k !== '!template' && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v)) : v.substring(0, 1) === '@' ? obj.com[v.substring(1)] : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -8423,6 +8426,9 @@
 							c = k.substring(0, 1);
 							notnull = true;
 						}
+
+						if (k === 'class')
+							k = 'tclass';
 
 						if (c === '.') {
 							cls.push({ name: k.substring(1), fn: fn });
@@ -8472,6 +8478,10 @@
 							case 'show':
 							case 'selector':
 								break;
+							case 'import':
+							case 'tclass':
+								fn = v;
+								break;
 							case 'template':
 								var scr = e.find('script');
 								if (!scr.length)
@@ -8485,9 +8495,8 @@
 						if (k === 'def')
 							fn = new Function('return ' + v)();
 
-						if (backup && notnull) {
+						if (backup && notnull)
 							obj[k + 'bk'] = k == 'src' ? e.attr(k) : k == 'href' ? e.attr(k) : (k == 'html' || k == 'text') ? e.html() : k == 'val' ? e.val() : k == 'title' ? e.attr(k) : k == 'disabled' ? e.prop(k) : k === 'checked' ? e.prop(k) : '';
-						}
 
 						if (s) {
 
@@ -8693,6 +8702,11 @@
 
 			if (can) {
 
+				if (item.import) {
+					IMPORT(item.import, el);
+					delete item.import;
+				}
+
 				if (item.html) {
 					if (value != null || !item.html.$nn) {
 						tmp = item.html.call(el, value, path, el);
@@ -8771,6 +8785,12 @@
 				for (var i = 0; i < item.child.length; i++)
 					item.exec(value, path, i);
 			}
+
+			if (item.tclass) {
+				el.tclass(item.tclass);
+				delete item.tclass;
+			}
+
 		};
 
 		bindersnew.push(obj);
