@@ -2769,7 +2769,6 @@ __Linking commands__:
     It works in the controller scope only
 -->
 <div data-bind="@@__COMMAND + COMMAND + COMMAND:VALUE"></div>
-
 ```
 
 __Commands and nested jQuery selectors__:
