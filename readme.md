@@ -2717,13 +2717,15 @@ __Commands__:
 - `checked` sets `checked` attribute (condition must return `boolean`)
 - `src` sets `src` attribute (condition must return `string`)
 - `href` sets `href` attribute (condition must return `string`)
-- `value` sets `value` attribute (condition must return `string`)
+- `val` sets `value` attribute (condition must return `string`)
 - `template` (without value) it expects `<script type="text/html">` which will be compiled and used as Tangular template
 - `change` executes a method `function(value, path, jQueryElement)` in `jQueryElement` context (must contain a name of method)
 - `.YOUR_CLASS_NAME` toggles class (condition must return `boolean`)
 - `selector` can contain jQuery selector and `bind` will be performed for this selector only
 - `def` sets a default value, value will be evaluated as JavaScript code
 - `delay` delays a binding and must contain `Number`
+- `class` toggles class if the binder has been processed and must contain `String` as a class name
+- `import` perform `IMPORT()` and must contain `{String}` as URL address
 - `!COMMAND` evaluating will be performed if the value won't be `null` or `undefined`
 
 __Linking commands__:
@@ -2734,7 +2736,7 @@ __Linking commands__:
 
 <!--
     Binds a value according to the data-jc-path attribute
-    It works in component scope only
+    It works in the component scope only
 -->
 <div data-bind="@__COMMAND + COMMAND + COMMAND:VALUE"></div>
 
@@ -2746,31 +2748,25 @@ __Linking commands__:
 
 <!--
     Binds a value defined via component.data('property', value)
-    It works in component scope only
+    It works in the component scope only
 -->
 <div data-bind="@property__COMMAND + COMMAND + COMMAND:VALUE"></div>
 
 <!--
-    Binds a value according to the data-jc-path attribute
-    It works in component scope only
--->
-<div data-bind="@__COMMAND + COMMAND + COMMAND:VALUE"></div>
-
-<!--
-    Binds a component config
-    It works in controller scope only
+    Binds a controller config
+    It works in the controller scope only
 -->
 <div data-bind="@@config__COMMAND + COMMAND + COMMAND:VALUE"></div>
 
 <!--
     Binds a value defined via controller.data('property', value)
-    It works in controller scope only
+    It works in the controller scope only
 -->
 <div data-bind="@@property__COMMAND + COMMAND + COMMAND:VALUE"></div>
 
 <!--
     Binds a value according to controller scope
-    It works in component scope only
+    It works in the controller scope only
 -->
 <div data-bind="@@__COMMAND + COMMAND + COMMAND:VALUE"></div>
 
