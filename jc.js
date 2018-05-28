@@ -1635,7 +1635,7 @@
 		path = ctrl_path(path);
 		if (path) {
 			M.skipproxy = path;
-			set(path, value, type);
+			set(path, value);
 			emitwatch(path, value, type);
 		}
 		return M;
