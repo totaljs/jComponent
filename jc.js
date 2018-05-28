@@ -1523,6 +1523,8 @@
 		if (!path)
 			return M;
 
+		set(path, get(path), true);
+
 		var state = [];
 
 		if (type === undefined)
@@ -1584,6 +1586,12 @@
 
 		var arg = arguments;
 		var all = M.components;
+
+		var $ticks = Math.random().toString().substring(2, 8);
+		for (var j = 0; j < arg.length; j++) {
+			var p = arg[j];
+			binders[p] && binderbind(p, p, $ticks);
+		}
 
 		for (var i = 0, length = all.length; i < length; i++) {
 			var com = all[i];
@@ -3349,7 +3357,7 @@
 		M.set(path, value);
 	}
 
-	function set(path, value) {
+	function set(path, value, is) {
 
 		if (path == null)
 			return;
@@ -3368,7 +3376,7 @@
 		var key = '+' + path;
 
 		if (paths[key])
-			return paths[key](MD.scope, value, path, binders, binderbind);
+			return paths[key](MD.scope, value, path, binders, binderbind, is);
 
 		if (path.indexOf('?') !== -1) {
 			path = '';
@@ -3397,9 +3405,9 @@
 		if (v.substring(0, 1) !== '[')
 			v = '.' + v;
 
-		var fn = (new Function('w', 'a', 'b', 'binders', 'binderbind', 'var $ticks=Math.random().toString().substring(2,8);' + builder.join(';') + ';var v=typeof(a)===\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v;' + binder.join(';') + ';return v'));
+		var fn = (new Function('w', 'a', 'b', 'binders', 'binderbind', 'nobind', 'var $ticks=Math.random().toString().substring(2,8);if(!nobind){' + builder.join(';') + ';var v=typeof(a)===\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v;}' + binder.join(';') + ';return v'));
 		paths[key] = fn;
-		fn(MD.scope, value, path, binders, binderbind);
+		fn(MD.scope, value, path, binders, binderbind, is);
 		return C;
 	}
 
@@ -7390,6 +7398,7 @@
 				return proxy[path];
 			is = true;
 			callback = function(key) {
+
 				var p = path + (key ? '.' + key : '');
 				if (M.skipproxy === p) {
 					M.skipproxy = '';
@@ -7398,8 +7407,10 @@
 				setTimeout(function() {
 					if (M.skipproxy === p)
 						M.skipproxy = '';
-					else
-						W.NOTIFY(p, true);
+					else {
+						W.NOTIFY(p);
+						W.RESET(p);
+					}
 				}, MD.delaybinder);
 			};
 
