@@ -1556,6 +1556,8 @@
 		if (!path)
 			return M;
 
+		set(path, get(path), true);
+
 		var state = [];
 
 		if (type === undefined)
@@ -1617,6 +1619,12 @@
 
 		var arg = arguments;
 		var all = M.components;
+
+		var $ticks = Math.random().toString().substring(2, 8);
+		for (var j = 0; j < arg.length; j++) {
+			var p = arg[j];
+			binders[p] && binderbind(p, p, $ticks);
+		}
 
 		for (var i = 0, length = all.length; i < length; i++) {
 			var com = all[i];
@@ -1714,7 +1722,7 @@
 			type = 1;
 
 		M.skipproxy = path;
-		set(path, value, type);
+		set(path, value);
 
 		if (isUpdate)
 			return M.update(path, reset, type, true);
@@ -3521,7 +3529,7 @@
 		M.set(path, value);
 	}
 
-	function set(path, value) {
+	function set(path, value, is) {
 
 		if (path == null)
 			return;
@@ -3540,7 +3548,7 @@
 		var key = '+' + path;
 
 		if (paths[key])
-			return paths[key](MD.scope, value, path, binders, binderbind);
+			return paths[key](MD.scope, value, path, binders, binderbind, is);
 
 		if (path.indexOf('?') !== -1) {
 			path = '';
@@ -3569,9 +3577,9 @@
 		if (v.substring(0, 1) !== '[')
 			v = '.' + v;
 
-		var fn = (new Function('w', 'a', 'b', 'binders', 'binderbind', 'var $ticks=Math.random().toString().substring(2,8);' + builder.join(';') + ';var v=typeof(a)===\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v;' + binder.join(';') + ';return v'));
+		var fn = (new Function('w', 'a', 'b', 'binders', 'binderbind', 'nobind', 'var $ticks=Math.random().toString().substring(2,8);if(!nobind){' + builder.join(';') + ';var v=typeof(a)===\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v;}' + binder.join(';') + ';return v'));
 		paths[key] = fn;
-		fn(MD.scope, value, path, binders, binderbind);
+		fn(MD.scope, value, path, binders, binderbind, is);
 		return C;
 	}
 
@@ -6555,21 +6563,20 @@
 			return;
 
 		removewaiter(self);
+
+		// Remove all global events
+		OK(events).forEach(function(e) {
+			var evt = events[e];
+			evt = evt.remove('controller', self.name);
+			if (!evt.length)
+				delete events[e];
+		});
+		watches = watches.remove('controller', self.name);
 		self.removed = true;
 		self.$data = null;
 		self.emit('destroy');
 		self.destroy && self.destroy();
 		delete M.controllers[self.name];
-
-		// Remove all global events
-		OK(events).forEach(function(e) {
-			var evt = events[e];
-			OK(evt).forEach(function(key) {
-				evt[key] = evt[key].remove('controller', self.name);
-				if (!evt[key].length)
-					delete events[''][key];
-			});
-		});
 
 		// Remove events
 		M.off('ctrl' + self.name + '#watch');
@@ -7831,8 +7838,10 @@
 				setTimeout(function() {
 					if (M.skipproxy === p)
 						M.skipproxy = '';
-					else
-						W.NOTIFY(p, true);
+					else {
+						W.NOTIFY(p);
+						W.RESET(p);
+					}
 				}, MD.delaybinder);
 			};
 
