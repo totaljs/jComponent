@@ -8009,6 +8009,8 @@
 							k = 'tclass';
 
 						if (c === '.') {
+							if (notnull)
+								fn.$nn = 1;
 							cls.push({ name: k.substring(1), fn: fn });
 							k = 'class';
 						}
@@ -8098,8 +8100,14 @@
 					}
 
 				} else {
+
 					// path
 					path = item;
+
+					if (path.substring(0, 1) === '!') {
+						path = path.substring(1);
+						obj.notnull = true;
+					}
 
 					if (meta.length === 1) {
 						var fn = GET(path);
@@ -8223,6 +8231,9 @@
 					return;
 			}
 
+			if (item.notnull && value == null)
+				return;
+
 			if (item.selector) {
 				if (item.cache)
 					el = item.cache;
@@ -8274,7 +8285,8 @@
 			if (item.classes) {
 				for (var i = 0; i < item.classes.length; i++) {
 					var cls = item.classes[i];
-					el.tclass(cls.name, !!cls.fn.call(el, value, path, el));
+					if (!cls.fn.$nn || value != null)
+						el.tclass(cls.name, !!cls.fn.call(el, value, path, el));
 				}
 			}
 
