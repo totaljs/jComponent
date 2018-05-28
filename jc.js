@@ -1689,7 +1689,7 @@
 			type = 1;
 
 		M.skipproxy = path;
-		set(path, value, type);
+		set(path, value);
 
 		if (isUpdate)
 			return M.update(path, reset, type, true);
@@ -6174,24 +6174,24 @@
 			return;
 
 		removewaiter(self);
+
+		// Remove all global events
+		OK(events).forEach(function(e) {
+			var evt = events[e];
+			evt = evt.remove('controller', self.name);
+			if (!evt.length)
+				delete events[e];
+		});
+
+		watches = watches.remove('controller', self.name);
 		self.removed = true;
 		self.$data = null;
 		self.emit('destroy');
 		self.destroy && self.destroy();
 		delete M.controllers[self.name];
 
-		// Remove all global events
-		OK(events).forEach(function(e) {
-			var evt = events[e];
-			OK(evt).forEach(function(key) {
-				evt[key] = evt[key].remove('controller', self.name);
-				if (!evt[key].length)
-					delete events[''][key];
-			});
-		});
-
 		// Remove events
-		W.OFF('ctrl' + self.name + '#watch');
+		M.off('ctrl' + self.name + '#watch');
 
 		// Remove schedulers
 		schedulers = schedulers.remove('controller', self.name);
