@@ -1201,11 +1201,8 @@
 			return '';
 		});
 
-		if (repeat) {
-			arg = [];
-			for (var i = 0; i < arguments.length; i++)
-				arg.push(arguments[i]);
-		}
+		if (repeat)
+			arg = [url, data, callback, timeout];
 
 		var method = url.substring(0, index).toUpperCase();
 		var isCredentials = method.substring(0, 1) === '!';
