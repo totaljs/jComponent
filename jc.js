@@ -5187,7 +5187,7 @@
 		if (typeof(dt) === 'string' && dt.substring(0, 1) !== '-')
 			dt = W.NOW.add('-' + dt);
 		var val = this[type];
-		return val === 0 ? false : val < dt.getTime();
+		return val === 0 ? true : val < dt.getTime();
 	};
 
 	USAGE.prototype.convert = function(type) {
@@ -7488,9 +7488,9 @@
 				}
 
 				var dt = now.add(item.expire);
-				W.FIND(item.selector, true).forEach(function(component) {
-					component && component.usage.compare(item.name, dt) && item.callback(component);
-				});
+				var arr = W.FIND(item.selector, true);
+				for (var j = 0; j < arr.length; j++)
+					arr[j] && arr[j].usage.compare(item.name, dt) && item.callback(arr[j]);
 			}
 		}, 3500);
 
