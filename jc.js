@@ -7488,9 +7488,11 @@
 				}
 
 				var dt = now.add(item.expire);
-				var arr = W.FIND(item.selector, true);
-				for (var j = 0; j < arr.length; j++)
-					arr[j] && arr[j].usage.compare(item.name, dt) && item.callback(arr[j]);
+				var arr = FIND(item.selector, true);
+				for (var j = 0; j < arr.length; j++) {
+					var a = arr[j];
+					a && a.usage.compare(item.name, dt) && item.callback(a);
+				}
 			}
 		}, 3500);
 
