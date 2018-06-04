@@ -9,7 +9,7 @@
 
 > __Download__: more than 80 jComponents free for everyone <https://componentator.com>
 
-- Current version: `v14.5.0`
+- Current version: `v14`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -119,6 +119,23 @@ Examples:
 
 <div data-jc="textbox __ form.name __ required:true;maxlength:30 __ 'Peter'"></div>
 <div data-jc="textbox" data-jc-path="form.name" data-jc-config="required:true;maxlength:30" data-jc-value="'Peter'"></div>
+```
+
+- `null` values will be skipped
+
+## `v14.5.0` Lazy loading
+
+Lazy components can be initialized/processed when are loaded via `SETTER()`.
+
+```html
+<div data-jc="LAZY confirm"></div>
+
+<script>
+    setTimeout(function() {
+        // "confirm" component will be initialized/processed only now
+        SETTER('confirm', 'Are you happy?', ['Yes', 'No'], console.log);
+    }, 10000);
+</script>
 ```
 
 ---
