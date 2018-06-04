@@ -81,6 +81,7 @@
 	var knockknockcounter = 0;
 	var binders = {};
 	var bindersnew = [];
+	var lazycom = {};
 
 	var current_ctrl = null;
 	var current_owner = null;
@@ -139,7 +140,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.0.0';
+	M.version = 'v15.001';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -151,7 +152,6 @@
 	M.transforms = {};
 	L.items = M.controllers = {};
 	M.compiler = C;
-
 	C.is = false;
 	C.recompile = false;
 	C.importing = 0;
@@ -2433,17 +2433,18 @@
 		}
 
 		var has = false;
+
 		crawler(container, function(name, dom, level, controller, scope) {
 
 			var el = $(dom);
-			has = true;
-
 			var meta = name.split(REGMETA);
 			if (meta.length) {
 				meta = meta.trim(true);
 				name = meta[0];
 			} else
 				meta = null;
+
+			has = true;
 
 			// Check singleton instance
 			if (statics['$ST_' + name]) {
@@ -2476,6 +2477,13 @@
 						name = keys[0].trim();
 				}
 
+				var lazy = false;
+
+				if (name.substring(0, 5).toLowerCase() === 'lazy ') {
+					name = name.substring(5);
+					lazy = true;
+				}
+
 				if (!is && name.lastIndexOf('@') === -1) {
 					if (versions[name])
 						name += '@' + versions[name];
@@ -2484,6 +2492,23 @@
 				}
 
 				var com = M.$components[name];
+				var lo;
+
+				if (lazy && name) {
+					var namea = name.substring(0, name.indexOf('@'));
+					lo = lazycom[name];
+					if (!com) {
+						if (!lo) {
+							if (namea && name !== namea)
+								lazycom[name] = lazycom[namea] = { state: 1 };
+							else
+								lazycom[name] = { state: 1 };
+							continue;
+						}
+						if (lo.state === 1)
+							continue;
+					}
+				}
 
 				if (!com) {
 
@@ -2594,6 +2619,7 @@
 						dependencies(com, function(obj, el) {
 							typeof(obj.make) === 'function' && obj.make(data);
 							init(el, obj);
+							lo && (lo.state = 3);
 						}, obj, el);
 					};
 
@@ -2626,6 +2652,7 @@
 								obj.make = obj.prerender(obj.make);
 							el.html(obj.make);
 							init(el, obj);
+							lo && (lo.state = 3);
 						}, obj, el);
 						continue;
 					}
@@ -2636,6 +2663,7 @@
 								data = obj.prerender(data);
 							el.html(data);
 							init(el, obj);
+							lo && (lo.state = 3);
 						}, obj, el);
 					});
 
@@ -2646,12 +2674,14 @@
 					dependencies(com, function(obj, el) {
 						obj.make && obj.make();
 						init(el, obj);
+						lo && (lo.state = 3);
 					}, obj, el);
 				} else {
 					// Because sometimes make doesn't contain the content of the element
 					setTimeout(function(init, el, obj) {
 						obj.make && obj.make();
 						init(el, obj);
+						lo && (lo.state = 3);
 					}, 5, init, el, obj);
 				}
 			}
@@ -5483,6 +5513,21 @@
 		if (beg === 3) {
 			selector = name;
 			name = arguments[2];
+
+			if (lazycom[selector] && lazycom[selector].state !== 3) {
+
+				if (lazycom[selector].state === 1) {
+					lazycom[selector].state = 2;
+					compile();
+				}
+
+				setTimeout(function(arg) {
+					W.SETTER.apply(W, arg);
+				}, 555, arguments);
+
+				return W.SETTER;
+			}
+
 			FIND(selector, true, function(arr) {
 				for (var i = 0, length = arr.length; i < length; i++) {
 					var o = arr[i];
@@ -5493,6 +5538,21 @@
 				}
 			});
 		} else {
+
+			if (lazycom[selector] && lazycom[selector].state !== 3) {
+
+				if (lazycom[selector].state === 1) {
+					lazycom[selector].state = 2;
+					compile();
+				}
+
+				setTimeout(function(arg) {
+					W.SETTER.apply(W, arg);
+				}, 555, arguments);
+
+				return W.SETTER;
+			}
+
 			var arr = FIND(selector, true);
 			for (var i = 0, length = arr.length; i < length; i++) {
 				var o = arr[i];

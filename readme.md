@@ -9,7 +9,7 @@
 
 > __Download__: more than 80 jComponents free for everyone <https://componentator.com>
 
-- Current version: `v15.0.0`
+- Current version: `v15`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -56,9 +56,9 @@ The library can be loaded with `async` attribute.
 
 ## HTML definition
 
-The library finds all components by the `data-component` attributes which must contain a component name and [the component must be defined in JavaScript](#component).
+The library finds all components by the `data-jc` attributes which must contain a component name and [the component must be defined in JavaScript](#component).
 
-__IMPORTANT__: +v8.0.0 supports shorter names of attributes e.g. `data-jc=""` instead of `data-component=""` or `data-jc-path` instead of `data-component-path`.
+__IMPORTANT__: +v8.0.0 supports shorter names of attributes e.g. `data-jc=""` instead of `data-jc=""` or `data-jc-path` instead of `data-component-path`.
 
 __IMPORTANT__: +v8.0.0 supports declaring of multiple components like this `<div data-jc="component1,component2,component3" ...`.
 
@@ -122,6 +122,21 @@ Examples:
 ```
 
 - `null` values will be skipped
+
+## `v14.3.0` Lazy loading
+
+Lazy components can be initialized/processed when are loaded via `SETTER()`.
+
+```html
+<div data-jc="LAZY confirm"></div>
+
+<script>
+    setTimeout(function() {
+        // "confirm" component will be initialized/processed only now
+        SETTER('confirm', 'Are you happy?', ['Yes', 'No'], console.log);
+    }, 10000);
+</script>
+```
 
 ---
 
