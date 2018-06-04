@@ -2497,17 +2497,15 @@
 				if (lazy && name) {
 					var namea = name.substring(0, name.indexOf('@'));
 					lo = lazycom[name];
-					if (!com) {
-						if (!lo) {
-							if (namea && name !== namea)
-								lazycom[name] = lazycom[namea] = { state: 1 };
-							else
-								lazycom[name] = { state: 1 };
-							continue;
-						}
-						if (lo.state === 1)
-							continue;
+					if (!lo) {
+						if (namea && name !== namea)
+							lazycom[name] = lazycom[namea] = { state: 1 };
+						else
+							lazycom[name] = { state: 1 };
+						continue;
 					}
+					if (lo.state === 1)
+						continue;
 				}
 
 				if (!com) {
