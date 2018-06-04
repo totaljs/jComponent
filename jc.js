@@ -5518,6 +5518,7 @@
 
 				if (lazycom[selector].state === 1) {
 					lazycom[selector].state = 2;
+					warn('Lazy load: ' + selector);
 					compile();
 				}
 
@@ -5543,6 +5544,7 @@
 
 				if (lazycom[selector].state === 1) {
 					lazycom[selector].state = 2;
+					warn('Lazy load: ' + selector);
 					compile();
 				}
 
@@ -7602,6 +7604,22 @@
 			if (beg === 3) {
 				selector = name;
 				name = arguments[2];
+
+				if (lazycom[selector] && lazycom[selector].state !== 3) {
+
+					if (lazycom[selector].state === 1) {
+						lazycom[selector].state = 2;
+						warn('Lazy load: ' + selector);
+						compile();
+					}
+
+					setTimeout(function(arg) {
+						$.fn.SETTER.apply(self, arg);
+					}, 555, arguments);
+
+					return self;
+				}
+
 				self.FIND(selector, true, function(arr) {
 					for (var i = 0, length = arr.length; i < length; i++) {
 						var o = arr[i];
@@ -7611,7 +7629,24 @@
 							o[name] = arg[0];
 					}
 				});
+
 			} else {
+
+				if (lazycom[selector] && lazycom[selector].state !== 3) {
+
+					if (lazycom[selector].state === 1) {
+						lazycom[selector].state = 2;
+						warn('Lazy load: ' + selector);
+						compile();
+					}
+
+					setTimeout(function(arg) {
+						$.fn.SETTER.apply(self, arg);
+					}, 555, arguments);
+
+					return self;
+				}
+
 				var arr = self.FIND(selector, true);
 				for (var i = 0, length = arr.length; i < length; i++) {
 					var o = arr[i];
