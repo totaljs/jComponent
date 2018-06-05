@@ -134,7 +134,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.003';
+	M.version = 'v15.004';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -980,7 +980,7 @@
 					response = preparator(response, output);
 
 				var is = REGCOM.test(response);
-				response = importscripts(importstyles(response, id), id).trim();
+				response = importscripts(importstyles(response, id)).trim();
 				target = $(target);
 
 				if (response) {
@@ -3190,11 +3190,10 @@
 		});
 	}
 
-	function importscripts(str, id) {
+	function importscripts(str) {
 
 		var beg = -1;
 		var output = str;
-		var builder = [];
 		var external = [];
 		var scr;
 
@@ -3212,12 +3211,9 @@
 			if (scr.indexOf('type=') !== -1 && scr.lastIndexOf('javascript') === -1)
 				continue;
 
-			output = output.replace(code, '').trim();
-
 			var tmp = code.substring(end + 1, code.length - 9).trim();
-			if (tmp)
-				builder.push(tmp);
-			else {
+			if (!tmp) {
+				output = output.replace(code, '').trim();
 				var eid = 'external' + W.HASH(code);
 				if (!statics[eid]) {
 					external.push(code);
@@ -3227,22 +3223,6 @@
 		}
 
 		external.length && $('head').append(external.join('\n'));
-
-		if (builder.length) {
-			var key = 'js' + (id || '');
-			if (id) {
-				if (statics[key])
-					$('#' + key).remove();
-				else
-					statics[key] = true;
-			}
-			scr = document.createElement('script');
-			scr.type = 'text/javascript';
-			scr.text = builder.join('\n');
-			id && (scr.id = key);
-			document.body.appendChild(scr);
-		}
-
 		return output;
 	}
 
