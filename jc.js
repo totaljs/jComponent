@@ -65,7 +65,6 @@
 	var autofill = [];
 	var defaults = {};
 	var waits = {};
-	var operations = {};
 	var statics = {};
 	var proxy = {};
 	var ajaxconfig = {};
@@ -3022,12 +3021,6 @@
 		obj.state && obj.stateX(0, 3);
 
 		obj.$init && setTimeout(function() {
-			if (isOperation(obj.$init)) {
-				var op = OPERATION(obj.$init);
-				op && op.call(obj, obj);
-				obj.$init = undefined;
-				return;
-			}
 			var fn = get(obj.$init);
 			typeof(fn) === 'function' && fn.call(obj, obj);
 			obj.$init = undefined;
@@ -3108,10 +3101,6 @@
 				}, 3);
 			}, 100);
 		}
-	}
-
-	function isOperation(name) {
-		return name.charCodeAt(0) === 35;
 	}
 
 	function emitwatch(path, value, type) {
@@ -3297,17 +3286,6 @@
 		if (path == null)
 			return;
 
-		if (path.charCodeAt(0) === 35) {
-			var op = OPERATION(path);
-			if (op)
-				op(value, path);
-			else {
-				!warnings[path] && warn('Components: The operation {0} not found.'.format(path));
-				warnings[path] = true;
-			}
-			return;
-		}
-
 		var key = '+' + path;
 
 		if (paths[key])
@@ -3352,10 +3330,7 @@
 			return;
 
 		var code = path.charCodeAt(0);
-		if (code === 35) {
-			var op = OPERATION(path);
-			return op ? op : NOOP;
-		} else if (code === 37)
+		if (code === 37)
 			path = 'jctmp.' + path.substring(1);
 
 		var key = '=' + path;
@@ -4508,12 +4483,6 @@
 		if (path.charCodeAt(0) === 37)
 			path = 'jctmp.' + path.substring(1);
 
-		// Operations
-		if (isOperation(path)) {
-			self.$path = null;
-			return self;
-		}
-
 		path = path.env(true);
 
 		// !path = fixed path
@@ -5337,18 +5306,6 @@
 		for (var i = f; i < arguments.length; i++)
 			arg.push(arguments[i]);
 
-		// OPERATION
-		var c = path.charCodeAt(0);
-		if (c === 35) {
-			var op = OPERATION(path);
-			if (op) {
-				op.apply(W, arg);
-				ok = 1;
-			}
-			wait && !ok && exechelper(path, arg);
-			return W.EXEC;
-		}
-
 		// PLUGINS
 		if (c === 64) {
 			var index = path.indexOf('.');
@@ -5760,14 +5717,6 @@
 
 	W.SCHEMA = function(name, declaration) {
 		return M.schema(name, declaration);
-	};
-
-	W.OPERATION = function(name, fn) {
-		if (fn)
-			operations[name] = fn;
-		else
-			fn = operations[name.charCodeAt(0) === 35 ? name.substring(1) : name];
-		return fn;
 	};
 
 	W.CSS = W.STYLE = function(value, id) {
@@ -8096,6 +8045,7 @@
 		if (!self.element)
 			return true;
 
+		EMIT('plugin.destroy', self);
 		self.destroy && self.destroy();
 
 		// Remove all global events
@@ -8118,7 +8068,6 @@
 		self.element = null;
 
 		delete W.PLUGINS[self.name];
-		EMIT('plugin.destroy', self.name);
 		return true;
 	};
 

@@ -1967,18 +1967,6 @@ var id = MEDIAQUERY('(min-width: 500px) and (max-width: 1024px)', function(w, h,
 MEDIAQUERY(id);
 ```
 
-## Operations
-
-Operations are predefined functions. The operation can be executed automatically in the component attribute e.g. `data-component-init="#operation-name"`.
-
-```javascript
-OPERATION(name, fn);
-// Creates the operation.
-
-OPERATION(name);
-// Returns the operation.
-```
-
 ### Example
 
 ```javascript
