@@ -88,6 +88,7 @@
 
 	W.MAIN = W.M = W.jC = W.COM = M;
 	W.CONTROLLERS = L;
+	W.REMOVABLES = {};
 	W.EMPTYARRAY = [];
 	W.EMPTYOBJECT = {};
 	W.DATETIME = W.NOW = new Date();
@@ -140,7 +141,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.001';
+	M.version = 'v15.002';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1792,16 +1793,23 @@
 		if (path.charCodeAt(0) === 64) {
 			path = path.substring(1);
 			var index = path.indexOf('.');
-			var ctrl = CONTROLLER(path.substring(0, index));
-			return (ctrl ? ctrl.scope : 'UNDEFINED') + path.substring(index);
+			var p = path.substring(0, index);
+			var ctrl = CONTROLLER(p);
+			if (ctrl)
+				return ctrl.scope + path.substring(index);
+			ctrl = W.REMOVABLES[p];
+			return (ctrl ? ('REMOVABLES.' + p) : 'UNDEFINED') + path.substring(index);
 		}
 
 		var index = path.indexOf('/');
 		if (index === -1)
 			return path;
-
-		var ctrl = CONTROLLER(path.substring(0, index));
-		return (ctrl ? ctrl.scope : 'UNDEFINED') + '.' + path.substring(index + 1);
+		var p = path.substring(0, index);
+		var ctrl = CONTROLLER(p);
+		if (ctrl)
+			return ctrl.scope + '.' + path.substring(index + 1);
+		ctrl = W.REMOVABLES[p];
+		return (ctrl ? ('REMOVABLES.' + p) : 'UNDEFINED') + '.' + path.substring(index + 1);
 	}
 
 	W.GET = M.get = function(path, scope) {
@@ -2549,7 +2557,7 @@
 				obj.global = com.shared;
 				obj.element = el;
 				obj.dom = el[0];
-				obj.setPath(attrcom(el, 'path') || (meta ? meta[1] === 'null' ? '' : meta[1] : '') || obj._id, 1);
+				obj.setPath(ctrl_path(attrcom(el, 'path') || (meta ? meta[1] === 'null' ? '' : meta[1] : '') || obj._id), 1);
 				obj.config = {};
 
 				// Default config
@@ -3688,6 +3696,16 @@
 		}
 
 		clear('find');
+
+		// Checks REMOVABLES
+		var R = W.REMOVABLES;
+		OK(R).forEach(function(key) {
+			var a = R[key];
+			if (!inDOM(a.element)) {
+				a.remove();
+				delete R[key];
+			}
+		});
 
 		W.DATETIME = W.NOW = new Date();
 		var now = W.NOW.getTime();
@@ -5578,6 +5596,7 @@
 		var f = 1;
 		var wait = false;
 		var ok = 0;
+		var p;
 
 		if (path === true) {
 			wait = true;
@@ -5605,7 +5624,8 @@
 		// CONTROLLER
 		if (c === 64) {
 			var index = path.indexOf('.');
-			var ctrl = CONTROLLER(path.substring(1, index));
+			p = path.substring(1, index);
+			var ctrl = W.CONTROLLER(p) || W.REMOVABLES[p];
 			if (ctrl) {
 				var fn = ctrl[path.substring(index + 1)];
 				if (typeof(fn) === 'function') {
@@ -5621,7 +5641,8 @@
 		// CONTROLLER
 		var index = path.indexOf('/');
 		if (index !== -1) {
-			var ctrl = CONTROLLER(path.substring(0, index));
+			p = path.substring(0, index);
+			var ctrl = W.CONTROLLER(p) || W.REMOVABLES[p];
 			var fn = path.substring(index + 1);
 			if (ctrl && typeof(ctrl[fn]) === 'function') {
 				ctrl[fn].apply(ctrl, arg);
@@ -6192,7 +6213,10 @@
 
 			if (obj.$callback) {
 				C.controllers--;
+
+				var a = current_owner;
 				current_ctrl = obj.name;
+				current_owner = 'ctrl' + current_ctrl;
 
 				if (obj.element) {
 					var tmp = config || attrcom(obj.element, 'config');
@@ -6202,6 +6226,7 @@
 				obj.$callback.call(obj, obj, path, element);
 				obj.$callback = null;
 				current_ctrl = null;
+				current_owner = a;
 			}
 
 			return obj;
@@ -6248,7 +6273,7 @@
 		delete M.controllers[self.name];
 
 		// Remove events
-		M.off('ctrl' + self.name + '#watch');
+		W.OFF('ctrl' + self.name + '#watch');
 
 		// Remove schedulers
 		schedulers = schedulers.remove('controller', self.name);
@@ -8279,7 +8304,7 @@
 		if (cls.length)
 			obj.classes = cls;
 
-		path = path.replace('%', 'jctmp.');
+		path = ctrl_path(path);
 
 		if (path.indexOf('?') !== -1) {
 			var scope = scopes[scopes.length - 1];
@@ -8483,5 +8508,55 @@
 		var index = val.indexOf('value');
 		return index !== -1 ? (((/\W/).test(val)) || val === 'value') : false;
 	}
+
+	function REM(name, fn) {
+		(/\W/).test(name) && warn('Removable scope must contain A-Z chars only.');
+		W.REMOVABLES[name] && W.REMOVABLES[name].remove(true);
+		var scripts = document.getElementsByTagName('script');
+		var t = this;
+		t.element = scripts[scripts.length - 1];
+		t.id = 'rb' + name;
+		t.name = name;
+		W.REMOVABLES[name] = t;
+		var a = current_owner;
+		current_owner = t.id;
+		fn.call(t, t);
+		current_owner = a;
+	}
+
+	REM.prototype.remove = function() {
+
+		var self = this;
+		if (!self.element)
+			return true;
+
+		self.destroy && self.destroy();
+
+		// Remove all global events
+		OK(events).forEach(function(e) {
+			var evt = events[e];
+			evt = evt.remove('owner', self.id);
+			if (!evt.length)
+				delete events[e];
+		});
+
+		watches = watches.remove('owner', self.id);
+
+		// Remove events
+		W.OFF(self.id + '#watch');
+
+		// Remove schedulers
+		schedulers = schedulers.remove('owner', self.id);
+
+		self.element.remove();
+		self.element = null;
+
+		delete W.REMOVABLES[self.name];
+		return true;
+	};
+
+	W.REMOVABLE = function(name, fn) {
+		return fn ? new REM(name, fn) : W.REMOVABLES[name];
+	};
 
 })();
