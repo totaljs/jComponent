@@ -79,6 +79,7 @@
 	var lazycom = {};
 
 	var current_owner = null;
+	var current_element = null;
 
 	W.MAIN = W.M = W.jC = W.COM = M;
 	W.PLUGINS = {};
@@ -984,10 +985,12 @@
 				target = $(target);
 
 				if (response) {
+					current_element = target[0];
 					if (insert === false)
 						target.html(response);
 					else
 						target.append(response);
+					current_element = null;
 				}
 
 				setTimeout(function() {
@@ -2830,6 +2833,8 @@
 
 				key = '$import' + key;
 
+				current_element = item.element[0];
+
 				if (statics[key])
 					response = removescripts(response);
 				else
@@ -2849,6 +2854,7 @@
 					typeof(callback) === 'function' && callback(item.element);
 				}
 
+				current_element = null;
 				count++;
 				next();
 
@@ -3557,7 +3563,7 @@
 		var R = W.PLUGINS;
 		OK(R).forEach(function(key) {
 			var a = R[key];
-			if (!inDOM(a.element)) {
+			if (!inDOM(a.element[0]) || !a.element[0].innerHTML) {
 				a.remove();
 				delete R[key];
 			}
@@ -4581,7 +4587,10 @@
 		if (value instanceof Array)
 			value = value.join('');
 		var type = typeof(value);
-		return (value || TNB[type]) ? el.empty().append(value) : el.empty();
+		current_element = el[0];
+		var v = (value || TNB[type]) ? el.empty().append(value) : el.empty();
+		current_element = null;
+		return v;
 	};
 
 	PPC.text = function(value) {
@@ -4604,7 +4613,10 @@
 		var el = this.element;
 		if (value instanceof Array)
 			value = value.join('');
-		return value ? el.append(value) : el;
+		current_element = el[0];
+		var v = value ? el.append(value) : el;
+		current_element = null;
+		return v;
 	};
 
 	PPC.event = SCP.event = function() {
@@ -4991,16 +5003,6 @@
 			statics[key] = undefined;
 			statics[key + ':limit'] && (statics[key + ':limit'] = undefined);
 			return true;
-		}
-		return false;
-	};
-
-	W.TRY = function(fn, err) {
-		try {
-			fn();
-			return true;
-		} catch (e) {
-			err && err(e);
 		}
 		return false;
 	};
@@ -8007,9 +8009,8 @@
 	function Plugin(name, fn) {
 		(/\W/).test(name) && warn('Plugin name must contain A-Z chars only.');
 		W.PLUGINS[name] && W.PLUGINS[name].remove(true);
-		var scripts = document.getElementsByTagName('script');
 		var t = this;
-		t.element = scripts[scripts.length - 1];
+		t.element = $(current_element || document.body);
 		t.id = 'plug' + name;
 		t.name = name;
 		W.PLUGINS[name] = t;
