@@ -8087,6 +8087,7 @@
 		current_owner = t.id;
 		fn.call(t, t);
 		current_owner = a;
+		EMIT('plugin', t);
 	}
 
 	Plugin.prototype.remove = function() {
@@ -8117,6 +8118,7 @@
 		self.element = null;
 
 		delete W.PLUGINS[self.name];
+		EMIT('plugin.destroy', self.name);
 		return true;
 	};
 
