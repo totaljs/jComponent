@@ -1144,7 +1144,7 @@ MAIN.extend('model', { age: 30, name: 'Peter' }); // Example
 MAIN.get(path, [scope]); // default scope is `window`
 MAIN.get('model.age'); // Example
 MAIN.get('model.tags'); // Example
-MAIN.get('@plugin.name'); // +v10.1.0 reads a value according to the controller scope
+MAIN.get('@plugin.name'); // +v15 reads a value according to the plugin scope
 // Gets the value from the model.
 
 
@@ -1651,7 +1651,7 @@ EXEC('path.to.method', 'hide', 1000);
 // +v4.7.0
 
 EXEC('PLUGIN/method_name', 'hide', 1000);
-// Executes method in a controller
+// Executes method in a plugin
 // +v9.0.0
 // +v12.0.5 supports "WAITING" for a method e.g. EXEC(true, 'PLUGIN/method_name', 'hide', 1000);
 
@@ -2646,24 +2646,6 @@ __Linking commands__:
     It works in the component scope only
 -->
 <div data-bind="@property__COMMAND + COMMAND + COMMAND:VALUE"></div>
-
-<!--
-    Binds a controller config
-    It works in the controller scope only
--->
-<div data-bind="@@config__COMMAND + COMMAND + COMMAND:VALUE"></div>
-
-<!--
-    Binds a value defined via controller.data('property', value)
-    It works in the controller scope only
--->
-<div data-bind="@@property__COMMAND + COMMAND + COMMAND:VALUE"></div>
-
-<!--
-    Binds a value according to controller scope
-    It works in the controller scope only
--->
-<div data-bind="@@__COMMAND + COMMAND + COMMAND:VALUE"></div>
 ```
 
 __Commands and nested jQuery selectors__:
@@ -2692,9 +2674,7 @@ M;             // jComponent main instance
 
 DEF;           // +v14.0.0 alias for jComponent defaults "M.defaults"
 
-CONTROLLERS;   // jComponent controllers controller (+v11.0.0)
-
-DATETIME;      // {Date} contains datetime value (jComponent refreshes the value each 60 seconds)
+NOW;           // {Date} contains datetime value (jComponent refreshes the value each 60 seconds)
 PRIVATEMODE;   // {Boolean} determines whether the browser has disabled localStorage (+v11.7.0)
 
 // jcta.min.js, jctajr.min.js:
@@ -2712,11 +2692,48 @@ DAYS;          // +v11.0.0 Array of day name
 window.READY   // for asynchronous loading scripts
 ```
 
+## Plugins
+
+`+v15` are dynamic parts which are removed when the parent element is removed or when you create a new plugin with the same name. Plugins are alternative to controllers supported in older jComponent version.
+
+```html
+<!-- IF YOU CREATE THIS ELEMENT THE PLUGIN WILL BE DESTROYED TOO -->
+<div>
+    <div data-jc="textbox__name_of_plugin/data.name">Can communicates with this plugin</div>
+    <button class="exec" data-exec="name_of_plugin/method1">Executes method 1</button>
+
+    <script>
+    PLUGIN('name_of_plugin', function(scope) {
+
+        scope.data = { name: 'Peter' };
+        scope.or_whatever_you_need = { name: 'Peter' };
+
+        scope.method1 = function() {
+            console.log('Method 1 called');
+        };
+
+        scope.method2 = function() {
+            console.log('Method 2 called');
+        };
+
+        ON('global.events', function() {
+            // You can use global events or schedulers
+        });
+
+        // Built-in delegate
+        // optional
+        scope.destroy = function() {
+            // This plugin is destroyed
+        };
+    });
+    </script>
+</div>
+```
+
 ## Good to know
 
 - `MAIN.$components` a list of all registered components
 - `MAIN.components` a list of all instances of all components
-- `MAIN.controllers` a list of all instances of all controllers
 - Temporary variables: `+v11.2.0` --> `SET('%yourpath', 'value')` (works everywhere)
 
 ## Authors + Contacts
