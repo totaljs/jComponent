@@ -266,17 +266,6 @@ Lazy components can be initialized/processed when are loaded via `SETTER()`.
     Look into `DEFAULT()`, `component.default()` or `MAIN.default()` functions.
 -->
 
-<element data-jc-controller="CONTROLLER_NAME">
-<!--
-   +v3.9.0 - automatically calls the controller initialization. Look into the
-   controller section in this manual.
--->
-
-<element data-jc="somecomponent" data-jc-controller="CONTROLLER_NAME">
-<!--
-   +v11.5.0 - automatically assigns the controller to the component. Controller does not have to exist. It's the internal info only.
--->
-
 <element data-jc-released="true" />
 <!--
    +v7.0.0 - sets state of this current component as released.
@@ -1118,14 +1107,13 @@ MAIN.environment(key, [version], [language]);
 // Runs the compiler for new components. jComponent doesn't watch new elements in DOM.MAINrewrite(path, value);
 MAIN.rewrite('model.name', 'Peter');
 // +v4.0.0 Rewrites the value in the model without notification
-// +v10.1.0 supports "@controllername.path"
+// +v15 supports "@plugin.path"
 
 MAIN.set(path, value, [reset]);
 MAIN.set('model.name', 'Peter'); // Example: sets the value
 MAIN.set('+model.tags', 'HTML'); // Example: appends the value into the array
 MAIN.set('+model.tags', ['CSS', 'JavaScript']); // Example: appends the array into the array
 MAIN.set('!model.name', 'jComponent'); // Notifies all components which listen on this absolute path
-MAIN.set('@controllername.name', 'jComponent'); // +v10.1.0 sets a value according to the controller scope
 // Sets the value into the model. `reset` argument resets the state
 // (dirty, validation), default: `false`.
 
@@ -1133,7 +1121,7 @@ MAIN.set('@controllername.name', 'jComponent'); // +v10.1.0 sets a value accordi
 MAIN.push(path, value, [reset]);
 MAIN.push('model.tags', 'HTML'); // Example
 MAIN.push('model.tags', ['CSS', 'JavaScript']); // Example
-// +v10.1.0 supports "@controllername.path"
+// +v15 supports "@pluginname.path"
 // Pushs the value in the model, only for arrays. `reset` argument resets
 // the state (dirty, validation), default: `false`.
 
@@ -1141,14 +1129,14 @@ MAIN.push('model.tags', ['CSS', 'JavaScript']); // Example
 MAIN.inc(path, value, [reset]);
 MAIN.inc('model.age', 10); // Example
 MAIN.inc('model.price', -5); // Example
-// +v10.1.0 supports "@controllername.path"
+// +v15 supports "@pluginname.path"
 // Increments the value in the model, only for numbers. `reset` argument
 // resets the state (dirty, validation), default: `false`.
 
 
 MAIN.extend(path, value, [reset]);
 MAIN.extend('model', { age: 30, name: 'Peter' }); // Example
-// +v10.1.0 supports "@controllername.path"
+// +v15 supports "@plugin.path"
 // Extends the value in the model, only for objects. `reset` argument resets
 // the state (dirty, validation), default: `false`.
 
@@ -1156,13 +1144,13 @@ MAIN.extend('model', { age: 30, name: 'Peter' }); // Example
 MAIN.get(path, [scope]); // default scope is `window`
 MAIN.get('model.age'); // Example
 MAIN.get('model.tags'); // Example
-MAIN.get('@controllername.name'); // +v10.1.0 reads a value according to the controller scope
+MAIN.get('@plugin.name'); // +v10.1.0 reads a value according to the controller scope
 // Gets the value from the model.
 
 
 MAIN.invalid(path, [except_paths_arr]);
-// +v10.1.0 supports "@controllername.path"
 // +v13.0.0 supports an except flags "@hidden" (only hidden components), "@visible" (only visible components), "@disabled" (only disabled inputs in the component), "@enabled" (only enabled inputs in the component) in "except"
+// +v15 supports "@plugin.path"
 // Sets the invalid state to all components according the binding path.
 
 
@@ -1202,12 +1190,12 @@ MAIN.cachepath(path, expire, [rebind]);
 // The method creates watcher for `path` and stores values into the localStorage
 // Returns {Components}.
 // +v9.0.0: added "rebind" argument (default: false)
-// +v10.1.0 supports "@controllername.path"
+// +v15 supports "@plugin.path"
 
 MAIN.reset([path], [timeout]);
 // Reset the dirty and valid method together (Sets: dirty=true and valid=true)
 // Supports wildcard path, e.g. `model.*`.
-// +v10.1.0 supports "@controllername.path"
+// +v15 supports "@plugin.path"
 
 
 MAIN.each(fn(component, index, isAsterix), path);
@@ -1578,9 +1566,9 @@ INVALID(path);
 
 
 ERRORS(path, [except_paths_arr], [highlight]);
-// +v10.1.0 supports "@controllername.path"
 // +v11.4.0 supports highlighting
 // +v13.0.0 supports an except flags "@hidden" (only hidden components), "@visible" (only visible components), "@disabled" (only disabled inputs in the component), "@enabled" (only enabled inputs in the component) in "except"
+// +v15 supports "@plugin.path"
 // path {String}
 // except {String Array} excepts paths
 // highlight {Boolean} highlights invalid components (default: false)
@@ -1662,10 +1650,10 @@ EXEC('path.to.method', 'hide', 1000);
 // Returns EXEC. Can execute a function according to the path.
 // +v4.7.0
 
-EXEC('CONTROLLER/method_name', 'hide', 1000);
+EXEC('PLUGIN/method_name', 'hide', 1000);
 // Executes method in a controller
 // +v9.0.0
-// +v12.0.5 supports "WAITING" for a method e.g. EXEC(true, 'CONTROLLER/method_name', 'hide', 1000);
+// +v12.0.5 supports "WAITING" for a method e.g. EXEC(true, 'PLUGIN/method_name', 'hide', 1000);
 
 
 // Creates a singleton instance.
@@ -1775,8 +1763,8 @@ CAN(path, [except_paths_arr]);
 // Returns {Boolean}.
 // Opposite of MAIN.disable()
 // Supports wildcard path, e.g. `model.*`.
-// +v10.1.0 supports "@controllername.path"
 // +v13.0.0 supports an except flags "@hidden" (only hidden components), "@visible" (only visible components), "@disabled" (only disabled inputs in the component), "@enabled" (only enabled inputs in the component) in "except"
+// +v15 supports "@plugin.path"
 
 var can = CAN('users.form.*');
 can && submit();
@@ -1788,8 +1776,8 @@ DISABLED(path, [except_paths_arr]);
 // Combines the dirty and valid method together (e.g. for disabling of buttons)
 // Opposite of MAIN.can()
 // Supports wildcard path, e.g. `model.*`.
-// +v10.1.0 supports "@controllername.path"
 // +v13.0.0 supports an except flags "@hidden" (only hidden components), "@visible" (only visible components), "@disabled" (only disabled inputs in the component), "@enabled" (only enabled inputs in the component) in "except"
+// +v15 supports "@plugin.path"
 
 var disabled = DISABLED('users.form.*');
 !disabled && submit();
@@ -1801,7 +1789,7 @@ VALIDATE([path], [except_paths_arr]);
 // Validates all values according the path.
 // Returns {Boolean}.
 // Supports wildcard path, e.g. `model.*`.
-// +v10.1.0 supports "@controllername.path"
+// +v15 supports "@plugin.path"
 
 var valid = VALIDATE('users.form.*');
 valid && submit();
@@ -2096,106 +2084,6 @@ __Good to know__:
 - `data-jc-scope="?"` generates a scope path randomly
 - `data-jc-scope="!PATH"` creates idependent scope (it doesn't inherit absolute path) `+v11.0.0`
 
-### Controllers
-
-```html
-
-<div data-jc-controller="users-controller">
-    <!-- OPTIONAL -->
-</div>
-
-<script>
-
-    CONTROLLER('users-controller', function(controller) {
-        // controller scope
-        // here you can defined your code and methods
-    });
-
-</script>
-```
-
-Improved controllers are supported in `+v11.0.0`.
-
-- controllers have own scopes
-- can be removed/added just-in-time
-
-### Controllers management
-
-- `MAIN.controllers` contains all instances of all registered controllers
-
-__Global__
-
-```javascript
-CONTROLLERS.items;                        // {Object} all registered controllers
-CONTROLLERS.emit(name, [a], [b], [n]);    // Emits event in all controller instances
-CONTROLLERS.remove([name]);               // Removes controllers
-var ctrl = CONTROLLER('User');            // Gets a controller instance
-```
-
-__Instance properties/methods__:
-
-```javascript
-// REQUIRED
-CONTROLLER('Users', function(instance) {
-
-    // Properties
-    instance.scope;        // {String} name of scope
-    instance.name;         // {String} name of controller
-    instance.element;      // {jQuery} container (jQuery element)
-
-    // Methods
-    instance.emit(name, [a], [b], [c], ..);       // Emits event defined in controller
-    instance.on(name, fn);                        // Captures event
-    instance.find(selector);                      // Alias for "instance.element.find(selector)"
-    instance.append(value);                       // Alias for "instance.element.append()"
-    instance.html(value);                         // Alias for "instance.element.html()"
-    instance.event(name, [selector], callback);   // Alias for "instance.element.on()"
-    instance.path([path]);                        // Generates path according to the current scope
-    instance.set(path, value);                    // Sets a value according to the current scope
-    instance.update(path, [reset]);               // Updates current scope
-    instance.notify(path);                        // Notifies current scope
-    instance.inc(path, value);                    // Increases a value according to the current scope
-    instance.push(path, value);                   // Pushs a new value according to the current scope
-    instance.extend(path, value);                 // Extends an object according to the current scope
-    instance.rewrite(path, value);                // Rewrites a value with except notifications
-    instance.get(path);                           // Gets a value according to the current scope
-    instance.default(path);                       // Resets to default values
-    instance.toggle(cls, visible, [timeout]);     // Alias for "jQuery.toggleClass()"
-    instance.classes(string);                     // Toggles classes e.g. "+block -hidden"
-    instance.attr(name, [value]);                 // Alias for "jQuery.attr()"
-    instance.attrd(name, [value]);                // Alias for "jQuery.attr('data-{name}')"
-    instance.css(name, [value]);                  // Alias for "jQuery.css()"
-    instance.exec(name, [a], [b], [c]);           // Executes methods in all components
-    instance.empty();                             // Alias for "jQuery.empty()"
-    instance.components();                        // +v11.5.0 returns all nested components
-    instance.remove();                            // Removes itself
-    instance.watch('path', fn(path, value, type), init); // +v11.5.0 Enables watching of property within controller's scope
-    instance.unwatch('path', [fn]);               // +v11.5.0 Unbinds watching
-    instance.change([path], [isChange]);          // +v12.0.4 Can perform a change
-    instance.released();                          // +14.1.1 determines released state (the parent component must support releasing)
-
-    instance.FIND(selector, [many], [callback], [timeout]);  // +v14.1.1 performs FIND() for the controller elements
-    instance.SETTER(selector, name, [arg1], [argN]);         // +v14.1.1 performs SETTER() for the controller elements
-});
-```
-
-__Parts ouside of controller scope__:
-
-jComponent `+v11.7.0` supports `SCOPE()` method can create controller's scope outside of controller declaration. __IMPORTANT__ the method waits for the controller if the controller is not intialized.
-
-```javascript
-SCOPE('Users', function(controller, path, element) {
-    // controller scope
-    // here you can use e.g. WATCH() method or controller.watch()
-});
-```
-
-__Good to know__:
-- all registered events `ON()` + schedulers `SCHEDULE()` are removed too when controller is removed
-- controller can be defined without scope `<div data-jc-controller` and then the main scope is `window` object
-- `data-jc-scope=""` creates a scope for all nested components
-- `jRouting` +v11.2.0 supports environments in URL addreses `ROUTE('[adminurl]', ..)` or `REDIRECT('[adminurl]')`
-
 ## jQuery
 
 ```js
@@ -2267,11 +2155,6 @@ $('selector').attrd('title');
 // returns {Object}
 $('selector').scope();
 
-// Gets a parent controller
-// +v14.0.0
-// returns {Object}
-$('selector').controller();
-
 // Same functionality like FIND() method but it only finds components in this element
 // +v14.1.0
 $('selector').FIND([selector], [many], [callback], [timeout]);
@@ -2326,11 +2209,8 @@ Prototypes are supported in `+v10.0.0`.
 
 ```javascript
 MAIN.prototypes(function(proto) {
-    // proto.App
     // proto.Component
-    // proto.Container
-    // proto.Controller
-    // proto.Property
+    // proto.Plugin
     // proto.Usage
 });
 ```
