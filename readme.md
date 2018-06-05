@@ -2697,7 +2697,7 @@ window.READY   // for asynchronous loading scripts
 `+v15` are dynamic parts which are removed when the parent element is removed or when you create a new plugin with the same name. Plugins are alternative to controllers supported in older jComponent version.
 
 ```html
-<!-- IF YOU CREATE THIS ELEMENT THE PLUGIN WILL BE DESTROYED TOO -->
+<!-- IF YOU REMOVE THIS ELEMENT THE PLUGIN WILL BE DESTROYED TOO -->
 <div>
     <div data-jc="textbox__name_of_plugin/data.name">Can communicates with this plugin</div>
     <button class="exec" data-exec="name_of_plugin/method1">Executes method 1</button>
