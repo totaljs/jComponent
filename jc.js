@@ -61,7 +61,6 @@
 	var schedulers = [];
 	var toggles = [];
 	var versions = {};
-	var warnings = {};
 	var autofill = [];
 	var defaults = {};
 	var waits = {};
@@ -135,7 +134,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.002';
+	M.version = 'v15.003';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5305,6 +5304,8 @@
 
 		for (var i = f; i < arguments.length; i++)
 			arg.push(arguments[i]);
+
+		var c = path.charCodeAt(0);
 
 		// PLUGINS
 		if (c === 64) {

@@ -1688,22 +1688,21 @@ TRY(function() {
 });
 
 
-// MAKE([obj], fn);
-// Creates object scope
-var someobject = MAKE(function(obj) {
-    this.name = 'Peter';
-    this.age = 33;
-    obj.great = true;
+MAKE(obj/path, fn, [update]);
+// @path {Object/String}
+// @fn {Function}
+// @notify {Boolean} Optional, default "true"
+// returns {String}
+
+// Creates an object on the path "users.form" and notifies all components
+MAKE('users.form', function(obj) {
+    obj.name = 'Peter Širka';
+    obj.age = 33;
 });
 
-console.log(someobject); // { name: 'Peter', age: 33, great: true }
+console.log(users.form); // { name: 'jComponent', age: 100, great: true }
+// Output: { name: 'Peter Širka', age: 33 }
 
-MAKE(someobject, function(obj) {
-    this.name = 'jComponent';
-    obj.age = 100;
-});
-
-console.log(someobject); // { name: 'jComponent', age: 100, great: true }
 
 // +v9.0.0
 // Creates an object according path when not exists otherwise it updates it
