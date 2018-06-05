@@ -263,7 +263,7 @@ Lazy components can be initialized/processed when are loaded via `SETTER()`.
     ...
     </element>
 
-    Look into `DEFAULT()`, `component.default()` or `MAIN.default()` functions.
+    Look into `DEFAULT()` or `component.default()` functions.
 -->
 
 <element data-jc-released="true" />
@@ -1000,60 +1000,60 @@ MAIN.loaded;
 MAIN.version;
 // {Number} returns the current version of jComponent.
 
-MAIN.defaults.environments;
+DEF.environments;
 // {Object} environment storage
 // ENV() and String.prototype.env() methods use this variable
 // +v11.2.0
 
-MAIN.defaults.delay;
+DEF.delay;
 // {Number} sets a delay for keypress real-time binding, default `300`.
 
-MAIN.defaults.delayrepeat;
+DEF.delayrepeat;
 // {Number} sets a delay for repeating of AJAX requests
 
-MAIN.defaults.baseurl;
+DEF.baseurl;
 // v13.0.5
 // Can be {Function(url)} needs to return updated url
 // Can be {String} can contain base url which is used in this form "url = baseurl + url"
 
-MAIN.defaults.makeurl;
+DEF.makeurl;
 // v14.3.1
 // This delegate is executed before a request is created
 // Can be {Function(url)} needs to return updated url
 
-MAIN.defaults.keypress;
+DEF.keypress;
 // {Boolean} enables / disables keypress real-time binding, default `true`.
 
-MAIN.defaults.localstorage;
+DEF.localstorage;
 // {Boolean} enables / disables localstorage for cache mechanism, default `true`.
 
-MAIN.defaults.headers;
+DEF.headers;
 // {Object} can sets AJAX headers for all requests (+v12.0.0: with except X-Request-With header, the header is removed for request out of current hostname. You can add it manually via AJAXCONFIG())
 
-MAIN.defaults.ajaxerrors;
+DEF.ajaxerrors;
 // {Boolean} AJAX() won't create exception when HTTP status code will be >= 400, default `false`.
 
-MAIN.defaults.devices = {
+DEF.devices = {
     xs: { max: 768 },
     sm: { min: 768, max: 992 },
     md: { min: 992, max: 1200 },
     lg: { min: 1200 }
 };
 
-MAIN.defaults.jsoncompress = false;
+DEF.jsoncompress = false;
 // {Boolean} sets JSON compression (`null`, `false` and `empty strings` are removed)
 // in all AJAX operations (when an object is serializing to JSON)
 // +v8.0.0
 
-MAIN.defaults.jsondate = true;
+DEF.jsondate = true;
 // {Boolean} sets auto-parser in all AJAX operations (when is JSON deserialized to Object)
 // +v8.0.0
 
-MAIN.defaults.thousandsseparator = ' ';
+DEF.thousandsseparator = ' ';
 // {String} default thousands separator
 // +v12.0.0
 
-MAIN.defaults.decimalseparator = '.';
+DEF.decimalseparator = '.';
 // {String} default decimal separator
 // +v12.0.0
 
@@ -1557,7 +1557,7 @@ if (BLOCKED('submitted', 1000)) { // Example.
     return;
 }
 // Prevention for some operations. It's stored in `localStorage` according
-// `MAIN.defaults.localstorage`.
+// `DEF.localstorage`.
 // +11.8.0 timeout can contains string e.g. "5 minutes"
 
 
@@ -1913,6 +1913,11 @@ WH;
 // +v14.5.0
 // current window height
 // returns {Number}
+
+FREE();
+// +v15
+// Performs cleaner removed components and plugins
+// It executes automatically in some interval
 ```
 
 ## Simple Media Query Evaluator
