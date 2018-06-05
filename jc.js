@@ -8046,7 +8046,7 @@
 		// Remove schedulers
 		schedulers = schedulers.remove('owner', self.id);
 
-		self.element.remove();
+		// self.element.remove();
 		self.element = null;
 
 		delete W.PLUGINS[self.name];
