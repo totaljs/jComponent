@@ -143,7 +143,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v14.050';
+	M.version = 'v14.051';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5850,10 +5850,16 @@
 		return obj.id;
 	};
 
+	W.FREE = function(timeout) {
+		setTimeout2('$clean', cleaner, timeout || 10);
+		return M;
+	};
+
 	W.FN = function(exp) {
+
 		var index = exp.indexOf('=>');
 		if (index === -1)
-			return exp;
+			return isValue(exp) ? FN('value=>' + rebinddecode(exp)) : new Function('return ' + exp);
 
 		var arg = exp.substring(0, index).trim();
 		var val = exp.substring(index + 2).trim();
