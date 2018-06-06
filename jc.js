@@ -143,7 +143,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v14.051';
+	M.version = 'v14.052';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5215,8 +5215,10 @@
 	};
 
 	PPC.reconfigure = PPVC.reconfigure = PCTRL.reconfigure = function(value, callback, init) {
+
 		var self = this;
 		var isd = typeof(self.data) === 'function';
+
 		if (typeof(value) === 'object') {
 			OK(value).forEach(function(k) {
 				var prev = self.config[k];
@@ -5250,6 +5252,10 @@
 		}
 
 		isd && self.data('config', self.config);
+
+		if (self.config.$type)
+			self.type = self.config.$type;
+
 		return self;
 	};
 
