@@ -135,7 +135,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.006';
+	M.version = 'v15.007';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -4567,6 +4567,10 @@
 		}
 
 		self.data('config', self.config);
+
+		if (self.config.$type)
+			self.type = self.config.$type;
+
 		return self;
 	};
 

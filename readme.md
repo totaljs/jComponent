@@ -325,7 +325,7 @@ Lazy components can be initialized/processed when are loaded via `SETTER()`.
     +v11.2.0 if you need to use ";" or ":" in a value make sure to properly escape it with backslash "\;".
     +v11.8.0 can contain an "[environment]" key
     +v11.9.0 can contain a link to variable "=path.to.variable"
-    +v14.0.0 internal settings for "input/textarea/select" data-binding $binding:1 (only real-time binding), $binding:2 (after change binding), $delay:300 (binding delay)
+    +v14.0.0 internal settings for "input/textarea/select" data-binding $binding:1 (only real-time binding), $binding:2 (after change binding), $delay:300 (binding delay), $type:date (alternative to "data-jc-type")
 -->
 ```
 
