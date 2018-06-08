@@ -3177,7 +3177,7 @@
 
 		extensions[obj.name] && extensions[obj.name].forEach(function(item) {
 			item.config && obj.reconfigure(item.config, NOOP);
-			item.fn.call(obj, obj);
+			item.fn.call(obj, obj, obj.config);
 		});
 
 		obj.configure && obj.reconfigure(obj.config, undefined, true);
@@ -5723,7 +5723,7 @@
 			var m = M.components[i];
 			if (!m.$removed || name === m.name){
 				config && m.reconfigure(config, undefined, true);
-				declaration.call(m, m);
+				declaration.call(m, m, m.config);
 			}
 		}
 
