@@ -27,7 +27,6 @@
 	var ACTRLS = { INPUT: true, TEXTAREA: true, SELECT: true };
 	var DEFMODEL = { value: null };
 	var OK = Object.keys;
-	var A = '-->';
 
 	var LCOMPARER = window.Intl ? window.Intl.Collator().compare : function(a, b) {
 		return a.localeCompare(b);
@@ -143,7 +142,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v14.052';
+	M.version = 'v14.053';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -375,6 +374,18 @@
 		return h;
 	}
 
+	function findFormat(val) {
+		var a = val.indexOf('-->');
+		var s = 3;
+
+		if (a === -1) {
+			a = val.indexOf('->');
+			s = 2;
+		}
+
+		return a === -1 ? null : { path: val.substring(0, a).trim(), fn: W.FN(val.substring(a + s).trim()) };
+	}
+
 	W.UPLOAD = M.upload = function(url, data, callback, timeout, progress) {
 
 		if (!url)
@@ -537,19 +548,11 @@
 
 		if (name === 'watch') {
 			var arr = [];
-			index = path.indexOf(A);
 
-			if (index !== -1) {
-				var n = path.substring(index + 3).trim();
-				path = path.substring(0, index).trim();
-				var is = n.indexOf('=>') === -1;
-				if (is) {
-					if (n.indexOf('.') !== -1) {
-						n = '(value,path,type)=>' + n;
-						is = false;
-					}
-				}
-				obj.format = is ? GET(n) : FN(n);
+			var tmp = findFormat(path);
+			if (tmp) {
+				path = tmp.path;
+				obj.format = tmp.fn;
 			}
 
 			if (path.substring(path.length - 1) === '.')
@@ -612,9 +615,9 @@
 
 		if (path) {
 			path = path.replace('.*', '').trim();
-			index = path.indexOf(A);
-			if (index !== -1)
-				path = path.substring(0, index).trim();
+			var tmp = findFormat(path);
+			if (tmp)
+				path = tmp.path;
 			if (path.substring(path.length - 1) === '.')
 				path = path.substring(0, path.length - 1);
 		}
@@ -3171,14 +3174,15 @@
 		if (!obj)
 			return;
 
-		var value = obj.get();
 		var el = obj.element;
-		var tmp;
 
 		extensions[obj.name] && extensions[obj.name].forEach(function(item) {
 			item.config && obj.reconfigure(item.config, NOOP);
 			item.fn.call(obj, obj, obj.config);
 		});
+
+		var value = obj.get();
+		var tmp;
 
 		obj.configure && obj.reconfigure(obj.config, undefined, true);
 		obj.$loaded = true;
@@ -3544,7 +3548,7 @@
 
 	function remap(path, value) {
 
-		var index = path.replace(A, '->').indexOf('->');
+		var index = path.replace('-->', '->').indexOf('->');
 
 		if (index !== -1) {
 			value = value[path.substring(0, index).trim()];
@@ -5121,20 +5125,10 @@
 		// type 2: scope
 
 		var self = this;
-		var index = path.indexOf(A);
-
-		if (index !== -1) {
-			var name = path.substring(index + 3).trim();
-			path = path.substring(0, index).trim();
-
-			var is = name.indexOf('=>') === -1;
-			if (is) {
-				if (name.indexOf('.') !== -1) {
-					name = '(value,path,type)=>' + name;
-					is = false;
-				}
-			}
-			self.$format = is ? GET(name) : FN(name);
+		var tmp = findFormat(path);
+		if (tmp) {
+			path = tmp.path;
+			self.$format = tmp.fn;
 		} else if (!type)
 			self.$format = null;
 
@@ -8650,19 +8644,10 @@
 						return fn ? fn : null;
 					}
 
-					index = path.indexOf(A);
-
-					if (index !== -1) {
-						var n = path.substring(index + 3).trim();
-						path = path.substring(0, index).trim();
-						var is = n.indexOf('=>') === -1;
-						if (is) {
-							if (isValue(n) !== -1) {
-								n = '(value,path)=>' + n;
-								is = false;
-							}
-						}
-						obj.format = is ? GET(n) : FN(n);
+					var tmp = findFormat(path);
+					if (tmp) {
+						path = tmp.path;
+						obj.format = tmp.fn;
 					}
 
 					if (path.substring(path.length - 1) === '.')
