@@ -359,14 +359,16 @@
 		return h;
 	}
 
-	function findFn(val) {
+	function findFormat(val) {
 		var a = val.indexOf('-->');
 		var s = 3;
+
 		if (a === -1) {
 			a = val.indexOf('->');
 			s = 2;
 		}
-		return a === -1 ? null : { i: a, v: val.substring(a + s).trim() };
+
+		return a === -1 ? null : { path: val.substring(0, a).trim(), fn: W.FN(val.substring(a + s).trim()) };
 	}
 
 	W.UPLOAD = function(url, data, callback, timeout, progress) {
@@ -524,18 +526,10 @@
 		if (name === 'watch') {
 			var arr = [];
 
-			var tmp = findFn(path);
+			var tmp = findFormat(path);
 			if (tmp) {
-				var n = tmp.v;
-				path = path.substring(0, tmp.i).trim();
-				var is = n.indexOf('=>') === -1;
-				if (is) {
-					if (n.indexOf('.') !== -1) {
-						n = '(value,path,type)=>' + n;
-						is = false;
-					}
-				}
-				obj.format = is ? GET(n) : FN(n);
+				path = tmp.path;
+				obj.format = tmp.fn;
 			}
 
 			if (path.substring(path.length - 1) === '.')
@@ -598,9 +592,9 @@
 
 		if (path) {
 			path = path.replace('.*', '').trim();
-			var tmp = findFn(path);
+			var tmp = findFormat(path);
 			if (tmp)
-				path = path.substring(0, tmp.i).trim();
+				path = tmp.path;
 			if (path.substring(path.length - 1) === '.')
 				path = path.substring(0, path.length - 1);
 		}
@@ -1023,7 +1017,7 @@
 		return M;
 	};
 
-	W.INJECT = W.IMPORT = M.import = function(url, target, callback, insert, preparator) {
+	W.IMPORT = M.import = function(url, target, callback, insert, preparator) {
 		return W.IMPORTCACHE(url, null, target, callback, insert, preparator);
 	};
 
@@ -2986,14 +2980,15 @@
 		if (!obj)
 			return;
 
-		var value = obj.get();
 		var el = obj.element;
-		var tmp;
 
 		extensions[obj.name] && extensions[obj.name].forEach(function(item) {
 			item.config && obj.reconfigure(item.config, NOOP);
 			item.fn.call(obj, obj, obj.config);
 		});
+
+		var value = obj.get();
+		var tmp;
 
 		obj.configure && obj.reconfigure(obj.config, undefined, true);
 		obj.$loaded = true;
@@ -3265,7 +3260,7 @@
 
 	function remap(path, value) {
 
-		var index = path.replace(A, '->').indexOf('->');
+		var index = path.replace('-->', '->').indexOf('->');
 
 		if (index !== -1) {
 			value = value[path.substring(0, index).trim()];
@@ -4454,19 +4449,11 @@
 		// type 2: scope
 
 		var self = this;
-		var tmp = findFn(path);
+		var tmp = findFormat(path);
 
 		if (tmp) {
-			var name = tmp.v;
-			path = path.substring(0, tmp.i).trim();
-			var is = name.indexOf('=>') === -1;
-			if (is) {
-				if (name.indexOf('.') !== -1) {
-					name = '(value,path,type)=>' + name;
-					is = false;
-				}
-			}
-			self.$format = is ? GET(name) : FN(name);
+			path = tmp.path;
+			self.$format = tmp.fn;
 		} else if (!type)
 			self.$format = null;
 
@@ -7742,18 +7729,10 @@
 						return fn ? fn : null;
 					}
 
-					var tmp = findFn(path);
+					var tmp = findFormat(path);
 					if (tmp) {
-						var n = tmp.v;
-						path = path.substring(0, tmp.i).trim();
-						var is = n.indexOf('=>') === -1;
-						if (is) {
-							if (isValue(n) !== -1) {
-								n = '(value,path)=>' + n;
-								is = false;
-							}
-						}
-						obj.format = is ? GET(n) : FN(n);
+						path = tmp.path;
+						obj.format = tmp.fn;
 					}
 
 					if (path.substring(path.length - 1) === '.')

@@ -94,10 +94,10 @@ Binding is represented as `data-jc-path` attribute. jComponent has own buil-in m
 
 <!-- +v14.2.0 -->
 <!-- CUSTOM VALUE FORMATTER -->
-<div data-jc="" data-jc-path="contactform.name --> (value, path, type) => value.toUpperCase()"></div>
+<div data-jc="" data-jc-path="contactform.name -> (value, path, type) => value.toUpperCase()"></div>
 
 <!-- OR –->
-<div data-jc="" data-jc-path="contactform.name --> path + ' ' + value.toUpperCase()"></div>
+<div data-jc="" data-jc-path="contactform.name -> path + ' ' + value.toUpperCase()"></div>
 ```
 
 The value `contactform.name` is linked to `window.contactform.name` (the `window` is a browser window instance). The library automatically creates value in __window scope__ if the value doesn't exist.
@@ -909,9 +909,9 @@ COMPONENT('my-component-name', function(instance, config) {
     });
     // This delegate watches all changes according the model.
 
-    instance.watch('other.path.to.property --> value.toUpperCase()', function(path, value, type) {});
-    instance.watch('other.path.to.property --> (value, path, type) => value.toUpperCase()', function(path, value, type) {});
-    instance.watch('other.path.to.property --> function_name', function(path, value, type) {});
+    instance.watch('other.path.to.property -> value.toUpperCase()', function(path, value, type) {});
+    instance.watch('other.path.to.property -> (value, path, type) => value.toUpperCase()', function(path, value, type) {});
+    instance.watch('other.path.to.property -> function_name', function(path, value, type) {});
     // +v14.3.3 supports inline helpers for transformating values
 
     instance.unwatch([path], [function]);
@@ -1605,7 +1605,7 @@ AJAXCACHEREVIEW('METHOD URL', data, [callback(data, fromCache, reviewed) or path
 UPLOAD(url, formdata, [callback or path], [sleep], [progress(percentage, speed, remaining) or path]);
 UPLOAD(url, formdata, [callback or path], [sleep], [progress(percentage, speed, remaining) or path], [error(response, status, type) or path]);
 UPLOAD('/api/', formdata, 'form.response'); // Example
-UPLOAD('/api/', formdata, 'response.success-->form.response'); // Example with remapping.
+UPLOAD('/api/', formdata, 'response.success->form.response'); // Example with remapping.
 UPLOAD('/api/', formdata, function(response, err) { console.log(response); }); // Example
 // Uploads formdata and receive `JSON` from the server. When is throwed an error then
 // "response" is the empty object {}
