@@ -23,7 +23,6 @@
 	var ACTRLS = { INPUT: true, TEXTAREA: true, SELECT: true };
 	var DEFMODEL = { value: null };
 	var OK = Object.keys;
-	var A = '-->';
 
 	var LCOMPARER = window.Intl ? window.Intl.Collator().compare : function(a, b) {
 		return a.localeCompare(b);
@@ -135,7 +134,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.008';
+	M.version = 'v15.009';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -273,7 +272,7 @@
 	};
 
 	W.COOKIES = M.cookies = {
-		get: function (name) {
+		get: function(name) {
 			name = name.env();
 			var arr = document.cookie.split(';');
 			for (var i = 0; i < arr.length; i++) {
@@ -286,7 +285,7 @@
 			}
 			return '';
 		},
-		set: function (name, value, expire) {
+		set: function(name, value, expire) {
 			var type = typeof(expire);
 			if (type === 'number') {
 				var date = W.NOW;
@@ -296,7 +295,7 @@
 				expire = new Date(Date.now() + expire.parseExpire());
 			document.cookie = name.env() + '=' + value + '; expires=' + expire.toGMTString() + '; path=/';
 		},
-		rem: function (name) {
+		rem: function(name) {
 			M.cookies.set(name.env(), '', -1);
 		}
 	};
@@ -358,6 +357,16 @@
 				h[line.substring(0, index).toLowerCase()] = line.substring(index + 1).trim();
 		});
 		return h;
+	}
+
+	function findFn(val) {
+		var a = val.indexOf('-->');
+		var s = 3;
+		if (a === -1) {
+			a = val.indexOf('->');
+			s = 2;
+		}
+		return a === -1 ? null : { i: a, v: val.substring(a + s).trim() };
 	}
 
 	W.UPLOAD = function(url, data, callback, timeout, progress) {
@@ -514,11 +523,11 @@
 
 		if (name === 'watch') {
 			var arr = [];
-			index = path.indexOf(A);
 
-			if (index !== -1) {
-				var n = path.substring(index + 3).trim();
-				path = path.substring(0, index).trim();
+			var tmp = findFn(path);
+			if (tmp) {
+				var n = tmp.v;
+				path = path.substring(0, tmp.i).trim();
 				var is = n.indexOf('=>') === -1;
 				if (is) {
 					if (n.indexOf('.') !== -1) {
@@ -589,9 +598,9 @@
 
 		if (path) {
 			path = path.replace('.*', '').trim();
-			index = path.indexOf(A);
-			if (index !== -1)
-				path = path.substring(0, index).trim();
+			var tmp = findFn(path);
+			if (tmp)
+				path = path.substring(0, tmp.i).trim();
 			if (path.substring(path.length - 1) === '.')
 				path = path.substring(0, path.length - 1);
 		}
@@ -4445,12 +4454,11 @@
 		// type 2: scope
 
 		var self = this;
-		var index = path.indexOf(A);
+		var tmp = findFn(path);
 
-		if (index !== -1) {
-			var name = path.substring(index + 3).trim();
-			path = path.substring(0, index).trim();
-
+		if (tmp) {
+			var name = tmp.v;
+			path = path.substring(0, tmp.i).trim();
 			var is = name.indexOf('=>') === -1;
 			if (is) {
 				if (name.indexOf('.') !== -1) {
@@ -7734,11 +7742,10 @@
 						return fn ? fn : null;
 					}
 
-					index = path.indexOf(A);
-
-					if (index !== -1) {
-						var n = path.substring(index + 3).trim();
-						path = path.substring(0, index).trim();
+					var tmp = findFn(path);
+					if (tmp) {
+						var n = tmp.v;
+						path = path.substring(0, tmp.i).trim();
 						var is = n.indexOf('=>') === -1;
 						if (is) {
 							if (isValue(n) !== -1) {
