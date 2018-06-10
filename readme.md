@@ -1805,7 +1805,7 @@ WARN(a, [b], [..n]);
 
 ENV(key, [value]);
 // Gets/Sets the environment value
-// Alternative: String.prototype.env([search])
+// Alternative: String.prototype.env()
 // +v11.2.0
 
 ENV([object]); // sets environments
@@ -2262,7 +2262,7 @@ var string = 'Peter Širka'.slug();
 // String.prototype.parseExpire() --> returns miliseconds
 // String.prototype.toSearch()    --> returns string for fulltext search
 
-// String.prototype.env(search)   --> +v11.2.0 replaces [keyword] according to ENVIRONMENT (search finds all keys in string (default: false))
+// String.prototype.env()         --> +v11.2.0 replaces [keyword] according to ENVIRONMENT
 
 // String.prototype.format(format, arg1, arg2, arg3, ...);
 var string = 'My name is {0} and I am {1} years old.'.format('Peter', 31);

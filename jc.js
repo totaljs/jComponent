@@ -539,7 +539,7 @@
 			if (path.charCodeAt(0) === 37)
 				path = 'jctmp.' + path.substring(1);
 
-			path = path.env(true);
+			path = path.env();
 
 			// !path = fixed path
 			if (path.charCodeAt(0) === 33) {
@@ -4463,7 +4463,7 @@
 		if (path.charCodeAt(0) === 37)
 			path = 'jctmp.' + path.substring(1);
 
-		path = path.env(true);
+		path = path.env();
 
 		// !path = fixed path
 		if (path.charCodeAt(0) === 33) {
@@ -6013,21 +6013,17 @@
 		return arr;
 	};
 
-	SP.env = function(search) {
+	SP.env = function() {
 		var self = this;
-		if (search) {
-			return self.replace(REGENV, function(val) {
-				return ENV[val.substring(1, val.length - 1)] || val;
-			});
-		}
-		var l = self.length - 1;
-		return (self.charCodeAt(0) === 91 && self.charCodeAt(l) === 93 ? (ENV[self.substring(1, l)] || self) : self).toString();
+		return self.replace(REGENV, function(val) {
+			return ENV[val.substring(1, val.length - 1)] || val;
+		});
 	};
 
 	SP.$env = function() {
 		var self = this;
 		var index = this.indexOf('?');
-		return index === -1 ? self.env(true) : self.substring(0, index).env(true) + self.substring(index);
+		return index === -1 ? self.env() : self.substring(0, index).env() + self.substring(index);
 	};
 
 	SP.parseConfig = SP.$config = function(def, callback) {
