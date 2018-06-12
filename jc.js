@@ -1834,6 +1834,10 @@
 		return get(path, scope);
 	};
 
+	W.GETR = function(path) {
+		return GET(path, true);
+	};
+
 	W.VALIDATE = function(path, except) {
 
 		var arr = [];

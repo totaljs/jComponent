@@ -1446,6 +1446,9 @@ GET(path, [reset]);
 // Gets the value according to the path
 // @reset {Boolean} +v15 default `false`
 
+GETR(path);
+// Gets the value according to the path and resets the state of all components on the path
+
 IMPORT();
 // Alias for MAIN.import();
 
