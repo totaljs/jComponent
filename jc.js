@@ -137,7 +137,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.012';
+	M.version = 'v15.013';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -524,7 +524,7 @@
 		} else
 			path = path.replace('.*', '');
 
-		var obj = { name: name, fn: fn, owner: owner || current_owner, context: context || current_com };
+		var obj = { name: name, fn: fn, owner: owner || current_owner, context: context || (current_com == null ? undefined : current_com) };
 
 		if (name === 'watch') {
 			var arr = [];
