@@ -81,6 +81,7 @@
 
 	var current_owner = null;
 	var current_element = null;
+	var current_com = null;
 
 	W.MAIN = W.M = W.jC = W.COM = M;
 	W.PLUGINS = {};
@@ -136,7 +137,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.011';
+	M.version = 'v15.012';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -523,7 +524,7 @@
 		} else
 			path = path.replace('.*', '');
 
-		var obj = { name: name, fn: fn, owner: owner || current_owner, context: context };
+		var obj = { name: name, fn: fn, owner: owner || current_owner, context: context || current_com };
 
 		if (name === 'watch') {
 			var arr = [];
@@ -2547,7 +2548,10 @@
 				obj.id = attrcom(el, 'id') || obj._id;
 				obj.siblings = all.length > 1;
 
+				current_com = obj;
 				com.declaration.call(obj, obj, obj.config);
+				current_com = null;
+
 				meta[3] && el.attrd('jc-value', meta[3]);
 
 				if (obj.init && !statics[name]) {
@@ -3496,10 +3500,8 @@
 				continue;
 			}
 
-
 			var c = component.element;
-
-			if (c && inDOM(c[0])) {
+			if (!component.$removed && c && inDOM(c[0])) {
 				if (!component.attr(ATTRDEL)) {
 					if (component.$parser && !component.$parser.length)
 						component.$parser = undefined;
@@ -3509,17 +3511,10 @@
 				}
 			}
 
-			if (!component.$removed || component.$removed === 2) {
-				// Clears temporary cache for parent components
-				component.$parent = component.$main = undefined;
-				continue;
-			}
-
 			EMIT('destroy', component.name, component);
 			EMIT('component.destroy', component.name, component);
 
 			delete statics['$ST_' + component.name];
-
 			component.destroy && component.destroy();
 
 			if (c[0].nodeName !== 'BODY') {
@@ -3528,6 +3523,7 @@
 				c.remove();
 			}
 
+			component.$main = undefined;
 			component.$data = null;
 			component.dom = null;
 			component.$removed = 2;
