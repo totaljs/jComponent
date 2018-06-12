@@ -35,6 +35,7 @@
 
 	// temporary
 	W.jctmp = {};
+	W.W = window;
 
 	try {
 		var pmk = 'jc.test';
@@ -135,7 +136,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.010';
+	M.version = 'v15.011';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -174,7 +175,7 @@
 		if (arguments.length === 2) {
 			// name + value (is callback)
 			return function(val) {
-				W.TRANSFORM(name, val, value);
+				TRANSFORM(name, val, value);
 			};
 		}
 
@@ -225,13 +226,13 @@
 		if (typeof(name) === 'object') {
 			name && OK(name).forEach(function(key) {
 				ENV[key] = name[key];
-				W.EMIT('environment', key, name[key]);
+				EMIT('environment', key, name[key]);
 			});
 			return name;
 		}
 
 		if (value !== undefined) {
-			W.EMIT('environment', name, value);
+			EMIT('environment', name, value);
 			ENV[name] = value;
 			return value;
 		}
@@ -243,7 +244,7 @@
 		M.$localstorage = name;
 		M.$version = version || '';
 		M.$language = language || '';
-		env && W.ENV(env);
+		env && ENV(env);
 		return M;
 	};
 
@@ -369,7 +370,7 @@
 			s = 2;
 		}
 
-		return a === -1 ? null : { path: val.substring(0, a).trim(), fn: W.FN(val.substring(a + s).trim()) };
+		return a === -1 ? null : { path: val.substring(0, a).trim(), fn: FN(val.substring(a + s).trim()) };
 	}
 
 	W.UPLOAD = function(url, data, callback, timeout, progress) {
@@ -441,7 +442,7 @@
 				output.error = self.status > 399;
 				output.headers = parseHeaders(self.getAllResponseHeaders());
 
-				W.EMIT('response', output);
+				EMIT('response', output);
 
 				if (!output.process || output.cancel)
 					return;
@@ -452,7 +453,7 @@
 				if (!output.error || MD.ajaxerrors) {
 					typeof(callback) === 'string' ? remap(callback.env(), r) : (callback && callback(r, null, output));
 				} else {
-					W.EMIT('error', output);
+					EMIT('error', output);
 					output.process && typeof(callback) === 'function' && callback({}, r, output);
 				}
 
@@ -502,7 +503,7 @@
 		}
 
 		path = pathmaker(path);
-		W.ON('watch', path, fn, init);
+		ON('watch', path, fn, init);
 		return M;
 	};
 
@@ -949,7 +950,7 @@
 			};
 			scr.src = makeurl(url, true);
 			d.getElementsByTagName('head')[0].appendChild(scr);
-			W.EMIT('import', url, $(scr));
+			EMIT('import', url, $(scr));
 			return M;
 		}
 
@@ -961,7 +962,7 @@
 			d.getElementsByTagName('head')[0].appendChild(stl);
 			statics[url] = 2;
 			callback && setTimeout(callback, 200);
-			W.EMIT('import', url, $(stl));
+			EMIT('import', url, $(stl));
 			return M;
 		}
 
@@ -970,7 +971,7 @@
 		}, function() {
 
 			statics[url] = 2;
-			var id = 'import' + W.HASH(url);
+			var id = 'import' + HASH(url);
 
 			var cb = function(response, code, output) {
 
@@ -1004,7 +1005,7 @@
 					callback && WAIT(function() {
 						return C.is == false;
 					}, callback);
-					W.EMIT('import', url, target);
+					EMIT('import', url, target);
 				}, 10);
 			};
 
@@ -1019,12 +1020,12 @@
 	};
 
 	W.IMPORT = M.import = function(url, target, callback, insert, preparator) {
-		return W.IMPORTCACHE(url, null, target, callback, insert, preparator);
+		return IMPORTCACHE(url, null, target, callback, insert, preparator);
 	};
 
 	W.CACHEPATH = function(path, expire, rebind) {
 		var key = '$jcpath';
-		W.WATCH(path, function(p, value) {
+		WATCH(path, function(p, value) {
 			var obj = cachestorage(key);
 			if (obj)
 				obj[path] = value;
@@ -1072,7 +1073,7 @@
 	};
 
 	W.MODIFY = function(path, callback, timeout, reset) {
-		W.SET(path, callback(GET(path)), timeout, reset);
+		SET(path, callback(GET(path)), timeout, reset);
 		return M;
 	};
 
@@ -1272,7 +1273,7 @@
 			if (!options.url)
 				options.url = url;
 
-			W.EMIT('request', options);
+			EMIT('request', options);
 
 			if (options.cancel)
 				return;
@@ -1295,7 +1296,7 @@
 				output.status = req.status || 999;
 				output.text = s;
 				output.headers = parseHeaders(req.getAllResponseHeaders());
-				W.EMIT('response', output);
+				EMIT('response', output);
 				if (output.process && !output.cancel) {
 					if (typeof(callback) === 'string')
 						remap(callback, output.response);
@@ -1329,7 +1330,7 @@
 					} catch (e) {}
 				}
 
-				W.EMIT('response', output);
+				EMIT('response', output);
 
 				if (output.cancel || !output.process)
 					return;
@@ -1340,7 +1341,7 @@
 					else
 						callback && callback.call(output, output.response, output.status, output);
 				} else {
-					W.EMIT('error', output);
+					EMIT('error', output);
 					typeof(callback) === 'function' && callback.call(output, output.response, output.status, output);
 				}
 			};
@@ -1353,7 +1354,7 @@
 	};
 
 	W.AJAXCACHEREVIEW = function(url, data, callback, expire, timeout, clear) {
-		return W.AJAXCACHE(url, data, callback, expire, timeout, clear, true);
+		return AJAXCACHE(url, data, callback, expire, timeout, clear, true);
 	};
 
 	W.AJAXCACHE = function(url, data, callback, expire, timeout, clear, review) {
@@ -1394,7 +1395,7 @@
 				if (!review)
 					return;
 
-				W.AJAX(url, data, function(r, err) {
+				AJAX(url, data, function(r, err) {
 					if (err)
 						r = err;
 					// Is same?
@@ -1409,7 +1410,7 @@
 				return;
 			}
 
-			W.AJAX(url, data, function(r, err) {
+			AJAX(url, data, function(r, err) {
 				if (err)
 					r = err;
 				cacherest(method, uri, data, r, expire);
@@ -1915,7 +1916,7 @@
 
 		// Reset scope
 		var key = path.replace(/\.\*$/, '');
-		var fn = defaults['#' + W.HASH(key)];
+		var fn = defaults['#' + HASH(key)];
 		var tmp;
 
 		if (fn) {
@@ -2606,7 +2607,7 @@
 						continue;
 					}
 
-					var k = 'TE' + W.HASH(template);
+					var k = 'TE' + HASH(template);
 					var a = statics[k];
 					if (a) {
 						fn(a);
@@ -2748,7 +2749,7 @@
 			var tmp = attrcom(sc, 'value');
 			if (tmp) {
 				var fn = new Function('return ' + tmp);
-				defaults['#' + W.HASH(p)] = fn; // store by path (DEFAULT() --> can reset scope object)
+				defaults['#' + HASH(p)] = fn; // store by path (DEFAULT() --> can reset scope object)
 				tmp = fn();
 				set(p, tmp);
 				emitwatch(p, tmp, 1);
@@ -2834,7 +2835,7 @@
 			var key = makeurl(item.url);
 			var can = false;
 
-			W.AJAXCACHE('GET ' + item.url, null, function(response) {
+			AJAXCACHE('GET ' + item.url, null, function(response) {
 
 				key = '$import' + key;
 
@@ -2888,7 +2889,7 @@
 			params.language = M.$language;
 
 		params = STRINGIFY(params);
-		var key = W.HASH(method + '#' + url.replace(/\//g, '') + params).toString();
+		var key = HASH(method + '#' + url.replace(/\//g, '') + params).toString();
 		return cachestorage(key, value, expire);
 	}
 
@@ -3056,9 +3057,9 @@
 			}, 5);
 		})(cls);
 
-		obj.id && W.EMIT('#' + obj.id, obj);
-		W.EMIT('@' + obj.name, obj);
-		W.EMIT(n, obj);
+		obj.id && EMIT('#' + obj.id, obj);
+		EMIT('@' + obj.name, obj);
+		EMIT(n, obj);
 	}
 
 	function async(arr, fn, done) {
@@ -3107,7 +3108,7 @@
 						next();
 					else {
 						warn('Downloading: ' + item);
-						W.IMPORTCACHE(MD.fallback.format(item), MD.fallbackcache, next);
+						IMPORTCACHE(MD.fallback.format(item), MD.fallbackcache, next);
 					}
 				}, 3);
 			}, 100);
@@ -3151,8 +3152,8 @@
 			if (!$loaded) {
 				$loaded = true;
 				clear('valid', 'dirty', 'find');
-				W.EMIT('init');
-				W.EMIT('ready');
+				EMIT('init');
+				EMIT('ready');
 			}
 
 			setTimeout2('$initcleaner', function() {
@@ -3226,7 +3227,7 @@
 			var tmp = code.substring(end + 1, code.length - 9).trim();
 			if (!tmp) {
 				output = output.replace(code, '').trim();
-				var eid = 'external' + W.HASH(code);
+				var eid = 'external' + HASH(code);
 				if (!statics[eid]) {
 					external.push(code);
 					statics[eid] = true;
@@ -3513,8 +3514,11 @@
 				component.$parent = component.$main = undefined;
 				continue;
 			}
-			W.EMIT('destroy', component.name, component);
-			W.EMIT('component.destroy', component.name, component);
+
+			EMIT('destroy', component.name, component);
+			EMIT('component.destroy', component.name, component);
+
+			delete statics['$ST_' + component.name];
 
 			component.destroy && component.destroy();
 
@@ -3646,13 +3650,13 @@
 
 	SCP.unwatch = function(path, fn) {
 		var self = this;
-		W.OFF('scope' + self._id + '#watch', self.path + (path ? '.' + path : ''), fn);
+		OFF('scope' + self._id + '#watch', self.path + (path ? '.' + path : ''), fn);
 		return self;
 	};
 
 	SCP.watch = function(path, fn, init) {
 		var self = this;
-		W.ON('scope' + self._id + '#watch', self.path + (path ? '.' + path : ''), fn, init, self);
+		ON('scope' + self._id + '#watch', self.path + (path ? '.' + path : ''), fn, init, self);
 		return self;
 	};
 
@@ -3661,7 +3665,7 @@
 			timeout = path;
 			path = '';
 		}
-		return W.RESET(this.path + '.' + (path ? + path : '*'), timeout);
+		return RESET(this.path + '.' + (path ? + path : '*'), timeout);
 	};
 
 	SCP.default = function(path, timeout) {
@@ -3669,31 +3673,31 @@
 			timeout = path;
 			path = '';
 		}
-		return W.DEFAULT(this.path + '.' + (path ? path : '*'), timeout);
+		return DEFAULT(this.path + '.' + (path ? path : '*'), timeout);
 	};
 
 	SCP.set = function(path, value, timeout, reset) {
-		return W.SET(this.path + (path ? '.' + path : ''), value, timeout, reset);
+		return SET(this.path + (path ? '.' + path : ''), value, timeout, reset);
 	};
 
 	SCP.push = function(path, value, timeout, reset) {
-		return W.PUSH(this.path + (path ? '.' + path : ''), value, timeout, reset);
+		return PUSH(this.path + (path ? '.' + path : ''), value, timeout, reset);
 	};
 
 	SCP.update = function(path, timeout, reset) {
-		return W.UPDATE(this.path + (path ? '.' + path : ''), timeout, reset);
+		return UPDATE(this.path + (path ? '.' + path : ''), timeout, reset);
 	};
 
 	SCP.get = function(path) {
-		return W.GET(this.path + (path ? '.' + path : ''));
+		return GET(this.path + (path ? '.' + path : ''));
 	};
 
 	SCP.can = function(except) {
-		return W.CAN(this.path + '.*', except);
+		return CAN(this.path + '.*', except);
 	};
 
 	SCP.errors = function(except, highlight) {
-		return W.ERRORS(this.path + '.*', except, highlight);
+		return ERRORS(this.path + '.*', except, highlight);
 	};
 
 	SCP.remove = function() {
@@ -3714,7 +3718,7 @@
 			}
 		}
 
-		W.OFF('scope' + self._id + '#watch');
+		OFF('scope' + self._id + '#watch');
 		var e = self.element;
 		e.find('*').off();
 		e.off();
@@ -3821,7 +3825,7 @@
 				if (self.$bindreleased) {
 
 					if (self.$bindchanges) {
-						var hash = W.HASH(value);
+						var hash = HASH(value);
 						if (hash === self.$valuehash)
 							return;
 						self.$valuehash = hash;
@@ -3856,7 +3860,7 @@
 					cache.bt = 0; // reset timer id
 
 					if (self.$bindchanges) {
-						var hash = W.HASH(value);
+						var hash = HASH(value);
 						if (hash === self.$valuehash)
 							return;
 						self.$valuehash = hash;
@@ -3975,7 +3979,7 @@
 	PPC.notmodified = function(fields) {
 		var t = this;
 		typeof(fields) === 'string' && (fields = [fields]);
-		return W.NOTMODIFIED(t._id, t.get(), fields);
+		return NOTMODIFIED(t._id, t.get(), fields);
 	};
 
 	PPC.$waiter = function(prop, callback) {
@@ -4245,7 +4249,7 @@
 	};
 
 	PPC.notify = function() {
-		W.NOTIFY(this.path);
+		NOTIFY(this.path);
 		return this;
 	};
 
@@ -4646,7 +4650,7 @@
 
 	PPC.unwatch = function(path, fn) {
 		var self = this;
-		W.OFF('com' + self._id + '#watch', path, fn);
+		OFF('com' + self._id + '#watch', path, fn);
 		return self;
 	};
 
@@ -4666,7 +4670,7 @@
 	};
 
 	PPC.invalid = function() {
-		return W.INVALID(this.path, this);
+		return INVALID(this.path, this);
 	};
 
 	PPC.valid = function(value, noEmit) {
@@ -4688,7 +4692,7 @@
 	};
 
 	PPC.style = function(value) {
-		W.STYLE(value, this._id);
+		STYLE(value, this._id);
 		return this;
 	};
 
@@ -4696,7 +4700,7 @@
 		var self = this;
 		self.$dirty_disabled = false;
 		self.$dirty = true;
-		W.CHANGE(self.path, value === undefined ? true : value, self);
+		CHANGE(self.path, value === undefined ? true : value, self);
 		return self;
 	};
 
@@ -4748,7 +4752,7 @@
 		el.attr(ATTRDEL, 'true').find(ATTRCOM).attr(ATTRDEL, 'true');
 		self.$removed = 1;
 		self.removed = true;
-		W.OFF('com' + self._id + '#');
+		OFF('com' + self._id + '#');
 		!noClear && setTimeout2('$cleaner', cleaner2, 100);
 		return true;
 	};
@@ -4761,7 +4765,7 @@
 		} else
 			path = path.replace('.*', '');
 		var self = this;
-		W.ON('com' + self._id + '#' + name, path, fn, init, self);
+		ON('com' + self._id + '#' + name, path, fn, init, self);
 		return self;
 	};
 
@@ -4849,7 +4853,7 @@
 
 	PPC.skip = function(path) {
 		var self = this;
-		W.SKIP(path || self.path);
+		SKIP(path || self.path);
 		return self;
 	};
 
@@ -4889,7 +4893,7 @@
 			value = path;
 			path = self.path;
 		}
-		path && W.REWRITE(path, value);
+		path && REWRITE(path, value);
 		return self;
 	};
 
@@ -5029,7 +5033,7 @@
 			}
 		}
 
-		W.RECOMPILE();
+		RECOMPILE();
 	};
 
 	W.COMPONENT = function(name, config, declaration, dependencies) {
@@ -5044,14 +5048,14 @@
 		if (name.indexOf(',') !== -1) {
 			name.split(',').forEach(function(item, index) {
 				item = item.trim();
-				item && W.COMPONENT(item, config, declaration, index ? null : dependencies);
+				item && COMPONENT(item, config, declaration, index ? null : dependencies);
 			});
 			return;
 		}
 
 		M.$components[name] && warn('Components: Overwriting component:', name);
 		var a = M.$components[name] = { name: name, config: config, declaration: declaration, shared: {}, dependencies: dependencies instanceof Array ? dependencies : null };
-		W.EMIT('component.compile', name, a);
+		EMIT('component.compile', name, a);
 	};
 
 	W.SINGLETON = function(name, def) {
@@ -5085,7 +5089,7 @@
 			var ids = [];
 			query.split(',').forEach(function(q) {
 				q = q.trim();
-				q && ids.push(W.MEDIAQUERY(q, element, fn));
+				q && ids.push(MEDIAQUERY(q, element, fn));
 			});
 			return ids;
 		}
@@ -5273,7 +5277,7 @@
 
 	function exechelper(path, arg) {
 		setTimeout(function() {
-			W.EXEC(true, path, arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6]);
+			EXEC(true, path, arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6]);
 		}, 200);
 	}
 
@@ -5429,7 +5433,7 @@
 		// Is selector?
 		var c = value.substring(0, 1);
 		if (c === '#' || c === '.')
-			return W.PARSE($(value).html(), date);
+			return PARSE($(value).html(), date);
 
 		date === undefined && (date = MD.jsondate);
 		try {
@@ -5457,8 +5461,8 @@
 	W.NOOP = function(){};
 
 	W.TOGGLE = function(path, timeout, reset) {
-		var v = W.GET(path);
-		W.SET(path, !v, timeout, reset);
+		var v = GET(path);
+		SET(path, !v, timeout, reset);
 		return M;
 	};
 
@@ -5613,8 +5617,8 @@
 		if (fields)
 			path = path.concat('#', fields);
 
-		var s = W.STRINGIFY(value, false, fields);
-		var hash = W.HASH(s);
+		var s = STRINGIFY(value, false, fields);
+		var hash = HASH(s);
 		var key = 'notmodified.' + path;
 
 		if (cache[key] === hash)
@@ -5757,7 +5761,7 @@
 		var beg = str.length - 20;
 		if (beg < 0)
 			beg = 0;
-		var tkey = key ? key : W.HASH(str.substring(0, 20) + 'X' + str.substring(beg)) + '_keypress';
+		var tkey = key ? key : HASH(str.substring(0, 20) + 'X' + str.substring(beg)) + '_keypress';
 		setTimeout2(tkey, fn, timeout);
 	};
 
@@ -5835,7 +5839,7 @@
 	W.RECOMPILE = function() {
 		$recompile && clearTimeout($recompile);
 		$recompile = setTimeout(function() {
-			W.COMPILE();
+			COMPILE();
 			$recompile = null;
 		}, 700);
 	};
@@ -7007,8 +7011,8 @@
 					if (M.skipproxy === p)
 						M.skipproxy = '';
 					else {
-						W.NOTIFY(p);
-						W.RESET(p);
+						NOTIFY(p);
+						RESET(p);
 					}
 				}, MD.delaybinder);
 			};
@@ -7115,7 +7119,7 @@
 					return self;
 				}
 
-				W.WAIT(function() {
+				WAIT(function() {
 					var val = self.FIND(selector, many);
 					return val instanceof Array ? val.length > 0 : !!val;
 				}, function(err) {
@@ -7378,7 +7382,7 @@
 			var c = M.components;
 			for (var i = 0, length = c.length; i < length; i++)
 				c[i].knockknock && c[i].knockknock(knockknockcounter);
-			W.EMIT('knockknock', knockknockcounter++);
+			EMIT('knockknock', knockknockcounter++);
 		}, 60000);
 
 		function resize() {
@@ -8037,7 +8041,7 @@
 		watches = watches.remove('owner', self.id);
 
 		// Remove events
-		W.OFF(self.id + '#watch');
+		OFF(self.id + '#watch');
 
 		// Remove schedulers
 		schedulers = schedulers.remove('owner', self.id);
