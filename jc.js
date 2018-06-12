@@ -9,6 +9,7 @@
 	var REGEMPTY = /\s/g;
 	var REGCOMMA = /,/g;
 	var REGSEARCH = /[^a-zA-Zá-žÁ-Žа-яА-Я\d\s:]/g;
+	var REGFNPLUGIN = /[a-z0-9]+\/[a-z0-9]+\(|(^|(?=[^a-z0-9]))@[a-z0-9]+\./i;
 	var REGMETA = /_{2,}/;
 	var REGWILDCARD = /\.\*/;
 	var REGISARR = /\[\d+\]$/;
@@ -134,7 +135,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.009';
+	M.version = 'v15.010';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1796,17 +1797,18 @@
 		if (path.charCodeAt(0) === 64) {
 			path = path.substring(1);
 			var index = path.indexOf('.');
-			var p = path.substring(0, index);
+			var p = path.substring(0, index === -1 ? path.length : index);
 			var rem = W.PLUGINS[p];
-			return (rem ? ('PLUGINS.' + p) : 'UNDEFINED') + path.substring(index);
+			return (rem ? ('PLUGINS.' + p) : (p + '_plugin_not_found')) + (index === -1 ? '' : path.substring(index));
 		}
 
 		var index = path.indexOf('/');
 		if (index === -1)
 			return path;
+
 		var p = path.substring(0, index);
 		var rem = W.PLUGINS[p];
-		return (rem ? ('PLUGINS.' + p) : 'UNDEFINED') + '.' + path.substring(index + 1);
+		return (rem ? ('PLUGINS.' + p) : (p + '_plugin_not_found')) + '.' + path.substring(index + 1);
 	}
 
 	W.GET = M.get = function(path, scope) {
@@ -5156,7 +5158,14 @@
 		return obj.id;
 	};
 
+	var regfnplugin = function(v) {
+		var l = v.length;
+		return pathmaker(v.substring(0, l - 1)) + v.substring(l - 1);
+	};
+
 	W.FN = function(exp) {
+
+		exp = exp.replace(REGFNPLUGIN, regfnplugin);
 
 		var index = exp.indexOf('=>');
 		if (index === -1)
