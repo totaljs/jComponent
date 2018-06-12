@@ -137,7 +137,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.014';
+	M.version = 'v15.015';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1073,8 +1073,20 @@
 		return M;
 	};
 
-	W.MODIFY = function(path, callback, timeout, reset) {
-		SET(path, callback(GET(path)), timeout, reset);
+	W.MODIFY = function(path, value, timeout) {
+		if (path && typeof(path) === 'object') {
+			Object.keys(path).forEach(function(k) {
+				MODIFY(k, path[k], value);
+			});
+		} else {
+			if (typeof(value) === 'function')
+				value = value(GET(path));
+			SET(path, value, timeout);
+			if (timeout)
+				setTimeout(CHANGE, timeout + 5, path);
+			else
+				CHANGE(path);
+		}
 		return M;
 	};
 
