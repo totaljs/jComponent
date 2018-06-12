@@ -1442,8 +1442,9 @@ OFF('refresh');
 COMPILE();
 // Alias for $.components()
 
-GET();
-// Alias for MAIN.get();
+GET(path, [reset]);
+// Gets the value according to the path
+// @reset {Boolean} +v15 default `false`
 
 IMPORT();
 // Alias for MAIN.import();

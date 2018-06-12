@@ -137,7 +137,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.013';
+	M.version = 'v15.014';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1814,7 +1814,12 @@
 	}
 
 	W.GET = M.get = function(path, scope) {
-		return get(pathmaker(path), scope);
+		path = pathmaker(path);
+		if (scope === true) {
+			scope = null;
+			RESET(path, true);
+		}
+		return get(path, scope);
 	};
 
 	W.VALIDATE = function(path, except) {
