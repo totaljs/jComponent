@@ -137,7 +137,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.016';
+	M.version = 'v15.017';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2556,7 +2556,12 @@
 
 				while (true) {
 					if (parent.$com) {
-						obj.owner = parent.$com;
+						var pc = parent.$com;
+						obj.owner = pc;
+						if (pc.$children)
+							pc.$children++;
+						else
+							pc.$children = 1;
 						break;
 					} else if (parent.nodeName === 'BODY')
 						break;
@@ -3950,15 +3955,6 @@
 
 	var PPC = COM.prototype;
 
-	PPC.clear = function() {
-		var self = this;
-		for (var i = 0, length = M.components.length; i < length; i++) {
-			var m = M.components[i];
-			!m.$removed && m.owner === self && m.remove();
-		}
-		return self;
-	};
-
 	PPC.data = function(key, value) {
 		if (!key)
 			key = '@';
@@ -4648,7 +4644,18 @@
 	};
 
 	PPC.empty = function() {
-		var el = this.element;
+
+		var self = this;
+
+		if (self.$children) {
+			for (var i = 0, length = M.components.length; i < length; i++) {
+				var m = M.components[i];
+				!m.$removed && m.owner === self && m.remove();
+			}
+			self.$children = 0;
+		}
+
+		var el = self.element;
 		el.empty();
 		return el;
 	};
