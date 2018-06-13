@@ -137,7 +137,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.015';
+	M.version = 'v15.016';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2552,9 +2552,22 @@
 				}
 
 				var obj = new COM(com.name);
+				var parent = dom.parentNode;
+
+				while (true) {
+					if (parent.$com) {
+						obj.owner = parent.$com;
+						break;
+					} else if (parent.nodeName === 'BODY')
+						break;
+					parent = parent.parentNode;
+					if (parent == null)
+						break;
+				}
+
 				obj.global = com.shared;
 				obj.element = el;
-				obj.dom = el[0];
+				obj.dom = dom;
 				obj.setPath(pathmaker(attrcom(el, 'path') || (meta ? meta[1] === 'null' ? '' : meta[1] : '') || obj._id), 1);
 				obj.config = {};
 
@@ -3936,6 +3949,15 @@
 	}
 
 	var PPC = COM.prototype;
+
+	PPC.clear = function() {
+		var self = this;
+		for (var i = 0, length = M.components.length; i < length; i++) {
+			var m = M.components[i];
+			!m.$removed && m.owner === self && m.remove();
+		}
+		return self;
+	};
 
 	PPC.data = function(key, value) {
 		if (!key)

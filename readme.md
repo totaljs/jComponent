@@ -832,6 +832,9 @@ COMPONENT('my-component-name', function(instance, config) {
     // The component will disable path listening.
     // +v4.1.0
 
+    instance.clear();
+    // The component removes all nested components
+    // +v15
 
     instance.used();
     // Sets the current time into the `instance.usage.custom` property in this component.
