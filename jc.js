@@ -137,7 +137,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.017';
+	M.version = 'v15.018';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -370,7 +370,6 @@
 			a = val.indexOf('->');
 			s = 2;
 		}
-
 		return a === -1 ? null : { path: val.substring(0, a).trim(), fn: FN(val.substring(a + s).trim()) };
 	}
 
@@ -503,7 +502,7 @@
 			path = '*';
 		}
 
-		path = pathmaker(path);
+		path = pathmaker(path, true);
 		ON('watch', path, fn, init);
 		return M;
 	};
@@ -1799,30 +1798,40 @@
 		return M;
 	};
 
-	function pathmaker(path) {
+	function pathmaker(path, clean) {
 
 		if (!path)
 			return path;
 
+		var tmp = '';
+
+		if (clean) {
+			var index = path.indexOf(' ');
+			if (index !== -1) {
+				tmp = path.substring(index);
+				path = path.substring(0, index);
+			}
+		}
+
 		// temporary
 		if (path.charCodeAt(0) === 37)
-			return 'jctmp.' + path.substring(1);
+			return 'jctmp.' + path.substring(1) + tmp;
 
 		if (path.charCodeAt(0) === 64) {
 			path = path.substring(1);
 			var index = path.indexOf('.');
 			var p = path.substring(0, index === -1 ? path.length : index);
 			var rem = W.PLUGINS[p];
-			return (rem ? ('PLUGINS.' + p) : (p + '_plugin_not_found')) + (index === -1 ? '' : path.substring(index));
+			return ((rem ? ('PLUGINS.' + p) : (p + '_plugin_not_found')) + (index === -1 ? '' : path.substring(index))) + tmp;
 		}
 
 		var index = path.indexOf('/');
 		if (index === -1)
-			return path;
+			return path + tmp;
 
 		var p = path.substring(0, index);
 		var rem = W.PLUGINS[p];
-		return (rem ? ('PLUGINS.' + p) : (p + '_plugin_not_found')) + '.' + path.substring(index + 1);
+		return ((rem ? ('PLUGINS.' + p) : (p + '_plugin_not_found')) + '.' + path.substring(index + 1)) + tmp;
 	}
 
 	W.GET = M.get = function(path, scope) {
@@ -2573,7 +2582,7 @@
 				obj.global = com.shared;
 				obj.element = el;
 				obj.dom = dom;
-				obj.setPath(pathmaker(attrcom(el, 'path') || (meta ? meta[1] === 'null' ? '' : meta[1] : '') || obj._id), 1);
+				obj.setPath(pathmaker(attrcom(el, 'path') || (meta ? meta[1] === 'null' ? '' : meta[1] : '') || obj._id, true), 1);
 				obj.config = {};
 
 				// Default config
