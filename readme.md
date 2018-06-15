@@ -1099,127 +1099,6 @@ var value = MAIN.formatter('a-value', 'my.custom.path', 'number');
 ### Methods
 
 ```javascript
-MAIN.environment(key, [version], [language]);
-// Changes localstorage key, version and language
-// +v11.1.0
-
-// Runs the compiler for new components. jComponent doesn't watch new elements in DOM.MAINrewrite(path, value);
-MAIN.rewrite('model.name', 'Peter');
-// +v4.0.0 Rewrites the value in the model without notification
-// +v15 supports "@plugin.path"
-
-MAIN.set(path, value, [reset]);
-MAIN.set('model.name', 'Peter'); // Example: sets the value
-MAIN.set('+model.tags', 'HTML'); // Example: appends the value into the array
-MAIN.set('+model.tags', ['CSS', 'JavaScript']); // Example: appends the array into the array
-MAIN.set('!model.name', 'jComponent'); // Notifies all components which listen on this absolute path
-// Sets the value into the model. `reset` argument resets the state
-// (dirty, validation), default: `false`.
-
-
-MAIN.push(path, value, [reset]);
-MAIN.push('model.tags', 'HTML'); // Example
-MAIN.push('model.tags', ['CSS', 'JavaScript']); // Example
-// +v15 supports "@pluginname.path"
-// Pushs the value in the model, only for arrays. `reset` argument resets
-// the state (dirty, validation), default: `false`.
-
-
-MAIN.inc(path, value, [reset]);
-MAIN.inc('model.age', 10); // Example
-MAIN.inc('model.price', -5); // Example
-// +v15 supports "@pluginname.path"
-// Increments the value in the model, only for numbers. `reset` argument
-// resets the state (dirty, validation), default: `false`.
-
-
-MAIN.extend(path, value, [reset]);
-MAIN.extend('model', { age: 30, name: 'Peter' }); // Example
-// +v15 supports "@plugin.path"
-// Extends the value in the model, only for objects. `reset` argument resets
-// the state (dirty, validation), default: `false`.
-
-
-MAIN.get(path, [scope]); // default scope is `window`
-MAIN.get('model.age'); // Example
-MAIN.get('model.tags'); // Example
-MAIN.get('@plugin.name'); // +v15 reads a value according to the plugin scope
-// Gets the value from the model.
-
-
-MAIN.invalid(path, [except_paths_arr]);
-// +v13.0.0 supports an except flags "@hidden" (only hidden components), "@visible" (only visible components), "@disabled" (only disabled inputs in the component), "@enabled" (only enabled inputs in the component) in "except"
-// +v15 supports "@plugin.path"
-// Sets the invalid state to all components according the binding path.
-
-
-MAIN.import(url, [target], [callback], [insert], [preparator(response, meta)])
-// Imports a HTML content (with components) into the `target` (by default: `document.body`)
-// or can import scripts (.js) or styles (.css). `insert` argument (default: true) wraps
-// If the URL starts with `ONCE http://...` then the content will be downloaded only one time.
-// +v8.0.0 supports re-type of extension `https://maps.googleapis.com/maps/api/js?key=KEY .js`
-// +v8.0.0 styles are inserted into the head
-// +v9.0.0 added a preparator {Function} for preparing values, example `function(response) { return response; }` (it has to return a value)
-
-
-MAIN.dirty(path, [value]);
-MAIN.dirty('model.isDirty'); // Example: Checker.
-MAIN.dirty('model.isDirty', false); // Example: Setter.
-// Checks or sets a dirty value.
-// Returns {Boolean}.
-// Supports wildcard path, e.g. `model.*`.
-
-
-MAIN.valid(path, [value]);
-MAIN.valid('model.isValid'); // Example: Checker.
-MAIN.valid('model.isValid', false); // Example: Setter.
-// Checks or sets a valid value.
-// Returns {Boolean}.
-// Supports wildcard path, e.g. `model.*`.
-
-
-MAIN.cache(key); // Example: Getter.
-MAIN.cache(key, value, expire); // Example: Setter.
-// Gets or Sets the value from the cache. `Expire` in milliseconds or can be a string `5 minutes`.
-// Returns {Object}.
-
-
-MAIN.cachepath(path, expire, [rebind]);
-// +v8.0.0
-// The method creates watcher for `path` and stores values into the localStorage
-// Returns {Components}.
-// +v9.0.0: added "rebind" argument (default: false)
-// +v15 supports "@plugin.path"
-
-MAIN.reset([path], [timeout]);
-// Reset the dirty and valid method together (Sets: dirty=true and valid=true)
-// Supports wildcard path, e.g. `model.*`.
-// +v15 supports "@plugin.path"
-
-
-MAIN.each(fn(component, index, isAsterix), path);
-MAIN.each(function(component) { console.log(component); }); // Example: All components.
-MAIN.each(function(component) { console.log(component); }, 'model.*'); // Example: According the path.
-// Components selector.
-// Supports wildcard path, e.g. `model.*`.
-
-
-MAIN.update(path, [reset]);
-MAIN.update('model.*'); // Example
-MAIN.update('model.name'); // Example
-// Executes `Component.setter` for each component according path. `reset` argument resets
-// the state (dirty, validation), default: `false`.
-
-
-MAIN.notify([path1], [path2], [path3], [path4], ...);
-MAIN.notify('model.age', 'model.name'); // Example
-// Executes `Component.setter` for each component according path (only fixed path).
-
-
-MAIN.emit(name, [arg1], [arg2]);
-// Triggers event within all components.
-
-
 MAIN.parseCookie();
 // Parsers `document.cookie` and returns {Object}.
 
@@ -1658,6 +1537,9 @@ EXEC('PLUGIN/method_name', 'hide', 1000);
 // +v9.0.0
 // +v12.0.5 supports "WAITING" for a method e.g. EXEC(true, 'PLUGIN/method_name', 'hide', 1000);
 
+EXEC('#event_name', 'arg1', 'argN');
+// Executes an event
+// +v15.0.0
 
 // Creates a singleton instance.
 var obj = SINGLETON('name');
@@ -1967,26 +1849,6 @@ var id = MEDIAQUERY('(min-width: 500px) and (max-width: 1024px)', function(w, h,
 
 // Remove media query listener: "id" must be number
 MEDIAQUERY(id);
-```
-
-### Example
-
-```javascript
-// CREATING
-OPERATION('get.users', function(filter, callback) {
-    AJAX('GET /api/users/', filter, callback);
-});
-
-OPERATION('now', function() {
-    return new Date().format('HH:mm:ss');
-});
-
-// EXECUTING
-OPERATION('get.users')({}, 'db.users');
-console.log(OPERATION('now')());
-
-GET('#get.users')({}, 'db.users');
-console.log(GET('#now')());
 ```
 
 ## Waiter

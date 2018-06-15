@@ -137,7 +137,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.018';
+	M.version = 'v15.019';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5261,7 +5261,7 @@
 
 	W.RECONFIGURE = function(selector, value) {
 		SETTER(true, selector, 'reconfigure', value);
-		return W.RECONFIGURE;
+		return RECONFIGURE;
 	};
 
 	W.SETTER = function(selector, name) {
@@ -5288,7 +5288,7 @@
 					W.SETTER.apply(W, arg);
 				}, 555, arguments);
 
-				return W.SETTER;
+				return SETTER;
 			}
 
 			FIND(selector, true, function(arr) {
@@ -5314,7 +5314,7 @@
 					W.SETTER.apply(W, arg);
 				}, 555, arguments);
 
-				return W.SETTER;
+				return SETTER;
 			}
 
 			var arr = FIND(selector, true);
@@ -5327,7 +5327,7 @@
 			}
 		}
 
-		return W.SETTER;
+		return SETTER;
 	};
 
 	function exechelper(path, arg) {
@@ -5357,6 +5357,12 @@
 
 		var c = path.charCodeAt(0);
 
+		// Event
+		if (c === 35) {
+			EMIT(path.substring(1), arg[0], arg[1], arg[2], arg[3], arg[4]);
+			return EXEC;
+		}
+
 		// PLUGINS
 		if (c === 64) {
 			var index = path.indexOf('.');
@@ -5371,7 +5377,7 @@
 			}
 
 			wait && !ok && exechelper(path, arg);
-			return W.EXEC;
+			return EXEC;
 		}
 
 		// PLUGINS
@@ -5386,7 +5392,7 @@
 			}
 
 			wait && !ok && exechelper(path, arg);
-			return W.EXEC;
+			return EXEC;
 		}
 
 		var fn = get(path);
@@ -5397,7 +5403,7 @@
 		}
 
 		wait && !ok && exechelper(path, arg);
-		return W.EXEC;
+		return EXEC;
 	};
 
 	W.MAKE = function(obj, fn, update) {
