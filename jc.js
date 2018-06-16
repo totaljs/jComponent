@@ -137,7 +137,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.019';
+	M.version = 'v15.020';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5341,7 +5341,6 @@
 		var arg = [];
 		var f = 1;
 		var wait = false;
-		var ok = 0;
 		var p;
 
 		if (path === true) {
@@ -5359,9 +5358,15 @@
 
 		// Event
 		if (c === 35) {
-			EMIT(path.substring(1), arg[0], arg[1], arg[2], arg[3], arg[4]);
+			p = path.substring(1);
+			if (wait)
+				!events[p] && exechelper(path, arg);
+			else
+				EMIT(p, arg[0], arg[1], arg[2], arg[3], arg[4]);
 			return EXEC;
 		}
+
+		var ok = 0;
 
 		// PLUGINS
 		if (c === 64) {
