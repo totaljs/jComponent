@@ -5667,7 +5667,7 @@
 		var output = [];
 		M.each(function(obj) {
 			if (!(obj.disabled || obj.$dirty_disabled))
-				!obj.$dirty === false && output.push(obj.path);
+				obj.$dirty === false && output.push(obj.path);
 		}, pathmaker(path));
 		return output;
 	};
