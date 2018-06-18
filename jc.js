@@ -137,7 +137,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.020';
+	M.version = 'v15.021';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7460,7 +7460,7 @@
 
 		resize();
 
-		$(document).on('resize', resize);
+		$(window).on('resize', resize);
 		$(document).ready(function() {
 
 			if ($ready) {
