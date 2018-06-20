@@ -46,7 +46,7 @@ input:invalid { box-shadow: none; }
 	<div data-jc="LAZY calendar"></div>
 
 	<div style="padding:50px">
-		<div data-jc="textbox__form.value__type:date"></div>
+		<div data-jc="textbox__form.value__type:date">Skuska</div>
 		<div data-bind="form.value__html:value" style="margin:10px 0 0 0"></div>
 	</div>
 
@@ -72,6 +72,8 @@ input:invalid { box-shadow: none; }
 	<script>
 		var form = {};
 		form.value = new Date();
+
+COMPONENT_CONFIG('*form', 'required:true');
 
 COMPONENT('textbox', function(self, config) {
 
