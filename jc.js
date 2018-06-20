@@ -5078,7 +5078,6 @@
 		if (typeof(selector) === 'string') {
 			var fn = [];
 			selector.split(' ').forEach(function(sel) {
-				console.log('-->', sel);
 				var prop = '';
 				switch (sel.trim().substring(0, 1)) {
 					case '*':
@@ -5100,7 +5099,6 @@
 				fn.push('com.{0}==\'{1}\''.format(prop, prop === '$name' ? sel : sel.substring(1)));
 			});
 			selector = FN('com=>' + fn.join('&&'));
-			console.log(selector);
 		}
 
 		configs.push({ fn: selector, config: config });
