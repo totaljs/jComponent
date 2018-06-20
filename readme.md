@@ -2060,6 +2060,22 @@ COMPONENT_EXTEND('component-name', function(component) {
 });
 ```
 
+## Default configuration for components
+
+```javascript
+COMPONENT_CONFIG('component-name', 'required:true;placeholder:Modified config');
+COMPONENT_CONFIG('component-name .component-path', 'required:true;placeholder:Modified config');
+COMPONENT_CONFIG('#component-id', 'required:true;placeholder:Modified config');
+COMPONENT_CONFIG('#component-id .component-path', 'required:true;placeholder:Modified config');
+COMPONENT_CONFIG('.component-path', 'required:true;placeholder:Modified config');
+COMPONENT_CONFIG('*search-in-component-path', 'required:true;placeholder:Modified config');
+
+COMPONENT_CONFIG(function(com) {
+    // com === instance of Component but not fully initialized
+    return true;
+}, 'required:true;placeholder:Modified config');
+```
+
 ## PROTOTYPES
 
 Prototypes are supported in `+v10.0.0`.

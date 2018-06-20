@@ -50,6 +50,7 @@
 	var blocked = {};
 	var storage = {};
 	var extensions = {}; // COMPONENT_EXTEND()
+	var configs = [];
 	var cache = {};
 	var fallback = { $: 0 }; // $ === count of new items in fallback
 	var fallbackpending = [];
@@ -137,7 +138,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.021';
+	M.version = 'v15.022';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2595,6 +2596,11 @@
 				obj.type = attrcom(el, 'type') || '';
 				obj.id = attrcom(el, 'id') || obj._id;
 				obj.siblings = all.length > 1;
+
+				for (var i = 0; i < configs.length; i++) {
+					var con = configs[i];
+					con.fn(obj) && obj.reconfigure(con.config, NOOP);
+				}
 
 				current_com = obj;
 				com.declaration.call(obj, obj, obj.config);
@@ -5065,6 +5071,39 @@
 			return true;
 		}
 		return false;
+	};
+
+	W.COMPONENT_CONFIG = function(selector, config) {
+
+		if (typeof(selector) === 'string') {
+			var fn = [];
+			selector.split(' ').forEach(function(sel) {
+				console.log('-->', sel);
+				var prop = '';
+				switch (sel.trim().substring(0, 1)) {
+					case '*':
+						fn.push('com.path.indexOf(\'{0}\')!==-1'.format(sel.substring(1)));
+						return;
+					case '.':
+						// path
+						prop = 'path';
+						break;
+					case '#':
+						// id
+						prop = 'id';
+						break;
+					default:
+						// name
+						prop = '$name';
+						break;
+				}
+				fn.push('com.{0}==\'{1}\''.format(prop, prop === '$name' ? sel : sel.substring(1)));
+			});
+			selector = FN('com=>' + fn.join('&&'));
+			console.log(selector);
+		}
+
+		configs.push({ fn: selector, config: config });
 	};
 
 	W.COMPONENT_EXTEND = function(name, config, declaration) {
