@@ -138,7 +138,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.023';
+	M.version = 'v15.024';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7784,6 +7784,7 @@
 							case 'hide':
 							case 'show':
 							case 'selector':
+							case 'config':
 								break;
 							case 'import':
 							case 'tclass':
@@ -8013,6 +8014,16 @@
 				if (item.import) {
 					IMPORT(item.import, el);
 					delete item.import;
+				}
+
+				if (item.config) {
+					if (value != null || !item.config.$nn) {
+						tmp = item.config.call(el, value, path, el);
+						if (tmp) {
+							for (var i = 0; i < el.length; i++)
+								el[i].$com && el[i].$com.reconfigure(tmp);
+						}
+					}
 				}
 
 				if (item.html) {

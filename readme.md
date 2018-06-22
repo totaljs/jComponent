@@ -2493,7 +2493,8 @@ __Commands__:
 - `def` sets a default value, value will be evaluated as JavaScript code
 - `delay` delays a binding and must contain `Number`
 - `class` toggles class if the binder has been processed and must contain `String` as a class name
-- `import` perform `IMPORT()` and must contain `{String}` as URL address
+- `import` performs `IMPORT()` and must contain `{String}` as URL address
+- `config` performs `RECONFIGURE()` for the current element component, must return configuration `String`
 - `!COMMAND` evaluating will be performed if the value won't be `null` or `undefined`
 
 __Linking commands__:
