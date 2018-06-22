@@ -138,7 +138,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.022';
+	M.version = 'v15.023';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -3570,6 +3570,7 @@
 
 			delete statics['$ST_' + component.name];
 			component.destroy && component.destroy();
+			$('#css' + component.ID).remove();
 
 			if (c[0].nodeName !== 'BODY') {
 				c.off();
