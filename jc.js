@@ -138,7 +138,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.024';
+	M.version = 'v15.025';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1525,7 +1525,13 @@
 
 	// 1 === manually
 	// 2 === by input
-	M.update = function(path, reset, type) {
+	M.update = function(path, reset, type, wasset) {
+
+		if (path instanceof Array) {
+			for (var i = 0; i < path.length; i++)
+				M.update(path[i], reset, type);
+			return M;
+		}
 
 		path = pathmaker(path);
 		if (!path)
@@ -1539,7 +1545,7 @@
 		if (!path)
 			return M;
 
-		set(path, get(path), true);
+		!wasset && set(path, get(path), true);
 
 		var state = [];
 
@@ -1659,6 +1665,12 @@
 
 	M.inc = function(path, value, type) {
 
+		if (path instanceof Array) {
+			for (var i = 0; i < path.length; i++)
+				M.inc(path[i], value, type);
+			return M;
+		}
+
 		path = pathmaker(path);
 
 		if (!path)
@@ -1682,6 +1694,13 @@
 	// 2 === by input
 	// 3 === default
 	M.set = function(path, value, type) {
+
+		if (path instanceof Array) {
+			for (var i = 0; i < path.length; i++)
+				M.set(path[i], value, type);
+			return M;
+		}
+
 		path = pathmaker(path);
 
 		if (!path)
@@ -1771,6 +1790,12 @@
 	};
 
 	M.push = function(path, value, type) {
+
+		if (path instanceof Array) {
+			for (var i = 0; i < path.length; i++)
+				M.push(path[i], value, type);
+			return M;
+		}
 
 		var arr = get(path);
 		var n = false;
@@ -3364,6 +3389,7 @@
 
 		var v = arr[arr.length - 1];
 		binder.push('binders[\'' + v + '\']&&binderbind(\'' + v + '\',\'' + path + '\',$ticks)');
+		binder.push('binders[\'!' + v + '\']&&binderbind(\'!' + v + '\',\'' + path + '\',$ticks)');
 
 		if (v.substring(0, 1) !== '[')
 			v = '.' + v;
@@ -7928,10 +7954,11 @@
 		} else {
 			for (var i = 0, length = arr.length; i < length; i++) {
 				p += (p ? '.' : '') + arr[i];
-				if (binders[p])
-					binders[p].push(obj);
+				var k = i === length - 1 ? p : '!' + p;
+				if (binders[k])
+					binders[k].push(obj);
 				else
-					binders[p] = [obj];
+					binders[k] = [obj];
 			}
 		}
 
