@@ -1371,6 +1371,10 @@ UPDATE(path, [sleep/type], [reset]);
 // @type {String} +v14.0.0 can be defined own string type
 // IMPORTANT: type doesn't work with @reset
 
+BIND(path);
+// Rebinds values in `data-bind` elements
+// +v15
+
 NOTIFY(path1, path2, ...);
 // Notifies components setter according to the path (only fixed path).
 

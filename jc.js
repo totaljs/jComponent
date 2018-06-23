@@ -138,7 +138,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.025';
+	M.version = 'v15.026';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5828,6 +5828,22 @@
 		output = r;
 		!noCache && (cache[key] = output);
 		return output;
+	};
+
+	W.BIND = function(path) {
+		if (path instanceof Array) {
+			for (var i = 0; i < path.length; i++)
+				BIND(path[i]);
+			return W;
+		}
+		path = pathmaker(path);
+		if (!path)
+			return W;
+		var is = path.charCodeAt(0) === 33;
+		if (is)
+			path = path.substring(1);
+		path = path.replace(REGWILDCARD, '');
+		path && set(path, get(path), true);
 	};
 
 	W.UPDATE = function(path, timeout, reset) {
