@@ -119,6 +119,7 @@
 
 	MD.thousandsseparator = ' ';
 	MD.decimalseparator = '.';
+	MD.dateformat = null;
 
 	W.MONTHS = M.months = 'January,February,March,April,May,June,July,August,September,October,November,December'.split(',');
 	W.DAYS = M.days = 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'.split(',');
@@ -6567,6 +6568,9 @@
 	DP.format = function(format, utc) {
 
 		var self = utc ? this.toUTC() : this;
+
+		if (format == null)
+			format = MD.dateformat;
 
 		if (!format)
 			return self.getFullYear() + '-' + (self.getMonth() + 1).toString().padLeft(2, '0') + '-' + self.getDate().toString().padLeft(2, '0') + 'T' + self.getHours().toString().padLeft(2, '0') + ':' + self.getMinutes().toString().padLeft(2, '0') + ':' + self.getSeconds().toString().padLeft(2, '0') + '.' + self.getMilliseconds().toString().padLeft(3, '0') + 'Z';

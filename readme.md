@@ -1056,6 +1056,10 @@ DEF.decimalseparator = '.';
 // {String} default decimal separator
 // +v12.0.0
 
+DEF.dateformat = '';
+// {String} default date format
+// +v15.0.0
+
 MAIN.$version;
 // {String} appends the value to each URL address `?version=$version`
 // called via jComponent, default: "".
