@@ -1286,6 +1286,12 @@ ON('import', function(url, target) {
     // target {jQuery Element}
 });
 
+
+ON('lazy', function(component_name, isLoading) {
+    // Is executed when the begining/ending lazy loading
+    // +v15.0.0
+});
+
 OFF('error', [path], [fn]);
 // Removes events
 // +v10.1.0

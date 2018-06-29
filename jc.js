@@ -2318,8 +2318,10 @@
 		} else {
 			for (var i = 0, length = M.components.length; i < length; i++) {
 				var com = M.components[i];
+
 				if (!com || !com.$loaded || com.$removed || (id && com.id !== id) || (name && com.$name !== name) || (version && com.$version !== version))
 					continue;
+
 				if (path) {
 					if (com.path !== path) {
 						if (!com.pathscope || ((com.pathscope + '.' + path) !== com.path))
@@ -2622,6 +2624,7 @@
 				obj.type = attrcom(el, 'type') || '';
 				obj.id = attrcom(el, 'id') || obj._id;
 				obj.siblings = all.length > 1;
+				obj.$lazy = lo;
 
 				for (var i = 0; i < configs.length; i++) {
 					var con = configs[i];
@@ -2681,7 +2684,6 @@
 						dependencies(com, function(obj, el) {
 							typeof(obj.make) === 'function' && obj.make(data);
 							init(el, obj);
-							lo && (lo.state = 3);
 						}, obj, el);
 					};
 
@@ -2714,7 +2716,6 @@
 								obj.make = obj.prerender(obj.make);
 							el.html(obj.make);
 							init(el, obj);
-							lo && (lo.state = 3);
 						}, obj, el);
 						continue;
 					}
@@ -2725,7 +2726,6 @@
 								data = obj.prerender(data);
 							el.html(data);
 							init(el, obj);
-							lo && (lo.state = 3);
 						}, obj, el);
 					});
 
@@ -2736,14 +2736,12 @@
 					dependencies(com, function(obj, el) {
 						obj.make && obj.make();
 						init(el, obj);
-						lo && (lo.state = 3);
 					}, obj, el);
 				} else {
 					// Because sometimes make doesn't contain the content of the element
 					setTimeout(function(init, el, obj) {
 						obj.make && obj.make();
 						init(el, obj);
-						lo && (lo.state = 3);
 					}, 5, init, el, obj);
 				}
 			}
@@ -3144,6 +3142,12 @@
 		obj.id && EMIT('#' + obj.id, obj);
 		EMIT('@' + obj.name, obj);
 		EMIT(n, obj);
+		clear('find.');
+		if (obj.$lazy) {
+			obj.$lazy.state = 3;
+			delete obj.$lazy;
+			EMIT('lazy', obj.$name, false);
+		}
 	}
 
 	function async(arr, fn, done) {
@@ -3652,7 +3656,7 @@
 		OK(R).forEach(function(key) {
 			var a = R[key];
 			if (!inDOM(a.element[0]) || !a.element[0].innerHTML) {
-				a.remove();
+				a.$remove();
 				delete R[key];
 			}
 		});
@@ -5345,6 +5349,7 @@
 
 				if (lazycom[selector].state === 1) {
 					lazycom[selector].state = 2;
+					EMIT('lazy', selector, true);
 					warn('Lazy load: ' + selector);
 					compile();
 				}
@@ -5371,6 +5376,7 @@
 
 				if (lazycom[selector].state === 1) {
 					lazycom[selector].state = 2;
+					EMIT('lazy', selector, true);
 					warn('Lazy load: ' + selector);
 					compile();
 				}
@@ -7303,6 +7309,7 @@
 
 					if (lazycom[selector].state === 1) {
 						lazycom[selector].state = 2;
+						EMIT('lazy', selector, true);
 						warn('Lazy load: ' + selector);
 						compile();
 					}
@@ -7330,6 +7337,7 @@
 
 					if (lazycom[selector].state === 1) {
 						lazycom[selector].state = 2;
+						EMIT('lazy', selector, true);
 						warn('Lazy load: ' + selector);
 						compile();
 					}
@@ -8170,7 +8178,7 @@
 
 	function Plugin(name, fn) {
 		(/\W/).test(name) && warn('Plugin name must contain A-Z chars only.');
-		W.PLUGINS[name] && W.PLUGINS[name].remove(true);
+		W.PLUGINS[name] && W.PLUGINS[name].$remove(true);
 		var t = this;
 		t.element = $(current_element || document.body);
 		t.id = 'plug' + name;
@@ -8183,7 +8191,7 @@
 		EMIT('plugin', t);
 	}
 
-	Plugin.prototype.remove = function() {
+	Plugin.prototype.$remove = function() {
 
 		var self = this;
 		if (!self.element)
