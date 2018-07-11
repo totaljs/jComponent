@@ -110,6 +110,7 @@
 	MD.importcache = 'session';
 	MD.pingdata = {};
 	MD.baseurl = ''; // String or Function
+	MD.root = ''; // String or Function
 	MD.makeurl = null; // Function
 	MD.jsonconverter = {
 		'text json': function(text) {
@@ -139,7 +140,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.027';
+	M.version = 'v15.028';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1266,12 +1267,8 @@
 				delete options.headers['X-Requested-With'];
 				if (isCredentials)
 					options.xhrFields = { withCredentials: true };
-			} else if (MD.baseurl) {
-				if (typeof(MD.baseurl) === 'function')
-					url = MD.baseurl(url);
-				else
-					url = MD.baseurl + url;
-			}
+			} else
+				url = url.ROOT();
 
 			var custom = url.match(/\([a-z0-9\-.,]+\)/i);
 			if (custom) {
@@ -6177,6 +6174,21 @@
 			arr.push(self[i]);
 		}
 		return arr;
+	};
+
+	SP.ROOT = function(noBase) {
+		var url = this;
+		var r = MD.root;
+		var b = MD.baseurl;
+		var ext = /(https|http|wss|ws|file):\/\/|\/\/[a-z0-9]|[a-z]:/i;
+		var replace = function(t) {
+			return t.substring(0, 1) + '/';
+		};
+		if (r)
+			url = typeof(r) === 'function' ? r(url) : ext.test(url) ? url : (r + url);
+		else if (!noBase && b)
+			url = typeof(b) === 'function' ? b(url) : ext.test(url) ? url : (b + url);
+		return url.replace(/[^:]\/{2,}/, replace);
 	};
 
 	SP.env = function() {

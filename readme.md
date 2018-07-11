@@ -1013,7 +1013,12 @@ DEF.delayrepeat;
 DEF.baseurl;
 // v13.0.5
 // Can be {Function(url)} needs to return updated url
-// Can be {String} can contain base url which is used in this form "url = baseurl + url"
+// Can be {String} can contain base url which is used in this form "url = baseurl + url" for AJAX only
+
+DEF.root;
+// v15.0.0
+// Can be {Function(url)} needs to return updated url
+// Can be {String} can contain root url which is used in this form "url = root + url" for AJAX + ROUTES + REDIRECTS
 
 DEF.makeurl;
 // v14.3.1
