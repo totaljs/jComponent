@@ -141,7 +141,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.029';
+	M.version = 'v15.030';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -3887,7 +3887,7 @@
 		self.validate;
 		self.released;
 
-		self.getter = function(value, realtime, validate, nobind) {
+		self.getter = function(value, realtime, nobind) {
 
 			var self = this;
 
@@ -4890,7 +4890,6 @@
 	};
 
 	PPC.formatter = function(value, prepend) {
-
 		var self = this;
 
 		if (typeof(value) === 'function') {
@@ -7651,7 +7650,18 @@
 					self.$jcevent = 1;
 				else if (self.$jcevent === 1) {
 					com.dirty(false, true);
-					com.getter(self.value, true, true, true);
+					// com.getter(self.value, true, true); Why no bind?
+					com.getter(self.value, true);
+				} else if (self.$jcskip) {
+					self.$jcskip = false;
+				} else {
+					// formatter
+					var tmp = com.$skip;
+					if (tmp)
+						com.$skip = false;
+					com.setter(com.get(), com.path, 2);
+					if (tmp)
+						com.$skip = tmp;
 				}
 			});
 
@@ -7665,7 +7675,8 @@
 
 				if (self.$jckeypress === false) {
 					// bind + validate
-					com.getter(self.value, false, true);
+					self.$jcskip = true;
+					com.getter(self.value, false);
 					return;
 				}
 
@@ -7674,13 +7685,13 @@
 						var sel = self[self.selectedIndex];
 						self.$jcevent = 2;
 						com.dirty(false, true);
-						com.getter(sel.value, false, true);
+						com.getter(sel.value, false);
 						return;
 					case 'INPUT':
 						if (self.type === 'checkbox' || self.type === 'radio') {
 							self.$jcevent = 2;
 							com.dirty(false, true);
-							com.getter(self.checked, false, true);
+							com.getter(self.checked, false);
 							return;
 						}
 						break;
@@ -7688,12 +7699,13 @@
 
 				if (self.$jctimeout) {
 					com.dirty(false, true);
-					com.getter(self.value, true, true);
+					com.getter(self.value, true);
 					clearTimeout(self.$jctimeout);
 					self.$jctimeout = 0;
-				} else
+				} else {
+					self.$jcskip = true;
 					com.setter && com.setterX(com.get(), self.path, 2);
-
+				}
 			});
 
 			setTimeout(compile, 2);
@@ -7708,7 +7720,7 @@
 		// It's not dirty
 		com.dirty(false, true);
 		// Binds a value
-		com.getter(self.value, true, true);
+		com.getter(self.value, true);
 	}
 
 	M.$parser.push(function(path, value, type) {
