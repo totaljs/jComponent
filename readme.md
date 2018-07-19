@@ -58,7 +58,7 @@ The library can be loaded with `async` attribute.
 
 The library finds all components by the `data-jc` attributes which must contain a component name and [the component must be defined in JavaScript](#component).
 
-__IMPORTANT__: +v8.0.0 supports shorter names of attributes e.g. `data-jc=""` instead of `data-jc=""` or `data-jc-path` instead of `data-component-path`.
+__IMPORTANT__: +v8.0.0 supports shorter names of attributes e.g. `data-jc=""` instead of `data-component=""` instead of `data-component-path`.
 
 __IMPORTANT__: +v8.0.0 supports declaring of multiple components like this `<div data-jc="component1,component2,component3" ...`.
 
