@@ -1402,11 +1402,13 @@ TEMPLATE(url, callback(template), [prepare(template, meta)]);
 // executing. The content is downloaded only once. `prepare` argument is optional
 // (and executed once), but if it's declared then must "return" template (e.g. compiled template).
 
-ON();
-// Alias for MAIN.on();
+// Events listener
+ON(eventName, fn);
+ON('event1 + event2 + event3', fn); // multiple event declaration
 
-WATCH();
-// Alias for MAIN.on('watch', ...);
+// Watcher
+WATCH(path, fn, [init]);
+WATCH('path1 + path2 + path3', fn); // multiple path watchers
 
 HASH(value)
 // Creates a hash from the value.
@@ -2549,6 +2551,12 @@ __Commands and nested jQuery selectors__:
     <div class="age"></div>
     <b class="red">You are too young!</b>
 </div>
+```
+
+__Multiple watchers__:
+
+```html
+<div data-bind="path.to.property1__COMMAND SELECTOR:VALUE__|__path.to.property2__show:value__|__path.to.property3__.red:value"></div>
 ```
 
 __Value types__:
