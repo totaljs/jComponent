@@ -3896,7 +3896,7 @@
 
 			// @TODO: remove it in because it's a hack for older checkboxs
 			if (realtime === 2 && nobind) {
-				warn('Replace the component "{0}" to newest because it contains older declaration of component.getter().'.format(self.anem));
+				warn('The component "{0}" contains older declaration of component.getter(), replace it.'.format(self.name));
 				nobind = false;
 			}
 
