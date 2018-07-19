@@ -141,7 +141,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.030';
+	M.version = 'v15.031';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -3893,6 +3893,12 @@
 
 			value = self.parser(value);
 			self.getter2 && self.getter2(value, realtime);
+
+			// @TODO: remove it in because it's a hack for older checkboxs
+			if (realtime === 2 && nobind) {
+				warn('Replace the component "{0}" to newest because it contains older declaration of component.getter().'.format(self.anem));
+				nobind = false;
+			}
 
 			if (realtime)
 				self.$skip = true;
