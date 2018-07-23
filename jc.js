@@ -141,7 +141,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.031';
+	M.version = 'v15.032';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2215,10 +2215,19 @@
 			}
 		}
 
+		var b;
 		var released = container ? attrcom(container, 'released') === 'true' : false;
 		var tmp = attrcom(container, 'scope');
 		if (tmp)
 			scopes.push(container);
+
+		if (!container.$jcbind) {
+			b = container.getAttribute('data-bind') || container.getAttribute('bind');
+			if (b) {
+				!binders && (binders = []);
+				binders.push({ el: container, b: b });
+			}
+		}
 
 		var name = attrcom(container);
 		!container.$com && name != null && onComponent(name, container, 0, scopes);
@@ -2251,7 +2260,7 @@
 				}
 
 				if (!el.$jcbind) {
-					var b = el.getAttribute('data-bind') || el.getAttribute('bind');
+					b = el.getAttribute('data-bind') || el.getAttribute('bind');
 					if (b) {
 						!binders && (binders = []);
 						binders.push({ el: el, b: b });
