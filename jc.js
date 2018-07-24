@@ -379,6 +379,11 @@
 
 	W.UPLOAD = function(url, data, callback, timeout, progress) {
 
+		if (typeof(timeout) !== 'number' && progress == null) {
+			progress = timeout;
+			timeout = null;
+		}
+
 		if (!url)
 			url = location.pathname;
 
