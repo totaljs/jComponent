@@ -410,20 +410,25 @@
 			callback = undefined;
 		}
 
+		var output = {};
+		output.url = url;
+		output.process = true;
+		output.error = false;
+		output.upload = true;
+		output.method = method;
+		output.data = data;
+
+		EMIT('request', output);
+
+		if (output.cancel)
+			return;
+
 		setTimeout(function() {
 
 			var xhr = new XMLHttpRequest();
-			var output = {};
 
 			if (isCredentials)
 				xhr.withCredentials = true;
-
-			output.process = true;
-			output.error = false;
-			output.upload = true;
-			output.method = method;
-			output.url = url.$env();
-			output.data = data;
 
 			xhr.addEventListener('load', function() {
 
@@ -475,7 +480,7 @@
 					progress(percentage, evt.transferSpeed, evt.timeRemaining);
 			};
 
-			xhr.open(method, makeurl(url));
+			xhr.open(method, makeurl(output.url));
 
 			var keys = OK(MD.headers);
 			for (var i = 0; i < keys.length; i++)
