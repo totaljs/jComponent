@@ -141,7 +141,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.032';
+	M.version = 'v15.033';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
