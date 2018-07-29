@@ -141,7 +141,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.033';
+	M.version = 'v15.034';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7865,7 +7865,7 @@
 
 						k = keys[j].trim();
 
-						var s;
+						var s = '';
 						var notnull = false;
 						var backup = false;
 
