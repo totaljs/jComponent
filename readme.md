@@ -1329,6 +1329,30 @@ OFF('pages#refresh');
 OFF('refresh');
 ```
 
+### Events: first in sequence
+
+- supported in +v15
+
+```javascript
+ON('test', function() {
+    console.log(1);
+});
+
+ON('test', function() {
+    console.log(2);
+});
+
+// "^" = Adds a callback as the first event listener
+ON('^test', function() {
+    console.log(3);
+});
+
+EMIT('test');
+// 3
+// 1
+// 2
+```
+
 ## Additional methods / helpers
 
 ```js

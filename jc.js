@@ -141,7 +141,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.034';
+	M.version = 'v15.035';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -531,8 +531,15 @@
 			path = '*';
 		}
 
+		var push = '';
+
+		if (path.substring(0, 1) === '^') {
+			path = path.substring(1);
+			push = '^';
+		}
+
 		path = pathmaker(path, true);
-		ON('watch', path, fn, init);
+		ON(push + 'watch', path, fn, init);
 		return W;
 	};
 
@@ -543,6 +550,13 @@
 			for (var i = 0; i < arr.length; i++)
 				W.ON(arr[i], path, fn, init, context);
 			return W;
+		}
+
+		var push = true;
+
+		if (name.substring(0, 1) === '^') {
+			push = false;
+			name = name.substring(1);
 		}
 
 		var owner = null;
@@ -599,12 +613,20 @@
 
 			obj.path = path;
 			obj.$path = arr;
-			watches.push(obj);
+
+			if (push)
+				watches.push(obj);
+			else
+				watches.unshift(obj);
+
 			init && fn.call(context || M, path, obj.format ? obj.format(get(path), path, 0) : get(path), 0);
 		} else {
-			if (events[name])
-				events[name].push(obj);
-			else
+			if (events[name]) {
+				if (push)
+					events[name].push(obj);
+				else
+					events[name].unshift(obj);
+			} else
 				events[name] = [obj];
 			(!C.ready && (name === 'ready' || name === 'init')) && fn();
 		}
@@ -4909,8 +4931,16 @@
 			path = '';
 		} else
 			path = path.replace('.*', '');
+
 		var self = this;
-		ON('com' + self._id + '#' + name, path, fn, init, self);
+		var push = '';
+
+		if (name.substring(0, 1) === '^') {
+			push = '^';
+			name = name.substring(1);
+		}
+
+		ON(push + 'com' + self._id + '#' + name, path, fn, init, self);
 		return self;
 	};
 
