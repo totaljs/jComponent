@@ -141,7 +141,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.035';
+	M.version = 'v15.036';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -6022,7 +6022,7 @@
 		if (run) {
 			callback(null, function(sleep) {
 				setTimeout(function() {
-					WATCH(fn, callback, interval, timeout);
+					WAIT(fn, callback, interval, timeout);
 				}, sleep || 1);
 			});
 			return;
@@ -6056,7 +6056,7 @@
 
 			callback && callback(null, function(sleep) {
 				setTimeout(function() {
-					WATCH(fn, callback, interval);
+					WAIT(fn, callback, interval);
 				}, sleep || 1);
 			});
 
