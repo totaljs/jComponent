@@ -141,7 +141,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.036';
+	M.version = 'v15.037';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8053,7 +8053,7 @@
 									obj.com = parent.$ctrl;
 									if (path === '@' && !obj.com.$dataw) {
 										obj.com.$dataw = 1;
-										obj.com.watch('', function(path, value) {
+										obj.com.watch(function(path, value) {
 											obj.com.data('@', value);
 										});
 									}
@@ -8088,7 +8088,8 @@
 		if (cls.length)
 			obj.classes = cls;
 
-		path = pathmaker(path);
+		var bj = obj.com && path.substring(0, 1) === '@';
+		path = bj ? path : pathmaker(path);
 
 		if (path.indexOf('?') !== -1) {
 			var scope = scopes[scopes.length - 1];
