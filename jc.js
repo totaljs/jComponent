@@ -141,7 +141,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.037';
+	M.version = 'v15.038';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -4077,12 +4077,15 @@
 	var PPC = COM.prototype;
 
 	PPC.data = function(key, value) {
+
 		if (!key)
 			key = '@';
 		var self = this;
 		var data = self.$data[key];
-		if (value === undefined)
+
+		if (arguments.length === 1)
 			return data ? data.value : null;
+
 		if (data) {
 			data.value = value;
 			for (var i = 0; i < data.items.length; i++) {
@@ -4091,6 +4094,7 @@
 			}
 		} else
 			self.$data[key] = { value: value, items: [] };
+
 		return value;
 	};
 
