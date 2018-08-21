@@ -143,7 +143,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v14.054';
+	M.version = 'v14.055';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5896,7 +5896,7 @@
 
 		var index = exp.indexOf('=>');
 		if (index === -1)
-			return isValue(exp) ? FN('value=>' + rebinddecode(exp)) : new Function('return ' + exp);
+			return isValue(exp) ? FN('value=>' + rebinddecode(exp)) : new Function('return ' + (exp.indexOf('(') === -1 ? 'typeof({0})==\'function\'?{0}.apply(this,arguments):{0}'.format(exp) : exp));
 
 		var arg = exp.substring(0, index).trim();
 		var val = exp.substring(index + 2).trim();
