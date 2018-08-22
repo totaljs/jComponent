@@ -141,7 +141,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.039';
+	M.version = 'v15.040';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7876,7 +7876,7 @@
 
 					var k, v;
 
-					if (item !== 'template' && item !== '!template') {
+					if (item !== 'template' && item !== '!template' && item !== 'strict') {
 						index = item.indexOf(':');
 						if (index === -1)
 							continue;
@@ -7890,7 +7890,7 @@
 						continue;
 					}
 
-					var fn = k !== 'delay' && k !== 'import' && k !== 'class' && k !== 'template' && k !== '!template' && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v)) : v.substring(0, 1) === '@' ? obj.com[v.substring(1)] : GET(v) : 1;
+					var fn = k !== 'strict' && k !== 'track' && k !== 'delay' && k !== 'import' && k !== 'class' && k !== 'template' && k !== '!template' && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v)) : v.substring(0, 1) === '@' ? obj.com[v.substring(1)] : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -7932,6 +7932,12 @@
 							fn.$nn = 1;
 
 						switch (k) {
+							case 'track':
+								obj[k] = v.split(',').trim();
+								continue;
+							case 'strict':
+								obj[k] = true;
+								continue;
 							case 'visible':
 								k = 'show';
 								break;
@@ -8124,6 +8130,12 @@
 		}
 
 		obj.path = path;
+
+		if (obj.track) {
+			for (var i = 0; i < obj.track.length; i++)
+				obj.track[i] = obj.path + '.' + obj.track[i];
+		}
+
 		obj.init = 0;
 		obj.exec = function(value, path, index, wakeup) {
 
@@ -8163,7 +8175,21 @@
 				return;
 			}
 
-			if (!item.init)
+			if (item.init) {
+				if (item.strict && item.path !== path)
+					return;
+				if (item.track && item.path !== path) {
+					var can = false;
+					for (var i = 0; i < item.track.length; i++) {
+						if (item.track[i] === path) {
+							can = true;
+							break;
+						}
+					}
+					if (!can)
+						return;
+				}
+			} else
 				item.init = 1;
 
 			if (item.def && value == null)

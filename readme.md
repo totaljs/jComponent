@@ -2539,7 +2539,9 @@ __Commands__:
 - `delay` delays a binding and must contain `Number`
 - `class` toggles class if the binder has been processed and must contain `String` as a class name
 - `import` performs `IMPORT()` and must contain `{String}` as URL address
-- `config` performs `RECONFIGURE()` for the current element component, must return configuration `String`
+- `config` performs `RECONFIGURE()` for the element/selector component and __must return__ a configuration `String`
+- `strict` (without value) enables a strict path comparison, so `path` must be same or parent path within the binder `path`
+- `track` enables a strict path comparison for the defined paths separated by comma (use a `field` name without parent path)
 - `!COMMAND` evaluating will be performed if the value won't be `null` or `undefined`
 
 __Linking commands__:

@@ -26,13 +26,18 @@
 <body style="font-family:Arial">
 
 	<div style="padding:50px">
-		<div class="newtask" data-jc="newtask">
+		<div class="newtask" data-jc="newtask__form.name">
 			<div class="newtask-button"><button disabled data-bind="@__disabled:!value || !value.length"><i class="fa fa-keyboard"></i>ADD</button></div>
 			<div class="newtask-input"><input type="text" placeholder="Type a task" maxlength="1000" data-jc-bind="" /></div>
 		</div>
+		<div data-bind="form__html:JSON.stringify(value)"></div>
+		<div data-bind="form__track:name__html:value.name"></div>
 	</div>
 
 	<script>
+
+		var form = {};
+
 		COMPONENT('newtask', function(self, config) {
 			self.make = function() {
 			};
