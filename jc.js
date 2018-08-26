@@ -141,7 +141,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.040';
+	M.version = 'v15.041';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7570,7 +7570,7 @@
 		};
 
 		$.fn.component = function() {
-			var com = this.data(ATTRDATA);
+			var com = this.$com;
 			return com instanceof COM || com instanceof Array ? com : null;
 		};
 
@@ -7578,7 +7578,7 @@
 			var all = this.find(ATTRCOM);
 			var output;
 			all.each(function(index) {
-				var com = $(this).data(ATTRDATA);
+				var com = this.$com;
 				var isarr = com instanceof Array;
 				if (com instanceof COM || isarr) {
 					if (isarr) {
