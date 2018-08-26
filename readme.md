@@ -1586,6 +1586,10 @@ EXEC('#event_name', 'arg1', 'argN');
 // Executes an event
 // +v15.0.0
 
+EXEC2('path.to.method');
+// Returns EXEC wrapped in a callback function. Arguments will be arguments for EXEC()
+// +v15
+
 // Creates a singleton instance.
 var obj = SINGLETON('name');
 obj.name = 'Peter';

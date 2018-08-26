@@ -141,7 +141,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.043';
+	M.version = 'v15.044';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5492,6 +5492,16 @@
 			EXEC(true, path, arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6]);
 		}, 200);
 	}
+
+	W.EXEC2 = function(path, tmp) {
+		var is = path === true;
+		return function(a, b, c, d) {
+			if (is)
+				EXEC(path, a, b, c, d);
+			else
+				EXEC(tmp, path, a, b, c, d);
+		};
+	};
 
 	W.EXEC = function(path) {
 
