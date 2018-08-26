@@ -141,7 +141,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.042';
+	M.version = 'v15.043';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7572,8 +7572,7 @@
 		};
 
 		$.fn.component = function() {
-			var com = this.$com;
-			return com instanceof COM || com instanceof Array ? com : null;
+			return this.length ? this[0].$com : null;
 		};
 
 		$.fn.components = function(fn) {
@@ -7581,8 +7580,8 @@
 			var output;
 			all.each(function(index) {
 				var com = this.$com;
-				var isarr = com instanceof Array;
-				if (com instanceof COM || isarr) {
+				if (com) {
+					var isarr = com instanceof Array;
 					if (isarr) {
 						com.forEach(function(o) {
 							if (o && o.$ready && !o.$removed) {
