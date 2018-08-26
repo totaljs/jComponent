@@ -141,7 +141,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.041';
+	M.version = 'v15.042';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2814,9 +2814,9 @@
 				}
 			}
 
-			// A reference to instance
+			// A reference to instances
 			if (instances.length > 0)
-				el.data(ATTRDATA, instances.length > 1 ? instances : instances[0]);
+				el.$com = instances.length > 1 ? instances : instances[0];
 
 		}, undefined);
 
@@ -2944,12 +2944,13 @@
 
 		$(ATTRURL).each(function() {
 
-			var el = $(this);
-			if (el.data(ATTRDATA))
+			var t = this;
+			var el = $(t);
+
+			if (t.$downloaded)
 				return;
 
-			el.data(ATTRDATA, '1');
-
+			t.$downloaded = 1;
 			var url = attrcom(el, 'url');
 
 			// Unique
@@ -4271,7 +4272,7 @@
 		(container || self.element).find(ATTRCOM).each(function() {
 			var el = $(this);
 			el.attrd('jc-released', value ? 'true' : 'false');
-			var com = el.data(ATTRDATA);
+			var com = el[0].$com;
 			if (com instanceof Object) {
 				if (com instanceof Array) {
 					for (var i = 0, length = com.length; i < length; i++) {
@@ -4354,7 +4355,7 @@
 		var arr = [];
 		this.find(ATTRCOM).each(function() {
 			var el = $(this);
-			var com = el.data(ATTRDATA);
+			var com = el[0].$com;
 			if (com && !el.attr(ATTRDEL)) {
 				if (com instanceof Array)
 					arr.push.apply(arr, com);
@@ -6084,22 +6085,23 @@
 
 	COMPONENT('', function() {
 		var self = this;
-		var type = self.element[0].tagName;
+		var el = self.element;
+		var type = el[0].tagName;
 		if (type !== 'INPUT' && type !== 'SELECT' && type !== 'TEXTAREA') {
 			self.readonly();
 			self.setter = function(value) {
 				value = self.formatter(value, true);
-				self.element.html(value);
+				el.html(value);
 			};
 		} else {
 			var a = 'data-jc-bind';
-			!self.element.attr(a) && self.element.attr(a, '1');
-			if (self.element.attr('required')) {
+			!el.attr(a) && el.attr(a, '1');
+			if (el.attr('required')) {
 				self.validate = function(value, is) {
 					return is ? true : !!value;
 				};
 			}
-			self.element.$com = self;
+			el[0].$com = self;
 		}
 	});
 
