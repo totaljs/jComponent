@@ -34,6 +34,10 @@
 	var M = {}; // MAIN
 	var W = window;
 
+	var warn = W.WARN = function() {
+		W.console && W.console.warn.apply(W.console, arguments);
+	};
+
 	// temporary
 	W.jctmp = {};
 	W.W = window;
@@ -141,7 +145,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.044';
+	M.version = 'v15.045';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2931,10 +2935,6 @@
 		}
 
 		return scope.$scopedata;
-	}
-
-	function warn() {
-		W.console && W.console.warn.apply(W.console, arguments);
 	}
 
 	function download() {
