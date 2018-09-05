@@ -1,7 +1,7 @@
 (function() {
 
 	// Constants
-	var REGCOM = /(data-jc|data-bind|bind)=|COMPONENT\(/;
+	var REGCOM = /(data-jc|data-jc-url|data-jc-import|data-bind|bind)=|COMPONENT\(/;
 	var REGSCRIPT = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGENV = /(\[.*?\])/gi;
@@ -145,7 +145,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.045';
+	M.version = 'v15.046';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
