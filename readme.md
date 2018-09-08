@@ -2628,7 +2628,9 @@ $(document.body).append(obj.element);
 
 ### VBINDARRAY
 
-It can render Array of `VBIND`
+It can render Array of `VBIND`.
+
+- each main element will contain `data-index` attribute with the item array index
 
 ```javascript
 // VBINDARRAY(template, target_element);

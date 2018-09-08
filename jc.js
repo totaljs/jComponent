@@ -175,7 +175,7 @@
 
 	function VBinder(html) {
 		var t = this;
-		t.element = $(html);
+		var e = t.element = $(html);
 		t.binders = [];
 		var fn = function() {
 			var dom = this;
@@ -184,8 +184,8 @@
 			dom.$jcbind = parsebinder(dom, b, EMPTYARRAY);
 			dom.$jcbind && t.binders.push(dom.$jcbind);
 		};
-		t.element.filter(ATTRBIND).each(fn);
-		t.element.find(ATTRBIND).each(fn);
+		e.filter(ATTRBIND).each(fn);
+		e.find(ATTRBIND).each(fn);
 	}
 
 	var VBP = VBinder.prototype;
