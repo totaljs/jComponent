@@ -2597,6 +2597,45 @@ __Value types__:
 
 You can type multiple commands in a row.
 
+## `+v15` Virtual binder
+
+### VBIND
+
+Virtual binder `VBIND` is something similiar like Virtual DOM with very easy usage. It's very primitive.
+
+- all paths must start with (dot) `.path`
+- it expects custom object
+
+```javascript
+// VBIND(template);
+var obj = VBIND('<div data-bind=".name__html:value"></div>');
+
+// Sets a model
+obj.set({ name: 'Peter' });
+
+// Sets a value
+obj.set('name', 'Peter');
+
+// Removes the binder
+obj.remove();
+
+// jQuery element
+obj.element.html(); // <div>PETER</div>
+
+// Attachs element into the DOM
+$(document.body).append(obj.element);
+```
+
+### VBINDARRAY
+
+It can render Array of `VBIND`
+
+```javascript
+// VBINDARRAY(template, target_element);
+var obj = VBINDARRAY('<div data-bind=".name__html:value"></div>', document.body);
+obj.set([{ name: 'Peter' }, { name: 'Anna' }, { name: 'Lucia' }]);
+```
+
 ## Reserved keywords
 
 ```javascript

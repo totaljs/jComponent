@@ -15,6 +15,7 @@
 	var REGISARR = /\[\d+\]$/;
 	var ATTRCOM = '[data-jc]';
 	var ATTRURL = '[data-jc-url]';
+	var ATTRBIND = '[data-bind],[bind],[data-vbind]';
 	var ATTRDATA = 'jc';
 	var ATTRDEL = 'data-jc-removed';
 	var ATTRREL = 'data-jc-released';
@@ -145,7 +146,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.046';
+	M.version = 'v15.047';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -171,6 +172,152 @@
 	}
 
 	M.compile = compile;
+
+	function VBinder(html) {
+		var t = this;
+		t.element = $(html);
+		t.binders = [];
+		var fn = function() {
+			var dom = this;
+			var el = $(dom);
+			var b = el.attrd('bind') || el.attr('bind') || el.attrd('vbind');
+			dom.$jcbind = parsebinder(dom, b, EMPTYARRAY);
+			dom.$jcbind && t.binders.push(dom.$jcbind);
+		};
+		t.element.filter(ATTRBIND).each(fn);
+		t.element.find(ATTRBIND).each(fn);
+	}
+
+	var VBP = VBinder.prototype;
+
+	VBP.on = function() {
+		var t = this;
+		t.element.on.apply(t.element, arguments);
+		return t;
+	};
+
+	VBP.remove = function() {
+		var t = this;
+		var e = t.element;
+		e.find('*').off();
+		e.off();
+		e.remove();
+		t.element = null;
+		t.binders = null;
+		t = null;
+		return t;
+	};
+
+	VBP.set = function(path, model) {
+
+		var t = this;
+
+		if (model == null) {
+			model = path;
+			path = '';
+		}
+
+		for (var i = 0; i < t.binders.length; i++) {
+			var b = t.binders[i];
+			if (!path || path === b.path) {
+				var val = path ? model : get(b.path, model);
+				t.binders[i].exec(val, b.path);
+			}
+		}
+
+		return t;
+	};
+
+	W.VBIND = function(html) {
+		return new VBinder(html);
+	};
+
+	W.VBINDARRAY = function(html, el) {
+		var obj = {};
+		obj.html = html;
+		obj.items = [];
+		obj.element = el instanceof COM ? el.element : $(el);
+		obj.remove = function() {
+			for (var i = 0; i < obj.items.length; i++)
+				obj.items[i].remove();
+			obj.checksum = null;
+			obj.items = null;
+			obj.html = null;
+			obj.element = null;
+		};
+
+		var checksum = function(item) {
+			var sum = 0;
+			var binder = obj.items[0];
+			if (binder) {
+				for (var j = 0; j < binder.binders.length; j++) {
+					var val = get(binder.binders[j].path, item);
+					switch (typeof(val)) {
+						case 'number':
+							sum += val + '';
+							break;
+						case 'boolean':
+							sum += val ? '1' : '0';
+							break;
+						case 'string':
+							sum += val;
+							break;
+						default:
+							sum += val == null ? '' : val instanceof Date ? val.getTime() : JSON.stringify(val);
+							break;
+					}
+				}
+			}
+			return HASH(sum);
+		};
+
+		obj.set = function(index, value) {
+
+			var sum;
+
+			if (!(index instanceof Array)) {
+				var item = obj.items[index];
+				if (item) {
+					sum = checksum(value);
+					if (item.element[0].$bchecksum !== sum) {
+						item.element[0].$bchecksum = sum;
+						item.set(value);
+					}
+				}
+				return obj;
+			}
+
+			value = index;
+
+			if (obj.items.length > value.length) {
+				var rem = obj.items.splice(value.length);
+				for (var i = 0; i < rem.length; i++)
+					rem[i].remove();
+			}
+
+			for (var i = 0; i < value.length; i++) {
+				var val = value[i];
+				var item = obj.items[i];
+
+				if (!item) {
+					item = VBIND(obj.html);
+					obj.items.push(item);
+					item.element.attrd('index', i);
+					obj.element.append(item.element);
+				}
+
+				var el = item.element[0];
+				sum = checksum(val);
+
+				if (el.$bchecksum !== sum) {
+					el.$bchecksum = sum;
+					item.set(val);
+				}
+			}
+		};
+
+		return obj;
+	};
 
 	W.NEWTRANSFORM = function(name, callback) {
 		M.transforms[name] = callback;
@@ -3468,7 +3615,7 @@
 		if (v.substring(0, 1) !== '[')
 			v = '.' + v;
 
-		var fn = (new Function('w', 'a', 'b', 'binders', 'binderbind', 'nobind', 'var $ticks=Math.random().toString().substring(2,8);if(!nobind){' + builder.join(';') + ';var v=typeof(a)===\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v;}' + binder.join(';') + ';return v'));
+		var fn = (new Function('w', 'a', 'b', 'binders', 'binderbind', 'nobind', 'var $ticks=Math.random().toString().substring(2,8);if(!nobind){' + builder.join(';') + ';var v=typeof(a)==\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v}' + binder.join(';') + ';return v'));
 		paths[key] = fn;
 		fn(MD.scope, value, path, binders, binderbind, is);
 		return C;
@@ -7873,9 +8020,9 @@
 			return output;
 		}
 
-		var obj = {};
 		var path;
 		var index;
+		var obj = new jBinder();
 		var cls = [];
 		var sub = {};
 		var e = obj.el = $(el);
@@ -8035,7 +8182,9 @@
 					// path
 					path = item;
 
-					if (path.substring(0, 1) === '!') {
+					var c = path.substring(0, 1);
+
+					if (c === '!') {
 						path = path.substring(1);
 						obj.notnull = true;
 					}
@@ -8050,6 +8199,13 @@
 					if (tmp) {
 						path = tmp.path;
 						obj.format = tmp.fn;
+					}
+
+					// Is virtual path?
+					if (c === '.') {
+						obj.virtual = true;
+						path = path.substring(1);
+						continue;
 					}
 
 					if (path.substring(path.length - 1) === '.')
@@ -8109,237 +8265,244 @@
 		if (cls.length)
 			obj.classes = cls;
 
-		var bj = obj.com && path.substring(0, 1) === '@';
-		path = bj ? path : pathmaker(path);
-
-		if (path.indexOf('?') !== -1) {
-			var scope = scopes[scopes.length - 1];
-			if (scope && scope.$scopedata) {
-				var data = scope.$scopedata;
-				if (data == null)
-					return;
-				path = path.replace(/\?/g, data.path);
-			} else
-				return;
-		}
-
-		var arr = path.split('.');
-		var p = '';
-
-		if (obj.com) {
-			!obj.com.$data[path] && (obj.com.$data[path] = { value: null, items: [] });
-			obj.com.$data[path].items.push(obj);
+		if (obj.virtual) {
+			path = pathmaker(path);
 		} else {
-			for (var i = 0, length = arr.length; i < length; i++) {
-				p += (p ? '.' : '') + arr[i];
-				var k = i === length - 1 ? p : '!' + p;
-				if (binders[k])
-					binders[k].push(obj);
-				else
-					binders[k] = [obj];
+
+			var bj = obj.com && path.substring(0, 1) === '@';
+			path = bj ? path : pathmaker(path);
+
+			if (path.indexOf('?') !== -1) {
+				var scope = scopes[scopes.length - 1];
+				if (scope && scope.$scopedata) {
+					var data = scope.$scopedata;
+					if (data == null)
+						return;
+					path = path.replace(/\?/g, data.path);
+				} else
+					return;
+			}
+
+			var arr = path.split('.');
+			var p = '';
+
+			if (obj.com) {
+				!obj.com.$data[path] && (obj.com.$data[path] = { value: null, items: [] });
+				obj.com.$data[path].items.push(obj);
+			} else {
+				for (var i = 0, length = arr.length; i < length; i++) {
+					p += (p ? '.' : '') + arr[i];
+					var k = i === length - 1 ? p : '!' + p;
+					if (binders[k])
+						binders[k].push(obj);
+					else
+						binders[k] = [obj];
+				}
 			}
 		}
-
-		obj.path = path;
 
 		if (obj.track) {
 			for (var i = 0; i < obj.track.length; i++)
 				obj.track[i] = obj.path + '.' + obj.track[i];
 		}
 
+		obj.path = path;
 		obj.init = 0;
-		obj.exec = function(value, path, index, wakeup) {
-
-			var item = this;
-			var el = item.el;
-
-			if (index != null) {
-				if (item.child == null)
-					return;
-				item = item.child[index];
-				if (item == null)
-					return;
-			}
-
-			if (item.notnull && value == null)
-				return;
-
-			if (item.selector) {
-				if (item.cache)
-					el = item.cache;
-				else {
-					el = el.find(item.selector);
-					if (el.length)
-						item.cache = el;
-				}
-			}
-
-			if (!el.length)
-				return;
-
-			if (!wakeup && item.delay) {
-				item.$delay && clearTimeout(item.$delay);
-				item.$delay = setTimeout(function(obj, value, path, index) {
-					obj.$delay = null;
-					obj.exec(value, path, index, true);
-				}, item.delay, obj, value, path, index);
-				return;
-			}
-
-			if (item.init) {
-				if (item.strict && item.path !== path)
-					return;
-				if (item.track && item.path !== path) {
-					var can = false;
-					for (var i = 0; i < item.track.length; i++) {
-						if (item.track[i] === path) {
-							can = true;
-							break;
-						}
-					}
-					if (!can)
-						return;
-				}
-			} else
-				item.init = 1;
-
-			if (item.def && value == null)
-				value = item.def;
-
-			if (item.format)
-				value = item.format(value, path);
-
-			var tmp;
-			var can = true;
-
-			if (item.show && (value != null || !item.show.$nn)) {
-				tmp = item.show.call(item.el, value, path, item.el);
-				el.tclass('hidden', !tmp);
-				if (!tmp)
-					can = false;
-			}
-
-			if (item.hide && (value != null || !item.hide.$nn)) {
-				tmp = item.hide.call(el, value, path, el);
-				el.tclass('hidden', tmp);
-				if (tmp)
-					can = false;
-			}
-
-			if (item.classes) {
-				for (var i = 0; i < item.classes.length; i++) {
-					var cls = item.classes[i];
-					if (!cls.fn.$nn || value != null)
-						el.tclass(cls.name, !!cls.fn.call(el, value, path, el));
-				}
-			}
-
-			if (can) {
-
-				if (item.import) {
-					IMPORT(item.import, el);
-					delete item.import;
-				}
-
-				if (item.config) {
-					if (value != null || !item.config.$nn) {
-						tmp = item.config.call(el, value, path, el);
-						if (tmp) {
-							for (var i = 0; i < el.length; i++)
-								el[i].$com && el[i].$com.reconfigure(tmp);
-						}
-					}
-				}
-
-				if (item.html) {
-					if (value != null || !item.html.$nn) {
-						tmp = item.html.call(el, value, path, el);
-						el.html(tmp == null ? (item.htmlbk || '') : tmp);
-					} else
-						el.html(item.htmlbk || '');
-				}
-
-				if (item.text) {
-					if (value != null || !item.text.$nn) {
-						tmp = item.text.call(el, value, path, el);
-						el.text(tmp == null ? (item.htmlbk || '') : tmp);
-					} else
-						el.html(item.htmlbk || '');
-				}
-
-				if (item.val) {
-					if (value != null || !item.val.$nn) {
-						tmp = item.val.call(el, value, path, el);
-						el.val(tmp == null ? (item.valbk || '') : tmp);
-					} else
-						el.val(item.valbk || '');
-				}
-
-				if (item.template && (value != null || !item.template.$nn)) {
-					DEFMODEL.value = value;
-					DEFMODEL.path = path;
-					el.html(item.template(DEFMODEL));
-				}
-
-				if (item.disabled) {
-					if (value != null || !item.disabled.$nn) {
-						tmp = item.disabled.call(el, value, path, el);
-						el.prop('disabled', tmp == true);
-					} else
-						el.prop('disabled', item.disablebk == true);
-				}
-
-				if (item.checked) {
-					if (value != null || !item.checked.$nn) {
-						tmp = item.checked.call(el, value, path, el);
-						el.prop('checked', tmp == true);
-					} else
-						el.prop('checked', item.checkedbk == true);
-				}
-
-				if (item.title) {
-					if (value != null || !item.title.$nn) {
-						tmp = item.title.call(el, value, path, el);
-						el.attr('title', tmp == null ? (item.titlebk || '') : tmp);
-					} else
-						el.attr('title', item.titlebk || '');
-				}
-
-				if (item.href) {
-					if (value != null || !item.href.$nn) {
-						tmp = item.href.call(el, value, path, el);
-						el.attr('href', tmp == null ? (item.hrefbk || '') : tmp);
-					} else
-						el.attr(item.hrefbk || '');
-				}
-
-				if (item.src) {
-					if (value != null || !item.src.$nn) {
-						tmp = item.src.call(el, value, path, el);
-						el.attr('src', tmp == null ? (item.srcbk || '') : tmp);
-					} else
-						el.attr('src', item.srcbk || '');
-				}
-			}
-
-			if (item.change && (value != null || !item.change.$nn))
-				item.change.call(el, value, path, el);
-
-			if (can && index == null && item.child) {
-				for (var i = 0; i < item.child.length; i++)
-					item.exec(value, path, i);
-			}
-
-			if (item.tclass) {
-				el.tclass(item.tclass);
-				delete item.tclass;
-			}
-
-		};
-
-		bindersnew.push(obj);
+		!obj.virtual && bindersnew.push(obj);
 		return obj;
 	}
+
+	function jBinder() {}
+
+	var JBP = jBinder.prototype;
+
+	JBP.exec = function(value, path, index, wakeup) {
+
+		var item = this;
+		var el = item.el;
+
+		if (index != null) {
+			if (item.child == null)
+				return;
+			item = item.child[index];
+			if (item == null)
+				return;
+		}
+
+		if (item.notnull && value == null)
+			return;
+
+		if (item.selector) {
+			if (item.cache)
+				el = item.cache;
+			else {
+				el = el.find(item.selector);
+				if (el.length)
+					item.cache = el;
+			}
+		}
+
+		if (!el.length)
+			return;
+
+		if (!wakeup && item.delay) {
+			item.$delay && clearTimeout(item.$delay);
+			item.$delay = setTimeout(function(obj, value, path, index) {
+				obj.$delay = null;
+				obj.exec(value, path, index, true);
+			}, item.delay, item, value, path, index);
+			return;
+		}
+
+		if (item.init) {
+			if (item.strict && item.path !== path)
+				return;
+			if (item.track && item.path !== path) {
+				var can = false;
+				for (var i = 0; i < item.track.length; i++) {
+					if (item.track[i] === path) {
+						can = true;
+						break;
+					}
+				}
+				if (!can)
+					return;
+			}
+		} else
+			item.init = 1;
+
+		if (item.def && value == null)
+			value = item.def;
+
+		if (item.format)
+			value = item.format(value, path);
+
+		var tmp;
+		var can = true;
+
+		if (item.show && (value != null || !item.show.$nn)) {
+			tmp = item.show.call(item.el, value, path, item.el);
+			el.tclass('hidden', !tmp);
+			if (!tmp)
+				can = false;
+		}
+
+		if (item.hide && (value != null || !item.hide.$nn)) {
+			tmp = item.hide.call(el, value, path, el);
+			el.tclass('hidden', tmp);
+			if (tmp)
+				can = false;
+		}
+
+		if (item.classes) {
+			for (var i = 0; i < item.classes.length; i++) {
+				var cls = item.classes[i];
+				if (!cls.fn.$nn || value != null)
+					el.tclass(cls.name, !!cls.fn.call(el, value, path, el));
+			}
+		}
+
+		if (can) {
+
+			if (item.import) {
+				IMPORT(item.import, el);
+				delete item.import;
+			}
+
+			if (item.config) {
+				if (value != null || !item.config.$nn) {
+					tmp = item.config.call(el, value, path, el);
+					if (tmp) {
+						for (var i = 0; i < el.length; i++)
+							el[i].$com && el[i].$com.reconfigure(tmp);
+					}
+				}
+			}
+
+			if (item.html) {
+				if (value != null || !item.html.$nn) {
+					tmp = item.html.call(el, value, path, el);
+					el.html(tmp == null ? (item.htmlbk || '') : tmp);
+				} else
+					el.html(item.htmlbk || '');
+			}
+
+			if (item.text) {
+				if (value != null || !item.text.$nn) {
+					tmp = item.text.call(el, value, path, el);
+					el.text(tmp == null ? (item.htmlbk || '') : tmp);
+				} else
+					el.html(item.htmlbk || '');
+			}
+
+			if (item.val) {
+				if (value != null || !item.val.$nn) {
+					tmp = item.val.call(el, value, path, el);
+					el.val(tmp == null ? (item.valbk || '') : tmp);
+				} else
+					el.val(item.valbk || '');
+			}
+
+			if (item.template && (value != null || !item.template.$nn)) {
+				DEFMODEL.value = value;
+				DEFMODEL.path = path;
+				el.html(item.template(DEFMODEL));
+			}
+
+			if (item.disabled) {
+				if (value != null || !item.disabled.$nn) {
+					tmp = item.disabled.call(el, value, path, el);
+					el.prop('disabled', tmp == true);
+				} else
+					el.prop('disabled', item.disablebk == true);
+			}
+
+			if (item.checked) {
+				if (value != null || !item.checked.$nn) {
+					tmp = item.checked.call(el, value, path, el);
+					el.prop('checked', tmp == true);
+				} else
+					el.prop('checked', item.checkedbk == true);
+			}
+
+			if (item.title) {
+				if (value != null || !item.title.$nn) {
+					tmp = item.title.call(el, value, path, el);
+					el.attr('title', tmp == null ? (item.titlebk || '') : tmp);
+				} else
+					el.attr('title', item.titlebk || '');
+			}
+
+			if (item.href) {
+				if (value != null || !item.href.$nn) {
+					tmp = item.href.call(el, value, path, el);
+					el.attr('href', tmp == null ? (item.hrefbk || '') : tmp);
+				} else
+					el.attr(item.hrefbk || '');
+			}
+
+			if (item.src) {
+				if (value != null || !item.src.$nn) {
+					tmp = item.src.call(el, value, path, el);
+					el.attr('src', tmp == null ? (item.srcbk || '') : tmp);
+				} else
+					el.attr('src', item.srcbk || '');
+			}
+		}
+
+		if (item.change && (value != null || !item.change.$nn))
+			item.change.call(el, value, path, el);
+
+		if (can && index == null && item.child) {
+			for (var i = 0; i < item.child.length; i++)
+				item.exec(value, path, i);
+		}
+
+		if (item.tclass) {
+			el.tclass(item.tclass);
+			delete item.tclass;
+		}
+	};
 
 	function isValue(val) {
 		var index = val.indexOf('value');
