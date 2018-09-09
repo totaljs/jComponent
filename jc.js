@@ -146,7 +146,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.047';
+	M.version = 'v15.048';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -200,8 +200,7 @@
 		var t = this;
 		var e = t.element;
 		e.find('*').off();
-		e.off();
-		e.remove();
+		e.off().remove();
 		t.element = null;
 		t.binders = null;
 		t = null;
@@ -220,7 +219,7 @@
 		for (var i = 0; i < t.binders.length; i++) {
 			var b = t.binders[i];
 			if (!path || path === b.path) {
-				var val = path ? model : get(b.path, model);
+				var val = path || !b.path ? model : get(b.path, model);
 				t.binders[i].exec(val, b.path);
 			}
 		}
@@ -8123,6 +8122,7 @@
 							case 'src':
 							case 'val':
 							case 'title':
+							case 'placeholder':
 							case 'html':
 							case 'text':
 							case 'disabled':
@@ -8154,7 +8154,7 @@
 							fn = new Function('return ' + v)();
 
 						if (backup && notnull)
-							obj[k + 'bk'] = k == 'src' ? e.attr(k) : k == 'href' ? e.attr(k) : (k == 'html' || k == 'text') ? e.html() : k == 'val' ? e.val() : k == 'title' ? e.attr(k) : k == 'disabled' ? e.prop(k) : k === 'checked' ? e.prop(k) : '';
+							obj[k + 'bk'] = (k == 'src' || k == 'href' || k == 'title') ? e.attr(k) : (k == 'html' || k == 'text') ? e.html() : k == 'val' ? e.val() : (k == 'disabled' || k == 'checked' || k == 'placeholder') ? e.prop(k) : '';
 
 						if (s) {
 
@@ -8301,12 +8301,13 @@
 			}
 		}
 
+		obj.path = path;
+
 		if (obj.track) {
 			for (var i = 0; i < obj.track.length; i++)
-				obj.track[i] = obj.path + '.' + obj.track[i];
+				obj.track[i] = path + '.' + obj.track[i];
 		}
 
-		obj.path = path;
 		obj.init = 0;
 		!obj.virtual && bindersnew.push(obj);
 		return obj;
