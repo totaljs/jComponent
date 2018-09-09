@@ -468,7 +468,7 @@
 		}
 	};
 
-	M.formatter = function(value, path, type) {
+	W.FORMATTER = M.formatter = function(value, path, type) {
 
 		if (typeof(value) === 'function') {
 			!M.$formatter && (M.$formatter = []);
@@ -494,7 +494,7 @@
 		return value;
 	};
 
-	M.parser = function(value, path, type) {
+	W.PARSER = M.parser = function(value, path, type) {
 
 		if (typeof(value) === 'function') {
 			!M.$parser && (M.$parser = []);
