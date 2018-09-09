@@ -1767,11 +1767,11 @@ LASTMODIFICATION(property, date, [path], callback);
 
 // Transformations
 // v14.1.1
-CREATETRANSFORM('uppercase', function(value, next) {
+NEWTRANSFORM('uppercase', function(value, next) {
     next(value.toUpperCase());
 });
 
-CREATETRANSFORM('twice', function(value, next) {
+NEWTRANSFORM('twice', function(value, next) {
     next(value + value);
 });
 
