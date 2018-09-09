@@ -146,7 +146,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v15.048';
+	M.version = 'v16.000';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -236,6 +236,7 @@
 		obj.html = html;
 		obj.items = [];
 		obj.element = el instanceof COM ? el.element : $(el);
+		obj.element[0].$vbindarray = obj;
 		obj.remove = function() {
 			for (var i = 0; i < obj.items.length; i++)
 				obj.items[i].remove();
@@ -245,26 +246,31 @@
 			obj.element = null;
 		};
 
+		var serialize = function(val) {
+			switch (typeof(val)) {
+				case 'number':
+					return val + '';
+				case 'boolean':
+					return val ? '1' : '0';
+				case 'string':
+					return val;
+				default:
+					return val == null ? '' : val instanceof Date ? val.getTime() : JSON.stringify(val);
+			}
+		};
+
 		var checksum = function(item) {
 			var sum = 0;
 			var binder = obj.items[0];
 			if (binder) {
 				for (var j = 0; j < binder.binders.length; j++) {
-					var val = get(binder.binders[j].path, item);
-					switch (typeof(val)) {
-						case 'number':
-							sum += val + '';
-							break;
-						case 'boolean':
-							sum += val ? '1' : '0';
-							break;
-						case 'string':
-							sum += val;
-							break;
-						default:
-							sum += val == null ? '' : val instanceof Date ? val.getTime() : JSON.stringify(val);
-							break;
-					}
+					var b = binder.binders[j];
+					var p = b.path;
+					if (b.track) {
+						for (var i = 0; i < b.track.length; i++)
+							sum += serialize(get((p ? (p + '.') : '') + b.track[i].substring(1), item));
+					} else
+						sum += serialize(p ? get(p, item) : item);
 				}
 			}
 			return HASH(sum);
@@ -278,8 +284,9 @@
 				var item = obj.items[index];
 				if (item) {
 					sum = checksum(value);
-					if (item.element[0].$bchecksum !== sum) {
-						item.element[0].$bchecksum = sum;
+					var el = item.element[0];
+					if (el.$bchecksum !== sum) {
+						el.$bchecksum = sum;
 						item.set(value);
 					}
 				}
@@ -302,6 +309,8 @@
 					item = VBIND(obj.html);
 					obj.items.push(item);
 					item.element.attrd('index', i);
+					item.element[0].$vbind = item;
+					item.index = i;
 					obj.element.append(item.element);
 				}
 
@@ -408,7 +417,7 @@
 		return M;
 	};
 
-	W.EVALUATE = M.evaluate = function(path, expression, nopath) {
+	W.EVALUATE = function(path, expression, nopath) {
 
 		var key = 'eval' + expression;
 		var exp = temp[key];
@@ -419,16 +428,18 @@
 		else
 			val = get(path);
 
-		if (exp !== undefined)
+		if (exp)
 			return exp.call(val, val, path);
+
 		if (expression.indexOf('return') === -1)
 			expression = 'return ' + expression;
+
 		exp = new Function('value', 'path', expression);
 		temp[key] = exp;
 		return exp.call(val, val, path);
 	};
 
-	W.COOKIES = M.cookies = {
+	W.COOKIES = {
 		get: function(name) {
 			name = name.env();
 			var arr = document.cookie.split(';');
@@ -453,7 +464,7 @@
 			document.cookie = name.env() + '=' + value + '; expires=' + expire.toGMTString() + '; path=/';
 		},
 		rem: function(name) {
-			M.cookies.set(name.env(), '', -1);
+			COOKIES.set(name.env(), '', -1);
 		}
 	};
 
@@ -892,13 +903,13 @@
 	};
 
 	W.CHANGED = function(path) {
-		return !M.dirty(path);
+		return !com_dirty(path);
 	};
 
 	W.CHANGE = function(path, value) {
 		if (value == null)
 			value = true;
-		return !M.dirty(path, !value);
+		return !com_dirty(path, !value);
 	};
 
 	M.used = function(path) {
@@ -908,7 +919,7 @@
 		return M;
 	};
 
-	M.valid = function(path, value, onlyComponent) {
+	function com_valid(path, value, onlyComponent) {
 
 		var isExcept = value instanceof Array;
 		var key = 'valid' + path + (isExcept ? '>' + value.join('|') : '');
@@ -991,7 +1002,7 @@
 		return valid;
 	};
 
-	M.dirty = function(path, value, onlyComponent, skipEmitState) {
+	function com_dirty(path, value, onlyComponent, skipEmitState) {
 
 		var isExcept = value instanceof Array;
 		var key = 'dirty' + path + (isExcept ? '>' + value.join('|') : '');
@@ -1698,19 +1709,19 @@
 
 	W.CAN = function(path, except) {
 		path = pathmaker(path);
-		return !M.dirty(path, except) && M.valid(path, except);
+		return !com_dirty(path, except) && com_valid(path, except);
 	};
 
 	W.DISABLED = function(path, except) {
 		path = pathmaker(path);
-		return M.dirty(path, except) || !M.valid(path, except);
+		return com_dirty(path, except) || !com_valid(path, except);
 	};
 
 	W.INVALID = function(path, onlyComponent) {
 		path = pathmaker(path);
 		if (path) {
-			M.dirty(path, false, onlyComponent, true);
-			M.valid(path, false, onlyComponent);
+			com_dirty(path, false, onlyComponent, true);
+			com_valid(path, false, onlyComponent);
 		}
 		return W;
 	};
@@ -2135,7 +2146,7 @@
 		return valid;
 	};
 
-	M.validate2 = function(com) {
+	function com_validate2(com) {
 
 		var valid = true;
 
@@ -2206,7 +2217,7 @@
 			if (onlyComponent && onlyComponent._id !== com._id)
 				continue;
 
-			com.$default && com.set(com.path, com.$default(), 3);
+			com.$default && com.set(com.$default(), 3);
 
 			if (!reset)
 				return;
@@ -3470,7 +3481,7 @@
 							var tmp = com.parser(val);
 							if (tmp && com.get() !== tmp) {
 								com.dirty(false, true);
-								com.set(tmp, undefined, 0);
+								com.set(tmp, 0);
 							}
 						}
 						return true;
@@ -4093,9 +4104,9 @@
 
 			// Binds a value
 			if (nobind)
-				M.validate2(self);
+				com_validate2(self);
 			else
-				self.set(self.path, value, 2);
+				self.set(value, 2);
 		};
 
 		self.stateX = function(type, what) {
@@ -4450,7 +4461,7 @@
 	};
 
 	PPC.validate2 = function() {
-		return M.validate2(this);
+		return com_validate2(this);
 	};
 
 	PPC.exec = function(name, a, b, c, d, e) {
@@ -4521,6 +4532,7 @@
 		// type === 100 : custom
 		// type === 101 : dirty
 		// type === 102 : valid
+
 		var now = Date.now();
 		var t = this;
 
@@ -4560,11 +4572,17 @@
 		return this;
 	};
 
-	PPC.update = PPC.refresh = function(notify) {
+	PPC.update = PPC.refresh = function(notify, type) {
 		var self = this;
 		if (self.$binded) {
+
+			if (typeof(notify) === 'string') {
+				type = notify;
+				notify = true;
+			}
+
 			if (notify)
-				self.set(self.path, self.get());
+				self.set(self.get(), type);
 			else {
 				self.setter && self.setterX(self.get(), self.path, 1);
 				self.$interaction(1);
@@ -5166,7 +5184,7 @@
 			expression = path;
 			path = this.path;
 		}
-		return M.evaluate(path, expression, nopath);
+		return EVALUATE(path, expression, nopath);
 	};
 
 	PPC.get = function(path) {
@@ -5182,53 +5200,40 @@
 		return self;
 	};
 
-	PPC.set = function(path, value, type) {
+	PPC.set = function(value, type) {
 		var self = this;
-		if (value === undefined) {
-			value = path;
-			path = self.path;
-		}
-		path && M.set(path, value, type);
+		var arg = arguments;
+
+		// Backwards compatibility
+		if (arg.length === 3)
+			M.set(arg[0], arg[1], arg[2]);
+		else
+			M.set(self.path, value, type);
+
 		return self;
 	};
 
-	PPC.inc = function(path, value, type) {
+	PPC.inc = function(value, type) {
 		var self = this;
-		if (value === undefined) {
-			value = path;
-			path = self.path;
-		}
-		path && M.inc(path, value, type);
+		M.inc(self.path, value, type);
 		return self;
 	};
 
-	PPC.extend = function(path, value, type) {
+	PPC.extend = function(value, type) {
 		var self = this;
-		if (value === undefined) {
-			value = path;
-			path = self.path;
-		}
-		path && M.extend(path, value, type);
+		M.extend(self.path, value, type);
 		return self;
 	};
 
-	PPC.rewrite = function(path, value) {
+	PPC.rewrite = function(value) {
 		var self = this;
-		if (value === undefined) {
-			value = path;
-			path = self.path;
-		}
-		path && REWRITE(path, value);
+		REWRITE(self.path, value);
 		return self;
 	};
 
-	PPC.push = function(path, value, type) {
+	PPC.push = function(value, type) {
 		var self = this;
-		if (value === undefined) {
-			value = path;
-			path = self.path;
-		}
-		path && M.push(path, value, type);
+		M.push(self.path, value, type);
 		return self;
 	};
 
@@ -5912,10 +5917,11 @@
 			if (!condition || !condition())
 				return;
 			var id = setTimeout(function() {
+				var l = W.location;
 				if (url)
-					W.location.href = url.$env();
+					l.href = url.$env();
 				else
-					W.location.reload(true);
+					l.reload(true);
 			}, 5000);
 			callback && callback(id);
 		});
@@ -6239,28 +6245,6 @@
 		}, 700);
 	};
 
-	COMPONENT('', function() {
-		var self = this;
-		var el = self.element;
-		var type = el[0].tagName;
-		if (type !== 'INPUT' && type !== 'SELECT' && type !== 'TEXTAREA') {
-			self.readonly();
-			self.setter = function(value) {
-				value = self.formatter(value, true);
-				el.html(value);
-			};
-		} else {
-			var a = 'data-jc-bind';
-			!el.attr(a) && el.attr(a, '1');
-			if (el.attr('required')) {
-				self.validate = function(value, is) {
-					return is ? true : !!value;
-				};
-			}
-			el[0].$com = self;
-		}
-	});
-
 	// ===============================================================
 	// PROTOTYPES
 	// ===============================================================
@@ -6270,7 +6254,7 @@
 	var NP = Number.prototype;
 	var DP = Date.prototype;
 
-	AP.wait = AP.waitFor = function(onItem, callback, thread, tmp) {
+	AP.wait = function(onItem, callback, thread, tmp) {
 
 		var self = this;
 		var init = false;
@@ -7727,8 +7711,36 @@
 			return f;
 		};
 
+		function findinstance(t, type) {
+
+			if (!t.length)
+				return null;
+
+			for (var i = 0; i < t.length; i++) {
+				if (t[i][type])
+					return t[i][type];
+			}
+
+			var el = t[0].parentElement;
+			while (el !== null) {
+				if (el[type])
+					return el[type];
+				el = el.parentElement;
+			}
+
+			return null;
+		}
+
+		$.fn.vbind = function() {
+			return findinstance(this, '$vbind');
+		};
+
+		$.fn.vbindarray = function() {
+			return findinstance(this, '$vbindarray');
+		};
+
 		$.fn.component = function() {
-			return this.length ? this[0].$com : null;
+			return findinstance(this, '$com');
 		};
 
 		$.fn.components = function(fn) {

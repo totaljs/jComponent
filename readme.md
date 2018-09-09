@@ -9,7 +9,7 @@
 
 > __Download__: more than 80 jComponents free for everyone <https://componentator.com>
 
-- Current version: `v15`
+- Current version: `v16`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -599,15 +599,13 @@ COMPONENT('my-component-name', function(instance, config) {
     // Gets the value from the model.
 
 
-    instance.set([path], value, [type]);
+    instance.set(value, [type]);
     // Sets the value into the model.
-    // path {String}: default: instance.path
     // type {Number}: default 1
 
 
-    instance.rewrite([path], value);
+    instance.rewrite(value);
     // Rewrites a value with except notifications
-    // path {String}: default: instance.path
     // +v11.2.0
 
 
@@ -623,25 +621,23 @@ COMPONENT('my-component-name', function(instance, config) {
     // if "updatedPath" (default: false) then the library notifies all components which listen on the path. Otherwise the method performs "component.setter()" automatically.
 
 
-    instance.inc([path], value, [type]);
+    instance.inc(value, [type]);
     instance.inc(1); // example
     // Increments the value in the model.
-    // path {String}: default: instance.path
     // type {Number}: default 1
     // type {String}: +v14.0.0 can be used a string type
 
 
-    instance.extend([path], value, [type]);
+    instance.extend(value, [type]);
     instance.extend({ price: 0, name: 'jComponent' }); // example
     // Extends the value in the model. Only for objects.
     // type {String}: +v14.0.0 can be used a string type
 
 
-    instance.push([path], value, [type]);
+    instance.push(value, [type]);
     instance.push(1); // example
     instance.push([1, 2, 3]); // example
     // Push the value (can be an Array) in the model. Only for arrays.
-    // path {String}: default: instance.path
     // type {Number}: default 1
     // type {String}: +v14.0.0 can be used a string type
 
