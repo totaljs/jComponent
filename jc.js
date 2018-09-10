@@ -8134,7 +8134,6 @@
 							case 'src':
 							case 'val':
 							case 'title':
-							case 'placeholder':
 							case 'html':
 							case 'text':
 							case 'disabled':
@@ -8166,7 +8165,7 @@
 							fn = new Function('return ' + v)();
 
 						if (backup && notnull)
-							obj[k + 'bk'] = (k == 'src' || k == 'href' || k == 'title') ? e.attr(k) : (k == 'html' || k == 'text') ? e.html() : k == 'val' ? e.val() : (k == 'disabled' || k == 'checked' || k == 'placeholder') ? e.prop(k) : '';
+							obj[k + 'bk'] = (k == 'src' || k == 'href' || k == 'title') ? e.attr(k) : (k == 'html' || k == 'text') ? e.html() : k == 'val' ? e.val() : (k == 'disabled' || k == 'checked') ? e.prop(k) : '';
 
 						if (s) {
 
