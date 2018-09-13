@@ -2859,7 +2859,7 @@
 					obj.$noscope = attrcom(el, 'noscope') === 'true';
 
 				var code = obj.path ? obj.path.charCodeAt(0) : 0;
-				if (!obj.$noscope && scope.length) {
+				if (!obj.$noscope && scope.length && !obj.$pp) {
 
 					var output = initscopes(scope);
 
@@ -8294,13 +8294,10 @@
 			path = bj ? path : pathmaker(path);
 
 			if (path.indexOf('?') !== -1) {
-				var scope = scopes[scopes.length - 1];
-				if (scope && scope.$scopedata) {
-					var data = scope.$scopedata;
-					if (data == null)
-						return;
-					path = path.replace(/\?/g, data.path);
-				} else
+				var scope = initscopes(scopes);
+				if (scope)
+					path = path.replace(/\?/g, scope.path);
+				else
 					return;
 			}
 
