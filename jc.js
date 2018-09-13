@@ -146,7 +146,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.000';
+	M.version = 'v16.001';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2065,11 +2065,8 @@
 			return 'jctmp.' + path.substring(1) + tmp;
 
 		if (path.charCodeAt(0) === 64) {
-			path = path.substring(1);
-			var index = path.indexOf('.');
-			var p = path.substring(0, index === -1 ? path.length : index);
-			var rem = W.PLUGINS[p];
-			return ((rem ? ('PLUGINS.' + p) : (p + '_plugin_not_found')) + (index === -1 ? '' : path.substring(index))) + tmp;
+			// parent component.data()
+			return path;
 		}
 
 		var index = path.indexOf('/');
@@ -2528,15 +2525,8 @@
 			container.find('[data-jc]').each(function() {
 				var com = this.$com;
 
-				if (stop || !com || !com.$loaded || com.$removed || (id && com.id !== id) || (name && com.$name !== name) || (version && com.$version !== version))
+				if (stop || !com || !com.$loaded || com.$removed || (id && com.id !== id) || (name && com.$name !== name) || (version && com.$version !== version) || (path && (com.$pp || (com.path !== path && (!com.pathscope || ((com.pathscope + '.' + path) !== com.path))))))
 					return;
-
-				if (path) {
-					if (com.path !== path) {
-						if (!com.pathscope || ((com.pathscope + '.' + path) !== com.path))
-							return;
-					}
-				}
 
 				if (callback) {
 					if (callback(com) === false)
@@ -2547,16 +2537,8 @@
 		} else {
 			for (var i = 0, length = M.components.length; i < length; i++) {
 				var com = M.components[i];
-
-				if (!com || !com.$loaded || com.$removed || (id && com.id !== id) || (name && com.$name !== name) || (version && com.$version !== version))
+				if (!com || !com.$loaded || com.$removed || (id && com.id !== id) || (name && com.$name !== name) || (version && com.$version !== version) || ((path && (com.$pp || (com.path !== path && (!com.pathscope || ((com.pathscope + '.' + path) !== com.path)))))))
 					continue;
-
-				if (path) {
-					if (com.path !== path) {
-						if (!com.pathscope || ((com.pathscope + '.' + path) !== com.path))
-							continue;
-					}
-				}
 
 				if (callback) {
 					if (callback(com) === false)
@@ -4238,6 +4220,7 @@
 
 		if (!key)
 			key = '@';
+
 		var self = this;
 		var data = self.$data[key];
 
@@ -4252,6 +4235,15 @@
 			}
 		} else
 			self.$data[key] = { value: value, items: [] };
+
+		if (self.$ppc) {
+			var c = M.components;
+			for (var i = 0; i < c.length; i++) {
+				var com = c[i];
+				if (com.owner === self && com.$pp && key === com.path)
+					com.setterX(value, value, 2);
+			}
+		}
 
 		return value;
 	};
@@ -4790,6 +4782,13 @@
 
 		var arr = [];
 
+		if (path.substring(0, 1) === '@') {
+			path = path.substring(1);
+			self.$pp = true;
+			self.owner.$ppc = true;
+		} else
+			self.$pp = false;
+
 		// Temporary
 		if (path.charCodeAt(0) === 37)
 			path = 'jctmp.' + path.substring(1);
@@ -5188,8 +5187,13 @@
 	};
 
 	PPC.get = function(path) {
+		var self = this;
 		if (!path)
-			path = this.path;
+			path = self.path;
+
+		if (self.$pp)
+			return self.owner.data(self.path);
+
 		if (path)
 			return get(path);
 	};
@@ -5201,8 +5205,14 @@
 	};
 
 	PPC.set = function(value, type) {
+
 		var self = this;
 		var arg = arguments;
+
+		if (self.$pp) {
+			self.owner.set(self.path, value);
+			return self;
+		}
 
 		// Backwards compatibility
 		if (arg.length === 3)
@@ -6254,7 +6264,7 @@
 	var NP = Number.prototype;
 	var DP = Date.prototype;
 
-	AP.wait = function(onItem, callback, thread, tmp) {
+	AP.wait = AP.waitFor = function(onItem, callback, thread, tmp) {
 
 		var self = this;
 		var init = false;
