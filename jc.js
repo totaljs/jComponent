@@ -4474,12 +4474,13 @@
 		if (C.is)
 			C.recompile = true;
 
+		var n = 'jc-scope';
 		var prev = self.element;
-		var scope = prev.attrd('jc-scope');
+		var scope = prev.attrd(n);
 
-		self.element.removeAttr('data-jc');
+		self.element.rattrd('jc');
 		self.element[0].$com = null;
-		scope && self.element.removeAttr(ATTRSCOPE);
+		scope && self.element.rattrd(n);
 
 		if (remove)
 			prev.off().remove();
@@ -4490,7 +4491,7 @@
 		self.dom = self.element[0];
 		self.dom.$com = self;
 		self.attrd('jc', self.name);
-		scope && self.attrd('jc-scope', scope);
+		scope && self.attrd(n, scope);
 		self.siblings = false;
 		return self;
 	};
