@@ -5659,9 +5659,9 @@
 		var is = path === true;
 		return function(a, b, c, d) {
 			if (is)
-				EXEC(path, a, b, c, d);
-			else
 				EXEC(tmp, path, a, b, c, d);
+			else
+				EXEC(path, a, b, c, d);
 		};
 	};
 
