@@ -146,7 +146,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.002';
+	M.version = 'v16.003';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5539,13 +5539,13 @@
 		return pathmaker(v.substring(0, l - 1)) + v.substring(l - 1);
 	};
 
-	W.FN = function(exp) {
+	W.FN = function(exp, notrim) {
 
 		exp = exp.replace(REGFNPLUGIN, regfnplugin);
 
 		var index = exp.indexOf('=>');
 		if (index === -1)
-			return isValue(exp) ? FN('value=>' + rebinddecode(exp)) : new Function('return ' + (exp.indexOf('(') === -1 ? 'typeof({0})==\'function\'?{0}.apply(this,arguments):{0}'.format(exp) : exp));
+			return isValue(exp) ? FN('value=>' + rebinddecode(exp), true) : new Function('return ' + (exp.indexOf('(') === -1 ? 'typeof({0})==\'function\'?{0}.apply(this,arguments):{0}'.format(exp) : exp));
 
 		var arg = exp.substring(0, index).trim();
 		var val = exp.substring(index + 2).trim();
@@ -5555,10 +5555,11 @@
 		if (arg)
 			arg = arg.split(',');
 
-		if (val.charCodeAt(0) === 123) {
+		if (val.charCodeAt(0) === 123 && !notrim) {
 			is = true;
 			val = val.substring(1, val.length - 1).trim();
 		}
+
 
 		var output = (is ? '' : 'return ') + val;
 		switch (arg.length) {
@@ -8070,7 +8071,7 @@
 						continue;
 					}
 
-					var fn = k !== 'strict' && k !== 'track' && k !== 'delay' && k !== 'import' && k !== 'class' && k !== 'template' && k !== '!template' && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v)) : v.substring(0, 1) === '@' ? obj.com[v.substring(1)] : GET(v) : 1;
+					var fn = k !== 'strict' && k !== 'track' && k !== 'delay' && k !== 'import' && k !== 'class' && k !== 'template' && k !== '!template' && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.substring(0, 1) === '@' ? obj.com[v.substring(1)] : GET(v) : 1;
 					if (!fn)
 						return null;
 
