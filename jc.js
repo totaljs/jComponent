@@ -8415,7 +8415,7 @@
 				can = false;
 		}
 
-		if (item.invisible && (value != null || !item.show.$nn)) {
+		if (item.invisible && (value != null || !item.invisible.$nn)) {
 			tmp = item.invisible.call(item.el, value, path, item.el);
 			el.tclass('invisible', tmp);
 			if (!tmp)
