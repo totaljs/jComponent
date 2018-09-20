@@ -146,7 +146,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.001';
+	M.version = 'v16.002';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8413,6 +8413,14 @@
 			if (tmp)
 				can = false;
 		}
+
+		if (item.invisible && (value != null || !item.show.$nn)) {
+			tmp = item.invisible.call(item.el, value, path, item.el);
+			el.tclass('invisible', tmp);
+			if (!tmp)
+				can = false;
+		}
+
 
 		if (item.classes) {
 			for (var i = 0; i < item.classes.length; i++) {
