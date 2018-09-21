@@ -2822,7 +2822,13 @@
 				obj.global = com.shared;
 				obj.element = el;
 				obj.dom = dom;
-				obj.setPath(pathmaker(attrcom(el, 'path') || (meta ? meta[1] === 'null' ? '' : meta[1] : '') || obj._id, true), 1);
+
+				var p = attrcom(el, 'path') || (meta ? meta[1] === 'null' ? '' : meta[1] : '') || obj._id;
+
+				if (p.substring(0, 1) === '%')
+					obj.$noscope = true;
+
+				obj.setPath(pathmaker(p, true), 1);
 				obj.config = {};
 
 				// Default config
@@ -4791,10 +4797,8 @@
 			self.$pp = false;
 
 		// Temporary
-		if (path.charCodeAt(0) === 37) {
-			self.$noscope = true;
+		if (path.charCodeAt(0) === 37)
 			path = 'jctmp.' + path.substring(1);
-		}
 
 		path = path.env();
 
