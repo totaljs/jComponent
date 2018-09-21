@@ -146,7 +146,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.003';
+	M.version = 'v16.004';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -4791,8 +4791,10 @@
 			self.$pp = false;
 
 		// Temporary
-		if (path.charCodeAt(0) === 37)
+		if (path.charCodeAt(0) === 37) {
+			self.$noscope = true;
 			path = 'jctmp.' + path.substring(1);
+		}
 
 		path = path.env();
 
