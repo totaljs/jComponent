@@ -5916,8 +5916,8 @@
 		return W;
 	};
 
-	W.TOGGLE2 = function(path, type) {
-		W.TOGGLE(path, type);
+	W.TOGGLE2 = function(path, type, reset) {
+		W.TOGGLE(path, type, reset);
 		W.CHANGE(path);
 		return W;
 	};
