@@ -146,7 +146,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.005';
+	M.version = 'v16.006';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5916,33 +5916,33 @@
 		return W;
 	};
 
-	W.TOGGLE2 = function(path, type, reset) {
-		W.TOGGLE(path, type, reset);
-		W.CHANGE(path);
+	W.TOGGLE2 = function(path, type) {
+		TOGGLE(path, type);
+		CHANGE(path);
 		return W;
 	};
 
 	W.EXTEND2 = function(path, value, type) {
-		W.EXTEND(path, value, type);
-		W.CHANGE(path);
+		EXTEND(path, value, type);
+		CHANGE(path);
 		return W;
 	};
 
 	W.SET2 = function(path, value, type) {
-		W.SET(path, value, type);
-		W.CHANGE(path);
+		SET(path, value, type);
+		CHANGE(path);
 		return W;
 	};
 
 	W.INC2 = function(path, value, type) {
-		W.INC(path, value, type);
-		W.CHANGE(path);
+		INC(path, value, type);
+		CHANGE(path);
 		return W;
 	};
 
 	W.PUSH2 = function(path, value, type) {
-		W.PUSH(path, value, type);
-		W.CHANGE(path);
+		PUSH(path, value, type);
+		CHANGE(path);
 		return W;
 	};
 
@@ -6158,6 +6158,12 @@
 		setTimeout(function() {
 			M.update(path, reset);
 		}, timeout);
+	};
+
+	W.UPDATE2 = function(path, type) {
+		UPDATE(path, type);
+		CHANGE(path);
+		return W;
 	};
 
 	W.SCHEMA = function(name, declaration) {
