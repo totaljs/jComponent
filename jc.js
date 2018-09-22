@@ -146,7 +146,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.004';
+	M.version = 'v16.005';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5913,6 +5913,36 @@
 		setTimeout(function() {
 			M.push(path, value, reset);
 		}, timeout);
+		return W;
+	};
+
+	W.TOGGLE2 = function(path, value, type) {
+		W.TOGGLE(path, value, type);
+		W.CHANGE(path);
+		return W;
+	};
+
+	W.EXTEND2 = function(path, value, type) {
+		W.EXTEND(path, value, type);
+		W.CHANGE(path);
+		return W;
+	};
+
+	W.SET2 = function(path, value, type) {
+		W.SET(path, value, type);
+		W.CHANGE(path);
+		return W;
+	};
+
+	W.INC2 = function(path, value, type) {
+		W.INC(path, value, type);
+		W.CHANGE(path);
+		return W;
+	};
+
+	W.PUSH2 = function(path, value, type) {
+		W.PUSH(path, value, type);
+		W.CHANGE(path);
 		return W;
 	};
 
