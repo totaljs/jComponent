@@ -146,7 +146,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.006';
+	M.version = 'v16.007';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -4081,7 +4081,7 @@
 			value = self.parser(value);
 			self.getter2 && self.getter2(value, realtime);
 
-			// @TODO: remove it in because it's a hack for older checkboxs
+			// @TODO: remove it in because it's a hack for older checkboxes
 			if (realtime === 2 && nobind) {
 				warn('The component "{0}" contains older declaration of component.getter(), replace it.'.format(self.name));
 				nobind = false;
@@ -4093,7 +4093,7 @@
 			// Binds a value
 			if (nobind)
 				com_validate2(self);
-			else
+			else if (value !== self.get())
 				self.set(value, 2);
 		};
 
@@ -7932,7 +7932,6 @@
 					self.$jcevent = 1;
 				else if (self.$jcevent === 1) {
 					com.dirty(false, true);
-					// com.getter(self.value, true, true); Why no bind?
 					com.getter(self.value, true);
 				} else if (self.$jcskip) {
 					self.$jcskip = false;
