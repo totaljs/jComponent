@@ -146,7 +146,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.007';
+	M.version = 'v16.008';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1541,7 +1541,9 @@
 
 			options.error = function(req, s) {
 
-				if (!req.status && repeat) {
+				var code = req.status;
+
+				if (repeat && (!code || code === 408 || code === 502 || code === 503 || code === 504 || code === 509)) {
 					// internal error
 					// internet doesn't work
 					setTimeout(function() {
@@ -1552,7 +1554,7 @@
 				}
 
 				output.response = req.responseText;
-				output.status = req.status || 999;
+				output.status = code || 999;
 				output.text = s;
 				output.error = true;
 				output.headers = parseHeaders(req.getAllResponseHeaders());
