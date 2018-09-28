@@ -5417,7 +5417,7 @@
 	};
 
 	W.ADD = function(value, element) {
-		if (element instanceof COM || element instanceof Scope)
+		if (element instanceof COM || element instanceof Scope || element instanceof Plugin)
 			element = element.element;
 		if (value instanceof Array) {
 			for (var i = 0; i < value.length; i++)
