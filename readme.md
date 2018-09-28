@@ -1410,6 +1410,11 @@ BIND(path);
 // Rebinds values in `data-bind` elements
 // +v15
 
+ADD(declaration, [element]);
+ADD('textbox__form.path__required:true;label:Test');
+// Adds a jComponent dynamically
+// +v16
+
 NOTIFY(path1, path2, ...);
 // Notifies components setter according to the path (only fixed path).
 

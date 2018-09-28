@@ -146,7 +146,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.008';
+	M.version = 'v16.009';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5414,6 +5414,18 @@
 		}
 
 		RECOMPILE();
+	};
+
+	W.ADD = function(value, element) {
+		if (element instanceof COM || element instanceof Scope)
+			element = element.element;
+		if (value instanceof Array) {
+			for (var i = 0; i < value.length; i++)
+				ADD(value[i], element);
+		} else {
+			(element || $(document.body)).append('<div data-jc="{0}"></div>'.format(value));
+			setTimeout2('ADD', COMPILE, 10);
+		}
 	};
 
 	W.COMPONENT = function(name, config, declaration, dependencies) {
