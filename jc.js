@@ -146,7 +146,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.009';
+	M.version = 'v16.010';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1467,8 +1467,11 @@
 
 		setTimeout(function() {
 
-			if (method === 'GET' && data)
-				url += '?' + (typeof(data) === 'string' ? data : jQuery.param(data, true));
+			if (method === 'GET' && data) {
+				var qs = (typeof(data) === 'string' ? data : jQuery.param(data, true));
+				if (qs)
+					url += '?' + qs;
+			}
 
 			var options = {};
 			options.method = method;
@@ -2170,7 +2173,7 @@
 		state(arr, 1, 1);
 		// emit('validate', com.path);
 		return valid;
-	};
+	}
 
 	M.default = function(path, timeout, onlyComponent, reset) {
 
@@ -2235,12 +2238,9 @@
 			}
 		}
 
-		// emit('default', path);
-
 		if (reset) {
 			clear('valid', 'dirty');
 			state(arr, 3, 3);
-			// emit('reset', path);
 		}
 
 		return M;
