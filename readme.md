@@ -1659,6 +1659,12 @@ CLONE(someobject)
 // +v12.0.6
 
 
+COPY(from, to)
+// The method copies all values from "from" to "to" object, a reference will be same
+// returns to
+// +v16
+
+
 STRINGIFY(obj, [trim]);
 // The method creates a JSON string from the object.
 // {trim} optional argument (default: true) removes empty fields of string

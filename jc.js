@@ -146,7 +146,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.010';
+	M.version = 'v16.011';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5790,6 +5790,17 @@
 
 		fn.call(obj, obj, '');
 		return obj;
+	};
+
+	W.COPY = function(a, b) {
+		var keys = Object.keys(a);
+		for (var i = 0; i < keys.length; i++) {
+			var key = keys[i];
+			var val = a[key];
+			var type = typeof(val);
+			b[key] = type === 'object' ? val ? CLONE(val) : val : val;
+		}
+		return b;
 	};
 
 	W.CLONE = function(obj, path) {
