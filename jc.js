@@ -8085,6 +8085,14 @@
 		return val.replace(/&#39;/g, '\'');
 	}
 
+	function parsebinderskip(str) {
+		for (var i = 1; i < arguments.length; i++) {
+			if (str.indexOf(arguments[i]) !== -1)
+				return false;
+		}
+		return true;
+	}
+
 	function parsebinder(el, b, scopes, r) {
 		var meta = b.split(REGMETA);
 		if (meta.indexOf('|') !== -1) {
@@ -8135,8 +8143,7 @@
 
 					var rki = k.indexOf(' ');
 					var rk = rki === -1 ? k : k.substring(0, rki);
-
-					var fn = rk !== 'setter' && rk !== 'strict' && rk !== 'track' && rk !== 'delay' && rk !== 'import' && rk !== 'class' && rk !== 'template' && rk !== '!template' && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.substring(0, 1) === '@' ? obj.com[v.substring(1)] : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', 'template') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.substring(0, 1) === '@' ? obj.com[v.substring(1)] : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -8146,6 +8153,7 @@
 						k = keys[j].trim();
 
 						var s = '';
+						var notvisible = false;
 						var notnull = false;
 						var backup = false;
 
@@ -8155,14 +8163,15 @@
 							k = k.substring(0, index);
 						}
 
-						var c = k.substring(0, 1);
+						k = k.replace(/^(~!|!~|!|~)/, function(text) {
+							if (text.indexOf('!') !== -1)
+								notnull = true;
+							if (text.indexOf('~') !== -1)
+								notvisible = true;
+							return '';
+						});
 
-						// not null
-						if (c === '!') {
-							k = k.substring(1);
-							c = k.substring(0, 1);
-							notnull = true;
-						}
+						var c = k.substring(0, 1);
 
 						if (k === 'class')
 							k = 'tclass';
@@ -8174,8 +8183,12 @@
 							k = 'class';
 						}
 
-						if (notnull && typeof(fn) === 'function')
-							fn.$nn = 1;
+						if (typeof(fn) === 'function') {
+							if (notnull)
+								fn.$nn = 1;
+							if (notvisible)
+								fn.$nv = 1;
+						}
 
 						switch (k) {
 							case 'track':
@@ -8228,6 +8241,8 @@
 								fn = FN('(value,path,el)=>el.SETTER(' + v + ')');
 								if (notnull)
 									fn.$nn = 1;
+								if (notvisible)
+									fn.$nv =1;
 								break;
 							case 'import':
 							case 'tclass':
@@ -8240,6 +8255,8 @@
 								fn = Tangular.compile(scr.html());
 								if (notnull)
 									fn.$nn = 1;
+								if (notvisible)
+									fn.$nv = 1;
 								break;
 						}
 
@@ -8406,12 +8423,10 @@
 	function jBinder() {}
 
 	var JBP = jBinder.prototype;
-
-	JBP.exec = function(value, path, index, wakeup) {
+	JBP.exec = function(value, path, index, wakeup, can) {
 
 		var item = this;
 		var el = item.el;
-
 		if (index != null) {
 			if (item.child == null)
 				return;
@@ -8438,10 +8453,10 @@
 
 		if (!wakeup && item.delay) {
 			item.$delay && clearTimeout(item.$delay);
-			item.$delay = setTimeout(function(obj, value, path, index) {
+			item.$delay = setTimeout(function(obj, value, path, index, can) {
 				obj.$delay = null;
-				obj.exec(value, path, index, true);
-			}, item.delay, item, value, path, index);
+				obj.exec(value, path, index, true, can);
+			}, item.delay, item, value, path, index, can);
 			return;
 		}
 
@@ -8469,7 +8484,8 @@
 			value = item.format(value, path);
 
 		var tmp = null;
-		var can = true;
+
+		can = can !== false;
 
 		if (item.show && (value != null || !item.show.$nn)) {
 			tmp = item.show.call(item.el, value, path, item.el);
@@ -8492,7 +8508,6 @@
 				can = false;
 		}
 
-
 		if (item.classes) {
 			for (var i = 0; i < item.classes.length; i++) {
 				var cls = item.classes[i];
@@ -8501,103 +8516,100 @@
 			}
 		}
 
-		if (can) {
+		if (can && item.import) {
+			IMPORT(item.import, el);
+			delete item.import;
+		}
 
-			if (item.import) {
-				IMPORT(item.import, el);
-				delete item.import;
-			}
-
-			if (item.config) {
-				if (value != null || !item.config.$nn) {
-					tmp = item.config.call(el, value, path, el);
-					if (tmp) {
-						for (var i = 0; i < el.length; i++)
-							el[i].$com && el[i].$com.reconfigure(tmp);
-					}
+		if (item.config && (can || item.config.$nv)) {
+			if (value != null || !item.config.$nn) {
+				tmp = item.config.call(el, value, path, el);
+				if (tmp) {
+					for (var i = 0; i < el.length; i++)
+						el[i].$com && el[i].$com.reconfigure(tmp);
 				}
 			}
-
-			if (item.html) {
-				if (value != null || !item.html.$nn) {
-					tmp = item.html.call(el, value, path, el);
-					el.html(tmp == null ? (item.htmlbk || '') : tmp);
-				} else
-					el.html(item.htmlbk || '');
-			}
-
-			if (item.text) {
-				if (value != null || !item.text.$nn) {
-					tmp = item.text.call(el, value, path, el);
-					el.text(tmp == null ? (item.htmlbk || '') : tmp);
-				} else
-					el.html(item.htmlbk || '');
-			}
-
-			if (item.val) {
-				if (value != null || !item.val.$nn) {
-					tmp = item.val.call(el, value, path, el);
-					el.val(tmp == null ? (item.valbk || '') : tmp);
-				} else
-					el.val(item.valbk || '');
-			}
-
-			if (item.template && (value != null || !item.template.$nn)) {
-				DEFMODEL.value = value;
-				DEFMODEL.path = path;
-				el.html(item.template(DEFMODEL));
-			}
-
-			if (item.disabled) {
-				if (value != null || !item.disabled.$nn) {
-					tmp = item.disabled.call(el, value, path, el);
-					el.prop('disabled', tmp == true);
-				} else
-					el.prop('disabled', item.disablebk == true);
-			}
-
-			if (item.checked) {
-				if (value != null || !item.checked.$nn) {
-					tmp = item.checked.call(el, value, path, el);
-					el.prop('checked', tmp == true);
-				} else
-					el.prop('checked', item.checkedbk == true);
-			}
-
-			if (item.title) {
-				if (value != null || !item.title.$nn) {
-					tmp = item.title.call(el, value, path, el);
-					el.attr('title', tmp == null ? (item.titlebk || '') : tmp);
-				} else
-					el.attr('title', item.titlebk || '');
-			}
-
-			if (item.href) {
-				if (value != null || !item.href.$nn) {
-					tmp = item.href.call(el, value, path, el);
-					el.attr('href', tmp == null ? (item.hrefbk || '') : tmp);
-				} else
-					el.attr(item.hrefbk || '');
-			}
-
-			if (item.src) {
-				if (value != null || !item.src.$nn) {
-					tmp = item.src.call(el, value, path, el);
-					el.attr('src', tmp == null ? (item.srcbk || '') : tmp);
-				} else
-					el.attr('src', item.srcbk || '');
-			}
 		}
+
+		if (item.html && (can || item.html.$nv)) {
+			if (value != null || !item.html.$nn) {
+				tmp = item.html.call(el, value, path, el);
+				el.html(tmp == null ? (item.htmlbk || '') : tmp);
+			} else
+				el.html(item.htmlbk || '');
+		}
+
+		if (item.text && (can || item.text.$nv)) {
+			if (value != null || !item.text.$nn) {
+				tmp = item.text.call(el, value, path, el);
+				el.text(tmp == null ? (item.htmlbk || '') : tmp);
+			} else
+				el.html(item.htmlbk || '');
+		}
+
+		if (item.val && (can || item.val.$nv)) {
+			if (value != null || !item.val.$nn) {
+				tmp = item.val.call(el, value, path, el);
+				el.val(tmp == null ? (item.valbk || '') : tmp);
+			} else
+				el.val(item.valbk || '');
+		}
+
+		if (item.template && (can || item.template.$nv) && (value != null || !item.template.$nn)) {
+			DEFMODEL.value = value;
+			DEFMODEL.path = path;
+			el.html(item.template(DEFMODEL));
+		}
+
+		if (item.disabled && (can || item.disabled.$nv)) {
+			if (value != null || !item.disabled.$nn) {
+				tmp = item.disabled.call(el, value, path, el);
+				el.prop('disabled', tmp == true);
+			} else
+				el.prop('disabled', item.disablebk == true);
+		}
+
+		if (item.checked && (can || item.checked.$nv)) {
+			if (value != null || !item.checked.$nn) {
+				tmp = item.checked.call(el, value, path, el);
+				el.prop('checked', tmp == true);
+			} else
+				el.prop('checked', item.checkedbk == true);
+		}
+
+		if (item.title && (can || item.title.$nv)) {
+			if (value != null || !item.title.$nn) {
+				tmp = item.title.call(el, value, path, el);
+				el.attr('title', tmp == null ? (item.titlebk || '') : tmp);
+			} else
+				el.attr('title', item.titlebk || '');
+		}
+
+		if (item.href && (can || item.href.$nv)) {
+			if (value != null || !item.href.$nn) {
+				tmp = item.href.call(el, value, path, el);
+				el.attr('href', tmp == null ? (item.hrefbk || '') : tmp);
+			} else
+				el.attr(item.hrefbk || '');
+		}
+
+		if (item.src && (can || item.src.$nv)) {
+			if (value != null || !item.src.$nn) {
+				tmp = item.src.call(el, value, path, el);
+				el.attr('src', tmp == null ? (item.srcbk || '') : tmp);
+			} else
+				el.attr('src', item.srcbk || '');
+		}
+
+		if (item.setter && (can || item.setter.$nv) && (value != null || !item.setter.$nn))
+			item.setter.call(el, value, path, el);
 
 		if (item.change && (value != null || !item.change.$nn))
 			item.change.call(el, value, path, el);
 
-		if (item.setter && (value != null || !item.setter.$nn))
-			item.setter.call(el, value, path, el);
-
 		if (can && index == null && item.child) {
 			for (var i = 0; i < item.child.length; i++)
-				item.exec(value, path, i);
+				item.exec(value, path, i, undefined, can);
 		}
 
 		if (item.tclass) {
