@@ -2534,27 +2534,30 @@ __Commands__:
 
 - `show` toggles `hidden` class if the condition will be valid
 - `hide` toggles `hidden` class if the condition will be valid
-- `html` renders a value as HTML (condition must return `string`)
-- `text` renders a value as TEXT without tags (condition must return `string`)
-- `title` sets `title` attribute (condition must return `string`)
-- `disabled` sets `disabled` attribute (condition must return `boolean`)
-- `checked` sets `checked` attribute (condition must return `boolean`)
-- `src` sets `src` attribute (condition must return `string`)
-- `href` sets `href` attribute (condition must return `string`)
-- `val` sets `value` attribute (condition must return `string`)
-- `template` (without value) it expects `<script type="text/html">` which will be compiled and used as Tangular template
-- `change` executes a method `function(value, path, jQueryElement)` in `jQueryElement` context (must contain a name of method)
-- `.YOUR_CLASS_NAME` toggles class (condition must return `boolean`)
-- `selector` can contain jQuery selector and `bind` will be performed for this selector only
+- `html` renders a value as HTML (condition must return `string`) ***
+- `text` renders a value as TEXT without tags (condition must return `string`) ***
+- `title` sets `title` attribute (condition must return `string`) ***
+- `disabled` sets `disabled` attribute (condition must return `boolean`) ***
+- `checked` sets `checked` attribute (condition must return `boolean`) ***
+- `src` sets `src` attribute (condition must return `string`) ***
+- `href` sets `href` attribute (condition must return `string`) ***
+- `val` sets `value` attribute (condition must return `string`) ***
+- `template` (without value) it expects `<script type="text/html">` which will be compiled and used as Tangular template ***
+- `change` executes a method `function(value, path, jQueryElement)` in `jQueryElement` context (must contain a name of method) ***
+- `.YOUR_CLASS_NAME` toggles class (condition must return `boolean`) ***
+- `selector` can contain jQuery selector and `bind` will be performed for this selector only ***
 - `def` sets a default value, value will be evaluated as JavaScript code
 - `delay` delays a binding and must contain `Number`
 - `class` toggles class if the binder has been processed and must contain `String` as a class name
-- `import` performs `IMPORT()` and must contain `{String}` as URL address
-- `config` performs `RECONFIGURE()` for the element/selector component and __must return__ a configuration `String`
+- `import` performs `IMPORT()` and must contain `{String}` as URL address ***
+- `config` performs `RECONFIGURE()` for the element/selector component and __must return__ a configuration `String` ***
 - `strict` (without value) enables a strict path comparison, so `path` must be same or parent path within the binder `path`
-- `setter` performs `SETTER()` for the components inside the element, a `value` will be evaluated as arguments
+- `setter` performs `SETTER()` for the components inside the element, a `value` will be evaluated as arguments ***
 - `track` enables a strict path comparison for the defined paths separated by comma (use a `field` name without parent path)
 - `!COMMAND` evaluating will be performed if the value won't be `null` or `undefined`
+- `~COMMAND` evaluating will be performed for hidden elements too
+
+`***` element must be visible!!!
 
 __Linking commands__:
 
