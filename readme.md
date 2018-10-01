@@ -2552,6 +2552,7 @@ __Commands__:
 - `import` performs `IMPORT()` and must contain `{String}` as URL address
 - `config` performs `RECONFIGURE()` for the element/selector component and __must return__ a configuration `String`
 - `strict` (without value) enables a strict path comparison, so `path` must be same or parent path within the binder `path`
+- `setter` performs `SETTER()` for the components inside the element, a `value` will be evaluated as arguments
 - `track` enables a strict path comparison for the defined paths separated by comma (use a `field` name without parent path)
 - `!COMMAND` evaluating will be performed if the value won't be `null` or `undefined`
 

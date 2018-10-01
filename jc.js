@@ -146,7 +146,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.011';
+	M.version = 'v16.012';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -278,7 +278,7 @@
 
 		obj.set = function(index, value) {
 
-			var sum;
+			var sum = null;
 
 			if (!(index instanceof Array)) {
 				var item = obj.items[index];
@@ -421,7 +421,7 @@
 
 		var key = 'eval' + expression;
 		var exp = temp[key];
-		var val;
+		var val = null;
 
 		if (nopath)
 			val = path;
@@ -550,7 +550,7 @@
 
 		var method = 'POST';
 		var index = url.indexOf(' ');
-		var tmp;
+		var tmp = null;
 
 		if (index !== -1)
 			method = url.substring(0, index).toUpperCase();
@@ -923,7 +923,7 @@
 
 		var isExcept = value instanceof Array;
 		var key = 'valid' + path + (isExcept ? '>' + value.join('|') : '');
-		var except;
+		var except = null;
 
 		if (isExcept) {
 			except = value;
@@ -933,7 +933,7 @@
 		if (typeof(value) !== 'boolean' && cache[key] !== undefined)
 			return cache[key];
 
-		var flags;
+		var flags = null;
 
 		if (isExcept) {
 			var is = false;
@@ -1000,13 +1000,13 @@
 		cache[key] = valid;
 		state(arr, 1, 1);
 		return valid;
-	};
+	}
 
 	function com_dirty(path, value, onlyComponent, skipEmitState) {
 
 		var isExcept = value instanceof Array;
 		var key = 'dirty' + path + (isExcept ? '>' + value.join('|') : '');
-		var except;
+		var except = null;
 
 		if (isExcept) {
 			except = value;
@@ -1018,7 +1018,7 @@
 
 		var dirty = true;
 		var arr = value !== undefined ? [] : null;
-		var flags;
+		var flags = null;
 
 		if (isExcept) {
 			var is = false;
@@ -1330,7 +1330,7 @@
 		}
 
 		var arr = [];
-		var a;
+		var a = null;
 
 		if (path)
 			a = FIND('.' + path, true);
@@ -1425,8 +1425,8 @@
 		}
 
 		var td = typeof(data);
-		var tmp;
 		var arg = EMPTYARRAY;
+		var tmp;
 
 		if (!callback && (td === 'function' || td === 'string')) {
 			timeout = callback;
@@ -2103,7 +2103,7 @@
 
 		path = pathmaker(path.replace(REGWILDCARD, ''));
 
-		var flags;
+		var flags = null;
 		if (except) {
 			var is = false;
 			flags = {};
@@ -2367,7 +2367,7 @@
 			if (mq.oldW === cw && mq.oldH === ch)
 				continue;
 
-			var type;
+			var type = null;
 
 			if (cw >= d.md.min && cw <= d.md.max)
 				type = 'md';
@@ -2407,7 +2407,7 @@
 			}
 		}
 
-		var b;
+		var b = null;
 		var released = container ? attrcom(container, 'released') === 'true' : false;
 		var tmp = attrcom(container, 'scope');
 		if (tmp)
@@ -2432,7 +2432,7 @@
 		else
 			level++;
 
-		var binders;
+		var binders = null;
 
 		for (var i = 0, length = arr.length; i < length; i++) {
 			var el = arr[i];
@@ -2450,6 +2450,7 @@
 						onComponent(name || '', el, level, scopes);
 					}
 				}
+
 
 				if (!el.$jcbind) {
 					b = el.getAttribute('data-bind') || el.getAttribute('bind');
@@ -2749,7 +2750,7 @@
 				}
 
 				var com = M.$components[name];
-				var lo;
+				var lo = null;
 
 				if (lazy && name) {
 					var namea = name.substring(0, name.indexOf('@'));
@@ -5475,8 +5476,6 @@
 		}
 
 		query = query.toLowerCase();
-		var type;
-
 		if (query.indexOf(',') !== -1) {
 			var ids = [];
 			query.split(',').forEach(function(q) {
@@ -5545,7 +5544,6 @@
 
 		obj.id = mediaqueriescounter++;
 		obj.fn = fn;
-		obj.type = type;
 
 		if (element)
 			obj.element = element;
@@ -7824,7 +7822,7 @@
 
 		$.fn.components = function(fn) {
 			var all = this.find(ATTRCOM);
-			var output;
+			var output = null;
 			all.each(function(index) {
 				var com = this.$com;
 				if (com) {
@@ -8088,9 +8086,7 @@
 	}
 
 	function parsebinder(el, b, scopes, r) {
-
 		var meta = b.split(REGMETA);
-
 		if (meta.indexOf('|') !== -1) {
 			if (!r) {
 				var tmp = [];
@@ -8109,8 +8105,8 @@
 			return output;
 		}
 
-		var path;
-		var index;
+		var path = null;
+		var index = null;
 		var obj = new jBinder();
 		var cls = [];
 		var sub = {};
@@ -8137,7 +8133,10 @@
 						continue;
 					}
 
-					var fn = k !== 'strict' && k !== 'track' && k !== 'delay' && k !== 'import' && k !== 'class' && k !== 'template' && k !== '!template' && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.substring(0, 1) === '@' ? obj.com[v.substring(1)] : GET(v) : 1;
+					var rki = k.indexOf(' ');
+					var rk = rki === -1 ? k : k.substring(0, rki);
+
+					var fn = rk !== 'setter' && rk !== 'strict' && rk !== 'track' && rk !== 'delay' && rk !== 'import' && rk !== 'class' && rk !== 'template' && rk !== '!template' && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.substring(0, 1) === '@' ? obj.com[v.substring(1)] : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -8224,6 +8223,11 @@
 							case 'show':
 							case 'selector':
 							case 'config':
+								break;
+							case 'setter':
+								fn = FN('(value,path,el)=>el.SETTER(' + v + ')');
+								if (notnull)
+									fn.$nn = 1;
 								break;
 							case 'import':
 							case 'tclass':
@@ -8464,7 +8468,7 @@
 		if (item.format)
 			value = item.format(value, path);
 
-		var tmp;
+		var tmp = null;
 		var can = true;
 
 		if (item.show && (value != null || !item.show.$nn)) {
@@ -8587,6 +8591,9 @@
 
 		if (item.change && (value != null || !item.change.$nn))
 			item.change.call(el, value, path, el);
+
+		if (item.setter && (value != null || !item.setter.$nn))
+			item.setter.call(el, value, path, el);
 
 		if (can && index == null && item.child) {
 			for (var i = 0; i < item.child.length; i++)
