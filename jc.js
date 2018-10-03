@@ -146,7 +146,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.013';
+	M.version = 'v16.014';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2902,7 +2902,12 @@
 						if (obj.prerender)
 							data = obj.prerender(data);
 						dependencies(com, function(obj, el) {
-							typeof(obj.make) === 'function' && obj.make(data);
+							if (typeof(obj.make) === 'function') {
+								var parent = current_com;
+								current_com = obj;
+								obj.make(data);
+								current_com = parent;
+							}
 							init(el, obj);
 						}, obj, el);
 					};
@@ -2954,13 +2959,28 @@
 
 				if (com.dependencies) {
 					dependencies(com, function(obj, el) {
-						obj.make && obj.make();
+
+						if (obj.make) {
+							var parent = current_com;
+							current_com = obj;
+							obj.make();
+							current_com = parent;
+						}
+
 						init(el, obj);
 					}, obj, el);
 				} else {
+
 					// Because sometimes make doesn't contain the content of the element
 					setTimeout(function(init, el, obj) {
-						obj.make && obj.make();
+
+						if (obj.make) {
+							var parent = current_com;
+							current_com = obj;
+							obj.make();
+							current_com = parent;
+						}
+
 						init(el, obj);
 					}, 5, init, el, obj);
 				}
