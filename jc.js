@@ -146,7 +146,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.014';
+	M.version = 'v16.015';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -3748,6 +3748,8 @@
 	}
 
 	function inDOM(el) {
+		if (!el)
+			return;
 		if (el.nodeName === 'BODY')
 			return true;
 		var parent = el.parentNode;
