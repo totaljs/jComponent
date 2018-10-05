@@ -146,7 +146,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.015';
+	M.version = 'v16.016';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5926,6 +5926,10 @@
 	};
 
 	W.INC = function(path, value, timeout, reset) {
+
+		if (value == null)
+			value = 1;
+
 		var t = typeof(timeout);
 		if (t === 'boolean')
 			return M.inc(path, value, timeout);
