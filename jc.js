@@ -146,7 +146,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.016';
+	M.version = 'v16.017';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2410,8 +2410,9 @@
 		var b = null;
 		var released = container ? attrcom(container, 'released') === 'true' : false;
 		var tmp = attrcom(container, 'scope');
-		if (tmp)
-			scopes.push(container);
+		var binders = null;
+
+		tmp && scopes.push(container);
 
 		if (!container.$jcbind) {
 			b = container.getAttribute('data-bind') || container.getAttribute('bind');
@@ -2431,8 +2432,6 @@
 			level = 0;
 		else
 			level++;
-
-		var binders = null;
 
 		for (var i = 0, length = arr.length; i < length; i++) {
 			var el = arr[i];
