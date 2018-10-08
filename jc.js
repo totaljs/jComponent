@@ -146,7 +146,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.017';
+	M.version = 'v16.018';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1084,7 +1084,7 @@
 		// For double hitting component.state() --> look into COM.invalid()
 		!skipEmitState && state(arr, 1, 2);
 		return dirty;
-	};
+	}
 
 	W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
@@ -4105,12 +4105,6 @@
 			value = self.parser(value);
 			self.getter2 && self.getter2(value, realtime);
 
-			// @TODO: remove it in because it's a hack for older checkboxes
-			if (realtime === 2 && nobind) {
-				warn('The component "{0}" contains older declaration of component.getter(), replace it.'.format(self.name));
-				nobind = false;
-			}
-
 			if (realtime)
 				self.$skip = true;
 
@@ -4119,6 +4113,11 @@
 				com_validate2(self);
 			else if (value !== self.get())
 				self.set(value, 2);
+			else if (realtime === 3) {
+				// A validation for same values, "realtime=3" is in "blur" event
+				// Because we need to validate the input if the user leaves from the control
+				com_validate2(self);
+			}
 		};
 
 		self.stateX = function(type, what) {
@@ -7980,7 +7979,7 @@
 					self.$jcevent = 1;
 				else if (self.$jcevent === 1) {
 					com.dirty(false, true);
-					com.getter(self.value, true);
+					com.getter(self.value, 3);
 				} else if (self.$jcskip) {
 					self.$jcskip = false;
 				} else {
