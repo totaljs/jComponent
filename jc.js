@@ -42,6 +42,7 @@
 	// temporary
 	W.jctmp = {};
 	W.W = window;
+	W.FUNC = {};
 
 	try {
 		var pmk = 'jc.test';
@@ -146,7 +147,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.018';
+	M.version = 'v16.019';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
