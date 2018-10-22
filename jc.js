@@ -147,7 +147,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.019';
+	M.version = 'v16.020';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -6848,6 +6848,10 @@
 			}
 		}
 		return arr;
+	};
+
+	DP.toNumber = function(format) {
+		return +this.format(format || 'yyyyMMdd');
 	};
 
 	DP.parseDate = function() {
