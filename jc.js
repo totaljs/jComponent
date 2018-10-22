@@ -6609,7 +6609,7 @@
 	SP.isJSONDate = function() {
 		var t = this;
 		var l = t.length - 1;
-		return l > 22 && l < 30 && t.charCodeAt(l) === 90 && t.charCodeAt(10) === 84 && t.charCodeAt(4) === 45 && t.charCodeAt(13) === 58 && t.charCodeAt(16) === 58;
+		return l > 18 && l < 30 && t.charCodeAt(l) === 90 && t.charCodeAt(10) === 84 && t.charCodeAt(4) === 45 && t.charCodeAt(13) === 58 && t.charCodeAt(16) === 58;
 	};
 
 	SP.parseExpire = function() {
