@@ -147,7 +147,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.020';
+	M.version = 'v16.021';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7308,7 +7308,7 @@
 		return item === undefined ? def : item;
 	};
 
-	AP.quicksort = function(name, asc) {
+	AP.quicksort = function(name, asc, type) {
 
 		var self = this;
 		var length = self.length;
@@ -7320,37 +7320,66 @@
 			name = undefined;
 		}
 
-		if (asc === undefined)
+		if (asc == null || asc === 'asc')
 			asc = true;
+		else if (asc === 'desc')
+			asc = false;
 
-		var self = self;
-		var type = 0;
-		var field = name ? self[0][name] : self[0];
-
-		switch (typeof(field)) {
+		switch (type) {
+			case 'date':
+				type = 4;
+				break;
 			case 'string':
-				if (field.isJSONDate())
-					type = 4;
-				else
-					type = 1;
+				type = 1;
 				break;
 			case 'number':
 				type = 2;
 				break;
+			case 'bool':
 			case 'boolean':
 				type = 3;
 				break;
 			default:
-				if (!(field instanceof Date))
-					return self;
-				type = 4;
+				type = 0;
 				break;
+		}
+
+		if (!type) {
+			var index = 0;
+			while (!type) {
+				var field = self[index++];
+				if (field === undefined)
+					return self;
+				if (name)
+					field = field[name];
+				switch (typeof(field)) {
+					case 'string':
+						type = field.isJSONDate() ? 4 : 1;
+						break;
+					case 'number':
+						type = 2;
+						break;
+					case 'boolean':
+						type = 3;
+						break;
+					default:
+						if (field instanceof Date)
+							type = 4;
+						break;
+				}
+			}
 		}
 
 		self.sort(function(a, b) {
 
 			var va = name ? a[name] : a;
 			var vb = name ? b[name] : b;
+
+			if (va == null)
+				return 1;
+
+			if (vb == null)
+				return -1;
 
 			// String
 			if (type === 1) {
