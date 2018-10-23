@@ -147,7 +147,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.021';
+	M.version = 'v16.022';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7376,10 +7376,10 @@
 			var vb = name ? b[name] : b;
 
 			if (va == null)
-				return 1;
+				return asc ? -1 : 1;
 
 			if (vb == null)
-				return -1;
+				return asc ? -1 : 1;
 
 			// String
 			if (type === 1) {
