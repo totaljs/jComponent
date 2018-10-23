@@ -147,7 +147,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.022';
+	M.version = 'v16.023';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7379,7 +7379,7 @@
 				return asc ? -1 : 1;
 
 			if (vb == null)
-				return asc ? -1 : 1;
+				return asc ? 1 : -1;
 
 			// String
 			if (type === 1) {
