@@ -147,7 +147,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.023';
+	M.version = 'v16.024';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1240,14 +1240,29 @@
 				AJAXCACHE('GET ' + url, null, cb, expire);
 			else
 				AJAX('GET ' + url, cb);
-
 		});
 
 		return W;
 	};
 
 	W.IMPORT = M.import = function(url, target, callback, insert, preparator) {
-		return IMPORTCACHE(url, null, target, callback, insert, preparator);
+		if (url instanceof Array) {
+
+			if (typeof(target) === 'function') {
+				preparator = insert;
+				insert = callback;
+				callback = target;
+				target = null;
+			}
+
+			url.wait(function(url, next) {
+				IMPORTCACHE(url, null, target, next, insert, preparator);
+			}, function() {
+				callback && callback();
+			});
+		} else
+			IMPORTCACHE(url, null, target, callback, insert, preparator);
+		return W;
 	};
 
 	W.CACHEPATH = function(path, expire, rebind) {
@@ -6379,6 +6394,7 @@
 		}
 
 		var item = thread === true ? self.shift() : self[tmp.index++];
+
 		if (item === undefined) {
 			if (!tmp.pending) {
 				callback && callback();
