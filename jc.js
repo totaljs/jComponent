@@ -147,7 +147,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.024';
+	M.version = 'v16.025';
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7030,6 +7030,13 @@
 	};
 
 	NP.pluralize = function(zero, one, few, other) {
+
+		if (zero instanceof Array) {
+			one = zero[1];
+			few = zero[2];
+			other = zero[3];
+			zero = zero[0];
+		}
 
 		var num = this;
 		var value = '';
