@@ -147,7 +147,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 'v16.025';
+	M.version = 16.027;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2415,6 +2415,10 @@
 		if (!container)
 			return;
 
+		var comp = container ? attrcom(container, 'compile') : '1';
+		if (comp === '0' || comp === 'false')
+			return;
+
 		if (level == null || level === 0) {
 			scopes = [];
 			if (container !== document.body) {
@@ -2456,6 +2460,10 @@
 				if (!el.tagName)
 					continue;
 
+				comp = el.getAttribute('data-jc-compile');
+				if (comp === '0' || comp === 'false')
+					continue;
+
 				el.childNodes.length && el.tagName !== 'SCRIPT' && REGCOM.test(el.innerHTML) && sub.push(el);
 
 				if (el.$com === undefined) {
@@ -2465,7 +2473,6 @@
 						onComponent(name || '', el, level, scopes);
 					}
 				}
-
 
 				if (!el.$jcbind) {
 					b = el.getAttribute('data-bind') || el.getAttribute('bind');
@@ -4733,13 +4740,21 @@
 	};
 
 	PPC.noscope = PPC.noScope = function(value) {
-		this.$noscope = value === undefined ? true : value === true;
-		return this;
+		var self = this;
+		self.$noscope = value === undefined ? true : value === true;
+		return self;
+	};
+
+	PPC.nocompile = function() {
+		var self = this;
+		self.element.attrd('jc-compile', '0');
+		return self;
 	};
 
 	PPC.singleton = function() {
-		statics['$ST_' + this.name] = true;
-		return this;
+		var self = this;
+		statics['$ST_' + self.name] = true;
+		return self;
 	};
 
 	PPC.blind = function() {
@@ -4788,7 +4803,7 @@
 		return self;
 	};
 
-	PPC.noDirty = function(val) {
+	PPC.nodirty = PPC.noDirty = function(val) {
 		if (val === undefined)
 			val = true;
 		var self = this;
@@ -8754,5 +8769,4 @@
 	W.PLUGIN = function(name, fn) {
 		return fn ? new Plugin(name, fn) : W.PLUGINS[name];
 	};
-
 })();
