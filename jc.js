@@ -147,7 +147,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.027;
+	M.version = 16.028;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2464,15 +2464,18 @@
 				if (comp === '0' || comp === 'false')
 					continue;
 
-				el.childNodes.length && el.tagName !== 'SCRIPT' && REGCOM.test(el.innerHTML) && sub.push(el);
-
 				if (el.$com === undefined) {
 					name = attrcom(el);
 					if (name != null) {
 						released && el.setAttribute(ATTRREL, 'true');
 						onComponent(name || '', el, level, scopes);
+						comp = el.getAttribute('data-jc-compile');
+						if (comp === '0' || comp === 'false')
+							continue;
 					}
 				}
+
+				el.childNodes.length && el.tagName !== 'SCRIPT' && REGCOM.test(el.innerHTML) && sub.push(el);
 
 				if (!el.$jcbind) {
 					b = el.getAttribute('data-bind') || el.getAttribute('bind');
@@ -4549,8 +4552,10 @@
 	};
 
 	PPC.compile = function(container) {
-		compile(container || this.element);
-		return this;
+		var self = this;
+		!container && self.attrd('jc-compile') && self.attrd('jc-compile', '1');
+		compile(container || self.element);
+		return self;
 	};
 
 	PPC.nested = function() {
