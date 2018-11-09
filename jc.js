@@ -147,7 +147,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.029;
+	M.version = 16.030;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5955,6 +5955,12 @@
 		setTimeout(function() {
 			M.set(path, value, reset);
 		}, timeout);
+		return W;
+	};
+
+	W.SETR = function(path, value, type) {
+		M.set(path, value, type);
+		RESET(path);
 		return W;
 	};
 
