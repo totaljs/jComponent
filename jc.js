@@ -147,7 +147,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.030;
+	M.version = 16.031;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2160,7 +2160,6 @@
 
 		clear('valid');
 		state(arr, 1, 1);
-		// emit('validate', path);
 		return valid;
 	};
 
@@ -2187,7 +2186,6 @@
 
 		clear('valid');
 		state(arr, 1, 1);
-		// emit('validate', com.path);
 		return valid;
 	}
 
@@ -2305,7 +2303,6 @@
 
 		clear('valid', 'dirty');
 		state(arr, 1, 3);
-		// emit('reset', path);
 		return W;
 	};
 
@@ -2864,9 +2861,15 @@
 				var tmp = attrcom(el, 'config') || (meta ? meta[2] === 'null' ? '' : meta[2] : '');
 				tmp && obj.reconfigure(tmp, NOOP);
 
-				obj.$init = attrcom(el, 'init') || null;
-				obj.type = attrcom(el, 'type') || '';
-				obj.id = attrcom(el, 'id') || obj._id;
+				if (!obj.$init)
+					obj.$init = attrcom(el, 'init') || null;
+
+				if (!obj.type)
+					obj.type = attrcom(el, 'type') || '';
+
+				if (!obj.id)
+					obj.id = attrcom(el, 'id') || obj._id;
+
 				obj.siblings = all.length > 1;
 				obj.$lazy = lo;
 
@@ -4149,6 +4152,7 @@
 			var key = type + 'x' + what;
 			if (!self.$bindchanges || self.$state !== key) {
 				self.$state = key;
+				self.config.$state && EXEC.call(self, self.config.$state, type, what);
 				self.state(type, what);
 			}
 		};
@@ -4182,6 +4186,7 @@
 					}
 
 					// Binds value directly
+					self.config.$setter && EXEC.call(self, self.config.$setter, value, path, type);
 					self.data('', value);
 					self.setter(value, path, type);
 					self.setter2 && self.setter2(value, path, type);
@@ -4216,6 +4221,7 @@
 						self.$valuehash = hash;
 					}
 
+					self.config.$setter && EXEC.call(self, self.config.$setter, cache.value, cache.path, cache.type);
 					self.data('', cache.value);
 					self.setter(cache.value, cache.path, cache.type);
 					self.setter2 && self.setter2(cache.value, cache.path, cache.type);
@@ -4923,7 +4929,9 @@
 	};
 
 	PPC.reconfigure = function(value, callback, init) {
+
 		var self = this;
+
 		if (typeof(value) === 'object') {
 			OK(value).forEach(function(k) {
 				var prev = self.config[k];
@@ -4956,11 +4964,25 @@
 			});
 		}
 
-		self.data('config', self.config);
+		var cfg = self.config;
 
-		if (self.config.$type)
-			self.type = self.config.$type;
+		self.data('config', cfg);
 
+		if (cfg.$type)
+			self.type = cfg.$type;
+
+		if (cfg.$id)
+			self.id = cfg.$id;
+
+		if (cfg.$compile == false)
+			self.nocompile();
+
+		if (cfg.$init)
+			self.$init = cfg.$init;
+
+		cfg.$class && self.tclass(cfg.$class);
+		cfg.$released && self.release(cfg.$released == true);
+		cfg.$reconfigure && EXEC.call(cfg.$reconfigure, cfg);
 		return self;
 	};
 
@@ -5723,9 +5745,9 @@
 		return SETTER;
 	};
 
-	function exechelper(path, arg) {
+	function exechelper(ctx, path, arg) {
 		setTimeout(function() {
-			EXEC(true, path, arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6]);
+			EXEC.call(ctx, true, path, arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6]);
 		}, 200);
 	}
 
@@ -5745,6 +5767,7 @@
 		var f = 1;
 		var wait = false;
 		var p;
+		var ctx = this;
 
 		if (path === true) {
 			wait = true;
@@ -5763,9 +5786,9 @@
 		if (c === 35) {
 			p = path.substring(1);
 			if (wait)
-				!events[p] && exechelper(path, arg);
+				!events[p] && exechelper(ctx, path, arg);
 			else
-				EMIT(p, arg[0], arg[1], arg[2], arg[3], arg[4]);
+				EMIT.call(ctx, p, arg[0], arg[1], arg[2], arg[3], arg[4]);
 			return EXEC;
 		}
 
@@ -5779,12 +5802,12 @@
 			if (ctrl) {
 				var fn = ctrl[path.substring(index + 1)];
 				if (typeof(fn) === 'function') {
-					fn.apply(ctrl, arg);
+					fn.apply(ctx === W ? ctrl : ctx, arg);
 					ok = 1;
 				}
 			}
 
-			wait && !ok && exechelper(path, arg);
+			wait && !ok && exechelper(ctx, path, arg);
 			return EXEC;
 		}
 
@@ -5795,22 +5818,22 @@
 			var ctrl = W.PLUGINS[p];
 			var fn = path.substring(index + 1);
 			if (ctrl && typeof(ctrl[fn]) === 'function') {
-				ctrl[fn].apply(ctrl, arg);
+				ctrl[fn].apply(ctx === W ? ctrl : ctx, arg);
 				ok = 1;
 			}
 
-			wait && !ok && exechelper(path, arg);
+			wait && !ok && exechelper(ctx, path, arg);
 			return EXEC;
 		}
 
 		var fn = get(path);
 
 		if (typeof(fn) === 'function') {
-			fn.apply(W, arg);
+			fn.apply(ctx, arg);
 			ok = 1;
 		}
 
-		wait && !ok && exechelper(path, arg);
+		wait && !ok && exechelper(ctx, path, arg);
 		return EXEC;
 	};
 
