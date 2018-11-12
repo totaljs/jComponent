@@ -147,7 +147,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.031;
+	M.version = 16.032;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1087,9 +1087,14 @@
 		return dirty;
 	}
 
-	W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
+W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
-		url = url.$env();
+		var w;
+
+		url = url.$env().replace(/<.*?>/, function(text) {
+			w = text.substring(1, text.length - 1);
+			return '';
+		}).trim();
 
 		// unique
 		var first = url.substring(0, 1);
@@ -1110,6 +1115,23 @@
 		} else if (typeof(insert) === 'function') {
 			preparator = insert;
 			insert = true;
+		}
+
+		if (w) {
+			if (W[w]) {
+				callback && callback();
+				return;
+			}
+			var wo = GET(w);
+			if (typeof(wo) === 'function') {
+				if (wo()) {
+					callback && callback();
+					return;
+				}
+			} else if (wo) {
+				callback && callback();
+				return;
+			}
 		}
 
 		if (url.substring(0, 2) === '//')
