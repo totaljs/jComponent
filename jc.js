@@ -26,6 +26,9 @@
 	var DEFMODEL = { value: null };
 	var OK = Object.keys;
 	var MULTIPLE = ' + ';
+	var TYPE_FN = 'function';
+	var TYPE_S = 'string';
+	var TYPE_N = 'number';
 
 	var LCOMPARER = window.Intl ? window.Intl.Collator().compare : function(a, b) {
 		return a.localeCompare(b);
@@ -147,7 +150,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.032;
+	M.version = 16.033;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -249,11 +252,11 @@
 
 		var serialize = function(val) {
 			switch (typeof(val)) {
-				case 'number':
+				case TYPE_N:
 					return val + '';
 				case 'boolean':
 					return val ? '1' : '0';
-				case 'string':
+				case TYPE_S:
 					return val;
 				default:
 					return val == null ? '' : val instanceof Date ? val.getTime() : JSON.stringify(val);
@@ -345,7 +348,7 @@
 		}
 
 		var cb = function() {
-			if (typeof(callback) === 'string')
+			if (typeof(callback) === TYPE_S)
 				SET(callback, value);
 			else
 				callback(value);
@@ -456,11 +459,11 @@
 		},
 		set: function(name, value, expire) {
 			var type = typeof(expire);
-			if (type === 'number') {
+			if (type === TYPE_N) {
 				var date = W.NOW;
 				date.setTime(date.getTime() + (expire * 24 * 60 * 60 * 1000));
 				expire = date;
-			} else if (type === 'string')
+			} else if (type === TYPE_S)
 				expire = new Date(Date.now() + expire.parseExpire());
 			document.cookie = name.env() + '=' + value + '; expires=' + expire.toGMTString() + '; path=/';
 		},
@@ -471,7 +474,7 @@
 
 	W.FORMATTER = M.formatter = function(value, path, type) {
 
-		if (typeof(value) === 'function') {
+		if (typeof(value) === TYPE_FN) {
 			!M.$formatter && (M.$formatter = []);
 
 			// Prepend
@@ -497,7 +500,7 @@
 
 	W.PARSER = M.parser = function(value, path, type) {
 
-		if (typeof(value) === 'function') {
+		if (typeof(value) === TYPE_FN) {
 			!M.$parser && (M.$parser = []);
 
 			// Prepend
@@ -541,7 +544,7 @@
 
 	W.UPLOAD = function(url, data, callback, timeout, progress) {
 
-		if (typeof(timeout) !== 'number' && progress == null) {
+		if (typeof(timeout) !== TYPE_N && progress == null) {
 			progress = timeout;
 			timeout = null;
 		}
@@ -572,7 +575,7 @@
 
 		url = url.substring(index).trim().$env();
 
-		if (typeof(callback) === 'number') {
+		if (typeof(callback) === TYPE_N) {
 			timeout = callback;
 			callback = undefined;
 		}
@@ -606,7 +609,7 @@
 				} catch (e) {}
 
 				if (progress) {
-					if (typeof(progress) === 'string')
+					if (typeof(progress) === TYPE_S)
 						remap(progress, 100);
 					else
 						progress(100);
@@ -627,10 +630,10 @@
 					r = output.response = self.status + ': ' + self.statusText;
 
 				if (!output.error || MD.ajaxerrors) {
-					typeof(callback) === 'string' ? remap(callback.env(), r) : (callback && callback(r, null, output));
+					typeof(callback) === TYPE_S ? remap(callback.env(), r) : (callback && callback(r, null, output));
 				} else {
 					EMIT('error', output);
-					output.process && typeof(callback) === 'function' && callback({}, r, output);
+					output.process && typeof(callback) === TYPE_FN && callback({}, r, output);
 				}
 
 			}, false);
@@ -641,7 +644,7 @@
 				var percentage = 0;
 				if (evt.lengthComputable)
 					percentage = Math.round(evt.loaded * 100 / evt.total);
-				if (typeof(progress) === 'string')
+				if (typeof(progress) === TYPE_S)
 					remap(progress.env(), percentage);
 				else
 					progress(percentage, evt.transferSpeed, evt.timeRemaining);
@@ -687,7 +690,7 @@
 			return W;
 		}
 
-		if (typeof(path) === 'function') {
+		if (typeof(path) === TYPE_FN) {
 			init = fn;
 			fn = path;
 			path = '*';
@@ -729,7 +732,7 @@
 			name = name.substring(index + 1).trim();
 		}
 
-		if (typeof(path) === 'function') {
+		if (typeof(path) === TYPE_FN) {
 			fn = path;
 			path = name === 'watch' ? '*' : '';
 		} else
@@ -804,7 +807,7 @@
 			return W;
 		}
 
-		if (typeof(path) === 'function') {
+		if (typeof(path) === TYPE_FN) {
 			fn = path;
 			path = '';
 		}
@@ -1087,12 +1090,12 @@
 		return dirty;
 	}
 
-W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
+	W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 		var w;
 
 		url = url.$env().replace(/<.*?>/, function(text) {
-			w = text.substring(1, text.length - 1);
+			w = text.substring(1, text.length - 1).trim();
 			return '';
 		}).trim();
 
@@ -1100,30 +1103,31 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		var first = url.substring(0, 1);
 		var once = url.substring(0, 5).toLowerCase() === 'once ';
 
-		if (typeof(target) === 'function') {
+		if (typeof(target) === TYPE_FN) {
 
-			if (typeof(callback) === 'function') {
+			if (typeof(callback) === TYPE_FN) {
 				preparator = callback;
 				insert = true;
-			} else if (typeof(insert) === 'function') {
+			} else if (typeof(insert) === TYPE_FN) {
 				preparator = insert;
 				insert = true;
 			}
 
 			callback = target;
 			target = 'body';
-		} else if (typeof(insert) === 'function') {
+		} else if (typeof(insert) === TYPE_FN) {
 			preparator = insert;
 			insert = true;
 		}
 
 		if (w) {
-			if (W[w]) {
-				callback && callback();
-				return;
-			}
+
+			var wf = w.substring(w.length - 2) === '()';
+			if (wf)
+				w = w.substring(0, w.length - 2);
+
 			var wo = GET(w);
-			if (typeof(wo) === 'function') {
+			if (wf && typeof(wo) === TYPE_FN) {
 				if (wo()) {
 					callback && callback();
 					return;
@@ -1270,7 +1274,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 	W.IMPORT = M.import = function(url, target, callback, insert, preparator) {
 		if (url instanceof Array) {
 
-			if (typeof(target) === 'function') {
+			if (typeof(target) === TYPE_FN) {
 				preparator = insert;
 				insert = callback;
 				callback = target;
@@ -1342,7 +1346,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 				MODIFY(k, path[k], value);
 			});
 		} else {
-			if (typeof(value) === 'function')
+			if (typeof(value) === TYPE_FN)
 				value = value(GET(path));
 			SET(path, value, timeout);
 			if (timeout)
@@ -1356,13 +1360,13 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 	W.LASTMODIFICATION = W.USAGE = M.usage = function(name, expire, path, callback) {
 
 		var type = typeof(expire);
-		if (type === 'string') {
+		if (type === TYPE_S) {
 			var dt = W.NOW = W.DATETIME = new Date();
 			expire = dt.add('-' + expire.env()).getTime();
-		} else if (type === 'number')
+		} else if (type === TYPE_N)
 			expire = Date.now() - expire;
 
-		if (typeof(path) === 'function') {
+		if (typeof(path) === TYPE_FN) {
 			callback = path;
 			path = undefined;
 		}
@@ -1455,7 +1459,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 	W.AJAX = function(url, data, callback, timeout) {
 
-		if (typeof(url) === 'function') {
+		if (typeof(url) === TYPE_FN) {
 			timeout = callback;
 			callback = data;
 			data = url;
@@ -1466,7 +1470,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		var arg = EMPTYARRAY;
 		var tmp;
 
-		if (!callback && (td === 'function' || td === 'string')) {
+		if (!callback && (td === TYPE_FN || td === TYPE_S)) {
 			timeout = callback;
 			callback = data;
 			data = undefined;
@@ -1506,7 +1510,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		setTimeout(function() {
 
 			if (method === 'GET' && data) {
-				var qs = (typeof(data) === 'string' ? data : jQuery.param(data, true));
+				var qs = (typeof(data) === TYPE_S ? data : jQuery.param(data, true));
 				if (qs)
 					url += '?' + qs;
 			}
@@ -1516,7 +1520,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 			options.converters = MD.jsonconverter;
 
 			if (method !== 'GET') {
-				if (typeof(data) === 'string') {
+				if (typeof(data) === TYPE_S) {
 					options.data = data;
 				} else {
 					options.contentType = 'application/json; charset=utf-8';
@@ -1573,7 +1577,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 				output.headers = parseHeaders(req.getAllResponseHeaders());
 				EMIT('response', output);
 				if (output.process && !output.cancel) {
-					if (typeof(callback) === 'string')
+					if (typeof(callback) === TYPE_S)
 						remap(callback, output.response);
 					else
 						callback && callback.call(output, output.response, undefined, output);
@@ -1613,13 +1617,13 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 					return;
 
 				if (MD.ajaxerrors) {
-					if (typeof(callback) === 'string')
+					if (typeof(callback) === TYPE_S)
 						remap(callback, output.response);
 					else
 						callback && callback.call(output, output.response, output.status, output);
 				} else {
 					EMIT('error', output);
-					typeof(callback) === 'function' && callback.call(output, output.response, output.status, output);
+					typeof(callback) === TYPE_FN && callback.call(output, output.response, output.status, output);
 				}
 			};
 
@@ -1638,7 +1642,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 		var tdata = typeof(data);
 
-		if (tdata === 'function' || (tdata === 'string' && typeof(callback) === 'string' && typeof(expire) !== 'string')) {
+		if (tdata === TYPE_FN || (tdata === TYPE_S && typeof(callback) === TYPE_S && typeof(expire) !== TYPE_S)) {
 			clear = timeout;
 			timeout = expire;
 			expire = callback;
@@ -1664,7 +1668,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 				var diff = review ? STRINGIFY(value) : null;
 
-				if (typeof(callback) === 'string')
+				if (typeof(callback) === TYPE_S)
 					remap(callback, value);
 				else
 					callback(value, true);
@@ -1678,7 +1682,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 					// Is same?
 					if (diff !== STRINGIFY(r)) {
 						cacherest(method, uri, data, r, expire);
-						if (typeof(callback) === 'string')
+						if (typeof(callback) === TYPE_S)
 							remap(callback, r);
 						else
 							callback(r, false, true);
@@ -1691,7 +1695,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 				if (err)
 					r = err;
 				cacherest(method, uri, data, r, expire);
-				if (typeof(callback) === 'string')
+				if (typeof(callback) === TYPE_S)
 					remap(callback, r);
 				else
 					callback(r, false);
@@ -1777,7 +1781,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		if (item > now)
 			return true;
 
-		if (typeof(timeout) === 'string')
+		if (typeof(timeout) === TYPE_S)
 			timeout = timeout.env().parseExpire();
 
 		var local = MD.localstorage && timeout > 10000;
@@ -1943,7 +1947,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		var current = get(path);
 		if (!current) {
 			current = 0;
-		} else if (typeof(current) !== 'number') {
+		} else if (typeof(current) !== TYPE_N) {
 			current = parseFloat(current);
 			if (isNaN(current))
 				current = 0;
@@ -2649,12 +2653,12 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 			var cache;
 			try {
 				cache = localStorage.getItem(M.$localstorage + '.cache');
-				if (cache && typeof(cache) === 'string')
+				if (cache && typeof(cache) === TYPE_S)
 					storage = PARSE(cache);
 			} catch (e) {}
 			try {
 				cache = localStorage.getItem(M.$localstorage + '.blocked');
-				if (cache && typeof(cache) === 'string')
+				if (cache && typeof(cache) === TYPE_S)
 					blocked = PARSE(cache);
 			} catch (e) {}
 		}
@@ -2689,7 +2693,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 		declaration.importing = true;
 		declaration.dependencies.wait(function(item, next) {
-			if (typeof(item) === 'function')
+			if (typeof(item) === TYPE_FN)
 				item(next);
 			else
 				IMPORT('once ' + item, next);
@@ -2946,12 +2950,12 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 					continue;
 				}
 
-				if (typeof(template) === 'string') {
+				if (typeof(template) === TYPE_S) {
 					var fn = function(data) {
 						if (obj.prerender)
 							data = obj.prerender(data);
 						dependencies(com, function(obj, el) {
-							if (typeof(obj.make) === 'function') {
+							if (typeof(obj.make) === TYPE_FN) {
 								var parent = current_com;
 								current_com = obj;
 								obj.make(data);
@@ -2982,7 +2986,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 					continue;
 				}
 
-				if (typeof(obj.make) === 'string') {
+				if (typeof(obj.make) === TYPE_S) {
 
 					if (obj.make.indexOf('<') !== -1) {
 						dependencies(com, function(obj, el) {
@@ -3225,7 +3229,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 				if (item.callback && !attrcom(item.element)) {
 					var callback = get(item.callback);
-					typeof(callback) === 'function' && callback(item.element);
+					typeof(callback) === TYPE_FN && callback(item.element);
 				}
 
 				current_element = null;
@@ -3272,7 +3276,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 				return value;
 			}
 
-			if (typeof(expire) === 'string')
+			if (typeof(expire) === TYPE_S)
 				expire = expire.parseExpire();
 
 			storage[key] = { expire: now + expire, value: value };
@@ -3402,7 +3406,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 		obj.$init && setTimeout(function() {
 			var fn = get(obj.$init);
-			typeof(fn) === 'function' && fn.call(obj, obj);
+			typeof(fn) === TYPE_FN && fn.call(obj, obj);
 			obj.$init = undefined;
 		}, 5);
 
@@ -4370,7 +4374,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 	PPC.notmodified = function(fields) {
 		var t = this;
-		typeof(fields) === 'string' && (fields = [fields]);
+		typeof(fields) === TYPE_S && (fields = [fields]);
 		return NOTMODIFIED(t._id, t.get(), fields);
 	};
 
@@ -4653,7 +4657,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		var self = this;
 		if (self.$binded) {
 
-			if (typeof(notify) === 'string') {
+			if (typeof(notify) === TYPE_S) {
 				type = notify;
 				notify = true;
 			}
@@ -4746,14 +4750,14 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		var manual = false;
 		var self = this;
 
-		if (typeof(cls) !== 'string') {
+		if (typeof(cls) !== TYPE_S) {
 			timeout = visible;
 			visible = cls;
 			cls = 'hidden';
 			manual = true;
 		}
 
-		if (typeof(visible) === 'number') {
+		if (typeof(visible) === TYPE_N) {
 			timeout = visible;
 			visible = undefined;
 		} else if (manual && visible !== undefined)
@@ -5102,7 +5106,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 		var self = this;
 
-		if (typeof(path) === 'function') {
+		if (typeof(path) === TYPE_FN) {
 			init = fn;
 			fn = path;
 			path = self.path;
@@ -5202,7 +5206,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 	};
 
 	PPC.on = function(name, path, fn, init) {
-		if (typeof(path) === 'function') {
+		if (typeof(path) === TYPE_FN) {
 			init = fn;
 			fn = path;
 			path = '';
@@ -5224,7 +5228,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 	PPC.formatter = function(value, prepend) {
 		var self = this;
 
-		if (typeof(value) === 'function') {
+		if (typeof(value) === TYPE_FN) {
 			!self.$formatter && (self.$formatter = []);
 			if (prepend === true)
 				self.$formatter.unshift(value);
@@ -5253,7 +5257,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		var self = this;
 		var type = typeof(value);
 
-		if (type === 'function') {
+		if (type === TYPE_FN) {
 			!self.$parser && (self.$parser = []);
 
 			if (prepend === true)
@@ -5264,7 +5268,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 			return self;
 		}
 
-		if (self.trim && type === 'string')
+		if (self.trim && type === TYPE_S)
 			value = value.trim();
 
 		var a = self.$parser;
@@ -5372,7 +5376,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 	}
 
 	USAGE.prototype.compare = function(type, dt) {
-		if (typeof(dt) === 'string' && dt.substring(0, 1) !== '-')
+		if (typeof(dt) === TYPE_S && dt.substring(0, 1) !== '-')
 			dt = W.NOW.add('-' + dt);
 		var val = this[type];
 		return val === 0 ? true : val < dt.getTime();
@@ -5463,7 +5467,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 	W.COMPONENT_CONFIG = function(selector, config) {
 
-		if (typeof(selector) === 'string') {
+		if (typeof(selector) === TYPE_S) {
 			var fn = [];
 			selector.split(' ').forEach(function(sel) {
 				var prop = '';
@@ -5494,7 +5498,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 	W.COMPONENT_EXTEND = function(name, config, declaration) {
 
-		if (typeof(config) === 'function') {
+		if (typeof(config) === TYPE_FN) {
 			var tmp = declaration;
 			declaration = config;
 			config = tmp;
@@ -5530,7 +5534,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 	W.COMPONENT = function(name, config, declaration, dependencies) {
 
-		if (typeof(config) === 'function') {
+		if (typeof(config) === TYPE_FN) {
 			dependencies = declaration;
 			declaration = config;
 			config = null;
@@ -5564,12 +5568,12 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 	W.MEDIAQUERY = function(query, element, fn) {
 
-		if (typeof(query) === 'number') {
+		if (typeof(query) === TYPE_N) {
 			mediaqueries.remove('id', query);
 			return true;
 		}
 
-		if (typeof(element) === 'function') {
+		if (typeof(element) === TYPE_FN) {
 			fn = element;
 			element = null;
 		}
@@ -5730,7 +5734,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 			FIND(selector, true, function(arr) {
 				for (var i = 0, length = arr.length; i < length; i++) {
 					var o = arr[i];
-					if (typeof(o[name]) === 'function')
+					if (typeof(o[name]) === TYPE_FN)
 						o[name].apply(o, arg);
 					else
 						o[name] = arg[0];
@@ -5757,7 +5761,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 			var arr = FIND(selector, true);
 			for (var i = 0, length = arr.length; i < length; i++) {
 				var o = arr[i];
-				if (typeof(o[name]) === 'function')
+				if (typeof(o[name]) === TYPE_FN)
 					o[name].apply(o, arg);
 				else
 					o[name] = arg[0];
@@ -5823,7 +5827,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 			var ctrl = W.PLUGINS[p];
 			if (ctrl) {
 				var fn = ctrl[path.substring(index + 1)];
-				if (typeof(fn) === 'function') {
+				if (typeof(fn) === TYPE_FN) {
 					fn.apply(ctx === W ? ctrl : ctx, arg);
 					ok = 1;
 				}
@@ -5839,7 +5843,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 			p = path.substring(0, index);
 			var ctrl = W.PLUGINS[p];
 			var fn = path.substring(index + 1);
-			if (ctrl && typeof(ctrl[fn]) === 'function') {
+			if (ctrl && typeof(ctrl[fn]) === TYPE_FN) {
 				ctrl[fn].apply(ctx === W ? ctrl : ctx, arg);
 				ok = 1;
 			}
@@ -5850,7 +5854,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 		var fn = get(path);
 
-		if (typeof(fn) === 'function') {
+		if (typeof(fn) === TYPE_FN) {
 			fn.apply(ctx, arg);
 			ok = 1;
 		}
@@ -5862,11 +5866,11 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 	W.MAKE = function(obj, fn, update) {
 
 		switch (typeof(obj)) {
-			case 'function':
+			case TYPE_FN:
 				fn = obj;
 				obj = {};
 				break;
-			case 'string':
+			case TYPE_S:
 				var p = obj;
 				var is = true;
 				obj = get(p);
@@ -5905,10 +5909,10 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 		var type = typeof(obj);
 		switch (type) {
-			case 'number':
+			case TYPE_N:
 			case 'boolean':
 				return obj;
-			case 'string':
+			case TYPE_S:
 				return path ? obj : CLONE(get(obj), true);
 		}
 
@@ -5933,7 +5937,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 				if (fields instanceof Array) {
 					if (fields.indexOf(key) === -1)
 						return undefined;
-				} else if (tf === 'function') {
+				} else if (tf === TYPE_FN) {
 					if (!fields(key, value))
 						return undefined;
 				} else if (fields[key] === false)
@@ -5942,7 +5946,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 			if (compress === true) {
 				var t = typeof(value);
-				if (t === 'string') {
+				if (t === TYPE_S) {
 					value = value.trim();
 					return value ? value : undefined;
 				} else if (value === false || value == null)
@@ -5963,7 +5967,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		date === undefined && (date = MD.jsondate);
 		try {
 			return JSON.parse(value, function(key, value) {
-				return typeof(value) === 'string' && date && value.isJSONDate() ? new Date(value) : value;
+				return typeof(value) === TYPE_S && date && value.isJSONDate() ? new Date(value) : value;
 			});
 		} catch (e) {
 			return null;
@@ -5995,7 +5999,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		var t = typeof(timeout);
 		if (t === 'boolean')
 			return M.set(path, value, timeout);
-		if (!timeout || timeout < 10 || t !== 'number') // TYPE
+		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.set(path, value, timeout);
 		setTimeout(function() {
 			M.set(path, value, reset);
@@ -6017,7 +6021,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		var t = typeof(timeout);
 		if (t === 'boolean')
 			return M.inc(path, value, timeout);
-		if (!timeout || timeout < 10 || t !== 'number') // TYPE
+		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.inc(path, value, timeout);
 		setTimeout(function() {
 			M.inc(path, value, reset);
@@ -6029,7 +6033,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		var t = typeof(timeout);
 		if (t === 'boolean')
 			return M.extend(path, value, timeout);
-		if (!timeout || timeout < 10 || t !== 'number') // TYPE
+		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.extend(path, value, timeout);
 		setTimeout(function() {
 			M.extend(path, value, reset);
@@ -6041,7 +6045,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		var t = typeof(timeout);
 		if (t === 'boolean')
 			return M.push(path, value, timeout);
-		if (!timeout || timeout < 10 || t !== 'number') // TYPE
+		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.push(path, value, timeout);
 		setTimeout(function() {
 			M.push(path, value, reset);
@@ -6085,7 +6089,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 	W.UPTODATE = function(period, url, callback, condition) {
 
-		if (typeof(url) === 'function') {
+		if (typeof(url) === TYPE_FN) {
 			condition = callback;
 			callback = url;
 			url = '';
@@ -6213,13 +6217,13 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 		var isWaiting = false;
 
-		if (typeof(many) === 'function') {
+		if (typeof(many) === TYPE_FN) {
 			isWaiting = true;
 			callback = many;
 			many = undefined;
 			// noCache = undefined;
 			// noCache can be timeout
-		} else if (typeof(noCache) === 'function') {
+		} else if (typeof(noCache) === TYPE_FN) {
 			var tmp = callback;
 			isWaiting = true;
 			callback = noCache;
@@ -6286,7 +6290,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		var t = typeof(timeout);
 		if (t === 'boolean')
 			return M.update(path, timeout);
-		if (!timeout || timeout < 10 || t !== 'number') // TYPE
+		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.update(path, reset, timeout);
 		setTimeout(function() {
 			M.update(path, reset);
@@ -6312,7 +6316,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		if (!s)
 			return 0;
 		var type = typeof(s);
-		if (type === 'number')
+		if (type === TYPE_N)
 			return s;
 		else if (type === 'boolean')
 			return s ? 1 : 0;
@@ -6357,13 +6361,13 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		var key = ((Math.random() * 10000) >> 0).toString(16);
 		var tkey = timeout > 0 ? key + '_timeout' : 0;
 
-		if (typeof(callback) === 'number') {
+		if (typeof(callback) === TYPE_N) {
 			var tmp = interval;
 			interval = callback;
 			callback = tmp;
 		}
 
-		var is = typeof(fn) === 'string';
+		var is = typeof(fn) === TYPE_S;
 		var run = false;
 
 		if (is) {
@@ -6449,7 +6453,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		// INIT
 		if (!tmp) {
 
-			if (typeof(callback) !== 'function') {
+			if (typeof(callback) !== TYPE_FN) {
 				thread = callback;
 				callback = null;
 			}
@@ -6535,7 +6539,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 	AP.async = function(context, callback) {
 
-		if (typeof(context) === 'function') {
+		if (typeof(context) === TYPE_FN) {
 			var tmp = callback;
 			callback = context;
 			context = tmp;
@@ -6603,9 +6607,9 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 			return t.substring(0, 1) + '/';
 		};
 		if (r)
-			url = typeof(r) === 'function' ? r(url) : ext.test(url) ? url : (r + url);
+			url = typeof(r) === TYPE_FN ? r(url) : ext.test(url) ? url : (r + url);
 		else if (!noBase && b)
-			url = typeof(b) === 'function' ? b(url) : ext.test(url) ? url : (b + url);
+			url = typeof(b) === TYPE_FN ? b(url) : ext.test(url) ? url : (b + url);
 		return url.replace(/[^:]\/{2,}/, replace);
 	};
 
@@ -6627,11 +6631,11 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		var output;
 
 		switch (typeof(def)) {
-			case 'function':
+			case TYPE_FN:
 				callback = def;
 				output = {};
 				break;
-			case 'string':
+			case TYPE_S:
 				output = def.parseConfig();
 				break;
 			case 'object':
@@ -6866,7 +6870,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		var self = this;
 		var output = [];
 		for (var i = 0, length = self.length; i < length; i++) {
-			if (typeof(self[i]) === 'string')
+			if (typeof(self[i]) === TYPE_S)
 				self[i] = self[i].trim();
 			if (empty || self[i])
 				output.push(self[i]);
@@ -6877,7 +6881,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 	AP.findIndex = function(cb, value) {
 
 		var self = this;
-		var isFN = typeof(cb) === 'function';
+		var isFN = typeof(cb) === TYPE_FN;
 		var isV = value !== undefined;
 
 		for (var i = 0, length = self.length; i < length; i++) {
@@ -6896,7 +6900,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 	AP.findAll = function(cb, value) {
 
 		var self = this;
-		var isFN = typeof(cb) === 'function';
+		var isFN = typeof(cb) === TYPE_FN;
 		var isV = value !== undefined;
 		var arr = [];
 
@@ -6921,7 +6925,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 		var self = this;
 		var arr = [];
-		var isFN = typeof(cb) === 'function';
+		var isFN = typeof(cb) === TYPE_FN;
 		var isV = value !== undefined;
 
 		for (var i = 0, length = self.length; i < length; i++) {
@@ -6952,7 +6956,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 			value = parseInt(arr[0]);
 		}
 
-		if (typeof(value) === 'string')
+		if (typeof(value) === TYPE_S)
 			value = value.env();
 
 		var self = this;
@@ -7137,7 +7141,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 		var index = num.indexOf('.');
 
-		if (typeof(decimals) === 'string') {
+		if (typeof(decimals) === TYPE_S) {
 			var tmp;
 			if (decimals.substring(0, 1) === '[') {
 				tmp = ENV(decimals.substring(1, decimals.length - 1));
@@ -7222,7 +7226,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		if (value == null)
 			return self;
 
-		if (typeof(value) === 'number')
+		if (typeof(value) === TYPE_N)
 			return self + value;
 
 		var first = value.charCodeAt(0);
@@ -7422,10 +7426,10 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 			case 'date':
 				type = 4;
 				break;
-			case 'string':
+			case TYPE_S:
 				type = 1;
 				break;
-			case 'number':
+			case TYPE_N:
 				type = 2;
 				break;
 			case 'bool':
@@ -7446,10 +7450,10 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 				if (name)
 					field = field[name];
 				switch (typeof(field)) {
-					case 'string':
+					case TYPE_S:
 						type = field.isJSONDate() ? 4 : 1;
 						break;
-					case 'number':
+					case TYPE_N:
 						type = 2;
 						break;
 					case 'boolean':
@@ -7532,7 +7536,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		for (var i = 0, length = self.length; i < length; i++) {
 			var val = key ? self[i][key] : self[i];
 
-			if (typeof(val) === 'string')
+			if (typeof(val) === TYPE_S)
 				val = val.parseFloat();
 
 			if (val instanceof Date) {
@@ -7606,7 +7610,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		}
 
 		if (isDate) {
-			if (typeof(output) === 'number')
+			if (typeof(output) === TYPE_N)
 				return new Date(output);
 			output[0] = new Date(output[0]);
 			output[1] = new Date(output[1]);
@@ -7622,7 +7626,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 		var is = false;
 		var callback;
 
-		if (typeof(path) === 'string') {
+		if (typeof(path) === TYPE_S) {
 			if (proxy[path])
 				return proxy[path];
 			is = true;
@@ -7730,7 +7734,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 		$.fn.FIND = function(selector, many, callback, timeout) {
 
-			if (typeof(many) === 'function') {
+			if (typeof(many) === TYPE_FN) {
 				timeout = callback;
 				callback = many;
 				many = undefined;
@@ -7738,7 +7742,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 
 			var self = this;
 			var output = findcomponent(self, selector);
-			if (typeof(callback) === 'function') {
+			if (typeof(callback) === TYPE_FN) {
 
 				if (output.length) {
 					callback.call(output, output);
@@ -7794,7 +7798,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 				self.FIND(selector, true, function(arr) {
 					for (var i = 0, length = arr.length; i < length; i++) {
 						var o = arr[i];
-						if (typeof(o[name]) === 'function')
+						if (typeof(o[name]) === TYPE_FN)
 							o[name].apply(o, arg);
 						else
 							o[name] = arg[0];
@@ -7822,7 +7826,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 				var arr = self.FIND(selector, true);
 				for (var i = 0, length = arr.length; i < length; i++) {
 					var o = arr[i];
-					if (typeof(o[name]) === 'function')
+					if (typeof(o[name]) === TYPE_FN)
 						o[name].apply(o, arg);
 					else
 						o[name] = arg[0];
@@ -8181,10 +8185,10 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 	M.$parser.push(function(path, value, type) {
 
 		switch (type) {
-			case 'number':
+			case TYPE_N:
 			case 'currency':
 			case 'float':
-				var v = +(typeof(value) == 'string' ? value.replace(REGEMPTY, '').replace(REGCOMMA, '.') : value);
+				var v = +(typeof(value) == TYPE_S ? value.replace(REGEMPTY, '').replace(REGCOMMA, '.') : value);
 				return isNaN(v) ? null : v;
 
 			case 'date':
@@ -8334,7 +8338,7 @@ W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
 							k = 'class';
 						}
 
-						if (typeof(fn) === 'function') {
+						if (typeof(fn) === TYPE_FN) {
 							if (notnull)
 								fn.$nn = 1;
 							if (notvisible)
