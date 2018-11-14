@@ -150,7 +150,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.033;
+	M.version = 16.034;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2696,7 +2696,7 @@
 			if (typeof(item) === TYPE_FN)
 				item(next);
 			else
-				IMPORT('once ' + item, next);
+				IMPORT((item.indexOf('<') === -1 ? 'once ' : '') + item, next);
 		}, function() {
 			declaration.importing = false;
 			callback(obj, el);
@@ -5527,7 +5527,7 @@
 			for (var i = 0; i < value.length; i++)
 				ADD(value[i], element);
 		} else {
-			(element || $(document.body)).append('<div data-jc="{0}"></div>'.format(value));
+			$(element || document.body).append('<div data-jc="{0}"></div>'.format(value));
 			setTimeout2('ADD', COMPILE, 10);
 		}
 	};
