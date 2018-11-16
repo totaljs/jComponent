@@ -150,7 +150,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.034;
+	M.version = 16.035;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2498,6 +2498,7 @@
 				if (!el.$jcbind) {
 					b = el.getAttribute('data-bind') || el.getAttribute('bind');
 					if (b) {
+						el.$jcbind = 1;
 						!binders && (binders = []);
 						binders.push({ el: el, b: b });
 					}
@@ -2505,7 +2506,7 @@
 
 				comp = el.getAttribute('data-jc-compile');
 				if (comp !== '0' && comp !== 'false')
-					el.childNodes.length && el.tagName !== 'SCRIPT' && REGCOM.test(el.innerHTML) && sub.push(el);
+					el.childNodes.length && el.tagName !== 'SCRIPT' && REGCOM.test(el.innerHTML) && sub.indexOf(el) === -1 && sub.push(el);
 			}
 		}
 
@@ -4955,9 +4956,7 @@
 	};
 
 	PPC.reconfigure = function(value, callback, init) {
-
 		var self = this;
-
 		if (typeof(value) === 'object') {
 			OK(value).forEach(function(k) {
 				var prev = self.config[k];
@@ -8680,8 +8679,10 @@
 			if (value != null || !item.config.$nn) {
 				tmp = item.config.call(el, value, path, el);
 				if (tmp) {
-					for (var i = 0; i < el.length; i++)
-						el[i].$com && el[i].$com.reconfigure(tmp);
+					for (var i = 0; i < el.length; i++) {
+						var c = el[i].$com;
+						c && c.$ready && c.reconfigure(tmp);
+					}
 				}
 			}
 		}
