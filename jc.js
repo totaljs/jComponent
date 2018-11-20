@@ -9,7 +9,7 @@
 	var REGEMPTY = /\s/g;
 	var REGCOMMA = /,/g;
 	var REGSEARCH = /[^a-zA-Zá-žÁ-Žа-яА-Я\d\s:]/g;
-	var REGFNPLUGIN = /[a-z0-9]+\/[a-z0-9]+\(|(^|(?=[^a-z0-9]))@[a-z0-9]+\./i;
+	var REGFNPLUGIN = /[a-z0-9_-]+\/[a-z0-9_]+\(|(^|(?=[^a-z0-9]))@[a-z0-9-_]+\./i;
 	var REGMETA = /_{2,}/;
 	var REGWILDCARD = /\.\*/;
 	var REGISARR = /\[\d+\]$/;
@@ -150,7 +150,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.035;
+	M.version = 16.036;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -539,6 +539,12 @@
 			a = val.indexOf('->');
 			s = 2;
 		}
+
+		if (a !== -1) {
+			if (val.indexOf('/') !== -1 && val.indexOf('(') === -1)
+				val += '(value)';
+		}
+
 		return a === -1 ? null : { path: val.substring(0, a).trim(), fn: FN(val.substring(a + s).trim()) };
 	}
 
@@ -2117,6 +2123,7 @@
 		}
 
 		var index = path.indexOf('/');
+
 		if (index === -1)
 			return path + tmp;
 
@@ -5658,6 +5665,7 @@
 		var l = v.length;
 		return pathmaker(v.substring(0, l - 1)) + v.substring(l - 1);
 	};
+
 
 	W.FN = function(exp, notrim) {
 
