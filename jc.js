@@ -150,7 +150,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.036;
+	M.version = 16.037;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8290,9 +8290,14 @@
 					var k, v;
 
 					if (item !== 'template' && item !== '!template' && item !== 'strict') {
+
 						index = item.indexOf(':');
-						if (index === -1)
-							continue;
+
+						if (index === -1) {
+							index = item.length;
+							item += ':value';
+						}
+
 						k = item.substring(0, index).trim();
 						v = item.substring(index + 1).trim();
 					} else
