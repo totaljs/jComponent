@@ -150,7 +150,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.037;
+	M.version = 16.038;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -6159,12 +6159,6 @@
 					(new Function(r))();
 				} catch (e) {}
 			}
-		};
-
-		options.error = function() {
-			setTimeout(function() {
-				location.reload(true);
-			}, 2000);
 		};
 
 		execute && $.ajax(makeurl(url), options);
