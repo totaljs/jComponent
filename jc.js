@@ -8693,7 +8693,7 @@
 			if (typeof(item.import) === 'function') {
 				if (value) {
 					!item.$ic && (item.$ic = {});
-					!item.$ic[value] && IMPORT(value, el);
+					!item.$ic[value] && IMPORT('ONCE ' + value, el);
 					item.$ic[value] = 1;
 				}
 			} else {
