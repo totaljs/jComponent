@@ -150,7 +150,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.040;
+	M.version = 16.041;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8406,8 +8406,13 @@
 									fn.$nv =1;
 								break;
 							case 'import':
-								if ((/^(https|http):\/\//).test(v) || (/^\/\//).test(v))
-									fn = v;
+								var c = v.substring(0, 1);
+								if ((/^(https|http):\/\//).test(v) || c === '/' || c === '.') {
+									if (c === '.')
+										fn = v.substring(1);
+									else
+										fn = v;
+								}
 								else
 									fn = FN(rebinddecode(v));
 								break;
