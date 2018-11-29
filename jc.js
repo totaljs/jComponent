@@ -150,7 +150,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.042;
+	M.version = 16.043;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5715,12 +5715,12 @@
 		var arg = [];
 		var beg = selector === true ? 3 : 2;
 
+
 		for (var i = beg; i < arguments.length; i++)
 			arg.push(arguments[i]);
 
 		if (beg === 3) {
 			selector = name;
-			name = arguments[2];
 
 			if (lazycom[selector] && lazycom[selector].state !== 3) {
 
@@ -5737,6 +5737,8 @@
 
 				return SETTER;
 			}
+
+			name = arguments[2];
 
 			FIND(selector, true, function(arr) {
 				for (var i = 0, length = arr.length; i < length; i++) {
@@ -6244,6 +6246,12 @@
 		if (isWaiting) {
 			WAIT(function() {
 				var val = FIND(value, many, noCache);
+				if (lazycom[value] && lazycom[value].state === 1) {
+					lazycom[value].state = 2;
+					EMIT('lazy', value, true);
+					warn('Lazy load: ' + value);
+					compile();
+				}
 				return val instanceof Array ? val.length > 0 : !!val;
 			}, function(err) {
 				// timeout
@@ -8871,4 +8879,5 @@
 	W.PLUGIN = function(name, fn) {
 		return fn ? new Plugin(name, fn) : W.PLUGINS[name];
 	};
+
 })();
