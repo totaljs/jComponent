@@ -150,7 +150,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.041;
+	M.version = 16.042;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -6091,15 +6091,16 @@
 	};
 
 	W.DEFAULT = function(path, timeout, reset) {
-		return M.default(path, timeout, null, reset);
-	};
-
-	W.DEFAULT2 = function(path, timeout, reset) {
-		var index = path.indexOf('.*');
-		if (index !== -1)
-			path = path.substring(0, index);
-		SET(path, {});
-		return M.default(path, timeout, null, reset);
+		var arr = path.split(REGMETA);
+		if (arr.length > 1) {
+			var def = arr[1];
+			path = arr[0];
+			var index = path.indexOf('.*');
+			if (index !== -1)
+				path = path.substring(0, index);
+			SET(path, new Function('return ' + def)(), timeout > 10 ? timeout : 3, timeout > 10 ? 3 : null);
+		}
+		return M.default(arr[0], timeout, null, reset);
 	};
 
 	W.UPTODATE = function(period, url, callback, condition) {
@@ -8250,8 +8251,9 @@
 	}
 
 	function parsebinderskip(str) {
-		for (var i = 1; i < arguments.length; i++) {
-			if (str.indexOf(arguments[i]) !== -1)
+		var a = arguments;
+		for (var i = 1; i < a.length; i++) {
+			if (str.indexOf(a[i]) !== -1)
 				return false;
 		}
 		return true;
