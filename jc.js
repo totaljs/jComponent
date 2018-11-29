@@ -150,7 +150,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.038;
+	M.version = 16.040;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -6094,6 +6094,14 @@
 		return M.default(path, timeout, null, reset);
 	};
 
+	W.DEFAULT2 = function(path, timeout, reset) {
+		var index = path.indexOf('.*');
+		if (index !== -1)
+			path = path.substring(0, index);
+		SET(path, {});
+		return M.default(path, timeout, null, reset);
+	};
+
 	W.UPTODATE = function(period, url, callback, condition) {
 
 		if (typeof(url) === TYPE_FN) {
@@ -8358,9 +8366,6 @@
 							case 'strict':
 								obj[k] = true;
 								continue;
-							case 'visible':
-								k = 'show';
-								break;
 							case 'hidden':
 								k = 'hide';
 								break;
@@ -8388,16 +8393,11 @@
 							case 'html':
 							case 'text':
 							case 'disabled':
+							case 'enabled':
 							case 'checked':
 								backup = true;
 								break;
-							case 'def':
-							case 'change':
-							case 'hide':
-							case 'show':
-							case 'selector':
-							case 'config':
-								break;
+
 							case 'setter':
 								fn = FN('(value,path,el)=>el.SETTER(' + v + ')');
 								if (notnull)
@@ -8406,6 +8406,11 @@
 									fn.$nv =1;
 								break;
 							case 'import':
+								if ((/^(https|http):\/\//).test(v) || (/^\/\//).test(v))
+									fn = v;
+								else
+									fn = FN(rebinddecode(v));
+								break;
 							case 'tclass':
 								fn = v;
 								break;
@@ -8669,6 +8674,13 @@
 				can = false;
 		}
 
+		if (item.visible && (value != null || !item.visible.$nn)) {
+			tmp = item.visible.call(item.el, value, path, item.el);
+			el.tclass('invisible', !tmp);
+			if (!tmp)
+				can = false;
+		}
+
 		if (item.classes) {
 			for (var i = 0; i < item.classes.length; i++) {
 				var cls = item.classes[i];
@@ -8678,8 +8690,16 @@
 		}
 
 		if (can && item.import) {
-			IMPORT(item.import, el);
-			delete item.import;
+			if (typeof(item.import) === 'function') {
+				if (value) {
+					!item.$ic && (item.$ic = {});
+					!item.$ic[value] && IMPORT(value, el);
+					item.$ic[value] = 1;
+				}
+			} else {
+				IMPORT(item.import, el);
+				delete item.import;
+			}
 		}
 
 		if (item.config && (can || item.config.$nv)) {
@@ -8729,7 +8749,15 @@
 				tmp = item.disabled.call(el, value, path, el);
 				el.prop('disabled', tmp == true);
 			} else
-				el.prop('disabled', item.disablebk == true);
+				el.prop('disabled', item.disabledbk == true);
+		}
+
+		if (item.enabled && (can || item.enabled.$nv)) {
+			if (value != null || !item.enabled.$nn) {
+				tmp = item.enabled.call(el, value, path, el);
+				el.prop('disabled', !tmp);
+			} else
+				el.prop('disabled', item.enabledbk == false);
 		}
 
 		if (item.checked && (can || item.checked.$nv)) {
