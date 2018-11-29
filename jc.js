@@ -5715,11 +5715,11 @@
 		var arg = [];
 		var beg = selector === true ? 3 : 2;
 
-
 		for (var i = beg; i < arguments.length; i++)
 			arg.push(arguments[i]);
 
 		if (beg === 3) {
+
 			selector = name;
 
 			if (lazycom[selector] && lazycom[selector].state !== 3) {
@@ -5732,6 +5732,7 @@
 				}
 
 				setTimeout(function(arg) {
+					arg[0] = true;
 					W.SETTER.apply(W, arg);
 				}, 555, arguments);
 
