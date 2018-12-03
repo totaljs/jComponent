@@ -5948,7 +5948,7 @@
 			fn = obj;
 			obj = {};
 		}
-		fn(function(path, value) {
+		fn.call(obj, function(path, value) {
 			return set2(obj, path, value);
 		});
 		return obj;
