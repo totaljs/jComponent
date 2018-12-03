@@ -29,6 +29,8 @@
 	var TYPE_FN = 'function';
 	var TYPE_S = 'string';
 	var TYPE_N = 'number';
+	var TYPE_O = 'object';
+	var KEY_ENV = 'environment';
 
 	var LCOMPARER = window.Intl ? window.Intl.Collator().compare : function(a, b) {
 		return a.localeCompare(b);
@@ -150,7 +152,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.043;
+	M.version = 16.044;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -391,16 +393,16 @@
 
 	W.ENV = function(name, value) {
 
-		if (typeof(name) === 'object') {
+		if (typeof(name) === TYPE_O) {
 			name && OK(name).forEach(function(key) {
 				ENV[key] = name[key];
-				EMIT('environment', key, name[key]);
+				EMIT(KEY_ENV, key, name[key]);
 			});
 			return name;
 		}
 
 		if (value !== undefined) {
-			EMIT('environment', name, value);
+			EMIT(KEY_ENV, name, value);
 			ENV[name] = value;
 			return value;
 		}
@@ -575,7 +577,7 @@
 		if (tmp) {
 			url = url.replace(tmp, '').replace(/\s{2,}/g, ' ');
 			tmp = (new Function('return ' + tmp))();
-			if (typeof(tmp) === 'object')
+			if (typeof(tmp) === TYPE_O)
 				headers = tmp;
 		}
 
@@ -1135,11 +1137,11 @@
 			var wo = GET(w);
 			if (wf && typeof(wo) === TYPE_FN) {
 				if (wo()) {
-					callback && callback();
+					callback && callback(0);
 					return;
 				}
 			} else if (wo) {
-				callback && callback();
+				callback && callback(0);
 				return;
 			}
 		}
@@ -1165,11 +1167,13 @@
 			if (statics[url]) {
 				if (callback) {
 					if (statics[url] === 2)
-						callback();
+						callback(0);
 					else {
 						WAIT(function() {
 							return statics[url] === 2;
-						}, callback);
+						}, function() {
+							callback(0);
+						});
 					}
 				}
 				return W;
@@ -1204,7 +1208,7 @@
 			scr.async = false;
 			scr.onload = function() {
 				statics[url] = 2;
-				callback && callback();
+				callback && callback(1);
 				W.jQuery && setTimeout(compile, 300);
 			};
 			scr.src = makeurl(url, true);
@@ -1220,7 +1224,7 @@
 			stl.href = makeurl(url, true);
 			d.getElementsByTagName('head')[0].appendChild(stl);
 			statics[url] = 2;
-			callback && setTimeout(callback, 200);
+			callback && setTimeout(callback, 200, 1);
 			EMIT('import', url, $(stl));
 			return W;
 		}
@@ -1235,7 +1239,7 @@
 			var cb = function(response, code, output) {
 
 				if (!response) {
-					callback && callback();
+					callback && callback(0);
 					return;
 				}
 
@@ -1263,7 +1267,9 @@
 					is && compile();
 					callback && WAIT(function() {
 						return C.is == false;
-					}, callback);
+					}, function() {
+						callback(1);
+					});
 					EMIT('import', url, target);
 				}, 10);
 			};
@@ -1347,7 +1353,7 @@
 	};
 
 	W.MODIFY = function(path, value, timeout) {
-		if (path && typeof(path) === 'object') {
+		if (path && typeof(path) === TYPE_O) {
 			Object.keys(path).forEach(function(k) {
 				MODIFY(k, path[k], value);
 			});
@@ -1402,7 +1408,7 @@
 
 		var l = location;
 
-		if (typeof(url) === 'object') {
+		if (typeof(url) === TYPE_O) {
 			type = values;
 			values = url;
 			url = l.pathname + l.search;
@@ -1507,7 +1513,7 @@
 		if (tmp) {
 			url = url.replace(tmp, '').replace(/\s{2,}/g, ' ');
 			tmp = (new Function('return ' + tmp))();
-			if (typeof(tmp) === 'object')
+			if (typeof(tmp) === TYPE_O)
 				headers = tmp;
 		}
 
@@ -1992,7 +1998,7 @@
 		if (!path)
 			return M;
 
-		var isUpdate = (typeof(value) === 'object' && !(value instanceof Array) && value != null);
+		var isUpdate = (typeof(value) === TYPE_O && !(value instanceof Array) && value != null);
 		var reset = type === true;
 		if (reset)
 			type = 1;
@@ -3697,10 +3703,41 @@
 		if (v.substring(0, 1) !== '[')
 			v = '.' + v;
 
-		var fn = (new Function('w', 'a', 'b', 'binders', 'binderbind', 'nobind', 'var $ticks=Math.random().toString().substring(2,8);if(!nobind){' + builder.join(';') + ';var v=typeof(a)==\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v}' + binder.join(';') + ';return v'));
+		var fn = (new Function('w', 'a', 'b', 'binders', 'binderbind', 'nobind', 'var $ticks=Math.random().toString().substring(2,8);if(!nobind){' + builder.join(';') + ';var v=typeof(a)==\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v}' + binder.join(';') + ';return a'));
 		paths[key] = fn;
 		fn(MD.scope, value, path, binders, binderbind, is);
 		return C;
+	}
+
+	function set2(scope, path, value) {
+
+		if (path == null)
+			return;
+
+		var key = '++' + path;
+
+		if (paths[key])
+			return paths[key](scope, value, path);
+
+		var arr = parsepath(path);
+		var builder = [];
+
+		for (var i = 0; i < arr.length - 1; i++) {
+			var item = arr[i];
+			var type = arr[i + 1] ? (REGISARR.test(arr[i + 1]) ? '[]' : '{}') : '{}';
+			var p = 'w' + (item.substring(0, 1) === '[' ? '' : '.') + item;
+			builder.push('if(typeof(' + p + ')!==\'object\'||' + p + '==null)' + p + '=' + type);
+		}
+
+		var v = arr[arr.length - 1];
+
+		if (v.substring(0, 1) !== '[')
+			v = '.' + v;
+
+		var fn = (new Function('w', 'a', 'b', builder.join(';') + ';w' + v + '=a;return a'));
+		paths[key] = fn;
+		fn(scope, value, path);
+		return scope;
 	}
 
 	function get(path, scope) {
@@ -4964,7 +5001,7 @@
 
 	PPC.reconfigure = function(value, callback, init) {
 		var self = this;
-		if (typeof(value) === 'object') {
+		if (typeof(value) === TYPE_O) {
 			OK(value).forEach(function(k) {
 				var prev = self.config[k];
 				if (!init && self.config[k] !== value[k])
@@ -5888,7 +5925,9 @@
 					is = false;
 					obj = {};
 				}
-				fn.call(obj, obj, p);
+				fn.call(obj, obj, p, function(path, value) {
+					set2(obj, path, value);
+				});
 				if (is && (update === undefined || update === true))
 					M.update(p, true);
 				else {
@@ -5904,13 +5943,24 @@
 		return obj;
 	};
 
+	W.OPT = function(obj, fn) {
+		if (typeof(obj) === TYPE_FN) {
+			fn = obj;
+			obj = {};
+		}
+		fn(function(path, value) {
+			return set2(obj, path, value);
+		});
+		return obj;
+	};
+
 	W.COPY = function(a, b) {
 		var keys = Object.keys(a);
 		for (var i = 0; i < keys.length; i++) {
 			var key = keys[i];
 			var val = a[key];
 			var type = typeof(val);
-			b[key] = type === 'object' ? val ? CLONE(val) : val : val;
+			b[key] = type === TYPE_O ? val ? CLONE(val) : val : val;
 		}
 		return b;
 	};
@@ -6265,7 +6315,7 @@
 		}
 
 		// Element
-		if (typeof(value) === 'object') {
+		if (typeof(value) === TYPE_O) {
 			if (!(value instanceof jQuery))
 				value = $(value);
 			var output = findcomponent(value, '');
@@ -6341,7 +6391,7 @@
 			return s ? 1 : 0;
 		else if (s instanceof Date)
 			return s.getTime();
-		else if (type === 'object')
+		else if (type === TYPE_O)
 			s = STRINGIFY(s);
 		var hash = 0, i, char;
 		if (!s.length)
@@ -6657,7 +6707,7 @@
 			case TYPE_S:
 				output = def.parseConfig();
 				break;
-			case 'object':
+			case TYPE_O:
 				if (def != null)
 					output = def;
 				else
@@ -6938,6 +6988,37 @@
 		var index = this.findIndex(cb, value);
 		if (index !== -1)
 			return this[index];
+	};
+
+	AP.findValue = function(cb, value, path, def, cache) {
+
+		if (typeof(cb) === TYPE_FN) {
+			def = path;
+			path = value;
+			value = undefined;
+			cache = false;
+		}
+
+		var key, val = def;
+
+		if (cache) {
+			key = 'fv_' + cb + '=' + value;
+			if (temp[key])
+				return temp[key];
+		}
+
+		var index = this.findIndex(cb, value);
+		if (index !== -1) {
+			var item = this[index];
+			if (path.indexOf('.') === -1)
+				item = item[path];
+			else
+				item = get(path, item);
+			cache && (temp[key] = val);
+			val = item == null ? def : item;
+		}
+
+		return val;
 	};
 
 	AP.remove = function(cb, value) {
@@ -7896,7 +7977,7 @@
 
 			var self = this;
 			var arr = (self.attr('class') || '').split(' ');
-			var isReg = typeof(a) === 'object';
+			var isReg = typeof(a) === TYPE_O;
 
 			for (var i = 0, length = arr.length; i < length; i++) {
 				var cls = arr[i];
@@ -8706,7 +8787,7 @@
 		}
 
 		if (can && item.import) {
-			if (typeof(item.import) === 'function') {
+			if (typeof(item.import) === TYPE_FN) {
 				if (value) {
 					!item.$ic && (item.$ic = {});
 					!item.$ic[value] && IMPORT('ONCE ' + value, el);
