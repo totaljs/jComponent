@@ -152,7 +152,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.044;
+	M.version = 16.045;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8375,6 +8375,7 @@
 		var cls = [];
 		var sub = {};
 		var e = obj.el = $(el);
+		var tmp;
 
 		for (var i = 0; i < meta.length; i++) {
 			var item = meta[i].trim();
@@ -8515,11 +8516,13 @@
 								var scr = e.find('script');
 								if (!scr.length)
 									scr = e;
-								fn = Tangular.compile(scr.html());
+								tmp = scr.html();
+								fn = Tangular.compile(tmp);
 								if (notnull)
 									fn.$nn = 1;
 								if (notvisible)
 									fn.$nv = 1;
+								fn.$compile = (/data-(jc|bind)="/).test(tmp);
 								break;
 						}
 
@@ -8568,7 +8571,7 @@
 						return fn ? fn : null;
 					}
 
-					var tmp = findFormat(path);
+					tmp = findFormat(path);
 					if (tmp) {
 						path = tmp.path;
 						obj.format = tmp.fn;
@@ -8839,6 +8842,7 @@
 			DEFMODEL.value = value;
 			DEFMODEL.path = path;
 			el.html(item.template(DEFMODEL));
+			item.template.$compile && W.COMPILE();
 		}
 
 		if (item.disabled && (can || item.disabled.$nv)) {
