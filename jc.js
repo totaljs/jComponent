@@ -152,7 +152,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.045;
+	M.version = 16.046;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
