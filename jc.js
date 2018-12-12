@@ -1772,8 +1772,7 @@
 	};
 
 	W.DISABLED = function(path, except) {
-		path = pathmaker(path);
-		return com_dirty(path, except) || !com_valid(path, except);
+		return !W.CAN(path, except);
 	};
 
 	W.INVALID = function(path, onlyComponent) {
@@ -1926,9 +1925,7 @@
 		path = pathmaker(path);
 		if (path) {
 			var val = get(path);
-			if (val == null)
-				val = {};
-			M.set(path, $.extend(val, value), type);
+			M.set(path, $.extend(val == null ? {} : val, value), type);
 		}
 		return M;
 	};
@@ -5571,7 +5568,7 @@
 				ADD(value[i], element);
 		} else {
 			$(element || document.body).append('<div data-jc="{0}"></div>'.format(value));
-			setTimeout2('ADD', COMPILE, 10);
+			RECOMPILE();
 		}
 	};
 
@@ -5597,6 +5594,7 @@
 		EMIT('component.compile', name, a);
 	};
 
+	// @TODO: remove in v17
 	W.SINGLETON = function(name, def) {
 		return singletons[name] || (singletons[name] = (new Function('return ' + (def || '{}')))());
 	};
@@ -6355,7 +6353,7 @@
 		path && set(path, get(path), true);
 	};
 
-	W.UPDATE = function(path, timeout, reset) {
+	W.UPD = W.UPDATE = function(path, timeout, reset) {
 		var t = typeof(timeout);
 		if (t === 'boolean')
 			return M.update(path, timeout);
@@ -6366,14 +6364,10 @@
 		}, timeout);
 	};
 
-	W.UPDATE2 = function(path, type) {
+	W.UPD2 = W.UPDATE2 = function(path, type) {
 		UPDATE(path, type);
 		CHANGE(path);
 		return W;
-	};
-
-	W.SCHEMA = function(name, declaration) {
-		return M.schema(name, declaration);
 	};
 
 	W.CSS = W.STYLE = function(value, id) {
@@ -6415,6 +6409,7 @@
 		return b.join('').substring(0, size);
 	};
 
+	// @TODO: remove in v17
 	W.KEYPRESS = function(fn, timeout, key) {
 		if (!timeout)
 			timeout = 300;
@@ -6497,12 +6492,9 @@
 		return compile(container);
 	};
 
+	// @TODO: remove in v17
 	W.RECOMPILE = function() {
-		$recompile && clearTimeout($recompile);
-		$recompile = setTimeout(function() {
-			COMPILE();
-			$recompile = null;
-		}, 700);
+		setTimeout2('$compile', COMPILE, 700);
 	};
 
 	// ===============================================================
@@ -7625,6 +7617,7 @@
 		return self;
 	};
 
+	// @TODO: remove in v17
 	AP.scalar = function(type, key, def) {
 
 		var output = def;
@@ -7721,6 +7714,7 @@
 
 	var BLACKLIST = { sort: 1, reverse: 1, splice: 1, slice: 1, pop: 1, unshift: 1, shift: 1, push: 1 };
 
+	// @TODO: remove in v17
 	W.CREATE = function(path) {
 
 		var is = false;
