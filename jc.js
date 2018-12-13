@@ -152,7 +152,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.046;
+	M.version = 16.047;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -6277,6 +6277,7 @@
 	W.FIND = function(value, many, noCache, callback) {
 
 		var isWaiting = false;
+		var output;
 
 		if (typeof(many) === TYPE_FN) {
 			isWaiting = true;
@@ -6316,7 +6317,7 @@
 		if (typeof(value) === TYPE_O) {
 			if (!(value instanceof jQuery))
 				value = $(value);
-			var output = findcomponent(value, '');
+			output = findcomponent(value, '');
 			return many ? output : output[0];
 		}
 
@@ -6340,7 +6341,7 @@
 	W.BIND = function(path) {
 		if (path instanceof Array) {
 			for (var i = 0; i < path.length; i++)
-				BIND(path[i]);
+				W.BIND(path[i]);
 			return W;
 		}
 		path = pathmaker(path);
@@ -7836,10 +7837,12 @@
 
 			var self = this;
 			var output = findcomponent(self, selector);
+
 			if (typeof(callback) === TYPE_FN) {
 
 				if (output.length) {
-					callback.call(output, output);
+					var val = many ? output : output[0];
+					callback.call(val, val);
 					return self;
 				}
 
