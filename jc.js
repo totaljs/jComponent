@@ -11,6 +11,7 @@
 	var REGSEARCH = /[^a-zA-Zá-žÁ-Žа-яА-Я\d\s:]/g;
 	var REGFNPLUGIN = /[a-z0-9_-]+\/[a-z0-9_]+\(|(^|(?=[^a-z0-9]))@[a-z0-9-_]+\./i;
 	var REGMETA = /_{2,}/;
+	var REGBINDERCOMPARE = /^[^a-z0-9.]/;
 	var REGWILDCARD = /\.\*/;
 	var REGISARR = /\[\d+\]$/;
 	var ATTRCOM = '[data-jc]';
@@ -152,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.047;
+	M.version = 16.048;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8339,10 +8340,13 @@
 
 	function parsebinderskip(str) {
 		var a = arguments;
+		str = str.split(' ')[0].trim().replace(REGBINDERCOMPARE, '');
+
 		for (var i = 1; i < a.length; i++) {
-			if (str.indexOf(a[i]) !== -1)
+			if (str === a[i])
 				return false;
 		}
+
 		return true;
 	}
 
