@@ -8577,6 +8577,11 @@
 				M.scrollbars.splice(index, 1);
 		};
 
+		self.width = function(w) {
+			element.find('.ui-scrollbar-body').css('width', w);
+			return self;
+		};
+
 		var resize_visible = function() {
 			if (element[0].offsetParent) {
 				setTimeout(self.resize, 1000);
