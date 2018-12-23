@@ -5252,6 +5252,10 @@
 		configs.push({ fn: selector, config: config });
 	};
 
+	function recompile() {
+		setTimeout2('$compile', COMPILE, 700);
+	}
+
 	W.COMPONENT_EXTEND = function(name, config, declaration) {
 
 		if (typeof(config) === TYPE_FN) {
@@ -5273,7 +5277,7 @@
 			}
 		}
 
-		RECOMPILE();
+		recompile();
 	};
 
 	W.ADD = function(value, element) {
@@ -5284,7 +5288,7 @@
 				ADD(value[i], element);
 		} else {
 			$(element || document.body).append('<div data-jc="{0}"></div>'.format(value));
-			RECOMPILE();
+			recompile();
 		}
 	};
 
@@ -8296,28 +8300,19 @@
 	function CustomScrollbar(element, options) {
 
 		var self = this;
-		var size = { margin: 30 };
+		var size = {};
 		var drag = {};
+
+		if (!options)
+			options = {};
 
 		element.aclass('ui-scrollbar');
 		element.wrapInner('<div class="ui-scrollbar-area"><div class="ui-scrollbar-body"></div></div>');
 		element.prepend('<div class="ui-scrollbar-y ui-scrollbar-notready"><span></span></div><div class="ui-scrollbar-x ui-scrollbar-notready"><span></span></div>');
 		element[0].$scrollbar = self;
 
-		self.element = element;
-
-		var visibleX = false;
-		var visibleY = false;
-
-		if (options) {
-			if (options.visibleX)
-				visibleX = true;
-			if (options.visibleY)
-				visibleY = true;
-			if (options.margin)
-				size.margin = options.margin;
-		}
-
+		var visibleX = options.visibleX == null ? false : options.visibleX;
+		var visibleY = options.visibleY == null ? false : options.visibleY;
 		var pathx = $(element.find('> .ui-scrollbar-x')[0]);
 		var pathy = $(element.find('> .ui-scrollbar-y')[0]);
 		var barx = $(pathx.find('span')[0]);
@@ -8329,7 +8324,10 @@
 		var delayresize;
 		var delay;
 
-		var delay;
+		self.element = element;
+		self.area = area;
+		size.margin = options.margin || 30;
+
 		var onmousemove = function(e) {
 			if (drag.is) {
 				var p;
@@ -8452,13 +8450,14 @@
 					notemmited = false;
 				}
 
-				delay && clearTimeout(delay)
+				delay && clearTimeout(delay);
 				delay = setTimeout(function() {
 					delay = null;
 					notemmited = true;
 				}, 700);
-			}
 
+				options.onscroll && options.onscroll(self);
+			}
 		});
 
 		self.check = function() {
@@ -8492,6 +8491,9 @@
 
 			delayresize = null;
 
+			if (options.parent)
+				el = el.closest(options.parent);
+
 			size.scrollWidth = a.scrollWidth;
 			size.scrollHeight = a.scrollHeight;
 			size.viewWidth = el.width();
@@ -8508,7 +8510,7 @@
 
 			var width = +barx.css('width').replace('px', '');
 
-			size.vbar = size.scrollHeight > size.clientHeight;
+			size.vbar = (size.scrollHeight - size.margin) > size.clientHeight;
 			if (size.vbar) {
 				size.vbarsize = (size.clientHeight * ((size.viewHeight - width) / size.scrollHeight)) >> 0;
 				if (size.vbarsize < 30)
@@ -8516,7 +8518,7 @@
 				bary.css('height', size.vbarsize);
 			}
 
-			size.hbar = size.scrollWidth > size.clientWidth;
+			size.hbar = (size.scrollWidth - size.margin) > size.clientWidth;
 			if (size.hbar) {
 				size.hbarsize = (size.clientWidth * ((size.viewWidth - width) / size.scrollWidth)) >> 0;
 				if (size.hbarsize < 30)
@@ -8524,10 +8526,10 @@
 				barx.css('width', size.hbarsize);
 			}
 
-			pathx.tclass((visibleX ? 'ui-scrollbar-' : '') + 'hidden', !size.hbar);
-			pathy.tclass((visibleY ? 'ui-scrollbar-' : '') + 'hidden', !size.vbar);
-
-			element.tclass('ui-scrollbar-isx', size.hbar).tclass('ui-scrollbar-isy', size.vbar);
+			var n = 'ui-scrollbar-';
+			pathx.tclass((visibleX ? n : '') + 'hidden', !size.hbar);
+			pathy.tclass((visibleY ? n : '') + 'hidden', !size.vbar);
+			element.tclass(n + '-isx', size.hbar).tclass(n + '-isy', size.vbar);
 
 			if (visibleX && !size.hbar)
 				size.hbar = true;
@@ -8536,11 +8538,12 @@
 				size.vbar = true;
 
 			if (!ready) {
-				var cls = 'ui-scrollbar-notready';
+				var cls = n + 'notready';
 				element.find('.' + cls).rclass(cls);
 				ready = true;
 			}
 
+			options.onresize && options.onresize(self);
 			return self;
 		};
 
@@ -8560,19 +8563,30 @@
 			return self;
 		};
 
+		ON('resize', self.resize);
+
 		self.destroy = function() {
 			clearInterval(intervalresize);
 			$(window).off('mousemove', onmousemove).off('resize', onresize).off('mouseup', onmouseup);
 			area.off();
 			pathx.off();
 			pathy.off();
+			OFF('resize', self.resize);
 			var index = M.scrollbars.indexOf(self);
 			if (index !== -1)
 				M.scrollbars.splice(index, 1);
 		};
 
-		setTimeout(self.resize, 100);
-		intervalresize = setInterval(self.check, (options ? options.interval : 0) || 54321);
+		var resize_visible = function() {
+			if (element[0].offsetParent) {
+				setTimeout(self.resize, 1000);
+				self.resize();
+			} else
+				setTimeout(resize_visible, 234);
+		};
+
+		resize_visible();
+		intervalresize = setInterval(self.check, options.interval || 54321);
 		M.scrollbars.push(self);
 		return self;
 	}
