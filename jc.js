@@ -71,23 +71,17 @@
 	var events = {};
 	var watches = [];
 	var temp = {};
-	var mediaqueries = [];
-	var singletons = {};
-	var schedulers = [];
 	var toggles = [];
 	var versions = {};
 	var autofill = [];
 	var defaults = {};
 	var waits = {};
 	var statics = {};
-	var proxy = {};
 	var ajaxconfig = {};
 	var skips = {};
 	var $ready = setTimeout(load, 2);
 	var $loaded = false;
 	var $domready = false;
-	var schedulercounter = 0;
-	var mediaqueriescounter = 0;
 	var knockknockcounter = 0;
 	var binders = {};
 	var bindersnew = [];
@@ -153,10 +147,11 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.048;
+	M.version = 17.001;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
+	M.scrollbars = [];
 
 	M.$components = {};
 	M.components = [];
@@ -925,13 +920,6 @@
 		return !com_dirty(path, !value);
 	};
 
-	M.used = function(path) {
-		M.each(function(obj) {
-			!obj.disabled && obj.used();
-		}, path);
-		return M;
-	};
-
 	function com_valid(path, value, onlyComponent) {
 
 		var isExcept = value instanceof Array;
@@ -997,14 +985,10 @@
 			com.state && arr.push(com);
 
 			if (!onlyComponent) {
-				if (wildcard || com.path === path) {
+				if (wildcard || com.path === path)
 					com.$valid = value;
-					com.$interaction(102);
-				}
-			} else if (onlyComponent._id === com._id) {
+			} else if (onlyComponent._id === com._id)
 				com.$valid = value;
-				com.$interaction(102);
-			}
 			if (com.$valid === false)
 				valid = false;
 		}
@@ -1079,14 +1063,10 @@
 			com.state && arr.push(com);
 
 			if (!onlyComponent) {
-				if (wildcard || com.path === path) {
+				if (wildcard || com.path === path)
 					com.$dirty = value;
-					com.$interaction(101);
-				}
-			} else if (onlyComponent._id === com._id) {
+			} else if (onlyComponent._id === com._id)
 				com.$dirty = value;
-				com.$interaction(101);
-			}
 			if (com.$dirty === false)
 				dirty = false;
 		}
@@ -1368,41 +1348,6 @@
 				CHANGE(path);
 		}
 		return W;
-	};
-
-	W.LASTMODIFICATION = W.USAGE = M.usage = function(name, expire, path, callback) {
-
-		var type = typeof(expire);
-		if (type === TYPE_S) {
-			var dt = W.NOW = W.DATETIME = new Date();
-			expire = dt.add('-' + expire.env()).getTime();
-		} else if (type === TYPE_N)
-			expire = Date.now() - expire;
-
-		if (typeof(path) === TYPE_FN) {
-			callback = path;
-			path = undefined;
-		}
-
-		var arr = [];
-		var a = null;
-
-		if (path)
-			a = FIND('.' + path, true);
-		else
-			a = M.components;
-
-		for (var i = 0; i < a.length; i++) {
-			var c = a[i];
-			if (c.usage[name] >= expire) {
-				if (callback)
-					callback(c);
-				else
-					arr.push(c);
-			}
-		}
-
-		return callback ? M : arr;
 	};
 
 	W.MAKEPARAMS = function(url, values, type) {
@@ -1718,21 +1663,6 @@
 		return W;
 	};
 
-	W.SCHEDULE = function(selector, name, expire, callback) {
-		if (expire.substring(0, 1) !== '-')
-			expire = '-' + expire;
-		var arr = expire.split(' ');
-		var type = arr[1].toLowerCase().substring(0, 1);
-		var id = GUID(10);
-		schedulers.push({ id: id, name: name, expire: expire, selector: selector, callback: callback, type: type === 'y' || type === 'd' ? 'h' : type, owner: current_owner });
-		return id;
-	};
-
-	W.CLEARSCHEDULE = function(id) {
-		schedulers = schedulers.remove('id', id);
-		return W;
-	};
-
 	W.CLEARCACHE = function() {
 		if (!W.isPRIVATEMODE) {
 			var rem = localStorage.removeItem;
@@ -1845,7 +1775,6 @@
 			if (com.setter) {
 				com.$skip = false;
 				com.setterX(result, path, type);
-				com.$interaction(type);
 			}
 
 			if (!com.$ready)
@@ -1853,18 +1782,14 @@
 
 			if (reset === true) {
 
-				if (!com.$dirty_disabled) {
+				if (!com.$dirty_disabled)
 					com.$dirty = true;
-					com.$interaction(101);
-				}
 
 				if (!com.$valid_disabled) {
 					com.$valid = true;
 					com.$validate = false;
-					if (com.validate) {
+					if (com.validate)
 						com.$valid = com.validate(result);
-						com.$interaction(102);
-					}
 				}
 
 				findcontrol2(com);
@@ -1912,7 +1837,6 @@
 				var val = com.get();
 				com.setter && com.setterX(val, com.path, 1);
 				com.state && com.stateX(1, 6);
-				com.$interaction(1);
 			}
 		}
 
@@ -2023,15 +1947,11 @@
 
 			if (com.setter) {
 				if (com.path === path) {
-					if (com.setter) {
+					if (com.setter)
 						com.setterX(result, path, type);
-						com.$interaction(type);
-					}
 				} else {
-					if (com.setter) {
+					if (com.setter)
 						com.setterX(get(com.path), path, type);
-						com.$interaction(type);
-					}
 				}
 			}
 
@@ -2046,10 +1966,8 @@
 				if (!com.$valid_disabled) {
 					com.$valid = true;
 					com.$validate = false;
-					if (com.validate) {
+					if (com.validate)
 						com.$valid = com.validate(result);
-						com.$interaction(102);
-					}
 				}
 
 				findcontrol2(com);
@@ -2189,7 +2107,6 @@
 			com.$validate = true;
 			if (com.validate) {
 				com.$valid = com.validate(get(com.path));
-				com.$interaction(102);
 				if (!com.$valid)
 					valid = false;
 			}
@@ -2216,7 +2133,6 @@
 
 		if (com.validate) {
 			com.$valid = com.validate(get(com.path));
-			com.$interaction(102);
 			if (!com.$valid)
 				valid = false;
 		}
@@ -2282,10 +2198,8 @@
 			if (!com.$valid_disabled) {
 				com.$valid = true;
 				com.$validate = false;
-				if (com.validate) {
+				if (com.validate)
 					com.$valid = com.validate(com.get());
-					com.$interaction(102);
-				}
 			}
 		}
 
@@ -2323,18 +2237,14 @@
 
 			findcontrol2(com);
 
-			if (!com.$dirty_disabled) {
+			if (!com.$dirty_disabled)
 				com.$dirty = true;
-				com.$interaction(101);
-			}
 
 			if (!com.$valid_disabled) {
 				com.$valid = true;
 				com.$validate = false;
-				if (com.validate) {
+				if (com.validate)
 					com.$valid = com.validate(com.get());
-					com.$interaction(102);
-				}
 			}
 		}
 
@@ -2363,76 +2273,6 @@
 	// ===============================================================
 	// PRIVATE FUNCTIONS
 	// ===============================================================
-
-	function mediaquery() {
-
-		if (!mediaqueries || !mediaqueries.length)
-			return;
-
-		var orientation = W.orientation ? Math.abs(W.orientation) === 90 ? 'landscape' : 'portrait' : '';
-
-		var $w = $(W);
-		var w = $w.width();
-		var h = $w.height();
-		var d = MD.devices;
-
-		for (var i = 0, length = mediaqueries.length; i < length; i++) {
-			var mq = mediaqueries[i];
-			var cw = w;
-			var ch = h;
-
-			if (mq.element) {
-				cw = mq.element.width();
-				ch = mq.element.height();
-			}
-
-			if (mq.orientation) {
-				if (!orientation && mq.orientation !== 'portrait')
-					continue;
-				else if (orientation !== mq.orientation)
-					continue;
-			}
-
-			if (mq.minW && mq.minW >= cw)
-				continue;
-			if (mq.maxW && mq.maxW <= cw)
-				continue;
-			if (mq.minH && mq.minH >= ch)
-				continue;
-			if (mq.maxH && mq.maxH <= ch)
-				continue;
-
-			if (mq.oldW === cw && mq.oldH !== ch) {
-				// changed height
-				if (!mq.maxH && !mq.minH)
-					continue;
-			}
-
-			if (mq.oldH === ch && mq.oldW !== cw) {
-				// changed width
-				if (!mq.maxW && !mq.minW)
-					continue;
-			}
-
-			if (mq.oldW === cw && mq.oldH === ch)
-				continue;
-
-			var type = null;
-
-			if (cw >= d.md.min && cw <= d.md.max)
-				type = 'md';
-			else if (cw >= d.sm.min && cw <= d.sm.max)
-				type = 'sm';
-			else if (cw > d.lg.min)
-				type = 'lg';
-			else if (cw <= d.xs.max)
-				type = 'xs';
-
-			mq.oldW = cw;
-			mq.oldH = ch;
-			mq.fn(cw, ch, type, mq.id);
-		}
-	}
 
 	function attrcom(el, name) {
 		name = name ? '-' + name : '';
@@ -3399,12 +3239,9 @@
 					}
 				}
 
-				if (obj.$binded)
-					obj.$interaction(0);
-				else {
+				if (!obj.$binded) {
 					obj.$binded = true;
 					obj.setterX(value, obj.path, 0);
-					obj.$interaction(0);
 				}
 			}
 		} else
@@ -3532,7 +3369,6 @@
 
 		setTimeout2('$ready', function() {
 
-			mediaquery();
 			refresh();
 			initialize();
 
@@ -4126,15 +3962,6 @@
 			a.scope && a.scope.path === self.path && a.remove(true);
 		}
 
-		if (self.isolated) {
-			arr = OK(proxy);
-			for (var i = 0; i < arr.length; i++) {
-				var a = arr[i];
-				if (a.substring(0, self.path.length) === self.path)
-					delete proxy[a];
-			}
-		}
-
 		OFF('scope' + self._id + '#watch');
 		var e = self.element;
 		e.find('*').off();
@@ -4162,7 +3989,6 @@
 	function COM(name) {
 		var self = this;
 		self._id = self.ID = 'jc' + (C.counter++);
-		self.usage = new USAGE();
 		self.$dirty = true;
 		self.$valid = true;
 		self.$validate = false;
@@ -4647,50 +4473,6 @@
 		return arr;
 	};
 
-	PPC.$interaction = function(type) {
-
-		// type === 0 : init
-		// type === 1 : manually
-		// type === 2 : by input
-		// type === 3 : by default
-		// type === 100 : custom
-		// type === 101 : dirty
-		// type === 102 : valid
-
-		var now = Date.now();
-		var t = this;
-
-		switch (type) {
-			case 0:
-				t.usage.init = now;
-				t.$binded = true;
-				break;
-			case 1:
-				t.usage.manually = now;
-				t.$binded = true;
-				break;
-			case 2:
-				t.usage.input = now;
-				t.$binded = true;
-				break;
-			case 3:
-				t.usage.default = now;
-				t.$binded = true;
-				break;
-			case 100:
-				t.usage.custom = now;
-				break;
-			case 101:
-				t.usage.dirty = now;
-				break;
-			case 102:
-				t.usage.valid = now;
-				break;
-		}
-
-		return t;
-	};
-
 	PPC.notify = function() {
 		NOTIFY(this.path);
 		return this;
@@ -4707,10 +4489,8 @@
 
 			if (notify)
 				self.set(self.get(), type);
-			else {
+			else
 				self.setter && self.setterX(self.get(), self.path, 1);
-				self.$interaction(1);
-			}
 		}
 		return self;
 	};
@@ -5174,7 +4954,6 @@
 
 		self.$valid = value;
 		self.$validate = false;
-		self.$interaction(102);
 		clear('valid');
 		!noEmit && self.state && self.stateX(1, 1);
 		return self;
@@ -5193,10 +4972,6 @@
 		return self;
 	};
 
-	PPC.used = function() {
-		return this.$interaction(100);
-	};
-
 	PPC.dirty = function(value, noEmit) {
 
 		var self = this;
@@ -5208,7 +4983,6 @@
 			return self;
 
 		self.$dirty = value;
-		self.$interaction(101);
 		clear('dirty');
 		!noEmit && self.state && self.stateX(2, 2);
 		return self;
@@ -5401,70 +5175,11 @@
 		return self;
 	};
 
-	// ===============================================================
-	// USAGE DECLARATION
-	// ===============================================================
-
-	function USAGE() {
-		var t = this;
-		t.init = 0;
-		t.manually = 0;
-		t.input = 0;
-		t.default = 0;
-		t.custom = 0;
-		t.dirty = 0;
-		t.valid = 0;
-	}
-
-	USAGE.prototype.compare = function(type, dt) {
-		if (typeof(dt) === TYPE_S && dt.substring(0, 1) !== '-')
-			dt = W.NOW.add('-' + dt);
-		var val = this[type];
-		return val === 0 ? true : val < dt.getTime();
-	};
-
-	USAGE.prototype.convert = function(type) {
-
-		var n = Date.now();
-		var output = {};
-		var num = 1;
-		var t = this;
-
-		switch (type.toLowerCase().substring(0, 3)) {
-			case 'min':
-			case 'mm':
-			case 'm':
-				num = 60000;
-				break;
-
-			case 'hou':
-			case 'hh':
-			case 'h':
-				num = 360000;
-				break;
-
-			case 'sec':
-			case 'ss':
-			case 's':
-				num = 1000;
-				break;
-		}
-
-		output.init = t.init === 0 ? 0 : ((n - t.init) / num) >> 0;
-		output.manually = t.manually === 0 ? 0 : ((n - t.manually) / num) >> 0;
-		output.input = t.input === 0 ? 0 : ((n - t.input) / num) >> 0;
-		output.default = t.default === 0 ? 0 : ((n - t.default) / num) >> 0;
-		output.custom = t.custom === 0 ? 0 : ((n - t.custom) / num) >> 0;
-		output.dirty = t.dirty === 0 ? 0 : ((n - t.dirty) / num) >> 0;
-		output.valid = t.valid === 0 ? 0 : ((n - t.valid) / num) >> 0;
-		return output;
-	};
-
 	M.prototypes = function(fn) {
 		var obj = {};
 		obj.Component = PPC;
-		obj.Usage = USAGE.prototype;
 		obj.Plugin = Plugin.prototype;
+		obj.CustomScrollbar = CustomScrollbar.prototype;
 		fn.call(obj, obj);
 		return M;
 	};
@@ -5595,106 +5310,12 @@
 		EMIT('component.compile', name, a);
 	};
 
-	// @TODO: remove in v17
-	W.SINGLETON = function(name, def) {
-		return singletons[name] || (singletons[name] = (new Function('return ' + (def || '{}')))());
-	};
-
 	W.WIDTH = function(el) {
 		if (!el)
 			el = $(W);
 		var w = el.width();
 		var d = MD.devices;
 		return w >= d.md.min && w <= d.md.max ? 'md' : w >= d.sm.min && w <= d.sm.max ? 'sm' : w > d.lg.min ? 'lg' : w <= d.xs.max ? 'xs' : '';
-	};
-
-	W.MEDIAQUERY = function(query, element, fn) {
-
-		if (typeof(query) === TYPE_N) {
-			mediaqueries.remove('id', query);
-			return true;
-		}
-
-		if (typeof(element) === TYPE_FN) {
-			fn = element;
-			element = null;
-		}
-
-		query = query.toLowerCase();
-		if (query.indexOf(',') !== -1) {
-			var ids = [];
-			query.split(',').forEach(function(q) {
-				q = q.trim();
-				q && ids.push(MEDIAQUERY(q, element, fn));
-			});
-			return ids;
-		}
-
-		var d = MD.devices;
-
-		if (query === 'md')
-			query = 'min-width:{0}px and max-width:{1}px'.format(d.md.min, d.md.max);
-		else if (query === 'lg')
-			query = 'min-width:{0}px'.format(d.lg.min);
-		else if (query === 'xs')
-			query = 'max-width:{0}px'.format(d.xs.max);
-		else if (query === 'sm')
-			query = 'min-width:{0}px and max-width:{1}px'.format(d.sm.min, d.sm.max);
-
-		var arr = query.match(/(max-width|min-width|max-device-width|min-device-width|max-height|min-height|max-device-height|height|width):(\s)\d+(px|em|in)?/gi);
-		var obj = {};
-
-		var num = function(val) {
-			var n = parseInt(val.match(/\d+/), 10);
-			return val.match(/\d+(em)/) ? n * 16 : val.match(/\d+(in)/) ? (n * 0.010416667) >> 0 : n;
-		};
-
-		if (arr) {
-			for (var i = 0, length = arr.length; i < length; i++) {
-				var item = arr[i];
-				var index = item.indexOf(':');
-				switch (item.substring(0, index).toLowerCase().trim()) {
-					case 'min-width':
-					case 'min-device-width':
-					case 'width':
-						obj.minW = num(item);
-						break;
-					case 'max-width':
-					case 'max-device-width':
-						obj.maxW = num(item);
-						break;
-					case 'min-height':
-					case 'min-device-height':
-					case 'height':
-						obj.minH = num(item);
-						break;
-					case 'max-height':
-					case 'max-device-height':
-						obj.maxH = num(item);
-						break;
-				}
-			}
-		}
-
-		arr = query.match(/orientation:(\s)(landscape|portrait)/gi);
-		if (arr) {
-			for (var i = 0, length = arr.length; i < length; i++) {
-				var item = arr[i];
-				if (item.toLowerCase().indexOf('portrait') !== -1)
-					obj.orientation = 'portrait';
-				else
-					obj.orientation = 'landscape';
-			}
-		}
-
-		obj.id = mediaqueriescounter++;
-		obj.fn = fn;
-
-		if (element)
-			obj.element = element;
-
-		mediaqueries.push(obj);
-		return obj.id;
 	};
 
 	var regfnplugin = function(v) {
@@ -6155,80 +5776,6 @@
 		return M.default(arr[0], timeout, null, reset);
 	};
 
-	W.UPTODATE = function(period, url, callback, condition) {
-
-		if (typeof(url) === TYPE_FN) {
-			condition = callback;
-			callback = url;
-			url = '';
-		}
-
-		var dt = new Date().add(period);
-		ON('knockknock', function() {
-			if (dt > W.NOW)
-				return;
-			if (!condition || !condition())
-				return;
-			var id = setTimeout(function() {
-				var l = W.location;
-				if (url)
-					l.href = url.$env();
-				else
-					l.reload(true);
-			}, 5000);
-			callback && callback(id);
-		});
-	};
-
-	W.PING = function(url, timeout, execute) {
-
-		if (navigator.onLine != null && !navigator.onLine)
-			return;
-
-		if (typeof(timeout) === 'boolean') {
-			execute = timeout;
-			timeout = 0;
-		}
-
-		url = url.$env();
-
-		var index = url.indexOf(' ');
-		var method = 'GET';
-
-		if (index !== -1) {
-			method = url.substring(0, index).toUpperCase();
-			url = url.substring(index).trim();
-		}
-
-		var options = {};
-		var data = $.param(MD.pingdata);
-
-		if (data) {
-			index = url.lastIndexOf('?');
-			if (index === -1)
-				url += '?' + data;
-			else
-				url += '&' + data;
-		}
-
-		options.type = method;
-		options.headers = { 'x-ping': location.pathname, 'x-cookies': navigator.cookieEnabled ? '1' : '0', 'x-referrer': document.referrer };
-
-		options.success = function(r) {
-			if (r) {
-				try {
-					(new Function(r))();
-				} catch (e) {}
-			}
-		};
-
-		execute && $.ajax(makeurl(url), options);
-
-		return setInterval(function() {
-			$.ajax(makeurl(url), options);
-		}, timeout || 30000);
-	};
-
 	W.MODIFIED = function(path) {
 		var output = [];
 		M.each(function(obj) {
@@ -6411,18 +5958,6 @@
 		return b.join('').substring(0, size);
 	};
 
-	// @TODO: remove in v17
-	W.KEYPRESS = function(fn, timeout, key) {
-		if (!timeout)
-			timeout = 300;
-		var str = fn.toString();
-		var beg = str.length - 20;
-		if (beg < 0)
-			beg = 0;
-		var tkey = key ? key : HASH(str.substring(0, 20) + 'X' + str.substring(beg)) + '_keypress';
-		setTimeout2(tkey, fn, timeout);
-	};
-
 	W.WAIT = function(fn, callback, interval, timeout) {
 		var key = ((Math.random() * 10000) >> 0).toString(16);
 		var tkey = timeout > 0 ? key + '_timeout' : 0;
@@ -6492,11 +6027,6 @@
 	W.COMPILE = function(container) {
 		clearTimeout($recompile);
 		return compile(container);
-	};
-
-	// @TODO: remove in v17
-	W.RECOMPILE = function() {
-		setTimeout2('$compile', COMPILE, 700);
 	};
 
 	// ===============================================================
@@ -7619,173 +7149,6 @@
 		return self;
 	};
 
-	// @TODO: remove in v17
-	AP.scalar = function(type, key, def) {
-
-		var output = def;
-		var isDate = false;
-		var isAvg = type === 'avg' || type === 'average';
-		var isDistinct = type === 'distinct';
-		var self = this;
-
-		for (var i = 0, length = self.length; i < length; i++) {
-			var val = key ? self[i][key] : self[i];
-
-			if (typeof(val) === TYPE_S)
-				val = val.parseFloat();
-
-			if (val instanceof Date) {
-				isDate = true;
-				val = val.getTime();
-			}
-
-			if (isDistinct) {
-				if (!output)
-					output = [];
-				output.indexOf(val) === -1 && output.push(val);
-				continue;
-			}
-
-			if (type === 'median') {
-				if (!output)
-					output = [];
-				output.push(val);
-				continue;
-			}
-
-			if (type === 'sum' || isAvg) {
-				if (output)
-					output += val;
-				else
-					output = val;
-				continue;
-			}
-
-			if (type !== 'range') {
-				if (!output)
-					output = val;
-			} else {
-				if (!output) {
-					output = new Array(2);
-					output[0] = val;
-					output[1] = val;
-				}
-			}
-
-			switch (type) {
-				case 'range':
-					output[0] = Math.min(output[0], val);
-					output[1] = Math.max(output[1], val);
-					break;
-				case 'min':
-					output = Math.min(output, val);
-					break;
-				case 'max':
-					output = Math.max(output, val);
-					break;
-			}
-		}
-
-		if (isDistinct)
-			return output;
-
-		if (isAvg) {
-			output = output / self.length;
-			return isDate ? new Date(output) : output;
-		}
-
-		if (type === 'median') {
-			if (!output)
-				output = [0];
-			output.sort(function(a, b) {
-				return a - b;
-			});
-			var half = Math.floor(output.length / 2);
-			output = output.length % 2 ? output[half] : (output[half - 1] + output[half]) / 2.0;
-		}
-
-		if (isDate) {
-			if (typeof(output) === TYPE_N)
-				return new Date(output);
-			output[0] = new Date(output[0]);
-			output[1] = new Date(output[1]);
-		}
-
-		return output;
-	};
-
-	var BLACKLIST = { sort: 1, reverse: 1, splice: 1, slice: 1, pop: 1, unshift: 1, shift: 1, push: 1 };
-
-	// @TODO: remove in v17
-	W.CREATE = function(path) {
-
-		var is = false;
-		var callback;
-
-		if (typeof(path) === TYPE_S) {
-			if (proxy[path])
-				return proxy[path];
-			is = true;
-			callback = function(key) {
-
-				var p = path + (key ? '.' + key : '');
-				if (M.skipproxy === p) {
-					M.skipproxy = '';
-					return;
-				}
-				setTimeout(function() {
-					if (M.skipproxy === p)
-						M.skipproxy = '';
-					else {
-						NOTIFY(p);
-						RESET(p);
-					}
-				}, MD.delaybinder);
-			};
-
-		} else
-			callback = path;
-
-		var blocked = false;
-		var obj = path ? (GET(path) || {}) : {};
-		var handler = {
-			get: function(target, property, receiver) {
-				try {
-					return new Proxy(target[property], handler);
-				} catch (err) {
-					return Reflect.get(target, property, receiver);
-				}
-			},
-			defineProperty: function(target, property, descriptor) {
-				!blocked && callback(property, descriptor);
-				return Reflect.defineProperty(target, property, descriptor);
-			},
-			deleteProperty: function(target, property) {
-				!blocked && callback(property);
-				return Reflect.deleteProperty(target, property);
-			},
-			apply: function(target, thisArg, argumentsList) {
-				if (BLACKLIST[target.name]) {
-					blocked = true;
-					var result = Reflect.apply(target, thisArg, argumentsList);
-					callback('', argumentsList[0]);
-					blocked = false;
-					return result;
-				}
-				return Reflect.apply(target, thisArg, argumentsList);
-			}
-		};
-
-		var o = new Proxy(obj, handler);
-
-		if (is) {
-			M.skipproxy = path;
-			GET(path) == null && SET(path, obj, true);
-			return proxy[path] = o;
-		} else
-			return o;
-	};
-
 	// Waits for jQuery
 	WAIT(function() {
 		return !!W.jQuery;
@@ -7796,37 +7159,6 @@
 			paths = {};
 			cleaner();
 		}, (1000 * 60) * 5);
-
-		// scheduler
-		schedulercounter = 0;
-		setInterval(function() {
-
-			if (!schedulers.length)
-				return;
-
-			schedulercounter++;
-			var now = new Date();
-			W.DATETIME = W.NOW = now;
-			for (var i = 0, length = schedulers.length; i < length; i++) {
-				var item = schedulers[i];
-				if (item.type === 'm') {
-					if (schedulercounter % 30 !== 0)
-						continue;
-				} else if (item.type === 'h') {
-					// 1800 seconds --> 30 minutes
-					// 1800 / 2 (seconds) --> 900
-					if (schedulercounter % 900 !== 0)
-						continue;
-				}
-
-				var dt = now.add(item.expire);
-				var arr = FIND(item.selector, true);
-				for (var j = 0; j < arr.length; j++) {
-					var a = arr[j];
-					a && a.usage.compare(item.name, dt) && item.callback(a);
-				}
-			}
-		}, 3500);
 
 		$.fn.FIND = function(selector, many, callback, timeout) {
 
@@ -8146,7 +7478,6 @@
 			var w = $(window);
 			W.WW = w.width();
 			W.WH = w.height();
-			mediaquery();
 		}
 
 		resize();
@@ -8158,8 +7489,6 @@
 				clearTimeout($ready);
 				load();
 			}
-
-			$(W).on('orientationchange', mediaquery);
 
 			$(document).on('input', 'input[data-jc-bind],textarea[data-jc-bind]', function() {
 
@@ -8953,9 +8282,6 @@
 		// Remove events
 		OFF(self.id + '#watch');
 
-		// Remove schedulers
-		schedulers = schedulers.remove('owner', self.id);
-
 		// self.element.remove();
 		self.element = null;
 
@@ -8965,6 +8291,294 @@
 
 	W.PLUGIN = function(name, fn) {
 		return fn ? new Plugin(name, fn) : W.PLUGINS[name];
+	};
+
+	function CustomScrollbar(element, options) {
+
+		var self = this;
+		var size = { margin: 30 };
+		var drag = {};
+
+		element.aclass('ui-scrollbar');
+		element.wrapInner('<div class="ui-scrollbar-area"><div class="ui-scrollbar-body"></div></div>');
+		element.prepend('<div class="ui-scrollbar-y ui-scrollbar-notready"><span></span></div><div class="ui-scrollbar-x ui-scrollbar-notready"><span></span></div>');
+		element[0].$scrollbar = self;
+
+		self.element = element;
+
+		var visibleX = false;
+		var visibleY = false;
+
+		if (options) {
+			if (options.visibleX)
+				visibleX = true;
+			if (options.visibleY)
+				visibleY = true;
+			if (options.margin)
+				size.margin = options.margin;
+		}
+
+		var pathx = $(element.find('> .ui-scrollbar-x')[0]);
+		var pathy = $(element.find('> .ui-scrollbar-y')[0]);
+		var barx = $(pathx.find('span')[0]);
+		var bary = $(pathy.find('span')[0]);
+		var area = $(element.find('> .ui-scrollbar-area')[0]);
+		var notemmited = true;
+		var ready = false;
+		var intervalresize;
+		var delayresize;
+		var delay;
+
+		var delay;
+		var onmousemove = function(e) {
+			if (drag.is) {
+				var p;
+				if (drag.type === 'y') {
+					var p = ((e.pageY - drag.offset) / size.viewHeight) * 100;
+					area[0].scrollTop = ((size.scrollHeight / 100) * p) - drag.offset2;
+				} else {
+					p = ((e.pageX - drag.offset) / size.viewWidth) * 100;
+					area[0].scrollLeft = ((size.scrollWidth / 100) * p) - drag.offset2;
+				}
+			}
+		};
+
+		var onresize = function() {
+			delayresize && clearTimeout(delayresize);
+			delayresize = setTimeout(self.resize, 500);
+		};
+
+		var onmouseup = function() {
+			drag.is = false;
+		};
+
+		$(window).on('mousemove', onmousemove).on('mouseup', onmouseup).on('resize', onresize);
+
+		pathx.on('mousedown', function(e) {
+
+			drag.type = 'x';
+
+			if (e.target.nodeName === 'SPAN') {
+				drag.offset = e.offsetX;
+				drag.offset2 = size.hbarsize - e.offsetX;
+				drag.is = true;
+			} else {
+				// path
+				var p = ((e.offsetX - size.hbarsize) / size.viewWidth) * 100;
+				area.prop('scrollLeft', (size.scrollWidth / 100) * p);
+				drag.is = false;
+			}
+
+			e.preventDefault();
+			e.stopPropagation();
+		});
+
+		pathx.on('mouseup', function() {
+			drag.is = false;
+		});
+
+		pathy.on('mousedown', function(e) {
+
+			drag.type = 'y';
+
+			if (e.target.nodeName === 'SPAN') {
+				drag.offset = e.offsetY;
+				drag.offset2 = size.vbarsize - e.offsetY;
+				drag.is = true;
+			} else {
+				// path
+				var p = ((e.offsetY - size.vbarsize) / (size.viewHeight - (size.hbar ? size.thickness : 0))) * 100;
+				area.prop('scrollTop', (size.scrollHeight / 100) * p);
+				drag.is = false;
+			}
+
+			e.preventDefault();
+			e.stopPropagation();
+		});
+
+		area.on('scroll', function() {
+
+			var y = area[0].scrollTop;
+			var x = area[0].scrollLeft;
+			var is = false;
+			var pos;
+			var p;
+			var max;
+
+			if (size.vbar) {
+
+				var minus = (size.hbar ? size.thickness : 0);
+				p = Math.ceil((y / (size.scrollHeight - size.clientHeight)) * 100);
+				pos = (((size.clientHeight - size.vbarsize - minus) / 100) * p);
+
+				if (pos < 0)
+					pos = 0;
+				else {
+					max = size.viewHeight - size.vbarsize - minus;
+					if (pos > max)
+						pos = max;
+				}
+
+				if (size.vpos !== pos) {
+					size.vpos = pos;
+					bary.css('top', pos);
+					is = true;
+				}
+			}
+
+			if (size.hbar) {
+				p = Math.ceil((x / (size.scrollWidth - size.clientWidth)) * 100);
+				pos = (((size.clientWidth - size.hbarsize) / 100) * p);
+
+				if (pos < 0)
+					pos = 0;
+				else {
+					max = size.viewWidth - size.hbarsize;
+					if (pos > max)
+						pos = max;
+				}
+
+				if (size.hpos !== pos) {
+					size.hpos = pos;
+					barx.css('left', pos);
+					is = true;
+				}
+			}
+
+			if (is) {
+
+				if (notemmited) {
+					EMIT('scroll', area);
+					notemmited = false;
+				}
+
+				delay && clearTimeout(delay)
+				delay = setTimeout(function() {
+					delay = null;
+					notemmited = true;
+				}, 700);
+			}
+
+		});
+
+		self.check = function() {
+
+			var el = element[0];
+			var parent = el.parentNode;
+			var is = false;
+
+			while (parent) {
+				if (parent.nodeName === 'BODY') {
+					is = true;
+					break;
+				}
+				parent = parent.parentNode;
+			}
+
+			if (is)
+				self.resize();
+			else
+				self.destroy();
+		};
+
+		self.resize = function() {
+
+			// Not visible
+			if (!element[0].offsetParent)
+				return;
+
+			var a = area[0];
+			var el = element;
+
+			delayresize = null;
+
+			size.scrollWidth = a.scrollWidth;
+			size.scrollHeight = a.scrollHeight;
+			size.viewWidth = el.width();
+			size.viewHeight = el.height();
+
+			area.css('width', size.viewWidth + size.margin);
+			area.css('height', size.viewHeight + size.margin);
+
+			size.clientWidth = area.innerWidth();
+			size.clientHeight = area.innerHeight();
+			size.thickness = 10;
+			size.hpos = 0;
+			size.vpos = 0;
+
+			var width = +barx.css('width').replace('px', '');
+
+			size.vbar = size.scrollHeight > size.clientHeight;
+			if (size.vbar) {
+				size.vbarsize = (size.clientHeight * ((size.viewHeight - width) / size.scrollHeight)) >> 0;
+				if (size.vbarsize < 30)
+					size.vbarsize = 30;
+				bary.css('height', size.vbarsize);
+			}
+
+			size.hbar = size.scrollWidth > size.clientWidth;
+			if (size.hbar) {
+				size.hbarsize = (size.clientWidth * ((size.viewWidth - width) / size.scrollWidth)) >> 0;
+				if (size.hbarsize < 30)
+					size.hbarsize = 30;
+				barx.css('width', size.hbarsize);
+			}
+
+			pathx.tclass((visibleX ? 'ui-scrollbar-' : '') + 'hidden', !size.hbar);
+			pathy.tclass((visibleY ? 'ui-scrollbar-' : '') + 'hidden', !size.vbar);
+
+			element.tclass('ui-scrollbar-isx', size.hbar).tclass('ui-scrollbar-isy', size.vbar);
+
+			if (visibleX && !size.hbar)
+				size.hbar = true;
+
+			if (visibleY && !size.vbar)
+				size.vbar = true;
+
+			if (!ready) {
+				var cls = 'ui-scrollbar-notready';
+				element.find('.' + cls).rclass(cls);
+				ready = true;
+			}
+
+			return self;
+		};
+
+		self.scrollLeft = function(val) {
+			area[0].scrollLeft = val;
+			return self;
+		};
+
+		self.scrollTop = function(val) {
+			area[0].scrollTop = val;
+			return self;
+		};
+
+		self.scroll = function(x, y) {
+			area[0].scrollLeft = x;
+			area[0].scrollTop = y;
+			return self;
+		};
+
+		self.destroy = function() {
+			clearInterval(intervalresize);
+			$(window).off('mousemove', onmousemove).off('resize', onresize).off('mouseup', onmouseup);
+			area.off();
+			pathx.off();
+			pathy.off();
+			var index = M.scrollbars.indexOf(self);
+			if (index !== -1)
+				M.scrollbars.splice(index, 1);
+		};
+
+		setTimeout(self.resize, 100);
+		intervalresize = setInterval(self.check, (options ? options.interval : 0) || 54321);
+		M.scrollbars.push(self);
+		return self;
+	}
+
+	W.SCROLLBAR = function(element, options) {
+		return new CustomScrollbar(element, options);
 	};
 
 })();
