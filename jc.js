@@ -147,7 +147,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.001;
+	M.version = 17.002;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8529,7 +8529,9 @@
 			var n = 'ui-scrollbar-';
 			pathx.tclass((visibleX ? n : '') + 'hidden', !size.hbar);
 			pathy.tclass((visibleY ? n : '') + 'hidden', !size.vbar);
+
 			element.tclass(n + '-isx', size.hbar).tclass(n + '-isy', size.vbar);
+			element.tclass('ui-scrollbar-touch', isMOBILE && isTOUCH);
 
 			if (visibleX && !size.hbar)
 				size.hbar = true;
