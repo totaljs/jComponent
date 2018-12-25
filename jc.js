@@ -147,7 +147,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.003;
+	M.version = 17.004;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8306,18 +8306,21 @@
 		if (!options)
 			options = {};
 
-		element.aclass('ui-scrollbar');
-		element.wrapInner('<div class="ui-scrollbar-area"><div class="ui-scrollbar-body"></div></div>');
-		element.prepend('<div class="ui-scrollbar-y ui-scrollbar-notready"><span></span></div><div class="ui-scrollbar-x ui-scrollbar-notready"><span></span></div>');
+		var n = 'ui-scrollbar';
+
+		element.aclass(n);
+		element.wrapInner('<div class="{0}-area"><div class="{0}-body"></div></div>'.format(n));
+		element.prepend('<div class="{0}-path {0}-notready"><div class="{0}-y"><span></span></div><div class="{0}-x"><span></span></div></div>'.format(n));
 		element[0].$scrollbar = self;
 
 		var visibleX = options.visibleX == null ? false : options.visibleX;
 		var visibleY = options.visibleY == null ? false : options.visibleY;
-		var pathx = $(element.find('> .ui-scrollbar-x')[0]);
-		var pathy = $(element.find('> .ui-scrollbar-y')[0]);
+		var path = element.find('.' + n + '-path');
+		var pathx = $(path.find('.' + n + '-x')[0]);
+		var pathy = $(path.find('.' + n + '-y')[0]);
 		var barx = $(pathx.find('span')[0]);
 		var bary = $(pathy.find('span')[0]);
-		var area = $(element.find('> .ui-scrollbar-area')[0]);
+		var area = $(element.find('> .' + n + '-area')[0]);
 		var notemmited = true;
 		var ready = false;
 		var intervalresize;
@@ -8488,6 +8491,7 @@
 
 			var a = area[0];
 			var el = element;
+			var md = isMOBILE && isTOUCH;
 
 			delayresize = null;
 
@@ -8499,8 +8503,21 @@
 			size.viewWidth = el.width();
 			size.viewHeight = el.height();
 
-			area.css('width', size.viewWidth + size.margin);
-			area.css('height', size.viewHeight + size.margin);
+			// Safari iOS
+			if (md) {
+
+				if (size.viewWidth > WW)
+					size.viewWidth = WW;
+
+				if (size.viewWidth > screen.width)
+					size.viewWidth = screen.width;
+
+				area.css('width', size.viewWidth);
+				area.css('height', size.viewHeight);
+			} else {
+				area.css('width', size.viewWidth + size.margin);
+				area.css('height', size.viewHeight + size.margin);
+			}
 
 			size.clientWidth = area.innerWidth();
 			size.clientHeight = area.innerHeight();
@@ -8537,7 +8554,7 @@
 				size.vbar = true;
 
 			element.tclass(n + 'isx', size.hbar).tclass(n + 'isy', size.vbar);
-			element.tclass('ui-scrollbar-touch', isMOBILE && isTOUCH);
+			element.tclass(n + 'touch', md);
 
 			if (!ready) {
 				var cls = n + 'notready';
@@ -8577,11 +8594,6 @@
 			var index = M.scrollbars.indexOf(self);
 			if (index !== -1)
 				M.scrollbars.splice(index, 1);
-		};
-
-		self.width = function(w) {
-			element.find('.ui-scrollbar-body').css('width', w);
-			return self;
 		};
 
 		var resize_visible = function() {
