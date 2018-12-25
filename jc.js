@@ -8521,9 +8521,12 @@
 
 			size.clientWidth = area.innerWidth();
 			size.clientHeight = area.innerHeight();
-			size.thickness = 10;
+			size.thickness = options.thickness || 10;
 			size.hpos = 0;
 			size.vpos = 0;
+
+			pathx.css({ top: size.viewHeight - size.thickness, width: size.viewWidth });
+			pathy.css({ left: size.viewWidth - size.thickness, height: size.viewHeight });
 
 			var width = +barx.css('width').replace('px', '');
 
@@ -8553,8 +8556,7 @@
 			if (visibleY && !size.vbar)
 				size.vbar = true;
 
-			element.tclass(n + 'isx', size.hbar).tclass(n + 'isy', size.vbar);
-			element.tclass(n + 'touch', md);
+			element.tclass(n + 'isx', size.hbar).tclass(n + 'isy', size.vbar).tclass(n + 'touch', md);
 
 			if (!ready) {
 				var cls = n + 'notready';
