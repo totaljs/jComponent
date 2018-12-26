@@ -147,7 +147,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.004;
+	M.version = 17.005;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8349,17 +8349,31 @@
 			delayresize = setTimeout(self.resize, 500);
 		};
 
-		var onmouseup = function() {
-			drag.is = false;
+		var bind = function() {
+			if (!drag.binded) {
+				drag.binded = true;
+				$(window).on('mousemove', onmousemove).on('mouseup', onmouseup);
+			}
 		};
 
-		$(window).on('mousemove', onmousemove).on('mouseup', onmouseup).on('resize', onresize);
+		var unbind = function() {
+			if (drag.binded) {
+				drag.binded = false;
+				$(window).off('mousemove', onmousemove).off('mouseup', onmouseup);
+			}
+		};
+
+		var onmouseup = function() {
+			drag.is = false;
+			unbind();
+		};
 
 		pathx.on('mousedown', function(e) {
 
 			drag.type = 'x';
 
 			if (e.target.nodeName === 'SPAN') {
+				bind();
 				drag.offset = e.offsetX;
 				drag.offset2 = size.hbarsize - e.offsetX;
 				drag.is = true;
@@ -8376,6 +8390,7 @@
 
 		pathx.on('mouseup', function() {
 			drag.is = false;
+			unbind();
 		});
 
 		pathy.on('mousedown', function(e) {
@@ -8383,6 +8398,7 @@
 			drag.type = 'y';
 
 			if (e.target.nodeName === 'SPAN') {
+				bind();
 				drag.offset = e.offsetY;
 				drag.offset2 = size.vbarsize - e.offsetY;
 				drag.is = true;
@@ -8584,8 +8600,6 @@
 			return self;
 		};
 
-		ON('resize', self.resize);
-
 		self.destroy = function() {
 			clearInterval(intervalresize);
 			$(window).off('mousemove', onmousemove).off('resize', onresize).off('mouseup', onmouseup);
@@ -8605,6 +8619,11 @@
 			} else
 				setTimeout(resize_visible, 234);
 		};
+
+		if (options.autoresize == null || options.autoresize) {
+			$(window).on('resize', onresize);
+			ON('resize', self.resize);
+		}
 
 		resize_visible();
 		intervalresize = setInterval(self.check, options.interval || 54321);
