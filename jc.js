@@ -147,7 +147,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.006;
+	M.version = 17.007;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8515,8 +8515,6 @@
 			if (options.parent)
 				el = el.closest(options.parent);
 
-			size.scrollWidth = a.scrollWidth;
-			size.scrollHeight = a.scrollHeight;
 			size.viewWidth = el.width();
 			size.viewHeight = el.height();
 
@@ -8536,6 +8534,8 @@
 				area.css('height', size.viewHeight + size.margin);
 			}
 
+			size.scrollWidth = a.scrollWidth;
+			size.scrollHeight = a.scrollHeight;
 			size.clientWidth = area.innerWidth();
 			size.clientHeight = area.innerHeight();
 			size.thickness = options.thickness || 10;
