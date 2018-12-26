@@ -147,7 +147,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.005;
+	M.version = 17.006;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8322,7 +8322,6 @@
 		var bary = $(pathy.find('span')[0]);
 		var area = $(element.find('> .' + n + '-area')[0]);
 		var notemmited = true;
-		var ready = false;
 		var intervalresize;
 		var delayresize;
 		var delay;
@@ -8345,6 +8344,7 @@
 		};
 
 		var onresize = function() {
+			!delayresize && path.aclass(n + '-notready');
 			delayresize && clearTimeout(delayresize);
 			delayresize = setTimeout(self.resize, 500);
 		};
@@ -8499,6 +8499,7 @@
 				self.destroy();
 		};
 
+		self.resize2 = onresize;
 		self.resize = function() {
 
 			// Not visible
@@ -8573,12 +8574,7 @@
 				size.vbar = true;
 
 			element.tclass(n + 'isx', size.hbar).tclass(n + 'isy', size.vbar).tclass(n + 'touch', md);
-
-			if (!ready) {
-				var cls = n + 'notready';
-				element.find('.' + cls).rclass(cls);
-				ready = true;
-			}
+			path.rclass(n + 'notready');
 
 			options.onresize && options.onresize(self);
 			return self;
@@ -8602,7 +8598,7 @@
 
 		self.destroy = function() {
 			clearInterval(intervalresize);
-			$(window).off('mousemove', onmousemove).off('resize', onresize).off('mouseup', onmouseup);
+			unbind();
 			area.off();
 			pathx.off();
 			pathy.off();
