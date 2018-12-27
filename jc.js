@@ -147,7 +147,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.007;
+	M.version = 17.009;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8509,6 +8509,7 @@
 			var a = area[0];
 			var el = element;
 			var md = isMOBILE && isTOUCH;
+			var sw = SCROLLBARWIDTH();
 
 			delayresize = null;
 
@@ -8530,8 +8531,8 @@
 				area.css('width', size.viewWidth);
 				area.css('height', size.viewHeight);
 			} else {
-				area.css('width', size.viewWidth + size.margin);
-				area.css('height', size.viewHeight + size.margin);
+				area.css('width', size.viewWidth + size.margin + sw);
+				area.css('height', size.viewHeight + size.margin + sw);
 			}
 
 			size.scrollWidth = a.scrollWidth;
