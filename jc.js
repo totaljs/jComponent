@@ -149,7 +149,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.010;
+	M.version = 17.011;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -333,7 +333,6 @@
 
 	W.NEWTRANSFORM = function(name, callback) {
 		M.transforms[name] = callback;
-		return W;
 	};
 
 	W.TRANSFORM = function(name, value, callback) {
@@ -381,8 +380,6 @@
 			}, cb);
 		} else
 			cb();
-
-		return W;
 	};
 
 	// ===============================================================
@@ -413,12 +410,10 @@
 		M.$version = version || '';
 		M.$language = language || '';
 		env && ENV(env);
-		return M;
 	};
 
 	W.FREE = function(timeout) {
 		setTimeout2('$clean', cleaner, timeout || 10);
-		return M;
 	};
 
 	W.EVALUATE = function(path, expression, nopath) {
@@ -483,7 +478,7 @@
 			else
 				M.$formatter.push(value);
 
-			return M;
+			return;
 		}
 
 		var a = M.$formatter;
@@ -671,8 +666,6 @@
 			xhr.send(data);
 
 		}, timeout || 0);
-
-		return W;
 	};
 
 	W.UNWATCH = function(path, fn) {
@@ -681,10 +674,8 @@
 			var arr = path.split(MULTIPLE).trim();
 			for (var i = 0; i < arr.length; i++)
 				W.UNWATCH(arr[i], fn);
-			return W;
-		}
-
-		return OFF('watch', path, fn);
+		} else
+			OFF('watch', path, fn);
 	};
 
 	W.WATCH = function(path, fn, init) {
@@ -693,7 +684,7 @@
 			var arr = path.split(MULTIPLE).trim();
 			for (var i = 0; i < arr.length; i++)
 				W.WATCH(arr[i], fn, init);
-			return W;
+			return;
 		}
 
 		if (typeof(path) === TYPE_FN) {
@@ -711,7 +702,6 @@
 
 		path = pathmaker(path, 1, 1);
 		ON(push + 'watch', path, fn, init);
-		return W;
 	};
 
 	W.ON = function(name, path, fn, init, context) {
@@ -720,7 +710,7 @@
 			var arr = name.split(MULTIPLE).trim();
 			for (var i = 0; i < arr.length; i++)
 				W.ON(arr[i], path, fn, init, context);
-			return W;
+			return;
 		}
 
 		var push = true;
@@ -801,7 +791,6 @@
 				events[name] = [obj];
 			(!C.ready && (name === 'ready' || name === 'init')) && fn();
 		}
-		return W;
 	};
 
 	W.OFF = function(name, path, fn) {
@@ -810,7 +799,7 @@
 			var arr = name.split('+').trim();
 			for (var i = 0; i < arr.length; i++)
 				W.OFF(arr[i], path, fn);
-			return W;
+			return;
 		}
 
 		if (typeof(path) === TYPE_FN) {
@@ -888,7 +877,6 @@
 		});
 
 		watches = cleararr(watches, 'watch');
-		return W;
 	};
 
 	W.EMIT = function(name) {
@@ -1159,7 +1147,7 @@
 						});
 					}
 				}
-				return W;
+				return;
 			}
 
 			statics[url] = 1;
@@ -1197,7 +1185,7 @@
 			scr.src = makeurl(url, true);
 			d.getElementsByTagName('head')[0].appendChild(scr);
 			EMIT('import', url, $(scr));
-			return W;
+			return;
 		}
 
 		if (ext === '.css') {
@@ -1209,7 +1197,7 @@
 			statics[url] = 2;
 			callback && setTimeout(callback, 200, 1);
 			EMIT('import', url, $(stl));
-			return W;
+			return;
 		}
 
 		WAIT(function() {
@@ -1262,8 +1250,6 @@
 			else
 				AJAX('GET ' + url, cb);
 		});
-
-		return W;
 	};
 
 	W.IMPORT = M.import = function(url, target, callback, insert, preparator) {
@@ -1283,7 +1269,6 @@
 			});
 		} else
 			IMPORTCACHE(url, null, target, callback, insert, preparator);
-		return W;
 	};
 
 	W.CACHEPATH = function(path, expire, rebind) {
@@ -1303,9 +1288,7 @@
 			var cache = cachestorage(key);
 			cache && cache[path] !== undefined && cache[path] !== get(path) && M.set(path, cache[path], true);
 		}
-		return W;
 	};
-
 
 	W.CACHE = function(key, value, expire) {
 		return cachestorage(key, value, expire);
@@ -1332,7 +1315,6 @@
 		} else
 			delete storage[key];
 		save();
-		return W;
 	};
 
 	W.MODIFY = function(path, value, timeout) {
@@ -1349,7 +1331,6 @@
 			else
 				CHANGE(path);
 		}
-		return W;
 	};
 
 	W.MAKEPARAMS = function(url, values, type) {
@@ -1414,7 +1395,6 @@
 
 	W.AJAXCONFIG = function(name, fn) {
 		ajaxconfig[name] = fn;
-		return W;
 	};
 
 	W.AJAX = function(url, data, callback, timeout) {
@@ -1438,7 +1418,7 @@
 
 		var index = url.indexOf(' ');
 		if (index === -1)
-			return W;
+			return;
 
 		var repeat = false;
 
@@ -1590,8 +1570,6 @@
 			$.ajax(makeurl(output.url), options);
 
 		}, timeout || 0);
-
-		return W;
 	};
 
 	W.AJAXCACHEREVIEW = function(url, data, callback, expire, timeout, clear) {
@@ -1617,7 +1595,7 @@
 
 		var index = url.indexOf(' ');
 		if (index === -1)
-			return W;
+			return;
 
 		var method = url.substring(0, index).toUpperCase();
 		var uri = url.substring(index).trim().$env();
@@ -1661,8 +1639,6 @@
 					callback(r, false);
 			});
 		}, timeout || 1);
-
-		return W;
 	};
 
 	W.CLEARCACHE = function() {
@@ -1673,7 +1649,6 @@
 			rem(k + '.cache');
 			rem(k + '.blocked');
 		}
-		return W;
 	};
 
 	W.ERRORS = function(path, except, highlight) {
@@ -1714,7 +1689,6 @@
 			com_dirty(path, false, onlyComponent, true);
 			com_valid(path, false, onlyComponent);
 		}
-		return W;
 	};
 
 	W.BLOCKED = function(name, timeout, callback) {
@@ -1742,12 +1716,12 @@
 		if (path instanceof Array) {
 			for (var i = 0; i < path.length; i++)
 				M.update(path[i], reset, type);
-			return M;
+			return;
 		}
 
 		path = pathmaker(path);
 		if (!path)
-			return M;
+			return;
 
 		var is = path.charCodeAt(0) === 33;
 		if (is)
@@ -1755,7 +1729,7 @@
 
 		path = path.replace(REGWILDCARD, '');
 		if (!path)
-			return M;
+			return;
 
 		!wasset && set(path, get(path), true);
 
@@ -1808,7 +1782,6 @@
 			state[i].stateX(1, 4);
 
 		emitwatch(path, get(path), type);
-		return M;
 	};
 
 	W.NOTIFY = function() {
@@ -1844,8 +1817,6 @@
 
 		for (var j = 0; j < arg.length; j++)
 			emitwatch(arg[j], GET(arg[j]), 1);
-
-		return W;
 	};
 
 	M.extend = function(path, value, type) {
@@ -1854,7 +1825,6 @@
 			var val = get(path);
 			M.set(path, $.extend(val == null ? {} : val, value), type);
 		}
-		return M;
 	};
 
 	W.REWRITE = function(path, value, type) {
@@ -1864,7 +1834,6 @@
 			set(path, value);
 			emitwatch(path, value, type);
 		}
-		return W;
 	};
 
 	M.inc = function(path, value, type) {
@@ -1872,13 +1841,13 @@
 		if (path instanceof Array) {
 			for (var i = 0; i < path.length; i++)
 				M.inc(path[i], value, type);
-			return M;
+			return;
 		}
 
 		path = pathmaker(path);
 
 		if (!path)
-			return M;
+			return;
 
 		var current = get(path);
 		if (!current) {
@@ -1891,7 +1860,6 @@
 
 		current += value;
 		M.set(path, current, type);
-		return M;
 	};
 
 	// 1 === manually
@@ -1902,13 +1870,13 @@
 		if (path instanceof Array) {
 			for (var i = 0; i < path.length; i++)
 				M.set(path[i], value, type);
-			return M;
+			return;
 		}
 
 		path = pathmaker(path);
 
 		if (!path)
-			return M;
+			return;
 
 		var is = path.charCodeAt(0) === 33;
 		if (is)
@@ -1920,7 +1888,7 @@
 		}
 
 		if (!path)
-			return M;
+			return;
 
 		var isUpdate = (typeof(value) === TYPE_O && !(value instanceof Array) && value != null);
 		var reset = type === true;
@@ -1984,7 +1952,6 @@
 			state[i].stateX(type, 5);
 
 		emitwatch(path, result, type);
-		return M;
 	};
 
 	M.push = function(path, value, type) {
@@ -1992,7 +1959,7 @@
 		if (path instanceof Array) {
 			for (var i = 0; i < path.length; i++)
 				M.push(path[i], value, type);
-			return M;
+			return;
 		}
 
 		var arr = get(path);
@@ -2018,8 +1985,6 @@
 			M.set(path, arr, type);
 		else if (is)
 			M.update(path, undefined, type);
-
-		return M;
 	};
 
 	function pathmaker(path, clean, noscope) {
@@ -2153,7 +2118,7 @@
 			setTimeout(function() {
 				M.default(path, 0, onlyComponent, reset);
 			}, timeout);
-			return M;
+			return;
 		}
 
 		if (typeof(onlyComponent) === 'boolean') {
@@ -2212,8 +2177,6 @@
 			clear('valid', 'dirty');
 			state(arr, 3, 3);
 		}
-
-		return M;
 	};
 
 	W.RESET = M.reset = function(path, timeout, onlyComponent) {
@@ -2222,7 +2185,7 @@
 			setTimeout(function() {
 				M.reset(path);
 			}, timeout);
-			return W;
+			return;
 		}
 
 		path = pathmaker(path).replace(REGWILDCARD, '');
@@ -2255,7 +2218,6 @@
 
 		clear('valid', 'dirty');
 		state(arr, 1, 3);
-		return W;
 	};
 
 	M.each = function(fn, path) {
@@ -2270,9 +2232,8 @@
 				continue;
 			var stop = fn(com, index++, wildcard);
 			if (stop === true)
-				return M;
+				return;
 		}
-		return M;
 	};
 
 	// ===============================================================
@@ -5186,7 +5147,6 @@
 		obj.Plugin = Plugin.prototype;
 		obj.CustomScrollbar = CustomScrollbar.prototype;
 		fn.call(obj, obj);
-		return M;
 	};
 
 	// ===============================================================
@@ -5684,7 +5644,10 @@
 	W.TOGGLE = function(path, timeout, reset) {
 		var v = GET(path);
 		SET(path, !v, timeout, reset);
-		return W;
+	};
+
+	W.NULL = function(path, value, timeout) {
+		SET(path, null, timeout);
 	};
 
 	W.SET = function(path, value, timeout, reset) {
@@ -5696,13 +5659,11 @@
 		setTimeout(function() {
 			M.set(path, value, reset);
 		}, timeout);
-		return W;
 	};
 
 	W.SETR = function(path, value, type) {
 		M.set(path, value, type);
 		RESET(path);
-		return W;
 	};
 
 	W.INC = function(path, value, timeout, reset) {
@@ -5718,7 +5679,6 @@
 		setTimeout(function() {
 			M.inc(path, value, reset);
 		}, timeout);
-		return W;
 	};
 
 	W.EXTEND = function(path, value, timeout, reset) {
@@ -5730,7 +5690,6 @@
 		setTimeout(function() {
 			M.extend(path, value, reset);
 		}, timeout);
-		return W;
 	};
 
 	W.PUSH = function(path, value, timeout, reset) {
@@ -5742,37 +5701,31 @@
 		setTimeout(function() {
 			M.push(path, value, reset);
 		}, timeout);
-		return W;
 	};
 
 	W.TOGGLE2 = function(path, type) {
 		TOGGLE(path, type);
 		CHANGE(path);
-		return W;
 	};
 
 	W.EXTEND2 = function(path, value, type) {
 		EXTEND(path, value, type);
 		CHANGE(path);
-		return W;
 	};
 
 	W.SET2 = function(path, value, type) {
 		SET(path, value, type);
 		CHANGE(path);
-		return W;
 	};
 
 	W.INC2 = function(path, value, type) {
 		INC(path, value, type);
 		CHANGE(path);
-		return W;
 	};
 
 	W.PUSH2 = function(path, value, type) {
 		PUSH(path, value, type);
 		CHANGE(path);
-		return W;
 	};
 
 	W.DEFAULT = function(path, timeout, reset) {
@@ -5785,7 +5738,7 @@
 				path = path.substring(0, index);
 			SET(path, new Function('return ' + def)(), timeout > 10 ? timeout : 3, timeout > 10 ? 3 : null);
 		}
-		return M.default(arr[0], timeout, null, reset);
+		M.default(arr[0], timeout, null, reset);
 	};
 
 	W.MODIFIED = function(path) {
@@ -5902,16 +5855,16 @@
 		if (path instanceof Array) {
 			for (var i = 0; i < path.length; i++)
 				W.BIND(path[i]);
-			return W;
+			return;
 		}
 		path = pathmaker(path);
-		if (!path)
-			return W;
-		var is = path.charCodeAt(0) === 33;
-		if (is)
-			path = path.substring(1);
-		path = path.replace(REGWILDCARD, '');
-		path && set(path, get(path), true);
+		if (path) {
+			var is = path.charCodeAt(0) === 33;
+			if (is)
+				path = path.substring(1);
+			path = path.replace(REGWILDCARD, '');
+			path && set(path, get(path), true);
+		}
 	};
 
 	W.UPD = W.UPDATE = function(path, timeout, reset) {
@@ -5928,7 +5881,6 @@
 	W.UPD2 = W.UPDATE2 = function(path, type) {
 		UPDATE(path, type);
 		CHANGE(path);
-		return W;
 	};
 
 	W.CSS = W.STYLE = function(value, id) {
