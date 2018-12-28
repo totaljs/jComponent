@@ -149,7 +149,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.011;
+	M.version = 17.012;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -700,7 +700,7 @@
 			push = '^';
 		}
 
-		path = pathmaker(path, 1, 1);
+		path = pathmaker(path, 1);
 		ON(push + 'watch', path, fn, init);
 	};
 
@@ -8221,6 +8221,7 @@
 		current_owner = t.id;
 		fn.call(t, t);
 		current_owner = a;
+		current_scope = null;
 		EMIT('plugin', t);
 	}
 
@@ -8262,7 +8263,11 @@
 	};
 
 	W.PLUGIN = function(name, fn) {
-		return fn ? new Plugin(name, fn) : W.PLUGINS[name];
+		if (fn) {
+			current_scope = name;
+			fn = new Plugin(name, fn);
+		}
+		return fn || W.PLUGINS[name];
 	};
 
 	function CustomScrollbar(element, options) {
