@@ -5479,6 +5479,9 @@
 
 		path = path.env();
 
+		if (current_scope)
+			path = path.replace(REGSCOPEINLINE, current_scope);
+
 		for (var i = f; i < arguments.length; i++)
 			arg.push(arguments[i]);
 
