@@ -14,6 +14,7 @@
 	var REGBINDERCOMPARE = /^[^a-z0-9.]/;
 	var REGWILDCARD = /\.\*/;
 	var REGISARR = /\[\d+\]$/;
+	var REGSCOPEINLINE = /\?/g;
 	var ATTRCOM = '[data-jc]';
 	var ATTRURL = '[data-jc-url]';
 	var ATTRBIND = '[data-bind],[bind],[data-vbind]';
@@ -90,6 +91,7 @@
 	var current_owner = null;
 	var current_element = null;
 	var current_com = null;
+	var current_scope = null;
 
 	W.MAIN = W.M = W.jC = W.COM = M;
 	W.PLUGINS = {};
@@ -147,7 +149,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.009;
+	M.version = 17.010;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -707,7 +709,7 @@
 			push = '^';
 		}
 
-		path = pathmaker(path, true);
+		path = pathmaker(path, 1, 1);
 		ON(push + 'watch', path, fn, init);
 		return W;
 	};
@@ -959,7 +961,7 @@
 		if (index !== -1)
 			path = path.substring(0, index);
 
-		path = pathmaker(path);
+		path = pathmaker(path, 0, 1);
 
 		var all = M.components;
 		for (var i = 0, length = all.length; i < length; i++) {
@@ -1037,7 +1039,7 @@
 		if (index !== -1)
 			path = path.substring(0, index);
 
-		path = pathmaker(path);
+		path = pathmaker(path, 0, 1);
 
 		var all = M.components;
 		for (var i = 0, length = all.length; i < length; i++) {
@@ -1335,7 +1337,7 @@
 
 	W.MODIFY = function(path, value, timeout) {
 		if (path && typeof(path) === TYPE_O) {
-			Object.keys(path).forEach(function(k) {
+			OK(path).forEach(function(k) {
 				MODIFY(k, path[k], value);
 			});
 		} else {
@@ -2020,7 +2022,7 @@
 		return M;
 	};
 
-	function pathmaker(path, clean) {
+	function pathmaker(path, clean, noscope) {
 
 		if (!path)
 			return path;
@@ -2034,6 +2036,9 @@
 				path = path.substring(0, index);
 			}
 		}
+
+		if (!noscope && current_scope)
+			path = path.replace(REGSCOPEINLINE, current_scope);
 
 		// temporary
 		if (path.charCodeAt(0) === 37)
@@ -2730,7 +2735,7 @@
 				if (p.substring(0, 1) === '%')
 					obj.$noscope = true;
 
-				obj.setPath(pathmaker(p, true), 1);
+				obj.setPath(pathmaker(p, 1, 1), 1);
 				obj.config = {};
 
 				// Default config
@@ -3797,7 +3802,7 @@
 			is = true;
 		}
 
-		keys = Object.keys(binders);
+		keys = OK(binders);
 		for (var i = 0; i < keys.length; i++) {
 			arr = binders[keys[i]];
 			var j = 0;
@@ -5324,7 +5329,7 @@
 
 	var regfnplugin = function(v) {
 		var l = v.length;
-		return pathmaker(v.substring(0, l - 1)) + v.substring(l - 1);
+		return pathmaker(v.substring(0, l - 1), 0, 1) + v.substring(l - 1);
 	};
 
 
@@ -5579,7 +5584,7 @@
 	};
 
 	W.COPY = function(a, b) {
-		var keys = Object.keys(a);
+		var keys = OK(a);
 		for (var i = 0; i < keys.length; i++) {
 			var key = keys[i];
 			var val = a[key];
@@ -7962,7 +7967,7 @@
 			}
 		}
 
-		var keys = Object.keys(sub);
+		var keys = OK(sub);
 		for (var i = 0; i < keys.length; i++) {
 			var key = keys[i];
 			if (!obj.child)
@@ -7976,11 +7981,11 @@
 			obj.classes = cls;
 
 		if (obj.virtual) {
-			path = pathmaker(path);
+			path = pathmaker(path, 0, 1);
 		} else {
 
 			var bj = obj.com && path.substring(0, 1) === '@';
-			path = bj ? path : pathmaker(path);
+			path = bj ? path : pathmaker(path, 0, 1);
 
 			if (path.indexOf('?') !== -1) {
 				var scope = initscopes(scopes);
@@ -8264,7 +8269,15 @@
 		EMIT('plugin', t);
 	}
 
-	Plugin.prototype.$remove = function() {
+	var PP = Plugin.prototype;
+
+	PP.scope = function(path) {
+		var self = this;
+		current_scope = path === null ? null : (path || self.name);
+		return self;
+	};
+
+	PP.$remove = function() {
 
 		var self = this;
 		if (!self.element)
