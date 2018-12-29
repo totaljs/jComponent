@@ -32,6 +32,8 @@
 	var TYPE_S = 'string';
 	var TYPE_N = 'number';
 	var TYPE_O = 'object';
+	var TYPE_B = 'boolean';
+	var TYPE_NULL = 'null';
 	var KEY_ENV = 'environment';
 
 	var LCOMPARER = window.Intl ? window.Intl.Collator().compare : function(a, b) {
@@ -149,7 +151,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.012;
+	M.version = 17.013;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -207,8 +209,14 @@
 		e.off().remove();
 		t.element = null;
 		t.binders = null;
+		t.value = {};
 		t = null;
 		return t;
+	};
+
+	VBP.get = function(path) {
+		var val = this.value;
+		return path ? get(path, val) : val;
 	};
 
 	VBP.set = function(path, model) {
@@ -216,9 +224,10 @@
 		var t = this;
 
 		if (model == null) {
-			model = path;
+			t.value = model = path;
 			path = '';
-		}
+		} else
+			set2(t.value, path, model);
 
 		for (var i = 0; i < t.binders.length; i++) {
 			var b = t.binders[i];
@@ -241,6 +250,7 @@
 		obj.items = [];
 		obj.element = el instanceof COM ? el.element : $(el);
 		obj.element[0].$vbindarray = obj;
+		obj.value = [];
 		obj.remove = function() {
 			for (var i = 0; i < obj.items.length; i++)
 				obj.items[i].remove();
@@ -254,7 +264,7 @@
 			switch (typeof(val)) {
 				case TYPE_N:
 					return val + '';
-				case 'boolean':
+				case TYPE_B:
 					return val ? '1' : '0';
 				case TYPE_S:
 					return val;
@@ -280,6 +290,11 @@
 			return HASH(sum);
 		};
 
+		obj.get = function(index) {
+			var val = obj.value;
+			return index == null ? val : val[index];
+		};
+
 		obj.set = function(index, value) {
 
 			var sum = null;
@@ -292,12 +307,13 @@
 					if (el.$bchecksum !== sum) {
 						el.$bchecksum = sum;
 						item.set(value);
+						obj.value[index] = value;
 					}
 				}
 				return obj;
 			}
 
-			value = index;
+			obj.value = value = index;
 
 			if (obj.items.length > value.length) {
 				var rem = obj.items.splice(value.length);
@@ -921,7 +937,7 @@
 			value = undefined;
 		}
 
-		if (typeof(value) !== 'boolean' && cache[key] !== undefined)
+		if (typeof(value) !== TYPE_B && cache[key] !== undefined)
 			return cache[key];
 
 		var flags = null;
@@ -1000,7 +1016,7 @@
 			value = undefined;
 		}
 
-		if (typeof(value) !== 'boolean' && cache[key] !== undefined)
+		if (typeof(value) !== TYPE_B && cache[key] !== undefined)
 			return cache[key];
 
 		var dirty = true;
@@ -1588,7 +1604,7 @@
 			data = null;
 		}
 
-		if (typeof(timeout) === 'boolean') {
+		if (typeof(timeout) === TYPE_B) {
 			clear = timeout === true;
 			timeout = 0;
 		}
@@ -2121,7 +2137,7 @@
 			return;
 		}
 
-		if (typeof(onlyComponent) === 'boolean') {
+		if (typeof(onlyComponent) === TYPE_B) {
 			reset = onlyComponent;
 			onlyComponent = null;
 		}
@@ -2691,7 +2707,7 @@
 				obj.element = el;
 				obj.dom = dom;
 
-				var p = attrcom(el, 'path') || (meta ? meta[1] === 'null' ? '' : meta[1] : '') || obj._id;
+				var p = attrcom(el, 'path') || (meta ? meta[1] === TYPE_NULL ? '' : meta[1] : '') || obj._id;
 
 				if (p.substring(0, 1) === '%')
 					obj.$noscope = true;
@@ -2702,7 +2718,7 @@
 				// Default config
 				com.config && obj.reconfigure(com.config, NOOP);
 
-				var tmp = attrcom(el, 'config') || (meta ? meta[2] === 'null' ? '' : meta[2] : '');
+				var tmp = attrcom(el, 'config') || (meta ? meta[2] === TYPE_NULL ? '' : meta[2] : '');
 				tmp && obj.reconfigure(tmp, NOOP);
 
 				if (!obj.$init)
@@ -5562,7 +5578,7 @@
 		var type = typeof(obj);
 		switch (type) {
 			case TYPE_N:
-			case 'boolean':
+			case TYPE_B:
 				return obj;
 			case TYPE_S:
 				return path ? obj : CLONE(get(obj), true);
@@ -5652,7 +5668,7 @@
 
 	W.SET = function(path, value, timeout, reset) {
 		var t = typeof(timeout);
-		if (t === 'boolean')
+		if (t === TYPE_B)
 			return M.set(path, value, timeout);
 		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.set(path, value, timeout);
@@ -5672,7 +5688,7 @@
 			value = 1;
 
 		var t = typeof(timeout);
-		if (t === 'boolean')
+		if (t === TYPE_B)
 			return M.inc(path, value, timeout);
 		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.inc(path, value, timeout);
@@ -5683,7 +5699,7 @@
 
 	W.EXTEND = function(path, value, timeout, reset) {
 		var t = typeof(timeout);
-		if (t === 'boolean')
+		if (t === TYPE_B)
 			return M.extend(path, value, timeout);
 		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.extend(path, value, timeout);
@@ -5694,7 +5710,7 @@
 
 	W.PUSH = function(path, value, timeout, reset) {
 		var t = typeof(timeout);
-		if (t === 'boolean')
+		if (t === TYPE_B)
 			return M.push(path, value, timeout);
 		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.push(path, value, timeout);
@@ -5869,7 +5885,7 @@
 
 	W.UPD = W.UPDATE = function(path, timeout, reset) {
 		var t = typeof(timeout);
-		if (t === 'boolean')
+		if (t === TYPE_B)
 			return M.update(path, timeout);
 		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.update(path, reset, timeout);
@@ -5894,7 +5910,7 @@
 		var type = typeof(s);
 		if (type === TYPE_N)
 			return s;
-		else if (type === 'boolean')
+		else if (type === TYPE_B)
 			return s ? 1 : 0;
 		else if (s instanceof Date)
 			return s.getTime();
@@ -7000,7 +7016,7 @@
 		if (!length || length === 1)
 			return self;
 
-		if (typeof(name) === 'boolean') {
+		if (typeof(name) === TYPE_B) {
 			asc = name;
 			name = undefined;
 		}
@@ -7021,7 +7037,7 @@
 				type = 2;
 				break;
 			case 'bool':
-			case 'boolean':
+			case TYPE_B:
 				type = 3;
 				break;
 			default:
@@ -7044,7 +7060,7 @@
 					case TYPE_N:
 						type = 2;
 						break;
-					case 'boolean':
+					case TYPE_B:
 						type = 3;
 						break;
 					default:
@@ -7617,7 +7633,7 @@
 			var arr = bindersnew.splice(0);
 			for (var i = 0; i < arr.length; i++) {
 				var item = arr[i];
-				if (!item.init) {
+				if (!item.$init) {
 					if (item.com)
 						item.exec(item.com.data(item.path), item.path);
 					else
@@ -7670,6 +7686,7 @@
 		var sub = {};
 		var e = obj.el = $(el);
 		var tmp;
+		var isclick = false;
 
 		for (var i = 0; i < meta.length; i++) {
 			var item = meta[i].trim();
@@ -7747,6 +7764,9 @@
 						}
 
 						switch (k) {
+							case 'click':
+								isclick = true;
+								break;
 							case 'track':
 								obj[k] = v.split(',').trim();
 								continue;
@@ -7968,14 +7988,39 @@
 			}
 		}
 
-		obj.path = path;
+		obj.path = path == TYPE_NULL ? null : path;
 
 		if (obj.track) {
 			for (var i = 0; i < obj.track.length; i++)
 				obj.track[i] = path + '.' + obj.track[i];
 		}
 
-		obj.init = 0;
+		if (isclick) {
+
+			var fn = function(click) {
+				return function(e) {
+
+					var val;
+
+					if (obj.virtual) {
+						var tmp = obj.el.vbind();
+						val = tmp ? tmp.get(obj.path) : null;
+					} else
+						val = obj.path ? GET(obj.path) : null;
+
+					click(val, obj.path, $(this), e);
+				};
+			};
+
+			obj.click && obj.el.on('click', fn(obj.click));
+			var child = obj.child;
+			if (child) {
+				for (var i = 0; i < child.length; i++)
+					child[i].click && obj.el.on('click', child[i].selector, fn(child[i].click));
+			}
+		}
+
+		obj.$init = 0;
 		!obj.virtual && bindersnew.push(obj);
 		return obj;
 	}
@@ -8020,7 +8065,7 @@
 			return;
 		}
 
-		if (item.init) {
+		if (item.$init) {
 			if (item.strict && item.path !== path)
 				return;
 			if (item.track && item.path !== path) {
@@ -8034,8 +8079,10 @@
 				if (!can)
 					return;
 			}
-		} else
-			item.init = 1;
+		} else {
+			item.init && item.init.call(item.el, value, path, item.el);
+			item.$init = 1;
+		}
 
 		if (item.def && value == null)
 			value = item.def;
