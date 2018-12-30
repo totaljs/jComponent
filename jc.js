@@ -151,7 +151,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.016;
+	M.version = 17.017;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8293,6 +8293,14 @@
 	}
 
 	var PP = Plugin.prototype;
+
+	PP.exec = function(name, a, b, c, d, e) {
+		var self = this;
+		self.scope();
+		var fn = self[name];
+		fn && fn.call(self, a, b, c, d, e);
+		return self;
+	};
 
 	PP.scope = function(path) {
 		var self = this;
