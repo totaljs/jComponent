@@ -151,7 +151,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.015;
+	M.version = 17.016;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1463,6 +1463,8 @@
 
 		url = url.substring(index).trim().$env();
 
+		var curr_scope = current_scope;
+
 		setTimeout(function() {
 
 			if (method === 'GET' && data) {
@@ -1527,6 +1529,7 @@
 			delete options.url;
 
 			options.success = function(r, s, req) {
+				current_scope = curr_scope;
 				output.response = r;
 				output.status = req.status || 999;
 				output.text = s;
@@ -1549,6 +1552,7 @@
 					// internet doesn't work
 					setTimeout(function() {
 						arg[0] += ' REPEAT';
+						current_scope = curr_scope;
 						W.AJAX.apply(M, arg);
 					}, MD.delayrepeat);
 					return;
@@ -1567,6 +1571,8 @@
 					} catch (e) {}
 				}
 
+				current_scope = curr_scope;
+
 				EMIT('response', output);
 
 				if (output.cancel || !output.process)
@@ -1581,6 +1587,7 @@
 					EMIT('error', output);
 					typeof(callback) === TYPE_FN && callback.call(output, output.response, output.status, output);
 				}
+
 			};
 
 			$.ajax(makeurl(output.url), options);
@@ -1615,12 +1622,15 @@
 
 		var method = url.substring(0, index).toUpperCase();
 		var uri = url.substring(index).trim().$env();
+		var curr_scope = current_scope;
 
 		setTimeout(function() {
 			var value = clear ? undefined : cacherest(method, uri, data, undefined, expire);
 			if (value !== undefined) {
 
 				var diff = review ? STRINGIFY(value) : null;
+
+				current_scope = curr_scope;
 
 				if (typeof(callback) === TYPE_S)
 					remap(callback, value);
@@ -1629,6 +1639,8 @@
 
 				if (!review)
 					return;
+
+				current_scope = curr_scope;
 
 				AJAX(url, data, function(r, err) {
 					if (err)
@@ -1645,9 +1657,11 @@
 				return;
 			}
 
+			current_scope = curr_scope;
 			AJAX(url, data, function(r, err) {
 				if (err)
 					r = err;
+				current_scope = curr_scope;
 				cacherest(method, uri, data, r, expire);
 				if (typeof(callback) === TYPE_S)
 					remap(callback, r);
