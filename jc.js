@@ -151,7 +151,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.017;
+	M.version = 17.018;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8630,12 +8630,22 @@
 		};
 
 		self.scrollLeft = function(val) {
-			area[0].scrollLeft = val;
+			area[0].scrollLeft = val || 0;
 			return self;
 		};
 
 		self.scrollTop = function(val) {
-			area[0].scrollTop = val;
+			area[0].scrollTop = val || 0;
+			return self;
+		};
+
+		self.scrollBottom = function(val) {
+			area[0].scrollTop = (area[0].scrollHeight - size.clientHeight) - (val || 0);
+			return self;
+		};
+
+		self.scrollRight = function(val) {
+			area[0].scrollLeft = (area[0].scrollWidth - size.clientWidth) - (val || 0);
 			return self;
 		};
 
