@@ -151,7 +151,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.014;
+	M.version = 17.015;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5483,7 +5483,10 @@
 			if (ctrl) {
 				var fn = ctrl[path.substring(index + 1)];
 				if (typeof(fn) === TYPE_FN) {
+					var tmp = current_scope;
+					current_scope = p;
 					fn.apply(ctx === W ? ctrl : ctx, arg);
+					current_scope = tmp;
 					ok = 1;
 				}
 			}
@@ -5499,7 +5502,10 @@
 			var ctrl = W.PLUGINS[p];
 			var fn = path.substring(index + 1);
 			if (ctrl && typeof(ctrl[fn]) === TYPE_FN) {
+				var tmp = current_scope;
+				current_scope = p;
 				ctrl[fn].apply(ctx === W ? ctrl : ctx, arg);
+				current_scope = tmp;
 				ok = 1;
 			}
 
