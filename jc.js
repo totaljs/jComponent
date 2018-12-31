@@ -151,7 +151,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.018;
+	M.version = 17.019;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -917,12 +917,14 @@
 	};
 
 	W.CHANGED = function(path) {
+		path = pathmaker(path);
 		return !com_dirty(path);
 	};
 
 	W.CHANGE = function(path, value) {
 		if (value == null)
 			value = true;
+		path = pathmaker(path);
 		return !com_dirty(path, !value);
 	};
 
@@ -1991,6 +1993,8 @@
 				M.push(path[i], value, type);
 			return;
 		}
+
+		path = pathmaker(path);
 
 		var arr = get(path);
 		var n = false;
@@ -5717,7 +5721,7 @@
 		}, timeout);
 	};
 
-	W.EXTEND = function(path, value, timeout, reset) {
+	W.EXT = W.EXTEND = function(path, value, timeout, reset) {
 		var t = typeof(timeout);
 		if (t === TYPE_B)
 			return M.extend(path, value, timeout);
@@ -5744,7 +5748,7 @@
 		CHANGE(path);
 	};
 
-	W.EXTEND2 = function(path, value, type) {
+	W.EXT2 = W.EXTEND2 = function(path, value, type) {
 		EXTEND(path, value, type);
 		CHANGE(path);
 	};
