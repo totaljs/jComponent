@@ -151,7 +151,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.019;
+	M.version = 17.020;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -979,7 +979,7 @@
 			if (flags && ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':disabled')) || (flags.disabled && com.find(SELINPUT).is(':enabled'))))
 				continue;
 
-			if (com.disabled || com.$valid_disabled) {
+			if (com.$valid_disabled) {
 				arr && com.state && arr.push(com);
 				continue;
 			}
@@ -1057,7 +1057,7 @@
 			if (flags && ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':disabled')) || (flags.disabled && com.find(SELINPUT).is(':enabled'))))
 				continue;
 
-			if (com.disabled || com.$dirty_disabled) {
+			if (com.$dirty_disabled) {
 				arr && com.state && arr.push(com);
 				continue;
 			}
@@ -1698,7 +1698,7 @@
 		var arr = [];
 
 		M.each(function(obj) {
-			if (!obj.disabled && (!except || !obj.$except(except)) && obj.$valid === false && !obj.$valid_disabled)
+			if ((!except || !obj.$except(except)) && obj.$valid === false && !obj.$valid_disabled)
 				arr.push(obj);
 		}, pathmaker(path));
 
@@ -1776,7 +1776,7 @@
 		for (var i = 0, length = all.length; i < length; i++) {
 			var com = all[i];
 
-			if (!com || com.disabled || com.$removed || !com.$loaded || !com.path || !com.$compare(path))
+			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path))
 				continue;
 
 			var result = com.get();
@@ -1829,7 +1829,7 @@
 
 		for (var i = 0, length = all.length; i < length; i++) {
 			var com = all[i];
-			if (!com || com.$removed || com.disabled || !com.$loaded || !com.path)
+			if (!com || com.$removed || !com.$loaded || !com.path)
 				continue;
 
 			var is = 0;
@@ -1944,7 +1944,7 @@
 		for (var i = 0, length = all.length; i < length; i++) {
 			var com = all[i];
 
-			if (!com || com.disabled || com.$removed || !com.$loaded || !com.path || !com.$compare(path))
+			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path))
 				continue;
 
 			if (com.setter) {
@@ -2097,7 +2097,7 @@
 		var all = M.components;
 		for (var i = 0, length = all.length; i < length; i++) {
 			var com = all[i];
-			if (!com || com.$removed || com.disabled || !com.$loaded || !com.path || !com.$compare(path))
+			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path))
 				continue;
 
 			if (flags && ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':disabled')) || (flags.disabled && com.find(SELINPUT).is(':enabled'))))
@@ -2124,9 +2124,6 @@
 	function com_validate2(com) {
 
 		var valid = true;
-
-		if (com.disabled)
-			return valid;
 
 		if (com.$valid_disabled)
 			return valid;
@@ -2181,7 +2178,7 @@
 		for (var i = 0, length = all.length; i < length; i++) {
 			var com = all[i];
 
-			if (!com || com.$removed || com.disabled || !com.$loaded || !com.path || !com.$compare(path))
+			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path))
 				continue;
 
 			if (com.state)
@@ -2229,7 +2226,7 @@
 
 		for (var i = 0, length = all.length; i < length; i++) {
 			var com = all[i];
-			if (!com || com.$removed || com.disabled || !com.$loaded || !com.path || !com.$compare(path))
+			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path))
 				continue;
 
 			com.state && arr.push(com);
@@ -4010,7 +4007,6 @@
 		self.path;
 		self.type;
 		self.id;
-		self.disabled = false;
 		self.removed = false;
 
 		self.make;
@@ -5784,7 +5780,7 @@
 	W.MODIFIED = function(path) {
 		var output = [];
 		M.each(function(obj) {
-			if (!(obj.disabled || obj.$dirty_disabled))
+			if (!obj.$dirty_disabled)
 				obj.$dirty === false && output.push(obj.path);
 		}, pathmaker(path));
 		return output;
