@@ -151,7 +151,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.020;
+	M.version = 17.021;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8028,7 +8028,7 @@
 					} else
 						val = obj.path ? GET(obj.path) : null;
 
-					click(val, $(this), e);
+					click($(this), e, val, obj.path);
 				};
 			};
 
