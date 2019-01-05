@@ -151,7 +151,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.021;
+	M.version = 17.022;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7736,7 +7736,8 @@
 
 					var rki = k.indexOf(' ');
 					var rk = rki === -1 ? k : k.substring(0, rki);
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', 'template') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.substring(0, 1) === '@' ? obj.com[v.substring(1)] : GET(v) : 1;
+
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', 'template', 'click') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.substring(0, 1) === '@' ? obj.com[v.substring(1)] : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -7786,6 +7787,7 @@
 						switch (k) {
 							case 'click':
 								isclick = true;
+								fn = v;
 								break;
 							case 'track':
 								obj[k] = v.split(',').trim();
@@ -8016,19 +8018,32 @@
 		}
 
 		if (isclick) {
-
 			var fn = function(click) {
 				return function(e) {
 
-					var val;
+					var t = this;
 
-					if (obj.virtual) {
-						var tmp = obj.el.vbind();
-						val = tmp ? tmp.get(obj.path) : null;
-					} else
-						val = obj.path ? GET(obj.path) : null;
+					if ((t.nodeName === 'INPUT' || t.nodeName === 'BUTTON') && t.disabled)
+						return;
 
-					click($(this), e, val, obj.path);
+					var el = $(t);
+
+					click = click.replace('?', function() {
+						var scope = el.scope();
+						return scope ? scope.path : '?';
+					});
+
+					var fn = GET(click);
+					if (fn) {
+						var val;
+						if (obj.virtual) {
+							var tmp = obj.el.vbind();
+							val = tmp ? tmp.get(obj.path) : null;
+						} else
+							val = obj.path ? GET(obj.path) : null;
+						fn(el, e, val, obj.path);
+					}
+
 				};
 			};
 
