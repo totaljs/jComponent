@@ -151,7 +151,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.025;
+	M.version = 17.026;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8402,7 +8402,9 @@
 		self.area = area;
 		size.margin = options.margin || 30;
 
-		var onmousemove = function(e) {
+		var events = {};
+
+		events.onmousemove = function(e) {
 			if (drag.is) {
 				var p;
 				if (drag.type === 'y') {
@@ -8415,7 +8417,7 @@
 			}
 		};
 
-		var onresize = function() {
+		events.onresize = function() {
 			!delayresize && path.aclass(n + '-notready');
 			delayresize && clearTimeout(delayresize);
 			delayresize = setTimeout(self.resize, 500);
@@ -8424,20 +8426,28 @@
 		var bind = function() {
 			if (!drag.binded) {
 				drag.binded = true;
-				$(window).on('mousemove', onmousemove).on('mouseup', onmouseup);
+				$(window).on('mousemove', events.onmousemove).on('mouseup', events.onmouseup).on('mouseout', events.onmouseout);
 			}
 		};
 
 		var unbind = function() {
 			if (drag.binded) {
 				drag.binded = false;
-				$(window).off('mousemove', onmousemove).off('mouseup', onmouseup);
+				$(window).off('mousemove', events.onmousemove).off('mouseup', events.onmouseup).off('mouseout', events.onmouseout);
 			}
 		};
 
-		var onmouseup = function() {
+		events.onmouseup = function() {
 			drag.is = false;
 			unbind();
+		};
+
+		events.onmouseout = function(e) {
+			var f = e.relatedTarget || e.toElement;
+			if (!f || f.nodeName == 'HTML') {
+				drag.is = false;
+				unbind();
+			}
 		};
 
 		pathx.on('mousedown', function(e) {
