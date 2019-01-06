@@ -151,7 +151,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.028;
+	M.version = 17.030;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7745,9 +7745,9 @@
 
 					var rki = k.indexOf(' ');
 					var rk = rki === -1 ? k : k.substring(0, rki);
-					var c = v.charAt(0);
+					var c = v ? v.charAt(0) : '';
 					var vmethod = c === '.' ? 1 : c === '@' ? 2 : 0;
-					var smethod = v.indexOf('?') !== -1;
+					var smethod = v && v.indexOf('?') !== -1;
 					var dfn;
 
 					if (vmethod) {
