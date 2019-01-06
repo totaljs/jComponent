@@ -151,7 +151,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.023;
+	M.version = 17.024;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -242,7 +242,6 @@
 
 			for (var j = 0; j < b.length; j++) {
 				var bi = b[j];
-				console.log(bi);
 				bi.exec(path || !bi.path ? model : get(bi.path, model), bi.path);
 			}
 		}
