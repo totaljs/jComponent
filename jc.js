@@ -151,7 +151,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.022;
+	M.version = 17.023;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -219,6 +219,9 @@
 		return path ? get(path, val) : val;
 	};
 
+	// A temporary variable for the performance
+	var VBPA = [null];
+
 	VBP.set = function(path, model) {
 
 		var t = this;
@@ -231,9 +234,16 @@
 
 		for (var i = 0; i < t.binders.length; i++) {
 			var b = t.binders[i];
-			if (!path || path === b.path) {
-				var val = path || !b.path ? model : get(b.path, model);
-				t.binders[i].exec(val, b.path);
+
+			if (!(b instanceof Array)) {
+				VBPA[0] = b;
+				b = VBPA;
+			}
+
+			for (var j = 0; j < b.length; j++) {
+				var bi = b[j];
+				console.log(bi);
+				bi.exec(path || !bi.path ? model : get(bi.path, model), bi.path);
 			}
 		}
 
