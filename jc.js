@@ -151,7 +151,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.027;
+	M.version = 17.028;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -242,7 +242,7 @@
 
 			for (var j = 0; j < b.length; j++) {
 				var bi = b[j];
-				bi.exec(path || !bi.path ? model : get(bi.path, model), bi.path);
+				bi && bi.exec(path || !bi.path ? model : get(bi.path, model), bi.path);
 			}
 		}
 
@@ -7745,8 +7745,41 @@
 
 					var rki = k.indexOf(' ');
 					var rk = rki === -1 ? k : k.substring(0, rki);
+					var c = v.charAt(0);
+					var vmethod = c === '.' ? 1 : c === '@' ? 2 : 0;
+					var smethod = v.indexOf('?') !== -1;
+					var dfn;
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', 'template', 'click') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.substring(0, 1) === '@' ? obj.com[v.substring(1)] : GET(v) : 1;
+					if (vmethod) {
+						v = v.substring(1);
+						dfn = (function(v, type) {
+							return function(value, path, el) {
+								var fn;
+								if (type === 1) {
+									var vb = el.vbindarray() || el.vbind();
+									fn = vb && vb[v];
+								} else {
+									var com = el.component();
+									fn = com && com[v];
+								}
+								if (fn)
+									return fn.call(this, value, path, el);
+							};
+						})(v, vmethod);
+					} else if (smethod) {
+						dfn = (function(p) {
+							return function(value, path, el) {
+								var scope = el.scope();
+								if (scope) {
+									var fn = GET(p.replace(/\?/g, scope.path));
+									if (fn)
+										return fn.call(el, value, path, el);
+								}
+							};
+						})(v);
+					}
+
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', 'template', 'click') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.substring(0, 1) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -8410,6 +8443,7 @@
 				var half;
 				var off = drag.offset2;
 				if (drag.type === 'y') {
+
 					if (e.pageY > drag.pos) {
 						half = size.vbarsize / 1.5 >> 0;
 						if (off < half)
