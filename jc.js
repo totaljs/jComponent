@@ -151,7 +151,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.026;
+	M.version = 17.027;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8407,13 +8407,38 @@
 		events.onmousemove = function(e) {
 			if (drag.is) {
 				var p;
+				var half;
+				var off = drag.offset2;
 				if (drag.type === 'y') {
-					p = ((e.pageY - drag.offset) / (size.viewHeight - drag.offset2)) * 100;
+					if (e.pageY > drag.pos) {
+						half = size.vbarsize / 1.5 >> 0;
+						if (off < half)
+							off = half;
+					}
+
+					p = ((e.pageY - drag.offset) / (size.viewHeight - off)) * 100;
 					area[0].scrollTop = ((size.scrollHeight - size.viewHeight) / 100) * (p > 100 ? 100 : p);
+					if (drag.counter++ > 10) {
+						drag.counter = 0;
+						drag.pos = e.pageY;
+					}
+
 				} else {
-					p = ((e.pageX - drag.offset) / (size.viewWidth - drag.offset2)) * 100;
+					if (e.pageX > drag.pos) {
+						half = size.hbarsize / 1.5 >> 0;
+						if (off < half)
+							off = half;
+					}
+
+					p = ((e.pageX - drag.offset) / (size.viewWidth - off)) * 100;
 					area[0].scrollLeft = ((size.scrollWidth - size.viewWidth) / 100) * (p > 100 ? 100 : p);
+					if (drag.counter++ > 5) {
+						drag.counter = 0;
+						drag.pos = e.pageX;
+					}
 				}
+				if (p < -20 || p > 120)
+					drag.is = false;
 			}
 		};
 
@@ -8450,57 +8475,7 @@
 			}
 		};
 
-		pathx.on('mousedown', function(e) {
-
-			drag.type = 'x';
-
-			if (e.target.nodeName === 'SPAN') {
-				bind();
-				drag.offset = element.offset().left + e.offsetX;
-				drag.offset2 = size.hbarsize - e.offsetX;
-				drag.is = true;
-				drag.determined = false;
-				drag.pos = e.pageX;
-			} else {
-				// path
-				var p = ((e.offsetX - size.hbarsize) / size.viewWidth) * 100;
-				area.prop('scrollLeft', (size.scrollWidth / 100) * p);
-				drag.is = false;
-			}
-
-			e.preventDefault();
-			e.stopPropagation();
-		});
-
-		pathx.on('mouseup', function() {
-			drag.is = false;
-			unbind();
-		});
-
-		pathy.on('mousedown', function(e) {
-
-			drag.type = 'y';
-
-			if (e.target.nodeName === 'SPAN') {
-				bind();
-				drag.offset = element.offset().top + e.offsetY;
-				drag.offset2 = size.vbarsize - e.offsetY;
-				drag.is = true;
-				drag.determined = false;
-				drag.pos = e.pageY;
-			} else {
-				// path
-				var p = ((e.offsetY - size.vbarsize) / (size.viewHeight - (size.hbar ? size.thickness : 0))) * 100;
-				area.prop('scrollTop', (size.scrollHeight / 100) * p);
-				drag.is = false;
-			}
-
-			e.preventDefault();
-			e.stopPropagation();
-		});
-
-		area.on('scroll', function() {
-
+		events.onscroll = function() {
 			var y = area[0].scrollTop;
 			var x = area[0].scrollLeft;
 			var is = false;
@@ -8563,7 +8538,58 @@
 
 				options.onscroll && options.onscroll(self);
 			}
+		};
+
+		pathx.on('mousedown', function(e) {
+
+			drag.type = 'x';
+
+			if (e.target.nodeName === 'SPAN') {
+				bind();
+				drag.offset = element.offset().left + e.offsetX;
+				drag.offset2 = e.offsetX;
+				drag.is = true;
+				drag.pos = e.pageX;
+				drag.counter = 0;
+			} else {
+				// path
+				var p = ((e.offsetX - 50) / (size.viewWidth - size.hbarsize)) * 100;
+				area.prop('scrollLeft', ((size.scrollWidth - size.viewWidth) / 100) * p);
+				drag.is = false;
+			}
+
+			e.preventDefault();
+			e.stopPropagation();
 		});
+
+		pathx.on('mouseup', function() {
+			drag.is = false;
+			unbind();
+		});
+
+		pathy.on('mousedown', function(e) {
+
+			drag.type = 'y';
+
+			if (e.target.nodeName === 'SPAN') {
+				bind();
+				drag.offset = element.offset().top + e.offsetY;
+				drag.offset2 = e.offsetY;
+				drag.pos = e.pageY;
+				drag.is = true;
+				drag.counter = 0;
+			} else {
+				// path
+				var p = ((e.offsetY - 50) / (size.viewHeight - size.vbarsize)) * 100;
+				area.prop('scrollTop', ((size.scrollHeight - size.viewHeight) / 100) * p);
+				drag.is = false;
+			}
+
+			e.preventDefault();
+			e.stopPropagation();
+		});
+
+		area.on('scroll', events.onscroll);
 
 		self.check = function() {
 
@@ -8632,11 +8658,10 @@
 			pathx.css({ top: size.viewHeight - size.thickness, width: size.viewWidth });
 			pathy.css({ left: size.viewWidth - size.thickness, height: size.viewHeight });
 
-			var width = +barx.css('width').replace('px', '');
-
 			size.vbar = (size.scrollHeight - size.margin) > size.clientHeight;
+
 			if (size.vbar) {
-				size.vbarsize = (size.clientHeight * ((size.viewHeight - width) / size.scrollHeight)) >> 0;
+				size.vbarsize = (size.clientHeight * (size.viewHeight / size.scrollHeight)) >> 0;
 				if (size.vbarsize < 30)
 					size.vbarsize = 30;
 				bary.css('height', size.vbarsize);
@@ -8644,7 +8669,7 @@
 
 			size.hbar = (size.scrollWidth - size.margin) > size.clientWidth;
 			if (size.hbar) {
-				size.hbarsize = (size.clientWidth * ((size.viewWidth - width) / size.scrollWidth)) >> 0;
+				size.hbarsize = (size.clientWidth * (size.viewWidth / size.scrollWidth)) >> 0;
 				if (size.hbarsize < 30)
 					size.hbarsize = 30;
 				barx.css('width', size.hbarsize);
@@ -8664,6 +8689,7 @@
 			path.rclass(n + 'notready');
 
 			options.onresize && options.onresize(self);
+			events.onscroll();
 			return self;
 		};
 
