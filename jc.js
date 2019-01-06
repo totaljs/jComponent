@@ -151,7 +151,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.024;
+	M.version = 17.025;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8406,11 +8406,11 @@
 			if (drag.is) {
 				var p;
 				if (drag.type === 'y') {
-					var p = ((e.pageY - drag.offset) / size.viewHeight) * 100;
-					area[0].scrollTop = ((size.scrollHeight / 100) * p) - drag.offset2;
+					p = ((e.pageY - drag.offset) / (size.viewHeight - drag.offset2)) * 100;
+					area[0].scrollTop = ((size.scrollHeight - size.viewHeight) / 100) * (p > 100 ? 100 : p);
 				} else {
-					p = ((e.pageX - drag.offset) / size.viewWidth) * 100;
-					area[0].scrollLeft = ((size.scrollWidth / 100) * p) - drag.offset2;
+					p = ((e.pageX - drag.offset) / (size.viewWidth - drag.offset2)) * 100;
+					area[0].scrollLeft = ((size.scrollWidth - size.viewWidth) / 100) * (p > 100 ? 100 : p);
 				}
 			}
 		};
@@ -8446,9 +8446,11 @@
 
 			if (e.target.nodeName === 'SPAN') {
 				bind();
-				drag.offset = e.offsetX;
+				drag.offset = element.offset().left + e.offsetX;
 				drag.offset2 = size.hbarsize - e.offsetX;
 				drag.is = true;
+				drag.determined = false;
+				drag.pos = e.pageX;
 			} else {
 				// path
 				var p = ((e.offsetX - size.hbarsize) / size.viewWidth) * 100;
@@ -8471,9 +8473,11 @@
 
 			if (e.target.nodeName === 'SPAN') {
 				bind();
-				drag.offset = e.offsetY;
+				drag.offset = element.offset().top + e.offsetY;
 				drag.offset2 = size.vbarsize - e.offsetY;
 				drag.is = true;
+				drag.determined = false;
+				drag.pos = e.pageY;
 			} else {
 				// path
 				var p = ((e.offsetY - size.vbarsize) / (size.viewHeight - (size.hbar ? size.thickness : 0))) * 100;
@@ -8693,6 +8697,7 @@
 
 		var resize_visible = function() {
 			if (element[0].offsetParent) {
+				setTimeout(self.resize, 500);
 				setTimeout(self.resize, 1000);
 				self.resize();
 			} else
