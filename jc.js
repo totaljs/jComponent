@@ -151,7 +151,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.030;
+	M.version = 17.031;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -161,7 +161,6 @@
 	M.components = [];
 	M.$formatter = [];
 	M.$parser = [];
-	M.transforms = {};
 	M.compiler = C;
 	C.is = false;
 	C.recompile = false;
@@ -354,57 +353,6 @@
 		};
 
 		return obj;
-	};
-
-	W.NEWTRANSFORM = function(name, callback) {
-		M.transforms[name] = callback;
-	};
-
-	W.TRANSFORM = function(name, value, callback) {
-
-		var m = M.transforms;
-
-		if (arguments.length === 2) {
-			// name + value (is callback)
-			return function(val) {
-				TRANSFORM(name, val, value);
-			};
-		}
-
-		var cb = function() {
-			if (typeof(callback) === TYPE_S)
-				SET(callback, value);
-			else
-				callback(value);
-		};
-
-		var keys = name.split(',');
-		var async = [];
-		var context = {};
-
-		context.value = value;
-
-		for (var i = 0, length = keys.length; i < length; i++) {
-			var key = keys[i].trim();
-			key && m[key] && async.push(m[key]);
-		}
-
-		if (async.length === 1)
-			async[0].call(context, value, function(val) {
-				if (val !== undefined)
-					value = val;
-				cb();
-			});
-		else if (async.length) {
-			async.wait(function(fn, next) {
-				fn.call(context, value, function(val) {
-					if (val !== undefined)
-						value = val;
-					next();
-				});
-			}, cb);
-		} else
-			cb();
 	};
 
 	// ===============================================================
@@ -7722,7 +7670,7 @@
 			if (item) {
 				if (i) {
 
-					var k, v;
+					var k, v = '';
 
 					if (item !== 'template' && item !== '!template' && item !== 'strict') {
 
@@ -7745,9 +7693,9 @@
 
 					var rki = k.indexOf(' ');
 					var rk = rki === -1 ? k : k.substring(0, rki);
-					var c = v ? v.charAt(0) : '';
+					var c = v.charAt(0);
 					var vmethod = c === '.' ? 1 : c === '@' ? 2 : 0;
-					var smethod = v && v.indexOf('?') !== -1;
+					var smethod = v.indexOf('?') !== -1;
 					var dfn;
 
 					if (vmethod) {
