@@ -22,12 +22,14 @@
 	var ATTRDEL = 'data-jc-removed';
 	var ATTRREL = 'data-jc-released';
 	var ATTRSCOPE = 'data-jc-scope';
+	var ATTRSCOPE2 = 'data-scope';
 	var SELINPUT = 'input,textarea,select';
 	var DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
 	var ACTRLS = { INPUT: true, TEXTAREA: true, SELECT: true };
 	var DEFMODEL = { value: null };
 	var OK = Object.keys;
 	var MULTIPLE = ' + ';
+	var SCOPENAME = 'scope';
 	var TYPE_FN = 'function';
 	var TYPE_S = 'string';
 	var TYPE_N = 'number';
@@ -151,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.031;
+	M.version = 17.032;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2250,14 +2252,15 @@
 		if (level == null || level === 0) {
 			scopes = [];
 			if (container !== document.body) {
-				var scope = $(container).closest('[' + ATTRSCOPE + ']');
+				var scope = $(container).closest('[' + ATTRSCOPE + '][' + ATTRSCOPE2 + ']');
 				scope && scope.length && scopes.push(scope[0]);
 			}
 		}
 
 		var b = null;
 		var released = container ? attrcom(container, 'released') === 'true' : false;
-		var tmp = attrcom(container, 'scope');
+		var tmp = attrscope(container);
+
 		var binders = null;
 
 		tmp && scopes.push(container);
@@ -2728,18 +2731,26 @@
 
 				var code = obj.path ? obj.path.charCodeAt(0) : 0;
 				if (!obj.$noscope && scope.length && !obj.$pp) {
-
 					var output = initscopes(scope);
-
 					if (obj.path && code !== 33 && code !== 35) {
-						obj.setPath(obj.path === '?' ? output.path : (obj.path.indexOf('?') === -1 ? output.path + '.' + obj.path : obj.path.replace(/\?/g, output.path)), 2);
+						var is = (obj.path || '').indexOf('?') !== -1;
+						if (obj.path === '?') {
+							obj.setPath(output.path, 2);
+							is = true;
+						} else if (output.isnew || is) {
+							is && obj.setPath(obj.path.replace(/\?/g, output.path), 2);
+						} else {
+							obj.setPath(output.path + '.' + obj.path, 2);
+							is = true;
+						}
 					} else {
 						obj.$$path = EMPTYARRAY;
 						obj.path = '';
 					}
-
-					obj.scope = output;
-					obj.pathscope = output.path;
+					if (is) {
+						obj.scope = output;
+						obj.pathscope = output.path;
+					}
 				}
 
 				instances.push(obj);
@@ -2867,15 +2878,18 @@
 		}, nextpending);
 	}
 
+	function attrscope(el) {
+		return attrcom(el, SCOPENAME) || el.getAttribute('data-' + SCOPENAME);
+	}
+
 	function initscopes(scopes) {
 
 		var scope = scopes[scopes.length - 1];
 		if (scope.$scopedata)
 			return scope.$scopedata;
 
-		var path = attrcom(scope, 'scope');
+		var path = attrscope(scope);
 		var independent = path.substring(0, 1) === '!';
-
 		if (independent)
 			path = path.substring(1);
 
@@ -2883,7 +2897,7 @@
 		if (!independent) {
 			for (var i = scopes.length - 1; i > -1; i--) {
 				arr.push(scopes[i]);
-				if (scopes[i].getAttribute(ATTRSCOPE).substring(0, 1) === '!')
+				if (attrscope(scopes[i]) === '!')
 					break;
 			}
 		}
@@ -2895,7 +2909,7 @@
 		for (var i = 0, length = arr.length; i < length; i++) {
 
 			var sc = arr[i];
-			var p = sc.$scope || attrcom(sc, 'scope');
+			var p = sc.$scope || attrscope(sc);
 
 			sc.$initialized = true;
 
@@ -2925,6 +2939,7 @@
 			d.elements = arr.slice(0, i + 1);
 			d.isolated = sc.$isolated;
 			d.element = $(arr[0]);
+			d.isnew = !!arr[0].getAttribute('data-' + SCOPENAME);
 			sc.$scopedata = d;
 
 			var tmp = attrcom(sc, 'value');
@@ -2954,7 +2969,7 @@
 				tmp = GET(tmp);
 				if (tmp) {
 					var a = current_owner;
-					current_owner = 'scope' + d._id;
+					current_owner = SCOPENAME + d._id;
 					tmp.call(d, p, $(sc));
 					current_owner = a;
 				}
@@ -3857,13 +3872,13 @@
 
 	SCP.unwatch = function(path, fn) {
 		var self = this;
-		OFF('scope' + self._id + '#watch', self.path + (path ? '.' + path : ''), fn);
+		OFF(SCOPENAME + self._id + '#watch', self.path + (path ? '.' + path : ''), fn);
 		return self;
 	};
 
 	SCP.watch = function(path, fn, init) {
 		var self = this;
-		ON('scope' + self._id + '#watch', self.path + (path ? '.' + path : ''), fn, init, self);
+		ON(SCOPENAME + self._id + '#watch', self.path + (path ? '.' + path : ''), fn, init, self);
 		return self;
 	};
 
@@ -3916,7 +3931,7 @@
 			a.scope && a.scope.path === self.path && a.remove(true);
 		}
 
-		OFF('scope' + self._id + '#watch');
+		OFF(SCOPENAME + self._id + '#watch');
 		var e = self.element;
 		e.find('*').off();
 		e.off();
@@ -4631,6 +4646,10 @@
 		ds && self.unwatch(ds.path, ds.fn);
 
 		if (path) {
+
+			if (path.indexOf('?') !== -1 && self.pathscope)
+				path = path.replace(/\?/g, self.pathscope);
+
 			self.$datasource = { path: path, fn: callback };
 			self.watch(path, callback, init !== false);
 		} else
