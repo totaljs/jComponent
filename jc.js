@@ -1,7 +1,7 @@
 (function() {
 
 	// Constants
-	var REGCOM = /(data-jc|data-jc-url|data-jc-import|data-bind|bind)=|COMPONENT\(/;
+	var REGCOM = /(data--|data---|data-jc|data-jc-url|data-jc-import|#-bind|bind)=|COMPONENT\(/;
 	var REGSCRIPT = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGENV = /(\[.*?\])/gi;
@@ -15,7 +15,7 @@
 	var REGWILDCARD = /\.\*/;
 	var REGISARR = /\[\d+\]$/;
 	var REGSCOPEINLINE = /\?/g;
-	var ATTRCOM = '[data-jc]';
+	var ATTRCOM = '[data-jc],[data--],[data---]';
 	var ATTRURL = '[data-jc-url]';
 	var ATTRBIND = '[data-bind],[bind],[data-vbind]';
 	var ATTRDATA = 'jc';
@@ -97,7 +97,7 @@
 	var current_com = null;
 	var current_scope = null;
 
-	W.MAIN = W.M = W.jC = W.COM = M;
+	W.MAIN = W.M = M;
 	W.PLUGINS = {};
 	W.EMPTYARRAY = [];
 	W.EMPTYOBJECT = {};
@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.032;
+	M.version = 17.033;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -187,7 +187,7 @@
 		var fn = function() {
 			var dom = this;
 			var el = $(dom);
-			var b = el.attrd('bind') || el.attr('bind') || el.attrd('vbind');
+			var b = el.attrd('bind') || el.attr('bind');
 			dom.$jcbind = parsebinder(dom, b, EMPTYARRAY);
 			dom.$jcbind && t.binders.push(dom.$jcbind);
 		};
@@ -2231,8 +2231,9 @@
 	// ===============================================================
 
 	function attrcom(el, name) {
-		name = name ? '-' + name : '';
-		return el.getAttribute ? el.getAttribute('data-jc' + name) : el.attrd('jc' + name);
+		if (!el.attrd)
+			el = $(el);
+		return name ? el.attrd('jc-' + name) : (el.attrd('jc') || el.attrd('-') || el.attrd('--'));
 	}
 
 	function crawler(container, onComponent, level, scopes) {
@@ -2381,7 +2382,7 @@
 		var arr = callback ? undefined : [];
 		if (container) {
 			var stop = false;
-			container.find('[data-jc]').each(function() {
+			container.find(ATTRCOM).each(function() {
 				var com = this.$com;
 
 				if (stop || !com || !com.$loaded || com.$removed || (id && com.id !== id) || (name && com.$name !== name) || (version && com.$version !== version) || (path && (com.$pp || (com.path !== path && (!com.pathscope || ((com.pathscope + '.' + path) !== com.path))))))
@@ -2443,7 +2444,7 @@
 		for (var i = 0, length = arr.length; i < length; i++) {
 			var el = arr[i];
 			if (el && el.tagName) {
-				el.childNodes.length && el.tagName !== 'SCRIPT' && el.getAttribute('data-jc') == null && sub.push(el);
+				el.childNodes.length && el.tagName !== 'SCRIPT' && !attrcom(el) && sub.push(el);
 				if (ACTRLS[el.tagName] && el.getAttribute('data-jc-bind') != null && onElement(el) === false)
 					return;
 			}
@@ -4739,7 +4740,7 @@
 	PPC.main = SCP.main = function() {
 		var self = this;
 		if (self.$main === undefined) {
-			var tmp = self.parent().closest('[data-jc]')[0];
+			var tmp = self.parent().closest(ATTRCOM)[0];
 			self.$main = tmp ? tmp.$com : null;
 		}
 		return self.$main;
