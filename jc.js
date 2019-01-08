@@ -5585,7 +5585,7 @@
 			case TYPE_B:
 				return obj;
 			case TYPE_S:
-				return path ? obj : CLONE(get(obj), true);
+				return path ? obj : CLONE(get(pathmaker(obj)), true);
 		}
 
 		if (obj == null)
