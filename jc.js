@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.033;
+	M.version = 17.034;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2764,7 +2764,7 @@
 					obj.$released = true;
 
 				if (attrcom(el, 'url')) {
-					warn('Components: You have to use "data-jc-template" attribute instead of "data-jc-url" for the component: {0}[{1}].'.format(obj.name, obj.path));
+					warn('jC: use "data-jc-template" instead of "data-jc-url": {0}[{1}].'.format(obj.name, obj.path));
 					continue;
 				}
 
@@ -2919,8 +2919,14 @@
 				continue;
 			}
 
+			var meta = p.split(REGMETA);
+			if (meta.length > 1)
+				p = meta[0];
+
+			var conf = (meta[1] || '').replace(/\$/g, '').parseConfig();
+
 			sc.$processed = true;
-			sc.$isolated = p.substring(0, 1) === '!';
+			sc.$isolated = p.substring(0, 1) === '!' || !!conf.isolated;
 
 			if (sc.$isolated)
 				p = p.substring(1);
@@ -2941,9 +2947,10 @@
 			d.isolated = sc.$isolated;
 			d.element = $(arr[0]);
 			d.isnew = !!arr[0].getAttribute('data-' + SCOPENAME);
+			d.config = conf;
 			sc.$scopedata = d;
 
-			var tmp = attrcom(sc, 'value');
+			var tmp = meta[2] || attrcom(sc, 'value');
 			if (tmp) {
 				var fn = new Function('return ' + tmp);
 				defaults['#' + HASH(p)] = fn; // store by path (DEFAULT() --> can reset scope object)
@@ -2953,7 +2960,7 @@
 			}
 
 			// Applies classes
-			var cls = attrcom(sc, 'class');
+			var cls = conf.class || attrcom(sc, 'class');
 			if (cls) {
 				(function(cls) {
 					cls = cls.split(' ');
@@ -2965,7 +2972,7 @@
 				})(cls);
 			}
 
-			tmp = attrcom(sc, 'init');
+			tmp = conf.init || attrcom(sc, 'init');
 			if (tmp) {
 				tmp = GET(tmp);
 				if (tmp) {
