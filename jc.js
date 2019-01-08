@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.034;
+	M.version = 17.035;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -4409,7 +4409,7 @@
 		var prev = self.element;
 		var scope = prev.attrd(n);
 
-		self.element.rattrd('jc');
+		self.element.rattrd('jc', '-', '--', '---');
 		self.element[0].$com = null;
 		scope && self.element.rattrd(n);
 
@@ -7283,8 +7283,10 @@
 			return this.removeAttr(a);
 		};
 
-		$.fn.rattrd = function(a) {
-			return this.removeAttr('data-' + a);
+		$.fn.rattrd = function() {
+			for (var i = 0; i < arguments.length; i++)
+				this.removeAttr('data-' + arguments[i]);
+			return this;
 		};
 
 		$.fn.rclass2 = function(a) {
