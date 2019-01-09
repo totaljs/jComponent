@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.037;
+	M.version = 17.038;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2739,7 +2739,7 @@
 							obj.setPath(output.path, 2);
 							is = true;
 						} else if (output.isnew || is) {
-							is && obj.setPath(obj.path.replace(/\?/g, output.path), 2);
+							is && obj.setPath(obj.path.replace(REGSCOPEINLINE, output.path), 2);
 						} else {
 							obj.setPath(output.path + '.' + obj.path, 2);
 							is = true;
@@ -4656,7 +4656,7 @@
 		if (path) {
 
 			if (path.indexOf('?') !== -1 && self.pathscope)
-				path = path.replace(/\?/g, self.pathscope);
+				path = path.replace(REGSCOPEINLINE, self.pathscope);
 
 			self.$datasource = { path: path, fn: callback };
 			self.watch(path, callback, init !== false);
@@ -7748,7 +7748,7 @@
 							return function(value, path, el) {
 								var scope = el.scope();
 								if (scope) {
-									var fn = GET(p.replace(/\?/g, scope.path));
+									var fn = GET(p.replace(REGSCOPEINLINE, scope.path));
 									if (fn)
 										return fn.call(el, value, path, el);
 								}
@@ -8006,7 +8006,7 @@
 			if (path.indexOf('?') !== -1) {
 				var scope = initscopes(scopes);
 				if (scope)
-					path = path.replace(/\?/g, scope.path);
+					path = path.replace(REGSCOPEINLINE, scope.path);
 				else
 					return;
 			}
@@ -8046,9 +8046,10 @@
 						return;
 
 					var el = $(t);
+					var scope;
 
-					click = click.replace(/\?/g, function() {
-						var scope = el.scope();
+					click = click.replace(REGSCOPEINLINE, function() {
+						!scope && (scope = el.scope());
 						return scope ? scope.path : '?';
 					});
 
@@ -8060,6 +8061,12 @@
 							val = tmp ? tmp.get(obj.path) : null;
 						} else
 							val = obj.path ? GET(obj.path) : null;
+
+						var index = click.indexOf('/');
+						if (index !== -1)
+							current_scope = click.substring(0, index);
+						else if (scope)
+							current_scope = scope.path;
 
 						fn(el, e, val, obj.path);
 					}
