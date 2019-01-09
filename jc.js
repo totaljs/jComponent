@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.036;
+	M.version = 17.037;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8061,7 +8061,7 @@
 						} else
 							val = obj.path ? GET(obj.path) : null;
 
-						fn(click, el, e, val, obj.path);
+						fn(el, e, val, obj.path);
 					}
 
 				};
