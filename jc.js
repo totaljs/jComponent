@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.035;
+	M.version = 17.036;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2253,7 +2253,7 @@
 		if (level == null || level === 0) {
 			scopes = [];
 			if (container !== document.body) {
-				var scope = $(container).closest('[' + ATTRSCOPE + '][' + ATTRSCOPE2 + ']');
+				var scope = $(container).closest('[' + ATTRSCOPE + '],[' + ATTRSCOPE2 + ']');
 				scope && scope.length && scopes.push(scope[0]);
 			}
 		}
@@ -7262,7 +7262,7 @@
 			var data = this[0].$scopedata;
 			if (data)
 				return data;
-			var el = this.closest('[' + ATTRSCOPE + ']');
+			var el = this.closest('[' + ATTRSCOPE + '],[' + ATTRSCOPE2 + ']');
 			if (el.length) {
 				data = el[0].$scopedata;
 				if (data)
@@ -8047,7 +8047,7 @@
 
 					var el = $(t);
 
-					click = click.replace('?', function() {
+					click = click.replace(/\?/g, function() {
 						var scope = el.scope();
 						return scope ? scope.path : '?';
 					});
@@ -8060,7 +8060,8 @@
 							val = tmp ? tmp.get(obj.path) : null;
 						} else
 							val = obj.path ? GET(obj.path) : null;
-						fn(el, e, val, obj.path);
+
+						fn(click, el, e, val, obj.path);
 					}
 
 				};
