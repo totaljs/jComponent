@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.038;
+	M.version = 17.039;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7989,7 +7989,7 @@
 			if (!obj.child)
 				obj.child = [];
 			var o = sub[key];
-			o.selector = key;
+			o.selector = key.charAt(0) === '-' ? ATTRCOM : key;
 			obj.child.push(o);
 		}
 
@@ -8211,7 +8211,10 @@
 				if (tmp) {
 					for (var i = 0; i < el.length; i++) {
 						var c = el[i].$com;
-						c && c.$ready && c.reconfigure(tmp);
+						if (c && c.$ready)
+							c.reconfigure(tmp);
+						else
+							binderconfig(el[i], tmp);
 					}
 				}
 			}
@@ -8312,6 +8315,16 @@
 			delete item.tclass;
 		}
 	};
+
+	function binderconfig(el, val) {
+		setTimeout(function() {
+			var c = el.$com;
+			if (c && c.$ready)
+				c.reconfigure(val);
+			else
+				binderconfig(el, val);
+		}, DEF.delaybinder, el, val);
+	}
 
 	function isValue(val) {
 		var index = val.indexOf('value');
