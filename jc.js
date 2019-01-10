@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.039;
+	M.version = 17.041;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -697,6 +697,7 @@
 
 		var owner = null;
 		var index = name.indexOf('#');
+		var scope;
 
 		if (index) {
 			owner = name.substring(0, index).trim();
@@ -709,7 +710,13 @@
 		} else
 			path = path.replace('.*', '');
 
-		var obj = { name: name, fn: fn, owner: owner || current_owner, context: context || (current_com == null ? undefined : current_com) };
+		if (path) {
+			index = path.indexOf('/');
+			if (index !== -1)
+				scope = path.substring(0, index);
+		}
+
+		var obj = { name: name, fn: fn, owner: owner || current_owner, context: context || (current_com == null ? undefined : current_com), scope: scope };
 
 		if (name === 'watch') {
 			var arr = [];
@@ -755,7 +762,11 @@
 			else
 				watches.unshift(obj);
 
-			init && fn.call(context || M, path, obj.format ? obj.format(get(path), path, 0) : get(path), 0);
+			if (init) {
+				obj.scope && (current_scope = obj.scope);
+				fn.call(context || M, path, obj.format ? obj.format(get(path), path, 0) : get(path), 0);
+			}
+
 		} else {
 			if (events[name]) {
 				if (push)
@@ -3323,10 +3334,12 @@
 		for (var i = 0, length = watches.length; i < length; i++) {
 			var self = watches[i];
 			if (self.path === '*') {
+				self.scope && (current_scope = self.scope);
 				self.fn.call(self.context, path, self.format ? self.format(value, path, type) : value, type);
 			} else if (path.length > self.path.length) {
 				var index = path.lastIndexOf('.', self.path.length);
 				if (index === -1 ? false : self.path === path.substring(0, index)) {
+					self.scope && (current_scope = self.scope);
 					var val = GET(self.path);
 					self.fn.call(self.context, path, self.format ? self.format(val, path, type) : val, type);
 				}
@@ -3334,6 +3347,7 @@
 				for (var j = 0, jl = self.$path.length; j < jl; j++) {
 					if (self.$path[j] === path) {
 						var val = GET(self.path);
+						self.scope && (current_scope = self.scope);
 						self.fn.call(self.context, path, self.format ? self.format(val, path, type) : val, type);
 						break;
 					}
