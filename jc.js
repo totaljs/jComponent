@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.041;
+	M.version = 17.042;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8667,7 +8667,6 @@
 			var a = area[0];
 			var el = element;
 			var md = isMOBILE && isTOUCH;
-			var sw = SCROLLBARWIDTH();
 
 			delayresize = null;
 
@@ -8689,8 +8688,8 @@
 				area.css('width', size.viewWidth);
 				area.css('height', size.viewHeight);
 			} else {
-				area.css('width', size.viewWidth + size.margin + sw);
-				area.css('height', size.viewHeight + size.margin + sw);
+				area.css('width', size.viewWidth + size.margin);
+				area.css('height', size.viewHeight + size.margin);
 			}
 
 			size.scrollWidth = a.scrollWidth;
@@ -8704,7 +8703,7 @@
 			pathx.css({ top: size.viewHeight - size.thickness, width: size.viewWidth });
 			pathy.css({ left: size.viewWidth - size.thickness, height: size.viewHeight });
 
-			size.vbar = (size.scrollHeight - size.margin) > size.clientHeight;
+			size.vbar = size.scrollHeight > size.clientHeight;
 
 			if (size.vbar) {
 				size.vbarsize = (size.clientHeight * (size.viewHeight / size.scrollHeight)) >> 0;
@@ -8713,7 +8712,7 @@
 				bary.css('height', size.vbarsize);
 			}
 
-			size.hbar = (size.scrollWidth - size.margin) > size.clientWidth;
+			size.hbar = size.scrollWidth > size.clientWidth;
 			if (size.hbar) {
 				size.hbarsize = (size.clientWidth * (size.viewWidth / size.scrollWidth)) >> 0;
 				if (size.hbarsize < 30)
