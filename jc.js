@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.042;
+	M.version = 17.043;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -675,11 +675,13 @@
 			push = '^';
 		}
 
+		var index = path.indexOf('?');
 		path = pathmaker(path, 1);
-		ON(push + 'watch', path, fn, init);
+
+		ON(push + 'watch', path, fn, init, null, index === -1 ? '' : current_scope);
 	};
 
-	W.ON = function(name, path, fn, init, context) {
+	W.ON = function(name, path, fn, init, context, scope) {
 
 		if (name.indexOf(MULTIPLE) !== -1) {
 			var arr = name.split(MULTIPLE).trim();
@@ -697,7 +699,6 @@
 
 		var owner = null;
 		var index = name.indexOf('#');
-		var scope;
 
 		if (index) {
 			owner = name.substring(0, index).trim();
@@ -8437,6 +8438,7 @@
 		var pathy = $(path.find('.' + n + '-y')[0]);
 		var barx = $(pathx.find('span')[0]);
 		var bary = $(pathy.find('span')[0]);
+		var bodyarea = element.find('.' + n + '-body');
 		var area = $(element.find('> .' + n + '-area')[0]);
 		var notemmited = true;
 		var intervalresize;
@@ -8703,7 +8705,7 @@
 			pathx.css({ top: size.viewHeight - size.thickness, width: size.viewWidth });
 			pathy.css({ left: size.viewWidth - size.thickness, height: size.viewHeight });
 
-			size.vbar = size.scrollHeight > size.clientHeight;
+			size.vbar = (size.scrollHeight - size.clientHeight) > 5;
 
 			if (size.vbar) {
 				size.vbarsize = (size.clientHeight * (size.viewHeight / size.scrollHeight)) >> 0;
@@ -8732,6 +8734,9 @@
 
 			element.tclass(n + 'isx', size.hbar).tclass(n + 'isy', size.vbar).tclass(n + 'touch', md);
 			path.rclass(n + 'notready');
+
+			var sw = SCROLLBARWIDTH();
+			sw && bodyarea.css({ 'margin-right': size.vbar ? ((options.mr || 40) - sw) : null, 'margin-bottom': size.hbar ? ((options.mb || 40) - sw) : null });
 
 			options.onresize && options.onresize(self);
 			events.onscroll();
