@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.043;
+	M.version = 17.044;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8638,6 +8638,13 @@
 		});
 
 		area.on('scroll', events.onscroll);
+		self.element.on('scroll', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			var t = this;
+			t.scrollTop = 0;
+			t.scrollLeft = 0;
+		});
 
 		self.check = function() {
 
@@ -8673,7 +8680,7 @@
 			delayresize = null;
 
 			if (options.parent)
-				el = el.closest(options.parent);
+				el = typeof(options.parent) === 'object' ? $(options.parent) : el.closest(options.parent);
 
 			size.viewWidth = el.width();
 			size.viewHeight = el.height();
