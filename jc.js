@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.044;
+	M.version = 17.045;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8751,23 +8751,37 @@
 		};
 
 		self.scrollLeft = function(val) {
-			area[0].scrollLeft = val || 0;
-			return self;
+
+			if (val == null)
+				return area[0].scrollLeft;
+
+			if (typeof(val) === 'string')
+				val = area[0].scrollLeft + (+val);
+
+			return area[0].scrollLeft = val;
 		};
 
 		self.scrollTop = function(val) {
-			area[0].scrollTop = val || 0;
-			return self;
+
+			if (val == null)
+				return area[0].scrollTop;
+
+			if (typeof(val) === 'string')
+				val = area[0].scrollTop + (+val);
+
+			return area[0].scrollTop = val;
 		};
 
 		self.scrollBottom = function(val) {
-			area[0].scrollTop = (area[0].scrollHeight - size.clientHeight) - (val || 0);
-			return self;
+			if (val == null)
+				return area[0].scrollTop;
+			return area[0].scrollTop = (area[0].scrollHeight - size.clientHeight) - (val || 0);
 		};
 
 		self.scrollRight = function(val) {
-			area[0].scrollLeft = (area[0].scrollWidth - size.clientWidth) - (val || 0);
-			return self;
+			if (val == null)
+				return area[0].scrollLeft;
+			return area[0].scrollLeft = (area[0].scrollWidth - size.clientWidth) - (val || 0);
 		};
 
 		self.scroll = function(x, y) {
