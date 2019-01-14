@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.045;
+	M.version = 17.046;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -6809,6 +6809,25 @@
 			separatorDecimal = MD.decimalseparator;
 
 		return minus + output + (dec.length ? separatorDecimal + dec : '');
+	};
+
+	SP.SCOPE = function(element) {
+
+		var t = this;
+		if (t.indexOf('?') === -1)
+			return t;
+
+		var path, tmp;
+		if (element instanceof COM)
+			path = element.scope ? element.scope.path : '';
+		else if (element instanceof jQuery) {
+			tmp = element.scope();
+			if (tmp)
+				path = tmp.path;
+		} else
+			path = element;
+
+		return path ? t.replace(/\?/g, path) : t;
 	};
 
 	SP.padLeft = function(t, e) {
