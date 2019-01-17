@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 16.048;
+	M.version = 16.049;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7827,6 +7827,11 @@
 				}
 			}
 		}, 3500);
+
+		// Fixed IE <button tags
+		(/msie|trident/i).test(navigator.userAgent) && $(window).on('keydown', function(e) {
+			e.keyCode === 13 && e.preventDefault();
+		});
 
 		$.fn.FIND = function(selector, many, callback, timeout) {
 
