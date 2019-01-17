@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.046;
+	M.version = 17.047;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5182,10 +5182,12 @@
 	// WINDOW FUNCTIONS
 	// ===============================================================
 
-	W.isMOBILE = /Mobi/.test(navigator.userAgent);
-	W.isROBOT = navigator.userAgent ? (/search|agent|bot|crawler|spider/i).test(navigator.userAgent) : true;
+	var ua = navigator.userAgent | '';
+	W.isMOBILE = /Mobi/.test(ua);
+	W.isROBOT = (/search|agent|bot|crawler|spider/i).test(ua);
 	W.isSTANDALONE = navigator.standalone || W.matchMedia('(display-mode: standalone)').matches;
 	W.isTOUCH = !!('ontouchstart' in W || navigator.maxTouchPoints);
+	W.isIE = (/msie|trident/i).test(ua);
 
 	W.setTimeout2 = function(name, fn, timeout, limit, param) {
 		var key = ':' + name;
@@ -7171,6 +7173,11 @@
 	WAIT(function() {
 		return !!W.jQuery;
 	}, function() {
+
+		// Fixed IE <button tags
+		W.isIE && $(window).on('keydown', function(e) {
+			e.keyCode === 13 && e.preventDefault();
+		});
 
 		setInterval(function() {
 			temp = {};
