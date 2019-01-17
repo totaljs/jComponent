@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.048;
+	M.version = 17.049;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -3379,11 +3379,11 @@
 				var arr = autofill.splice(0);
 				for (var i = 0; i < arr.length; i++) {
 					var com = arr[i];
-					!com.$default && findcontrol(com.element[0], function(el) {
+					!com.$default && findcontrol(com.dom, function(el) {
 						var val = $(el).val();
 						if (val) {
 							var tmp = com.parser(val);
-							if (tmp && com.get() !== tmp) {
+							if (tmp) {
 								com.dirty(false, true);
 								com.set(tmp, 0);
 							}
@@ -4129,7 +4129,7 @@
 			var a = 'select-one';
 			value = self.formatter(value);
 
-			findcontrol(self.element[0], function(t) {
+			findcontrol(self.dom, function(t) {
 
 				if (t.$com !== self)
 					t.$com = self;
@@ -4148,7 +4148,7 @@
 				if (value == null)
 					value = '';
 
-				if (!type && t.type !== a && t.type !== 'range' && !self.$default && !value)
+				if (!type && self.$autofill && t.type !== a && t.type !== 'range' && !self.$default)
 					autofill.push(t.$com);
 
 				if (t.type === a || t.type === 'select') {
@@ -4161,6 +4161,12 @@
 	}
 
 	var PPC = COM.prototype;
+
+	PPC.autofill = function(val) {
+		var t = this;
+		t.$autofill = val == null ? true : val == true;
+		return t;
+	};
 
 	PPC.data = function(key, value) {
 
@@ -4302,7 +4308,7 @@
 
 	PPC.hidden = function(callback) {
 		var t = this;
-		var v = t.element ? t.element[0].offsetParent : null;
+		var v = t.element ? t.dom.offsetParent : null;
 		v = v === null;
 		if (callback) {
 			if (v)
@@ -4315,7 +4321,7 @@
 
 	PPC.visible = function(callback) {
 		var t = this;
-		var v = t.element ? t.element[0].offsetParent : null;
+		var v = t.element ? t.dom.offsetParent : null;
 		v = v !== null;
 		if (callback) {
 			if (v)
@@ -4328,7 +4334,7 @@
 
 	PPC.width = function(callback) {
 		var t = this;
-		var v = t.element ? t.element[0].offsetWidth : 0;
+		var v = t.element ? t.dom.offsetWidth : 0;
 		if (callback) {
 			if (v)
 				callback.call(t, v);
@@ -4340,7 +4346,7 @@
 
 	PPC.height = function(callback) {
 		var t = this;
-		var v = t.element ? t.element[0].offsetHeight : 0;
+		var v = t.element ? t.dom.offsetHeight : 0;
 		if (callback) {
 			if (v)
 				callback.call(t, v);
@@ -5188,6 +5194,7 @@
 	W.isSTANDALONE = navigator.standalone || W.matchMedia('(display-mode: standalone)').matches;
 	W.isTOUCH = !!('ontouchstart' in W || navigator.maxTouchPoints);
 	W.isIE = (/msie|trident/i).test(ua);
+	var isIEED = W.isIE || (/edge/i).test(ua);
 
 	W.setTimeout2 = function(name, fn, timeout, limit, param) {
 		var key = ':' + name;
