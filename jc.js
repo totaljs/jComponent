@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.047;
+	M.version = 17.048;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5182,7 +5182,7 @@
 	// WINDOW FUNCTIONS
 	// ===============================================================
 
-	var ua = navigator.userAgent | '';
+	var ua = navigator.userAgent || '';
 	W.isMOBILE = /Mobi/.test(ua);
 	W.isROBOT = (/search|agent|bot|crawler|spider/i).test(ua);
 	W.isSTANDALONE = navigator.standalone || W.matchMedia('(display-mode: standalone)').matches;
