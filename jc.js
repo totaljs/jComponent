@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.049;
+	M.version = 17.051;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7579,7 +7579,9 @@
 					var tmp = com.$skip;
 					if (tmp)
 						com.$skip = false;
-					com.setter(com.get(), com.path, 2);
+					var val = com.get();
+					com.setter(val, com.path, 2);
+					com.setter2 && com.setter2(val, com.path, 2);
 					if (tmp)
 						com.$skip = tmp;
 				}
