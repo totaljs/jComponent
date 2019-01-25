@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.051;
+	M.version = 17.052;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -535,7 +535,7 @@
 		if (index !== -1)
 			method = url.substring(0, index).toUpperCase();
 
-		var isCredentials = method.substring(0, 1) === '!';
+		var isCredentials = method.charAt(0) === '!';
 		if (isCredentials)
 			method = method.substring(1);
 
@@ -670,8 +670,8 @@
 
 		var push = '';
 
-		if (path.substring(0, 1) === '^') {
-			path = path.substring(1);
+		if (path.charAt(0) === '^') {
+			path = path.substring(1).trim();
 			push = '^';
 		}
 
@@ -692,9 +692,9 @@
 
 		var push = true;
 
-		if (name.substring(0, 1) === '^') {
+		if (name.charAt(0) === '^') {
 			push = false;
-			name = name.substring(1);
+			name = name.substring(1).trim();
 		}
 
 		var owner = null;
@@ -919,7 +919,7 @@
 			var is = false;
 			flags = {};
 			except = except.remove(function(item) {
-				if (item.substring(0, 1) === '@') {
+				if (item.charAt(0) === '@') {
 					flags[item.substring(1)] = true;
 					is = true;
 					return true;
@@ -1000,7 +1000,7 @@
 			var is = false;
 			flags = {};
 			except = except.remove(function(item) {
-				if (item.substring(0, 1) === '@') {
+				if (item.charAt(0) === '@') {
 					flags[item.substring(1)] = true;
 					is = true;
 					return true;
@@ -1068,7 +1068,7 @@
 		}).trim();
 
 		// unique
-		var first = url.substring(0, 1);
+		var first = url.charAt(0);
 		var once = url.substring(0, 5).toLowerCase() === 'once ';
 
 		if (typeof(target) === TYPE_FN) {
@@ -1420,7 +1420,7 @@
 			arg = [url, data, callback, timeout];
 
 		var method = url.substring(0, index).toUpperCase();
-		var isCredentials = method.substring(0, 1) === '!';
+		var isCredentials = method.charAt(0) === '!';
 		if (isCredentials)
 			method = method.substring(1);
 
@@ -2054,7 +2054,7 @@
 			var is = false;
 			flags = {};
 			except = except.remove(function(item) {
-				if (item.substring(0, 1) === '@') {
+				if (item.charAt(0) === '@') {
 					flags[item.substring(1)] = true;
 					is = true;
 					return true;
@@ -2346,6 +2346,11 @@
 
 	function findcomponent(container, selector, callback) {
 
+		// @todo: parent is not implemented yet
+		// var parent = selector && selector.charAt(0) === '^';
+		// if (parent)
+		// 	selector = selector.substring(1);
+
 		var s = (selector ? selector.split(' ') : EMPTYARRAY);
 		var path = '';
 		var name = '';
@@ -2354,7 +2359,7 @@
 		var index;
 
 		for (var i = 0, length = s.length; i < length; i++) {
-			switch (s[i].substring(0, 1)) {
+			switch (s[i].charAt(0)) {
 				case '*':
 					break;
 				case '.':
@@ -2393,25 +2398,24 @@
 
 		var arr = callback ? undefined : [];
 		if (container) {
-			var stop = false;
-			container.find(ATTRCOM).each(function() {
-				var com = this.$com;
-
-				if (stop || !com || !com.$loaded || com.$removed || (id && com.id !== id) || (name && com.$name !== name) || (version && com.$version !== version) || (path && (com.$pp || (com.path !== path && (!com.pathscope || ((com.pathscope + '.' + path) !== com.path))))))
-					return;
-
-				if (callback) {
-					if (callback(com) === false)
-						stop = true;
-				} else
-					arr.push(com);
-			});
+			for (var j = 0; j < container.length; j++) {
+				var childs = container[j].querySelectorAll(ATTRCOM);
+				for (var i = 0; i < childs.length; i++) {
+					var com = childs[i].$com;
+					if (!com || !com.$loaded || com.$removed || (id && com.id !== id) || (name && com.$name !== name) || (version && com.$version !== version) || (path && (com.$pp || (com.path !== path && (!com.pathscope || ((com.pathscope + '.' + path) !== com.path))))))
+						continue;
+					if (callback) {
+						if (callback(com) === false)
+							break;
+					} else
+						arr.push(com);
+				}
+			}
 		} else {
 			for (var i = 0, length = M.components.length; i < length; i++) {
 				var com = M.components[i];
 				if (!com || !com.$loaded || com.$removed || (id && com.id !== id) || (name && com.$name !== name) || (version && com.$version !== version) || ((path && (com.$pp || (com.path !== path && (!com.pathscope || ((com.pathscope + '.' + path) !== com.path)))))))
 					continue;
-
 				if (callback) {
 					if (callback(com) === false)
 						break;
@@ -2697,7 +2701,7 @@
 
 				var p = attrcom(el, 'path') || (meta ? meta[1] === TYPE_NULL ? '' : meta[1] : '') || obj._id;
 
-				if (p.substring(0, 1) === '%')
+				if (p.charAt(0) === '%')
 					obj.$noscope = true;
 
 				obj.setPath(pathmaker(p, 1, 1), 1);
@@ -2795,7 +2799,7 @@
 						}, obj, el);
 					};
 
-					var c = template.substring(0, 1);
+					var c = template.charAt(0);
 					if (c === '.' || c === '#' || c === '[') {
 						fn($(template).html());
 						continue;
@@ -2902,7 +2906,7 @@
 			return scope.$scopedata;
 
 		var path = attrscope(scope);
-		var independent = path.substring(0, 1) === '!';
+		var independent = path.charAt(0) === '!';
 		if (independent)
 			path = path.substring(1);
 
@@ -2938,7 +2942,7 @@
 			var conf = (meta[1] || '').replace(/\$/g, '').parseConfig();
 
 			sc.$processed = true;
-			sc.$isolated = p.substring(0, 1) === '!' || !!conf.isolated;
+			sc.$isolated = p.charAt(0) === '!' || !!conf.isolated;
 
 			if (sc.$isolated)
 				p = p.substring(1);
@@ -3017,7 +3021,7 @@
 
 			// Unique
 			var once = url.substring(0, 5).toLowerCase() === 'once ';
-			if (url.substring(0, 1) === '!' || once) {
+			if (url.charAt(0) === '!' || once) {
 				if (once)
 					url = url.substring(5);
 				else
@@ -3513,7 +3517,7 @@
 		for (var i = 0; i < arr.length - 1; i++) {
 			var item = arr[i];
 			var type = arr[i + 1] ? (REGISARR.test(arr[i + 1]) ? '[]' : '{}') : '{}';
-			var p = 'w' + (item.substring(0, 1) === '[' ? '' : '.') + item;
+			var p = 'w' + (item.charAt(0) === '[' ? '' : '.') + item;
 			builder.push('if(typeof(' + p + ')!==\'object\'||' + p + '==null)' + p + '=' + type);
 		}
 
@@ -3526,7 +3530,7 @@
 		binder.push('binders[\'' + v + '\']&&binderbind(\'' + v + '\',\'' + path + '\',$ticks)');
 		binder.push('binders[\'!' + v + '\']&&binderbind(\'!' + v + '\',\'' + path + '\',$ticks)');
 
-		if (v.substring(0, 1) !== '[')
+		if (v.charAt(0) !== '[')
 			v = '.' + v;
 
 		var fn = (new Function('w', 'a', 'b', 'binders', 'binderbind', 'nobind', 'var $ticks=Math.random().toString().substring(2,8);if(!nobind){' + builder.join(';') + ';var v=typeof(a)==\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v}' + binder.join(';') + ';return a'));
@@ -3551,13 +3555,13 @@
 		for (var i = 0; i < arr.length - 1; i++) {
 			var item = arr[i];
 			var type = arr[i + 1] ? (REGISARR.test(arr[i + 1]) ? '[]' : '{}') : '{}';
-			var p = 'w' + (item.substring(0, 1) === '[' ? '' : '.') + item;
+			var p = 'w' + (item.charAt(0) === '[' ? '' : '.') + item;
 			builder.push('if(typeof(' + p + ')!==\'object\'||' + p + '==null)' + p + '=' + type);
 		}
 
 		var v = arr[arr.length - 1];
 
-		if (v.substring(0, 1) !== '[')
+		if (v.charAt(0) !== '[')
 			v = '.' + v;
 
 		var fn = (new Function('w', 'a', 'b', builder.join(';') + ';w' + v + '=a;return a'));
@@ -3587,13 +3591,13 @@
 
 		for (var i = 0, length = arr.length - 1; i < length; i++) {
 			var item = arr[i];
-			if (item.substring(0, 1) !== '[')
+			if (item.charAt(0) !== '[')
 				item = '.' + item;
 			builder.push('if(!w' + item + ')return');
 		}
 
 		var v = arr[arr.length - 1];
-		if (v.substring(0, 1) !== '[')
+		if (v.charAt(0) !== '[')
 			v = '.' + v;
 
 		var fn = (new Function('w', builder.join(';') + ';return w' + v));
@@ -4369,9 +4373,9 @@
 			return self.$released;
 
 		self.attrd('jc-released', value);
-
-		(container || self.element).find(ATTRCOM).each(function() {
-			var el = $(this);
+		var childs = (container || self.element).find(ATTRCOM);
+		for (var j = 0; j < childs.length; j++) {
+			var el = $(childs[j]);
 			el.attrd('jc-released', value ? 'true' : 'false');
 			var com = el[0].$com;
 			if (com instanceof Object) {
@@ -4392,7 +4396,7 @@
 					!value && com.setterX();
 				}
 			}
-		});
+		}
 
 		if (!container && self.$released !== value) {
 			self.$released = value;
@@ -4410,13 +4414,14 @@
 
 	PPC.exec = function(name, a, b, c, d, e) {
 		var self = this;
-		self.find(ATTRCOM).each(function() {
-			var t = this;
+		var childs = self.find(ATTRCOM);
+		for (var i = 0; i < childs.length; i++) {
+			var t = childs[i];
 			if (t.$com) {
 				t.$com.caller = self;
 				t.$com[name] && this.$com[name](a, b, c, d, e);
 			}
-		});
+		}
 		return self;
 	};
 
@@ -4456,9 +4461,11 @@
 	};
 
 	PPC.nested = function() {
+		var self = this;
+		var childs = self.find(ATTRCOM);
 		var arr = [];
-		this.find(ATTRCOM).each(function() {
-			var el = $(this);
+		for (var i = 0; i < childs.length; i++) {
+			var el = $(childs[i]);
 			var com = el[0].$com;
 			if (com && !el.attr(ATTRDEL)) {
 				if (com instanceof Array)
@@ -4466,7 +4473,7 @@
 				else
 					arr.push(com);
 			}
-		});
+		}
 		return arr;
 	};
 
@@ -4548,7 +4555,7 @@
 		var rem = '';
 
 		for (var i = 0, length = arr.length; i < length; i++) {
-			var c = arr[i].substring(0, 1);
+			var c = arr[i].charAt(0);
 			if (c === '-')
 				rem += (rem ? ' ' : '') + arr[i].substring(1);
 			else
@@ -4703,7 +4710,7 @@
 
 		var arr = [];
 
-		if (path.substring(0, 1) === '@') {
+		if (path.charAt(0) === '@') {
 			path = path.substring(1);
 			self.$pp = true;
 			self.owner.$ppc = true;
@@ -4791,7 +4798,7 @@
 					self.configure(k, value[k], init, init ? undefined : prev);
 				self.data('config.' + k, value[k]);
 			});
-		} else if (value.substring(0, 1) === '=') {
+		} else if (value.charAt(0) === '=') {
 			value = value.substring(1);
 			if (self.watch) {
 				self.$rcwatch && self.unwatch(self.$rcwatch, self.rcwatch);
@@ -5032,9 +5039,9 @@
 		var self = this;
 		var push = '';
 
-		if (name.substring(0, 1) === '^') {
+		if (name.charAt(0) === '^') {
 			push = '^';
-			name = name.substring(1);
+			name = name.substring(1).trim();
 		}
 
 		ON(push + 'com' + self._id + '#' + name, path, fn, init, self);
@@ -5230,7 +5237,7 @@
 			var fn = [];
 			selector.split(' ').forEach(function(sel) {
 				var prop = '';
-				switch (sel.trim().substring(0, 1)) {
+				switch (sel.trim().charAt(0)) {
 					case '*':
 						fn.push('com.path.indexOf(\'{0}\')!==-1'.format(sel.substring(1)));
 						return;
@@ -5656,7 +5663,7 @@
 	W.PARSE = function(value, date) {
 
 		// Is selector?
-		var c = value.substring(0, 1);
+		var c = value.charAt(0);
 		if (c === '#' || c === '.')
 			return PARSE($(value).html(), date);
 
@@ -6205,7 +6212,7 @@
 		var b = MD.baseurl;
 		var ext = /(https|http|wss|ws|file):\/\/|\/\/[a-z0-9]|[a-z]:/i;
 		var replace = function(t) {
-			return t.substring(0, 1) + '/';
+			return t.charAt(0) + '/';
 		};
 		if (r)
 			url = typeof(r) === TYPE_FN ? r(url) : ext.test(url) ? url : (r + url);
@@ -6660,7 +6667,7 @@
 
 		format = format.env();
 
-		if (format && format.substring(0, 1) === '!') {
+		if (format && format.charAt(0) === '!') {
 			half = true;
 			format = format.substring(1);
 		}
@@ -6767,7 +6774,7 @@
 		var num = self.toString();
 		var dec = '';
 		var output = '';
-		var minus = num.substring(0, 1) === '-' ? '-' : '';
+		var minus = num.charAt(0) === '-' ? '-' : '';
 		if (minus)
 			num = num.substring(1);
 
@@ -6775,7 +6782,7 @@
 
 		if (typeof(decimals) === TYPE_S) {
 			var tmp;
-			if (decimals.substring(0, 1) === '[') {
+			if (decimals.charAt(0) === '[') {
 				tmp = ENV(decimals.substring(1, decimals.length - 1));
 				if (tmp) {
 					decimals = tmp.decimals;
@@ -7228,11 +7235,67 @@
 			return many ? output : output[0];
 		};
 
+		var com_exec = function(com, name, arg) {
+			if (com instanceof Array) {
+				for (var i = 0; i < com.length; i++) {
+					var ci = com[i];
+					if (ci[name])
+						ci[name].apply(ci, arg);
+				}
+			} else if (com[name])
+				com[name].apply(com, arg);
+		};
+
+		$.fn.EMIT = function(name, a, b, c, d) {
+			var is = name.charAt(0) === '^';
+			if (is)
+				name = name.substring(1).trim();
+			return this.EXEC((is ? '^' : '') + 'emit', name, a, b, c, d);
+		};
+
+		$.fn.EXEC = function(name) {
+
+			var self = this;
+			var arg = [];
+			var parent = name.charAt(0) === '^';
+			if (parent)
+				name = name.substring(1).trim();
+
+			for (var i = 1; i < arguments.length; i++)
+				arg.push(arguments[i]);
+
+			for (var j = 0; j < self.length; j++) {
+				var el = self[j];
+				if (parent) {
+					while (true) {
+						el = el.parentNode;
+						if (el == null || el.nodeName === 'HTML')
+							break;
+						el.$com && com_exec(el.$com, name, arg);
+					}
+				} else {
+					// childs
+					var fn = function(el) {
+						for (var i = 0; i < el.children.length; i++) {
+							var cur = el.children[i];
+							cur.$com && cur.getAttribute('data-jc-bind') == null && com_exec(cur.$com, name, arg);
+							if (cur.children && cur.children.length)
+								fn(cur);
+						}
+					};
+					fn(el);
+				}
+			}
+
+			return self;
+		};
+
 		$.fn.SETTER = function(selector, name) {
 
 			var self = this;
 			var arg = [];
 			var beg = selector === true ? 3 : 2;
+			var tmp;
 
 			for (var i = beg; i < arguments.length; i++)
 				arg.push(arguments[i]);
@@ -7240,6 +7303,10 @@
 			if (beg === 3) {
 				selector = name;
 				name = arguments[2];
+
+				tmp = selector;
+				if (tmp.charAt(0) === '^')
+					selector = selector.substring(1).trim();
 
 				if (lazycom[selector] && lazycom[selector].state !== 3) {
 
@@ -7257,7 +7324,7 @@
 					return self;
 				}
 
-				self.FIND(selector, true, function(arr) {
+				self.FIND(tmp, true, function(arr) {
 					for (var i = 0, length = arr.length; i < length; i++) {
 						var o = arr[i];
 						if (typeof(o[name]) === TYPE_FN)
@@ -7269,6 +7336,10 @@
 
 			} else {
 
+				tmp = selector;
+				if (tmp.charAt(0) === '^')
+					selector = selector.substring(1).trim();
+
 				if (lazycom[selector] && lazycom[selector].state !== 3) {
 
 					if (lazycom[selector].state === 1) {
@@ -7285,7 +7356,7 @@
 					return self;
 				}
 
-				var arr = self.FIND(selector, true);
+				var arr = self.FIND(tmp, true);
 				for (var i = 0, length = arr.length; i < length; i++) {
 					var o = arr[i];
 					if (typeof(o[name]) === TYPE_FN)
@@ -7442,29 +7513,33 @@
 		$.fn.components = function(fn) {
 			var all = this.find(ATTRCOM);
 			var output = null;
-			all.each(function(index) {
-				var com = this.$com;
+			for (var i = 0; i < all.length; i++) {
+				var com = all[i].$com;
 				if (com) {
 					var isarr = com instanceof Array;
 					if (isarr) {
 						com.forEach(function(o) {
 							if (o && o.$ready && !o.$removed) {
-								if (fn)
-									return fn.call(o, index);
-								if (!output)
-									output = [];
-								output.push(o);
+								if (fn) {
+									fn.call(o, i);
+								} else {
+									if (!output)
+										output = [];
+									output.push(o);
+								}
 							}
 						});
 					} else if (com && com.$ready && !com.$removed) {
-						if (fn)
-							return fn.call(com, index);
-						if (!output)
-							output = [];
-						output.push(com);
+						if (fn) {
+							fn.call(com, i);
+						} else {
+							if (!output)
+								output = [];
+							output.push(com);
+						}
 					}
 				}
-			});
+			}
 			return fn ? all : output;
 		};
 
@@ -7806,7 +7881,7 @@
 						})(v);
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', 'template', 'click') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.substring(0, 1) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', 'template', 'click') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -7834,7 +7909,7 @@
 							return '';
 						});
 
-						var c = k.substring(0, 1);
+						var c = k.charAt(0);
 
 						if (k === 'class')
 							k = 'tclass';
@@ -7904,7 +7979,7 @@
 									fn.$nv =1;
 								break;
 							case 'import':
-								var c = v.substring(0, 1);
+								var c = v.charAt(0);
 								if ((/^(https|http):\/\//).test(v) || c === '/' || c === '.') {
 									if (c === '.')
 										fn = v.substring(1);
@@ -7963,7 +8038,7 @@
 					// path
 					path = item;
 
-					var c = path.substring(0, 1);
+					var c = path.charAt(0);
 
 					if (c === '!') {
 						path = path.substring(1);
@@ -7992,11 +8067,11 @@
 					if (path.substring(path.length - 1) === '.')
 						path = path.substring(0, path.length - 1);
 
-					if (path.substring(0, 1) === '@') {
+					if (path.charAt(0) === '@') {
 						path = path.substring(1);
 
 						var isCtrl = false;
-						if (path.substring(0, 1) === '@') {
+						if (path.charAt(0) === '@') {
 							isCtrl = true;
 							path = path.substring(1);
 						}
@@ -8050,7 +8125,7 @@
 			path = pathmaker(path, 0, 1);
 		} else {
 
-			var bj = obj.com && path.substring(0, 1) === '@';
+			var bj = obj.com && path.charAt(0) === '@';
 			path = bj ? path : pathmaker(path, 0, 1);
 
 			if (path.indexOf('?') !== -1) {
