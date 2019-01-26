@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.052;
+	M.version = 17.053;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5201,7 +5201,6 @@
 	W.isSTANDALONE = navigator.standalone || W.matchMedia('(display-mode: standalone)').matches;
 	W.isTOUCH = !!('ontouchstart' in W || navigator.maxTouchPoints);
 	W.isIE = (/msie|trident/i).test(ua);
-	var isIEED = W.isIE || (/edge/i).test(ua);
 
 	W.setTimeout2 = function(name, fn, timeout, limit, param) {
 		var key = ':' + name;
@@ -6963,6 +6962,7 @@
 	};
 
 	SP.parseDate = function() {
+
 		var self = this.trim();
 		if (!self)
 			return null;
@@ -6977,12 +6977,20 @@
 		if (lc === 90)
 			return new Date(Date.parse(self));
 
+		var ampm = null;
+		var tmp;
+
+		self = self.replace(/(\s)(am|pm)/i, function(text) {
+			ampm = text.trim().toLowerCase();
+			return '';
+		});
+
 		var arr = self.indexOf(' ') === -1 ? self.split('T') : self.split(' ');
 		var index = arr[0].indexOf(':');
 		var length = arr[0].length;
 
 		if (index !== -1) {
-			var tmp = arr[1];
+			tmp = arr[1];
 			arr[1] = arr[0];
 			arr[0] = tmp;
 		}
@@ -7020,6 +7028,13 @@
 			time[2] = time[2].substring(0, index);
 		} else
 			time[3] = '0';
+
+		if (ampm) {
+			// 12 hours time
+			tmp = +time[0];
+			if (ampm === 'pm')
+				time[0] = tmp + 12;
+		}
 
 		parsed.push(+date[firstDay ? 2 : 0]); // year
 		parsed.push(+date[1]); // month
