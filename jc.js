@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.053;
+	M.version = 17.054;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1666,11 +1666,39 @@
 			highlight = true;
 		}
 
+		path = path.replace('.*', '');
+
+		var isExcept = except instanceof Array;
+		var flags = null;
+
+		if (isExcept) {
+			var is = false;
+			flags = {};
+			except = except.remove(function(item) {
+				if (item.charAt(0) === '@') {
+					flags[item.substring(1)] = true;
+					is = true;
+					return true;
+				}
+				return false;
+			});
+			!is && (flags = null);
+			isExcept = except.length > 0;
+		}
+
 		var arr = [];
 
-		M.each(function(obj) {
-			if ((!except || !obj.$except(except)) && obj.$valid === false && !obj.$valid_disabled)
-				arr.push(obj);
+		M.each(function(com) {
+
+			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path) || (isExcept && com.$except(except)))
+				return;
+
+			if (flags && ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':disabled')) || (flags.disabled && com.find(SELINPUT).is(':enabled'))))
+				return;
+
+			if (!com.$valid)
+				arr.push(com);
+
 		}, pathmaker(path));
 
 		highlight && state(arr, 1, 1);
