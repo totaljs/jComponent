@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.054;
+	M.version = 17.055;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -427,7 +427,7 @@
 			}
 			return '';
 		},
-		set: function(name, value, expire) {
+		set: function(name, value, expire, samesite) {
 			var type = typeof(expire);
 			if (type === TYPE_N) {
 				var date = W.NOW;
@@ -435,7 +435,7 @@
 				expire = date;
 			} else if (type === TYPE_S)
 				expire = new Date(Date.now() + expire.parseExpire());
-			document.cookie = name.env() + '=' + value + '; expires=' + expire.toGMTString() + '; path=/';
+			document.cookie = name.env() + '=' + value + '; expires=' + expire.toGMTString() + '; path=/' + (samesite ? ('; samesite=' + samesite.charAt(0).toUpperCase() + samesite.substring(1)) : '');
 		},
 		rem: function(name) {
 			COOKIES.set(name.env(), '', -1);
