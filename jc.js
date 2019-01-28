@@ -153,7 +153,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.055;
+	M.version = 17.056;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2716,7 +2716,7 @@
 						else
 							pc.$children = 1;
 						break;
-					} else if (parent.nodeName === 'BODY')
+					} else if (parent.tagName === 'BODY')
 						break;
 					parent = parent.parentNode;
 					if (parent == null)
@@ -3706,11 +3706,11 @@
 	function inDOM(el) {
 		if (!el)
 			return;
-		if (el.nodeName === 'BODY')
+		if (el.tagName === 'BODY')
 			return true;
 		var parent = el.parentNode;
 		while (parent) {
-			if (parent.nodeName === 'BODY')
+			if (parent.tagName === 'BODY')
 				return true;
 			parent = parent.parentNode;
 		}
@@ -3798,7 +3798,7 @@
 			component.destroy && component.destroy();
 			$('#css' + component.ID).remove();
 
-			if (c[0].nodeName !== 'BODY') {
+			if (c[0].tagName !== 'BODY') {
 				c.off();
 				c.find('*').off();
 				c.remove();
@@ -7233,7 +7233,11 @@
 
 		// Fixed IE <button tags
 		W.isIE && $(window).on('keydown', function(e) {
-			e.keyCode === 13 && e.preventDefault();
+			if (e.keyCode === 13) {
+				var n = e.target.tagName;
+				if (n === 'BUTTON' || n === 'INPUT' || n === 'SELECT')
+					e.preventDefault();
+			}
 		});
 
 		setInterval(function() {
@@ -7312,7 +7316,7 @@
 				if (parent) {
 					while (true) {
 						el = el.parentNode;
-						if (el == null || el.nodeName === 'HTML')
+						if (el == null || el.tagName === 'HTML')
 							break;
 						el.$com && com_exec(el.$com, name, arg);
 					}
@@ -8210,7 +8214,7 @@
 
 					var t = this;
 
-					if ((t.nodeName === 'INPUT' || t.nodeName === 'BUTTON') && t.disabled)
+					if ((t.tagName === 'INPUT' || t.tagName === 'BUTTON') && t.disabled)
 						return;
 
 					var el = $(t);
@@ -8670,7 +8674,7 @@
 
 		events.onmouseout = function(e) {
 			var f = e.relatedTarget || e.toElement;
-			if (!f || f.nodeName == 'HTML') {
+			if (!f || f.tagName == 'HTML') {
 				drag.is = false;
 				unbind();
 			}
@@ -8745,7 +8749,7 @@
 
 			drag.type = 'x';
 
-			if (e.target.nodeName === 'SPAN') {
+			if (e.target.tagName === 'SPAN') {
 				bind();
 				drag.offset = element.offset().left + e.offsetX;
 				drag.offset2 = e.offsetX;
@@ -8772,7 +8776,7 @@
 
 			drag.type = 'y';
 
-			if (e.target.nodeName === 'SPAN') {
+			if (e.target.tagName === 'SPAN') {
 				bind();
 				drag.offset = element.offset().top + e.offsetY;
 				drag.offset2 = e.offsetY;
@@ -8806,7 +8810,7 @@
 			var is = false;
 
 			while (parent) {
-				if (parent.nodeName === 'BODY') {
+				if (parent.tagName === 'BODY') {
 					is = true;
 					break;
 				}
