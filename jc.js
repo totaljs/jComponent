@@ -37,6 +37,8 @@
 	var TYPE_B = 'boolean';
 	var TYPE_NULL = 'null';
 	var KEY_ENV = 'environment';
+	var REG_DATE = /\.|-|\/|\\|:|\s/g;
+	var REG_TIME = /am|pm/i;
 
 	var LCOMPARER = window.Intl ? window.Intl.Collator().compare : function(a, b) {
 		return a.localeCompare(b);
@@ -153,7 +155,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.056;
+	M.version = 17.057;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -6989,7 +6991,35 @@
 		});
 	};
 
-	SP.parseDate = function() {
+	function parseDateFormat(format, val) {
+
+		format = format.split(REG_DATE);
+		var tmp = val.split(REG_DATE);
+		var dt = {};
+
+		for (var i = 0; i < format.length; i++) {
+			var type = format[i];
+			if (tmp[i])
+				dt[type.charAt(0)] = +tmp[i];
+		}
+
+		var h = dt.h || dt.H;
+
+		if (h != null) {
+			var ampm = val.match(REG_TIME);
+			if (ampm) {
+				if (ampm[0].toLowerCase() === 'pm')
+					h += 12;
+			}
+		}
+
+		return new Date(dt.y || 0, (dt.M || 1) - 1, dt.d || 0, h, dt.m || 0, dt.s || 0);
+	}
+
+	SP.parseDate = function(format) {
+
+		if (format)
+			return parseDateFormat(format, this);
 
 		var self = this.trim();
 		if (!self)
