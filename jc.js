@@ -155,7 +155,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.057;
+	M.version = 17.058;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8631,6 +8631,7 @@
 		var intervalresize;
 		var delayresize;
 		var delay;
+		var resizeid;
 
 		self.element = element;
 		self.area = area;
@@ -8711,6 +8712,7 @@
 		};
 
 		events.onscroll = function() {
+
 			var y = area[0].scrollTop;
 			var x = area[0].scrollLeft;
 			var is = false;
@@ -8761,6 +8763,8 @@
 			if (is) {
 
 				if (notemmited) {
+					clearTimeout(resizeid);
+					resizeid = setTimeout(self.resize, 100, true);
 					EMIT('scroll', area);
 					notemmited = false;
 				}
@@ -8853,8 +8857,17 @@
 				self.destroy();
 		};
 
+		var cssx = {};
+		var cssy = {};
+		var cssba = {};
+
 		self.resize2 = onresize;
-		self.resize = function() {
+		self.resize = function(scrolling) {
+
+			if (resizeid) {
+				clearTimeout(resizeid);
+				resizeid = null;
+			}
 
 			// Not visible
 			if (!element[0].offsetParent)
@@ -8896,8 +8909,13 @@
 			size.hpos = 0;
 			size.vpos = 0;
 
-			pathx.css({ top: size.viewHeight - size.thickness, width: size.viewWidth });
-			pathy.css({ left: size.viewWidth - size.thickness, height: size.viewHeight });
+			cssx.top = size.viewHeight - size.thickness;
+			cssx.width = size.viewWidth;
+			cssy.left = size.viewWidth - size.thickness;
+			cssy.height = size.viewHeight;
+
+			pathx.css(cssx);
+			pathy.css(cssy);
 
 			size.vbar = (size.scrollHeight - size.clientHeight) > 5;
 
@@ -8930,10 +8948,17 @@
 			path.rclass(n + 'notready');
 
 			var sw = SCROLLBARWIDTH();
-			sw && bodyarea.css({ 'margin-right': size.vbar ? ((options.mr || 40) - sw) : null, 'margin-bottom': size.hbar ? ((options.mb || 40) - sw) : null });
+			if (sw) {
+				cssba['margin-right'] = size.vbar ? ((options.mr || 40) - sw) : null;
+				cssba['margin-bottom'] = size.hbar ? ((options.mb || 40) - sw) : null;
+				bodyarea.css(cssba);
+			}
 
 			options.onresize && options.onresize(self);
-			events.onscroll();
+
+			if (!scrolling)
+				events.onscroll();
+
 			return self;
 		};
 
