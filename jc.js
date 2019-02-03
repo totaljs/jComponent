@@ -155,7 +155,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.058;
+	M.version = 17.059;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8715,10 +8715,13 @@
 
 			var y = area[0].scrollTop;
 			var x = area[0].scrollLeft;
-			var is = false;
+			var is = size.prevx !== x || size.prevy !== y;
 			var pos;
 			var p;
 			var max;
+
+			size.prevx = x;
+			size.prevy = y;
 
 			if (size.vbar) {
 
@@ -8737,7 +8740,6 @@
 				if (size.vpos !== pos) {
 					size.vpos = pos;
 					bary.css('top', pos);
-					is = true;
 				}
 			}
 
@@ -8756,7 +8758,6 @@
 				if (size.hpos !== pos) {
 					size.hpos = pos;
 					barx.css('left', pos);
-					is = true;
 				}
 			}
 
@@ -8764,7 +8765,7 @@
 
 				if (notemmited) {
 					clearTimeout(resizeid);
-					resizeid = setTimeout(self.resize, 100, true);
+					resizeid = setTimeout(self.resize, 500, true);
 					EMIT('scroll', area);
 					notemmited = false;
 				}
@@ -8776,6 +8777,12 @@
 				}, 700);
 
 				options.onscroll && options.onscroll(self);
+
+			} else {
+				if (size.hbar || size.vbar) {
+					clearTimeout(resizeid);
+					resizeid = setTimeout(self.resize, 500, true);
+				}
 			}
 		};
 
