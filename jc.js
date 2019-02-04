@@ -155,7 +155,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.059;
+	M.version = 17.061;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5414,6 +5414,7 @@
 
 		var arg = [];
 		var beg = selector === true ? 3 : 2;
+		var is;
 
 		for (var i = beg; i < arguments.length; i++)
 			arg.push(arguments[i]);
@@ -5422,9 +5423,18 @@
 
 			selector = name;
 
+			if (selector.charAt(0) === '!') {
+				selector = selector.substring(1);
+				is = true;
+			}
+
 			if (lazycom[selector] && lazycom[selector].state !== 3) {
 
 				if (lazycom[selector].state === 1) {
+
+					if (is)
+						return;
+
 					lazycom[selector].state = 2;
 					EMIT('lazy', selector, true);
 					warn('Lazy load: ' + selector);
@@ -5452,9 +5462,18 @@
 			});
 		} else {
 
+			if (selector.charAt(0) === '!') {
+				selector = selector.substring(1);
+				is = true;
+			}
+
 			if (lazycom[selector] && lazycom[selector].state !== 3) {
 
 				if (lazycom[selector].state === 1) {
+
+					if (is)
+						return;
+
 					lazycom[selector].state = 2;
 					EMIT('lazy', selector, true);
 					warn('Lazy load: ' + selector);
