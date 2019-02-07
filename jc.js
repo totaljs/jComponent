@@ -155,7 +155,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.063;
+	M.version = 17.064;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -166,6 +166,7 @@
 	M.$formatter = [];
 	M.$parser = [];
 	M.compiler = C;
+	M.paths = {};
 	C.is = false;
 	C.recompile = false;
 	C.importing = 0;
@@ -760,6 +761,11 @@
 			obj.path = path;
 			obj.$path = arr;
 
+			if (M.paths[path])
+				M.paths[path]++;
+			else
+				M.paths[path] = 1;
+
 			if (push)
 				watches.push(obj);
 			else
@@ -855,6 +861,10 @@
 					v = key === name && item.path === path;
 				else
 					v = key === name;
+
+				if (v && item.path && M.paths[item.path])
+					M.paths[item.path]--;
+
 				return v;
 			});
 		};
@@ -3806,6 +3816,9 @@
 				c.remove();
 			}
 
+			if (M.paths[component.path])
+				M.paths[component.path]--;
+
 			component.$main = undefined;
 			component.$data = null;
 			component.dom = null;
@@ -3842,8 +3855,11 @@
 				j--;
 				arr.splice(j, 1);
 			}
-			if (!arr.length)
+			if (!arr.length) {
+				if (M.paths[keys[i]])
+					M.paths[keys[i]]--;
 				delete binders[keys[i]];
+			}
 		}
 
 		clear('find');
@@ -4774,6 +4790,14 @@
 		self.path = path;
 		self.$path = arr;
 		type !== 1 && C.ready && refresh();
+
+		if (path.indexOf('?') === -1) {
+			if (M.paths[path])
+				M.paths[path]++;
+			else
+				M.paths[path] = 1;
+		}
+
 		return self;
 	};
 
@@ -8267,8 +8291,18 @@
 		obj.path = path == TYPE_NULL ? null : path;
 
 		if (obj.track) {
-			for (var i = 0; i < obj.track.length; i++)
-				obj.track[i] = path + '.' + obj.track[i];
+			for (var i = 0; i < obj.track.length; i++) {
+				var objk = obj.track[i] = path + '.' + obj.track[i];
+				if (M.paths[objk])
+					M.paths[objk]++;
+				else
+					M.paths[objk] = 1;
+			}
+		} else {
+			if (M.paths[obj.path])
+				M.paths[obj.path]++;
+			else
+				M.paths[obj.path] = 1;
 		}
 
 		if (isclick) {
