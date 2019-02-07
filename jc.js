@@ -155,7 +155,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.061;
+	M.version = 17.063;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5078,6 +5078,19 @@
 		return self;
 	};
 
+	PPC.off = function(name, fn) {
+		var self = this;
+		OFF('com' + self._id + '#' + name, fn);
+		return self;
+	};
+
+	PPC.caniuse = function(name) {
+		if (M.$components[name])
+			return 1;
+		if (lazycom[name])
+			return 2;
+	};
+
 	PPC.formatter = function(value, prepend) {
 		var self = this;
 
@@ -7013,6 +7026,7 @@
 	function parseDateFormat(format, val) {
 
 		format = format.split(REG_DATE);
+
 		var tmp = val.split(REG_DATE);
 		var dt = {};
 
@@ -7032,7 +7046,7 @@
 			}
 		}
 
-		return new Date(dt.y || 0, (dt.M || 1) - 1, dt.d || 0, h, dt.m || 0, dt.s || 0);
+		return new Date(dt.y || 0, (dt.M || 1) - 1, dt.d || 0, h || 0, dt.m || 0, dt.s || 0);
 	}
 
 	SP.parseDate = function(format) {
