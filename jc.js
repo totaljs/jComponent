@@ -155,7 +155,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.064;
+	M.version = 17.065;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5553,6 +5553,13 @@
 		};
 	};
 
+	W.SEEX = function(path, a, b, c, d) {
+		if (path.indexOf('.') === -1)
+			EXEC(path, a, b, c, d);
+		else
+			SET(path, a);
+	};
+
 	W.EXEC = function(path) {
 
 		var arg = [];
@@ -8956,8 +8963,8 @@
 			if (options.parent)
 				el = typeof(options.parent) === 'object' ? $(options.parent) : el.closest(options.parent);
 
-			size.viewWidth = el.width();
-			size.viewHeight = el.height();
+			size.viewWidth = el.width() + (options.offsetX || 0);
+			size.viewHeight = el.height() + (options.offsetY || 0);
 
 			// Safari iOS
 			if (md) {
