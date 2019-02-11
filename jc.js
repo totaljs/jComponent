@@ -155,7 +155,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.065;
+	M.version = 17.066;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7639,6 +7639,10 @@
 			return null;
 		}
 
+		$.fn.binder = function() {
+			return findinstance(this, '$jcbind');
+		};
+
 		$.fn.vbind = function() {
 			return findinstance(this, '$vbind');
 		};
@@ -7890,7 +7894,7 @@
 		var arr = binders[path];
 		for (var i = 0; i < arr.length; i++) {
 			var item = arr[i];
-			if (item.ticks !== ticks) {
+			if (!item.disabled && item.ticks !== ticks) {
 				item.ticks = ticks;
 				item.exec(GET(item.path), absolutePath);
 			}
@@ -8369,6 +8373,9 @@
 	JBP.exec = function(value, path, index, wakeup, can) {
 
 		var item = this;
+		if (item.disabled)
+			return;
+
 		var el = item.el;
 		if (index != null) {
 			if (item.child == null)
