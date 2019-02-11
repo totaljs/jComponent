@@ -155,7 +155,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.066;
+	M.version = 17.067;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8447,7 +8447,7 @@
 		}
 
 		if (item.hide && (value != null || !item.hide.$nn)) {
-			tmp = item.hide.call(el, value, path, el);
+			tmp = item.hide.call(item.el, value, path, item.el);
 			el.tclass('hidden', tmp);
 			if (tmp)
 				can = false;
