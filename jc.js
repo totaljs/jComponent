@@ -155,7 +155,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.067;
+	M.version = 17.068;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8275,9 +8275,10 @@
 
 			if (path.indexOf('?') !== -1) {
 				var scope = initscopes(scopes);
-				if (scope)
+				if (scope) {
 					path = path.replace(REGSCOPEINLINE, scope.path);
-				else
+					obj.scope = scope.path;
+				} else
 					return;
 			}
 
@@ -8409,6 +8410,9 @@
 			}, item.delay, item, value, path, index, can);
 			return;
 		}
+
+		if (item.scope)
+			current_scope = item.scope;
 
 		if (item.$init) {
 			if (item.strict && item.path !== path)
