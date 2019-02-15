@@ -155,7 +155,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.068;
+	M.version = 17.069;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1775,7 +1775,6 @@
 			return;
 
 		!wasset && set(path, get(path), true);
-
 		var state = [];
 
 		if (type === undefined)
@@ -4269,7 +4268,16 @@
 
 		if (path.length > self.path.length) {
 			var index = path.lastIndexOf('.', self.path.length);
-			return index === -1 ? false : self.path === path.substring(0, index);
+
+			for (var i = 0; i < self.path.length; i++) {
+				var a = path.charAt(i);
+				var b = self.path.charAt(i);
+				if (a !== b)
+					return false;
+			}
+
+			var c = path.charAt(i);
+			return c === '.' || c === '[' || c === '';
 		}
 
 		for (var i = 0, length = self.$path.length; i < length; i++) {
@@ -8090,8 +8098,8 @@
 							case 'exec':
 								k = 'change';
 								break;
-							case 'disable':
-								k = 'disabled';
+							case 'disabled': // internal rewrite because binder contains '.disabled` property
+								k = 'disable';
 								backup = true;
 								break;
 							case 'value':
@@ -8110,7 +8118,7 @@
 							case 'title':
 							case 'html':
 							case 'text':
-							case 'disabled':
+							case 'disable':
 							case 'enabled':
 							case 'checked':
 								backup = true;
@@ -8155,7 +8163,7 @@
 							fn = new Function('return ' + v)();
 
 						if (backup && notnull)
-							obj[k + 'bk'] = (k == 'src' || k == 'href' || k == 'title') ? e.attr(k) : (k == 'html' || k == 'text') ? e.html() : k == 'val' ? e.val() : (k == 'disabled' || k == 'checked') ? e.prop(k) : '';
+							obj[k + 'bk'] = (k == 'src' || k == 'href' || k == 'title') ? e.attr(k) : (k == 'html' || k == 'text') ? e.html() : k == 'val' ? e.val() : (k == 'disable' || k == 'checked') ? e.prop(k) : '';
 
 						if (s) {
 
@@ -8289,9 +8297,21 @@
 				!obj.com.$data[path] && (obj.com.$data[path] = { value: null, items: [] });
 				obj.com.$data[path].items.push(obj);
 			} else {
+				var skiparr = false;
 				for (var i = 0, length = arr.length; i < length; i++) {
 					p += (p ? '.' : '') + arr[i];
 					var k = i === length - 1 ? p : '!' + p;
+					if (!skiparr) {
+						var index = arr[i].indexOf('[');
+						if (index !== -1) {
+							var ka = k.substring(0, k.length - index);
+							if (binders[ka])
+								binders[ka].push(obj);
+							else
+								binders[ka] = [obj];
+							skiparr = true;
+						}
+					}
 					if (binders[k])
 						binders[k].push(obj);
 					else
@@ -8538,9 +8558,9 @@
 			item.template.$compile && W.COMPILE();
 		}
 
-		if (item.disabled && (can || item.disabled.$nv)) {
-			if (value != null || !item.disabled.$nn) {
-				tmp = item.disabled.call(el, value, path, el);
+		if (item.disable && (can || item.disable.$nv)) {
+			if (value != null || !item.disable.$nn) {
+				tmp = item.disable.call(el, value, path, el);
 				el.prop('disabled', tmp == true);
 			} else
 				el.prop('disabled', item.disabledbk == true);
