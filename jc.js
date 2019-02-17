@@ -46,6 +46,11 @@
 	var T_CHECKED = 'checked';
 	var T_VALUE = 'value';
 	var T_RESIZE = 'resize';
+	var T_FALSE = 'false';
+	var T_TRUE = 'true';
+	var T_RESPONSE = 'response';
+	var T_VALID = 'valid';
+	var T_DIRTY = 'dirty';
 
 	var LCOMPARER = window.Intl ? window.Intl.Collator().compare : function(a, b) {
 		return a.localeCompare(b);
@@ -54,6 +59,7 @@
 	var C = {}; // COMPILER
 	var M = {}; // MAIN
 	var W = window;
+	var LS = W.localStorage;
 
 	var warn = W.WARN = function() {
 		W.console && W.console.warn.apply(W.console, arguments);
@@ -66,9 +72,9 @@
 
 	try {
 		var pmk = 'jc.test';
-		W.localStorage.setItem(pmk, '1');
-		W.isPRIVATEMODE = W.localStorage.getItem(pmk) !== '1';
-		W.localStorage.removeItem(pmk);
+		LS.setItem(pmk, '1');
+		W.isPRIVATEMODE = LS.getItem(pmk) !== '1';
+		LS.removeItem(pmk);
 	} catch (e) {
 		W.isPRIVATEMODE = true;
 	}
@@ -607,7 +613,7 @@
 				output.error = self.status > 399;
 				output.headers = parseHeaders(self.getAllResponseHeaders());
 
-				EMIT('response', output);
+				EMIT(T_RESPONSE, output);
 
 				if (!output.process || output.cancel)
 					return;
@@ -921,7 +927,7 @@
 	function com_valid(path, value, onlyComponent) {
 
 		var isExcept = value instanceof Array;
-		var key = 'valid' + path + (isExcept ? '>' + value.join('|') : '');
+		var key = T_VALID + path + (isExcept ? '>' + value.join('|') : '');
 		var except = null;
 
 		if (isExcept) {
@@ -991,7 +997,7 @@
 				valid = false;
 		}
 
-		clear('valid');
+		clear(T_VALID);
 		cache[key] = valid;
 		state(arr, 1, 1);
 		return valid;
@@ -1000,7 +1006,7 @@
 	function com_dirty(path, value, onlyComponent, skipEmitState) {
 
 		var isExcept = value instanceof Array;
-		var key = 'dirty' + path + (isExcept ? '>' + value.join('|') : '');
+		var key = T_DIRTY + path + (isExcept ? '>' + value.join('|') : '');
 		var except = null;
 
 		if (isExcept) {
@@ -1069,7 +1075,7 @@
 				dirty = false;
 		}
 
-		clear('dirty');
+		clear(T_DIRTY);
 		cache[key] = dirty;
 
 		// For double hitting component.state() --> look into COM.invalid()
@@ -1526,7 +1532,7 @@
 				output.status = req.status || 999;
 				output.text = s;
 				output.headers = parseHeaders(req.getAllResponseHeaders());
-				EMIT('response', output);
+				EMIT(T_RESPONSE, output);
 				if (output.process && !output.cancel) {
 					if (typeof(callback) === TYPE_S)
 						remap(callback, output.response);
@@ -1565,7 +1571,7 @@
 
 				current_scope = curr_scope;
 
-				EMIT('response', output);
+				EMIT(T_RESPONSE, output);
 
 				if (output.cancel || !output.process)
 					return;
@@ -1665,7 +1671,7 @@
 
 	W.CLEARCACHE = function() {
 		if (!W.isPRIVATEMODE) {
-			var rem = localStorage.removeItem;
+			var rem = LS.removeItem;
 			var k = M.$localstorage;
 			rem(k);
 			rem(k + '.cache');
@@ -1754,7 +1760,7 @@
 
 		var local = MD.localstorage && timeout > 10000;
 		blocked[key] = now + timeout;
-		!W.isPRIVATEMODE && local && localStorage.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
+		!W.isPRIVATEMODE && local && LS.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
 		callback && callback();
 		return false;
 	};
@@ -1825,7 +1831,7 @@
 			com.state && state.push(com);
 		}
 
-		reset && clear('dirty', 'valid');
+		reset && clear(T_DIRTY, T_VALID);
 
 		for (var i = 0, length = state.length; i < length; i++)
 			state[i].stateX(1, 4);
@@ -1995,7 +2001,7 @@
 				com.valid(com.validate(result), true);
 		}
 
-		reset && clear('dirty', 'valid');
+		reset && clear(T_DIRTY, T_VALID);
 
 		for (var i = 0, length = state.length; i < length; i++)
 			state[i].stateX(type, 5);
@@ -2142,7 +2148,7 @@
 			}
 		}
 
-		clear('valid');
+		clear(T_VALID);
 		state(arr, 1, 1);
 		return valid;
 	};
@@ -2164,7 +2170,7 @@
 				valid = false;
 		}
 
-		clear('valid');
+		clear(T_VALID);
 		state(arr, 1, 1);
 		return valid;
 	}
@@ -2231,7 +2237,7 @@
 		}
 
 		if (reset) {
-			clear('valid', 'dirty');
+			clear(T_VALID, T_DIRTY);
 			state(arr, 3, 3);
 		}
 	};
@@ -2273,7 +2279,7 @@
 			}
 		}
 
-		clear('valid', 'dirty');
+		clear(T_VALID, T_DIRTY);
 		state(arr, 1, 3);
 	};
 
@@ -2314,7 +2320,7 @@
 			return;
 
 		var comp = container ? attrcom(container, 'compile') : '1';
-		if (comp === '0' || comp === 'false')
+		if (comp === '0' || comp === T_FALSE)
 			return;
 
 		if (level == null || level === 0) {
@@ -2326,7 +2332,7 @@
 		}
 
 		var b = null;
-		var released = container ? attrcom(container, 'released') === 'true' : false;
+		var released = container ? attrcom(container, 'released') === T_TRUE : false;
 		var tmp = attrscope(container);
 
 		var binders = null;
@@ -2360,13 +2366,13 @@
 					continue;
 
 				comp = el.getAttribute('data-jc-compile');
-				if (comp === '0' || comp === 'false')
+				if (comp === '0' || comp === T_FALSE)
 					continue;
 
 				if (el.$com === undefined) {
 					name = attrcom(el);
 					if (name != null) {
-						released && el.setAttribute(ATTRREL, 'true');
+						released && el.setAttribute(ATTRREL, T_TRUE);
 						onComponent(name || '', el, level, scopes);
 					}
 				}
@@ -2381,7 +2387,7 @@
 				}
 
 				comp = el.getAttribute('data-jc-compile');
-				if (comp !== '0' && comp !== 'false')
+				if (comp !== '0' && comp !== T_FALSE)
 					el.childNodes.length && el.tagName !== 'SCRIPT' && REGCOM.test(el.innerHTML) && sub.indexOf(el) === -1 && sub.push(el);
 			}
 		}
@@ -2533,12 +2539,12 @@
 		if (MD.localstorage) {
 			var cache;
 			try {
-				cache = localStorage.getItem(M.$localstorage + '.cache');
+				cache = LS.getItem(M.$localstorage + '.cache');
 				if (cache && typeof(cache) === TYPE_S)
 					storage = PARSE(cache);
 			} catch (e) {}
 			try {
-				cache = localStorage.getItem(M.$localstorage + '.blocked');
+				cache = LS.getItem(M.$localstorage + '.blocked');
 				if (cache && typeof(cache) === TYPE_S)
 					blocked = PARSE(cache);
 			} catch (e) {}
@@ -2799,7 +2805,7 @@
 				dom.$com = obj;
 
 				if (!obj.$noscope)
-					obj.$noscope = attrcom(el, 'noscope') === 'true';
+					obj.$noscope = attrcom(el, 'noscope') === T_TRUE;
 
 				var code = obj.path ? obj.path.charCodeAt(0) : 0;
 				if (!obj.$noscope && scope.length && !obj.$pp) {
@@ -2831,7 +2837,7 @@
 				if (template)
 					obj.template = template;
 
-				if (attrcom(el, 'released') === 'true')
+				if (attrcom(el, 'released') === T_TRUE)
 					obj.$released = true;
 
 				if (attrcom(el, 'url')) {
@@ -3140,7 +3146,7 @@
 
 		}, function() {
 			C.importing--;
-			clear('valid', 'dirty', 'find');
+			clear(T_VALID, T_DIRTY, 'find');
 			count && canCompile && compile();
 		});
 	}
@@ -3428,7 +3434,7 @@
 
 			if (!$loaded) {
 				$loaded = true;
-				clear('valid', 'dirty', 'find');
+				clear(T_VALID, T_DIRTY, 'find');
 				EMIT('init');
 				EMIT('ready');
 			}
@@ -3901,7 +3907,7 @@
 			}
 		}
 
-		MD.localstorage && is2 && !W.isPRIVATEMODE && localStorage.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
+		MD.localstorage && is2 && !W.isPRIVATEMODE && LS.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
 
 		for (var key in storage) {
 			var item = storage[key];
@@ -3920,7 +3926,7 @@
 	}
 
 	function save() {
-		!W.isPRIVATEMODE && MD.localstorage && localStorage.setItem(M.$localstorage + '.cache', JSON.stringify(storage));
+		!W.isPRIVATEMODE && MD.localstorage && LS.setItem(M.$localstorage + '.cache', JSON.stringify(storage));
 	}
 
 	function refresh() {
@@ -4205,7 +4211,7 @@
 
 				if (t.type === 'checkbox') {
 					var tmp = value != null ? value.toString().toLowerCase() : '';
-					tmp = tmp === 'true' || tmp === '1' || tmp === 'on';
+					tmp = tmp === T_TRUE || tmp === '1' || tmp === 'on';
 					tmp !== t.checked && (t.checked = tmp);
 					return;
 				}
@@ -4446,7 +4452,7 @@
 		var childs = (container || self.element).find(ATTRCOM);
 		for (var j = 0; j < childs.length; j++) {
 			var el = $(childs[j]);
-			el.attrd('jc-released', value ? 'true' : 'false');
+			el.attrd('jc-released', value ? T_TRUE : T_FALSE);
 			var com = el[0].$com;
 			if (com instanceof Object) {
 				if (com instanceof Array) {
@@ -4512,7 +4518,7 @@
 		if (remove)
 			prev.off().remove();
 		else
-			self.attrd('jc-replaced', 'true');
+			self.attrd('jc-replaced', T_TRUE);
 
 		self.element = $(el);
 		self.dom = self.element[0];
@@ -5040,7 +5046,7 @@
 
 		self.$valid = value;
 		self.$validate = false;
-		clear('valid');
+		clear(T_VALID);
 		!noEmit && self.state && self.stateX(1, 1);
 		return self;
 	};
@@ -5069,7 +5075,7 @@
 			return self;
 
 		self.$dirty = value;
-		clear('dirty');
+		clear(T_DIRTY);
 		!noEmit && self.state && self.stateX(2, 2);
 		return self;
 	};
@@ -5098,7 +5104,7 @@
 		var el = self.element;
 		removewaiter(self);
 		el.removeData(ATTRDATA);
-		el.attr(ATTRDEL, 'true').find(ATTRCOM).attr(ATTRDEL, 'true');
+		el.attr(ATTRDEL, T_TRUE).find(ATTRCOM).attr(ATTRDEL, T_TRUE);
 		self.$removed = 1;
 		self.removed = true;
 		OFF('com' + self._id + '#');
@@ -6392,8 +6398,8 @@
 			var k = kv[0].trim();
 			var v = kv[1].trim().replace(/\0/g, ':').env();
 
-			if (v === 'true' || v === 'false')
-				v = v === 'true';
+			if (v === T_TRUE || v === T_FALSE)
+				v = v === T_TRUE;
 			else if (num.test(v)) {
 				var tmp = +v;
 				if (!isNaN(tmp))
@@ -7786,7 +7792,7 @@
 				if (self.$jckeypress === undefined) {
 					var tmp = attrcom(self, 'keypress');
 					if (tmp)
-						self.$jckeypress = tmp === 'true';
+						self.$jckeypress = tmp === T_TRUE;
 					else if (com.config.$realtime != null)
 						self.$jckeypress = com.config.$realtime === true;
 					else if (com.config.$binding)
@@ -7801,7 +7807,7 @@
 					self.$jcdelay = +(attrcom(self, 'keypress-delay') || com.config.$delay || MD.delay);
 
 				if (self.$jconly === undefined)
-					self.$jconly = attrcom(self, 'keypress-only') === 'true' || com.config.$keypress === true || com.config.$binding === 2;
+					self.$jconly = attrcom(self, 'keypress-only') === T_TRUE || com.config.$keypress === true || com.config.$binding === 2;
 
 				self.$jctimeout && clearTimeout(self.$jctimeout);
 				self.$jctimeout = setTimeout(keypressdelay, self.$jcdelay, self);
