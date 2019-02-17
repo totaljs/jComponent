@@ -155,7 +155,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.069;
+	M.version = 17.071;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8391,6 +8391,12 @@
 	function jBinder() {}
 
 	var JBP = jBinder.prototype;
+
+	JBP.refresh = function() {
+		var t = this;
+		t.exec(GET(t.path), t.path);
+	};
+
 	JBP.exec = function(value, path, index, wakeup, can) {
 
 		var item = this;
