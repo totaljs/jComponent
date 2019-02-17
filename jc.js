@@ -162,7 +162,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.072;
+	M.version = 17.073;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2080,6 +2080,15 @@
 		if (scope === true) {
 			scope = null;
 			RESET(path, true);
+		} else if (typeof(scope) === TYPE_FN) {
+			var val = get(path);
+			if (val == null) {
+				setTimeout(function(path, scope) {
+					GET(path, scope);
+				}, MD.delaywatcher, path, scope);
+			} else
+				scope(val);
+			return;
 		}
 		return get(path, scope);
 	};
