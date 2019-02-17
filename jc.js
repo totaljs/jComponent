@@ -39,6 +39,13 @@
 	var KEY_ENV = 'environment';
 	var REG_DATE = /\.|-|\/|\\|:|\s/g;
 	var REG_TIME = /am|pm/i;
+	var T_DISABLED = 'disabled';
+	var T_HIDDEN = 'hidden';
+	var T_WIDTH = 'width';
+	var T_HEIGHT = 'height';
+	var T_CHECKED = 'checked';
+	var T_VALUE = 'value';
+	var T_RESIZE = 'resize';
 
 	var LCOMPARER = window.Intl ? window.Intl.Collator().compare : function(a, b) {
 		return a.localeCompare(b);
@@ -155,7 +162,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.071;
+	M.version = 17.072;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -411,7 +418,7 @@
 		if (expression.indexOf('return') === -1)
 			expression = 'return ' + expression;
 
-		exp = new Function('value', 'path', expression);
+		exp = new Function(T_VALUE, 'path', expression);
 		temp[key] = exp;
 		return exp.call(val, val, path);
 	};
@@ -3005,7 +3012,7 @@
 			d.config = conf;
 			sc.$scopedata = d;
 
-			var tmp = meta[2] || attrcom(sc, 'value');
+			var tmp = meta[2] || attrcom(sc, T_VALUE);
 			if (tmp) {
 				var fn = new Function('return ' + tmp);
 				defaults['#' + HASH(p)] = fn; // store by path (DEFAULT() --> can reset scope object)
@@ -3258,7 +3265,7 @@
 				obj.$prepared = true;
 				obj.$ready = true;
 
-				tmp = attrcom(obj, 'value');
+				tmp = attrcom(obj, T_VALUE);
 
 				if (tmp) {
 					if (!defaults[tmp])
@@ -4372,7 +4379,7 @@
 			if (v)
 				callback.call(t);
 			else
-				t.$waiter('hidden', callback);
+				t.$waiter(T_HIDDEN, callback);
 		}
 		return v;
 	};
@@ -4397,7 +4404,7 @@
 			if (v)
 				callback.call(t, v);
 			else
-				t.$waiter('width', callback);
+				t.$waiter(T_WIDTH, callback);
 		}
 		return v;
 	};
@@ -4409,7 +4416,7 @@
 			if (v)
 				callback.call(t, v);
 			else
-				t.$waiter('height', callback);
+				t.$waiter(T_HEIGHT, callback);
 		}
 		return v;
 	};
@@ -4634,7 +4641,7 @@
 		if (typeof(cls) !== TYPE_S) {
 			timeout = visible;
 			visible = cls;
-			cls = 'hidden';
+			cls = T_HIDDEN;
 			manual = true;
 		}
 
@@ -5393,7 +5400,7 @@
 			return;
 		}
 
-		M.$components[name] && warn('Components: Overwriting component:', name);
+		M.$components[name] && warn('Overwriting component:', name);
 		var a = M.$components[name] = { name: name, config: config, declaration: declaration, shared: {}, dependencies: dependencies instanceof Array ? dependencies : null };
 		EMIT('component.compile', name, a);
 	};
@@ -6885,11 +6892,15 @@
 			if (decimals.charAt(0) === '[') {
 				tmp = ENV(decimals.substring(1, decimals.length - 1));
 				if (tmp) {
-					decimals = tmp.decimals;
-					if (tmp.separator)
-						separator = tmp.separator;
-					if (tmp.decimalseparator)
-						separatorDecimal = tmp.decimalseparator;
+					if (tmp >= 0) {
+						decimals = tmp;
+					} else {
+						decimals = tmp.decimals;
+						if (tmp.separator)
+							separator = tmp.separator;
+						if (tmp.decimalseparator)
+							separatorDecimal = tmp.decimalseparator;
+					}
 				}
 			} else {
 				tmp = separator;
@@ -7744,7 +7755,7 @@
 
 		resize();
 
-		$(window).on('resize', resize);
+		$(window).on(T_RESIZE, resize);
 		$(document).ready(function() {
 
 			if ($ready) {
@@ -8034,7 +8045,7 @@
 						})(v);
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', 'template', 'click', 'format') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', 'template', 'click', 'format', 'empty') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -8082,8 +8093,14 @@
 						}
 
 						switch (k) {
-							case 'format':
+							case 'empty':
 								fn = v;
+								break;
+							case 'format':
+								if ((/^\d+$/).test(v))
+									fn = +v;
+								else
+									fn = v;
 								break;
 							case 'click':
 								isclick = true;
@@ -8095,17 +8112,17 @@
 							case 'strict':
 								obj[k] = true;
 								continue;
-							case 'hidden':
+							case T_HIDDEN:
 								k = 'hide';
 								break;
 							case 'exec':
 								k = 'change';
 								break;
-							case 'disabled': // internal rewrite because binder contains '.disabled` property
+							case T_DISABLED: // internal rewrite because binder contains '.disabled` property
 								k = 'disable';
 								backup = true;
 								break;
-							case 'value':
+							case T_VALUE:
 								k = 'val';
 								backup = true;
 								break;
@@ -8123,7 +8140,7 @@
 							case 'text':
 							case 'disable':
 							case 'enabled':
-							case 'checked':
+							case T_CHECKED:
 								backup = true;
 								break;
 
@@ -8166,7 +8183,7 @@
 							fn = new Function('return ' + v)();
 
 						if (backup && notnull)
-							obj[k + 'bk'] = (k == 'src' || k == 'href' || k == 'title') ? e.attr(k) : k == 'html' ? e.html() : k == 'text' ? e.text() : k == 'val' ? e.val() : k == 'checked' ? e.prop(k) : k === 'disable' ? e.prop('disabled') : k === 'enabled' ? (e.prop('disabled') == false) : '';
+							obj[k + 'bk'] = (k == 'src' || k == 'href' || k == 'title') ? e.attr(k) : k == 'html' ? e.html() : k == 'text' ? e.text() : k == 'val' ? e.val() : k == T_CHECKED ? e.prop(k) : k === 'disable' ? e.prop(T_DISABLED) : k === 'enabled' ? (e.prop(T_DISABLED) == false) : '';
 
 						if (s) {
 
@@ -8273,6 +8290,9 @@
 			o.selector = key.charAt(0) === '-' ? ATTRCOM : key;
 			obj.child.push(o);
 		}
+
+		if (!obj.empty)
+			obj.empty = '';
 
 		if (cls.length)
 			obj.classes = cls;
@@ -8474,14 +8494,14 @@
 
 		if (item.show && (value != null || !item.show.$nn)) {
 			tmp = item.show.call(item.el, value, path, item.el);
-			el.tclass('hidden', !tmp);
+			el.tclass(T_HIDDEN, !tmp);
 			if (!tmp)
 				can = false;
 		}
 
 		if (item.hide && (value != null || !item.hide.$nn)) {
 			tmp = item.hide.call(item.el, value, path, item.el);
-			el.tclass('hidden', tmp);
+			el.tclass(T_HIDDEN, tmp);
 			if (tmp)
 				can = false;
 		}
@@ -8539,25 +8559,25 @@
 		if (item.html && (can || item.html.$nv)) {
 			if (value != null || !item.html.$nn) {
 				tmp = item.html.call(el, value, path, el);
-				el.html(tmp == null ? (item.htmlbk || '') : item.format ? tmp.format(item.format) : tmp);
+				el.html(tmp == null ? (item.htmlbk || item.empty) : item.format ? tmp.format(item.format) : tmp);
 			} else
-				el.html(item.htmlbk || '');
+				el.html(item.htmlbk || item.empty);
 		}
 
 		if (item.text && (can || item.text.$nv)) {
 			if (value != null || !item.text.$nn) {
 				tmp = item.text.call(el, value, path, el);
-				el.text(tmp == null ? (item.textbk || '') : item.format ? tmp.format(item.format) : tmp);
+				el.text(tmp == null ? (item.textbk || item.empty) : item.format ? tmp.format(item.format) : tmp);
 			} else
-				el.html(item.htmlbk || '');
+				el.html(item.htmlbk || item.empty);
 		}
 
 		if (item.val && (can || item.val.$nv)) {
 			if (value != null || !item.val.$nn) {
 				tmp = item.val.call(el, value, path, el);
-				el.val(tmp == null ? (item.valbk || '') : item.format ? tmp.format(item.format) : tmp);
+				el.val(tmp == null ? (item.valbk || item.empty) : item.format ? tmp.format(item.format) : tmp);
 			} else
-				el.val(item.valbk || '');
+				el.val(item.valbk || item.empty);
 		}
 
 		if (item.template && (can || item.template.$nv) && (value != null || !item.template.$nn)) {
@@ -8570,49 +8590,49 @@
 		if (item.disable && (can || item.disable.$nv)) {
 			if (value != null || !item.disable.$nn) {
 				tmp = item.disable.call(el, value, path, el);
-				el.prop('disabled', tmp == true);
+				el.prop(T_DISABLED, tmp == true);
 			} else
-				el.prop('disabled', item.disablebk == true);
+				el.prop(T_DISABLED, item.disablebk == true);
 		}
 
 		if (item.enabled && (can || item.enabled.$nv)) {
 			if (value != null || !item.enabled.$nn) {
 				tmp = item.enabled.call(el, value, path, el);
-				el.prop('disabled', !tmp);
+				el.prop(T_DISABLED, !tmp);
 			} else
-				el.prop('disabled', item.enabledbk == false);
+				el.prop(T_DISABLED, item.enabledbk == false);
 		}
 
 		if (item.checked && (can || item.checked.$nv)) {
 			if (value != null || !item.checked.$nn) {
 				tmp = item.checked.call(el, value, path, el);
-				el.prop('checked', tmp == true);
+				el.prop(T_CHECKED, tmp == true);
 			} else
-				el.prop('checked', item.checkedbk == true);
+				el.prop(T_CHECKED, item.checkedbk == true);
 		}
 
 		if (item.title && (can || item.title.$nv)) {
 			if (value != null || !item.title.$nn) {
 				tmp = item.title.call(el, value, path, el);
-				el.attr('title', tmp == null ? (item.titlebk || '') : item.format ? tmp.format(item.format) : tmp);
+				el.attr('title', tmp == null ? (item.titlebk || item.empty) : item.format ? tmp.format(item.format) : tmp);
 			} else
-				el.attr('title', item.titlebk || '');
+				el.attr('title', item.titlebk || item.empty);
 		}
 
 		if (item.href && (can || item.href.$nv)) {
 			if (value != null || !item.href.$nn) {
 				tmp = item.href.call(el, value, path, el);
-				el.attr('href', tmp == null ? (item.hrefbk || '') : item.format ? tmp.format(item.format) : tmp);
+				el.attr('href', tmp == null ? (item.hrefbk || item.empty) : item.format ? tmp.format(item.format) : tmp);
 			} else
-				el.attr(item.hrefbk || '');
+				el.attr(item.hrefbk || item.empty);
 		}
 
 		if (item.src && (can || item.src.$nv)) {
 			if (value != null || !item.src.$nn) {
 				tmp = item.src.call(el, value, path, el);
-				el.attr('src', tmp == null ? (item.srcbk || '') : item.format ? tmp.format(item.format) : tmp);
+				el.attr('src', tmp == null ? (item.srcbk || item.empty) : item.format ? tmp.format(item.format) : tmp);
 			} else
-				el.attr('src', item.srcbk || '');
+				el.attr('src', item.srcbk || item.empty);
 		}
 
 		if (item.setter && (can || item.setter.$nv) && (value != null || !item.setter.$nn))
@@ -8643,8 +8663,8 @@
 	}
 
 	function isValue(val) {
-		var index = val.indexOf('value');
-		return index !== -1 ? (((/\W/).test(val)) || val === 'value') : false;
+		var index = val.indexOf(T_VALUE);
+		return index !== -1 ? (((/\W/).test(val)) || val === T_VALUE) : false;
 	}
 
 	function Plugin(name, fn) {
@@ -9001,7 +9021,7 @@
 			delayresize = null;
 
 			if (options.parent)
-				el = typeof(options.parent) === 'object' ? $(options.parent) : el.closest(options.parent);
+				el = typeof(options.parent) === TYPE_O ? $(options.parent) : el.closest(options.parent);
 
 			size.viewWidth = el.width() + (options.offsetX || 0);
 			size.viewHeight = el.height() + (options.offsetY || 0);
@@ -9015,11 +9035,11 @@
 				if (size.viewWidth > screen.width)
 					size.viewWidth = screen.width;
 
-				area.css('width', size.viewWidth);
-				area.css('height', size.viewHeight);
+				area.css(T_WIDTH, size.viewWidth);
+				area.css(T_HEIGHT, size.viewHeight);
 			} else {
-				area.css('width', size.viewWidth + size.margin);
-				area.css('height', size.viewHeight + size.margin);
+				area.css(T_WIDTH, size.viewWidth + size.margin);
+				area.css(T_HEIGHT, size.viewHeight + size.margin);
 			}
 
 			size.scrollWidth = a.scrollWidth;
@@ -9044,7 +9064,7 @@
 				size.vbarsize = (size.clientHeight * (size.viewHeight / size.scrollHeight)) >> 0;
 				if (size.vbarsize < 30)
 					size.vbarsize = 30;
-				bary.css('height', size.vbarsize);
+				bary.css(T_HEIGHT, size.vbarsize);
 			}
 
 			size.hbar = size.scrollWidth > size.clientWidth;
@@ -9052,12 +9072,12 @@
 				size.hbarsize = (size.clientWidth * (size.viewWidth / size.scrollWidth)) >> 0;
 				if (size.hbarsize < 30)
 					size.hbarsize = 30;
-				barx.css('width', size.hbarsize);
+				barx.css(T_WIDTH, size.hbarsize);
 			}
 
 			var n = 'ui-scrollbar-';
-			pathx.tclass((visibleX ? n : '') + 'hidden', !size.hbar);
-			pathy.tclass((visibleY ? n : '') + 'hidden', !size.vbar);
+			pathx.tclass((visibleX ? n : '') + T_HIDDEN, !size.hbar);
+			pathy.tclass((visibleY ? n : '') + T_HIDDEN, !size.vbar);
 
 			if (visibleX && !size.hbar)
 				size.hbar = true;
@@ -9129,7 +9149,7 @@
 			area.off();
 			pathx.off();
 			pathy.off();
-			OFF('resize', self.resize);
+			OFF(T_RESIZE, self.resize);
 			var index = M.scrollbars.indexOf(self);
 			if (index !== -1)
 				M.scrollbars.splice(index, 1);
@@ -9145,8 +9165,8 @@
 		};
 
 		if (options.autoresize == null || options.autoresize) {
-			$(window).on('resize', onresize);
-			ON('resize', self.resize);
+			$(window).on(T_RESIZE, onresize);
+			ON(T_RESIZE, self.resize);
 		}
 
 		resize_visible();
