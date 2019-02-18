@@ -168,7 +168,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.074;
+	M.version = 17.075;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2813,7 +2813,12 @@
 								obj.setPath(scope.path + '.' + obj.path, 2);
 								is = true;
 							}
+						} else {
+							var pn = dom.parentNode;
+							if (pn && !pn.$noscope)
+								pn.$noscope = true;
 						}
+
 					} else {
 						obj.$$path = EMPTYARRAY;
 						obj.path = '';
@@ -2954,6 +2959,10 @@
 
 		el = el.parentNode;
 
+		// For quick DOM travelsation (this is a simple cache)
+		if (el && el.$noscope)
+			return;
+
 		while (el && el.tagName !== 'BODY') {
 
 			var path = el.getAttribute ? (el.getAttribute(ATTRSCOPE2) || el.getAttribute(ATTRSCOPE) || el.getAttribute(SCOPENAME)) : null;
@@ -2993,6 +3002,13 @@
 				scope.elements = [];
 
 				var parent = scope.parent;
+
+				if (!parent) {
+					var pn = el.parentNode;
+					if (pn)
+						pn.$noscope = true;
+				}
+
 				while (parent) {
 					scope.elements.push(parent.element[0]);
 					if (parent.isolated)
@@ -3045,8 +3061,11 @@
 
 				return scope;
 
-			} else
+			} else {
 				el = el.parentNode;
+				if (el && el.$noscope)
+					return;
+			}
 		}
 	}
 
@@ -4677,7 +4696,7 @@
 		return self;
 	};
 
-	PPC.noscope = PPC.noScope = function(value) {
+	PPC.noscope = function(value) {
 		var self = this;
 		self.$noscope = value === undefined ? true : value === true;
 		return self;
