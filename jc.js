@@ -168,7 +168,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.075;
+	M.version = 17.076;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7567,19 +7567,26 @@
 		};
 
 		$.fn.scope = function() {
-
-			if (!this.length)
+			var el = this;
+			if (!el.length)
 				return null;
 
-			var data = this[0].$scopedata;
+			el = el[0];
+
+			var data = el.$scopedata;
 			if (data)
 				return data;
-			var el = this.closest('[' + ATTRSCOPE + '],[' + ATTRSCOPE2 + ']');
-			if (el.length) {
-				data = el[0].$scopedata;
-				if (data)
-					return data;
+
+			el = el.parentNode;
+
+			while (el && el.tagName !== 'BODY') {
+				if (el.$scopedata)
+					return el.$scopedata;
+				if (el.$noscope)
+					return null;
+				el = el.parentNode;
 			}
+
 			return null;
 		};
 
@@ -8403,12 +8410,9 @@
 						return;
 
 					var el = $(t);
-					var scope;
+					var scope = el.scope();
 
-					click = click.replace(REGSCOPEINLINE, function() {
-						!scope && (scope = el.scope());
-						return scope ? scope.path : '?';
-					});
+					click = scope ? scope.makepath(click) : click;
 
 					var fn = GET(click);
 					if (fn) {
