@@ -2751,7 +2751,7 @@
 				var p = attrcom(el, 'path') || (meta ? meta[1] === TYPE_NULL ? '' : meta[1] : '') || obj._id;
 				var tmp = attrcom(el, 'config') || (meta ? meta[2] === TYPE_NULL ? '' : meta[2] : '');
 
-				if (p.charAt(0) === '%' || (tmp && tmp.indexOf('$noscope:')))
+				if (p.charAt(0) === '%' || (tmp && tmp.indexOf('$noscope:') !== -1))
 					obj.$noscope = true;
 
 				obj.setPath(pathmaker(p, 1, 1), 1);
