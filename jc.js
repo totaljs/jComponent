@@ -2950,24 +2950,18 @@
 		}, nextpending);
 	}
 
-	function attrscope(el) {
-		return attrcom(el, SCOPENAME) || el.getAttribute('data-' + SCOPENAME);
-	}
-
 	function findscope(el) {
 
 		el = el.parentNode;
 
 		while (el && el.tagName !== 'BODY') {
 
-			var path = el.getAttribute(SCOPENAME) || el.getAttribute(ATTRSCOPE2) || el.getAttribute(ATTRSCOPE);
+			var path = el.getAttribute ? (el.getAttribute(ATTRSCOPE2) || el.getAttribute(ATTRSCOPE) || el.getAttribute(SCOPENAME)) : null;
 			if (path) {
 
 				if (el.$scopedata)
 					return el.$scopedata;
 
-				// init scope
-				path = attrscope(el);
 				var independent = path.charAt(0) === '!';
 				if (independent)
 					path = path.substring(1);
