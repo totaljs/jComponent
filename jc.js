@@ -21,8 +21,6 @@
 	var ATTRDATA = 'jc';
 	var ATTRDEL = 'data-jc-removed';
 	var ATTRREL = 'data-jc-released';
-	var ATTRSCOPE = 'data-jc-scope';
-	var ATTRSCOPE2 = 'data-scope';
 	var SELINPUT = 'input,textarea,select';
 	var DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
 	var ACTRLS = { INPUT: true, TEXTAREA: true, SELECT: true };
@@ -30,6 +28,8 @@
 	var OK = Object.keys;
 	var MULTIPLE = ' + ';
 	var SCOPENAME = 'scope';
+	var ATTRSCOPE = 'data-jc-' + SCOPENAME;
+	var ATTRSCOPE2 = 'data-' + SCOPENAME;
 	var TYPE_FN = 'function';
 	var TYPE_S = 'string';
 	var TYPE_N = 'number';
@@ -168,7 +168,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.073;
+	M.version = 17.074;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2309,7 +2309,7 @@
 		return name ? el.attrd('jc-' + name) : (el.attrd('jc') || el.attrd('-') || el.attrd('--'));
 	}
 
-	function crawler(container, onComponent, level, scopes) {
+	function crawler(container, onComponent, level) {
 
 		if (container)
 			container = $(container)[0];
@@ -2323,21 +2323,9 @@
 		if (comp === '0' || comp === T_FALSE)
 			return;
 
-		if (level == null || level === 0) {
-			scopes = [];
-			if (container !== document.body) {
-				var scope = $(container).closest('[' + ATTRSCOPE + '],[' + ATTRSCOPE2 + ']');
-				scope && scope.length && scopes.push(scope[0]);
-			}
-		}
-
 		var b = null;
 		var released = container ? attrcom(container, 'released') === T_TRUE : false;
-		var tmp = attrscope(container);
-
 		var binders = null;
-
-		tmp && scopes.push(container);
 
 		if (!container.$jcbind) {
 			b = container.getAttribute('data-bind') || container.getAttribute('bind');
@@ -2348,7 +2336,7 @@
 		}
 
 		var name = attrcom(container);
-		!container.$com && name != null && onComponent(name, container, 0, scopes);
+		!container.$com && name != null && onComponent(name, container, 0);
 
 		var arr = container.childNodes;
 		var sub = [];
@@ -2373,7 +2361,7 @@
 					name = attrcom(el);
 					if (name != null) {
 						released && el.setAttribute(ATTRREL, T_TRUE);
-						onComponent(name || '', el, level, scopes);
+						onComponent(name || '', el, level);
 					}
 				}
 
@@ -2394,13 +2382,13 @@
 
 		for (var i = 0, length = sub.length; i < length; i++) {
 			el = sub[i];
-			el && crawler(el, onComponent, level, scopes && scopes.length ? scopes : []);
+			el && crawler(el, onComponent, level);
 		}
 
 		if (binders) {
 			for (var i = 0; i < binders.length; i++) {
 				var a = binders[i];
-				a.el.$jcbind = parsebinder(a.el, a.b, scopes);
+				a.el.$jcbind = parsebinder(a.el, a.b);
 			}
 		}
 	}
@@ -2626,7 +2614,7 @@
 
 		var has = false;
 
-		crawler(container, function(name, dom, level, scope) {
+		crawler(container, function(name, dom) {
 
 			var el = $(dom);
 			var meta = name.split(REGMETA);
@@ -2761,8 +2749,9 @@
 				obj.dom = dom;
 
 				var p = attrcom(el, 'path') || (meta ? meta[1] === TYPE_NULL ? '' : meta[1] : '') || obj._id;
+				var tmp = attrcom(el, 'config') || (meta ? meta[2] === TYPE_NULL ? '' : meta[2] : '');
 
-				if (p.charAt(0) === '%')
+				if (p.charAt(0) === '%' || (tmp && tmp.indexOf('$noscope:')))
 					obj.$noscope = true;
 
 				obj.setPath(pathmaker(p, 1, 1), 1);
@@ -2770,8 +2759,6 @@
 
 				// Default config
 				com.config && obj.reconfigure(com.config, NOOP);
-
-				var tmp = attrcom(el, 'config') || (meta ? meta[2] === TYPE_NULL ? '' : meta[2] : '');
 				tmp && obj.reconfigure(tmp, NOOP);
 
 				if (!obj.$init)
@@ -2808,26 +2795,33 @@
 					obj.$noscope = attrcom(el, 'noscope') === T_TRUE;
 
 				var code = obj.path ? obj.path.charCodeAt(0) : 0;
-				if (!obj.$noscope && scope.length && !obj.$pp) {
-					var output = initscopes(scope);
+				if (!obj.$noscope && !obj.$pp) {
+
+					// @TODO: v18 must contain this condition --> if (obj.path.indexOf('?') !== -1)
+					var scope = findscope(dom);
+					var is = false;
+
 					if (obj.path && code !== 33 && code !== 35) {
-						var is = (obj.path || '').indexOf('?') !== -1;
-						if (obj.path === '?') {
-							obj.setPath(output.path, 2);
-							is = true;
-						} else if (output.isnew || is) {
-							is && obj.setPath(obj.path.replace(REGSCOPEINLINE, output.path), 2);
-						} else {
-							obj.setPath(output.path + '.' + obj.path, 2);
-							is = true;
+						if (scope) {
+							is = (obj.path || '').indexOf('?') !== -1;
+							if (obj.path === '?') {
+								obj.setPath(scope.path, 2);
+								is = true;
+							} else if (scope.isnew || is) {
+								is && obj.setPath(scope.makepath(obj.path), 2);
+							} else {
+								obj.setPath(scope.path + '.' + obj.path, 2);
+								is = true;
+							}
 						}
 					} else {
 						obj.$$path = EMPTYARRAY;
 						obj.path = '';
 					}
+
 					if (is) {
-						obj.scope = output;
-						obj.pathscope = output.path;
+						obj.scope = scope;
+						obj.pathscope = scope.path;
 					}
 				}
 
@@ -2960,108 +2954,106 @@
 		return attrcom(el, SCOPENAME) || el.getAttribute('data-' + SCOPENAME);
 	}
 
-	function initscopes(scopes) {
+	function findscope(el) {
 
-		var scope = scopes[scopes.length - 1];
-		if (scope.$scopedata)
-			return scope.$scopedata;
+		el = el.parentNode;
 
-		var path = attrscope(scope);
-		var independent = path.charAt(0) === '!';
-		if (independent)
-			path = path.substring(1);
+		while (el && el.tagName !== 'BODY') {
 
-		var arr = [scope];
-		if (!independent) {
-			for (var i = scopes.length - 1; i > -1; i--) {
-				arr.push(scopes[i]);
-				if (attrscope(scopes[i]) === '!')
-					break;
-			}
-		}
+			var path = el.getAttribute(SCOPENAME) || el.getAttribute(ATTRSCOPE2) || el.getAttribute(ATTRSCOPE);
+			if (path) {
 
-		var absolute = '';
+				if (el.$scopedata)
+					return el.$scopedata;
 
-		arr.length && arr.reverse();
+				// init scope
+				path = attrscope(el);
+				var independent = path.charAt(0) === '!';
+				if (independent)
+					path = path.substring(1);
 
-		for (var i = 0, length = arr.length; i < length; i++) {
+				var meta = path.split(REGMETA);
+				if (meta.length > 1)
+					path = meta[0];
 
-			var sc = arr[i];
-			var p = sc.$scope || attrscope(sc);
+				var scope = new Scope();
+				var conf = (meta[1] || '').replace(/\$/g, '').parseConfig();
+				var isolated = path.charAt(0) === '!';
 
-			sc.$initialized = true;
+				scope.isolated = isolated || !!conf.isolated;
 
-			if (sc.$processed) {
-				absolute = p;
-				continue;
-			}
+				if (isolated)
+					path = path.substring(1);
 
-			var meta = p.split(REGMETA);
-			if (meta.length > 1)
-				p = meta[0];
+				if (!path || path === '?')
+					path = GUID(25).replace(/\d/g, '');
 
-			var conf = (meta[1] || '').replace(/\$/g, '').parseConfig();
+				scope._id = scope.ID = scope.id = GUID(10);
+				scope.element = $(el);
+				scope.isnew = !!el.getAttribute(ATTRSCOPE);
+				scope.config = conf;
+				el.$scopedata = scope;
 
-			sc.$processed = true;
-			sc.$isolated = p.charAt(0) === '!' || !!conf.isolated;
+				// find parent
+				scope.parent = findscope(el);
+				scope.elements = [];
 
-			if (sc.$isolated)
-				p = p.substring(1);
-
-			if (!p || p === '?')
-				p = GUID(25).replace(/\d/g, '');
-
-			if (sc.$isolated)
-				absolute = p;
-			else
-				absolute += (absolute ? '.' : '') + p;
-
-			sc.$scope = absolute;
-			var d = new Scope();
-			d._id = d.ID = d.id = GUID(10);
-			d.path = absolute;
-			d.elements = arr.slice(0, i + 1);
-			d.isolated = sc.$isolated;
-			d.element = $(arr[0]);
-			d.isnew = !!arr[0].getAttribute('data-' + SCOPENAME);
-			d.config = conf;
-			sc.$scopedata = d;
-
-			var tmp = meta[2] || attrcom(sc, T_VALUE);
-			if (tmp) {
-				var fn = new Function('return ' + tmp);
-				defaults['#' + HASH(p)] = fn; // store by path (DEFAULT() --> can reset scope object)
-				tmp = fn();
-				set(p, tmp);
-				emitwatch(p, tmp, 1);
-			}
-
-			// Applies classes
-			var cls = conf.class || attrcom(sc, 'class');
-			if (cls) {
-				(function(cls) {
-					cls = cls.split(' ');
-					setTimeout(function() {
-						var el = $(sc);
-						for (var i = 0, length = cls.length; i < length; i++)
-							el.tclass(cls[i]);
-					}, 5);
-				})(cls);
-			}
-
-			tmp = conf.init || attrcom(sc, 'init');
-			if (tmp) {
-				tmp = GET(tmp);
-				if (tmp) {
-					var a = current_owner;
-					current_owner = SCOPENAME + d._id;
-					tmp.call(d, p, $(sc));
-					current_owner = a;
+				var parent = scope.parent;
+				while (parent) {
+					scope.elements.push(parent.element[0]);
+					if (parent.isolated)
+						break;
+					parent = parent.parent;
+					if (parent == null)
+						break;
 				}
-			}
-		}
 
-		return scope.$scopedata;
+				scope.elements.push(el);
+
+				if (scope.isolated)
+					scope.path = path;
+				else if (scope.parent)
+					scope.path = scope.parent.path + '.' + path;
+				else
+					scope.path = path;
+
+				var tmp = meta[2] || attrcom(el, T_VALUE);
+				if (tmp) {
+					var fn = new Function('return ' + tmp);
+					defaults['#' + HASH(path)] = fn; // store by path (DEFAULT() --> can reset scope object)
+					tmp = fn();
+					set(path, tmp);
+					emitwatch(path, tmp, 1);
+				}
+
+				// Applies classes
+				var cls = conf.class || attrcom(el, 'class');
+				if (cls) {
+					(function(cls) {
+						cls = cls.split(' ');
+						setTimeout(function() {
+							for (var i = 0, length = cls.length; i < length; i++)
+								scope.element.tclass(cls[i]);
+						}, 5);
+					})(cls);
+				}
+
+				tmp = conf.init || attrcom(el, 'init');
+				if (tmp) {
+					tmp = GET(tmp);
+					if (tmp) {
+						var a = current_owner;
+						current_owner = SCOPENAME + scope._id;
+						tmp.call(scope, path, scope.element);
+						current_owner = a;
+					}
+				}
+
+				return scope;
+
+			} else
+				el = el.parentNode;
+		}
 	}
 
 	function download() {
@@ -3964,6 +3956,19 @@
 
 	var SCP = Scope.prototype;
 
+	SCP.makepath = function(val) {
+		var t = this;
+		return val.replace(/\?\d+/, function(text) {
+			var skip = +text.substring(1);
+			var parent = t.parent;
+			for (var i = 1; i < skip; i++) {
+				if (parent)
+					parent = parent.parent;
+			}
+			return parent ? parent.path : t.path;
+		}).replace(/\?/g, t.path);
+	};
+
 	SCP.unwatch = function(path, fn) {
 		var self = this;
 		OFF(SCOPENAME + self._id + '#watch', self.path + (path ? '.' + path : ''), fn);
@@ -4760,7 +4765,7 @@
 		if (path) {
 
 			if (path.indexOf('?') !== -1 && self.pathscope)
-				path = path.replace(REGSCOPEINLINE, self.pathscope);
+				path = self.scope.makepath(path);
 
 			self.$datasource = { path: path, fn: callback };
 			self.watch(path, callback, init !== false);
@@ -7969,7 +7974,7 @@
 		return true;
 	}
 
-	function parsebinder(el, b, scopes, r) {
+	function parsebinder(el, b, r) {
 		var meta = b.split(REGMETA);
 		if (meta.indexOf('|') !== -1) {
 			if (!r) {
@@ -7978,13 +7983,13 @@
 				for (var i = 0; i < meta.length; i++) {
 					var m = meta[i];
 					if (m === '|') {
-						tmp.length && output.push(parsebinder(el, tmp.join('__'), scopes));
+						tmp.length && output.push(parsebinder(el, tmp.join('__')));
 						tmp = [];
 						continue;
 					}
 					m && tmp.push(m);
 				}
-				tmp.length && output.push(parsebinder(el, tmp.join('__'), scopes, true));
+				tmp.length && output.push(parsebinder(el, tmp.join('__'), true));
 			}
 			return output;
 		}
@@ -8052,7 +8057,7 @@
 							return function(value, path, el) {
 								var scope = el.scope();
 								if (scope) {
-									var fn = GET(p.replace(REGSCOPEINLINE, scope.path));
+									var fn = GET(scope.makepath(p));
 									if (fn)
 										return fn.call(el, value, path, el);
 								}
@@ -8320,9 +8325,9 @@
 			path = bj ? path : pathmaker(path, 0, 1);
 
 			if (path.indexOf('?') !== -1) {
-				var scope = initscopes(scopes);
+				var scope = findscope(el);
 				if (scope) {
-					path = path.replace(REGSCOPEINLINE, scope.path);
+					path = scope.makepath(path);
 					obj.scope = scope.path;
 				} else
 					return;
