@@ -168,7 +168,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.079;
+	M.version = 17.081;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -4308,8 +4308,6 @@
 			return self.path === path;
 
 		if (path.length > self.path.length) {
-			var index = path.lastIndexOf('.', self.path.length);
-
 			for (var i = 0; i < self.path.length; i++) {
 				var a = path.charAt(i);
 				var b = self.path.charAt(i);
@@ -8804,7 +8802,6 @@
 		var delayresize;
 		var delay;
 		var resizeid;
-		var dom = null;
 
 		self.element = element;
 		self.area = area;
@@ -8949,10 +8946,6 @@
 					resizeid = setTimeout(self.resize, 500, true);
 					EMIT('scroll', area);
 					notemmited = false;
-					if (dom) {
-						dom.scrollTop = 0;
-						dom.scrollLeft = 0;
-					}
 				}
 
 				delay && clearTimeout(delay);
@@ -9021,12 +9014,16 @@
 		});
 
 		area.on('scroll', events.onscroll);
+
 		self.element.on('scroll', function(e) {
 			e.preventDefault();
 			e.stopPropagation();
 			var t = this;
-			t.scrollTop = 0;
-			t.scrollLeft = 0;
+			if (t.scrollTop)
+				t.scrollTop = 0;
+			if (t.scrollLeft)
+				t.scrollLeft = 0;
+			return false;
 		});
 
 		self.check = function() {
@@ -9071,10 +9068,22 @@
 
 			delayresize = null;
 
-			if (options.parent)
+			if (options.parent) {
 				el = typeof(options.parent) === TYPE_O ? $(options.parent) : el.closest(options.parent);
+				if (!el[0].$scrollbar) {
+					el[0].$scrollbar = 1;
+					el.on('scroll', function(e) {
+						var t = this;
+						if (t.scrollTop)
+							t.scrollTop = 0;
+						if (t.scrollLeft)
+							t.scrollLeft = 0;
+						e.preventDefault();
+						return false;
+					});
+				}
+			}
 
-			dom = el[0];
 			size.viewWidth = el.width() + (options.offsetX || 0);
 			size.viewHeight = el.height() + (options.offsetY || 0);
 
@@ -9152,8 +9161,6 @@
 			if (!scrolling)
 				events.onscroll();
 
-			dom.scrollTop = 0;
-			dom.scrollLeft = 0;
 			return self;
 		};
 
