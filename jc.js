@@ -168,7 +168,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.078;
+	M.version = 17.079;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8804,6 +8804,7 @@
 		var delayresize;
 		var delay;
 		var resizeid;
+		var dom = null;
 
 		self.element = element;
 		self.area = area;
@@ -8948,6 +8949,10 @@
 					resizeid = setTimeout(self.resize, 500, true);
 					EMIT('scroll', area);
 					notemmited = false;
+					if (dom) {
+						dom.scrollTop = 0;
+						dom.scrollLeft = 0;
+					}
 				}
 
 				delay && clearTimeout(delay);
@@ -9069,6 +9074,7 @@
 			if (options.parent)
 				el = typeof(options.parent) === TYPE_O ? $(options.parent) : el.closest(options.parent);
 
+			dom = el[0];
 			size.viewWidth = el.width() + (options.offsetX || 0);
 			size.viewHeight = el.height() + (options.offsetY || 0);
 
@@ -9146,6 +9152,8 @@
 			if (!scrolling)
 				events.onscroll();
 
+			dom.scrollTop = 0;
+			dom.scrollLeft = 0;
 			return self;
 		};
 
