@@ -8804,7 +8804,6 @@
 		var delayresize;
 		var delay;
 		var resizeid;
-		var isanimframe = !!W.requestAnimationFrame;
 
 		self.element = element;
 		self.area = area;
