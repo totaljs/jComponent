@@ -168,7 +168,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.076;
+	M.version = 17.077;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2804,6 +2804,7 @@
 					if (obj.path && code !== 33 && code !== 35) {
 						if (scope) {
 							is = (obj.path || '').indexOf('?') !== -1;
+
 							if (obj.path === '?') {
 								obj.setPath(scope.path, 2);
 								is = true;
@@ -2993,7 +2994,7 @@
 
 				scope._id = scope.ID = scope.id = GUID(10);
 				scope.element = $(el);
-				scope.isnew = !!el.getAttribute(ATTRSCOPE);
+				scope.isnew = !el.getAttribute(ATTRSCOPE);
 				scope.config = conf;
 				el.$scopedata = scope;
 
