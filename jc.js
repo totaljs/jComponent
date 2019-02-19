@@ -168,7 +168,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.077;
+	M.version = 17.078;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8804,6 +8804,7 @@
 		var delayresize;
 		var delay;
 		var resizeid;
+		var isanimframe = !!W.requestAnimationFrame;
 
 		self.element = element;
 		self.area = area;
@@ -8883,6 +8884,14 @@
 			}
 		};
 
+		events.forcey = function() {
+			bary.css('top', size.vpos);
+		};
+
+		events.forcex = function() {
+			barx.css('left', size.hpos);
+		};
+
 		events.onscroll = function() {
 
 			var y = area[0].scrollTop;
@@ -8911,7 +8920,7 @@
 
 				if (size.vpos !== pos) {
 					size.vpos = pos;
-					bary.css('top', pos);
+					W.requestAnimationFrame(events.forcey);
 				}
 			}
 
@@ -8929,7 +8938,7 @@
 
 				if (size.hpos !== pos) {
 					size.hpos = pos;
-					barx.css('left', pos);
+					W.requestAnimationFrame(events.forcex);
 				}
 			}
 
