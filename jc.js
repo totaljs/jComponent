@@ -6976,6 +6976,8 @@
 			return t;
 		if (element instanceof COM)
 			return element.scope ? element.scope.makepath(t) : t;
+		else if (element instanceof Plugin)
+			return t.replace(/\?/g, element.name);
 		else if (element instanceof jQuery || element.nodeName) {
 			var tmp = $(element).scope();
 			return tmp ? tmp.makepath(t) : t;
