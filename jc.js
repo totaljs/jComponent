@@ -20,7 +20,6 @@
 	var ATTRBIND = '[data-bind],[bind],[data-vbind]';
 	var ATTRDATA = 'jc';
 	var ATTRDEL = 'data-jc-removed';
-	var ATTRREL = 'data-jc-released';
 	var SELINPUT = 'input,textarea,select';
 	var DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
 	var ACTRLS = { INPUT: true, TEXTAREA: true, SELECT: true };
@@ -30,6 +29,7 @@
 	var SCOPENAME = 'scope';
 	var ATTRSCOPE = 'data-jc-' + SCOPENAME;
 	var ATTRSCOPE2 = 'data-' + SCOPENAME;
+	var ATTRREL2 = 'data-released';
 	var TYPE_FN = 'function';
 	var TYPE_S = 'string';
 	var TYPE_N = 'number';
@@ -51,6 +51,7 @@
 	var T_RESPONSE = 'response';
 	var T_VALID = 'valid';
 	var T_DIRTY = 'dirty';
+	var T_BIND = 'bind';
 
 	var LCOMPARER = window.Intl ? window.Intl.Collator().compare : function(a, b) {
 		return a.localeCompare(b);
@@ -203,7 +204,7 @@
 		var fn = function() {
 			var dom = this;
 			var el = $(dom);
-			var b = el.attrd('bind') || el.attr('bind');
+			var b = el.attrd(T_BIND) || el.attr(T_BIND);
 			dom.$jcbind = parsebinder(dom, b, EMPTYARRAY);
 			dom.$jcbind && t.binders.push(dom.$jcbind);
 		};
@@ -2309,7 +2310,13 @@
 		return name ? el.attrd('jc-' + name) : (el.attrd('jc') || el.attrd('-') || el.attrd('--'));
 	}
 
-	function crawler(container, onComponent, level) {
+	function attrrel(el) {
+		if (el instanceof jQuery)
+			el = el[0];
+		return el.getAttribute('data-released') || el.getAttribute('data-jc-released');
+	}
+
+	function crawler(container, onComponent, level, released) {
 
 		if (container)
 			container = $(container)[0];
@@ -2323,12 +2330,14 @@
 		if (comp === '0' || comp === T_FALSE)
 			return;
 
+		if (!released)
+			released = container ? attrrel(container) === T_TRUE : false;
+
 		var b = null;
-		var released = container ? attrcom(container, 'released') === T_TRUE : false;
 		var binders = null;
 
 		if (!container.$jcbind) {
-			b = container.getAttribute('data-bind') || container.getAttribute('bind');
+			b = container.getAttribute('data-' + T_BIND) || container.getAttribute(T_BIND);
 			if (b) {
 				!binders && (binders = []);
 				binders.push({ el: container, b: b });
@@ -2360,13 +2369,13 @@
 				if (el.$com === undefined) {
 					name = attrcom(el);
 					if (name != null) {
-						released && el.setAttribute(ATTRREL, T_TRUE);
+						released && el.setAttribute(ATTRREL2, T_TRUE);
 						onComponent(name || '', el, level);
 					}
 				}
 
 				if (!el.$jcbind) {
-					b = el.getAttribute('data-bind') || el.getAttribute('bind');
+					b = el.getAttribute('data-' + T_BIND) || el.getAttribute(T_BIND);
 					if (b) {
 						el.$jcbind = 1;
 						!binders && (binders = []);
@@ -2382,7 +2391,7 @@
 
 		for (var i = 0, length = sub.length; i < length; i++) {
 			el = sub[i];
-			el && crawler(el, onComponent, level);
+			el && crawler(el, onComponent, level, released);
 		}
 
 		if (binders) {
@@ -2837,7 +2846,7 @@
 				if (template)
 					obj.template = template;
 
-				if (attrcom(el, 'released') === T_TRUE)
+				if (attrrel(el) === T_TRUE)
 					obj.$released = true;
 
 				if (attrcom(el, 'url')) {
@@ -4459,43 +4468,45 @@
 		return self;
 	};
 
-	PPC.release = function(value, container) {
+	function releasecomponents(dom, value, init) {
+		if (dom) {
+			if (dom.$com) {
+				var com = dom.$com;
+				if (com instanceof Array) {
+					for (var i = 0; i < com.length; i++)
+						com[i].release(value, null, true);
+				} else
+					com.release(value, null, true);
+			} else if (init) {
+				var is = attrcom(dom);
+				is && dom.setAttribute(ATTRREL2, value ? T_TRUE : T_FALSE);
+			}
+
+			if (dom.children) {
+				for (var i = 0; i < dom.children.length; i++)
+					releasecomponents(dom.children[i], value);
+			}
+		}
+	}
+
+	PPC.release = function(value, container, onlyme) {
 
 		var self = this;
 		if (value === undefined || self.$removed)
 			return self.$released;
 
-		self.attrd('jc-released', value);
-		var childs = (container || self.element).find(ATTRCOM);
-		for (var j = 0; j < childs.length; j++) {
-			var el = $(childs[j]);
-			el.attrd('jc-released', value ? T_TRUE : T_FALSE);
-			var com = el[0].$com;
-			if (com instanceof Object) {
-				if (com instanceof Array) {
-					for (var i = 0, length = com.length; i < length; i++) {
-						var o = com[i];
-						if (!o.$removed && o.$released !== value) {
-							o.$released = value;
-							o.released && o.released(value, self);
-							o.$waiter(!value);
-							!value && o.setterX();
-						}
-					}
-				} else if (!com.$removed && com.$released !== value) {
-					com.$released = value;
-					com.released && com.released(value, self);
-					com.$waiter(!value);
-					!value && com.setterX();
-				}
-			}
-		}
+		self.attr(ATTRREL2, value ? T_TRUE : T_FALSE);
 
 		if (!container && self.$released !== value) {
 			self.$released = value;
 			self.released && self.released(value, self);
 			self.$waiter(!value);
 			!value && self.setterX();
+		}
+
+		if (!onlyme) {
+			var el = container || self.element;
+			releasecomponents(el instanceof jQuery ? el[0] : el, value);
 		}
 
 		return value;
@@ -8080,7 +8091,7 @@
 						})(v);
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', 'template', 'click', 'format', 'empty') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', 'template', 'click', 'format', 'empty', 'release') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -8509,10 +8520,8 @@
 				if (!can)
 					return;
 			}
-		} else {
+		} else
 			item.init && item.init.call(item.el, value, path, item.el);
-			item.$init = 1;
-		}
 
 		if (item.def && value == null)
 			value = item.def;
@@ -8551,6 +8560,14 @@
 			if (!tmp)
 				can = false;
 		}
+
+		if (item.release) {
+			item.el.attr(ATTRREL2, !can);
+			releasecomponents(item.el[0], !can, !item.$init);
+		}
+
+		if (!item.$init)
+			item.$init = 1;
 
 		if (item.classes) {
 			for (var i = 0; i < item.classes.length; i++) {
