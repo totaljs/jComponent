@@ -169,7 +169,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.083;
+	M.version = 17.084;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -4468,7 +4468,8 @@
 		return self;
 	};
 
-	function releasecomponents(dom, value, init) {
+	function releasecomponents(dom, value, init, ischildren) {
+
 		if (dom) {
 			if (dom.$com) {
 				var com = dom.$com;
@@ -4477,6 +4478,11 @@
 						com[i].release(value, null, true);
 				} else
 					com.release(value, null, true);
+			} else if (ischildren && dom.$jcbind && dom.$jcbind.release) {
+
+				// A binder controls nested children by itself
+				return;
+
 			} else if (init) {
 				var is = attrcom(dom);
 				is && dom.setAttribute(ATTRREL2, value ? T_TRUE : T_FALSE);
@@ -4484,7 +4490,7 @@
 
 			if (dom.children) {
 				for (var i = 0; i < dom.children.length; i++)
-					releasecomponents(dom.children[i], value);
+					releasecomponents(dom.children[i], value, init, true);
 			}
 		}
 	}
