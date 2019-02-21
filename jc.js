@@ -169,7 +169,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.084;
+	M.version = 17.085;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2313,7 +2313,7 @@
 	function attrrel(el) {
 		if (el instanceof jQuery)
 			el = el[0];
-		return el.getAttribute('data-released') || el.getAttribute('data-jc-released');
+		return el.getAttribute(ATTRREL2) || el.getAttribute('data-jc-released');
 	}
 
 	function crawler(container, onComponent, level, released) {
@@ -4468,34 +4468,79 @@
 		return self;
 	};
 
-	function releasecomponents(dom, value, init, ischildren) {
+	function releasecomponents(type, dom, value, init, ischildren) {
+
+		// type = 0   - current component and all nested components
+		// type = 1   - only nested components
+		// type = 2   - only current component
 
 		if (dom) {
-			if (dom.$com) {
-				var com = dom.$com;
-				if (com instanceof Array) {
-					for (var i = 0; i < com.length; i++)
-						com[i].release(value, null, true);
-				} else
-					com.release(value, null, true);
-			} else if (ischildren && dom.$jcbind && dom.$jcbind.release) {
 
-				// A binder controls nested children by itself
-				return;
+			if (type === 0 || type === 2) {
+				if (dom.$com) {
+					var com = dom.$com;
+					if (com instanceof Array) {
+						for (var i = 0; i < com.length; i++) {
+							var tmp = com[i];
+							if (tmp.$releasetype) {
+								if (tmp.$releasetype === 1) // manual
+									return;
+								if (tmp.$releasetype === 2 && !value) // true
+									return;
+								if (tmp.$releasetype === 3 && value) // false
+									return;
+							}
+							tmp.release(value, null, true);
+						}
+					} else {
+						if (com.$releasetype === 1) // manual
+							return;
+						if (com.$releasetype === 2 && !value) // true
+							return;
+						if (com.$releasetype === 3 && value) // false
+							return;
+						com.release(value, null, true);
+					}
+				} else if (ischildren && dom.$jcbind && dom.$jcbind.release) {
 
-			} else if (init) {
-				var is = attrcom(dom);
-				is && dom.setAttribute(ATTRREL2, value ? T_TRUE : T_FALSE);
+					// A binder controls nested children by itself
+					return;
+
+				} else if (init) {
+					var is = attrcom(dom);
+					is && dom.setAttribute(ATTRREL2, value ? T_TRUE : T_FALSE);
+				}
 			}
 
-			if (dom.children) {
+			if ((type === 0 || type === 1) && dom.children) {
 				for (var i = 0; i < dom.children.length; i++)
-					releasecomponents(dom.children[i], value, init, true);
+					releasecomponents(0, dom.children[i], value, init, true);
 			}
 		}
 	}
 
-	PPC.release = function(value, container, onlyme) {
+	PPC.releasemode = function(type) {
+		var self = this;
+		switch (type) {
+			case 2:
+			case true:
+			case 'true':
+				type = 2; // accept only released
+				break;
+			case 3:
+			case false:
+			case 'false':
+				type = 3; // accept only unreleased
+				break;
+			default:
+				type = 1; // manual
+				break;
+		}
+		self.$releasetype = type;
+		return self;
+	};
+
+	PPC.release = function(value, container, skipnested) {
 
 		var self = this;
 		if (value === undefined || self.$removed)
@@ -4510,9 +4555,9 @@
 			!value && self.setterX();
 		}
 
-		if (!onlyme) {
+		if (!skipnested) {
 			var el = container || self.element;
-			releasecomponents(el instanceof jQuery ? el[0] : el, value);
+			releasecomponents(1, el instanceof jQuery ? el[0] : el, value, 0, 0, true);
 		}
 
 		return value;
@@ -8569,7 +8614,7 @@
 
 		if (item.release) {
 			item.el.attr(ATTRREL2, !can);
-			releasecomponents(item.el[0], !can, !item.$init);
+			releasecomponents(0, item.el[0], !can, !item.$init);
 		}
 
 		if (!item.$init)
