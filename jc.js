@@ -168,7 +168,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.081;
+	M.version = 17.082;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -6971,22 +6971,16 @@
 	};
 
 	SP.SCOPE = function(element) {
-
 		var t = this;
-		if (t.indexOf('?') === -1)
+		if (t.indexOf('?') === -1 || element == null)
 			return t;
-
-		var path, tmp;
 		if (element instanceof COM)
-			path = element.scope ? element.scope.path : '';
-		else if (element instanceof jQuery) {
-			tmp = element.scope();
-			if (tmp)
-				path = tmp.path;
-		} else
-			path = element;
-
-		return path ? t.replace(/\?/g, path) : t;
+			return element.scope ? element.scope.makepath(t) : t;
+		else if (element instanceof jQuery || element.nodeName) {
+			var tmp = $(element).scope();
+			return tmp ? tmp.makepath(t) : t;
+		}
+		return element.makepath ? element.makepath(t) : t;
 	};
 
 	SP.padLeft = function(t, e) {
