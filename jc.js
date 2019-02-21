@@ -169,7 +169,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.085;
+	M.version = 17.086;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -4482,22 +4482,12 @@
 					if (com instanceof Array) {
 						for (var i = 0; i < com.length; i++) {
 							var tmp = com[i];
-							if (tmp.$releasetype) {
-								if (tmp.$releasetype === 1) // manual
-									return;
-								if (tmp.$releasetype === 2 && !value) // true
-									return;
-								if (tmp.$releasetype === 3 && value) // false
-									return;
-							}
+							if (tmp.$releasetype && (tmp.$releasetype === 3 || (tmp.$releasetype === 1 && !value) || (tmp.$releasetype === 2 && value)))
+								return;
 							tmp.release(value, null, true);
 						}
 					} else {
-						if (com.$releasetype === 1) // manual
-							return;
-						if (com.$releasetype === 2 && !value) // true
-							return;
-						if (com.$releasetype === 3 && value) // false
+						if (com.$releasetype === 3 && (com.$releasetype === 3 || (com.$releasetype === 1 && !value) || (com.$releasetype === 2 && value)))
 							return;
 						com.release(value, null, true);
 					}
@@ -4522,18 +4512,22 @@
 	PPC.releasemode = function(type) {
 		var self = this;
 		switch (type) {
-			case 2:
+			case 'auto':
+			case 0:
+				type = null;
+				break;
+			case 1:
 			case true:
 			case 'true':
-				type = 2; // accept only released
+				type = 1; // accept only released
 				break;
-			case 3:
+			case 2:
 			case false:
 			case 'false':
-				type = 3; // accept only unreleased
+				type = 2; // accept only unreleased
 				break;
 			default:
-				type = 1; // manual
+				type = 3; // manual
 				break;
 		}
 		self.$releasetype = type;
@@ -6433,6 +6427,10 @@
 		var self = this;
 		var index = this.indexOf('?');
 		return index === -1 ? self.env() : self.substring(0, index).env() + self.substring(index);
+	};
+
+	SP.COMPILE = function() {
+		return REGCOM.test(this);
 	};
 
 	SP.parseConfig = SP.$config = function(def, callback) {
