@@ -169,7 +169,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.086;
+	M.version = 17.087;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -6429,7 +6429,7 @@
 		return index === -1 ? self.env() : self.substring(0, index).env() + self.substring(index);
 	};
 
-	SP.COMPILE = function() {
+	SP.COMPILABLE = function() {
 		return REGCOM.test(this);
 	};
 
