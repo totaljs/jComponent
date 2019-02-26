@@ -169,7 +169,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.087;
+	M.version = 17.088;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8657,25 +8657,25 @@
 		if (item.html && (can || item.html.$nv)) {
 			if (value != null || !item.html.$nn) {
 				tmp = item.html.call(el, value, path, el);
-				el.html(tmp == null ? (item.htmlbk || item.empty) : item.format ? tmp.format(item.format) : tmp);
+				el.html(bindvalue(tmp, item, 'html'));
 			} else
-				el.html(item.htmlbk || item.empty);
+				el.html(item.empty || item.htmlbk);
 		}
 
 		if (item.text && (can || item.text.$nv)) {
 			if (value != null || !item.text.$nn) {
 				tmp = item.text.call(el, value, path, el);
-				el.text(tmp == null ? (item.textbk || item.empty) : item.format ? tmp.format(item.format) : tmp);
+				el.text(bindvalue(tmp, item, 'text'));
 			} else
-				el.html(item.htmlbk || item.empty);
+				el.html(item.empty || item.textbk);
 		}
 
 		if (item.val && (can || item.val.$nv)) {
 			if (value != null || !item.val.$nn) {
 				tmp = item.val.call(el, value, path, el);
-				el.val(tmp == null ? (item.valbk || item.empty) : item.format ? tmp.format(item.format) : tmp);
+				el.val(bindvalue(tmp, item, 'val'));
 			} else
-				el.val(item.valbk || item.empty);
+				el.val(item.empty || item.valbk);
 		}
 
 		if (item.template && (can || item.template.$nv) && (value != null || !item.template.$nn)) {
@@ -8712,32 +8712,32 @@
 		if (item.title && (can || item.title.$nv)) {
 			if (value != null || !item.title.$nn) {
 				tmp = item.title.call(el, value, path, el);
-				el.attr('title', tmp == null ? (item.titlebk || item.empty) : item.format ? tmp.format(item.format) : tmp);
+				el.attr('title', bindvalue(tmp, item, 'title'));
 			} else
-				el.attr('title', item.titlebk || item.empty);
+				el.attr('title', item.empty || item.titlebk);
 		}
 
 		if (item.href && (can || item.href.$nv)) {
 			if (value != null || !item.href.$nn) {
 				tmp = item.href.call(el, value, path, el);
-				el.attr('href', tmp == null ? (item.hrefbk || item.empty) : item.format ? tmp.format(item.format) : tmp);
+				el.attr('href', bindvalue(tmp, item, 'href'));
 			} else
-				el.attr(item.hrefbk || item.empty);
+				el.attr(item.empty || item.hrefbk);
 		}
 
 		if (item.src && (can || item.src.$nv)) {
 			if (value != null || !item.src.$nn) {
 				tmp = item.src.call(el, value, path, el);
-				el.attr('src', tmp == null ? (item.srcbk || item.empty) : item.format ? tmp.format(item.format) : tmp);
+				el.attr('src', bindvalue(tmp, item, 'src'));
 			} else
-				el.attr('src', item.srcbk || item.empty);
+				el.attr('src', item.empty || item.srcbk);
 		}
 
 		if (item.setter && (can || item.setter.$nv) && (value != null || !item.setter.$nn))
 			item.setter.call(el, value, path, el);
 
 		if (item.change && (value != null || !item.change.$nn))
-			item.change.call(el, item.format && value != null ? value.format(item.format) : value, path, el);
+			item.change.call(el, bindvalue(value, item), path, el);
 
 		if (can && index == null && item.child) {
 			for (var i = 0; i < item.child.length; i++)
@@ -8749,6 +8749,10 @@
 			delete item.tclass;
 		}
 	};
+
+	function bindvalue(val, item, prop) {
+		return val === '' ? item.empty : val == null ? (item.empty || (prop ? item[prop + 'bk'] : '')) : item.format ? val.format(item.format) : val;
+	}
 
 	function binderconfig(el, val) {
 		setTimeout(function() {
