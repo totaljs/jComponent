@@ -52,6 +52,8 @@
 	var T_VALID = 'valid';
 	var T_DIRTY = 'dirty';
 	var T_BIND = 'bind';
+	var T_TEMPLATE = 'template';
+	var T_VBINDARR = 'vbindarray';
 
 	var LCOMPARER = window.Intl ? window.Intl.Collator().compare : function(a, b) {
 		return a.localeCompare(b);
@@ -169,7 +171,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.088;
+	M.version = 17.089;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2842,7 +2844,7 @@
 
 				instances.push(obj);
 
-				var template = attrcom(el, 'template') || obj.template;
+				var template = attrcom(el, T_TEMPLATE) || obj.template;
 				if (template)
 					obj.template = template;
 
@@ -7762,7 +7764,7 @@
 		};
 
 		$.fn.vbindarray = function() {
-			return findinstance(this, '$vbindarray');
+			return findinstance(this, '$' + T_VBINDARR);
 		};
 
 		$.fn.component = function() {
@@ -8085,7 +8087,7 @@
 
 					var k, v = '';
 
-					if (item !== 'template' && item !== '!template' && item !== 'strict') {
+					if (item !== T_TEMPLATE && item !== ('!' + T_TEMPLATE) && item !== 'strict' && item !== T_VBINDARR && item !== ('!' + T_VBINDARR)) {
 
 						index = item.indexOf(':');
 
@@ -8140,7 +8142,7 @@
 						})(v);
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', 'template', 'click', 'format', 'empty', 'release') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', T_TEMPLATE, T_VBINDARR, 'click', 'format', 'empty', 'release') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -8260,7 +8262,15 @@
 							case 'tclass':
 								fn = v;
 								break;
-							case 'template':
+							case T_VBINDARR:
+								var scr = e.find('script');
+								if (!scr.length)
+									scr = e;
+								fn = VBINDARRAY(scr.html(), e);
+								if (notvisible)
+									fn.$nv = 1;
+								break;
+							case T_TEMPLATE:
 								var scr = e.find('script');
 								if (!scr.length)
 									scr = e;
@@ -8270,7 +8280,7 @@
 									fn.$nn = 1;
 								if (notvisible)
 									fn.$nv = 1;
-								fn.$compile = (/data-(jc|bind)="/).test(tmp);
+								fn.$compile = tmp.COMPILABLE();
 								break;
 						}
 
@@ -8653,6 +8663,9 @@
 				}
 			}
 		}
+
+		if (item.vbindarray && (can || item.vbindarray.$nv))
+			item.vbindarray.set(value);
 
 		if (item.html && (can || item.html.$nv)) {
 			if (value != null || !item.html.$nn) {
