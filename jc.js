@@ -669,7 +669,7 @@
 		if (path.indexOf(MULTIPLE) !== -1) {
 			var arr = path.split(MULTIPLE).trim();
 			for (var i = 0; i < arr.length; i++)
-				W.UNWATCH(arr[i], fn);
+				UNWATCH(arr[i], fn);
 		} else
 			OFF('watch', path, fn);
 	};
@@ -679,7 +679,7 @@
 		if (path.indexOf(MULTIPLE) !== -1) {
 			var arr = path.split(MULTIPLE).trim();
 			for (var i = 0; i < arr.length; i++)
-				W.WATCH(arr[i], fn, init);
+				WATCH(arr[i], fn, init);
 			return;
 		}
 
@@ -707,7 +707,7 @@
 		if (name.indexOf(MULTIPLE) !== -1) {
 			var arr = name.split(MULTIPLE).trim();
 			for (var i = 0; i < arr.length; i++)
-				W.ON(arr[i], path, fn, init, context);
+				ON(arr[i], path, fn, init, context);
 			return;
 		}
 
@@ -811,7 +811,7 @@
 		if (name.indexOf('+') !== -1) {
 			var arr = name.split('+').trim();
 			for (var i = 0; i < arr.length; i++)
-				W.OFF(arr[i], path, fn);
+				OFF(arr[i], path, fn);
 			return;
 		}
 
@@ -1556,7 +1556,7 @@
 					setTimeout(function() {
 						arg[0] += ' REPEAT';
 						current_scope = curr_scope;
-						W.AJAX.apply(M, arg);
+						AJAX.apply(M, arg);
 					}, MD.delayrepeat);
 					return;
 				}
@@ -1741,7 +1741,7 @@
 	};
 
 	W.DISABLED = function(path, except) {
-		return !W.CAN(path, except);
+		return !CAN(path, except);
 	};
 
 	W.INVALID = function(path, onlyComponent) {
@@ -5284,7 +5284,7 @@
 	};
 
 	PPC.emit = function() {
-		W.EMIT.apply(M, arguments);
+		EMIT.apply(M, arguments);
 		return this;
 	};
 
@@ -5587,7 +5587,7 @@
 
 				setTimeout(function(arg) {
 					arg[0] = true;
-					W.SETTER.apply(W, arg);
+					SETTER.apply(W, arg);
 				}, 555, arguments);
 
 				return SETTER;
@@ -5625,7 +5625,7 @@
 				}
 
 				setTimeout(function(arg) {
-					W.SETTER.apply(W, arg);
+					SETTER.apply(W, arg);
 				}, 555, arguments);
 
 				return SETTER;
@@ -6104,7 +6104,7 @@
 	W.BIND = function(path) {
 		if (path instanceof Array) {
 			for (var i = 0; i < path.length; i++)
-				W.BIND(path[i]);
+				BIND(path[i]);
 			return;
 		}
 		path = pathmaker(path);
