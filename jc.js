@@ -171,7 +171,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.089;
+	M.version = 17.091;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8109,7 +8109,7 @@
 					var rki = k.indexOf(' ');
 					var rk = rki === -1 ? k : k.substring(0, rki);
 					var c = v.charAt(0);
-					var vmethod = c === '.' ? 1 : c === '@' ? 2 : 0;
+					var vmethod = k !== 'vdom' ? c === '.' ? 1 : c === '@' ? 2 : 0 : 0;
 					var smethod = v.indexOf('?') !== -1;
 					var dfn;
 
@@ -8142,7 +8142,7 @@
 						})(v);
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', T_TEMPLATE, T_VBINDARR, 'click', 'format', 'empty', 'release') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', T_TEMPLATE, T_VBINDARR, 'click', 'format', 'empty', 'release', 'vdom') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -8189,6 +8189,7 @@
 								fn.$nv = 1;
 						}
 
+
 						switch (k) {
 							case 'empty':
 								fn = v;
@@ -8207,7 +8208,7 @@
 								obj[k] = v.split(',').trim();
 								continue;
 							case 'strict':
-								obj[k] = true;
+								obj[k] = v ? +v : true;
 								continue;
 							case T_HIDDEN:
 								k = 'hide';
@@ -8260,6 +8261,7 @@
 									fn = FN(rebinddecode(v));
 								break;
 							case 'tclass':
+							case 'vdom':
 								fn = v;
 								break;
 							case T_VBINDARR:
@@ -8566,8 +8568,10 @@
 			current_scope = item.scope;
 
 		if (item.$init) {
-			if (item.strict && item.path !== path)
-				return;
+			if (item.strict && item.path !== path) {
+				if (item.strict !== 1 || path.length > item.path.length)
+					return;
+			}
 			if (item.track && item.path !== path) {
 				var can = false;
 				for (var i = 0; i < item.track.length; i++) {
@@ -8694,8 +8698,16 @@
 		if (item.template && (can || item.template.$nv) && (value != null || !item.template.$nn)) {
 			DEFMODEL.value = value;
 			DEFMODEL.path = path;
-			el.html(item.template(DEFMODEL));
-			item.template.$compile && W.COMPILE();
+
+			if (item.vdom) {
+				var status = DIFFDOM(el, item.vdom, item.template(DEFMODEL));
+				tmp = !!(status.add || status.upd);
+			} else {
+				tmp = true;
+				el.html(item.template(DEFMODEL));
+			}
+
+			item.template.$compile && tmp && W.COMPILE(el);
 		}
 
 		if (item.disable && (can || item.disable.$nv)) {
@@ -8761,6 +8773,36 @@
 			el.tclass(item.tclass);
 			delete item.tclass;
 		}
+	};
+
+	W.DIFFDOM = function(el, selector, html) {
+
+		var vdom = $(html);
+		var varr = vdom.filter(selector);
+		var vels = el.find(selector);
+		var output = { add: 0, upd: 0, rem: 0 };
+
+		for (var i = 0; i < vels.length; i++) {
+
+			var a = varr[i];
+			var b = vels[i];
+
+			if (b == null) {
+				a.remove();
+				output.rem++;
+			} else if (a.innerHTML !== b.innerHTML) {
+				b.parentNode.replaceChild(a, b);
+				console.log(b);
+				output.upd++;
+			}
+		}
+
+		for (var i = vels.length; i < varr.length; i++) {
+			el[0].appendChild(varr[i]);
+			output.add++;
+		}
+
+		return output;
 	};
 
 	function bindvalue(val, item, prop) {
