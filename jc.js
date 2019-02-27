@@ -54,7 +54,6 @@
 	var T_BIND = 'bind';
 	var T_TEMPLATE = 'template';
 	var T_VBINDARR = 'vbindarray';
-	var T_VDOM = 'vdom';
 	var T_SCRIPT = 'script';
 
 	var LCOMPARER = window.Intl ? window.Intl.Collator().compare : function(a, b) {
@@ -8111,7 +8110,7 @@
 					var rki = k.indexOf(' ');
 					var rk = rki === -1 ? k : k.substring(0, rki);
 					var c = v.charAt(0);
-					var vmethod = k !== T_VDOM ? c === '.' ? 1 : c === '@' ? 2 : 0 : 0;
+					var vmethod = k !== T_TEMPLATE ? c === '.' ? 1 : c === '@' ? 2 : 0 : 0;
 					var smethod = v.indexOf('?') !== -1;
 					var dfn;
 
@@ -8144,7 +8143,7 @@
 						})(v);
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', T_TEMPLATE, T_VBINDARR, 'click', 'format', 'empty', 'release', T_VDOM) && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', T_TEMPLATE, T_VBINDARR, 'click', 'format', 'empty', 'release') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -8263,7 +8262,6 @@
 									fn = FN(rebinddecode(v));
 								break;
 							case 'tclass':
-							case T_VDOM:
 								fn = v;
 								break;
 							case T_VBINDARR:
@@ -8284,6 +8282,7 @@
 									fn.$nn = 1;
 								if (notvisible)
 									fn.$nv = 1;
+								fn.$vdom = v;
 								fn.$compile = tmp.COMPILABLE();
 								break;
 						}
@@ -8571,7 +8570,7 @@
 
 		if (item.$init) {
 			if (item.strict && item.path !== path) {
-				if (item.strict === true || path.length > item.path.length)
+				if (item.strict !== true || path.length > item.path.length)
 					return;
 			}
 			if (item.track && item.path !== path) {
@@ -8701,8 +8700,8 @@
 			DEFMODEL.value = value;
 			DEFMODEL.path = path;
 
-			if (item.vdom) {
-				var status = DIFFDOM(el, item.vdom, item.template(DEFMODEL));
+			if (item.template.$vdom) {
+				var status = DIFFDOM(el, item.template.$vdom, item.template(DEFMODEL));
 				tmp = !!(status.add || status.upd);
 			} else {
 				tmp = true;
