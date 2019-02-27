@@ -54,6 +54,8 @@
 	var T_BIND = 'bind';
 	var T_TEMPLATE = 'template';
 	var T_VBINDARR = 'vbindarray';
+	var T_VDOM = 'vdom';
+	var T_SCRIPT = 'script';
 
 	var LCOMPARER = window.Intl ? window.Intl.Collator().compare : function(a, b) {
 		return a.localeCompare(b);
@@ -1191,8 +1193,8 @@
 
 		var d = document;
 		if (ext === '.js') {
-			var scr = d.createElement('script');
-			scr.type = 'text/javascript';
+			var scr = d.createElement(T_SCRIPT);
+			scr.type = 'text/java' + T_SCRIPT;
 			scr.async = false;
 			scr.onload = function() {
 				statics[url] = 2;
@@ -3499,7 +3501,7 @@
 		return str.replace(REGSCRIPT, function(text) {
 			var index = text.indexOf('>');
 			var scr = text.substring(0, index + 1);
-			return scr.substring(0, 6) === '<style' || (scr.substring(0, 7) === '<script' && scr.indexOf('type="') === -1) || scr.indexOf('/javascript"') !== -1 ? '' : text;
+			return scr.substring(0, 6) === '<style' || (scr.substring(0, 7) === ('<' + T_SCRIPT) && scr.indexOf('type="') === -1) || scr.indexOf('/javascript"') !== -1 ? '' : text;
 		});
 	}
 
@@ -3512,7 +3514,7 @@
 
 		while (true) {
 
-			beg = str.indexOf('<script', beg);
+			beg = str.indexOf('<' + T_SCRIPT, beg);
 			if (beg === -1)
 				break;
 			var end = str.indexOf('</script>', beg + 8);
@@ -3521,7 +3523,7 @@
 			end = code.indexOf('>');
 			scr = code.substring(0, end);
 
-			if (scr.indexOf('type=') !== -1 && scr.lastIndexOf('javascript') === -1)
+			if (scr.indexOf('type=') !== -1 && scr.lastIndexOf('java' + T_SCRIPT) === -1)
 				continue;
 
 			var tmp = code.substring(end + 1, code.length - 9).trim();
@@ -8109,7 +8111,7 @@
 					var rki = k.indexOf(' ');
 					var rk = rki === -1 ? k : k.substring(0, rki);
 					var c = v.charAt(0);
-					var vmethod = k !== 'vdom' ? c === '.' ? 1 : c === '@' ? 2 : 0 : 0;
+					var vmethod = k !== T_VDOM ? c === '.' ? 1 : c === '@' ? 2 : 0 : 0;
 					var smethod = v.indexOf('?') !== -1;
 					var dfn;
 
@@ -8142,7 +8144,7 @@
 						})(v);
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', T_TEMPLATE, T_VBINDARR, 'click', 'format', 'empty', 'release', 'vdom') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', T_TEMPLATE, T_VBINDARR, 'click', 'format', 'empty', 'release', T_VDOM) && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -8208,7 +8210,7 @@
 								obj[k] = v.split(',').trim();
 								continue;
 							case 'strict':
-								obj[k] = v ? +v : true;
+								obj[k] = v ? v : true;
 								continue;
 							case T_HIDDEN:
 								k = 'hide';
@@ -8261,11 +8263,11 @@
 									fn = FN(rebinddecode(v));
 								break;
 							case 'tclass':
-							case 'vdom':
+							case T_VDOM:
 								fn = v;
 								break;
 							case T_VBINDARR:
-								var scr = e.find('script');
+								var scr = e.find(T_SCRIPT);
 								if (!scr.length)
 									scr = e;
 								fn = VBINDARRAY(scr.html(), e);
@@ -8273,7 +8275,7 @@
 									fn.$nv = 1;
 								break;
 							case T_TEMPLATE:
-								var scr = e.find('script');
+								var scr = e.find(T_SCRIPT);
 								if (!scr.length)
 									scr = e;
 								tmp = scr.html();
@@ -8569,7 +8571,7 @@
 
 		if (item.$init) {
 			if (item.strict && item.path !== path) {
-				if (item.strict !== 1 || path.length > item.path.length)
+				if (item.strict === true || path.length > item.path.length)
 					return;
 			}
 			if (item.track && item.path !== path) {
@@ -8775,6 +8777,17 @@
 		}
 	};
 
+	/*
+	function diffattr(el) {
+		var arr = [];
+		for (var i = 0; i < el.attributes.length; i++) {
+			var item = el.attributes[i];
+			arr.push(item.nodeName + '=' + item.nodeValue);
+		}
+		return arr.join('_');
+	}
+	*/
+
 	W.DIFFDOM = function(el, selector, html) {
 
 		var vdom = $(html);
@@ -8784,15 +8797,14 @@
 
 		for (var i = 0; i < vels.length; i++) {
 
-			var a = varr[i];
-			var b = vels[i];
+			var a = vels[i];
+			var b = varr[i];
 
 			if (b == null) {
-				a.remove();
+				a.parentNode.removeChild(a);
 				output.rem++;
 			} else if (a.innerHTML !== b.innerHTML) {
-				b.parentNode.replaceChild(a, b);
-				console.log(b);
+				a.parentNode.replaceChild(b, a);
 				output.upd++;
 			}
 		}
