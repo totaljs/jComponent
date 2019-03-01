@@ -172,7 +172,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.091;
+	M.version = 17.092;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -4140,7 +4140,7 @@
 			var key = type + 'x' + what;
 			if (!self.$bindchanges || self.$state !== key) {
 				self.$state = key;
-				self.config.$state && EXEC.call(self, self.config.$state, type, what);
+				self.config.$state && EXEC.call(self, self.config.$state.SCOPE(self), type, what);
 				self.state(type, what);
 			}
 		};
@@ -4174,7 +4174,7 @@
 					}
 
 					// Binds value directly
-					self.config.$setter && EXEC.call(self, self.config.$setter, value, path, type);
+					self.config.$setter && EXEC.call(self, self.config.$setter.SCOPE(self), value, path, type);
 					self.data('', value);
 					self.setter(value, path, type);
 					self.setter2 && self.setter2(value, path, type);
@@ -4209,7 +4209,7 @@
 						self.$valuehash = hash;
 					}
 
-					self.config.$setter && EXEC.call(self, self.config.$setter, cache.value, cache.path, cache.type);
+					self.config.$setter && EXEC.call(self, self.config.$setter.SCOPE(self), cache.value, cache.path, cache.type);
 					self.data('', cache.value);
 					self.setter(cache.value, cache.path, cache.type);
 					self.setter2 && self.setter2(cache.value, cache.path, cache.type);
@@ -4997,7 +4997,7 @@
 
 		cfg.$class && self.tclass(cfg.$class);
 		cfg.$released && self.release(cfg.$released == true);
-		cfg.$reconfigure && EXEC.call(cfg.$reconfigure, cfg);
+		cfg.$reconfigure && EXEC.call(cfg.$reconfigure, cfg.SCOPE(cfg));
 		return self;
 	};
 
