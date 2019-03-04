@@ -5861,7 +5861,7 @@
 	W.PARSE = function(value, date) {
 
 		// Is selector?
-		var c = value.charAt(0);
+		var c = (value || '').charAt(0);
 		if (c === '#' || c === '.')
 			return PARSE($(value).html(), date);
 
