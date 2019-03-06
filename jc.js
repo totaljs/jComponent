@@ -172,7 +172,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.092;
+	M.version = 17.093;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -759,6 +759,7 @@
 
 			// !path = fixed path
 			if (path.charCodeAt(0) === 33) {
+				obj.$pathfixed = true;
 				path = path.substring(1);
 				arr.push(path);
 			} else {
@@ -773,6 +774,7 @@
 					s.push(p[j]);
 					arr.push(s.join('.'));
 				}
+				obj.$pathfixed = false;
 			}
 
 			obj.path = path;
@@ -3417,6 +3419,15 @@
 	function emitwatch(path, value, type) {
 		for (var i = 0, length = watches.length; i < length; i++) {
 			var self = watches[i];
+
+			if (self.$pathfixed) {
+				if (self.path === path || (path.length < self.path.length && self.path.substring(0, path.length) === path)) {
+					self.scope && (current_scope = self.scope);
+					self.fn.call(self.context, path, self.format ? self.format(value, path, type) : value, type);
+				}
+				continue;
+			}
+
 			if (self.path === '*') {
 				self.scope && (current_scope = self.scope);
 				self.fn.call(self.context, path, self.format ? self.format(value, path, type) : value, type);
@@ -4313,11 +4324,11 @@
 		return false;
 	};
 
-	PPC.$compare = function(path, fix) {
+	PPC.$compare = function(path) {
 		var self = this;
 
-		if (fix)
-			return self.path === path;
+		if (self.$pathfixed)
+			return self.path === path || (path.length < self.path.length && self.path.substring(0, path.length) === path);
 
 		if (path.length > self.path.length) {
 			for (var i = 0; i < self.path.length; i++) {
@@ -4877,6 +4888,7 @@
 
 		// !path = fixed path
 		if (path.charCodeAt(0) === 33) {
+			self.$pathfixed = true;
 			path = path.substring(1);
 			arr.push(path);
 		} else {
@@ -4891,6 +4903,7 @@
 				s.push(p[j]);
 				arr.push(s.join('.'));
 			}
+			self.$pathfixed = false;
 		}
 
 		self.path = path;
