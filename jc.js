@@ -73,6 +73,7 @@
 	W.jctmp = {};
 	W.W = window;
 	W.FUNC = {};
+	W.REPO = {};
 
 	try {
 		var pmk = 'jc.test';
@@ -172,7 +173,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.093;
+	M.version = 17.094;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
