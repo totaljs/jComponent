@@ -108,6 +108,7 @@
 	var $loaded = false;
 	var $domready = false;
 	var knockknockcounter = 0;
+	var pendingrequest = 0;
 	var binders = {};
 	var bindersnew = [];
 	var lazycom = {};
@@ -173,7 +174,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.094;
+	M.version = 17.095;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1430,6 +1431,7 @@
 		var td = typeof(data);
 		var arg = EMPTYARRAY;
 		var tmp;
+		var rawurl = url;
 
 		if (!callback && (td === TYPE_FN || td === TYPE_S)) {
 			timeout = callback;
@@ -1442,6 +1444,21 @@
 			return;
 
 		var repeat = false;
+		var sync = false;
+
+		url = url.replace(/\ssync/i, function() {
+			sync = true;
+			return '';
+		});
+
+		if (sync) {
+			if (pendingrequest) {
+				setTimeout(function(a, b, c, d) {
+					W.AJAX.call(W, a, b, c, d);
+				}, MD.delay, rawurl, data, callback, timeout);
+				return;
+			}
+		}
 
 		url = url.replace(/\srepeat/i, function() {
 			repeat = true;
@@ -1469,6 +1486,8 @@
 		url = url.substring(index).trim().$env();
 
 		var curr_scope = current_scope;
+
+		pendingrequest++;
 
 		setTimeout(function() {
 
@@ -1534,6 +1553,7 @@
 			delete options.url;
 
 			options.success = function(r, s, req) {
+				pendingrequest--;
 				current_scope = curr_scope;
 				output.response = r;
 				output.status = req.status || 999;
@@ -1550,6 +1570,7 @@
 
 			options.error = function(req, s) {
 
+				pendingrequest--;
 				var code = req.status;
 
 				if (repeat && (!code || code === 408 || code === 502 || code === 503 || code === 504 || code === 509)) {
