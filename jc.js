@@ -3303,6 +3303,10 @@
 		}
 	}
 
+	function resizenoscrollbar(el) {
+		el.find(selnoscrollbar).noscrollbar();
+	}
+
 	function prepare(obj) {
 
 		if (!obj)
@@ -3379,7 +3383,7 @@
 			}, 5);
 		})(cls);
 
-		el.find(selnoscrollbar).noscrollbar();
+		setTimeout(resizenoscrollbar, 777, el);
 
 		obj.id && EMIT('#' + obj.id, obj);
 		EMIT('@' + obj.name, obj);
