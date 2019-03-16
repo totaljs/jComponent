@@ -56,6 +56,11 @@
 	var T_VBINDARR = 'vbindarray';
 	var T_SCRIPT = 'script';
 
+	// No scrollbar
+	var cssnoscrollbar = { 'overflow-y': 'scroll' };
+	var clsnoscrollbar = 'noscrollbar';
+	var selnoscrollbar = '.' + clsnoscrollbar;
+
 	var LCOMPARER = window.Intl ? window.Intl.Collator().compare : function(a, b) {
 		return a.localeCompare(b);
 	};
@@ -174,7 +179,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.095;
+	M.version = 17.096;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -3373,6 +3378,8 @@
 				el[0].$jclass = tmp;
 			}, 5);
 		})(cls);
+
+		el.find(selnoscrollbar).noscrollbar();
 
 		obj.id && EMIT('#' + obj.id, obj);
 		EMIT('@' + obj.name, obj);
@@ -7880,10 +7887,33 @@
 			EMIT('knockknock', knockknockcounter++);
 		}, 60000);
 
+		$.fn.noscrollbar = function() {
+			var t = this;
+			var sw = SCROLLBARWIDTH();
+			for (var i = 0; i < t.length; i++) {
+				var m = t[i];
+				if (m.offsetParent) {
+					var el = $(m);
+					var w = $(el[0].parentNode).width();
+					if (m.$noscrollbarwidth !== w) {
+						m.$noscrollbarwidth = w;
+						cssnoscrollbar.width = Math.ceil(w + sw) + 'px';
+						el.css(cssnoscrollbar);
+						if ((el.attr('class') || '').indexOf(clsnoscrollbar) === -1)
+							el.aclass(clsnoscrollbar);
+					}
+				}
+			}
+			return t;
+		};
+
 		function resize() {
 			var w = $(window);
 			W.WW = w.width();
 			W.WH = w.height();
+			setTimeout2(clsnoscrollbar, function() {
+				$(selnoscrollbar).noscrollbar();
+			}, 300);
 		}
 
 		resize();
