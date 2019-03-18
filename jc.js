@@ -90,6 +90,7 @@
 	}
 
 	// Internal cache
+	var scrollbarwidth = null;
 	var blocked = {};
 	var storage = {};
 	var extensions = {}; // COMPONENT_EXTEND()
@@ -179,7 +180,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.096;
+	M.version = 17.097;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1323,14 +1324,16 @@
 
 	W.SCROLLBARWIDTH = function() {
 		var id = 'jcscrollbarwidth';
-		if (cache[id])
-			return cache[id];
+		if (scrollbarwidth != null)
+			return scrollbarwidth;
 		var b = document.body;
 		$(b).append('<div id="{0}" style="width{1}height{1}overflow:scroll;position:absolute;top{2}left{2}"></div>'.format(id, ':100px;', ':9999px;'));
 		var el = document.getElementById(id);
-		var w = cache[id] = el.offsetWidth - el.clientWidth;
-		b.removeChild(el);
-		return w;
+		if (el) {
+			scrollbarwidth = el.offsetWidth - el.clientWidth;
+			b.removeChild(el);
+		}
+		return scrollbarwidth || 0;
 	};
 
 	W.REMOVECACHE = function(key, isSearching) {
@@ -7896,7 +7899,7 @@
 			var sw = SCROLLBARWIDTH();
 			for (var i = 0; i < t.length; i++) {
 				var m = t[i];
-				if (m.offsetParent) {
+				if (m && m.offsetParent) {
 					var el = $(m);
 					var w = $(el[0].parentNode).width();
 					if (m.$noscrollbarwidth !== w) {
