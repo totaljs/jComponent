@@ -57,7 +57,7 @@
 	var T_SCRIPT = 'script';
 
 	// No scrollbar
-	var cssnoscrollbar = { 'overflow-y': 'scroll' };
+	var cssnoscrollbar = {};
 	var clsnoscrollbar = 'noscrollbar';
 	var selnoscrollbar = '.' + clsnoscrollbar;
 
@@ -180,7 +180,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.097;
+	M.version = 17.098;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7897,6 +7897,9 @@
 		$.fn.noscrollbar = function() {
 			var t = this;
 			var sw = SCROLLBARWIDTH();
+
+			cssnoscrollbar['overflow-y'] = sw ? 'scroll' : 'auto';
+
 			for (var i = 0; i < t.length; i++) {
 				var m = t[i];
 				if (m && m.offsetParent) {
