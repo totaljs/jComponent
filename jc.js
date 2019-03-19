@@ -6551,7 +6551,7 @@
 			// Is double?
 			var l = text.charCodeAt(1) === 123 ? 2 : 1;
 			var val = get(text.substring(l, text.length - l).trim(), obj);
-			return val == null ? (def == null ? text : def) : (encode ? encodeURIComponent(val) : val);
+			return val == null ? (def == null ? text : def) : (encode ? encodeURIComponent(val + '') : val);
 		});
 	};
 
