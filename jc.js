@@ -180,7 +180,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.098;
+	M.version = 17.099;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -6542,12 +6542,16 @@
 		return output;
 	};
 
-	SP.params = SP.arg = function(obj) {
+	SP.params = SP.arg = function(obj, encode, def) {
+
+		if (typeof(encode) === 'string')
+			def = encode;
+
 		return this.replace(REGPARAMS, function(text) {
 			// Is double?
 			var l = text.charCodeAt(1) === 123 ? 2 : 1;
 			var val = get(text.substring(l, text.length - l).trim(), obj);
-			return val == null ? text : val;
+			return val == null ? (def == null ? text : def) : (encode ? encodeURIComponent(val) : val);
 		});
 	};
 
