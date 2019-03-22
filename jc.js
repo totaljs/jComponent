@@ -9016,11 +9016,7 @@
 
 		self.element = element;
 		self.area = area;
-
-		if (!options.margin)
-			options.margin = SCROLLBARWIDTH() || 30;
-
-		size.margin = options.margin;
+		size.margin = options.margin || 30;
 
 		var events = {};
 
