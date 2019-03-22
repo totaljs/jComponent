@@ -180,7 +180,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.101;
+	M.version = 17.102;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -9018,7 +9018,7 @@
 		self.area = area;
 
 		if (!options.margin)
-			options.margin = SCROLLBARWIDTH();
+			options.margin = SCROLLBARWIDTH() || 30;
 
 		size.margin = options.margin;
 
