@@ -180,7 +180,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.099;
+	M.version = 17.101;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -9016,7 +9016,11 @@
 
 		self.element = element;
 		self.area = area;
-		size.margin = options.margin || 30;
+
+		if (!options.margin)
+			options.margin = SCROLLBARWIDTH();
+
+		size.margin = options.margin;
 
 		var events = {};
 
