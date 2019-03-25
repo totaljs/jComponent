@@ -180,7 +180,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.102;
+	M.version = 17.103;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5838,8 +5838,14 @@
 			fn = obj;
 			obj = {};
 		}
+
+		var scope = '';
 		fn.call(obj, function(path, value) {
-			return set2(obj, path, value);
+			return set2(obj, scope + path, value);
+		}, function(s) {
+			scope = s == null ? '' : (s + '');
+			if (scope)
+				scope += '.';
 		});
 		return obj;
 	};
@@ -6551,7 +6557,11 @@
 			// Is double?
 			var l = text.charCodeAt(1) === 123 ? 2 : 1;
 			var val = get(text.substring(l, text.length - l).trim(), obj);
-			return val == null ? (def == null ? text : def) : (encode ? encodeURIComponent(val + '') : val);
+
+			if (encode && encode === 'json')
+				return JSON.stringify(val);
+
+			return val == null ? (def == null ? text : def) : encode ? encodeURIComponent(val + '') : val;
 		});
 	};
 
