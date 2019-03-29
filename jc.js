@@ -180,7 +180,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.103;
+	M.version = 17.104;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -4891,6 +4891,13 @@
 			self.$datasource = null;
 
 		return self;
+	};
+
+	PPC.makepath = function(path) {
+		var self = this;
+		if (path.indexOf('?') !== -1 && self.pathscope)
+			path = self.scope.makepath(path);
+		return path;
 	};
 
 	PPC.setPath = function(path, type) {
