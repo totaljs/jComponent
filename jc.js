@@ -180,7 +180,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.104;
+	M.version = 17.105;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7915,7 +7915,7 @@
 			EMIT('knockknock', knockknockcounter++);
 		}, 60000);
 
-		$.fn.noscrollbar = function() {
+		$.fn.noscrollbar = function(force) {
 			var t = this;
 			var sw = SCROLLBARWIDTH();
 
@@ -7926,7 +7926,7 @@
 				if (m && m.offsetParent) {
 					var el = $(m);
 					var w = $(el[0].parentNode).width();
-					if (m.$noscrollbarwidth !== w) {
+					if (force || m.$noscrollbarwidth !== w) {
 						m.$noscrollbarwidth = w;
 						cssnoscrollbar.width = Math.ceil(w + sw) + 'px';
 						el.css(cssnoscrollbar);
