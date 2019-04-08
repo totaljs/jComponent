@@ -180,7 +180,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.105;
+	M.version = 17.106;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -9314,6 +9314,7 @@
 
 			size.viewWidth = el.width() + (options.offsetX || 0);
 			size.viewHeight = el.height() + (options.offsetY || 0);
+			size.margin = SCROLLBARWIDTH();
 
 			// Safari iOS
 			if (md) {
@@ -9377,10 +9378,12 @@
 			element.tclass(n + 'isx', size.hbar).tclass(n + 'isy', size.vbar).tclass(n + 'touch', md);
 			path.rclass(n + 'notready');
 
-			var sw = SCROLLBARWIDTH();
-			if (sw) {
-				cssba['margin-right'] = size.vbar ? ((options.mr || 40) - sw) : null;
-				cssba['margin-bottom'] = size.hbar ? ((options.mb || 40) - sw) : null;
+			if (!size.margin)
+				size.margin = size.thickness;
+
+			if (size.margin) {
+				cssba['margin-right'] = size.vbar ? size.thickness : '';
+				cssba['margin-bottom'] = size.hbar ? size.thickness : '';
 				bodyarea.css(cssba);
 			}
 
