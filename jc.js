@@ -180,7 +180,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.106;
+	M.version = 17.107;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2053,6 +2053,13 @@
 			return;
 		}
 
+		var unshift = 0;
+
+		if (path.charAt(0) === '^') {
+			path = path.substring(1);
+			unshift = 1;
+		}
+
 		path = pathmaker(path);
 
 		var arr = get(path);
@@ -2067,12 +2074,19 @@
 		M.skipproxy = path;
 
 		if (value instanceof Array) {
-			if (value.length)
-				arr.push.apply(arr, value);
-			else
+			if (value.length) {
+				if (unshift)
+					arr.unshift.apply(arr, value);
+				else
+					arr.push.apply(arr, value);
+			} else
 				is = false;
-		} else
-			arr.push(value);
+		} else {
+			if (unshift)
+				arr.unshift(value);
+			else
+				arr.push(value);
+		}
 
 		if (n)
 			M.set(path, arr, type);
