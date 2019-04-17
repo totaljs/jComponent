@@ -180,18 +180,18 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.107;
+	M.version = 17.108;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
 	M.scrollbars = [];
-
 	M.$components = {};
 	M.components = [];
 	M.$formatter = [];
 	M.$parser = [];
 	M.compiler = C;
 	M.paths = {};
+
 	C.is = false;
 	C.recompile = false;
 	C.importing = 0;
@@ -4560,10 +4560,15 @@
 					// A binder controls nested children by itself
 					return;
 
-				} else if (init) {
-					var is = attrcom(dom);
-					is && dom.setAttribute(ATTRREL2, value ? T_TRUE : T_FALSE);
-				}
+					/*
+					else if (init) {
+						var is = attrcom(dom);
+						is && dom.setAttribute(ATTRREL2, value ? T_TRUE : T_FALSE);
+					}
+					*/
+
+				} else
+					attrcom(dom) && dom.setAttribute(ATTRREL2, value ? T_TRUE : T_FALSE);
 			}
 
 			if ((type === 0 || type === 1) && dom.children) {
