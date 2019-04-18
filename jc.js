@@ -161,6 +161,7 @@
 	MD.thousandsseparator = ' ';
 	MD.decimalseparator = '.';
 	MD.dateformat = null;
+	MD.currency = {};
 
 	W.MONTHS = M.months = 'January,February,March,April,May,June,July,August,September,October,November,December'.split(',');
 	W.DAYS = M.days = 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'.split(',');
@@ -180,7 +181,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.108;
+	M.version = 17.109;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7057,6 +7058,11 @@
 		return value.indexOf('#') === -1 ? value : value.replace(M.regexp.pluralize, function(text) {
 			return text === '##' ? num.format() : num.toString();
 		});
+	};
+
+	NP.currency = function(currency) {
+		var curr = MD.currency[currency];
+		return curr ? curr(this) : this.format(2);
 	};
 
 	NP.format = function(decimals, separator, separatorDecimal) {
