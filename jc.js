@@ -161,7 +161,7 @@
 	MD.thousandsseparator = ' ';
 	MD.decimalseparator = '.';
 	MD.dateformat = null;
-	MD.currency = {};
+	MD.currencies = {};
 
 	W.MONTHS = M.months = 'January,February,March,April,May,June,July,August,September,October,November,December'.split(',');
 	W.DAYS = M.days = 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'.split(',');
@@ -7061,7 +7061,7 @@
 	};
 
 	NP.currency = function(currency) {
-		var curr = MD.currency[currency];
+		var curr = MD.currencies[currency];
 		return curr ? curr(this) : this.format(2);
 	};
 
