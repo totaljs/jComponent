@@ -181,7 +181,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.109;
+	M.version = 17.111;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5961,7 +5961,7 @@
 		for (var j = 0; j < arguments.length; j++) {
 			var arr = arguments[j].split(',');
 			for (var i = 0, length = arr.length; i < length; i++) {
-				var p = arr[i].trim();
+				var p = pathmaker(arr[i].trim());
 				if (skips[p])
 					skips[p]++;
 				else
