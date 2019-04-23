@@ -71,6 +71,7 @@
 	var W = window;
 	var LS = W.localStorage;
 	var PREF = {};
+	var PREFBLACKLIST = { set: 1, get: 1, save: 1, load: 1, keys: 1 };
 
 	var warn = W.WARN = function() {
 		W.console && W.console.warn.apply(W.console, arguments);
@@ -98,9 +99,11 @@
 			for (var i = 0; i < keys.length; i++) {
 				var key = keys[i];
 				var item = data[key];
-				if (item && item.expire > NOW)
+				if (item && item.expire > NOW) {
 					PREF[key] = item;
-				else
+					if (!PREFBLACKLIST[key])
+						W.PREF[key] = item.value;
+				} else
 					remove = true;
 			}
 
@@ -122,13 +125,22 @@
 
 	PR.set = function(key, value, expire) {
 
-		if (value === undefined)
+		if (value === undefined) {
 			delete PREF[key];
-		else
+			if (!PREFBLACKLIST[key])
+				delete W.PREF[key];
+		} else {
 			PREF[key] = { value: value, expire: NOW.add(expire || '1 month') };
+			if (!PREFBLACKLIST[key])
+				W.PREF[key] = value;
+		}
 
 		setTimeout2('PREF', prefsave, 1000);
 		return value;
+	};
+
+	PR.keys = function() {
+		return Object.keys(PREF);
 	};
 
 	PR.load = function(callback) {
