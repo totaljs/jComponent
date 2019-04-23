@@ -55,6 +55,7 @@
 	var T_TEMPLATE = 'template';
 	var T_VBINDARR = 'vbindarray';
 	var T_SCRIPT = 'script';
+	var T_PATHS = 'PATHS';
 
 	// No scrollbar
 	var cssnoscrollbar = {};
@@ -102,6 +103,11 @@
 				else
 					remove = true;
 			}
+
+			PREF.PATHS && OK(PREF.PATHS).forEach(function(key) {
+				M.set(key, PREF.PATHS[key], true);
+			});
+
 			remove && setTimeout2('PREF', W.PREF.save, 1000, null, PREF);
 		}
 		compile();
@@ -197,7 +203,6 @@
 	MD.delaybinder = 200;
 	MD.delayrepeat = 2000;
 	MD.keypress = true;
-	MD.localstorage = true;
 	MD.jsoncompress = false;
 	MD.jsondate = true;
 	MD.ajaxerrors = false;
@@ -207,7 +212,6 @@
 	MD.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 	MD.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
 	MD.importcache = 'session';
-	MD.pingdata = {};
 	MD.baseurl = ''; // String or Function
 	MD.root = ''; // String or Function
 	MD.makeurl = null; // Function
@@ -240,7 +244,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.112;
+	M.version = 17.113;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1359,21 +1363,22 @@
 			IMPORTCACHE(url, null, target, callback, insert, preparator);
 	};
 
-	W.CACHEPATH = function(path, expire, rebind) {
-		var key = '$jcpath';
+	W.CACHEPATH = function(path, expire, rebind, preferences) {
 		WATCH(path, function(p, value) {
-			var obj = cachestorage(key);
+			var obj = preferences ? W.PREF.get(T_PATHS) : cachestorage(T_PATHS);
 			if (obj)
 				obj[path] = value;
 			else {
 				obj = {};
 				obj[path] = value;
 			}
-			cachestorage(key, obj, expire);
+			if (preferences)
+				W.PREF.set(T_PATHS, value, expire);
+			else
+				cachestorage(T_PATHS, obj, expire);
 		});
-
 		if (rebind === undefined || rebind) {
-			var cache = cachestorage(key);
+			var cache = preferences ? W.PREF.get(T_PATHS) : cachestorage(T_PATHS);
 			cache && cache[path] !== undefined && cache[path] !== get(path) && M.set(path, cache[path], true);
 		}
 	};
@@ -1854,7 +1859,7 @@
 		if (typeof(timeout) === TYPE_S)
 			timeout = timeout.env().parseExpire();
 
-		var local = MD.localstorage && timeout > 10000;
+		var local = timeout > 10000;
 		blocked[key] = now + timeout;
 		!W.isPRIVATEMODE && local && LS.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
 		callback && callback();
@@ -2642,22 +2647,20 @@
 
 	function load() {
 		clearTimeout($ready);
-		if (MD.localstorage) {
-			var cache;
-			try {
-				cache = LS.getItem(M.$localstorage + '.cache');
-				if (cache && typeof(cache) === TYPE_S)
-					storage = PARSE(cache);
-			} catch (e) {}
-			try {
-				cache = LS.getItem(M.$localstorage + '.blocked');
-				if (cache && typeof(cache) === TYPE_S)
-					blocked = PARSE(cache);
-			} catch (e) {}
-		}
+		var cache;
+		try {
+			cache = LS.getItem(M.$localstorage + '.cache');
+			if (cache && typeof(cache) === TYPE_S)
+				storage = PARSE(cache);
+		} catch (e) {}
 
+		try {
+			cache = LS.getItem(M.$localstorage + '.blocked');
+			if (cache && typeof(cache) === TYPE_S)
+				blocked = PARSE(cache);
+		} catch (e) {}
 		if (storage) {
-			var obj = storage['$jcpath'];
+			var obj = storage[T_PATHS];
 			obj && OK(obj.value).forEach(function(key) {
 				M.set(key, obj.value[key], true);
 			});
@@ -4046,7 +4049,7 @@
 			}
 		}
 
-		MD.localstorage && is2 && !W.isPRIVATEMODE && LS.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
+		is2 && !W.isPRIVATEMODE && LS.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
 
 		for (var key in storage) {
 			var item = storage[key];
@@ -4065,7 +4068,7 @@
 	}
 
 	function save() {
-		!W.isPRIVATEMODE && MD.localstorage && LS.setItem(M.$localstorage + '.cache', JSON.stringify(storage));
+		!W.isPRIVATEMODE && LS.setItem(M.$localstorage + '.cache', JSON.stringify(storage));
 	}
 
 	function refresh() {
