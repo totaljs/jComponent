@@ -69,9 +69,68 @@
 	var M = {}; // MAIN
 	var W = window;
 	var LS = W.localStorage;
+	var PREF = {};
 
 	var warn = W.WARN = function() {
 		W.console && W.console.warn.apply(W.console, arguments);
+	};
+
+	var prefsave = function() {
+		var keys = Object.keys(PREF);
+		for (var i = 0; i < keys.length; i++) {
+			var key = keys[i];
+			var item = PREF[key];
+			if (item && item.expire > NOW)
+				PREF[key] = item;
+			else
+				delete PREF[key];
+		}
+		W.PREF.save(PREF);
+	};
+
+	var prefload = function(data) {
+		if (typeof(data) === 'string')
+			data = PARSE(data);
+		if (data) {
+			var keys = Object.keys(data);
+			var remove = false;
+			for (var i = 0; i < keys.length; i++) {
+				var key = keys[i];
+				var item = data[key];
+				if (item && item.expire > NOW)
+					PREF[key] = item;
+				else
+					remove = true;
+			}
+			remove && setTimeout2('PREF', W.PREF.save, 1000, null, PREF);
+		}
+		compile();
+	};
+
+	var PR = W.PREF = {};
+
+	PR.get = function(key) {
+		var tmp = PREF[key];
+		return tmp && tmp.expire > NOW ? tmp.value : undefined;
+	};
+
+	PR.set = function(key, value, expire) {
+
+		if (value === undefined)
+			delete PREF[key];
+		else
+			PREF[key] = { value: value, expire: NOW.add(expire || '1 month') };
+
+		setTimeout2('PREF', prefsave, 1000);
+		return value;
+	};
+
+	PR.load = function(callback) {
+		callback(!W.isPRIVATEMODE && PARSE(LS.getItem(M.$localstorage + '.pref')));
+	};
+
+	PR.save = function(data) {
+		!W.isPRIVATEMODE && LS.setItem(M.$localstorage + '.pref', STRINGIFY(data));
 	};
 
 	// temporary
@@ -181,7 +240,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.111;
+	M.version = 17.112;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8088,7 +8147,7 @@
 				}
 			});
 
-			setTimeout(compile, 2);
+			setTimeout(W.PREF.load, 2, prefload);
 			$domready = true;
 		});
 	}, 100);
