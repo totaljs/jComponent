@@ -72,6 +72,7 @@
 	var LS = W.localStorage;
 	var PREF = {};
 	var PREFBLACKLIST = { set: 1, get: 1, save: 1, load: 1, keys: 1 };
+	var PREFLOADED = 0;
 
 	var warn = W.WARN = function() {
 		W.console && W.console.warn.apply(W.console, arguments);
@@ -93,6 +94,7 @@
 	var prefload = function(data) {
 		if (typeof(data) === 'string')
 			data = PARSE(data);
+
 		if (data) {
 			var keys = Object.keys(data);
 			var remove = false;
@@ -112,6 +114,12 @@
 			});
 
 			remove && setTimeout2('PREF', W.PREF.save, 1000, null, PREF);
+		}
+		M.loaded = true;
+		PREFLOADED = 1;
+		for (var i = 0; i < plugininit.length; i++) {
+			var tmp = plugininit[i];
+			W.PLUGIN(tmp.name, tmp.fn);
 		}
 		compile();
 	};
@@ -164,6 +172,7 @@
 		LS.removeItem(pmk);
 	} catch (e) {
 		W.isPRIVATEMODE = true;
+		warn('jC: localStorage is disabled');
 	}
 
 	// Internal cache
@@ -182,6 +191,7 @@
 	var toggles = [];
 	var versions = {};
 	var autofill = [];
+	var plugininit = [];
 	var defaults = {};
 	var waits = {};
 	var statics = {};
@@ -256,7 +266,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.113;
+	M.version = 17.114;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2612,14 +2622,12 @@
 	}
 
 	function findcontrol2(com, input) {
-
 		if (com.$inputcontrol) {
 			if (com.$inputcontrol % 2 !== 0) {
 				com.$inputcontrol++;
 				return;
 			}
 		}
-
 		var target = input ? input : com.element;
 		findcontrol(target[0], function(el) {
 			if (!el.$com || el.$com !== com) {
@@ -2665,7 +2673,6 @@
 			if (cache && typeof(cache) === TYPE_S)
 				storage = PARSE(cache);
 		} catch (e) {}
-
 		try {
 			cache = LS.getItem(M.$localstorage + '.blocked');
 			if (cache && typeof(cache) === TYPE_S)
@@ -2677,8 +2684,6 @@
 				M.set(key, obj.value[key], true);
 			});
 		}
-
-		M.loaded = true;
 	}
 
 	function dependencies(declaration, callback, obj, el) {
@@ -5506,14 +5511,6 @@
 		return self;
 	};
 
-	M.prototypes = function(fn) {
-		var obj = {};
-		obj.Component = PPC;
-		obj.Plugin = Plugin.prototype;
-		obj.CustomScrollbar = CustomScrollbar.prototype;
-		fn.call(obj, obj);
-	};
-
 	// ===============================================================
 	// WINDOW FUNCTIONS
 	// ===============================================================
@@ -7134,9 +7131,11 @@
 		});
 	};
 
-	NP.currency = function(currency) {
+	NP.currency = function(currency, a, b, c) {
+		if (currency.charAt(0) === '[')
+			currency = currency.env();
 		var curr = MD.currencies[currency];
-		return curr ? curr(this) : this.format(2);
+		return curr ? curr(this, a, b, c) : this.format(2);
 	};
 
 	NP.format = function(decimals, separator, separatorDecimal) {
@@ -9092,11 +9091,14 @@
 	};
 
 	W.PLUGIN = function(name, fn) {
-		if (fn) {
-			current_scope = name;
-			fn = new Plugin(name, fn);
-		}
-		return fn || W.PLUGINS[name];
+		if (PREFLOADED) {
+			if (fn) {
+				current_scope = name;
+				fn = new Plugin(name, fn);
+			}
+			return fn || W.PLUGINS[name];
+		} else
+			plugininit.push({ name: name, fn: fn });
 	};
 
 	function CustomScrollbar(element, options) {
@@ -9565,6 +9567,14 @@
 		M.scrollbars.push(self);
 		return self;
 	}
+
+	M.prototypes = function(fn) {
+		var obj = {};
+		obj.Component = PPC;
+		obj.Plugin = PP;
+		obj.VBinder = VBP;
+		fn.call(obj, obj);
+	};
 
 	W.SCROLLBAR = function(element, options) {
 		return new CustomScrollbar(element, options);
