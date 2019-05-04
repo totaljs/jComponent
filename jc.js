@@ -126,9 +126,12 @@
 
 	var PR = W.PREF = {};
 
-	PR.get = function(key) {
+	PR.get = function(key, expire) {
 		var tmp = PREF[key];
-		return tmp && tmp.expire > NOW ? tmp.value : undefined;
+		var val = tmp && tmp.expire > NOW ? tmp.value : undefined;
+		if (expire && val !== undefined)
+			PR.set(key, val, expire);
+		return val;
 	};
 
 	PR.set = function(key, value, expire) {
@@ -143,7 +146,7 @@
 				W.PREF[key] = value;
 		}
 
-		setTimeout2('PREF', prefsave, 1000);
+		setTimeout2('PREF', prefsave, MD.delaypref);
 		return value;
 	};
 
@@ -224,6 +227,7 @@
 	MD.delaywatcher = 555;
 	MD.delaybinder = 200;
 	MD.delayrepeat = 2000;
+	MD.delaypref = 1000;
 	MD.keypress = true;
 	MD.jsoncompress = false;
 	MD.jsondate = true;
@@ -266,7 +270,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.114;
+	M.version = 17.115;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
