@@ -270,7 +270,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.115;
+	M.version = 17.116;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5101,11 +5101,20 @@
 	};
 
 	PPC.rcwatch = function(path, value) {
-		return value ? this.reconfigure(value) : this;
+		var self = this;
+		if (value) {
+			self.reconfigure(value);
+			self.$reconfigure();
+		}
+		return self;
 	};
 
 	PPC.reconfigure = function(value, callback, init) {
 		var self = this;
+
+		if (value == null)
+			return self;
+
 		if (typeof(value) === TYPE_O) {
 			OK(value).forEach(function(k) {
 				var prev = self.config[k];
@@ -5118,7 +5127,7 @@
 				self.data('config.' + k, value[k]);
 			});
 		} else if (value.charAt(0) === '=') {
-			value = value.substring(1);
+			value = value.substring(1).SCOPE(self);
 			if (self.watch) {
 				self.$rcwatch && self.unwatch(self.$rcwatch, self.rcwatch);
 				self.watch(value, self.rcwatch);
@@ -5138,26 +5147,50 @@
 			});
 		}
 
+		self.$reconfigure();
+		return self;
+	};
+
+	PPC.$reconfigure = function() {
+		var self = this;
 		var cfg = self.config;
 
 		self.data('config', cfg);
 
-		if (cfg.$type)
+		if (cfg.$type) {
 			self.type = cfg.$type;
+			delete cfg.$type;
+		}
 
-		if (cfg.$id)
+		if (cfg.$id) {
 			self.id = cfg.$id;
+			delete cfg.$id;
+		}
 
-		if (cfg.$compile == false)
+		if (cfg.$compile == false) {
 			self.nocompile();
+			delete cfg.$compile;
+		}
 
-		if (cfg.$init)
+		if (cfg.$init) {
 			self.$init = cfg.$init;
+			delete cfg.$init;
+		}
 
-		cfg.$class && self.tclass(cfg.$class);
-		cfg.$released && self.release(cfg.$released == true);
-		cfg.$reconfigure && EXEC.call(cfg.$reconfigure, cfg.SCOPE(cfg));
-		return self;
+		if (cfg.$class) {
+			self.tclass(cfg.$class);
+			delete cfg.$class;
+		}
+
+		if (cfg.$released) {
+			self.release(cfg.$released == true);
+			delete cfg.$released;
+		}
+
+		if (cfg.$reconfigure) {
+			EXEC.call(self, cfg.$reconfigure.SCOPE(self), self);
+			delete cfg.$reconfigure;
+		}
 	};
 
 	PPC.closest = SCP.closest = function(sel) {
