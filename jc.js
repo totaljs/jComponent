@@ -270,7 +270,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.116;
+	M.version = 17.117;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -484,13 +484,13 @@
 		if (typeof(name) === TYPE_O) {
 			name && OK(name).forEach(function(key) {
 				ENV[key] = name[key];
-				EMIT(KEY_ENV, key, name[key]);
+				events[KEY_ENV] && EMIT(KEY_ENV, key, name[key]);
 			});
 			return name;
 		}
 
 		if (value !== undefined) {
-			EMIT(KEY_ENV, name, value);
+			events[KEY_ENV] && EMIT(KEY_ENV, name, value);
 			ENV[name] = value;
 			return value;
 		}
@@ -682,7 +682,7 @@
 		output.method = method;
 		output.data = data;
 
-		EMIT('request', output);
+		events.request && EMIT('request', output);
 
 		if (output.cancel)
 			return;
@@ -715,7 +715,7 @@
 				output.error = self.status > 399;
 				output.headers = parseHeaders(self.getAllResponseHeaders());
 
-				EMIT(T_RESPONSE, output);
+				events[T_RESPONSE] && EMIT(T_RESPONSE, output);
 
 				if (!output.process || output.cancel)
 					return;
@@ -726,7 +726,7 @@
 				if (!output.error || MD.ajaxerrors) {
 					typeof(callback) === TYPE_S ? remap(callback.env(), r) : (callback && callback(r, null, output));
 				} else {
-					EMIT('error', output);
+					events.error && EMIT('error', output);
 					output.process && typeof(callback) === TYPE_FN && callback({}, r, output);
 				}
 
@@ -1302,7 +1302,7 @@
 			};
 			scr.src = makeurl(url, true);
 			d.getElementsByTagName('head')[0].appendChild(scr);
-			EMIT('import', url, $(scr));
+			events.import && EMIT('import', url, $(scr));
 			return;
 		}
 
@@ -1314,7 +1314,7 @@
 			d.getElementsByTagName('head')[0].appendChild(stl);
 			statics[url] = 2;
 			callback && setTimeout(callback, 200, 1);
-			EMIT('import', url, $(stl));
+			events.import && EMIT('import', url, $(stl));
 			return;
 		}
 
@@ -1359,7 +1359,7 @@
 					}, function() {
 						callback(1);
 					});
-					EMIT('import', url, target);
+					events.import && EMIT('import', url, target);
 				}, 10);
 			};
 
@@ -1633,7 +1633,7 @@
 			if (!options.url)
 				options.url = url;
 
-			EMIT('request', options);
+			events.request && EMIT('request', options);
 
 			if (options.cancel)
 				return;
@@ -1658,7 +1658,7 @@
 				output.status = req.status || 999;
 				output.text = s;
 				output.headers = parseHeaders(req.getAllResponseHeaders());
-				EMIT(T_RESPONSE, output);
+				events[T_RESPONSE] && EMIT(T_RESPONSE, output);
 				if (output.process && !output.cancel) {
 					if (typeof(callback) === TYPE_S)
 						remap(callback, output.response);
@@ -1698,7 +1698,7 @@
 
 				current_scope = curr_scope;
 
-				EMIT(T_RESPONSE, output);
+				events[T_RESPONSE] && EMIT(T_RESPONSE, output);
 
 				if (output.cancel || !output.process)
 					return;
@@ -1709,7 +1709,7 @@
 					else
 						callback && callback.call(output, output.response, output.status, output);
 				} else {
-					EMIT('error', output);
+					events.error && EMIT('error', output);
 					typeof(callback) === TYPE_FN && callback.call(output, output.response, output.status, output);
 				}
 
@@ -3487,13 +3487,18 @@
 		setTimeout(resizenoscrollbar, 777, el);
 
 		obj.id && EMIT('#' + obj.id, obj);
-		EMIT('@' + obj.name, obj);
-		EMIT(n, obj);
+
+		var e = '@' + obj.name;
+
+		events[e] && EMIT(e, obj);
+		events[n] && EMIT(n, obj);
+
 		clear('find.');
+
 		if (obj.$lazy) {
 			obj.$lazy.state = 3;
 			delete obj.$lazy;
-			EMIT('lazy', obj.$name, false);
+			events.lazy && EMIT('lazy', obj.$name, false);
 		}
 	}
 
@@ -3598,8 +3603,8 @@
 			if (!$loaded) {
 				$loaded = true;
 				clear(T_VALID, T_DIRTY, 'find');
-				EMIT('init');
-				EMIT('ready');
+				events.init && EMIT('init');
+				events.ready && EMIT('ready');
 			}
 
 			setTimeout2('$initcleaner', function() {
@@ -3987,8 +3992,9 @@
 				}
 			}
 
-			EMIT('destroy', component.name, component);
-			EMIT('component.destroy', component.name, component);
+			events.destroy && EMIT('destroy', component.name, component);
+			var e = 'component.destroy';
+			events[e] && EMIT(e, component.name, component);
 
 			delete statics['$ST_' + component.name];
 			component.destroy && component.destroy();
@@ -5677,7 +5683,8 @@
 
 		M.$components[name] && warn('Overwriting component:', name);
 		var a = M.$components[name] = { name: name, config: config, declaration: declaration, shared: {}, dependencies: dependencies instanceof Array ? dependencies : null };
-		EMIT('component.compile', name, a);
+		var e = 'component.compile';
+		events[e] && EMIT(e, name, a);
 	};
 
 	W.WIDTH = function(el) {
@@ -5763,7 +5770,7 @@
 						return;
 
 					lazycom[selector].state = 2;
-					EMIT('lazy', selector, true);
+					events.lazy && EMIT('lazy', selector, true);
 					warn('Lazy load: ' + selector);
 					compile();
 				}
@@ -5802,7 +5809,7 @@
 						return;
 
 					lazycom[selector].state = 2;
-					EMIT('lazy', selector, true);
+					events.lazy && EMIT('lazy', selector, true);
 					warn('Lazy load: ' + selector);
 					compile();
 				}
@@ -6250,7 +6257,7 @@
 				var val = FIND(value, many, noCache);
 				if (lazycom[value] && lazycom[value].state === 1) {
 					lazycom[value].state = 2;
-					EMIT('lazy', value, true);
+					events.lazy && EMIT('lazy', value, true);
 					warn('Lazy load: ' + value);
 					compile();
 				}
@@ -7768,7 +7775,7 @@
 
 					if (lazycom[selector].state === 1) {
 						lazycom[selector].state = 2;
-						EMIT('lazy', selector, true);
+						events.lazy && EMIT('lazy', selector, true);
 						warn('Lazy load: ' + selector);
 						compile();
 					}
@@ -7800,7 +7807,7 @@
 
 					if (lazycom[selector].state === 1) {
 						lazycom[selector].state = 2;
-						EMIT('lazy', selector, true);
+						events.lazy && EMIT('lazy', selector, true);
 						warn('Lazy load: ' + selector);
 						compile();
 					}
@@ -8374,7 +8381,7 @@
 						})(v);
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', T_TEMPLATE, T_VBINDARR, 'click', 'format', 'empty', 'release') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', T_TEMPLATE, T_VBINDARR, 'click', 'format', 'currency', 'empty', 'release') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -8424,6 +8431,7 @@
 
 						switch (k) {
 							case 'empty':
+							case 'currency':
 								fn = v;
 								break;
 							case 'format':
@@ -9048,7 +9056,7 @@
 	};
 
 	function bindvalue(val, item, prop) {
-		return val === '' ? item.empty : val == null ? (item.empty || (prop ? item[prop + 'bk'] : '')) : item.format ? val.format(item.format) : val;
+		return val === '' ? item.empty : val == null ? (item.empty || (prop ? item[prop + 'bk'] : '')) : item.currency ? val.currency(item.currency) : item.format ? val.format(item.format) : val;
 	}
 
 	function binderconfig(el, val) {
@@ -9079,7 +9087,7 @@
 		fn.call(t, t);
 		current_owner = a;
 		current_scope = null;
-		EMIT('plugin', t);
+		events.plugin && EMIT('plugin', t);
 	}
 
 	var PP = Plugin.prototype;
@@ -9310,7 +9318,7 @@
 				if (notemmited) {
 					clearTimeout(resizeid);
 					resizeid = setTimeout(self.resize, 500, true);
-					EMIT('scroll', area);
+					events.scroll && EMIT('scroll', area);
 					notemmited = false;
 				}
 
@@ -9541,6 +9549,7 @@
 			if (typeof(val) === 'string')
 				val = area[0].scrollLeft + (+val);
 
+			size.hpos = -1;
 			return area[0].scrollLeft = val;
 		};
 
@@ -9552,24 +9561,29 @@
 			if (typeof(val) === 'string')
 				val = area[0].scrollTop + (+val);
 
+			size.vpos = -1;
 			return area[0].scrollTop = val;
 		};
 
 		self.scrollBottom = function(val) {
 			if (val == null)
 				return area[0].scrollTop;
+			size.vpos = -1;
 			return area[0].scrollTop = (area[0].scrollHeight - size.clientHeight) - (val || 0);
 		};
 
 		self.scrollRight = function(val) {
 			if (val == null)
 				return area[0].scrollLeft;
+			size.hpos = -1;
 			return area[0].scrollLeft = (area[0].scrollWidth - size.clientWidth) - (val || 0);
 		};
 
 		self.scroll = function(x, y) {
 			area[0].scrollLeft = x;
 			area[0].scrollTop = y;
+			size.vpos = -1;
+			size.hpos = -1;
 			return self;
 		};
 
