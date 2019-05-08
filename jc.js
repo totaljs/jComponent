@@ -270,7 +270,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.117;
+	M.version = 17.118;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1010,7 +1010,7 @@
 			var context = e[i].context;
 			if (context !== undefined && (context === null || context.$removed))
 				continue;
-			e[i].fn.apply(context || window, args);
+			e[i].fn.apply(context || W, args);
 		}
 
 		return true;
@@ -7648,7 +7648,7 @@
 	}, function() {
 
 		// Fixed IE <button tags
-		W.isIE && $(window).on('keydown', function(e) {
+		W.isIE && $(W).on('keydown', function(e) {
 			if (e.keyCode === 13) {
 				var n = e.target.tagName;
 				if (n === 'BUTTON' || n === 'INPUT' || n === 'SELECT')
@@ -8081,7 +8081,7 @@
 		};
 
 		function resize() {
-			var w = $(window);
+			var w = $(W);
 			W.WW = w.width();
 			W.WH = w.height();
 			setTimeout2(clsnoscrollbar, function() {
@@ -8091,7 +8091,7 @@
 
 		resize();
 
-		$(window).on(T_RESIZE, resize);
+		$(W).on(T_RESIZE, resize);
 		$(document).ready(function() {
 
 			if ($ready) {
@@ -9181,9 +9181,9 @@
 		self.area = area;
 		size.margin = options.margin || 30;
 
-		var events = {};
+		var handlers = {};
 
-		events.onmousemove = function(e) {
+		handlers.onmousemove = function(e) {
 			if (drag.is) {
 				var p;
 				var half;
@@ -9222,7 +9222,7 @@
 			}
 		};
 
-		events.onresize = function() {
+		handlers.onresize = function() {
 			!delayresize && path.aclass(n + '-notready');
 			delayresize && clearTimeout(delayresize);
 			delayresize = setTimeout(self.resize, 500);
@@ -9231,23 +9231,23 @@
 		var bind = function() {
 			if (!drag.binded) {
 				drag.binded = true;
-				$(window).on('mousemove', events.onmousemove).on('mouseup', events.onmouseup).on('mouseout', events.onmouseout);
+				$(W).on('mousemove', handlers.onmousemove).on('mouseup', handlers.onmouseup).on('mouseout', handlers.onmouseout);
 			}
 		};
 
 		var unbind = function() {
 			if (drag.binded) {
 				drag.binded = false;
-				$(window).off('mousemove', events.onmousemove).off('mouseup', events.onmouseup).off('mouseout', events.onmouseout);
+				$(W).off('mousemove', handlers.onmousemove).off('mouseup', handlers.onmouseup).off('mouseout', handlers.onmouseout);
 			}
 		};
 
-		events.onmouseup = function() {
+		handlers.onmouseup = function() {
 			drag.is = false;
 			unbind();
 		};
 
-		events.onmouseout = function(e) {
+		handlers.onmouseout = function(e) {
 			var f = e.relatedTarget || e.toElement;
 			if (!f || f.tagName == 'HTML') {
 				drag.is = false;
@@ -9255,15 +9255,15 @@
 			}
 		};
 
-		events.forcey = function() {
+		handlers.forcey = function() {
 			bary.css('top', size.vpos);
 		};
 
-		events.forcex = function() {
+		handlers.forcex = function() {
 			barx.css('left', size.hpos);
 		};
 
-		events.onscroll = function() {
+		handlers.onscroll = function() {
 
 			var y = area[0].scrollTop;
 			var x = area[0].scrollLeft;
@@ -9291,7 +9291,7 @@
 
 				if (size.vpos !== pos) {
 					size.vpos = pos;
-					W.requestAnimationFrame(events.forcey);
+					W.requestAnimationFrame(handlers.forcey);
 				}
 			}
 
@@ -9309,7 +9309,7 @@
 
 				if (size.hpos !== pos) {
 					size.hpos = pos;
-					W.requestAnimationFrame(events.forcex);
+					W.requestAnimationFrame(handlers.forcex);
 				}
 			}
 
@@ -9387,7 +9387,7 @@
 			e.stopPropagation();
 		});
 
-		area.on('scroll', events.onscroll);
+		area.on('scroll', handlers.onscroll);
 
 		self.element.on('scroll', function(e) {
 			e.preventDefault();
@@ -9536,7 +9536,7 @@
 			options.onresize && options.onresize(self);
 
 			if (!scrolling)
-				events.onscroll();
+				handlers.onscroll();
 
 			return self;
 		};
@@ -9609,7 +9609,7 @@
 		};
 
 		if (options.autoresize == null || options.autoresize) {
-			$(window).on(T_RESIZE, onresize);
+			$(W).on(T_RESIZE, onresize);
 			ON(T_RESIZE, self.resize);
 		}
 
