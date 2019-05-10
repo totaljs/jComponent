@@ -56,6 +56,8 @@
 	var T_VBINDARR = 'vbindarray';
 	var T_SCRIPT = 'script';
 	var T_PATHS = 'PATHS';
+	var T_CLASS = 'class';
+	var T_HTML = 'html';
 
 	// No scrollbar
 	var cssnoscrollbar = {};
@@ -270,7 +272,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.118;
+	M.version = 17.119;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -3180,7 +3182,7 @@
 				}
 
 				// Applies classes
-				var cls = conf.class || attrcom(el, 'class');
+				var cls = conf.class || attrcom(el, T_CLASS);
 				if (cls) {
 					(function(cls) {
 						cls = cls.split(' ');
@@ -3245,7 +3247,7 @@
 			item.element = el;
 			item.callback = attrcom(el, 'init');
 			item.path = attrcom(el, 'path');
-			item.toggle = (attrcom(el, 'class') || '').split(' ');
+			item.toggle = (attrcom(el, T_CLASS) || '').split(' ');
 			item.expire = attrcom(el, 'cache') || MD.importcache;
 			arr.push(item);
 		});
@@ -3469,7 +3471,7 @@
 		el.trigger(n);
 		el.off(n);
 
-		var cls = attrcom(el, 'class');
+		var cls = attrcom(el, T_CLASS);
 		cls && (function(cls) {
 			setTimeout(function() {
 				cls = cls.split(' ');
@@ -7881,7 +7883,7 @@
 		$.fn.rclass2 = function(a) {
 
 			var self = this;
-			var arr = (self.attr('class') || '').split(' ');
+			var arr = (self.attr(T_CLASS) || '').split(' ');
 			var isReg = typeof(a) === TYPE_O;
 
 			for (var i = 0, length = arr.length; i < length; i++) {
@@ -8072,7 +8074,7 @@
 						m.$noscrollbarwidth = w;
 						cssnoscrollbar.width = Math.ceil(w + sw) + 'px';
 						el.css(cssnoscrollbar);
-						if ((el.attr('class') || '').indexOf(clsnoscrollbar) === -1)
+						if ((el.attr(T_CLASS) || '').indexOf(clsnoscrollbar) === -1)
 							el.aclass(clsnoscrollbar);
 					}
 				}
@@ -8381,7 +8383,7 @@
 						})(v);
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', 'class', T_TEMPLATE, T_VBINDARR, 'click', 'format', 'currency', 'empty', 'release') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', T_CLASS, T_TEMPLATE, T_VBINDARR, 'click', 'format', 'currency', 'empty', 'release') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -8411,14 +8413,14 @@
 
 						var c = k.charAt(0);
 
-						if (k === 'class')
-							k = 'tclass';
+						if (k === T_CLASS)
+							k = 't' + T_CLASS;
 
 						if (c === '.') {
 							if (notnull)
 								fn.$nn = 1;
 							cls.push({ name: k.substring(1), fn: fn });
-							k = 'class';
+							k = T_CLASS;
 						}
 
 						if (typeof(fn) === TYPE_FN) {
@@ -8474,7 +8476,7 @@
 							case 'src':
 							case 'val':
 							case 'title':
-							case 'html':
+							case T_HTML:
 							case 'text':
 							case 'disable':
 							case 'enabled':
@@ -8505,15 +8507,22 @@
 								break;
 							case T_VBINDARR:
 								var scr = e.find(T_SCRIPT);
-								if (!scr.length)
+								var r = false;
+								if (scr.length)
+									r = true;
+								else
 									scr = e;
 								fn = VBINDARRAY(scr.html(), e);
 								if (notvisible)
 									fn.$nv = 1;
+								r && scr.remove();
 								break;
 							case T_TEMPLATE:
 								var scr = e.find(T_SCRIPT);
-								if (!scr.length)
+								var r = false;
+								if (scr.length)
+									r = true;
+								else
 									scr = e;
 								tmp = scr.html();
 								fn = Tangular.compile(tmp);
@@ -8523,6 +8532,7 @@
 									fn.$nv = 1;
 								fn.$vdom = v;
 								fn.$compile = tmp.COMPILABLE();
+								r && scr.remove();
 								break;
 						}
 
@@ -8530,14 +8540,14 @@
 							fn = new Function('return ' + v)();
 
 						if (backup && notnull)
-							obj[k + 'bk'] = (k == 'src' || k == 'href' || k == 'title') ? e.attr(k) : k == 'html' ? e.html() : k == 'text' ? e.text() : k == 'val' ? e.val() : k == T_CHECKED ? e.prop(k) : k === 'disable' ? e.prop(T_DISABLED) : k === 'enabled' ? (e.prop(T_DISABLED) == false) : '';
+							obj[k + 'bk'] = (k == 'src' || k == 'href' || k == 'title') ? e.attr(k) : k == T_HTML ? e.html() : k == 'text' ? e.text() : k == 'val' ? e.val() : k == T_CHECKED ? e.prop(k) : k === 'disable' ? e.prop(T_DISABLED) : k === 'enabled' ? (e.prop(T_DISABLED) == false) : '';
 
 						if (s) {
 
 							if (!sub[s])
 								sub[s] = {};
 
-							if (k !== 'class')
+							if (k !== T_CLASS)
 								sub[s][k] = fn;
 
 							else {
@@ -8548,7 +8558,7 @@
 									sub[s].cls = [p];
 							}
 						} else {
-							if (k !== 'class')
+							if (k !== T_CLASS)
 								obj[k] = fn;
 						}
 					}
@@ -8914,7 +8924,7 @@
 		if (item.html && (can || item.html.$nv)) {
 			if (value != null || !item.html.$nn) {
 				tmp = item.html.call(el, value, path, el);
-				el.html(bindvalue(tmp, item, 'html'));
+				el.html(bindvalue(tmp, item, T_HTML));
 			} else
 				el.html(item.empty || item.htmlbk);
 		}
