@@ -272,7 +272,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.119;
+	M.version = 17.120;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2673,6 +2673,7 @@
 
 	function load() {
 		clearTimeout($ready);
+		$ready = null;
 		var cache;
 		try {
 			cache = LS.getItem(M.$localstorage + '.cache');
@@ -3558,6 +3559,7 @@
 	}
 
 	function emitwatch(path, value, type) {
+
 		for (var i = 0, length = watches.length; i < length; i++) {
 			var self = watches[i];
 
@@ -8098,6 +8100,7 @@
 
 			if ($ready) {
 				clearTimeout($ready);
+				$ready = null;
 				load();
 			}
 
