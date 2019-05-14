@@ -272,7 +272,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.120;
+	M.version = 17.121;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2074,7 +2074,7 @@
 		if (!path)
 			return;
 
-		var isUpdate = (typeof(value) === TYPE_O && !(value instanceof Array) && value != null);
+		var isUpdate = (typeof(value) === TYPE_O && value != null && !(value instanceof Array) && !(value instanceof Date));
 		var reset = type === true;
 		if (reset)
 			type = 1;
