@@ -272,7 +272,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.121;
+	M.version = 17.122;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -9192,7 +9192,6 @@
 
 		self.element = element;
 		self.area = area;
-		size.margin = options.margin || 30;
 
 		var handlers = {};
 
@@ -9474,6 +9473,11 @@
 			size.viewWidth = el.width() + (options.offsetX || 0);
 			size.viewHeight = el.height() + (options.offsetY || 0);
 			size.margin = SCROLLBARWIDTH();
+
+			if (!size.margin && !isMOBILE) {
+				// Mac OS
+				size.margin = options.margin == null ? 25 : options.margin;
+			}
 
 			// Safari iOS
 			if (md) {
