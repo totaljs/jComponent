@@ -272,7 +272,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.122;
+	M.version = 17.123;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -9472,12 +9472,16 @@
 
 			size.viewWidth = el.width() + (options.offsetX || 0);
 			size.viewHeight = el.height() + (options.offsetY || 0);
-			size.margin = SCROLLBARWIDTH();
 
-			if (!size.margin && !isMOBILE) {
+			var sw = SCROLLBARWIDTH();
+			size.margin = sw;
+
+			if (!size.margin && !md) {
 				// Mac OS
+				size.empty = 1;
 				size.margin = options.margin == null ? 25 : options.margin;
-			}
+			} else
+				size.empty = 0;
 
 			// Safari iOS
 			if (md) {
@@ -9541,12 +9545,15 @@
 			element.tclass(n + 'isx', size.hbar).tclass(n + 'isy', size.vbar).tclass(n + 'touch', md);
 			path.rclass(n + 'notready');
 
-			if (!size.margin)
-				size.margin = size.thickness;
-
 			if (size.margin) {
-				cssba['margin-right'] = size.vbar ? size.thickness : '';
-				cssba['margin-bottom'] = size.hbar ? size.thickness : '';
+				var plus = size.margin;
+				var thickness = size.thickness;
+
+				if (W.isIE == false && sw && navigator.userAgent.indexOf('Edge') === -1)
+					plus = 0;
+
+				cssba['margin-right'] = size.vbar ? (thickness + plus) : plus;
+				cssba['margin-bottom'] = size.hbar ? (thickness + plus) : plus;
 				bodyarea.css(cssba);
 			}
 
