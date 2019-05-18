@@ -272,7 +272,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.123;
+	M.version = 17.124;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -9028,36 +9028,36 @@
 		}
 	};
 
-	/*
-	function diffattr(el) {
-		var arr = [];
-		for (var i = 0; i < el.attributes.length; i++) {
-			var item = el.attributes[i];
-			arr.push(item.nodeName + '=' + item.nodeValue);
-		}
-		return arr.join('_');
-	}
-	*/
-
 	W.DIFFDOM = function(el, selector, html) {
 
 		var vdom = $(html);
 		var varr = vdom.filter(selector);
 		var vels = el.find(selector);
 		var output = { add: 0, upd: 0, rem: 0 };
+		var compareindex = 0;
+		var is = false;
 
 		for (var i = 0; i < vels.length; i++) {
-
-			var a = vels[i];
+			var a = vels[compareindex++];
 			var b = varr[i];
 
 			if (b == null) {
-				a.parentNode.removeChild(a);
+				a && a.parentNode.removeChild(a);
 				output.rem++;
-			} else if (a.innerHTML !== b.innerHTML) {
-				a.parentNode.replaceChild(b, a);
+			} else if (a && a.innerHTML !== b.innerHTML) {
+
+				var next = vels[compareindex];
+				if (next && next.innerHTML === b.innerHTML && !is) {
+					is = true;
+					a.parentNode.removeChild(a);
+					compareindex++;
+				} else {
+					is = false;
+					a.parentNode.replaceChild(b, a);
+				}
 				output.upd++;
-			}
+			} else
+				is = false;
 		}
 
 		for (var i = vels.length; i < varr.length; i++) {
