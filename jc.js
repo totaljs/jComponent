@@ -272,7 +272,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.124;
+	M.version = 17.125;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -6100,15 +6100,40 @@
 		SET(path, null, timeout);
 	};
 
+	var timeouts = {};
+	var setbind = function(path, value, reset) {
+		delete timeouts[path];
+		M.set(path, value, reset);
+	};
+
+	var incbind = function(path, value, reset) {
+		delete timeouts[path];
+		M.inc(path, value, reset);
+	};
+
+	var extbind = function(path, value, reset) {
+		delete timeouts[path];
+		M.extend(path, value, reset);
+	};
+
+	var pushbind = function(path, value, reset) {
+		delete timeouts[path];
+		M.push(path, value, reset);
+	};
+
+	var updbind = function(path, reset) {
+		delete timeouts[path];
+		M.update(path, reset);
+	};
+
 	W.SET = function(path, value, timeout, reset) {
 		var t = typeof(timeout);
 		if (t === TYPE_B)
 			return M.set(path, value, timeout);
 		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.set(path, value, timeout);
-		setTimeout(function() {
-			M.set(path, value, reset);
-		}, timeout);
+		timeouts[path] && clearTimeout(timeouts[path]);
+		timeouts[path] = setTimeout(setbind, timeout, path, value, reset);
 	};
 
 	W.SETR = function(path, value, type) {
@@ -6126,9 +6151,8 @@
 			return M.inc(path, value, timeout);
 		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.inc(path, value, timeout);
-		setTimeout(function() {
-			M.inc(path, value, reset);
-		}, timeout);
+		timeouts[path] && clearTimeout(timeouts[path]);
+		timeouts[path] = setTimeout(incbind, timeout, path, value, reset);
 	};
 
 	W.EXT = W.EXTEND = function(path, value, timeout, reset) {
@@ -6137,9 +6161,8 @@
 			return M.extend(path, value, timeout);
 		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.extend(path, value, timeout);
-		setTimeout(function() {
-			M.extend(path, value, reset);
-		}, timeout);
+		timeouts[path] && clearTimeout(timeouts[path]);
+		timeouts[path] = setTimeout(extbind, timeout, path, value, reset);
 	};
 
 	W.PUSH = function(path, value, timeout, reset) {
@@ -6148,9 +6171,8 @@
 			return M.push(path, value, timeout);
 		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.push(path, value, timeout);
-		setTimeout(function() {
-			M.push(path, value, reset);
-		}, timeout);
+		timeouts[path] && clearTimeout(timeouts[path]);
+		timeouts[path] = setTimeout(pushbind, timeout, path, value, reset);
 	};
 
 	W.TOGGLE2 = function(path, type) {
@@ -6317,15 +6339,15 @@
 		}
 	};
 
+
 	W.UPD = W.UPDATE = function(path, timeout, reset) {
 		var t = typeof(timeout);
 		if (t === TYPE_B)
 			return M.update(path, timeout);
 		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.update(path, reset, timeout);
-		setTimeout(function() {
-			M.update(path, reset);
-		}, timeout);
+		timeouts[path] && clearTimeout(timeouts[path]);
+		timeouts[path] = setTimeout(updbind, timeout, path, reset);
 	};
 
 	W.UPD2 = W.UPDATE2 = function(path, type) {
