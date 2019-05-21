@@ -80,12 +80,18 @@
 		W.console && W.console.warn.apply(W.console, arguments);
 	};
 
-	var isvisible = function(el) {
-		if (W.isIE) {
-			var tmp = W.getComputedStyle(el);
-			return tmp && tmp.style.display !== 'none' && tmp.style.visibility !== T_HIDDEN;
-		} else
-			return !!el.offsetParent;
+	W.HIDDEN = function(el) {
+
+		if (el == null)
+			return true;
+
+		if (el instanceof jQuery)
+			el = [0];
+
+		if (W.isIE)
+			return !el.offsetWidth && !el.offsetHeight;
+		else
+			return !el.offsetParent;
 	};
 
 	var prefsave = function() {
@@ -4580,7 +4586,7 @@
 
 	PPC.hidden = function(callback) {
 		var t = this;
-		var v = t.element ? isvisible(t.dom) : false;
+		var v = !HIDDEN(t.dom);
 		if (callback) {
 			if (v)
 				callback.call(t);
@@ -4592,7 +4598,7 @@
 
 	PPC.visible = function(callback) {
 		var t = this;
-		var v = t.element ? isvisible(t.dom) : false;
+		var v = !HIDDEN(t.dom);
 		if (callback) {
 			if (v)
 				callback.call(t);
@@ -8095,7 +8101,7 @@
 			cssnoscrollbar['overflow-y'] = sw ? 'scroll' : 'auto';
 			for (var i = 0; i < t.length; i++) {
 				var m = t[i];
-				if (m && isvisible(m)) {
+				if (m && !HIDDEN(m)) {
 					var el = $(m);
 					var w = $(el[0].parentNode).width();
 					if (force || m.$noscrollbarwidth !== w) {
@@ -9471,7 +9477,7 @@
 			}
 
 			// Not visible
-			if (!isvisible(element[0]))
+			if (HIDDEN(element[0]))
 				return;
 
 			var a = area[0];
@@ -9650,12 +9656,13 @@
 		};
 
 		var resize_visible = function() {
-			if (isvisible(element[0])) {
+			if (HIDDEN(element[0]))
+				setTimeout(resize_visible, 234);
+			else {
 				setTimeout(self.resize, 500);
 				setTimeout(self.resize, 1000);
 				self.resize();
-			} else
-				setTimeout(resize_visible, 234);
+			}
 		};
 
 		if (options.autoresize == null || options.autoresize) {
