@@ -24,7 +24,6 @@
 	var DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
 	var ACTRLS = { INPUT: true, TEXTAREA: true, SELECT: true };
 	var DEFMODEL = { value: null };
-	var OK = Object.keys;
 	var MULTIPLE = ' + ';
 	var SCOPENAME = 'scope';
 	var ATTRSCOPE = 'data-jc-' + SCOPENAME;
@@ -58,6 +57,7 @@
 	var T_PATHS = 'PATHS';
 	var T_CLASS = 'class';
 	var T_HTML = 'html';
+	var OK = Object.keys;
 
 	// No scrollbar
 	var cssnoscrollbar = {};
@@ -78,6 +78,14 @@
 
 	var warn = W.WARN = function() {
 		W.console && W.console.warn.apply(W.console, arguments);
+	};
+
+	var isvisible = function(el) {
+		if (W.isIE) {
+			var tmp = W.getComputedStyle(el);
+			return tmp && tmp.style.display !== 'none' && tmp.style.visibility !== T_HIDDEN;
+		} else
+			return !!el.offsetParent;
 	};
 
 	var prefsave = function() {
@@ -272,7 +280,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.122;
+	M.version = 17.123;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -4572,8 +4580,7 @@
 
 	PPC.hidden = function(callback) {
 		var t = this;
-		var v = t.element ? t.dom.offsetParent : null;
-		v = v === null;
+		var v = t.element ? isvisible(t.dom) : false;
 		if (callback) {
 			if (v)
 				callback.call(t);
@@ -4585,8 +4592,7 @@
 
 	PPC.visible = function(callback) {
 		var t = this;
-		var v = t.element ? t.dom.offsetParent : null;
-		v = v !== null;
+		var v = t.element ? isvisible(t.dom) : false;
 		if (callback) {
 			if (v)
 				callback.call(t);
@@ -8064,12 +8070,10 @@
 		$.fn.noscrollbar = function(force) {
 			var t = this;
 			var sw = SCROLLBARWIDTH();
-
 			cssnoscrollbar['overflow-y'] = sw ? 'scroll' : 'auto';
-
 			for (var i = 0; i < t.length; i++) {
 				var m = t[i];
-				if (m && m.offsetParent) {
+				if (m && isvisible(m)) {
 					var el = $(m);
 					var w = $(el[0].parentNode).width();
 					if (force || m.$noscrollbarwidth !== w) {
@@ -9445,7 +9449,7 @@
 			}
 
 			// Not visible
-			if (!element[0].offsetParent)
+			if (!isvisible(element[0]))
 				return;
 
 			var a = area[0];
@@ -9617,7 +9621,7 @@
 		};
 
 		var resize_visible = function() {
-			if (element[0].offsetParent) {
+			if (isvisible(element[0])) {
 				setTimeout(self.resize, 500);
 				setTimeout(self.resize, 1000);
 				self.resize();
