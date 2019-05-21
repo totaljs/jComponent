@@ -280,7 +280,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.123;
+	M.version = 17.126;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -6106,15 +6106,40 @@
 		SET(path, null, timeout);
 	};
 
+	var timeouts = {};
+	var setbind = function(path, value, reset) {
+		delete timeouts[path];
+		M.set(path, value, reset);
+	};
+
+	var incbind = function(path, value, reset) {
+		delete timeouts[path];
+		M.inc(path, value, reset);
+	};
+
+	var extbind = function(path, value, reset) {
+		delete timeouts[path];
+		M.extend(path, value, reset);
+	};
+
+	var pushbind = function(path, value, reset) {
+		delete timeouts[path];
+		M.push(path, value, reset);
+	};
+
+	var updbind = function(path, reset) {
+		delete timeouts[path];
+		M.update(path, reset);
+	};
+
 	W.SET = function(path, value, timeout, reset) {
 		var t = typeof(timeout);
 		if (t === TYPE_B)
 			return M.set(path, value, timeout);
 		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.set(path, value, timeout);
-		setTimeout(function() {
-			M.set(path, value, reset);
-		}, timeout);
+		timeouts[path] && clearTimeout(timeouts[path]);
+		timeouts[path] = setTimeout(setbind, timeout, path, value, reset);
 	};
 
 	W.SETR = function(path, value, type) {
@@ -6132,9 +6157,8 @@
 			return M.inc(path, value, timeout);
 		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.inc(path, value, timeout);
-		setTimeout(function() {
-			M.inc(path, value, reset);
-		}, timeout);
+		timeouts[path] && clearTimeout(timeouts[path]);
+		timeouts[path] = setTimeout(incbind, timeout, path, value, reset);
 	};
 
 	W.EXT = W.EXTEND = function(path, value, timeout, reset) {
@@ -6143,9 +6167,8 @@
 			return M.extend(path, value, timeout);
 		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.extend(path, value, timeout);
-		setTimeout(function() {
-			M.extend(path, value, reset);
-		}, timeout);
+		timeouts[path] && clearTimeout(timeouts[path]);
+		timeouts[path] = setTimeout(extbind, timeout, path, value, reset);
 	};
 
 	W.PUSH = function(path, value, timeout, reset) {
@@ -6154,9 +6177,8 @@
 			return M.push(path, value, timeout);
 		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.push(path, value, timeout);
-		setTimeout(function() {
-			M.push(path, value, reset);
-		}, timeout);
+		timeouts[path] && clearTimeout(timeouts[path]);
+		timeouts[path] = setTimeout(pushbind, timeout, path, value, reset);
 	};
 
 	W.TOGGLE2 = function(path, type) {
@@ -6323,15 +6345,15 @@
 		}
 	};
 
+
 	W.UPD = W.UPDATE = function(path, timeout, reset) {
 		var t = typeof(timeout);
 		if (t === TYPE_B)
 			return M.update(path, timeout);
 		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.update(path, reset, timeout);
-		setTimeout(function() {
-			M.update(path, reset);
-		}, timeout);
+		timeouts[path] && clearTimeout(timeouts[path]);
+		timeouts[path] = setTimeout(updbind, timeout, path, reset);
 	};
 
 	W.UPD2 = W.UPDATE2 = function(path, type) {
@@ -9032,36 +9054,36 @@
 		}
 	};
 
-	/*
-	function diffattr(el) {
-		var arr = [];
-		for (var i = 0; i < el.attributes.length; i++) {
-			var item = el.attributes[i];
-			arr.push(item.nodeName + '=' + item.nodeValue);
-		}
-		return arr.join('_');
-	}
-	*/
-
 	W.DIFFDOM = function(el, selector, html) {
 
 		var vdom = $(html);
 		var varr = vdom.filter(selector);
 		var vels = el.find(selector);
 		var output = { add: 0, upd: 0, rem: 0 };
+		var compareindex = 0;
+		var is = false;
 
 		for (var i = 0; i < vels.length; i++) {
-
-			var a = vels[i];
+			var a = vels[compareindex++];
 			var b = varr[i];
 
 			if (b == null) {
-				a.parentNode.removeChild(a);
+				a && a.parentNode.removeChild(a);
 				output.rem++;
-			} else if (a.innerHTML !== b.innerHTML) {
-				a.parentNode.replaceChild(b, a);
+			} else if (a && a.innerHTML !== b.innerHTML) {
+
+				var next = vels[compareindex];
+				if (next && next.innerHTML === b.innerHTML && !is) {
+					is = true;
+					a.parentNode.removeChild(a);
+					compareindex++;
+				} else {
+					is = false;
+					a.parentNode.replaceChild(b, a);
+				}
 				output.upd++;
-			}
+			} else
+				is = false;
 		}
 
 		for (var i = vels.length; i < varr.length; i++) {
@@ -9476,12 +9498,16 @@
 
 			size.viewWidth = el.width() + (options.offsetX || 0);
 			size.viewHeight = el.height() + (options.offsetY || 0);
-			size.margin = SCROLLBARWIDTH();
 
-			if (!size.margin && !isMOBILE) {
+			var sw = SCROLLBARWIDTH();
+			size.margin = sw;
+
+			if (!size.margin && !md) {
 				// Mac OS
+				size.empty = 1;
 				size.margin = options.margin == null ? 25 : options.margin;
-			}
+			} else
+				size.empty = 0;
 
 			// Safari iOS
 			if (md) {
@@ -9545,12 +9571,15 @@
 			element.tclass(n + 'isx', size.hbar).tclass(n + 'isy', size.vbar).tclass(n + 'touch', md);
 			path.rclass(n + 'notready');
 
-			if (!size.margin)
-				size.margin = size.thickness;
-
 			if (size.margin) {
-				cssba['margin-right'] = size.vbar ? size.thickness : '';
-				cssba['margin-bottom'] = size.hbar ? size.thickness : '';
+				var plus = size.margin;
+				var thickness = size.thickness;
+
+				if (W.isIE == false && sw && navigator.userAgent.indexOf('Edge') === -1)
+					plus = 0;
+
+				cssba['margin-right'] = size.vbar ? (thickness + plus) : plus;
+				cssba['margin-bottom'] = size.hbar ? (thickness + plus) : plus;
 				bodyarea.css(cssba);
 			}
 
