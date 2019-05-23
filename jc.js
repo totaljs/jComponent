@@ -266,6 +266,7 @@
 	MD.thousandsseparator = ' ';
 	MD.decimalseparator = '.';
 	MD.dateformat = null;
+	// MD.currency = ''; DEFAULT CURRENCY
 	MD.currencies = {};
 
 	W.MONTHS = M.months = 'January,February,March,April,May,June,July,August,September,October,November,December'.split(',');
@@ -286,7 +287,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.126;
+	M.version = 17.127;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -7100,7 +7101,7 @@
 		if (format == null)
 			format = MD.dateformat;
 
-		if (!format)
+		if (!format || format === 'iso')
 			return self.getFullYear() + '-' + (self.getMonth() + 1).toString().padLeft(2, '0') + '-' + self.getDate().toString().padLeft(2, '0') + 'T' + self.getHours().toString().padLeft(2, '0') + ':' + self.getMinutes().toString().padLeft(2, '0') + ':' + self.getSeconds().toString().padLeft(2, '0') + '.' + self.getMilliseconds().toString().padLeft(3, '0') + 'Z';
 
 		var key = 'dt_' + format;
@@ -7189,6 +7190,13 @@
 
 	NP.pluralize = function(zero, one, few, other) {
 
+		// environment
+		if (zero.charAt(0) === '[') {
+			zero = zero.env();
+			if (typeof(zero) === TYPE_S)
+				zero = zero.split(',');
+		}
+
 		if (zero instanceof Array) {
 			one = zero[1];
 			few = zero[2];
@@ -7214,6 +7222,8 @@
 	};
 
 	NP.currency = function(currency, a, b, c) {
+		if (currency == null)
+			currency = MD.currency || '';
 		if (currency.charAt(0) === '[')
 			currency = currency.env();
 		var curr = MD.currencies[currency];
