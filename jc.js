@@ -287,7 +287,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.127;
+	M.version = 17.128;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8375,15 +8375,19 @@
 
 					if (item !== T_TEMPLATE && item !== ('!' + T_TEMPLATE) && item !== 'strict' && item !== T_VBINDARR && item !== ('!' + T_VBINDARR)) {
 
+						// template with nested selector
+						index = item.indexOf(T_TEMPLATE);
+						tmp = index === 0 || index === 1; // "template" or "!template"
 						index = item.indexOf(':');
-
 						if (index === -1) {
 							index = item.length;
-							item += ':value';
+							if (!tmp)
+								item += ':value';
 						}
 
 						k = item.substring(0, index).trim();
 						v = item.substring(index + 1).trim();
+
 					} else
 						k = item;
 
@@ -8437,7 +8441,7 @@
 
 						k = keys[j].trim();
 
-						var s = '';
+						var s = ''; // as nested selector
 						var notvisible = false;
 						var notnull = false;
 						var backup = false;
@@ -8474,7 +8478,6 @@
 							if (notvisible)
 								fn.$nv = 1;
 						}
-
 
 						switch (k) {
 							case 'empty':
@@ -8528,7 +8531,6 @@
 							case T_CHECKED:
 								backup = true;
 								break;
-
 							case 'setter':
 								fn = FN('(value,path,el)=>el.SETTER(' + v + ')');
 								if (notnull)
@@ -8563,12 +8565,13 @@
 								r && scr.remove();
 								break;
 							case T_TEMPLATE:
-								var scr = e.find(T_SCRIPT);
+								var et = s ? e.find(s) : e;
+								var scr = et.find(T_SCRIPT);
 								var r = false;
 								if (scr.length)
 									r = true;
 								else
-									scr = e;
+									scr = et;
 								tmp = scr.html();
 								fn = Tangular.compile(tmp);
 								if (notnull)
