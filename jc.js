@@ -246,6 +246,7 @@
 	MD.delayrepeat = 2000;
 	MD.delaypref = 1000;
 	MD.keypress = true;
+	MD.scrollbaranimate = true;
 	MD.jsoncompress = false;
 	MD.jsondate = true;
 	MD.ajaxerrors = false;
@@ -288,7 +289,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.133;
+	M.version = 17.134;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -9341,46 +9342,57 @@
 		var animcache = {};
 
 		var animyt_fn = function(value) {
-			if (animcache.y !== value) {
+			if (animcache.y !== value && !animcache.yis) {
 				animcache.y = value;
 				animyt.top = value + 20;
 				bary.stop().animate(animyt, 150, function() {
 					animyt.top = value;
-					bary.stop().animate(animyt, 150);
+					bary.stop().animate(animyt, 150, function() {
+						animcache.yis = false;
+					});
 				});
 			}
 		};
 
 		var animxt = {};
 		var animxt_fn = function(value) {
-			if (animcache.x !== value) {
+			if (animcache.x !== value && !animcache.xis) {
+				animcache.xis = true;
 				animcache.x = value;
 				animxt.left = value + 20;
 				barx.stop().animate(animxt, 150, function() {
 					animxt.left = value;
-					barx.stop().animate(animxt, 150);
+					barx.stop().animate(animxt, 150, function() {
+						animcache.xis = false;
+					});
 				});
 			}
 		};
 
 		var animyb = {};
 		var animyb_fn = function(value) {
-			if (animcache.y !== value) {
+			if (animcache.y !== value && !animcache.yis) {
+				animcache.yis = true;
 				animyb.height = value - 20;
 				bary.stop().animate(animyb, 150, function() {
 					animyb.height = value;
-					bary.stop().animate(animyb, 150);
+					bary.stop().animate(animyb, 150, function() {
+						animcache.yis = false;
+					});
 				});
 			}
 		};
 
 		var animxr = {};
 		var animxr_fn = function(value) {
-			if (animcache.x !== value) {
+			if (animcache.x !== value && !animcache.xis) {
+				animcache.yis = true;
 				animxr.width = value - 20;
 				barx.stop().animate(animxr, 150, function() {
 					animxr.width = value;
-					barx.stop().animate(animxr, 150);
+					barx.stop().animate(animxr, 150, function() {
+						animcache.xis = false;
+					});
 				});
 			}
 		};
@@ -9422,7 +9434,7 @@
 
 		handlers.forcey = function() {
 			bary.css('top', size.vpos);
-			if (size.vpos === 0 || size.vpos === size.vmax) {
+			if (DEF.scrollbaranimate && (size.vpos === 0 || size.vpos === size.vmax)) {
 				size.animvpost && clearTimeout(size.animvpost);
 				size.animvpost = setTimeout(animyt, 10, size.vpos, size.vmax);
 			}
@@ -9430,7 +9442,7 @@
 
 		handlers.forcex = function() {
 			barx.css('left', size.hpos);
-			if (size.hpos === 0 || size.hpos === size.hmax) {
+			if (DEF.scrollbaranimate && (size.hpos === 0 || size.hpos === size.hmax)) {
 				size.animhpost && clearTimeout(size.animhpost);
 				size.animhpost = setTimeout(animxt, 10, size.hpos, size.hmax);
 			}
@@ -9606,6 +9618,7 @@
 		var cssy = {};
 		var cssba = {};
 
+		self.size = size;
 		self.resize2 = onresize;
 		self.resize = function(scrolling) {
 
@@ -9627,7 +9640,7 @@
 			if (options.parent) {
 				el = typeof(options.parent) === TYPE_O ? $(options.parent) : el.closest(options.parent);
 				if (!el[0].$scrollbar) {
-					el[0].$scrollbar = 1;
+					el[0].$scrollbar = self;
 					el.on('scroll', function(e) {
 						var t = this;
 						if (t.scrollTop)
