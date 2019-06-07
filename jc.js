@@ -57,6 +57,7 @@
 	var T_PATHS = 'PATHS';
 	var T_CLASS = 'class';
 	var T_HTML = 'html';
+	var T_CONFIG = 'config';
 	var OK = Object.keys;
 
 	// No scrollbar
@@ -287,7 +288,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.128;
+	M.version = 17.129;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2909,13 +2910,17 @@
 				obj.dom = dom;
 
 				var p = attrcom(el, 'path') || (meta ? meta[1] === TYPE_NULL ? '' : meta[1] : '') || obj._id;
-				var tmp = attrcom(el, 'config') || (meta ? meta[2] === TYPE_NULL ? '' : meta[2] : '');
+				var tmp = attrcom(el, T_CONFIG) || (meta ? meta[2] === TYPE_NULL ? '' : meta[2] : '');
 
 				if (p.charAt(0) === '%' || (tmp && tmp.indexOf('$noscope:') !== -1))
 					obj.$noscope = true;
 
 				obj.setPath(pathmaker(p, 1, 1), 1);
-				obj.config = {};
+
+				if (tmp && tmp.charAt(0) === '%')
+					obj.config = W[tmp.substring(1)] || {};
+				else
+					obj.config = {};
 
 				// Default config
 				com.config && obj.reconfigure(com.config, NOOP);
@@ -5147,7 +5152,7 @@
 					callback(k, value[k], init, init ? undefined : prev);
 				else if (self.configure)
 					self.configure(k, value[k], init, init ? undefined : prev);
-				self.data('config.' + k, value[k]);
+				self.data(T_CONFIG + '.' + k, value[k]);
 			});
 		} else if (value.charAt(0) === '=') {
 			value = value.substring(1).SCOPE(self);
@@ -5162,7 +5167,7 @@
 				var prev = self.config[k];
 				if (!init && self.config[k] !== v)
 					self.config[k] = v;
-				self.data('config.' + k, v);
+				self.data(T_CONFIG + '.' + k, v);
 				if (callback)
 					callback(k, v, init, init ? undefined : prev);
 				else if (self.configure)
@@ -5178,7 +5183,7 @@
 		var self = this;
 		var cfg = self.config;
 
-		self.data('config', cfg);
+		self.data(T_CONFIG, cfg);
 
 		if (cfg.$type) {
 			self.type = cfg.$type;
@@ -5610,7 +5615,7 @@
 		return false;
 	};
 
-	W.COMPONENT_CONFIG = function(selector, config) {
+	W.COMPONENT_CONFIG = W.CONFIG = function(selector, config) {
 
 		if (typeof(selector) === TYPE_S) {
 			var fn = [];
@@ -5645,7 +5650,7 @@
 		setTimeout2('$compile', COMPILE, 700);
 	}
 
-	W.COMPONENT_EXTEND = function(name, config, declaration) {
+	W.COMPONENT_EXTEND = W.EXTENSION = function(name, config, declaration) {
 
 		if (typeof(config) === TYPE_FN) {
 			var tmp = declaration;
@@ -5653,10 +5658,19 @@
 			config = tmp;
 		}
 
+		// component_name: DESCRIPTION OF EXTENSION
+		var index = name.indexOf(':');
+		var note = '';
+
+		if (index !== -1) {
+			note = name.substring(index + 1).trim();
+			name = name.substring(0, index).trim();
+		}
+
 		if (extensions[name])
-			extensions[name].push({ config: config, fn: declaration });
+			extensions[name].push({ config: config, fn: declaration, name: note });
 		else
-			extensions[name] = [{ config: config, fn: declaration }];
+			extensions[name] = [{ config: config, fn: declaration, name: note }];
 
 		for (var i = 0, length = M.components.length; i < length; i++) {
 			var m = M.components[i];
@@ -5669,14 +5683,38 @@
 		recompile();
 	};
 
-	W.ADD = function(value, element) {
+	W.ADD = function(value, element, config, content) {
+
 		if (element instanceof COM || element instanceof Scope || element instanceof Plugin)
 			element = element.element;
+
+		if (element instanceof jQuery)
+			element = element[0];
+
+		if (element && typeof(element) === TYPE_O && !element.parentNode) {
+			content = config;
+			config = element;
+			element = null;
+		}
+
+		if (typeof(config) === TYPE_S) {
+			content = config;
+			config = null;
+		}
+
 		if (value instanceof Array) {
 			for (var i = 0; i < value.length; i++)
-				ADD(value[i], element);
+				ADD(value[i], element, config, content);
 		} else {
-			$(element || document.body).append('<div data-jc="{0}"></div>'.format(value));
+
+			var ck = '';
+
+			if (config) {
+				ck = T_CONFIG + GUID(10);
+				W[ck] = config;
+			}
+
+			$(element || document.body).append('<div data---="{0}"{1}>{2}</div>'.format(value, ck ? ' data-jc-config="%' + ck + '"' : '', content || ''));
 			recompile();
 		}
 	};
