@@ -288,7 +288,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.129;
+	M.version = 17.131;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -9586,7 +9586,7 @@
 			size.scrollHeight = a.scrollHeight;
 			size.clientWidth = area.innerWidth();
 			size.clientHeight = area.innerHeight();
-			size.thickness = options.thickness || 10;
+			size.thickness = pathy.width() || pathx.height() || options.thickness || 10;
 			size.hpos = 0;
 			size.vpos = 0;
 
