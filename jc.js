@@ -288,7 +288,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.132;
+	M.version = 17.133;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -9674,8 +9674,8 @@
 			size.clientWidth = area.innerWidth();
 			size.clientHeight = area.innerHeight();
 			var defthickness = options.thickness || 10;
-			size.thicknessV = pathy.width() || defthickness;
-			size.thicknessH = pathx.height() || defthickness;
+			size.thicknessV = (pathy.width() || defthickness) - 1;
+			size.thicknessH = (pathx.height() || defthickness) - 1;
 			size.hpos = 0;
 			size.vpos = 0;
 
