@@ -288,7 +288,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.131;
+	M.version = 17.132;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -9255,7 +9255,7 @@
 
 		element.aclass(n);
 		element.wrapInner('<div class="{0}-area"><div class="{0}-body"></div></div>'.format(n));
-		element.prepend('<div class="{0}-path {0}-notready"><div class="{0}-y"><span></span></div><div class="{0}-x"><span></span></div></div>'.format(n));
+		element.prepend('<div class="{0}-path {0}-notready"><div class="{0}-y"><span><b></b></span></div><div class="{0}-x"><span><b></b></span></div></div>'.format(n));
 		element[0].$scrollbar = self;
 
 		var visibleX = options.visibleX == null ? false : options.visibleX;
@@ -9337,6 +9337,76 @@
 			}
 		};
 
+		var animyt = {};
+		var animcache = {};
+
+		var animyt_fn = function(value) {
+			if (animcache.y !== value) {
+				animcache.y = value;
+				animyt.top = value + 20;
+				bary.stop().animate(animyt, 150, function() {
+					animyt.top = value;
+					bary.stop().animate(animyt, 150);
+				});
+			}
+		};
+
+		var animxt = {};
+		var animxt_fn = function(value) {
+			if (animcache.x !== value) {
+				animcache.x = value;
+				animxt.left = value + 20;
+				barx.stop().animate(animxt, 150, function() {
+					animxt.left = value;
+					barx.stop().animate(animxt, 150);
+				});
+			}
+		};
+
+		var animyb = {};
+		var animyb_fn = function(value) {
+			if (animcache.y !== value) {
+				animyb.height = value - 20;
+				bary.stop().animate(animyb, 150, function() {
+					animyb.height = value;
+					bary.stop().animate(animyb, 150);
+				});
+			}
+		};
+
+		var animxr = {};
+		var animxr_fn = function(value) {
+			if (animcache.x !== value) {
+				animxr.width = value - 20;
+				barx.stop().animate(animxr, 150, function() {
+					animxr.width = value;
+					barx.stop().animate(animxr, 150);
+				});
+			}
+		};
+
+		var animyt = function(pos, max) {
+			size.animvpost = null;
+			if (pos === max) {
+				size.animvpos = true;
+				animyt_fn(pos);
+			} else if (pos === 0) {
+				animyb_fn(+bary.attrd('size'));
+				size.animvpos = true;
+			}
+		};
+
+		var animxt = function(pos, max) {
+			size.animhpost = null;
+			if (pos === max) {
+				size.animhpos = true;
+				animxt_fn(pos);
+			} else if (pos === 0) {
+				animxr_fn(+barx.attrd('size'));
+				size.animhpos = true;
+			}
+		};
+
 		handlers.onmouseup = function() {
 			drag.is = false;
 			unbind();
@@ -9352,10 +9422,18 @@
 
 		handlers.forcey = function() {
 			bary.css('top', size.vpos);
+			if (size.vpos === 0 || size.vpos === size.vmax) {
+				size.animvpost && clearTimeout(size.animvpost);
+				size.animvpost = setTimeout(animyt, 10, size.vpos, size.vmax);
+			}
 		};
 
 		handlers.forcex = function() {
 			barx.css('left', size.hpos);
+			if (size.hpos === 0 || size.hpos === size.hmax) {
+				size.animhpost && clearTimeout(size.animhpost);
+				size.animhpost = setTimeout(animxt, 10, size.hpos, size.hmax);
+			}
 		};
 
 		handlers.onscroll = function() {
@@ -9372,9 +9450,9 @@
 
 			if (size.vbar) {
 
-				var minus = (size.hbar ? size.thickness : 0);
+				var minus = (size.hbar ? size.thicknessH : 0);
 				p = Math.ceil((y / (size.scrollHeight - size.clientHeight)) * 100);
-				pos = (((size.clientHeight - size.vbarsize - minus) / 100) * p);
+				pos = ((((size.clientHeight || 0) - (size.vbarsize || 0) - minus) / 100) * p);
 
 				if (pos < 0)
 					pos = 0;
@@ -9386,13 +9464,14 @@
 
 				if (size.vpos !== pos) {
 					size.vpos = pos;
+					size.vmax = max;
 					W.requestAnimationFrame(handlers.forcey);
 				}
 			}
 
 			if (size.hbar) {
 				p = Math.ceil((x / (size.scrollWidth - size.clientWidth)) * 100);
-				pos = (((size.clientWidth - size.hbarsize) / 100) * p);
+				pos = ((((size.clientWidth || 0) - (size.hbarsize || 0)) / 100) * p);
 
 				if (pos < 0)
 					pos = 0;
@@ -9404,6 +9483,7 @@
 
 				if (size.hpos !== pos) {
 					size.hpos = pos;
+					size.hmax = max;
 					W.requestAnimationFrame(handlers.forcex);
 				}
 			}
@@ -9421,6 +9501,9 @@
 				delay = setTimeout(function() {
 					delay = null;
 					notemmited = true;
+					size.animvpos = false;
+					animcache.y = -1;
+					animcache.x = -1;
 				}, 700);
 
 				options.onscroll && options.onscroll(self);
@@ -9437,7 +9520,9 @@
 
 			drag.type = 'x';
 
-			if (e.target.tagName === 'SPAN') {
+			var tag = e.target.tagName;
+
+			if (tag === 'SPAN' || tag === 'B') {
 				bind();
 				drag.offset = element.offset().left + e.offsetX;
 				drag.offset2 = e.offsetX;
@@ -9464,7 +9549,9 @@
 
 			drag.type = 'y';
 
-			if (e.target.tagName === 'SPAN') {
+			var tag = e.target.tagName;
+
+			if (tag === 'SPAN' || tag === 'B') {
 				bind();
 				drag.offset = element.offset().top + e.offsetY;
 				drag.offset2 = e.offsetY;
@@ -9586,13 +9673,15 @@
 			size.scrollHeight = a.scrollHeight;
 			size.clientWidth = area.innerWidth();
 			size.clientHeight = area.innerHeight();
-			size.thickness = pathy.width() || pathx.height() || options.thickness || 10;
+			var defthickness = options.thickness || 10;
+			size.thicknessV = pathy.width() || defthickness;
+			size.thicknessH = pathx.height() || defthickness;
 			size.hpos = 0;
 			size.vpos = 0;
 
-			cssx.top = size.viewHeight - size.thickness;
+			cssx.top = size.viewHeight - size.thicknessH;
 			cssx.width = size.viewWidth;
-			cssy.left = size.viewWidth - size.thickness;
+			cssy.left = size.viewWidth - size.thicknessV;
 			cssy.height = size.viewHeight;
 
 			pathx.css(cssx);
@@ -9604,7 +9693,7 @@
 				size.vbarsize = (size.clientHeight * (size.viewHeight / size.scrollHeight)) >> 0;
 				if (size.vbarsize < 30)
 					size.vbarsize = 30;
-				bary.css(T_HEIGHT, size.vbarsize);
+				bary.css(T_HEIGHT, size.vbarsize).attrd('size', size.vbarsize);
 			}
 
 			size.hbar = size.scrollWidth > size.clientWidth;
@@ -9612,7 +9701,7 @@
 				size.hbarsize = (size.clientWidth * (size.viewWidth / size.scrollWidth)) >> 0;
 				if (size.hbarsize < 30)
 					size.hbarsize = 30;
-				barx.css(T_WIDTH, size.hbarsize);
+				barx.css(T_WIDTH, size.hbarsize).attrd('size', size.hbarsize);
 			}
 
 			var n = 'ui-scrollbar-';
@@ -9630,13 +9719,12 @@
 
 			if (size.margin) {
 				var plus = size.margin;
-				var thickness = size.thickness;
 
 				if (W.isIE == false && sw && navigator.userAgent.indexOf('Edge') === -1)
 					plus = 0;
 
-				cssba['margin-right'] = size.vbar ? (thickness + plus) : plus;
-				cssba['margin-bottom'] = size.hbar ? (thickness + plus) : plus;
+				cssba['margin-right'] = size.vbar ? (size.thicknessV + plus) : plus;
+				cssba['margin-bottom'] = size.hbar ? (size.thicknessH + plus) : plus;
 				bodyarea.css(cssba);
 			}
 
