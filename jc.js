@@ -289,7 +289,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.135;
+	M.version = 17.136;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5810,6 +5810,7 @@
 		var arg = [];
 		var beg = selector === true ? 3 : 2;
 		var is;
+		var isget;
 
 		for (var i = beg; i < arguments.length; i++)
 			arg.push(arguments[i]);
@@ -5845,12 +5846,16 @@
 			}
 
 			name = arguments[2];
+			isget = name.indexOf('.') !== -1;
 
 			FIND(selector, true, function(arr) {
 				for (var i = 0, length = arr.length; i < length; i++) {
 					var o = arr[i];
-					if (typeof(o[name]) === TYPE_FN)
-						o[name].apply(o, arg);
+					var a = isget ? get(name, o) : o[name];
+					if (typeof(a) === TYPE_FN)
+						a.apply(o, arg);
+					else if (isget)
+						set(name, o);
 					else
 						o[name] = arg[0];
 				}
@@ -5883,10 +5888,15 @@
 			}
 
 			var arr = FIND(selector, true);
+			isget = name.indexOf('.') !== -1;
+
 			for (var i = 0, length = arr.length; i < length; i++) {
 				var o = arr[i];
-				if (typeof(o[name]) === TYPE_FN)
-					o[name].apply(o, arg);
+				var a = isget ? get(name, o) : o[name];
+				if (typeof(a) === TYPE_FN)
+					a.apply(o, arg);
+				else if (isget)
+					set(name, o);
 				else
 					o[name] = arg[0];
 			}
@@ -7851,6 +7861,7 @@
 			var arg = [];
 			var beg = selector === true ? 3 : 2;
 			var tmp;
+			var isget;
 
 			for (var i = beg; i < arguments.length; i++)
 				arg.push(arguments[i]);
@@ -7879,11 +7890,16 @@
 					return self;
 				}
 
+				isget = name.indexOf('.') !== -1;
+
 				self.FIND(tmp, true, function(arr) {
 					for (var i = 0, length = arr.length; i < length; i++) {
 						var o = arr[i];
-						if (typeof(o[name]) === TYPE_FN)
-							o[name].apply(o, arg);
+						var a = isget ? get(name, o) : o[name];
+						if (typeof(a) === TYPE_FN)
+							a.apply(o, arg);
+						else if (isget)
+							set(name, o);
 						else
 							o[name] = arg[0];
 					}
@@ -7912,10 +7928,15 @@
 				}
 
 				var arr = self.FIND(tmp, true);
+				isget = name.indexOf('.') !== -1;
+
 				for (var i = 0, length = arr.length; i < length; i++) {
 					var o = arr[i];
-					if (typeof(o[name]) === TYPE_FN)
-						o[name].apply(o, arg);
+					var a = isget ? get(name, o) : o[name];
+					if (typeof(a) === TYPE_FN)
+						a.apply(o, arg);
+					else if (isget)
+						set(name, o);
 					else
 						o[name] = arg[0];
 				}
