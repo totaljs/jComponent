@@ -57,6 +57,7 @@
 	var T_PATHS = 'PATHS';
 	var T_CLASS = 'class';
 	var T_HTML = 'html';
+	var T_CONFIG = 'config';
 	var OK = Object.keys;
 
 	// No scrollbar
@@ -245,6 +246,7 @@
 	MD.delayrepeat = 2000;
 	MD.delaypref = 1000;
 	MD.keypress = true;
+	MD.scrollbaranimate = true;
 	MD.jsoncompress = false;
 	MD.jsondate = true;
 	MD.ajaxerrors = false;
@@ -2909,13 +2911,17 @@
 				obj.dom = dom;
 
 				var p = attrcom(el, 'path') || (meta ? meta[1] === TYPE_NULL ? '' : meta[1] : '') || obj._id;
-				var tmp = attrcom(el, 'config') || (meta ? meta[2] === TYPE_NULL ? '' : meta[2] : '');
+				var tmp = attrcom(el, T_CONFIG) || (meta ? meta[2] === TYPE_NULL ? '' : meta[2] : '');
 
 				if (p.charAt(0) === '%' || (tmp && tmp.indexOf('$noscope:') !== -1))
 					obj.$noscope = true;
 
 				obj.setPath(pathmaker(p, 1, 1), 1);
-				obj.config = {};
+
+				if (tmp && tmp.charAt(0) === '%')
+					obj.config = W[tmp.substring(1)] || {};
+				else
+					obj.config = {};
 
 				// Default config
 				com.config && obj.reconfigure(com.config, NOOP);
@@ -5152,7 +5158,7 @@
 					callback(k, value[k], init, init ? undefined : prev);
 				else if (self.configure)
 					self.configure(k, value[k], init, init ? undefined : prev);
-				self.data('config.' + k, value[k]);
+				self.data(T_CONFIG + '.' + k, value[k]);
 			});
 		} else if (value.charAt(0) === '=') {
 			value = value.substring(1).SCOPE(self);
@@ -5167,7 +5173,7 @@
 				var prev = self.config[k];
 				if (!init && self.config[k] !== v)
 					self.config[k] = v;
-				self.data('config.' + k, v);
+				self.data(T_CONFIG + '.' + k, v);
 				if (callback)
 					callback(k, v, init, init ? undefined : prev);
 				else if (self.configure)
@@ -5183,7 +5189,7 @@
 		var self = this;
 		var cfg = self.config;
 
-		self.data('config', cfg);
+		self.data(T_CONFIG, cfg);
 
 		if (cfg.$type) {
 			self.type = cfg.$type;
@@ -5615,7 +5621,7 @@
 		return false;
 	};
 
-	W.COMPONENT_CONFIG = function(selector, config) {
+	W.COMPONENT_CONFIG = W.CONFIG = function(selector, config) {
 
 		if (typeof(selector) === TYPE_S) {
 			var fn = [];
@@ -5650,7 +5656,7 @@
 		setTimeout2('$compile', COMPILE, 700);
 	}
 
-	W.COMPONENT_EXTEND = function(name, config, declaration) {
+	W.COMPONENT_EXTEND = W.EXTENSION = function(name, config, declaration) {
 
 		if (typeof(config) === TYPE_FN) {
 			var tmp = declaration;
@@ -5658,10 +5664,19 @@
 			config = tmp;
 		}
 
+		// component_name: DESCRIPTION OF EXTENSION
+		var index = name.indexOf(':');
+		var note = '';
+
+		if (index !== -1) {
+			note = name.substring(index + 1).trim();
+			name = name.substring(0, index).trim();
+		}
+
 		if (extensions[name])
-			extensions[name].push({ config: config, fn: declaration });
+			extensions[name].push({ config: config, fn: declaration, name: note });
 		else
-			extensions[name] = [{ config: config, fn: declaration }];
+			extensions[name] = [{ config: config, fn: declaration, name: note }];
 
 		for (var i = 0, length = M.components.length; i < length; i++) {
 			var m = M.components[i];
@@ -5674,14 +5689,38 @@
 		recompile();
 	};
 
-	W.ADD = function(value, element) {
+	W.ADD = function(value, element, config, content) {
+
 		if (element instanceof COM || element instanceof Scope || element instanceof Plugin)
 			element = element.element;
+
+		if (element instanceof jQuery)
+			element = element[0];
+
+		if (element && typeof(element) === TYPE_O && !element.parentNode) {
+			content = config;
+			config = element;
+			element = null;
+		}
+
+		if (typeof(config) === TYPE_S) {
+			content = config;
+			config = null;
+		}
+
 		if (value instanceof Array) {
 			for (var i = 0; i < value.length; i++)
-				ADD(value[i], element);
+				ADD(value[i], element, config, content);
 		} else {
-			$(element || document.body).append('<div data-jc="{0}"></div>'.format(value));
+
+			var ck = '';
+
+			if (config) {
+				ck = T_CONFIG + GUID(10);
+				W[ck] = config;
+			}
+
+			$(element || document.body).append('<div data---="{0}"{1}>{2}</div>'.format(value, ck ? ' data-jc-config="%' + ck + '"' : '', content || ''));
 			recompile();
 		}
 	};
@@ -9222,7 +9261,7 @@
 
 		element.aclass(n);
 		element.wrapInner('<div class="{0}-area"><div class="{0}-body"></div></div>'.format(n));
-		element.prepend('<div class="{0}-path {0}-notready"><div class="{0}-y"><span></span></div><div class="{0}-x"><span></span></div></div>'.format(n));
+		element.prepend('<div class="{0}-path {0}-notready"><div class="{0}-y"><span><b></b></span></div><div class="{0}-x"><span><b></b></span></div></div>'.format(n));
 		element[0].$scrollbar = self;
 
 		var visibleX = options.visibleX == null ? false : options.visibleX;
@@ -9304,6 +9343,87 @@
 			}
 		};
 
+		var animyt = {};
+		var animcache = {};
+
+		var animyt_fn = function(value) {
+			if (animcache.y !== value && !animcache.yis) {
+				animcache.y = value;
+				animyt.top = value + 20;
+				bary.stop().animate(animyt, 150, function() {
+					animyt.top = value;
+					bary.stop().animate(animyt, 150, function() {
+						animcache.yis = false;
+					});
+				});
+			}
+		};
+
+		var animxt = {};
+		var animxt_fn = function(value) {
+			if (animcache.x !== value && !animcache.xis) {
+				animcache.xis = true;
+				animcache.x = value;
+				animxt.left = value + 20;
+				barx.stop().animate(animxt, 150, function() {
+					animxt.left = value;
+					barx.stop().animate(animxt, 150, function() {
+						animcache.xis = false;
+					});
+				});
+			}
+		};
+
+		var animyb = {};
+		var animyb_fn = function(value) {
+			if (animcache.y !== value && !animcache.yis) {
+				animcache.yis = true;
+				animyb.height = value - 20;
+				bary.stop().animate(animyb, 150, function() {
+					animyb.height = value;
+					bary.stop().animate(animyb, 150, function() {
+						animcache.yis = false;
+					});
+				});
+			}
+		};
+
+		var animxr = {};
+		var animxr_fn = function(value) {
+			if (animcache.x !== value && !animcache.xis) {
+				animcache.yis = true;
+				animxr.width = value - 20;
+				barx.stop().animate(animxr, 150, function() {
+					animxr.width = value;
+					barx.stop().animate(animxr, 150, function() {
+						animcache.xis = false;
+					});
+				});
+			}
+		};
+
+		var animyt = function(pos, max) {
+			size.animvpost = null;
+			if (pos === max) {
+				size.animvpos = true;
+				animyt_fn(pos);
+			} else if (pos === 0) {
+				animyb_fn(+bary.attrd('size'));
+				size.animvpos = true;
+			}
+		};
+
+		var animxt = function(pos, max) {
+			size.animhpost = null;
+			if (pos === max) {
+				size.animhpos = true;
+				animxt_fn(pos);
+			} else if (pos === 0) {
+				animxr_fn(+barx.attrd('size'));
+				size.animhpos = true;
+			}
+		};
+
 		handlers.onmouseup = function() {
 			drag.is = false;
 			unbind();
@@ -9319,10 +9439,18 @@
 
 		handlers.forcey = function() {
 			bary.css('top', size.vpos);
+			if (DEF.scrollbaranimate && (size.vpos === 0 || size.vpos === size.vmax)) {
+				size.animvpost && clearTimeout(size.animvpost);
+				size.animvpost = setTimeout(animyt, 10, size.vpos, size.vmax);
+			}
 		};
 
 		handlers.forcex = function() {
 			barx.css('left', size.hpos);
+			if (DEF.scrollbaranimate && (size.hpos === 0 || size.hpos === size.hmax)) {
+				size.animhpost && clearTimeout(size.animhpost);
+				size.animhpost = setTimeout(animxt, 10, size.hpos, size.hmax);
+			}
 		};
 
 		handlers.onscroll = function() {
@@ -9339,9 +9467,9 @@
 
 			if (size.vbar) {
 
-				var minus = (size.hbar ? size.thickness : 0);
+				var minus = (size.hbar ? size.thicknessH : 0);
 				p = Math.ceil((y / (size.scrollHeight - size.clientHeight)) * 100);
-				pos = (((size.clientHeight - size.vbarsize - minus) / 100) * p);
+				pos = ((((size.clientHeight || 0) - (size.vbarsize || 0) - minus) / 100) * p);
 
 				if (pos < 0)
 					pos = 0;
@@ -9353,13 +9481,14 @@
 
 				if (size.vpos !== pos) {
 					size.vpos = pos;
+					size.vmax = max;
 					W.requestAnimationFrame(handlers.forcey);
 				}
 			}
 
 			if (size.hbar) {
 				p = Math.ceil((x / (size.scrollWidth - size.clientWidth)) * 100);
-				pos = (((size.clientWidth - size.hbarsize) / 100) * p);
+				pos = ((((size.clientWidth || 0) - (size.hbarsize || 0)) / 100) * p);
 
 				if (pos < 0)
 					pos = 0;
@@ -9371,6 +9500,7 @@
 
 				if (size.hpos !== pos) {
 					size.hpos = pos;
+					size.hmax = max;
 					W.requestAnimationFrame(handlers.forcex);
 				}
 			}
@@ -9388,6 +9518,9 @@
 				delay = setTimeout(function() {
 					delay = null;
 					notemmited = true;
+					size.animvpos = false;
+					animcache.y = -1;
+					animcache.x = -1;
 				}, 700);
 
 				options.onscroll && options.onscroll(self);
@@ -9404,7 +9537,9 @@
 
 			drag.type = 'x';
 
-			if (e.target.tagName === 'SPAN') {
+			var tag = e.target.tagName;
+
+			if (tag === 'SPAN' || tag === 'B') {
 				bind();
 				drag.offset = element.offset().left + e.offsetX;
 				drag.offset2 = e.offsetX;
@@ -9431,7 +9566,9 @@
 
 			drag.type = 'y';
 
-			if (e.target.tagName === 'SPAN') {
+			var tag = e.target.tagName;
+
+			if (tag === 'SPAN' || tag === 'B') {
 				bind();
 				drag.offset = element.offset().top + e.offsetY;
 				drag.offset2 = e.offsetY;
@@ -9486,6 +9623,7 @@
 		var cssy = {};
 		var cssba = {};
 
+		self.size = size;
 		self.resize2 = onresize;
 		self.resize = function(scrolling) {
 
@@ -9507,7 +9645,7 @@
 			if (options.parent) {
 				el = typeof(options.parent) === TYPE_O ? $(options.parent) : el.closest(options.parent);
 				if (!el[0].$scrollbar) {
-					el[0].$scrollbar = 1;
+					el[0].$scrollbar = self;
 					el.on('scroll', function(e) {
 						var t = this;
 						if (t.scrollTop)
@@ -9553,13 +9691,15 @@
 			size.scrollHeight = a.scrollHeight;
 			size.clientWidth = area.innerWidth();
 			size.clientHeight = area.innerHeight();
-			size.thickness = options.thickness || 10;
+			var defthickness = options.thickness || 10;
+			size.thicknessV = (pathy.width() || defthickness) - 1;
+			size.thicknessH = (pathx.height() || defthickness) - 1;
 			size.hpos = 0;
 			size.vpos = 0;
 
-			cssx.top = size.viewHeight - size.thickness;
+			cssx.top = size.viewHeight - size.thicknessH;
 			cssx.width = size.viewWidth;
-			cssy.left = size.viewWidth - size.thickness;
+			cssy.left = size.viewWidth - size.thicknessV;
 			cssy.height = size.viewHeight;
 
 			pathx.css(cssx);
@@ -9571,7 +9711,7 @@
 				size.vbarsize = (size.clientHeight * (size.viewHeight / size.scrollHeight)) >> 0;
 				if (size.vbarsize < 30)
 					size.vbarsize = 30;
-				bary.css(T_HEIGHT, size.vbarsize);
+				bary.css(T_HEIGHT, size.vbarsize).attrd('size', size.vbarsize);
 			}
 
 			size.hbar = size.scrollWidth > size.clientWidth;
@@ -9579,7 +9719,7 @@
 				size.hbarsize = (size.clientWidth * (size.viewWidth / size.scrollWidth)) >> 0;
 				if (size.hbarsize < 30)
 					size.hbarsize = 30;
-				barx.css(T_WIDTH, size.hbarsize);
+				barx.css(T_WIDTH, size.hbarsize).attrd('size', size.hbarsize);
 			}
 
 			var n = 'ui-scrollbar-';
@@ -9597,13 +9737,12 @@
 
 			if (size.margin) {
 				var plus = size.margin;
-				var thickness = size.thickness;
 
 				if (W.isIE == false && sw && navigator.userAgent.indexOf('Edge') === -1)
 					plus = 0;
 
-				cssba['margin-right'] = size.vbar ? (thickness + plus) : plus;
-				cssba['margin-bottom'] = size.hbar ? (thickness + plus) : plus;
+				cssba['margin-right'] = size.vbar ? (size.thicknessV + plus) : plus;
+				cssba['margin-bottom'] = size.hbar ? (size.thicknessH + plus) : plus;
 				bodyarea.css(cssba);
 			}
 
