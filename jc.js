@@ -289,7 +289,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.137;
+	M.version = 17.138;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -9759,8 +9759,8 @@
 
 			size.scrollWidth = a.scrollWidth;
 			size.scrollHeight = a.scrollHeight;
-			size.clientWidth = area.innerWidth();
-			size.clientHeight = area.innerHeight();
+			size.clientWidth = Math.ceil(area.innerWidth());
+			size.clientHeight = Math.ceil(area.innerHeight())
 			var defthickness = options.thickness || 10;
 			size.thicknessV = (pathy.width() || defthickness) - 1;
 			size.thicknessH = (pathx.height() || defthickness) - 1;
