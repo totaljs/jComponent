@@ -289,7 +289,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.136;
+	M.version = 17.137;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -4326,7 +4326,7 @@
 			cache.bt = 0; // reset timer id
 
 			if (self.$bindchanges) {
-				var hash = HASH(value);
+				var hash = HASH(cache.value);
 				if (hash === self.$valuehash)
 					return;
 				self.$valuehash = hash;
@@ -4444,6 +4444,30 @@
 	}
 
 	var PPC = COM.prototype;
+
+	PPC.command = function(name, fn) {
+		var t = this;
+
+		if (!t.$commands)
+			t.$commands = {};
+
+		var first = false;
+
+		if (name.charAt(0) === '^') {
+			first = true;
+			name = name.substring(1);
+		}
+
+		if (t.$commands[name]) {
+			if (first)
+				t.$commands[name].unshift(fn);
+			else
+				t.$commands[name].push(fn);
+		} else
+			t.$commands[name] = [fn];
+
+		return t;
+	};
 
 	PPC.autofill = function(val) {
 		var t = this;
@@ -5802,7 +5826,6 @@
 
 	W.RECONFIGURE = function(selector, value) {
 		SETTER(true, selector, 'reconfigure', value);
-		return RECONFIGURE;
 	};
 
 	W.SETTER = function(selector, name) {
@@ -5842,7 +5865,7 @@
 					SETTER.apply(W, arg);
 				}, 555, arguments);
 
-				return SETTER;
+				return;
 			}
 
 			name = arguments[2];
@@ -5854,10 +5877,12 @@
 					var a = isget ? get(name, o) : o[name];
 					if (typeof(a) === TYPE_FN)
 						a.apply(o, arg);
+					/*
 					else if (isget)
 						set(name, o);
 					else
 						o[name] = arg[0];
+					*/
 				}
 			});
 		} else {
@@ -5895,14 +5920,15 @@
 				var a = isget ? get(name, o) : o[name];
 				if (typeof(a) === TYPE_FN)
 					a.apply(o, arg);
+
+				/*
 				else if (isget)
 					set(name, o);
 				else
 					o[name] = arg[0];
+				*/
 			}
 		}
-
-		return SETTER;
 	};
 
 	function exechelper(ctx, path, arg) {
@@ -5926,6 +5952,17 @@
 			EXEC(path, a, b, c, d);
 		else
 			SET(path, a);
+	};
+
+	W.CMD = function(name, a, b, c, d, e) {
+		for (var i = 0, length = M.components.length; i < length; i++) {
+			var com = M.components[i];
+			if (com && com.$loaded && !com.$removed && com.$commands && com.$commands[name]) {
+				var cmd = com.$commands[name];
+				for (var j = 0; j < cmd.length; j++)
+					cmd[j](a, b, c, d, e);
+			}
+		}
 	};
 
 	W.EXEC = function(path) {
@@ -5959,7 +5996,7 @@
 				!events[p] && exechelper(ctx, path, arg);
 			else
 				EMIT.call(ctx, p, arg[0], arg[1], arg[2], arg[3], arg[4]);
-			return EXEC;
+			return;
 		}
 
 		var ok = 0;
@@ -5981,7 +6018,7 @@
 			}
 
 			wait && !ok && exechelper(ctx, path, arg);
-			return EXEC;
+			return;
 		}
 
 		// PLUGINS
@@ -5999,7 +6036,7 @@
 			}
 
 			wait && !ok && exechelper(ctx, path, arg);
-			return EXEC;
+			return;
 		}
 
 		var fn = get(path);
@@ -6010,7 +6047,6 @@
 		}
 
 		wait && !ok && exechelper(ctx, path, arg);
-		return EXEC;
 	};
 
 	W.MAKE = function(obj, fn, update) {
@@ -7855,6 +7891,19 @@
 			return self;
 		};
 
+		$.fn.CMD = function(name, a, b, c, d, e) {
+			var self = this;
+			var arr = self.FIND('*', true);
+			for (var i = 0, length = arr.length; i < length; i++) {
+				var o = arr[i];
+				var cmd = o.$commands ? o.$commands[name] : null;
+				if (cmd && cmd.length) {
+					for (var j = 0; j < cmd.length; j++)
+						cmd[j](a, b, c, d, e);
+				}
+			}
+		};
+
 		$.fn.SETTER = function(selector, name) {
 
 			var self = this;
@@ -7898,10 +7947,10 @@
 						var a = isget ? get(name, o) : o[name];
 						if (typeof(a) === TYPE_FN)
 							a.apply(o, arg);
-						else if (isget)
+						/*else if (isget)
 							set(name, o);
 						else
-							o[name] = arg[0];
+							o[name] = arg[0];*/
 					}
 				});
 
@@ -7935,10 +7984,10 @@
 					var a = isget ? get(name, o) : o[name];
 					if (typeof(a) === TYPE_FN)
 						a.apply(o, arg);
-					else if (isget)
+					/*else if (isget)
 						set(name, o);
 					else
-						o[name] = arg[0];
+						o[name] = arg[0];*/
 				}
 			}
 
