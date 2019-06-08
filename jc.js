@@ -287,7 +287,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.128;
+	M.version = 17.134;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -4315,6 +4315,23 @@
 			}
 		};
 
+		var setterXbinder = function(self) {
+			var cache = self.$bindcache;
+			cache.bt = 0; // reset timer id
+
+			if (self.$bindchanges) {
+				var hash = HASH(value);
+				if (hash === self.$valuehash)
+					return;
+				self.$valuehash = hash;
+			}
+
+			self.config.$setter && EXEC.call(self, self.config.$setter.SCOPE(self), cache.value, cache.path, cache.type);
+			self.data('', cache.value);
+			self.setter(cache.value, cache.path, cache.type);
+			self.setter2 && self.setter2(cache.value, cache.path, cache.type);
+		};
+
 		self.setterX = function(value, path, type) {
 
 			if (!self.setter || (self.$bindexact && self.path !== path && self.path.indexOf(path + '.') === -1 && type))
@@ -4354,13 +4371,16 @@
 						cache.value = value;
 						cache.path = path;
 						cache.type = type;
+						cache.bt && clearTimeout(cache.bt);
 					} else {
 						cache.value = value;
 						cache.path = path;
 						cache.type = type;
 						if (!cache.bt) {
-							cache.is = true;
-							self.setterX();
+							if (cache.is)
+								self.setterX();
+							else
+								setterXbinder(self);
 						}
 					}
 				}
@@ -4368,22 +4388,7 @@
 			} else if (!self.$released && cache && cache.is) {
 				cache.is = false;
 				cache.bt && clearTimeout(cache.bt);
-				cache.bt = setTimeout(function(self) {
-					var cache = self.$bindcache;
-					cache.bt = 0; // reset timer id
-
-					if (self.$bindchanges) {
-						var hash = HASH(value);
-						if (hash === self.$valuehash)
-							return;
-						self.$valuehash = hash;
-					}
-
-					self.config.$setter && EXEC.call(self, self.config.$setter.SCOPE(self), cache.value, cache.path, cache.type);
-					self.data('', cache.value);
-					self.setter(cache.value, cache.path, cache.type);
-					self.setter2 && self.setter2(cache.value, cache.path, cache.type);
-				}, self.$bindtimeout, self);
+				cache.bt = setTimeout(setterXbinder, self.$bindtimeout, self);
 			}
 		};
 
@@ -6373,7 +6378,7 @@
 		$('<style type="text/css"' + (id ? ' id="css' + id + '"' : '') + '>' + (value instanceof Array ? value.join('') : value) + '</style>').appendTo('head');
 	};
 
-	W.HASH = function(s) {
+	W.HASH = function(s, unsigned) {
 		if (!s)
 			return 0;
 		var type = typeof(s);
@@ -6394,7 +6399,7 @@
 			hash = ((hash << 5) - hash) + char;
 			hash |= 0; // Convert to 32bit integer
 		}
-		return hash;
+		return unsigned ? hash >>> 0 : hash;
 	};
 
 	W.GUID = function(size) {
