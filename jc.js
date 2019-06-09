@@ -289,7 +289,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.139;
+	M.version = 17.141;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -9400,6 +9400,7 @@
 		};
 
 		var bind = function() {
+			animcache.disabled = true;
 			if (!drag.binded) {
 				drag.binded = true;
 				$(W).on('mousemove', handlers.onmousemove).on('mouseup', handlers.onmouseup).on('mouseout', handlers.onmouseout);
@@ -9407,6 +9408,7 @@
 		};
 
 		var unbind = function() {
+			animcache.disabled = false;
 			if (drag.binded) {
 				drag.binded = false;
 				$(W).off('mousemove', handlers.onmousemove).off('mouseup', handlers.onmouseup).off('mouseout', handlers.onmouseout);
@@ -9417,7 +9419,7 @@
 		var animcache = {};
 
 		var animyt_fn = function(value) {
-			if (animcache.y !== value && !animcache.yis && !animcache.disabled) {
+			if (animcache.y !== value && !animcache.yis) {
 				animcache.y = value;
 				animyt.top = value + 20;
 				bary.stop().animate(animyt, 150, function() {
@@ -9431,7 +9433,7 @@
 
 		var animxt = {};
 		var animxt_fn = function(value) {
-			if (animcache.x !== value && !animcache.xis && !animcache.disabled) {
+			if (animcache.x !== value && !animcache.xis) {
 				animcache.xis = true;
 				animcache.x = value;
 				animxt.left = value + 20;
@@ -9446,7 +9448,7 @@
 
 		var animyb = {};
 		var animyb_fn = function(value) {
-			if (animcache.y !== value && !animcache.yis && !animcache.disabled) {
+			if (animcache.y !== value && !animcache.yis) {
 				animcache.yis = true;
 				animyb.height = value - 20;
 				bary.stop().animate(animyb, 150, function() {
@@ -9460,7 +9462,7 @@
 
 		var animxr = {};
 		var animxr_fn = function(value) {
-			if (animcache.x !== value && !animcache.xis && !animcache.disabled) {
+			if (animcache.x !== value && !animcache.xis) {
 				animcache.yis = true;
 				animxr.width = value - 20;
 				barx.stop().animate(animxr, 150, function() {
@@ -9509,7 +9511,7 @@
 
 		handlers.forcey = function() {
 			bary.css('top', size.vpos);
-			if (DEF.scrollbaranimate && (size.vpos === 0 || size.vpos === size.vmax)) {
+			if (DEF.scrollbaranimate && !animcache.disabled && (size.vpos === 0 || size.vpos === size.vmax)) {
 				size.animvpost && clearTimeout(size.animvpost);
 				size.animvpost = setTimeout(animyt, 10, size.vpos, size.vmax);
 			}
@@ -9517,7 +9519,7 @@
 
 		handlers.forcex = function() {
 			barx.css('left', size.hpos);
-			if (DEF.scrollbaranimate && (size.hpos === 0 || size.hpos === size.hmax)) {
+			if (DEF.scrollbaranimate && !animcache.disabled && (size.hpos === 0 || size.hpos === size.hmax)) {
 				size.animhpost && clearTimeout(size.animhpost);
 				size.animhpost = setTimeout(animxt, 10, size.hpos, size.hmax);
 			}
@@ -9618,7 +9620,6 @@
 				drag.is = true;
 				drag.pos = e.pageX;
 				drag.counter = 0;
-				animcache.disabled = true;
 			} else {
 				// path
 				var p = ((e.offsetX - 50) / (size.viewWidth - size.hbarsize)) * 100;
@@ -9632,7 +9633,6 @@
 
 		pathx.on('mouseup', function() {
 			drag.is = false;
-			animcache.disabled = false;
 			unbind();
 		});
 
@@ -9649,7 +9649,6 @@
 				drag.pos = e.pageY;
 				drag.is = true;
 				drag.counter = 0;
-				animcache.disabled = true;
 			} else {
 				// path
 				var p = ((e.offsetY - 50) / (size.viewHeight - size.vbarsize)) * 100;
@@ -9711,7 +9710,6 @@
 			if (HIDDEN(element[0]))
 				return;
 
-			animcache.disabled = false;
 			animcache.yis = false;
 			animcache.xis = false;
 			animcache.y = -1;
