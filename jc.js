@@ -289,7 +289,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.138;
+	M.version = 17.139;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -9417,7 +9417,7 @@
 		var animcache = {};
 
 		var animyt_fn = function(value) {
-			if (animcache.y !== value && !animcache.yis) {
+			if (animcache.y !== value && !animcache.yis && !animcache.disabled) {
 				animcache.y = value;
 				animyt.top = value + 20;
 				bary.stop().animate(animyt, 150, function() {
@@ -9431,7 +9431,7 @@
 
 		var animxt = {};
 		var animxt_fn = function(value) {
-			if (animcache.x !== value && !animcache.xis) {
+			if (animcache.x !== value && !animcache.xis && !animcache.disabled) {
 				animcache.xis = true;
 				animcache.x = value;
 				animxt.left = value + 20;
@@ -9446,7 +9446,7 @@
 
 		var animyb = {};
 		var animyb_fn = function(value) {
-			if (animcache.y !== value && !animcache.yis) {
+			if (animcache.y !== value && !animcache.yis && !animcache.disabled) {
 				animcache.yis = true;
 				animyb.height = value - 20;
 				bary.stop().animate(animyb, 150, function() {
@@ -9460,7 +9460,7 @@
 
 		var animxr = {};
 		var animxr_fn = function(value) {
-			if (animcache.x !== value && !animcache.xis) {
+			if (animcache.x !== value && !animcache.xis && !animcache.disabled) {
 				animcache.yis = true;
 				animxr.width = value - 20;
 				barx.stop().animate(animxr, 150, function() {
@@ -9527,6 +9527,7 @@
 
 			var y = area[0].scrollTop;
 			var x = area[0].scrollLeft;
+
 			var is = size.prevx !== x || size.prevy !== y;
 			var pos;
 			var p;
@@ -9538,7 +9539,8 @@
 			if (size.vbar) {
 
 				var minus = (size.hbar ? size.thicknessH : 0);
-				p = Math.ceil((y / (size.scrollHeight - size.clientHeight)) * 100);
+				var d = size.scrollHeight - size.clientHeight;
+				p = d ? Math.ceil((y / d) * 100) : 0;
 				pos = ((((size.clientHeight || 0) - (size.vbarsize || 0) - minus) / 100) * p);
 
 				if (pos < 0)
@@ -9616,6 +9618,7 @@
 				drag.is = true;
 				drag.pos = e.pageX;
 				drag.counter = 0;
+				animcache.disabled = true;
 			} else {
 				// path
 				var p = ((e.offsetX - 50) / (size.viewWidth - size.hbarsize)) * 100;
@@ -9629,6 +9632,7 @@
 
 		pathx.on('mouseup', function() {
 			drag.is = false;
+			animcache.disabled = false;
 			unbind();
 		});
 
@@ -9645,6 +9649,7 @@
 				drag.pos = e.pageY;
 				drag.is = true;
 				drag.counter = 0;
+				animcache.disabled = true;
 			} else {
 				// path
 				var p = ((e.offsetY - 50) / (size.viewHeight - size.vbarsize)) * 100;
@@ -9706,6 +9711,12 @@
 			if (HIDDEN(element[0]))
 				return;
 
+			animcache.disabled = false;
+			animcache.yis = false;
+			animcache.xis = false;
+			animcache.y = -1;
+			animcache.x = -1;
+
 			var a = area[0];
 			var el = element;
 			var md = isMOBILE && isTOUCH;
@@ -9757,15 +9768,20 @@
 				area.css(T_HEIGHT, size.viewHeight + size.margin);
 			}
 
-			size.scrollWidth = a.scrollWidth;
-			size.scrollHeight = a.scrollHeight;
+			size.scrollWidth = a.scrollWidth || 0;
+			size.scrollHeight = a.scrollHeight || 0;
 			size.clientWidth = Math.ceil(area.innerWidth());
-			size.clientHeight = Math.ceil(area.innerHeight())
+			size.clientHeight = Math.ceil(area.innerHeight());
+
 			var defthickness = options.thickness || 10;
 			size.thicknessV = (pathy.width() || defthickness) - 1;
 			size.thicknessH = (pathx.height() || defthickness) - 1;
-			size.hpos = 0;
-			size.vpos = 0;
+
+			if (size.hpos == null)
+				size.hpos = 0;
+
+			if (size.vpos == null)
+				size.vpos = 0;
 
 			cssx.top = size.viewHeight - size.thicknessH;
 			cssx.width = size.viewWidth;
