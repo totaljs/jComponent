@@ -289,7 +289,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.143;
+	M.version = 17.144;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -3510,10 +3510,14 @@
 
 		setTimeout(resizenoscrollbar, 777, el);
 
+		if (obj.$releaseready != null) {
+			obj.release(obj.$releaseready, null, true);
+			delete obj.$releaseready;
+		}
+
 		obj.id && EMIT('#' + obj.id, obj);
 
 		var e = '@' + obj.name;
-
 		events[e] && EMIT(e, obj);
 		events[n] && EMIT(n, obj);
 
@@ -4685,17 +4689,27 @@
 			if (type === 0 || type === 2) {
 				if (dom.$com) {
 					var com = dom.$com;
+					var is = false;
 					if (com instanceof Array) {
 						for (var i = 0; i < com.length; i++) {
 							var tmp = com[i];
-							if (!tmp.$ready || tmp.$removed || (tmp.$releasetype && (tmp.$releasetype === 3 || (tmp.$releasetype === 1 && !value) || (tmp.$releasetype === 2 && value))))
-								return;
-							tmp.release(value, null, true);
+							if (tmp.$removed || (tmp.$releasetype && (tmp.$releasetype === 3 || (tmp.$releasetype === 1 && !value) || (tmp.$releasetype === 2 && value))))
+								continue;
+							if (tmp.$ready)
+								tmp.release(value, null, true);
+							else
+								tmp.$releaseready = value;
+							is = true;
 						}
-					} else {
-						if (!com.$ready || com.$removed || (com.$releasetype === 3 && (com.$releasetype === 3 || (com.$releasetype === 1 && !value) || (com.$releasetype === 2 && value))))
+						if (!is)
 							return;
-						com.release(value, null, true);
+					} else {
+						if (com.$removed || (com.$releasetype === 3 && (com.$releasetype === 3 || (com.$releasetype === 1 && !value) || (com.$releasetype === 2 && value))))
+							return;
+						if (com.$ready)
+							com.release(value, null, true);
+						else
+							com.$releaseready = value;
 					}
 				} else if (ischildren && dom.$jcbind && dom.$jcbind.release) {
 
@@ -4748,7 +4762,7 @@
 	PPC.release = function(value, container, skipnested) {
 
 		var self = this;
-		if (value === undefined || self.$removed || !self.$ready)
+		if (value === undefined || self.$removed)
 			return self.isreleased;
 
 		self.attr(ATTRREL2, value ? T_TRUE : T_FALSE);
