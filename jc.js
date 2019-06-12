@@ -289,7 +289,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.142;
+	M.version = 17.143;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -3004,7 +3004,7 @@
 					obj.template = template;
 
 				if (attrrel(el) === T_TRUE)
-					obj.$released = true;
+					obj.isreleased = true;
 
 				if (attrcom(el, 'url')) {
 					warn('jC: use "data-jc-template" instead of "data-jc-url": {0}[{1}].'.format(obj.name, obj.path));
@@ -3411,7 +3411,7 @@
 
 		findcontrol2(obj, collection);
 
-		obj.released && obj.released(obj.$released);
+		obj.released && obj.released(obj.isreleased);
 		M.components.push(obj);
 		C.init.push(obj);
 		type !== 'BODY' && REGCOM.test(el[0].innerHTML) && compile(el);
@@ -4268,7 +4268,7 @@
 		self.$ready = false;
 		self.$path;
 		self.trim = true;
-		self.$released = false;
+		self.isreleased = false;
 		self.$bindreleased = true;
 		self.$data = {};
 
@@ -4372,7 +4372,7 @@
 					self.setter(value, path, type);
 					self.setter2 && self.setter2(value, path, type);
 				} else {
-					if (self.$released) {
+					if (self.isreleased) {
 						cache.is = true;
 						cache.value = value;
 						cache.path = path;
@@ -4391,7 +4391,7 @@
 					}
 				}
 
-			} else if (!self.$released && cache && cache.is) {
+			} else if (!self.isreleased && cache && cache.is) {
 				cache.is = false;
 				cache.bt && clearTimeout(cache.bt);
 				cache.bt = setTimeout(setterXbinder, self.$bindtimeout, self);
@@ -4605,7 +4605,7 @@
 		} else
 			t.$W[prop] = { callback: [callback] };
 
-		if (!t.$released) {
+		if (!t.isreleased) {
 			t.$W[prop].id = setInterval(function(t, prop) {
 				var o = t.$W[prop];
 				var v = t[prop]();
@@ -4688,12 +4688,12 @@
 					if (com instanceof Array) {
 						for (var i = 0; i < com.length; i++) {
 							var tmp = com[i];
-							if (tmp.$releasetype && (tmp.$releasetype === 3 || (tmp.$releasetype === 1 && !value) || (tmp.$releasetype === 2 && value)))
+							if (!tmp.$ready || tmp.$removed || (tmp.$releasetype && (tmp.$releasetype === 3 || (tmp.$releasetype === 1 && !value) || (tmp.$releasetype === 2 && value))))
 								return;
 							tmp.release(value, null, true);
 						}
 					} else {
-						if (com.$releasetype === 3 && (com.$releasetype === 3 || (com.$releasetype === 1 && !value) || (com.$releasetype === 2 && value)))
+						if (!com.$ready || com.$removed || (com.$releasetype === 3 && (com.$releasetype === 3 || (com.$releasetype === 1 && !value) || (com.$releasetype === 2 && value))))
 							return;
 						com.release(value, null, true);
 					}
@@ -4748,13 +4748,13 @@
 	PPC.release = function(value, container, skipnested) {
 
 		var self = this;
-		if (value === undefined || self.$removed)
-			return self.$released;
+		if (value === undefined || self.$removed || !self.$ready)
+			return self.isreleased;
 
 		self.attr(ATTRREL2, value ? T_TRUE : T_FALSE);
 
-		if (!container && self.$released !== value) {
-			self.$released = value;
+		if (!container && self.isreleased !== value) {
+			self.isreleased = value;
 			self.released && self.released(value, self);
 			self.$waiter(!value);
 			!value && self.setterX();
