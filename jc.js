@@ -289,7 +289,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.141;
+	M.version = 17.142;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -5996,6 +5996,11 @@
 				!events[p] && exechelper(ctx, path, arg);
 			else
 				EMIT.call(ctx, p, arg[0], arg[1], arg[2], arg[3], arg[4]);
+			return;
+		}
+
+		if (c === 38) {
+			CMD.call(ctx, path.substring(1), arg[0], arg[1], arg[2], arg[3], arg[4]);
 			return;
 		}
 
