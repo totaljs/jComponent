@@ -289,7 +289,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.144;
+	M.version = 17.145;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -9226,6 +9226,7 @@
 		var output = { add: 0, upd: 0, rem: 0 };
 		var compareindex = 0;
 		var is = false;
+		var prop = 'outerHTML';
 
 		for (var i = 0; i < vels.length; i++) {
 			var a = vels[compareindex++];
@@ -9234,10 +9235,9 @@
 			if (b == null) {
 				a && a.parentNode.removeChild(a);
 				output.rem++;
-			} else if (a && a.innerHTML !== b.innerHTML) {
-
+			} else if (a && a[prop] !== b[prop]) {
 				var next = vels[compareindex];
-				if (next && next.innerHTML === b.innerHTML && !is) {
+				if (next && next[prop] === b[prop] && !is) {
 					is = true;
 					a.parentNode.removeChild(a);
 					compareindex++;
