@@ -5075,6 +5075,18 @@
 		return path;
 	};
 
+	PPC.scopepath = function(path) {
+		var self = this;
+
+		if (path.indexOf('?') === -1)
+			return path;
+
+		if (self.$scopepath === undefined)
+			self.$scopepath = self.element.scope() || null;
+
+		return self.$scopepath ? self.$scopepath.makepath(path) : path;
+	};
+
 	PPC.setPath = function(path, type) {
 
 		// type 1: init
