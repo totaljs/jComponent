@@ -7419,7 +7419,7 @@
 		if (t.indexOf('?') === -1 || element == null)
 			return t;
 		if (element instanceof COM)
-			return element.scope ? element.scope.makepath(t) : t;
+			return element.scope ? element.scope.makepath(t) : element.scopepath(t);
 		else if (element instanceof Plugin)
 			return t.replace(/\?/g, element.name);
 		else if (element instanceof jQuery || element.nodeName) {
