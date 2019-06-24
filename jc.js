@@ -289,7 +289,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.146;
+	M.version = 17.147;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -3363,7 +3363,7 @@
 		}
 
 		var item = cache['$session' + key];
-		if (item)
+		if (item !== undefined)
 			return item;
 
 		item = storage[key];
