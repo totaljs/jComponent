@@ -58,6 +58,7 @@
 	var T_CLASS = 'class';
 	var T_HTML = 'html';
 	var T_CONFIG = 'config';
+	var T_TMP = 'jctmp.';
 	var OK = Object.keys;
 
 	// No scrollbar
@@ -289,7 +290,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.147;
+	M.version = 17.148;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -870,7 +871,7 @@
 
 			// Temporary
 			if (path.charCodeAt(0) === 37)
-				path = 'jctmp.' + path.substring(1);
+				path = T_TMP + path.substring(1);
 
 			path = path.env();
 
@@ -1459,9 +1460,11 @@
 
 	W.MODIFY = function(path, value, timeout) {
 		if (path && typeof(path) === TYPE_O) {
-			OK(path).forEach(function(k) {
-				MODIFY(k, path[k], value);
-			});
+			var keys = OK(path);
+			for (var i = 0; i < keys.length; i++) {
+				var key = keys[i];
+				MODIFY(key, path[key], value);
+			}
 		} else {
 			if (typeof(value) === TYPE_FN)
 				value = value(GET(path));
@@ -2224,7 +2227,7 @@
 
 		// temporary
 		if (path.charCodeAt(0) === 37)
-			return 'jctmp.' + path.substring(1) + tmp;
+			return T_TMP + path.substring(1) + tmp;
 
 		if (path.charCodeAt(0) === 64) {
 			// parent component.data()
@@ -2257,6 +2260,21 @@
 			return;
 		}
 		return get(path, scope);
+	};
+
+	W.GETM = function(path) {
+		var model = null;
+		var arr = MODIFIED(path);
+		var index = path.indexOf('.*');
+		if (index !== -1)
+			path = path.substring(0, index);
+		for (var i = 0; i < arr.length; i++) {
+			var p = arr[i];
+			if (model == null)
+				model = {};
+			set2(model, p.substring(path.length + 1), get(p));
+		}
+		return model;
 	};
 
 	W.GETR = function(path) {
@@ -3835,7 +3853,7 @@
 
 		var code = path.charCodeAt(0);
 		if (code === 37)
-			path = 'jctmp.' + path.substring(1);
+			path = T_TMP + path.substring(1);
 
 		var key = '=' + path;
 		if (paths[key])
@@ -5112,7 +5130,7 @@
 
 		// Temporary
 		if (path.charCodeAt(0) === 37)
-			path = 'jctmp.' + path.substring(1);
+			path = T_TMP + path.substring(1);
 
 		path = path.env();
 
@@ -6350,8 +6368,8 @@
 	W.MODIFIED = function(path) {
 		var output = [];
 		M.each(function(obj) {
-			if (!obj.$dirty_disabled)
-				obj.$dirty === false && output.push(obj.path);
+			if (!obj.$dirty_disabled && obj.$dirty === false)
+				output.push(obj.path);
 		}, pathmaker(path));
 		return output;
 	};
