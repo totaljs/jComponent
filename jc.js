@@ -290,7 +290,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.148;
+	M.version = 17.149;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8728,6 +8728,11 @@
 								r && scr.remove();
 								break;
 							case T_TEMPLATE:
+
+								// Only for backward compatibility:
+								if (s === T_TRUE || s === T_VALUE)
+									s = '';
+
 								var et = s ? e.find(s) : e;
 								var scr = et.find(T_SCRIPT);
 								var r = false;
