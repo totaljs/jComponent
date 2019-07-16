@@ -1584,7 +1584,7 @@
 		var cancel = false;
 
 		url = url.replace(/\s(repeat|cancel)/i, function(text) {
-			if (text.charAt(1) === 'r')
+			if (text.charAt(1).toLowerCase() === 'r')
 				repeat = true;
 			else
 				cancel = true;
