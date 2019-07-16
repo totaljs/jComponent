@@ -290,7 +290,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.149;
+	M.version = 17.150;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1551,8 +1551,8 @@
 
 		var td = typeof(data);
 		var arg = EMPTYARRAY;
-		var tmp;
 		var rawurl = url;
+		var tmp;
 
 		if (!callback && (td === TYPE_FN || td === TYPE_S)) {
 			timeout = callback;
@@ -1564,7 +1564,6 @@
 		if (index === -1)
 			return;
 
-		var repeat = false;
 		var sync = false;
 
 		url = url.replace(/\ssync/i, function() {
@@ -1581,8 +1580,14 @@
 			}
 		}
 
-		url = url.replace(/\srepeat/i, function() {
-			repeat = true;
+		var repeat = false;
+		var cancel = false;
+
+		url = url.replace(/\s(repeat|cancel)/i, function(text) {
+			if (text.charAt(1) === 'r')
+				repeat = true;
+			else
+				cancel = true;
 			return '';
 		});
 
@@ -1606,8 +1611,15 @@
 
 		url = url.substring(index).trim().$env();
 
-		var curr_scope = current_scope;
+		var mainurl = method + ' ' + url;
+		if (cancel) {
+			if (cache[mainurl]) {
+				cache[mainurl].output.cancel = true;
+				cache[mainurl].xhr.abort();
+			}
+		}
 
+		var curr_scope = current_scope;
 		pendingrequest++;
 
 		setTimeout(function() {
@@ -1671,9 +1683,16 @@
 			output.method = method;
 			output.data = data;
 
+			if (cancel)
+				cache[mainurl] = { options: options, output: output };
+
 			delete options.url;
 
 			options.success = function(r, s, req) {
+
+				if (cancel)
+					delete cache[mainurl];
+
 				pendingrequest--;
 				current_scope = curr_scope;
 				output.response = r;
@@ -1690,6 +1709,9 @@
 			};
 
 			options.error = function(req, s) {
+
+				if (cancel)
+					delete cache[mainurl];
 
 				pendingrequest--;
 				var code = req.status;
@@ -1719,7 +1741,6 @@
 				}
 
 				current_scope = curr_scope;
-
 				events[T_RESPONSE] && EMIT(T_RESPONSE, output);
 
 				if (output.cancel || !output.process)
@@ -1737,7 +1758,9 @@
 
 			};
 
-			$.ajax(makeurl(output.url), options);
+			var xhr = $.ajax(makeurl(output.url), options);
+			if (cancel)
+				cache[mainurl].xhr = xhr;
 
 		}, timeout || 0);
 	};
