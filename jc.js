@@ -290,7 +290,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.150;
+	M.version = 17.151;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -8549,8 +8549,8 @@
 		var cls = [];
 		var sub = {};
 		var e = obj.el = $(el);
-		var tmp;
 		var isclick = false;
+		var tmp;
 
 		for (var i = 0; i < meta.length; i++) {
 			var item = meta[i].trim();
@@ -8999,6 +8999,14 @@
 			}
 		}
 
+		if (obj.child) {
+			for (var i = 0; i < obj.child.length; i++) {
+				var child = obj.child[i];
+				child.format = obj.format;
+				child.empty = obj.empty;
+			}
+		}
+
 		obj.$init = 0;
 		!obj.virtual && bindersnew.push(obj);
 		return obj;
@@ -9086,30 +9094,30 @@
 		can = can !== false;
 
 		if (item.show && (value != null || !item.show.$nn)) {
-			tmp = item.show.call(item.el, value, path, item.el);
-			el.tclass(T_HIDDEN, !tmp);
-			if (!tmp)
+			tmp = !item.show.call(item.el, value, path, item.el);
+			el.tclass(T_HIDDEN, tmp);
+			if (tmp)
 				can = false;
 		}
 
 		if (item.hide && (value != null || !item.hide.$nn)) {
-			tmp = item.hide.call(item.el, value, path, item.el);
+			tmp = !!item.hide.call(item.el, value, path, item.el);
 			el.tclass(T_HIDDEN, tmp);
 			if (tmp)
 				can = false;
 		}
 
 		if (item.invisible && (value != null || !item.invisible.$nn)) {
-			tmp = item.invisible.call(item.el, value, path, item.el);
+			tmp = !!item.invisible.call(item.el, value, path, item.el);
 			el.tclass('invisible', tmp);
-			if (!tmp)
+			if (tmp)
 				can = false;
 		}
 
 		if (item.visible && (value != null || !item.visible.$nn)) {
-			tmp = item.visible.call(item.el, value, path, item.el);
-			el.tclass('invisible', !tmp);
-			if (!tmp)
+			tmp = !item.visible.call(item.el, value, path, item.el);
+			el.tclass('invisible', tmp);
+			if (tmp)
 				can = false;
 		}
 
