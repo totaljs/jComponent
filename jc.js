@@ -290,7 +290,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.151;
+	M.version = 17.152;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2275,9 +2275,7 @@
 		} else if (typeof(scope) === TYPE_FN) {
 			var val = get(path);
 			if (val == null) {
-				setTimeout(function(path, scope) {
-					GET(path, scope);
-				}, MD.delaywatcher, path, scope);
+				setTimeout(GET, MD.delaywatcher, path, scope);
 			} else
 				scope(val);
 			return;
@@ -2298,6 +2296,12 @@
 			set2(model, p.substring(path.length + 1), get(p));
 		}
 		return model;
+	};
+
+	W.GETU = function(path) {
+		var m = get(pathmaker(path));
+		setTimeout(UPD, 1, path);
+		return m;
 	};
 
 	W.GETR = function(path) {
