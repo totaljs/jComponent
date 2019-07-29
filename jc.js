@@ -290,7 +290,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.152;
+	M.version = 17.153;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2986,7 +2986,7 @@
 
 				for (var i = 0; i < configs.length; i++) {
 					var con = configs[i];
-					con.fn(obj) && obj.reconfigure(con.config, NOOP);
+					con.fn(obj) && obj.reconfigure(typeof(con.config) === TYPE_FN ? con.config.call(obj) : con.config, NOOP);
 				}
 
 				current_com = obj;
