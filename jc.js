@@ -6275,7 +6275,7 @@
 		SET(path, !v, timeout, reset);
 	};
 
-	W.NULL = function(path, timeout) {
+	W.NUL = W.NULL = function(path, timeout) {
 		SET(path, null, timeout);
 	};
 
