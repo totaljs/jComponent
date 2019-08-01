@@ -6824,7 +6824,8 @@
 	SP.env = function() {
 		var self = this;
 		return self.replace(REGENV, function(val) {
-			return ENV[val.substring(1, val.length - 1)] || val;
+			var key = val.substring(1, val.length - 1);
+			return (key.charAt(0) === '.' ? GET(key.substring(1)) : ENV[key]) || val;
 		});
 	};
 
