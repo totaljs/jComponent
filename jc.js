@@ -290,7 +290,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.153;
+	M.version = 17.154;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -9215,16 +9215,36 @@
 			if (value != null || !item.disable.$nn) {
 				tmp = item.disable.call(el, value, path, el);
 				el.prop(T_DISABLED, tmp == true);
-			} else
-				el.prop(T_DISABLED, item.disablebk == true);
+			} else {
+				tmp = item.disablebk;
+				el.prop(T_DISABLED, tmp == true);
+			}
+			var conf = T_DISABLED + ':' + (tmp == true ? T_TRUE : T_FALSE);
+			for (var i = 0; i < el.length; i++) {
+				var c = el[i].$com;
+				if (c && c.$ready)
+					c.reconfigure(conf);
+				else
+					binderconfig(el[i], conf);
+			}
 		}
 
 		if (item.enabled && (can || item.enabled.$nv)) {
 			if (value != null || !item.enabled.$nn) {
-				tmp = item.enabled.call(el, value, path, el);
-				el.prop(T_DISABLED, !tmp);
-			} else
-				el.prop(T_DISABLED, item.enabledbk == false);
+				tmp = !item.enabled.call(el, value, path, el);
+				el.prop(T_DISABLED, tmp);
+			} else {
+				tmp = item.enabledbk == false;
+				el.prop(T_DISABLED, tmp);
+			}
+			var conf = T_DISABLED + ':' + (tmp == true ? T_TRUE : T_FALSE);
+			for (var i = 0; i < el.length; i++) {
+				var c = el[i].$com;
+				if (c && c.$ready)
+					c.reconfigure(conf);
+				else
+					binderconfig(el[i], conf);
+			}
 		}
 
 		if (item.checked && (can || item.checked.$nv)) {
