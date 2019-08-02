@@ -59,6 +59,7 @@
 	var T_HTML = 'html';
 	var T_CONFIG = 'config';
 	var T_TMP = 'jctmp.';
+	var ERRCONN = 'ERR_CONNECTION_CLOSED';
 	var OK = Object.keys;
 
 	// No scrollbar
@@ -290,7 +291,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.154;
+	M.version = 17.155;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -713,6 +714,39 @@
 
 			if (isCredentials)
 				xhr.withCredentials = true;
+
+			xhr.addEventListener('error', function() {
+
+				var self = this;
+
+				if (progress) {
+					if (typeof(progress) === TYPE_S)
+						remap(progress, 100);
+					else
+						progress(100);
+				}
+
+				var r = output.response = '';
+				output.status = self.status || 999;
+				output.text = self.statusText || ERRCONN;
+				output.error = output.status > 399;
+				output.headers = {};
+
+				events[T_RESPONSE] && EMIT(T_RESPONSE, output);
+
+				if (!output.process || output.cancel)
+					return;
+
+				if (!r && output.error)
+					r = output.response = output.status + ': ' + output.text;
+
+				if (!output.error || MD.ajaxerrors) {
+					typeof(callback) === TYPE_S ? remap(callback.env(), r) : (callback && callback(r, null, output));
+				} else {
+					events.error && EMIT('error', output);
+					output.process && typeof(callback) === TYPE_FN && callback({}, r, output);
+				}
+			});
 
 			xhr.addEventListener('load', function() {
 
