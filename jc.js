@@ -15,20 +15,21 @@
 	var REGWILDCARD = /\.\*/;
 	var REGISARR = /\[\d+\]$/;
 	var REGSCOPEINLINE = /\?/g;
+	var T_DATA = 'data-';
 	var ATTRCOM = '[data-jc],[data--],[data---]';
 	var ATTRURL = '[data-jc-url]';
 	var ATTRBIND = '[data-bind],[bind],[data-vbind]';
 	var ATTRDATA = 'jc';
-	var ATTRDEL = 'data-jc-removed';
+	var ATTRDEL = T_DATA + 'jc-removed';
 	var SELINPUT = 'input,textarea,select';
 	var DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
 	var ACTRLS = { INPUT: true, TEXTAREA: true, SELECT: true };
 	var DEFMODEL = { value: null };
 	var MULTIPLE = ' + ';
 	var SCOPENAME = 'scope';
-	var ATTRSCOPE = 'data-jc-' + SCOPENAME;
-	var ATTRSCOPE2 = 'data-' + SCOPENAME;
-	var ATTRREL2 = 'data-released';
+	var ATTRSCOPE = T_DATA + 'jc-' + SCOPENAME;
+	var ATTRSCOPE2 = T_DATA + '' + SCOPENAME;
+	var ATTRREL2 = T_DATA + 'released';
 	var TYPE_FN = 'function';
 	var TYPE_S = 'string';
 	var TYPE_N = 'number';
@@ -58,6 +59,7 @@
 	var T_CLASS = 'class';
 	var T_HTML = 'html';
 	var T_CONFIG = 'config';
+	var T_COMPILED = 'jc-compile';
 	var T_TMP = 'jctmp.';
 	var ERRCONN = 'ERR_CONNECTION_CLOSED';
 	var OK = Object.keys;
@@ -291,7 +293,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.155;
+	M.version = 17.156;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -2545,13 +2547,13 @@
 	function attrcom(el, name) {
 		if (!el.attrd)
 			el = $(el);
-		return name ? el.attrd('jc-' + name) : (el.attrd('jc') || el.attrd('-') || el.attrd('--'));
+		return name ? el.attrd('jc-' + name) : (el.attrd('jc') || el.attrd('-') || el.attrd('--') || el.attrd('---'));
 	}
 
 	function attrrel(el) {
 		if (el instanceof jQuery)
 			el = el[0];
-		return el.getAttribute(ATTRREL2) || el.getAttribute('data-jc-released');
+		return el.getAttribute(ATTRREL2) || el.getAttribute(T_DATA + 'jc-released');
 	}
 
 	function crawler(container, onComponent, level, released) {
@@ -2575,7 +2577,7 @@
 		var binders = null;
 
 		if (!container.$jcbind) {
-			b = container.getAttribute('data-' + T_BIND) || container.getAttribute(T_BIND);
+			b = container.getAttribute(T_DATA + T_BIND) || container.getAttribute(T_BIND);
 			if (b) {
 				!binders && (binders = []);
 				binders.push({ el: container, b: b });
@@ -2600,7 +2602,7 @@
 				if (!el.tagName)
 					continue;
 
-				comp = el.getAttribute('data-jc-compile');
+				comp = el.getAttribute(T_DATA + T_COMPILED);
 				if (comp === '0' || comp === T_FALSE)
 					continue;
 
@@ -2613,7 +2615,7 @@
 				}
 
 				if (!el.$jcbind) {
-					b = el.getAttribute('data-' + T_BIND) || el.getAttribute(T_BIND);
+					b = el.getAttribute(T_DATA + T_BIND) || el.getAttribute(T_BIND);
 					if (b) {
 						el.$jcbind = 1;
 						!binders && (binders = []);
@@ -2621,7 +2623,7 @@
 					}
 				}
 
-				comp = el.getAttribute('data-jc-compile');
+				comp = el.getAttribute(T_DATA + T_COMPILED);
 				if (comp !== '0' && comp !== T_FALSE)
 					el.childNodes.length && el.tagName !== 'SCRIPT' && REGCOM.test(el.innerHTML) && sub.indexOf(el) === -1 && sub.push(el);
 			}
@@ -4908,7 +4910,7 @@
 
 	PPC.compile = function(container) {
 		var self = this;
-		!container && self.attrd('jc-compile') && self.attrd('jc-compile', '1');
+		!container && self.attrd(T_COMPILED) && self.attrd(T_COMPILED, '1');
 		compile(container || self.element);
 		return self;
 	};
@@ -5063,7 +5065,7 @@
 
 	PPC.nocompile = function() {
 		var self = this;
-		self.element.attrd('jc-compile', '0');
+		self.element.attrd(T_COMPILED, '0');
 		return self;
 	};
 
@@ -5238,7 +5240,7 @@
 	};
 
 	PPC.attrd = SCP.attrd = function(name, value) {
-		name = 'data-' + name;
+		name = T_DATA + name;
 		var el = this.element;
 		if (value === undefined)
 			return el.attr(name);
@@ -8147,7 +8149,7 @@
 
 		$.fn.rattrd = function() {
 			for (var i = 0; i < arguments.length; i++)
-				this.removeAttr('data-' + arguments[i]);
+				this.removeAttr(T_DATA + arguments[i]);
 			return this;
 		};
 
@@ -8180,7 +8182,7 @@
 		};
 
 		$.fn.attrd = function(a, v) {
-			a = 'data-' + a;
+			a = T_DATA + a;
 			return v == null ? this.attr(a) : this.attr(a, v);
 		};
 
@@ -8406,7 +8408,8 @@
 				self.$jctimeout = setTimeout(keypressdelay, self.$jcdelay, self);
 			});
 
-			$(document).on('focus blur', 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind]', function(e) {
+			var SELECTOR = 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind]';
+			$(document).on('focus blur', SELECTOR, function(e) {
 
 				var self = this;
 				var com = self.$com;
@@ -8434,7 +8437,7 @@
 				}
 			});
 
-			$(document).on('change', 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind]', function() {
+			$(document).on('change', SELECTOR, function() {
 
 				var self = this;
 				var com = self.$com;
