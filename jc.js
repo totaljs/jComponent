@@ -2948,7 +2948,6 @@
 							if (end === -1)
 								end = meta[2].length;
 							x = meta[2].substring(index + 5, end);
-							console.log(x);
 						}
 					} else
 
@@ -3107,7 +3106,7 @@
 					obj.isreleased = true;
 
 				if (attrcom(el, 'url')) {
-					warn('jC: use "data-extra" instead of "data-jc-template": {0}[{1}].'.format(obj.name, obj.path));
+					warn('jC: use "data-import" instead of "data-jc-template": {0}[{1}].'.format(obj.name, obj.path));
 					continue;
 				}
 
