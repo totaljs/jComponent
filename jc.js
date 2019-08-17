@@ -3396,6 +3396,7 @@
 			// data.init
 			// data.path
 			// data.class
+			// data.make
 
 			// Unique
 			var url = data.url;
@@ -3452,8 +3453,8 @@
 					response = response.replace(/~PATH~/g, item.path);
 
 				if (item.make) {
-					var fn = GET(item.make);
-					if (fn) {
+					var fn = get(item.make);
+					if (fn && typeof(fn) === TYPE_FN) {
 						response = fn(response, item.element, item.path);
 						if (!response) {
 							current_element = null;
@@ -3468,9 +3469,10 @@
 
 				item.element.html(response);
 
-				if (item.callback && !attrcom(item.element)) {
+				if (item.callback) {
 					var callback = get(item.callback);
-					typeof(callback) === TYPE_FN && callback(item.element);
+					if (typeof(callback) === TYPE_FN)
+						callback(item.element);
 				}
 
 				current_element = null;
