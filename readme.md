@@ -9,7 +9,7 @@
 
 > __Download__: more than 80 jComponents free for everyone <https://componentator.com>
 
-- Current version: `v17`
+- Current version: `v18`
 - `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
@@ -35,8 +35,8 @@ __YOU NEED TO SEE:__
 
 ## Authors + Contacts
 
-- Peter Širka - www.petersirka.eu / <petersirka@gmail.com>
-- Martin Smola (contributor) - <https://github.com/molda> / <smola.martin@gmail.com>
+- Peter Širka - <https://www.petersirka.com> / <petersirka@gmail.com>
+- Denis Granec - <https://granec.cz> / <denis@granec.cz>
 
 [license-image]: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
 [license-url]: license.txt

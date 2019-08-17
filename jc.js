@@ -1,7 +1,7 @@
 (function() {
 
 	// Constants
-	var REGCOM = /(data--|data---|data-jc|data-jc-url|data-jc-import|#-bind|bind)=|COMPONENT\(/;
+	var REGCOM = /(data--|data---|data-jc|data-import|#-bind|bind)=|COMPONENT\(/;
 	var REGSCRIPT = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGENV = /(\[.*?\])/gi;
@@ -17,17 +17,16 @@
 	var REGSCOPEINLINE = /\?/g;
 	var T_DATA = 'data-';
 	var ATTRCOM = '[data-jc],[data--],[data---]';
-	var ATTRURL = '[data-jc-url]';
 	var ATTRBIND = '[data-bind],[bind],[data-vbind]';
+	var ATTRJCBIND = 'data-jc-bind';
 	var ATTRDATA = 'jc';
 	var ATTRDEL = T_DATA + 'jc-removed';
 	var SELINPUT = 'input,textarea,select';
-	var DIACRITICS = {225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o'};
+	var DIACRITICS = { 225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o' };
 	var ACTRLS = { INPUT: true, TEXTAREA: true, SELECT: true };
 	var DEFMODEL = { value: null };
 	var MULTIPLE = ' + ';
 	var SCOPENAME = 'scope';
-	var ATTRSCOPE = T_DATA + 'jc-' + SCOPENAME;
 	var ATTRSCOPE2 = T_DATA + '' + SCOPENAME;
 	var ATTRREL2 = T_DATA + 'released';
 	var TYPE_FN = 'function';
@@ -221,7 +220,6 @@
 	var waits = {};
 	var statics = {};
 	var ajaxconfig = {};
-	var skips = {};
 	var $ready = setTimeout(load, 2);
 	var $loaded = false;
 	var $domready = false;
@@ -240,10 +238,11 @@
 	W.PLUGINS = {};
 	W.EMPTYARRAY = [];
 	W.EMPTYOBJECT = {};
-	W.DATETIME = W.NOW = new Date();
+	W.NOW = new Date();
 
 	var MD = W.DEF = M.defaults = {};
 	var ENV = MD.environment = {};
+
 	MD.scope = W;
 	MD.delay = 555;
 	MD.delaywatcher = 555;
@@ -294,7 +293,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.157;
+	M.version = 18.001;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -522,7 +521,7 @@
 		return ENV[name];
 	};
 
-	M.environment = function(name, version, language, env) {
+	W.ENVIRONMENT = function(name, version, language, env) {
 		M.$localstorage = name;
 		M.$version = version || '';
 		M.$language = language || '';
@@ -584,7 +583,7 @@
 		}
 	};
 
-	W.FORMATTER = M.formatter = function(value, path, type) {
+	W.FORMATTER = function(value, path, type) {
 
 		if (typeof(value) === TYPE_FN) {
 			!M.$formatter && (M.$formatter = []);
@@ -610,7 +609,7 @@
 		return value;
 	};
 
-	W.PARSER = M.parser = function(value, path, type) {
+	W.PARSER = function(value, path, type) {
 
 		if (typeof(value) === TYPE_FN) {
 			!M.$parser && (M.$parser = []);
@@ -1511,66 +1510,6 @@
 			else
 				CHANGE(path);
 		}
-	};
-
-	W.MAKEPARAMS = function(url, values, type) {
-
-		var l = location;
-
-		if (typeof(url) === TYPE_O) {
-			type = values;
-			values = url;
-			url = l.pathname + l.search;
-		}
-
-		var query;
-		var index = url.indexOf('?');
-		if (index !== -1) {
-			query = M.parseQuery(url.substring(index + 1));
-			url = url.substring(0, index);
-		} else
-			query = {};
-
-		var keys = OK(values);
-
-		for (var i = 0, length = keys.length; i < length; i++) {
-			var key = keys[i];
-			query[key] = values[key];
-		}
-
-		var val = $.param(query, type == null || type === true);
-		return url + (val ? '?' + val : '');
-	};
-
-	M.parseQuery = W.READPARAMS = function(value) {
-
-		if (!value)
-			value = location.search;
-
-		if (!value)
-			return {};
-
-		var index = value.indexOf('?');
-		if (index !== -1)
-			value = value.substring(index + 1);
-
-		var arr = value.split('&');
-		var obj = {};
-		for (var i = 0, length = arr.length; i < length; i++) {
-			var sub = arr[i].split('=');
-			var key = sub[0];
-			var val = decodeURIComponent((sub[1] || '').replace(/\+/g, '%20'));
-
-			if (!obj[key]) {
-				obj[key] = val;
-				continue;
-			}
-
-			if (!(obj[key] instanceof Array))
-				obj[key] = [obj[key]];
-			obj[key].push(val);
-		}
-		return obj;
 	};
 
 	W.AJAXCONFIG = function(name, fn) {
@@ -2645,11 +2584,6 @@
 
 	function findcomponent(container, selector, callback) {
 
-		// @todo: parent is not implemented yet
-		// var parent = selector && selector.charAt(0) === '^';
-		// if (parent)
-		// 	selector = selector.substring(1);
-
 		var s = (selector ? selector.split(' ') : EMPTYARRAY);
 		var path = '';
 		var name = '';
@@ -2758,7 +2692,7 @@
 			var el = arr[i];
 			if (el && el.tagName) {
 				el.childNodes.length && el.tagName !== 'SCRIPT' && !attrcom(el) && sub.push(el);
-				if (ACTRLS[el.tagName] && el.getAttribute('data-jc-bind') != null && onElement(el) === false)
+				if (ACTRLS[el.tagName] && el.getAttribute(ATTRJCBIND) != null && onElement(el) === false)
 					return;
 			}
 		}
@@ -2948,15 +2882,8 @@
 							if (end === -1)
 								end = meta[2].length;
 							x = meta[2].substring(index + 5, end);
-							console.log(x);
 						}
 					} else
-
-					if (!x) {
-						x = attrcom(el, T_IMPORT);
-						if (x)
-							warn('jC: use component "$url:{0}" instead of "data-jc-import" for "{1}" component'.format(x, name));
-					}
 
 					if (!x) {
 						!statics['$NE_' + name] && (statics['$NE_' + name] = true);
@@ -3061,9 +2988,8 @@
 					obj.$noscope = attrcom(el, 'noscope') === T_TRUE;
 
 				var code = obj.path ? obj.path.charCodeAt(0) : 0;
-				if (!obj.$noscope && !obj.$pp) {
+				if (!obj.$noscope && !obj.$pp && obj.path.indexOf('?') !== -1) {
 
-					// @TODO: v18 must contain this condition --> if (obj.path.indexOf('?') !== -1)
 					var scope = findscope(dom);
 					var is = false;
 
@@ -3074,12 +3000,8 @@
 							if (obj.path === '?') {
 								obj.setPath(scope.path, 2);
 								is = true;
-							} else if (scope.isnew || is) {
+							} else
 								is && obj.setPath(scope.makepath(obj.path), 2);
-							} else {
-								obj.setPath(scope.path + '.' + obj.path, 2);
-								is = true;
-							}
 						} else {
 							var pn = dom.parentNode;
 							if (pn && !pn.$noscope)
@@ -3099,53 +3021,8 @@
 
 				instances.push(obj);
 
-				var template = attrcom(el, T_TEMPLATE) || obj.template;
-				if (template)
-					obj.template = template;
-
 				if (attrrel(el) === T_TRUE)
 					obj.isreleased = true;
-
-				if (attrcom(el, 'url')) {
-					warn('jC: use "data-extra" instead of "data-jc-template": {0}[{1}].'.format(obj.name, obj.path));
-					continue;
-				}
-
-				if (typeof(template) === TYPE_S) {
-					var fn = function(data) {
-						if (obj.prerender)
-							data = obj.prerender(data);
-						dependencies(com, function(obj, el) {
-							if (typeof(obj.make) === TYPE_FN) {
-								var parent = current_com;
-								current_com = obj;
-								obj.make(data);
-								current_com = parent;
-							}
-							init(el, obj);
-						}, obj, el);
-					};
-
-					var c = template.charAt(0);
-					if (c === '.' || c === '#' || c === '[') {
-						fn($(template).html());
-						continue;
-					}
-
-					var k = 'TE' + HASH(template);
-					var a = statics[k];
-					if (a) {
-						fn(a);
-						continue;
-					}
-
-					$.get(makeurl(template), function(response) {
-						statics[k] = response;
-						fn(response);
-					});
-
-					continue;
-				}
 
 				if (typeof(obj.make) === TYPE_S) {
 
@@ -3232,7 +3109,7 @@
 
 		while (el && el.tagName !== 'BODY') {
 
-			var path = el.getAttribute ? (el.getAttribute(ATTRSCOPE2) || el.getAttribute(ATTRSCOPE) || el.getAttribute(SCOPENAME)) : null;
+			var path = el.getAttribute ? (el.getAttribute(ATTRSCOPE2) || el.getAttribute(SCOPENAME)) : null;
 			if (path) {
 
 				if (el.$scopedata)
@@ -3260,7 +3137,6 @@
 
 				scope._id = scope.ID = scope.id = GUID(10);
 				scope.element = $(el);
-				scope.isnew = !el.getAttribute(ATTRSCOPE);
 				scope.config = conf;
 				el.$scopedata = scope;
 
@@ -3339,46 +3215,8 @@
 	function download() {
 
 		var arr = [];
-		var items;
 		var count = 0;
-
-		items = $(ATTRURL);
-
-		for (var i = 0; i < items.length; i++) {
-
-			var t = items[i];
-			if (t.$downloaded)
-				continue;
-
-			var el = $(t);
-			t.$downloaded = 1;
-			var url = attrcom(el, 'url');
-
-			warn('jC: use "data-import" instead of "data-jc-url": {0}.'.format(url));
-
-			// Unique
-			var once = url.substring(0, 5).toLowerCase() === 'once ';
-			if (url.charAt(0) === '!' || once) {
-				if (once)
-					url = url.substring(5);
-				else
-					url = url.substring(1);
-				if (statics[url])
-					continue;
-				statics[url] = 2;
-			}
-
-			var item = {};
-			item.url = url;
-			item.element = el;
-			item.callback = attrcom(el, 'init');
-			item.path = attrcom(el, 'path');
-			item.toggle = (attrcom(el, T_CLASS) || '').split(' ');
-			item.expire = attrcom(el, 'cache') || MD.importcache;
-			arr.push(item);
-		}
-
-		items = $('[' + T_DATA + T_IMPORT + ']');
+		var items = $('[' + T_DATA + T_IMPORT + ']');
 
 		for (var i = 0; i < items.length; i++) {
 
@@ -4258,7 +4096,7 @@
 			}
 		});
 
-		W.DATETIME = W.NOW = new Date();
+		W.NOW = new Date();
 		var now = W.NOW.getTime();
 		var is2 = false;
 		var is3 = false;
@@ -4503,7 +4341,13 @@
 
 			self.config.$setter && EXEC.call(self, self.config.$setter.SCOPE(self), cache.value, cache.path, cache.type);
 			self.data('', cache.value);
-			self.setter(cache.value, cache.path, cache.type);
+
+			if (!self.$skipsetter)
+				self.setter(cache.value, cache.path, cache.type);
+
+			if (self.$skipsetter)
+				self.$skipsetter = false;
+
 			self.setter2 && self.setter2(cache.value, cache.path, cache.type);
 		};
 
@@ -4514,14 +4358,6 @@
 
 			var cache = self.$bindcache;
 			if (arguments.length) {
-
-				if (skips[self.path]) {
-					var s = --skips[self.path];
-					if (s <= 0) {
-						delete skips[self.path];
-						return;
-					}
-				}
 
 				if (self.$format)
 					value = self.$format(value, path, type);
@@ -4538,8 +4374,15 @@
 					// Binds value directly
 					self.config.$setter && EXEC.call(self, self.config.$setter.SCOPE(self), value, path, type);
 					self.data('', value);
-					self.setter(value, path, type);
+
+					if (!self.$skipsetter)
+						self.setter(value, path, type);
+
+					if (self.$skipsetter)
+						self.$skipsetter = false;
+
 					self.setter2 && self.setter2(value, path, type);
+
 				} else {
 					if (self.isreleased) {
 						cache.is = true;
@@ -5384,7 +5227,7 @@
 			}
 			self.reconfigure(get(value), callback, init);
 		} else {
-			value.$config(function(k, v) {
+			value.parseConfig(function(k, v) {
 				var prev = self.config[k];
 				if (!init && self.config[k] !== v)
 					self.config[k] = v;
@@ -5568,11 +5411,6 @@
 		return self;
 	};
 
-	PPC.style = function(value) {
-		STYLE(value, this._id);
-		return this;
-	};
-
 	PPC.change = function(value) {
 		var self = this;
 		self.$dirty_disabled = false;
@@ -5748,9 +5586,9 @@
 			return get(path);
 	};
 
-	PPC.skip = function(path) {
+	PPC.skip = function() {
 		var self = this;
-		SKIP(path || self.path);
+		self.$skipsetter = true;
 		return self;
 	};
 
@@ -5836,7 +5674,7 @@
 		return false;
 	};
 
-	W.COMPONENT_CONFIG = W.CONFIG = function(selector, config) {
+	W.CONFIG = function(selector, config) {
 
 		if (typeof(selector) === TYPE_S) {
 			var fn = [];
@@ -5871,7 +5709,7 @@
 		setTimeout2('$compile', COMPILE, 700);
 	}
 
-	W.COMPONENT_EXTEND = W.EXTENSION = function(name, config, declaration) {
+	W.EXTENSION = function(name, config, declaration) {
 
 		if (typeof(config) === TYPE_FN) {
 			var tmp = declaration;
@@ -6375,19 +6213,6 @@
 		}
 	};
 
-	W.SKIP = function() {
-		for (var j = 0; j < arguments.length; j++) {
-			var arr = arguments[j].split(',');
-			for (var i = 0, length = arr.length; i < length; i++) {
-				var p = pathmaker(arr[i].trim());
-				if (skips[p])
-					skips[p]++;
-				else
-					skips[p] = 1;
-			}
-		}
-	};
-
 	W.NOOP = function(){};
 
 	W.TOGGLE = function(path, timeout, reset) {
@@ -6654,7 +6479,7 @@
 		CHANGE(path);
 	};
 
-	W.CSS = W.STYLE = function(value, id) {
+	W.CSS = function(value, id) {
 		id && $('#css' + id).remove();
 		$('<style type="text/css"' + (id ? ' id="css' + id + '"' : '') + '>' + (value instanceof Array ? value.join('') : value) + '</style>').appendTo('head');
 	};
@@ -6773,7 +6598,7 @@
 	var NP = Number.prototype;
 	var DP = Date.prototype;
 
-	AP.wait = AP.waitFor = function(onItem, callback, thread, tmp) {
+	AP.wait = function(onItem, callback, thread, tmp) {
 
 		var self = this;
 		var init = false;
@@ -6823,73 +6648,6 @@
 		tmp.pending--;
 		self.wait(onItem, callback, thread, tmp);
 	}
-
-	AP.limit = function(max, fn, callback, index) {
-
-		if (index === undefined)
-			index = 0;
-
-		var current = [];
-		var self = this;
-		var length = index + max;
-
-		for (var i = index; i < length; i++) {
-			var item = self[i];
-
-			if (item !== undefined) {
-				current.push(item);
-				continue;
-			}
-
-			if (!current.length) {
-				callback && callback();
-				return self;
-			}
-
-			fn(current, function() { callback && callback(); }, index, index + max);
-			return self;
-		}
-
-		if (!current.length) {
-			callback && callback();
-			return self;
-		}
-
-		fn(current, function() {
-			if (length < self.length)
-				self.limit(max, fn, callback, length);
-			else
-				callback && callback();
-		}, index, index + max);
-
-		return self;
-	};
-
-	AP.async = function(context, callback) {
-
-		if (typeof(context) === TYPE_FN) {
-			var tmp = callback;
-			callback = context;
-			context = tmp;
-		}
-
-		if (!context)
-			context = {};
-
-		var arr = this;
-		var index = 0;
-
-		var c = function() {
-			var fn = arr[index++];
-			if (fn)
-				fn.call(context, c, index - 1);
-			else
-				return callback && callback.call(context);
-		};
-
-		c();
-		return this;
-	};
 
 	AP.take = function(count) {
 		var arr = [];
@@ -6959,7 +6717,7 @@
 		return REGCOM.test(this);
 	};
 
-	SP.parseConfig = SP.$config = function(def, callback) {
+	SP.parseConfig = function(def, callback) {
 
 		var output;
 
@@ -7016,7 +6774,7 @@
 		return output;
 	};
 
-	SP.params = SP.arg = function(obj, encode, def) {
+	SP.arg = function(obj, encode, def) {
 
 		if (typeof(encode) === 'string')
 			def = encode;
@@ -7375,12 +7133,6 @@
 		return dt;
 	};
 
-	DP.toUTC = function(ticks) {
-		var self = this;
-		var dt = self.getTime() + self.getTimezoneOffset() * 60000;
-		return ticks ? dt : new Date(dt);
-	};
-
 	DP.format = function(format, utc) {
 
 		var self = utc ? this.toUTC() : this;
@@ -7613,19 +7365,6 @@
 		return this.toString().padRight(t, e || '0');
 	};
 
-	NP.async = function(fn, callback) {
-		var number = this;
-		if (number >= 0)
-			fn(number, function() {
-				setTimeout(function() {
-					(number - 1).async(fn, callback);
-				}, 1);
-			});
-		else
-			callback && callback();
-		return number;
-	};
-
 	NP.add = NP.inc = function(value, decimals) {
 
 		var self = this;
@@ -7823,7 +7562,7 @@
 		parsed.push(+time[2]); // seconds
 		parsed.push(+time[3]); // miliseconds
 
-		var def = W.DATETIME = W.NOW = new Date();
+		var def = W.NOW = new Date();
 
 		for (var i = 0, length = parsed.length; i < length; i++) {
 			if (isNaN(parsed[i]))
@@ -8076,7 +7815,7 @@
 					var fn = function(el) {
 						for (var i = 0; i < el.children.length; i++) {
 							var cur = el.children[i];
-							cur.$com && cur.getAttribute('data-jc-bind') == null && com_exec(cur.$com, name, arg);
+							cur.$com && cur.getAttribute(ATTRJCBIND) == null && com_exec(cur.$com, name, arg);
 							if (cur.children && cur.children.length)
 								fn(cur);
 						}
@@ -8376,40 +8115,10 @@
 			return fn ? all : output;
 		};
 
-		$.fn.rescroll = function(offset, bottom) {
-			var t = this;
-			t.each(function() {
-				var e = this;
-				var el = e;
-				el.scrollIntoView(true);
-				if (offset) {
-					var count = 0;
-					while (el && el.scrollTop == 0 && count++ < 25) {
-						el = el.parentNode;
-						if (el && el.scrollTop) {
-
-							var off = el.scrollTop + offset;
-
-							if (bottom != false) {
-								if (el.scrollTop + el.getBoundingClientRect().height >= el.scrollHeight) {
-									el.scrollTop = el.scrollHeight;
-									return;
-								}
-							}
-
-							el.scrollTop = off;
-							return;
-						}
-					}
-				}
-			});
-			return t;
-		};
-
 		$.components = M;
 
 		setInterval(function() {
-			W.DATETIME = W.NOW = new Date();
+			W.NOW = new Date();
 			var c = M.components;
 			for (var i = 0, length = c.length; i < length; i++)
 				c[i].knockknock && c[i].knockknock(knockknockcounter);
@@ -8451,13 +8160,30 @@
 		$(W).on(T_RESIZE, resize);
 		$(document).ready(function() {
 
+			var body = $(document.body);
+
+			if (isMOBILE)
+				body.aclass('jc-mobile');
+
+			if (isPRIVATEMODE)
+				body.aclass('jc-private');
+
+			if (isIE)
+				body.aclass('jc-ie');
+
+			if (isTOUCH)
+				body.aclass('jc-touch');
+
+			if (isSTANDALONE)
+				body.aclass('jc-standalone');
+
 			if ($ready) {
 				clearTimeout($ready);
 				$ready = null;
 				load();
 			}
 
-			$(document).on('input', 'input[data-jc-bind],textarea[data-jc-bind]', function() {
+			$(document).on('input', 'input[' + ATTRJCBIND + '],textarea[' + ATTRJCBIND + ']', function() {
 
 				// realtime binding
 				var self = this;
@@ -8492,7 +8218,7 @@
 				self.$jctimeout = setTimeout(keypressdelay, self.$jcdelay, self);
 			});
 
-			var SELECTOR = 'input[data-jc-bind],textarea[data-jc-bind],select[data-jc-bind]';
+			var SELECTOR = 'input[' + ATTRJCBIND + '],textarea[' + ATTRJCBIND + '],select[' + ATTRJCBIND + ']';
 			$(document).on('focus blur', SELECTOR, function(e) {
 
 				var self = this;
