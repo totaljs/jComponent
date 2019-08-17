@@ -60,6 +60,7 @@
 	var T_HTML = 'html';
 	var T_CONFIG = 'config';
 	var T_COMPILED = 'jc-compile';
+	var T_IMPORT = 'import';
 	var T_TMP = 'jctmp.';
 	var ERRCONN = 'ERR_CONNECTION_CLOSED';
 	var OK = Object.keys;
@@ -293,7 +294,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.156;
+	M.version = 17.157;
 	M.$localstorage = 'jc';
 	M.$version = '';
 	M.$language = '';
@@ -1358,7 +1359,7 @@
 			};
 			scr.src = makeurl(url, true);
 			d.getElementsByTagName('head')[0].appendChild(scr);
-			events.import && EMIT('import', url, $(scr));
+			events.import && EMIT(T_IMPORT, url, $(scr));
 			return;
 		}
 
@@ -1370,7 +1371,7 @@
 			d.getElementsByTagName('head')[0].appendChild(stl);
 			statics[url] = 2;
 			callback && setTimeout(callback, 200, 1);
-			events.import && EMIT('import', url, $(stl));
+			events.import && EMIT(T_IMPORT, url, $(stl));
 			return;
 		}
 
@@ -1379,7 +1380,7 @@
 		}, function() {
 
 			statics[url] = 2;
-			var id = 'import' + HASH(url);
+			var id = T_IMPORT + HASH(url);
 
 			var cb = function(response, code, output) {
 
@@ -1415,7 +1416,7 @@
 					}, function() {
 						callback(1);
 					});
-					events.import && EMIT('import', url, target);
+					events.import && EMIT(T_IMPORT, url, target);
 				}, 10);
 			};
 
@@ -2938,7 +2939,25 @@
 						fallback.$++;
 					}
 
-					var x = attrcom(el, 'import');
+					var x;
+
+					if (meta[2]) {
+						var index = meta[2].indexOf('$url:');
+						if (index !== -1) {
+							var end = meta[2].indexOf(';', index + 5);
+							if (end === -1)
+								end = meta[2].length;
+							x = meta[2].substring(index + 5, end);
+							console.log(x);
+						}
+					} else
+
+					if (!x) {
+						x = attrcom(el, T_IMPORT);
+						if (x)
+							warn('jC: use component "$url:{0}" instead of "data-jc-import" for "{1}" component'.format(x, name));
+					}
+
 					if (!x) {
 						!statics['$NE_' + name] && (statics['$NE_' + name] = true);
 						continue;
@@ -3088,7 +3107,7 @@
 					obj.isreleased = true;
 
 				if (attrcom(el, 'url')) {
-					warn('jC: use "data-jc-template" instead of "data-jc-url": {0}[{1}].'.format(obj.name, obj.path));
+					warn('jC: use "data-extra" instead of "data-jc-template": {0}[{1}].'.format(obj.name, obj.path));
 					continue;
 				}
 
@@ -3320,18 +3339,22 @@
 	function download() {
 
 		var arr = [];
+		var items;
 		var count = 0;
 
-		$(ATTRURL).each(function() {
+		items = $(ATTRURL);
 
-			var t = this;
-			var el = $(t);
+		for (var i = 0; i < items.length; i++) {
 
+			var t = items[i];
 			if (t.$downloaded)
-				return;
+				continue;
 
+			var el = $(t);
 			t.$downloaded = 1;
 			var url = attrcom(el, 'url');
+
+			warn('jC: use "data-import" instead of "data-jc-url": {0}.'.format(url));
 
 			// Unique
 			var once = url.substring(0, 5).toLowerCase() === 'once ';
@@ -3341,7 +3364,7 @@
 				else
 					url = url.substring(1);
 				if (statics[url])
-					return;
+					continue;
 				statics[url] = 2;
 			}
 
@@ -3353,7 +3376,51 @@
 			item.toggle = (attrcom(el, T_CLASS) || '').split(' ');
 			item.expire = attrcom(el, 'cache') || MD.importcache;
 			arr.push(item);
-		});
+		}
+
+		items = $('[' + T_DATA + T_IMPORT + ']');
+
+		for (var i = 0; i < items.length; i++) {
+
+			var t = items[i];
+			if (t.$downloaded)
+				continue;
+
+			var el = $(t);
+			t.$downloaded = 1;
+
+			var data = el.attrd(T_IMPORT).parseConfig();
+
+			// data.url
+			// data.cache
+			// data.init
+			// data.path
+			// data.class
+
+			// Unique
+			var url = data.url;
+
+			var once = url.substring(0, 5).toLowerCase() === 'once ';
+			if (url.charAt(0) === '!' || once) {
+				if (once)
+					url = url.substring(5);
+				else
+					url = url.substring(1);
+				if (statics[url])
+					continue;
+				statics[url] = 2;
+			}
+
+			var item = {};
+			item.url = url;
+			item.element = el;
+			item.callback = data.init;
+			item.path = data.path;
+			item.toggle = data.class;
+			item.make = data.make;
+			item.expire = data.cache || MD.importcache;
+			arr.push(item);
+		}
 
 		if (!arr.length)
 			return;
@@ -3378,13 +3445,28 @@
 					response = importscripts(importstyles(response));
 
 				can = response && REGCOM.test(response);
+				statics[key] = true;
+				item.toggle && item.toggle.length && item.toggle[0] && toggles.push(item);
+
+				if (item.path)
+					response = response.replace(/~PATH~/g, item.path);
+
+				if (item.make) {
+					var fn = GET(item.make);
+					if (fn) {
+						response = fn(response, item.element, item.path);
+						if (!response) {
+							current_element = null;
+							next();
+							return;
+						}
+					}
+				}
 
 				if (can)
 					canCompile = true;
 
 				item.element.html(response);
-				statics[key] = true;
-				item.toggle.length && item.toggle[0] && toggles.push(item);
 
 				if (item.callback && !attrcom(item.element)) {
 					var callback = get(item.callback);
@@ -8660,7 +8742,7 @@
 						})(v);
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', 'import', T_CLASS, T_TEMPLATE, T_VBINDARR, 'click', 'format', 'currency', 'empty', 'release') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'click', 'format', 'currency', 'empty', 'release') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -8766,7 +8848,7 @@
 								if (notvisible)
 									fn.$nv =1;
 								break;
-							case 'import':
+							case T_IMPORT:
 								var c = v.charAt(0);
 								if ((/^(https|http):\/\//).test(v) || c === '/' || c === '.') {
 									if (c === '.')
