@@ -2990,7 +2990,7 @@
 				var code = obj.path ? obj.path.charCodeAt(0) : 0;
 				if (!obj.$noscope && !obj.$pp) {
 
-					var scope = obj.path && obj.path.indexOf('?') !== -1 ? findscope(dom) : null;
+					var scope = findscope(dom);
 					var is = false;
 
 					if (obj.path && code !== 33 && code !== 35) {
