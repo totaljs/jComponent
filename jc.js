@@ -4470,9 +4470,8 @@
 	};
 
 	PPC.import = function(url, callback, insert, preparator) {
-		var self = this;
-		M.import(url, self.element, callback, insert, preparator);
-		return self;
+		IMPORT(url, this.element, callback, insert, preparator);
+		return this;
 	};
 
 	PPC.data = function(key, value) {
