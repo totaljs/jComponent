@@ -293,7 +293,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.002;
+	M.version = 18.003;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -4467,6 +4467,12 @@
 		var t = this;
 		t.$autofill = val == null ? true : val == true;
 		return t;
+	};
+
+	PPC.import = function(url, callback, insert, preparator) {
+		var self = this;
+		M.import(url, self.element, callback, insert, preparator);
+		return self;
 	};
 
 	PPC.data = function(key, value) {
