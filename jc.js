@@ -293,8 +293,8 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.001;
-	M.$localstorage = 'jc';
+	M.version = 18.002;
+	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
 	M.scrollbars = [];
@@ -1426,7 +1426,7 @@
 		});
 	};
 
-	W.IMPORT = M.import = function(url, target, callback, insert, preparator) {
+	W.IMPORT = function(url, target, callback, insert, preparator) {
 		if (url instanceof Array) {
 
 			if (typeof(target) === TYPE_FN) {
@@ -2487,7 +2487,7 @@
 	function attrcom(el, name) {
 		if (!el.attrd)
 			el = $(el);
-		return name ? el.attrd('jc-' + name) : (el.attrd('jc') || el.attrd('-') || el.attrd('--') || el.attrd('---'));
+		return name ? el.attrd(ATTRDATA + '-' + name) : (el.attrd(ATTRDATA) || el.attrd('-') || el.attrd('--') || el.attrd('---'));
 	}
 
 	function attrrel(el) {
@@ -2766,8 +2766,6 @@
 		var arr = [];
 
 		W.READY instanceof Array && arr.push.apply(arr, W.READY);
-		W.jComponent instanceof Array && arr.push.apply(arr, W.jComponent);
-		W.components instanceof Array && arr.push.apply(arr, W.components);
 
 		if (arr.length) {
 			while (true) {
@@ -2791,7 +2789,6 @@
 		}
 
 		var has = false;
-
 		crawler(container, function(name, dom) {
 
 			var el = $(dom);
@@ -2883,7 +2880,7 @@
 								end = meta[2].length;
 							x = meta[2].substring(index + 5, end);
 						}
-					} else
+					}
 
 					if (!x) {
 						!statics['$NE_' + name] && (statics['$NE_' + name] = true);
@@ -2901,7 +2898,7 @@
 					C.imports[x] = 1;
 					C.importing++;
 
-					M.import(x, function() {
+					IMPORT(x, function() {
 						C.importing--;
 						C.imports[x] = 2;
 					});
@@ -2954,14 +2951,8 @@
 				com.config && obj.reconfigure(com.config, NOOP);
 				tmp && obj.reconfigure(tmp, NOOP);
 
-				if (!obj.$init)
-					obj.$init = attrcom(el, 'init') || null;
-
-				if (!obj.type)
-					obj.type = attrcom(el, 'type') || '';
-
 				if (!obj.id)
-					obj.id = attrcom(el, 'id') || obj._id;
+					obj.id = obj._id;
 
 				obj.siblings = all.length > 1;
 				obj.$lazy = lo;
@@ -3215,7 +3206,6 @@
 	function download() {
 
 		var arr = [];
-		var count = 0;
 		var items = $('[' + T_DATA + T_IMPORT + ']');
 
 		for (var i = 0; i < items.length; i++) {
@@ -3235,6 +3225,7 @@
 			// data.path
 			// data.class
 			// data.make
+			// data.replace
 
 			// Unique
 			var url = data.url;
@@ -3250,27 +3241,20 @@
 				statics[url] = 2;
 			}
 
-			var item = {};
-			item.url = url;
-			item.element = el;
-			item.callback = data.init;
-			item.path = data.path;
-			item.toggle = data.class;
-			item.make = data.make;
-			item.expire = data.cache || MD.importcache;
-			arr.push(item);
+			data.url = url;
+			data.element = el;
+			data.toggle = data.class;
+			arr.push(data);
 		}
 
 		if (!arr.length)
 			return;
 
-		var canCompile = false;
 		C.importing++;
 
 		async(arr, function(item, next) {
 
 			var key = makeurl(item.url);
-			var can = false;
 
 			AJAXCACHE('GET ' + item.url, null, function(response) {
 
@@ -3283,7 +3267,6 @@
 				else
 					response = importscripts(importstyles(response));
 
-				can = response && REGCOM.test(response);
 				statics[key] = true;
 				item.toggle && item.toggle.length && item.toggle[0] && toggles.push(item);
 
@@ -3302,27 +3285,26 @@
 					}
 				}
 
-				if (can)
-					canCompile = true;
+				if (item.replace)
+					item.element.replaceWith(response);
+				else
+					item.element.html(response);
 
-				item.element.html(response);
-
-				if (item.callback) {
-					var callback = get(item.callback);
-					if (typeof(callback) === TYPE_FN)
-						callback(item.element);
+				if (item.init) {
+					var init = get(item.init);
+					if (typeof(init) === TYPE_FN)
+						init(item.element);
 				}
 
 				current_element = null;
-				count++;
 				next();
 
-			}, item.expire);
+			}, item.cache || MD.importcache);
 
 		}, function() {
 			C.importing--;
 			clear(T_VALID, T_DIRTY, 'find');
-			count && canCompile && compile();
+			compile();
 		});
 	}
 
@@ -4265,7 +4247,7 @@
 
 	function COM(name) {
 		var self = this;
-		self._id = self.ID = 'jc' + (C.counter++);
+		self._id = self.ID = ATTRDATA + (C.counter++);
 		self.$dirty = true;
 		self.$valid = true;
 		self.$validate = false;
@@ -4680,12 +4662,6 @@
 		return v;
 	};
 
-	PPC.import = function(url, callback, insert, preparator) {
-		var self = this;
-		M.import(url, self.element, callback, insert, preparator);
-		return self;
-	};
-
 	function releasecomponents(type, dom, value, init, ischildren) {
 
 		// type = 0   - current component and all nested components
@@ -4817,7 +4793,7 @@
 		var prev = self.element;
 		var scope = prev.attrd(n);
 
-		self.element.rattrd('jc', '-', '--', '---');
+		self.element.rattrd(ATTRDATA, '-', '--', '---');
 		self.element[0].$com = null;
 		scope && self.element.rattrd(n);
 
@@ -4829,7 +4805,7 @@
 		self.element = $(el);
 		self.dom = self.element[0];
 		self.dom.$com = self;
-		self.attrd('jc', self.name);
+		self.attrd(ATTRDATA, self.name);
 		scope && self.attrd(n, scope);
 		self.siblings = false;
 		return self;
@@ -4840,23 +4816,6 @@
 		!container && self.attrd(T_COMPILED) && self.attrd(T_COMPILED, '1');
 		compile(container || self.element);
 		return self;
-	};
-
-	PPC.nested = function() {
-		var self = this;
-		var childs = self.find(ATTRCOM);
-		var arr = [];
-		for (var i = 0; i < childs.length; i++) {
-			var el = $(childs[i]);
-			var com = el[0].$com;
-			if (com && !el.attr(ATTRDEL)) {
-				if (com instanceof Array)
-					arr.push.apply(arr, com);
-				else
-					arr.push(com);
-			}
-		}
-		return arr;
 	};
 
 	PPC.notify = function() {
@@ -4917,41 +4876,6 @@
 	PPC.rclass2 = function(search) {
 		this.element.rclass2(search);
 		return this;
-	};
-
-	PPC.classes = function(cls) {
-
-		var key = 'cls.' + cls;
-		var tmp = temp[key];
-		var t = this;
-		var e = t.element;
-
-		if (tmp) {
-			tmp.add && e.aclass(tmp.add);
-			tmp.rem && e.rclass(tmp.rem);
-			return t;
-		}
-
-		var arr = cls instanceof Array ? cls : cls.split(' ');
-		var add = '';
-		var rem = '';
-
-		for (var i = 0, length = arr.length; i < length; i++) {
-			var c = arr[i].charAt(0);
-			if (c === '-')
-				rem += (rem ? ' ' : '') + arr[i].substring(1);
-			else
-				add += (add ? ' ' : '') + (c === '+' ? arr[i].substring(1) : arr[i]);
-		}
-
-		add && e.aclass(add);
-		rem && e.rclass(rem);
-
-		if (cls instanceof Array)
-			return t;
-
-		temp[key] = { add: add, rem: rem };
-		return t;
 	};
 
 	PPC.toggle = function(cls, visible, timeout) {
@@ -8146,12 +8070,20 @@
 			return t;
 		};
 
+		function displaymode() {
+			var d = WIDTH();
+			var b = $(document.body);
+			b.rclass('jc-lg jc-md jc-sm jc-xs');
+			b.aclass('jc-' + d);
+		}
+
 		function resize() {
 			var w = $(W);
 			W.WW = w.width();
 			W.WH = w.height();
 			setTimeout2(clsnoscrollbar, function() {
 				$(selnoscrollbar).noscrollbar();
+				displaymode();
 			}, 300);
 		}
 
@@ -8166,16 +8098,42 @@
 				body.aclass('jc-mobile');
 
 			if (isPRIVATEMODE)
-				body.aclass('jc-private');
-
-			if (isIE)
-				body.aclass('jc-ie');
+				body.aclass('jc-nostorage');
 
 			if (isTOUCH)
 				body.aclass('jc-touch');
 
 			if (isSTANDALONE)
 				body.aclass('jc-standalone');
+
+			var cd = (function () {
+				var cookies = navigator.cookieEnabled;
+				if (!cookies) {
+					document.cookie = ATTRDATA;
+					cookies = document.cookie.indexOf(ATTRDATA) != -1;
+				}
+				return cookies;
+			})();
+
+			if (!cd)
+				body.aclass('jc-nocookies');
+
+			var ua = navigator.userAgent;
+
+			if (ua.indexOf('Edge') !== -1)
+				body.aclass('jc-edge');
+			else if (isIE)
+				body.aclass('jc-ie');
+			else if (ua.indexOf('Firefox') !== -1)
+				body.aclass('jc-firefox');
+			if (ua.indexOf('Electron') !== -1)
+				body.aclass('jc-electron');
+			else if (ua.indexOf('OPR') !== -1)
+				body.aclass('jc-opera');
+			else if (ua.indexOf('Chrome') !== -1)
+				body.aclass('jc-chrome');
+			else if (ua.indexOf('Safari/') !== -1)
+				body.aclass('jc-safari');
 
 			if ($ready) {
 				clearTimeout($ready);
