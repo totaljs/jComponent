@@ -294,8 +294,8 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.157;
-	M.$localstorage = 'jc';
+	M.version = 17.158;
+	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
 	M.scrollbars = [];
@@ -2548,7 +2548,7 @@
 	function attrcom(el, name) {
 		if (!el.attrd)
 			el = $(el);
-		return name ? el.attrd('jc-' + name) : (el.attrd('jc') || el.attrd('-') || el.attrd('--') || el.attrd('---'));
+		return name ? el.attrd(ATTRDATA + '-' + name) : (el.attrd(ATTRDATA) || el.attrd('-') || el.attrd('--') || el.attrd('---'));
 	}
 
 	function attrrel(el) {
@@ -3418,6 +3418,7 @@
 			item.path = data.path;
 			item.toggle = data.class;
 			item.make = data.make;
+			item.replace = data.replace;
 			item.expire = data.cache || MD.importcache;
 			arr.push(item);
 		}
@@ -3425,13 +3426,11 @@
 		if (!arr.length)
 			return;
 
-		var canCompile = false;
 		C.importing++;
 
 		async(arr, function(item, next) {
 
 			var key = makeurl(item.url);
-			var can = false;
 
 			AJAXCACHE('GET ' + item.url, null, function(response) {
 
@@ -3444,7 +3443,6 @@
 				else
 					response = importscripts(importstyles(response));
 
-				can = response && REGCOM.test(response);
 				statics[key] = true;
 				item.toggle && item.toggle.length && item.toggle[0] && toggles.push(item);
 
@@ -3463,10 +3461,10 @@
 					}
 				}
 
-				if (can)
-					canCompile = true;
-
-				item.element.html(response);
+				if (item.replace)
+					item.element.replaceWith(response);
+				else
+					item.element.html(response);
 
 				if (item.callback) {
 					var callback = get(item.callback);
@@ -3483,7 +3481,7 @@
 		}, function() {
 			C.importing--;
 			clear(T_VALID, T_DIRTY, 'find');
-			count && canCompile && compile();
+			compile();
 		});
 	}
 
@@ -4426,7 +4424,7 @@
 
 	function COM(name) {
 		var self = this;
-		self._id = self.ID = 'jc' + (C.counter++);
+		self._id = self.ID = ATTRDATA + (C.counter++);
 		self.$dirty = true;
 		self.$valid = true;
 		self.$validate = false;
@@ -4973,7 +4971,7 @@
 		var prev = self.element;
 		var scope = prev.attrd(n);
 
-		self.element.rattrd('jc', '-', '--', '---');
+		self.element.rattrd(ATTRDATA, '-', '--', '---');
 		self.element[0].$com = null;
 		scope && self.element.rattrd(n);
 
@@ -4985,7 +4983,7 @@
 		self.element = $(el);
 		self.dom = self.element[0];
 		self.dom.$com = self;
-		self.attrd('jc', self.name);
+		self.attrd(ATTRDATA, self.name);
 		scope && self.attrd(n, scope);
 		self.siblings = false;
 		return self;
