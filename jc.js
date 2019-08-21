@@ -15,8 +15,9 @@
 	var REGWILDCARD = /\.\*/;
 	var REGISARR = /\[\d+\]$/;
 	var REGSCOPEINLINE = /\?/g;
+	var T_COM = '---';
 	var T_DATA = 'data-';
-	var ATTRCOM = '[data-jc],[data--],[data---]';
+	var ATTRCOM = '[data-jc],[data--],[data' + T_COM + ']';
 	var ATTRBIND = '[data-bind],[bind],[data-vbind]';
 	var ATTRJCBIND = 'data-jc-bind';
 	var ATTRDATA = 'jc';
@@ -2480,7 +2481,7 @@
 	function attrcom(el, name) {
 		if (!el.attrd)
 			el = $(el);
-		return name ? el.attrd(ATTRDATA + '-' + name) : (el.attrd(ATTRDATA) || el.attrd('-') || el.attrd('--') || el.attrd('---'));
+		return name ? el.attrd(ATTRDATA + '-' + name) : (el.attrd(ATTRDATA) || el.attrd('-') || el.attrd('--') || el.attrd(T_COM));
 	}
 
 	function attrrel(el) {
@@ -4787,12 +4788,14 @@
 		if (C.is)
 			C.recompile = true;
 
-		var n = 'jc-scope';
+		var n = 'scope';
 		var prev = self.element;
 		var scope = prev.attrd(n);
+		var data = prev[0].$scopedata;
 
-		self.element.rattrd(ATTRDATA, '-', '--', '---');
-		self.element[0].$com = null;
+		prev.rattrd(ATTRDATA, '-', '--', T_COM);
+		prev[0].$com = prev[0].$scopedata = null;
+
 		scope && self.element.rattrd(n);
 
 		if (remove)
@@ -4801,9 +4804,16 @@
 			self.attrd('jc-replaced', T_TRUE);
 
 		self.element = $(el);
+
 		self.dom = self.element[0];
 		self.dom.$com = self;
-		self.attrd(ATTRDATA, self.name);
+
+		if (data) {
+			self.dom.$scopedata = data;
+			data.element = self.element;
+		}
+
+		self.attrd(T_COM, self.name);
 		scope && self.attrd(n, scope);
 		self.siblings = false;
 		return self;
