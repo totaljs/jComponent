@@ -278,8 +278,6 @@
 	W.MONTHS = M.months = 'January,February,March,April,May,June,July,August,September,October,November,December'.split(',');
 	W.DAYS = M.days = 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'.split(',');
 
-	M.skipproxy = '';
-
 	var MV = M.validators = {};
 	MV.url = /^(https?:\/\/(?:www\.|(?!www))[^\s.#!:?+=&@!$'~*,;/()[\]]+\.[^\s#!?+=&@!$'~*,;()[\]\\]{2,}\/?|www\.[^\s#!:.?+=&@!$'~*,;/()[\]]+\.[^\s#!?+=&@!$'~*,;()[\]\\]{2,}\/?)/i;
 	MV.phone = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/im;
@@ -293,7 +291,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.003;
+	M.version = 18.004;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -1941,8 +1939,6 @@
 		if (type === undefined)
 			type = 1; // manually
 
-		M.skipproxy = path;
-
 		var all = M.components;
 		for (var i = 0, length = all.length; i < length; i++) {
 			var com = all[i];
@@ -2033,7 +2029,6 @@
 	W.REWRITE = function(path, value, type) {
 		path = pathmaker(path);
 		if (path) {
-			M.skipproxy = path;
 			set(path, value);
 			emitwatch(path, value, type);
 		}
@@ -2098,7 +2093,6 @@
 		if (reset)
 			type = 1;
 
-		M.skipproxy = path;
 		set(path, value);
 
 		if (isUpdate)
@@ -2183,7 +2177,6 @@
 		}
 
 		var is = true;
-		M.skipproxy = path;
 
 		if (value instanceof Array) {
 			if (value.length) {
