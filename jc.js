@@ -292,7 +292,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.004;
+	M.version = 18.005;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -8097,13 +8097,159 @@
 
 		resize();
 
+		function parseUA() {
+			var arr = ua.match(/[a-z]+/gi);
+			if (arr) {
+				var data = {};
+				for (var i = 0; i < arr.length; i++) {
+					var uai = arr[i];
+
+					if (uai === 'like' && arr[i + 1] === 'Gecko') {
+						i += 1;
+						continue;
+					}
+
+					var key = uai.toLowerCase();
+					if (key === 'like')
+						break;
+
+					switch (key) {
+						case 'linux':
+						case 'windows':
+						case 'mac':
+						case 'symbian':
+						case 'symbos':
+						case 'tizen':
+						case 'android':
+							data[uai] = 2;
+							if (key === 'tizen' || key === 'android')
+								data.Mobile = 1;
+							break;
+						case 'webos':
+							data.WebOS = 2;
+							break;
+						case 'media':
+						case 'center':
+						case 'tv':
+						case 'smarttv':
+						case 'smart':
+							data[uai] = 5;
+							break;
+						case 'iemobile':
+						case 'mobile':
+							data[uai] = 1;
+							data.Mobile = 3;
+							break;
+						case 'ipad':
+						case 'ipod':
+						case 'iphone':
+							data.iOS = 2;
+							data.Mobile = 3;
+							data[uai] = 1;
+							if (key === 'ipad')
+								data.Tablet = 4;
+							break;
+						case 'phone':
+							data.Mobile = 3;
+							break;
+						case 'tizenbrowser':
+						case 'blackberry':
+						case 'mini':
+							data.Mobile = 3;
+							data[uai] = 1;
+							break;
+						case 'samsungbrowser':
+						case 'chrome':
+						case 'firefox':
+						case 'msie':
+						case 'opera':
+						case 'outlook':
+						case 'safari':
+						case 'mail':
+						case 'edge':
+						case 'electron':
+							data[uai] = 1;
+							break;
+						case 'trident':
+							data.MSIE = 1;
+							break;
+						case 'opr':
+							data.Opera = 1;
+							break;
+						case 'tablet':
+							data.Tablet = 4;
+							break;
+					}
+				}
+
+				if (data.MSIE) {
+					data.IE = 1;
+					delete data.MSIE;
+				}
+
+				if (data.WebOS || data.Android)
+					delete data.Linux;
+
+				if (data.IEMobile) {
+					if (data.Android)
+						delete data.Android;
+					if (data.Safari)
+						delete data.Safari;
+					if (data.Chrome)
+						delete data.Chrome;
+				} else if (data.MSIE) {
+					if (data.Chrome)
+						delete data.Chrome;
+					if (data.Safari)
+						delete data.Safari;
+				} else if (data.Edge) {
+					if (data.Chrome)
+						delete data.Chrome;
+					if (data.Safari)
+						delete data.Safari;
+				} else if (data.Opera) {
+					if (data.Chrome)
+						delete data.Chrome;
+					if (data.Safari)
+						delete data.Safari;
+				} else if (data.Chrome) {
+					if (data.Safari)
+						delete data.Safari;
+				} else if (data.SamsungBrowser) {
+					if (data.Safari)
+						delete data.Safari;
+				}
+			}
+
+			var keys = Object.keys(data);
+			var output = { os: '', browser: '', device: 'desktop' };
+
+			if (data.Tablet)
+				output.device = 'tablet';
+			else if (data.Mobile)
+				output.device = 'mobile';
+
+			for (var i = 0; i < keys.length; i++) {
+				var val = data[keys[i]];
+				switch (val) {
+					case 1:
+						output.browser += (output.browser ? ' ' : '') + keys[i];
+						break;
+					case 2:
+						output.os += (output.os ? ' ' : '') + keys[i];
+						break;
+					case 5:
+						output.device = 'tv';
+						break;
+				}
+			}
+			MAIN.ua = output;
+		}
+
 		$(W).on(T_RESIZE, resize);
 		$(document).ready(function() {
 
 			var body = $(document.body);
-
-			if (isMOBILE)
-				body.aclass('jc-mobile');
 
 			if (isPRIVATEMODE)
 				body.aclass('jc-nostorage');
@@ -8113,6 +8259,13 @@
 
 			if (isSTANDALONE)
 				body.aclass('jc-standalone');
+
+			parseUA();
+
+			var pua = MAIN.ua;
+			pua.desktop && body.aclass('jc-' + pua.desktop.toLowerCase());
+			pua.os && body.aclass('jc-' + pua.os.toLowerCase());
+			pua.device && body.aclass('jc-' + pua.device.toLowerCase());
 
 			var cd = (function () {
 				var cookies = navigator.cookieEnabled;
@@ -8125,23 +8278,6 @@
 
 			if (!cd)
 				body.aclass('jc-nocookies');
-
-			var ua = navigator.userAgent;
-
-			if (ua.indexOf('Edge') !== -1)
-				body.aclass('jc-edge');
-			else if (isIE)
-				body.aclass('jc-ie');
-			else if (ua.indexOf('Firefox') !== -1)
-				body.aclass('jc-firefox');
-			if (ua.indexOf('Electron') !== -1)
-				body.aclass('jc-electron');
-			else if (ua.indexOf('OPR') !== -1)
-				body.aclass('jc-opera');
-			else if (ua.indexOf('Chrome') !== -1)
-				body.aclass('jc-chrome');
-			else if (ua.indexOf('Safari/') !== -1)
-				body.aclass('jc-safari');
 
 			if ($ready) {
 				clearTimeout($ready);
