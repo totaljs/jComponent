@@ -8207,7 +8207,7 @@
 						delete data.Chrome;
 					if (data.Safari)
 						delete data.Safari;
-				} else if (data.Opera) {
+				} else if (data.Opera || data.Electron) {
 					if (data.Chrome)
 						delete data.Chrome;
 					if (data.Safari)
@@ -8247,6 +8247,7 @@
 		}
 
 		$(W).on(T_RESIZE, resize);
+
 		$(document).ready(function() {
 
 			var body = $(document.body);
@@ -8263,7 +8264,7 @@
 			parseUA();
 
 			var pua = MAIN.ua;
-			pua.desktop && body.aclass('jc-' + pua.desktop.toLowerCase());
+			pua.browser && body.aclass('jc-' + pua.browser.toLowerCase());
 			pua.os && body.aclass('jc-' + pua.os.toLowerCase());
 			pua.device && body.aclass('jc-' + pua.device.toLowerCase());
 
