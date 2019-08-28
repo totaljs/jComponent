@@ -9237,8 +9237,12 @@
 		if (item.change && (value != null || !item.change.$nn))
 			item.change.call(el, bindvalue(value, item), path, el);
 
-		if (item.focus && can)
-			el.find(item.focus).eq(0).focus();
+		if (item.focus && can) {
+			var elf = el.find(item.focus);
+			setTimeout(function(item) {
+				item.el.find(item.focus).eq(0).focus();
+			}, elf.length ? 100 : 1500, item);
+		}
 
 		if (can && index == null && item.child) {
 			for (var i = 0; i < item.child.length; i++)
