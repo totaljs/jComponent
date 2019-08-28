@@ -292,7 +292,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.005;
+	M.version = 18.006;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -8573,7 +8573,7 @@
 						})(v);
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'click', 'format', 'currency', 'empty', 'release') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', 'click', 'format', 'currency', 'empty', 'release') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -8623,6 +8623,7 @@
 						switch (k) {
 							case 'empty':
 							case 'currency':
+							case 'focus':
 								fn = v;
 								break;
 							case 'format':
@@ -9235,6 +9236,9 @@
 
 		if (item.change && (value != null || !item.change.$nn))
 			item.change.call(el, bindvalue(value, item), path, el);
+
+		if (item.focus && can)
+			el.find(item.focus).eq(0).focus();
 
 		if (can && index == null && item.child) {
 			for (var i = 0; i < item.child.length; i++)
