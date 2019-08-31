@@ -9103,9 +9103,12 @@
 				IMPORT(item.import, el);
 				delete item.import;
 			} else {
-				var scr = item.el.find('script');
-				scr.replaceWith(scr.html());
+				var scr = item.el.find(T_SCRIPT);
+				var scrhtml = scr.html();
+				scr.replaceWith(scrhtml);
 				delete item.import;
+				scrhtml.COMPILABLE() && COMPILE();
+				scrhtml = null;
 			}
 		}
 
