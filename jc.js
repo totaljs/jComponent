@@ -292,7 +292,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.006;
+	M.version = 18.007;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -8687,9 +8687,8 @@
 										fn = v.substring(1);
 									else
 										fn = v;
-								}
-								else
-									fn = FN(rebinddecode(v));
+								} else
+									fn = (v === 'value' || v === 'true') ? 1 : FN(rebinddecode(v));
 								break;
 							case 'tclass':
 								fn = v;
@@ -9100,8 +9099,12 @@
 					!item.$ic[value] && IMPORT('ONCE ' + value, el);
 					item.$ic[value] = 1;
 				}
-			} else {
+			} else if (item.import != 1) {
 				IMPORT(item.import, el);
+				delete item.import;
+			} else {
+				var scr = item.el.find('script');
+				scr.replaceWith(scr.html());
 				delete item.import;
 			}
 		}
