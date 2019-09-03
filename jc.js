@@ -3773,7 +3773,6 @@
 		var fn = (new Function('w', 'a', 'b', 'binders', 'binderbind', 'nobind', 'var $ticks=Math.random().toString().substring(2,8);if(!nobind){' + builder.join(';') + ';var v=typeof(a)==\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v}' + binder.join(';') + ';return a'));
 		paths[key] = fn;
 		fn(MD.scope, value, path, binders, binderbind, is);
-		return C;
 	}
 
 	function set2(scope, path, value) {
