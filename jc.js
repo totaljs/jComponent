@@ -292,7 +292,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.007;
+	M.version = 18.008;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -1557,9 +1557,13 @@
 
 		var repeat = false;
 		var cancel = false;
+		var reqid = null;
 
-		url = url.replace(/\s(repeat|cancel)/i, function(text) {
-			if (text.charAt(1).toLowerCase() === 'r')
+		url = url.replace(/\s(repeat|cancel|#[a-z]+)/i, function(text) {
+			var c = text.charAt(1);
+			if (c === '#')
+				reqid = text.substring(2);
+			else if (c.toLowerCase() === 'r')
 				repeat = true;
 			else
 				cancel = true;
@@ -1586,7 +1590,7 @@
 
 		url = url.substring(index).trim().$env();
 
-		var mainurl = method + ' ' + url;
+		var mainurl = (reqid || (method + ' ' + url));
 		if (cancel) {
 			if (cache[mainurl]) {
 				cache[mainurl].output.cancel = true;
@@ -1608,6 +1612,9 @@
 			var options = {};
 			options.method = method;
 			options.converters = MD.jsonconverter;
+
+			if (reqid)
+				options.id = reqid;
 
 			if (method !== 'GET') {
 				if (typeof(data) === TYPE_S) {
