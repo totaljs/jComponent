@@ -292,7 +292,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.008;
+	M.version = 18.009;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -2987,6 +2987,7 @@
 
 					if (obj.path && code !== 33 && code !== 35) {
 						if (scope) {
+
 							is = (obj.path || '').indexOf('?') !== -1;
 
 							if (obj.path === '?') {
@@ -4489,7 +4490,9 @@
 			data.value = value;
 			for (var i = 0; i < data.items.length; i++) {
 				var o = data.items[i];
+				var curr_scope = current_scope;
 				o.el[0].parentNode && o.exec(value, key);
+				current_scope = curr_scope;
 			}
 		} else
 			self.$data[key] = { value: value, items: [] };
@@ -8445,7 +8448,9 @@
 			var item = arr[i];
 			if (!item.disabled && item.ticks !== ticks) {
 				item.ticks = ticks;
+				var curr_scope = current_scope;
 				item.exec(GET(item.path), absolutePath);
+				current_scope = curr_scope;
 			}
 		}
 	}
@@ -8459,10 +8464,12 @@
 			for (var i = 0; i < arr.length; i++) {
 				var item = arr[i];
 				if (!item.$init) {
+					var curr_scope = current_scope;
 					if (item.com)
 						item.exec(item.com.data(item.path), item.path);
 					else
 						item.exec(GET(item.path), item.path);
+					current_scope = curr_scope;
 				}
 			}
 		}, 50);
@@ -8979,7 +8986,9 @@
 
 	JBP.refresh = function() {
 		var t = this;
+		var curr_scope = current_scope;
 		t.exec(GET(t.path), t.path);
+		current_scope = curr_scope;
 	};
 
 	JBP.exec = function(value, path, index, wakeup, can) {
@@ -9017,7 +9026,9 @@
 			item.$delay && clearTimeout(item.$delay);
 			item.$delay = setTimeout(function(obj, value, path, index, can) {
 				obj.$delay = null;
+				var curr_scope = current_scope;
 				obj.exec(value, path, index, true, can);
+				current_scope = curr_scope;
 			}, item.delay, item, value, path, index, can);
 			return;
 		}
@@ -9257,8 +9268,10 @@
 		}
 
 		if (can && index == null && item.child) {
+			var curr_scope = current_scope;
 			for (var i = 0; i < item.child.length; i++)
 				item.exec(value, path, i, undefined, can);
+			current_scope = curr_scope;
 		}
 
 		if (item.tclass) {
