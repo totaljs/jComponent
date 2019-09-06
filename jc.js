@@ -8695,7 +8695,7 @@
 								break;
 							case T_IMPORT:
 								var c = v.charAt(0);
-								if ((/^(https|http):\/\//).test(v) || c === '/' || c === '.') {
+								if ((/^(https|http):\/\//).test(v) || c === '/' || c === '.' || c === '[') {
 									if (c === '.')
 										fn = v.substring(1);
 									else
