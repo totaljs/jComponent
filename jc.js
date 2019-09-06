@@ -292,7 +292,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.009;
+	M.version = 18.011;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -6032,7 +6032,7 @@
 				obj = {};
 				break;
 			case TYPE_S:
-				var p = obj;
+				var p = pathmaker(obj);
 				var is = true;
 				obj = get(p);
 				if (obj == null) {
