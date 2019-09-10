@@ -292,12 +292,13 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.011;
+	M.version = 18.012;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
 	M.scrollbars = [];
 	M.$components = {};
+	M.binders = [];
 	M.components = [];
 	M.$formatter = [];
 	M.$parser = [];
@@ -1917,6 +1918,10 @@
 		!W.isPRIVATEMODE && local && LS.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
 		callback && callback();
 		return false;
+	};
+
+	M.scope = function() {
+		return current_scope;
 	};
 
 	// 1 === manually
@@ -4051,6 +4056,9 @@
 					break;
 				if (inDOM(o.el[0]))
 					continue;
+				index = M.binders.indexOf(o);
+				if (index !== -1)
+					M.binders.splice(index, 1);
 				var e = o.el;
 				if (!e[0].$br) {
 					e.off();
@@ -8976,7 +8984,10 @@
 		}
 
 		obj.$init = 0;
-		!obj.virtual && bindersnew.push(obj);
+		if (!obj.virtual) {
+			M.binders.push(obj);
+			bindersnew.push(obj);
+		}
 		return obj;
 	}
 
