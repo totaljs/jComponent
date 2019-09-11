@@ -292,7 +292,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.012;
+	M.version = 18.013;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -1888,6 +1888,10 @@
 	W.CAN = function(path, except) {
 		path = pathmaker(path);
 		return !com_dirty(path, except) && com_valid(path, except);
+	};
+
+	W.VALID = function(path, except) {
+		return com_valid(pathmaker(path), except);
 	};
 
 	W.DISABLED = function(path, except) {
