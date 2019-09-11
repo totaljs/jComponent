@@ -292,7 +292,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.013;
+	M.version = 18.014;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -9203,8 +9203,8 @@
 
 		if (item.disable && (can || item.disable.$nv)) {
 			if (value != null || !item.disable.$nn) {
-				tmp = item.disable.call(el, value, path, el);
-				el.prop(T_DISABLED, tmp == true);
+				tmp = !!item.disable.call(el, value, path, el);
+				el.prop(T_DISABLED, tmp);
 			} else {
 				tmp = item.disablebk;
 				el.prop(T_DISABLED, tmp == true);
@@ -9239,8 +9239,8 @@
 
 		if (item.checked && (can || item.checked.$nv)) {
 			if (value != null || !item.checked.$nn) {
-				tmp = item.checked.call(el, value, path, el);
-				el.prop(T_CHECKED, tmp == true);
+				tmp = !!item.checked.call(el, value, path, el);
+				el.prop(T_CHECKED, tmp);
 			} else
 				el.prop(T_CHECKED, item.checkedbk == true);
 		}
