@@ -294,7 +294,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.158;
+	M.version = 17.159;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -2393,6 +2393,10 @@
 		clear(T_VALID);
 		state(arr, 1, 1);
 		return valid;
+	};
+
+	W.VALID = function(path, except) {
+		return com_valid(pathmaker(path), except);
 	};
 
 	function com_validate2(com) {
