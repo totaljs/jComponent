@@ -292,7 +292,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.014;
+	M.version = 18.015;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -1924,8 +1924,8 @@
 		return false;
 	};
 
-	M.scope = function() {
-		return current_scope;
+	M.scope = function(val) {
+		return val === undefined ? current_scope : (current_scope = val);
 	};
 
 	// 1 === manually
