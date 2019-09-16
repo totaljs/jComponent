@@ -292,7 +292,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.015;
+	M.version = 18.016;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -5017,10 +5017,7 @@
 		ds && self.unwatch(ds.path, ds.fn);
 
 		if (path) {
-
-			if (path.indexOf('?') !== -1 && self.pathscope)
-				path = self.scope.makepath(path);
-
+			path = self.makepath(path);
 			self.$datasource = { path: path, fn: callback };
 			self.watch(path, callback, init !== false);
 		} else
@@ -5031,9 +5028,7 @@
 
 	PPC.makepath = function(path) {
 		var self = this;
-		if (path.indexOf('?') !== -1 && self.pathscope)
-			path = self.scope.makepath(path);
-		return path;
+		return path.indexOf('?') !== -1 && self.pathscope ? self.scope.makepath(path) : path;
 	};
 
 	PPC.scopepath = function(path) {
@@ -5337,7 +5332,7 @@
 			fn = path;
 			path = self.path;
 		} else
-			path = pathmaker(path);
+			path = self.makepath(path);
 
 		self.on('watch', path, fn, init);
 		return self;
