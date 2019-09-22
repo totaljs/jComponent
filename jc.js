@@ -9512,7 +9512,8 @@
 			animcache.disabled = true;
 			if (!drag.binded) {
 				drag.binded = true;
-				$(W).on('mousemove', handlers.onmousemove).on('mouseup', handlers.onmouseup).on('mouseout', handlers.onmouseout);
+				$(W).on('mousemove', handlers.onmousemove).on('mouseup', handlers.onmouseup);
+				//.on('mouseout', handlers.onmouseout);
 			}
 		};
 
@@ -9522,7 +9523,8 @@
 				pathy.rclass('ui-scrollbar-y-show');
 				pathx.rclass('ui-scrollbar-x-show');
 				drag.binded = false;
-				$(W).off('mousemove', handlers.onmousemove).off('mouseup', handlers.onmouseup).off('mouseout', handlers.onmouseout);
+				$(W).off('mousemove', handlers.onmousemove).off('mouseup', handlers.onmouseup);
+				//off('mouseout', handlers.onmouseout);
 			}
 		};
 
@@ -9612,13 +9614,14 @@
 			unbind();
 		};
 
+		/*
 		handlers.onmouseout = function(e) {
 			var f = e.relatedTarget || e.toElement;
 			if (!f || f.tagName == 'HTML') {
 				drag.is = false;
 				unbind();
 			}
-		};
+		};*/
 
 		handlers.forcey = function() {
 			bary.css('top', size.vpos);
