@@ -292,7 +292,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.017;
+	M.version = 18.018;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -9520,8 +9520,8 @@
 		var unbind = function() {
 			animcache.disabled = false;
 			if (drag.binded) {
-				pathy.rclass('ui-scrollbar-y-show');
-				pathx.rclass('ui-scrollbar-x-show');
+				pathy.rclass(n + 'y-show');
+				pathx.rclass(n + 'x-show');
 				drag.binded = false;
 				$(W).off('mousemove', handlers.onmousemove).off('mouseup', handlers.onmouseup);
 				//off('mouseout', handlers.onmouseout);
@@ -9741,7 +9741,8 @@
 				drag.is = false;
 			}
 
-			pathx.aclass('ui-scrollbar-x-show');
+			if (!pathx.hclass(n + T_HIDDEN))
+				pathx.aclass(n + 'x-show');
 
 			e.preventDefault();
 			e.stopPropagation();
@@ -9772,7 +9773,8 @@
 				drag.is = false;
 			}
 
-			pathy.aclass('ui-scrollbar-y-show');
+			if (!pathy.hclass(n + T_HIDDEN))
+				pathy.aclass(n + 'y-show');
 
 			e.preventDefault();
 			e.stopPropagation();
