@@ -292,7 +292,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.016;
+	M.version = 18.017;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -8731,8 +8731,14 @@
 								if (s === T_TRUE || s === T_VALUE)
 									s = '';
 
+								var ns = '';
+								v = v.replace(/\{.*?\}/g, function(sel) {
+									ns = sel.replace(/\{|\}/g, '').trim();
+									return '';
+								}).trim();
+
 								var et = s ? e.find(s) : e;
-								var scr = et.find(T_SCRIPT);
+								var scr = ns ? $(ns) : et.find(T_SCRIPT);
 								var r = false;
 								if (scr.length)
 									r = true;
@@ -8746,7 +8752,7 @@
 									fn.$nv = 1;
 								fn.$vdom = v;
 								fn.$compile = tmp.COMPILABLE();
-								r && scr.remove();
+								r && !ns && scr.remove();
 								break;
 						}
 
@@ -9513,6 +9519,8 @@
 		var unbind = function() {
 			animcache.disabled = false;
 			if (drag.binded) {
+				pathy.rclass('ui-scrollbar-y-show');
+				pathx.rclass('ui-scrollbar-x-show');
 				drag.binded = false;
 				$(W).off('mousemove', handlers.onmousemove).off('mouseup', handlers.onmouseup).off('mouseout', handlers.onmouseout);
 			}
@@ -9730,6 +9738,8 @@
 				drag.is = false;
 			}
 
+			pathx.aclass('ui-scrollbar-x-show');
+
 			e.preventDefault();
 			e.stopPropagation();
 		});
@@ -9759,9 +9769,12 @@
 				drag.is = false;
 			}
 
+			pathy.aclass('ui-scrollbar-y-show');
+
 			e.preventDefault();
 			e.stopPropagation();
 		});
+
 
 		area.on('scroll', handlers.onscroll);
 
@@ -9875,8 +9888,12 @@
 			size.clientHeight = Math.ceil(area.innerHeight());
 
 			var defthickness = options.thickness || 10;
-			size.thicknessV = (pathy.width() || defthickness) - 1;
-			size.thicknessH = (pathx.height() || defthickness) - 1;
+
+			if (!size.thicknessV)
+				size.thicknessV = (pathy.width() || defthickness) - 1;
+
+			if (!size.thicknessH)
+				size.thicknessH = (pathx.height() || defthickness) - 1;
 
 			if (size.hpos == null)
 				size.hpos = 0;
