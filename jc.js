@@ -7678,12 +7678,6 @@
 			}
 		});
 
-		setInterval(function() {
-			temp = {};
-			paths = {};
-			cleaner();
-		}, (1000 * 60) * 5);
-
 		$.fn.FIND = function(selector, many, callback, timeout) {
 
 			if (typeof(many) === TYPE_FN) {
@@ -8071,6 +8065,11 @@
 			for (var i = 0, length = c.length; i < length; i++)
 				c[i].knockknock && c[i].knockknock(knockknockcounter);
 			EMIT('knockknock', knockknockcounter++);
+			if (knockknockcounter % 5 === 0) {
+				paths = {};
+				cleaner();
+			}
+			temp = {};
 		}, 60000);
 
 		$.fn.noscrollbar = function(force) {
