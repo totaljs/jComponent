@@ -293,7 +293,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.018;
+	M.version = 18.019;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -6022,6 +6022,16 @@
 			return;
 		}
 
+		if (path.substring(0, 5) === 'FUNC') {
+			var fn = FUNC[path.substring(6)];
+			if (fn) {
+				ok = 1;
+				fn.apply(ctx === W ? ctrl : ctx, arg);
+			}
+			wait && !ok && exechelper(ctx, path, arg);
+			return;
+		}
+
 		var fn = get(path);
 
 		if (typeof(fn) === TYPE_FN) {
@@ -7401,7 +7411,7 @@
 
 	function parseDateFormat(format, val) {
 
-		format = format.split(REG_DATE);
+		format = format.env().split(REG_DATE);
 
 		var tmp = val.split(REG_DATE);
 		var dt = {};
