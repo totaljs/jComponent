@@ -8607,7 +8607,6 @@
 					if (!fn)
 						return null;
 
-
 					var keys = k.split('+');
 					for (var j = 0; j < keys.length; j++) {
 
@@ -9040,18 +9039,6 @@
 		if (item.notnull && value == null)
 			return;
 
-		var tmp = null;
-
-		if (item.changes) {
-			tmp = value;
-			if (typeof(value) === TYPE_O && value)
-				tmp = HASH(value);
-			if (item.stamp !== tmp)
-				item.stamp = tmp;
-			else
-				return;
-		}
-
 		if (item.selector) {
 			if (item.cache)
 				el = item.cache;
@@ -9100,6 +9087,18 @@
 
 		if (item.def && value == null)
 			value = item.def;
+
+		var tmp = null;
+
+		if (item.changes) {
+			tmp = value;
+			if (typeof(value) === TYPE_O && value)
+				tmp = HASH(value);
+			if (item.stamp !== tmp || !item.$init)
+				item.stamp = tmp;
+			else
+				return;
+		}
 
 		if (item.formatter)
 			value = item.formatter(value, path);
