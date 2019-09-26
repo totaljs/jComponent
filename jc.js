@@ -293,7 +293,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.019;
+	M.version = 18.021;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -8603,9 +8603,10 @@
 						})(v);
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', 'click', 'format', 'currency', 'empty', 'release') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', 'click', 'format', 'currency', 'empty', 'release', 'changes') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
+
 
 					var keys = k.split('+');
 					for (var j = 0; j < keys.length; j++) {
@@ -8651,6 +8652,8 @@
 						}
 
 						switch (k) {
+							case 'changes':
+								break;
 							case 'empty':
 								fn = v === T_VALUE ? DEF.empty : v;
 								break;
@@ -9037,6 +9040,18 @@
 		if (item.notnull && value == null)
 			return;
 
+		var tmp = null;
+
+		if (item.changes) {
+			tmp = value;
+			if (typeof(value) === TYPE_O && value)
+				tmp = HASH(value);
+			if (item.stamp !== tmp)
+				item.stamp = tmp;
+			else
+				return;
+		}
+
 		if (item.selector) {
 			if (item.cache)
 				el = item.cache;
@@ -9088,8 +9103,6 @@
 
 		if (item.formatter)
 			value = item.formatter(value, path);
-
-		var tmp = null;
 
 		can = can !== false;
 
