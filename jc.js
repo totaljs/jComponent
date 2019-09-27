@@ -293,7 +293,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.021;
+	M.version = 18.022;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -9766,7 +9766,7 @@
 				drag.is = false;
 			}
 
-			if (!pathx.hclass(n + T_HIDDEN))
+			if (!pathx.hclass(n + '–' + T_HIDDEN))
 				pathx.aclass(n + '-x-show');
 
 			e.preventDefault();
@@ -9798,7 +9798,7 @@
 				drag.is = false;
 			}
 
-			if (!pathy.hclass(n + T_HIDDEN))
+			if (!pathy.hclass(n + '-' + T_HIDDEN))
 				pathy.aclass(n + '-y-show');
 
 			e.preventDefault();
