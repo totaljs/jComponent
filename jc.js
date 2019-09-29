@@ -267,7 +267,7 @@
 	MD.empty = T_COM;
 	MD.jsonconverter = {
 		'text json': function(text) {
-			return PARSE(text);
+			return text;
 		}
 	};
 
