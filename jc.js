@@ -293,7 +293,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.022;
+	M.version = 18.023;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -699,12 +699,16 @@
 		}
 
 		var output = {};
+		output.throw = ajaxcustomerror;
+		output.respond = ajaxcustomresponse;
 		output.url = url;
 		output.process = true;
 		output.error = false;
 		output.upload = true;
 		output.method = method;
 		output.data = data;
+		output.scope = current_scope;
+		output.callback = callback;
 
 		events.request && EMIT('request', output);
 
@@ -719,86 +723,31 @@
 				xhr.withCredentials = true;
 
 			xhr.addEventListener('error', function() {
-
-				var self = this;
-
+				var req = this;
 				if (progress) {
 					if (typeof(progress) === TYPE_S)
 						remap(progress, 100);
 					else
 						progress(100);
 				}
-
-				var r = output.response = '';
-				output.status = self.status || 999;
-				output.text = self.statusText || ERRCONN;
-				output.error = output.status > 399;
-				output.headers = {};
-
-				events[T_RESPONSE] && EMIT(T_RESPONSE, output);
-
-				if (!output.process || output.cancel)
-					return;
-
-				if (!r && output.error)
-					r = output.response = output.status + ': ' + output.text;
-
-				if (!output.error || MD.ajaxerrors) {
-					typeof(callback) === TYPE_S ? remap(callback.env(), r) : (callback && callback(r, null, output));
-				} else {
-					events.error && EMIT('error', output);
-					output.process && typeof(callback) === TYPE_FN && callback({}, r, output);
-				}
+				ajaxprocess(output, req.status, req.statusText || ERRCONN, req.responseText, parseHeaders(req.getAllResponseHeaders()), output.status > 399);
 			});
 
 			xhr.addEventListener('load', function() {
-
-				var self = this;
-				var r = self.responseText;
-				try {
-					r = PARSE(r, MD.jsondate);
-				} catch (e) {}
-
-				if (progress) {
-					if (typeof(progress) === TYPE_S)
-						remap(progress, 100);
-					else
-						progress(100);
-				}
-
-				output.response = r;
-				output.status = self.status;
-				output.text = self.statusText;
-				output.error = self.status > 399;
-				output.headers = parseHeaders(self.getAllResponseHeaders());
-
-				events[T_RESPONSE] && EMIT(T_RESPONSE, output);
-
-				if (!output.process || output.cancel)
-					return;
-
-				if (!r && output.error)
-					r = output.response = self.status + ': ' + self.statusText;
-
-				if (!output.error || MD.ajaxerrors) {
-					typeof(callback) === TYPE_S ? remap(callback.env(), r) : (callback && callback(r, null, output));
-				} else {
-					events.error && EMIT('error', output);
-					output.process && typeof(callback) === TYPE_FN && callback({}, r, output);
-				}
-
+				var req = this;
+				ajaxprocess(output, req.status, req.statusText, req.responseText, parseHeaders(req.getAllResponseHeaders()));
 			}, false);
 
 			xhr.upload.onprogress = function(evt) {
-				if (!progress)
-					return;
-				var percentage = 0;
-				if (evt.lengthComputable)
-					percentage = Math.round(evt.loaded * 100 / evt.total);
-				if (typeof(progress) === TYPE_S)
-					remap(progress.env(), percentage);
-				else
-					progress(percentage, evt.transferSpeed, evt.timeRemaining);
+				if (progress) {
+					var percentage = 0;
+					if (evt.lengthComputable)
+						percentage = Math.round(evt.loaded * 100 / evt.total);
+					if (typeof(progress) === TYPE_S)
+						remap(progress.env(), percentage);
+					else
+						progress(percentage, evt.transferSpeed, evt.timeRemaining);
+				}
 			};
 
 			xhr.open(method, makeurl(output.url));
@@ -1628,6 +1577,13 @@
 			}
 
 			options.headers = $.extend(headers, MD.headers);
+			options.scope = curr_scope;
+			options.process = true;
+			options.error = false;
+			options.upload = false;
+			options.callback = callback;
+			options.throw = ajaxcustomerror;
+			options.respond = ajaxcustomresponse;
 
 			if (url.match(/http:\/\/|https:\/\//i)) {
 				options.crossDomain = true;
@@ -1660,12 +1616,16 @@
 			delete options.method;
 
 			var output = {};
+			output.throw = ajaxcustomerror;
+			output.respond = ajaxcustomresponse;
 			output.url = options.url;
 			output.process = true;
 			output.error = false;
 			output.upload = false;
 			output.method = method;
 			output.data = data;
+			output.scope = curr_scope;
+			output.callback = callback;
 
 			if (cancel)
 				cache[mainurl] = { options: options, output: output };
@@ -1673,23 +1633,10 @@
 			delete options.url;
 
 			options.success = function(r, s, req) {
-
 				if (cancel)
 					delete cache[mainurl];
-
 				pendingrequest--;
-				current_scope = curr_scope;
-				output.response = r;
-				output.status = req.status || 999;
-				output.text = s;
-				output.headers = parseHeaders(req.getAllResponseHeaders());
-				events[T_RESPONSE] && EMIT(T_RESPONSE, output);
-				if (output.process && !output.cancel) {
-					if (typeof(callback) === TYPE_S)
-						remap(callback, output.response);
-					else
-						callback && callback.call(output, output.response, undefined, output);
-				}
+				ajaxprocess(output, req.status, s, r, parseHeaders(req.getAllResponseHeaders()));
 			};
 
 			options.error = function(req, s) {
@@ -1708,46 +1655,79 @@
 						current_scope = curr_scope;
 						AJAX.apply(M, arg);
 					}, MD.delayrepeat);
-					return;
-				}
-
-				output.response = req.responseText;
-				output.status = code || 999;
-				output.text = s;
-				output.error = true;
-				output.headers = parseHeaders(req.getAllResponseHeaders());
-				var ct = output.headers['content-type'];
-
-				if (ct && ct.indexOf('/json') !== -1) {
-					try {
-						output.response = PARSE(output.response, MD.jsondate);
-					} catch (e) {}
-				}
-
-				current_scope = curr_scope;
-				events[T_RESPONSE] && EMIT(T_RESPONSE, output);
-
-				if (output.cancel || !output.process)
-					return;
-
-				if (MD.ajaxerrors) {
-					if (typeof(callback) === TYPE_S)
-						remap(callback, output.response);
-					else
-						callback && callback.call(output, output.response, output.status, output);
-				} else {
-					events.error && EMIT('error', output);
-					typeof(callback) === TYPE_FN && callback.call(output, output.response, output.status, output);
-				}
-
+				} else
+					ajaxprocess(output, code, s, req.responseText, parseHeaders(req.getAllResponseHeaders()), true);
 			};
-
 			var xhr = $.ajax(makeurl(output.url), options);
 			if (cancel)
 				cache[mainurl].xhr = xhr;
 
 		}, timeout || 0);
 	};
+
+	function ajaxcustomerror(response, headers, code) {
+		var t = this;
+		t.cancel = false;
+		t.process = true;
+		ajaxprocess(t, code, ATTRDATA, response, headers || EMPTYOBJECT, true);
+		t.cancel = true;
+	}
+
+	function ajaxcustomresponse(response, headers) {
+		var t = this;
+		t.cancel = false;
+		t.process = true;
+		ajaxprocess(t, 200, ATTRDATA, response, headers || EMPTYOBJECT);
+		t.cancel = true;
+	}
+
+	function ajaxprocess(output, code, status, response, headers, error) {
+
+		if (!code)
+			code = 999;
+
+		if (!response && error)
+			response = code + ': ' + status;
+
+		output.response = response;
+		output.status = code;
+		output.text = status;
+		output.error = error;
+		output.headers = headers;
+
+		var callback = output.callback;
+		var ct = output.headers['content-type'];
+
+		if (ct && ct.indexOf('/json') !== -1) {
+			try {
+				output.response = PARSE(output.response, MD.jsondate);
+			} catch (e) {}
+		}
+
+		current_scope = output.scope;
+		events[T_RESPONSE] && EMIT(T_RESPONSE, output);
+		current_scope = output.scope;
+
+		if (output.cancel || !output.process)
+			return;
+
+		if (error) {
+			if (MD.ajaxerrors) {
+				if (typeof(callback) === TYPE_S)
+					remap(callback, output.response);
+				else
+					callback && callback.call(output, output.response, output.status, output);
+			} else {
+				events.error && EMIT('error', output);
+				typeof(callback) === TYPE_FN && callback.call(output, output.response, output.status, output);
+			}
+		} else {
+			if (typeof(callback) === TYPE_S)
+				remap(callback, output.response);
+			else
+				callback && callback.call(output, output.response, undefined, output);
+		}
+	}
 
 	W.AJAXCACHEREVIEW = function(url, data, callback, expire, timeout, clear) {
 		return AJAXCACHE(url, data, callback, expire, timeout, clear, true);
