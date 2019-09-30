@@ -92,7 +92,7 @@
 			return true;
 
 		if (el instanceof jQuery)
-			el = [0];
+			el = el[0];
 
 		if (W.isIE)
 			return !el.offsetWidth && !el.offsetHeight;
@@ -294,7 +294,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.159;
+	M.version = 17.161;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
