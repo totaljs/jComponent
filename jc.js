@@ -92,7 +92,7 @@
 			return true;
 
 		if (el instanceof jQuery)
-			el = [0];
+			el = el[0];
 
 		if (W.isIE)
 			return !el.offsetWidth && !el.offsetHeight;
