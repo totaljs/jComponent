@@ -293,7 +293,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.023;
+	M.version = 18.024;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -709,6 +709,7 @@
 		output.data = data;
 		output.scope = current_scope;
 		output.callback = callback;
+		output.duration = Date.now();
 
 		events.request && EMIT('request', output);
 
@@ -1584,6 +1585,7 @@
 			options.callback = callback;
 			options.throw = ajaxcustomerror;
 			options.respond = ajaxcustomresponse;
+			options.duration = Date.now();
 
 			if (url.match(/http:\/\/|https:\/\//i)) {
 				options.crossDomain = true;
@@ -1626,6 +1628,7 @@
 			output.data = data;
 			output.scope = curr_scope;
 			output.callback = callback;
+			output.duration = options.duration;
 
 			if (cancel)
 				cache[mainurl] = { options: options, output: output };
@@ -1694,6 +1697,7 @@
 		output.text = status;
 		output.error = error;
 		output.headers = headers;
+		output.duration = Date.now() - output.duration;
 
 		var callback = output.callback;
 		var ct = output.headers['content-type'];
