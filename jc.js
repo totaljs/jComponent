@@ -293,7 +293,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.024;
+	M.version = 18.025;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -710,6 +710,7 @@
 		output.scope = current_scope;
 		output.callback = callback;
 		output.duration = Date.now();
+		output.progress = progress;
 
 		events.request && EMIT('request', output);
 
@@ -725,12 +726,6 @@
 
 			xhr.addEventListener('error', function() {
 				var req = this;
-				if (progress) {
-					if (typeof(progress) === TYPE_S)
-						remap(progress, 100);
-					else
-						progress(100);
-				}
 				ajaxprocess(output, req.status, req.statusText || ERRCONN, req.responseText, parseHeaders(req.getAllResponseHeaders()), output.status > 399);
 			});
 
@@ -740,14 +735,15 @@
 			}, false);
 
 			xhr.upload.onprogress = function(evt) {
-				if (progress) {
+				var p = output.progress;
+				if (p) {
 					var percentage = 0;
 					if (evt.lengthComputable)
 						percentage = Math.round(evt.loaded * 100 / evt.total);
-					if (typeof(progress) === TYPE_S)
-						remap(progress.env(), percentage);
+					if (typeof(p) === TYPE_S)
+						remap(p, percentage);
 					else
-						progress(percentage, evt.transferSpeed, evt.timeRemaining);
+						p(percentage, evt.transferSpeed, evt.timeRemaining);
 				}
 			};
 
@@ -1685,6 +1681,14 @@
 	}
 
 	function ajaxprocess(output, code, status, response, headers, error) {
+
+		var p = output.progress;
+		if (p) {
+			if (typeof(p) === TYPE_S)
+				remap(p, 100);
+			else
+				p(100);
+		}
 
 		if (!code)
 			code = 999;
@@ -3731,7 +3735,7 @@
 			path = path.substring(index + 3).trim();
 		}
 
-		M.set(path, value);
+		M.set(path.env(), value);
 	}
 
 	function set(path, value, is) {
@@ -4701,17 +4705,8 @@
 							com.$releaseready = value;
 					}
 				} else if (ischildren && dom.$jcbind && dom.$jcbind.release) {
-
 					// A binder controls nested children by itself
 					return;
-
-					/*
-					else if (init) {
-						var is = attrcom(dom);
-						is && dom.setAttribute(ATTRREL2, value ? T_TRUE : T_FALSE);
-					}
-					*/
-
 				} else
 					attrcom(dom) && dom.setAttribute(ATTRREL2, value ? T_TRUE : T_FALSE);
 			}
