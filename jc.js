@@ -293,7 +293,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.025;
+	M.version = 18.026;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -7167,11 +7167,11 @@
 
 	NP.pluralize = function(zero, one, few, other) {
 
-		// environment
-		if (zero.charAt(0) === '[') {
-			zero = zero.env();
-			if (typeof(zero) === TYPE_S)
-				zero = zero.split(',');
+		if (!one && typeof(zero) === TYPE_S) {
+			// Environment
+			if (zero.charAt(0) === '[')
+				zero = zero.env();
+			zero = zero.split(',');
 		}
 
 		if (zero instanceof Array) {
@@ -7196,6 +7196,7 @@
 		return value.indexOf('#') === -1 ? value : value.replace(M.regexp.pluralize, function(text) {
 			return text === '##' ? num.format() : num.toString();
 		});
+
 	};
 
 	NP.currency = function(currency, a, b, c) {
