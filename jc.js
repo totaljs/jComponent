@@ -1,7 +1,7 @@
 (function() {
 
 	// Constants
-	var REGCOM = /(data--|data---|data-jc|data-import|#-bind|bind)=|COMPONENT\(/;
+	var REGCOM = /(data--|data---|data-jc|data-import|-bind|bind)=|COMPONENT\(/;
 	var REGSCRIPT = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGENV = /(\[.*?\])/gi;
@@ -293,7 +293,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.026;
+	M.version = 18.027;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
