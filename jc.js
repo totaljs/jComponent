@@ -177,11 +177,11 @@
 	};
 
 	PR.load = function(callback) {
-		callback(!W.isPRIVATEMODE && PARSE(LS.getItem(M.$localstorage + '.pref')));
+		callback(!W.isPRIVATEMODE && PARSE(LS.getItem(MD.localstorage + '.pref')));
 	};
 
 	PR.save = function(data) {
-		!W.isPRIVATEMODE && LS.setItem(M.$localstorage + '.pref', STRINGIFY(data));
+		!W.isPRIVATEMODE && LS.setItem(MD.localstorage + '.pref', STRINGIFY(data));
 	};
 
 	// temporary
@@ -275,7 +275,15 @@
 	MD.decimalseparator = '.';
 	MD.dateformat = null;
 	// MD.currency = ''; DEFAULT CURRENCY
+	MD.localstorage = ATTRDATA;
+	MD.languagekey = 'language';
+	MD.versionkey = 'version';
 	MD.currencies = {};
+
+	// MD.language
+	// MD.languagehtml
+	// MD.version
+	// MD.versionhtml
 
 	W.MONTHS = M.months = 'January,February,March,April,May,June,July,August,September,October,November,December'.split(',');
 	W.DAYS = M.days = 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'.split(',');
@@ -293,10 +301,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.027;
-	M.$localstorage = ATTRDATA;
-	M.$version = '';
-	M.$language = '';
+	M.version = 18.028;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -523,9 +528,9 @@
 	};
 
 	W.ENVIRONMENT = function(name, version, language, env) {
-		M.$localstorage = name;
-		M.$version = version || '';
-		M.$language = language || '';
+		MD.localstorage = name;
+		MD.version = version || '';
+		MD.languagehtml = language || '';
 		env && ENV(env);
 	};
 
@@ -1816,7 +1821,7 @@
 	W.CLEARCACHE = function() {
 		if (!W.isPRIVATEMODE) {
 			var rem = LS.removeItem;
-			var k = M.$localstorage;
+			var k = MD.localstorage;
 			rem(k);
 			rem(k + '.cache');
 			rem(k + '.blocked');
@@ -1908,7 +1913,7 @@
 
 		var local = timeout > 10000;
 		blocked[key] = now + timeout;
-		!W.isPRIVATEMODE && local && LS.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
+		!W.isPRIVATEMODE && local && LS.setItem(MD.localstorage + '.blocked', JSON.stringify(blocked));
 		callback && callback();
 		return false;
 	};
@@ -2708,12 +2713,12 @@
 		$ready = null;
 		var cache;
 		try {
-			cache = LS.getItem(M.$localstorage + '.cache');
+			cache = LS.getItem(MD.localstorage + '.cache');
 			if (cache && typeof(cache) === TYPE_S)
 				storage = PARSE(cache);
 		} catch (e) {}
 		try {
-			cache = LS.getItem(M.$localstorage + '.blocked');
+			cache = LS.getItem(MD.localstorage + '.blocked');
 			if (cache && typeof(cache) === TYPE_S)
 				blocked = PARSE(cache);
 		} catch (e) {}
@@ -3317,11 +3322,26 @@
 
 	function cacherest(method, url, params, value, expire) {
 
-		if (params && !params.version && M.$version)
-			params.version = M.$version;
+		if (params) {
 
-		if (params && !params.language && M.$language)
-			params.language = M.$language;
+			var ishtml = url.indexOf('.html') !== -1;
+			var k = MD.versionkey;
+
+			if (!params[k]) {
+				if (MD.version)
+					params[k] = MD.version;
+				else if (MD.versionhtml && ishtml)
+					params[k] = MD.versionhtml;
+			}
+
+			k = MD.languagekey;
+			if (!params[k]) {
+				if (MD.language)
+					params[k] = MD.language;
+				else if (MD.languagehtml && ishtml)
+					params[k] = MD.languagehtml;
+			}
+		}
 
 		params = STRINGIFY(params);
 		var key = HASH(method + '#' + url.replace(/\//g, '') + params).toString();
@@ -3366,8 +3386,17 @@
 		var builder = [];
 		var en = encodeURIComponent;
 
-		M.$version && builder.push('version=' + en(M.$version));
-		M.$language && builder.push('language=' + en(M.$language));
+		var ishtml = url.indexOf('.html') !== -1;
+
+		if (MD.version)
+			builder.push(MD.versionkey + '=' + en(MD.version));
+		else if (MD.versionhtml && ishtml)
+			builder.push(MD.versionkey + '=' + en(MD.versionhtml));
+
+		if (MD.language)
+			builder.push(MD.languagekey + '=' + en(MD.language));
+		else if (MD.languagehtml && ishtml)
+			builder.push(MD.languagekey + '=' + en(MD.languagehtml));
 
 		if (!builder.length)
 			return url;
@@ -4092,7 +4121,7 @@
 			}
 		}
 
-		is2 && !W.isPRIVATEMODE && LS.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
+		is2 && !W.isPRIVATEMODE && LS.setItem(MD.localstorage + '.blocked', JSON.stringify(blocked));
 
 		for (var key in storage) {
 			var item = storage[key];
@@ -4111,7 +4140,7 @@
 	}
 
 	function save() {
-		!W.isPRIVATEMODE && LS.setItem(M.$localstorage + '.cache', JSON.stringify(storage));
+		!W.isPRIVATEMODE && LS.setItem(MD.localstorage + '.cache', JSON.stringify(storage));
 	}
 
 	function refresh() {
@@ -8634,7 +8663,7 @@
 							case 'changes':
 								break;
 							case 'empty':
-								fn = v === T_VALUE ? DEF.empty : v;
+								fn = v === T_VALUE ? MD.empty : v;
 								break;
 							case 'currency':
 							case 'focus':
@@ -9351,7 +9380,7 @@
 				c.reconfigure(val);
 			else
 				binderconfig(el, val);
-		}, DEF.delaybinder, el, val);
+		}, MD.delaybinder, el, val);
 	}
 
 	function isValue(val) {
@@ -9630,7 +9659,7 @@
 
 		handlers.forcey = function() {
 			bary.css('top', size.vpos);
-			if (DEF.scrollbaranimate && !animcache.disabled && (size.vpos === 0 || size.vpos === size.vmax)) {
+			if (MD.scrollbaranimate && !animcache.disabled && (size.vpos === 0 || size.vpos === size.vmax)) {
 				size.animvpost && clearTimeout(size.animvpost);
 				size.animvpost = setTimeout(animyt, 10, size.vpos, size.vmax);
 			}
@@ -9638,7 +9667,7 @@
 
 		handlers.forcex = function() {
 			barx.css('left', size.hpos);
-			if (DEF.scrollbaranimate && !animcache.disabled && (size.hpos === 0 || size.hpos === size.hmax)) {
+			if (MD.scrollbaranimate && !animcache.disabled && (size.hpos === 0 || size.hpos === size.hmax)) {
 				size.animhpost && clearTimeout(size.animhpost);
 				size.animhpost = setTimeout(animxt, 10, size.hpos, size.hmax);
 			}
