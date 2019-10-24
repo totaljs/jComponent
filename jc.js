@@ -301,7 +301,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.028;
+	M.version = 18.029;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1784,17 +1784,24 @@
 				else
 					callback(value, true);
 
-				if (!review)
+				if (!review || navigator.onLine === false)
 					return;
 
 				current_scope = curr_scope;
 
 				AJAX(url, data, function(r, err) {
+
 					if (err)
 						r = err;
+
+					current_scope = curr_scope;
+
 					// Is same?
 					if (diff !== STRINGIFY(r)) {
-						cacherest(method, uri, data, r, expire);
+
+						if (!err)
+							cacherest(method, uri, data, r, expire);
+
 						if (typeof(callback) === TYPE_S)
 							remap(callback, r);
 						else
@@ -1808,8 +1815,12 @@
 			AJAX(url, data, function(r, err) {
 				if (err)
 					r = err;
+
 				current_scope = curr_scope;
-				cacherest(method, uri, data, r, expire);
+
+				if (!err)
+					cacherest(method, uri, data, r, expire);
+
 				if (typeof(callback) === TYPE_S)
 					remap(callback, r);
 				else
