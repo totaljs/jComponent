@@ -301,7 +301,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.031;
+	M.version = 18.032;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -9775,10 +9775,10 @@
 				if (synclocked) {
 					if (synclocked !== syncid)
 						return;
-				} else {
+				} else
 					synclocked = syncid;
-					self.unsync();
-				}
+
+				self.unsync();
 
 				for (var i = 0; i < syncx.length; i++) {
 					if (syncx[i].$csid !== synclocked)
@@ -10113,8 +10113,8 @@
 		};
 
 		self.unsync = function() {
-			clearTimeout(syncdelay);
-			syncdelay = setTimeout(self.unsyncdone, 500);
+			syncdelay && clearTimeout(syncdelay);
+			syncdelay = setTimeout(self.unsyncdone, 300);
 		};
 
 		self.sync = function(el, offset) {
@@ -10127,17 +10127,17 @@
 
 			el.on('scroll', function() {
 
-				if (synclocked && synclocked !== el[0].$csid)
+				if (synclocked && synclocked !== this.$csid)
 					return;
 
-				synclocked = el[0].$csid;
+				synclocked = this.$csid;
 				self.unsync();
 
 				if (isx)
-					self.area[0].scrollLeft = el[0].scrollLeft;
+					self.area[0].scrollLeft = this.scrollLeft;
 
 				if (isy)
-					self.area[0].scrollTop = el[0].scrollTop;
+					self.area[0].scrollTop = this.scrollTop;
 			});
 
 			isx && syncx.push(el[0]);
