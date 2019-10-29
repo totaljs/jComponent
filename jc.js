@@ -301,7 +301,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.029;
+	M.version = 18.031;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -9501,6 +9501,11 @@
 		var delayresize;
 		var delay;
 		var resizeid;
+		var syncx = [];
+		var syncy = [];
+		var synclocked;
+		var syncdelay;
+		var syncid = 'cs' + GUID(5);
 
 		self.element = element;
 		self.area = area;
@@ -9764,6 +9769,27 @@
 					resizeid = setTimeout(self.resize, 500, true);
 				}
 			}
+
+			if (syncx.length || syncy.length) {
+
+				if (synclocked) {
+					if (synclocked !== syncid)
+						return;
+				} else {
+					synclocked = syncid;
+					self.unsync();
+				}
+
+				for (var i = 0; i < syncx.length; i++) {
+					if (syncx[i].$csid !== synclocked)
+						syncx[i].scrollLeft = x;
+				}
+
+				for (var i = 0; i < syncy.length; i++) {
+					if (syncy[i].$csid !== synclocked)
+						syncy[i].scrollTop = y;
+				}
+			}
 		};
 
 		pathx.on('mousedown', function(e) {
@@ -9786,7 +9812,7 @@
 				drag.is = false;
 			}
 
-			if (!pathx.hclass(n + '–' + T_HIDDEN))
+			if (!pathx.hclass(n + '-' + T_HIDDEN))
 				pathx.aclass(n + '-x-show');
 
 			e.preventDefault();
@@ -10080,6 +10106,43 @@
 			$(W).on(T_RESIZE, onresize);
 			ON(T_RESIZE, self.resize);
 		}
+
+		self.unsyncdone = function() {
+			synclocked = null;
+			syncdelay = null;
+		};
+
+		self.unsync = function() {
+			clearTimeout(syncdelay);
+			syncdelay = setTimeout(self.unsyncdone, 500);
+		};
+
+		self.sync = function(el, offset) {
+
+			el = el instanceof jQuery ? el : $(el);
+			el[0].$csid = 'cs' + GUID(8);
+
+			var isx = !offset || offset === 'left' || offset === 'x';
+			var isy = !offset || offset === 'top' || offset === 'y';
+
+			el.on('scroll', function() {
+
+				if (synclocked && synclocked !== el[0].$csid)
+					return;
+
+				synclocked = el[0].$csid;
+				self.unsync();
+
+				if (isx)
+					self.area[0].scrollLeft = el[0].scrollLeft;
+
+				if (isy)
+					self.area[0].scrollTop = el[0].scrollTop;
+			});
+
+			isx && syncx.push(el[0]);
+			isy && syncy.push(el[0]);
+		};
 
 		resize_visible();
 		intervalresize = setInterval(self.check, options.interval || 54321);
