@@ -301,7 +301,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.032;
+	M.version = 18.033;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5544,11 +5544,10 @@
 
 	PPC.get = function(path) {
 		var self = this;
-		if (!path)
-			path = self.path;
-
 		if (self.$pp)
 			return self.owner.data(self.path);
+
+		path = path ? self.makepath(path) : self.path;
 
 		if (path)
 			return get(path);
@@ -5563,16 +5562,17 @@
 	PPC.set = function(value, type) {
 
 		var self = this;
-		var arg = arguments;
 
 		if (self.$pp) {
 			self.owner.set(self.path, value);
 			return self;
 		}
 
+		var arg = arguments;
+
 		// Backwards compatibility
 		if (arg.length === 3)
-			M.set(arg[0], arg[1], arg[2]);
+			M.set(self.makepath(arg[0]), arg[1], arg[2]);
 		else
 			M.set(self.path, value, type);
 
@@ -6516,9 +6516,12 @@
 		} else if (fn())
 			run = true;
 
+		var curr_scope = current_scope;
+
 		if (run) {
 			callback(null, function(sleep) {
 				setTimeout(function() {
+					current_scope = curr_scope;
 					WAIT(fn, callback, interval, timeout);
 				}, sleep || 1);
 			});
@@ -6551,8 +6554,10 @@
 				delete waits[tkey];
 			}
 
+			current_scope = curr_scope;
 			callback && callback(null, function(sleep) {
 				setTimeout(function() {
+					current_scope = curr_scope;
 					WAIT(fn, callback, interval);
 				}, sleep || 1);
 			});
