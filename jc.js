@@ -220,6 +220,7 @@
 	var defaults = {};
 	var waits = {};
 	var statics = {};
+	var queues = {};
 	var ajaxconfig = {};
 	var $ready = setTimeout(load, 2);
 	var $loaded = false;
@@ -301,7 +302,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.033;
+	M.version = 18.034;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8707,6 +8708,9 @@
 							case 'exec':
 								k = 'change';
 								break;
+							case 'refresh':
+								k = 'refreshbind';
+								break;
 							case T_DISABLED: // internal rewrite because binder contains '.disabled` property
 								k = 'disable';
 								backup = true;
@@ -9325,7 +9329,10 @@
 		if (item.change && (value != null || !item.change.$nn))
 			item.change.call(el, bindvalue(value, item), path, el);
 
-		if (item.focus && can) {
+		if (can && item.refreshbind && (value != null || !item.refreshbind.$nn))
+			item.refreshbind.call(el, value, path, el);
+
+		if (can && item.focus) {
 			var elf = el.find(item.focus);
 			setTimeout(function(item) {
 				item.el.find(item.focus).eq(0).focus();
@@ -10165,6 +10172,34 @@
 
 	W.SCROLLBAR = function(element, options) {
 		return new CustomScrollbar(element, options);
+	};
+
+	W.QUEUE = function(name, fn) {
+
+		if (typeof(name) == 'function') {
+			fn = name;
+			name = T_COM;
+		}
+
+		var arr = queues[name];
+		if (!arr)
+			arr = queues[name] = [];
+
+		if (fn) {
+			arr.push(fn);
+			W.QUEUE(name);
+		} else if (!arr.isrunning) {
+			var item = arr.shift();
+			if (item) {
+				arr.isrunning = true;
+				item(function() {
+					arr.isrunning = false;
+					W.QUEUE(name);
+				}, arr.length);
+			}
+		}
+
+		return arr.length;
 	};
 
 })();
