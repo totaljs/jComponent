@@ -302,7 +302,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.034;
+	M.version = 18.035;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3243,6 +3243,7 @@
 			// data.class
 			// data.make
 			// data.replace
+			// data.target
 
 			// Unique
 			var url = data.url;
@@ -3301,6 +3302,9 @@
 						}
 					}
 				}
+
+				if (item.target)
+					item.element = $(item.target);
 
 				if (item.replace)
 					item.element.replaceWith(response);
