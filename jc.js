@@ -302,7 +302,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.035;
+	M.version = 18.036;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3304,9 +3304,8 @@
 				}
 
 				if (item.target)
-					item.element = $(item.target);
-
-				if (item.replace)
+					$(item.target).append(response);
+				else if (item.replace)
 					item.element.replaceWith(response);
 				else
 					item.element.html(response);
