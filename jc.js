@@ -302,7 +302,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.036;
+	M.version = 18.037;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -9502,6 +9502,7 @@
 		element.prepend('<div class="{0}-path {0}-notready"><div class="{0}-y"><span><b></b></span></div><div class="{0}-x"><span><b></b></span></div></div>'.format(n));
 		element[0].$scrollbar = self;
 
+		var pe = 'pointer-events';
 		var visibleX = options.visibleX == null ? false : options.visibleX;
 		var visibleY = options.visibleY == null ? false : options.visibleY;
 		var path = element.find('.' + n + '-path');
@@ -9708,7 +9709,6 @@
 
 			var y = area[0].scrollTop;
 			var x = area[0].scrollLeft;
-
 			var is = size.prevx !== x || size.prevy !== y;
 			var pos;
 			var p;
@@ -9796,13 +9796,17 @@
 				self.unsync();
 
 				for (var i = 0; i < syncx.length; i++) {
-					if (syncx[i].$csid !== synclocked)
+					if (syncx[i].$csid !== synclocked) {
 						syncx[i].scrollLeft = x;
+						syncx[i].style[pe] = 'none';
+					}
 				}
 
 				for (var i = 0; i < syncy.length; i++) {
-					if (syncy[i].$csid !== synclocked)
+					if (syncy[i].$csid !== synclocked) {
 						syncy[i].scrollTop = y;
+						syncy[i].style[pe] = 'none';
+					}
 				}
 			}
 		};
@@ -10125,6 +10129,12 @@
 		self.unsyncdone = function() {
 			synclocked = null;
 			syncdelay = null;
+
+			for (var i = 0; i < syncx.length; i++)
+				syncx[i].style[pe] = '';
+
+			for (var i = 0; i < syncy.length; i++)
+				syncy[i].style[pe] = '';
 		};
 
 		self.unsync = function() {
