@@ -9544,8 +9544,7 @@
 
 		handlers.onmousemove = function(e) {
 			if (drag.is) {
-				var p, half, diff, h;
-				var off = drag.offset2;
+				var p, diff, h;
 				if (drag.type === 'y') {
 
 					diff = e.pageY - drag.offset;
@@ -9737,7 +9736,6 @@
 
 			if (size.vbar && canY) {
 
-				var minus = (size.hbar ? size.thicknessH : 0);
 				var d = ((size.scrollHeight - size.clientHeight) + size.margin);
 
 				p = d ? Math.ceil((y / d) * 100) : 0;
