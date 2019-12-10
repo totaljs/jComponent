@@ -302,7 +302,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.037;
+	M.version = 18.038;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -9496,22 +9496,31 @@
 			options = {};
 
 		var n = 'ui-scrollbar';
+		var id = GUID(5);
 
 		element.aclass(n);
-		element.wrapInner('<div class="{0}-area"><div class="{0}-body"></div></div>'.format(n));
-		element.prepend('<div class="{0}-path {0}-notready"><div class="{0}-y"><span><b></b></span></div><div class="{0}-x"><span><b></b></span></div></div>'.format(n));
-		element[0].$scrollbar = self;
+		element.wrapInner('<div class="{0}-area" data-id="{1}"><div class="{0}-body" data-id="{1}"></div></div>'.format(n, id));
 
-		var pe = 'pointer-events';
+		var iscc = !!options.controls;
+		var controls = options.controls || element;
 		var visibleX = options.visibleX == null ? false : options.visibleX;
 		var visibleY = options.visibleY == null ? false : options.visibleY;
-		var path = element.find('.' + n + '-path');
-		var pathx = $(path.find('.' + n + '-x')[0]);
-		var pathy = $(path.find('.' + n + '-y')[0]);
-		var barx = $(pathx.find('span')[0]);
-		var bary = $(pathy.find('span')[0]);
-		var bodyarea = element.find('.' + n + '-body');
-		var area = $(element.find('> .' + n + '-area')[0]);
+		var orientation = options.orientation;
+		var canX = !orientation || orientation === 'x';
+		var canY = !orientation || orientation === 'y';
+
+		controls.prepend(('<div class="{0}-path {0}-notready" data-id="{1}">' + (canY ? '<div class="{0}-y" data-id="{1}"><span><b></b></span></div>' : '') + (canX ? '<div class="{0}-x" data-id="{1}"><span><b></b></span></div></div>' : '')).format(n, id));
+		element[0].$scrollbar = self;
+
+		var di = '[data-id="{0}"]'.format(id);
+		var pe = 'pointer-events';
+		var path = controls.find('.' + n + '-path' + di);
+		var pathx = canX ? $(path.find('.' + n + '-x' + di)[0]) : null;
+		var pathy = canY ? $(path.find('.' + n + '-y' + di)[0]) : null;
+		var barx = canX ? $(pathx.find('span')[0]) : null;
+		var bary = canY ? $(pathy.find('span')[0]) : null;
+		var bodyarea = element.find('.' + n + '-body' + di);
+		var area = $(element.find('> .' + n + '-area' + di)[0]);
 		var notemmited = true;
 		var intervalresize;
 		var delayresize;
@@ -9523,45 +9532,54 @@
 		var syncdelay;
 		var syncid = 'cs' + GUID(5);
 
+		self.pathx = pathx;
+		self.pathy = pathy;
+		self.barx = barx;
+		self.bary = bary;
 		self.element = element;
 		self.area = area;
+		self.body = bodyarea;
 
 		var handlers = {};
 
 		handlers.onmousemove = function(e) {
 			if (drag.is) {
-				var p;
-				var half;
+				var p, half, diff, h;
 				var off = drag.offset2;
 				if (drag.type === 'y') {
 
-					if (e.pageY > drag.pos) {
-						half = size.vbarsize / 1.5 >> 0;
-						if (off < half)
-							off = half;
-					}
+					diff = e.pageY - drag.offset;
 
-					p = ((e.pageY - drag.offset) / (size.viewHeight - off)) * 100;
-					area[0].scrollTop = ((size.scrollHeight - size.viewHeight) / 100) * (p > 100 ? 100 : p);
+					if (diff < 0)
+						diff = 0;
+
+					h = size.vbarlength - size.vbarsize;
+					p = (diff / h) * 100;
+					area[0].scrollTop = ((size.scrollHeight - size.viewHeight + (options.marginY || 0)) / 100) * (p > 100 ? 100 : p);
+
 					if (drag.counter++ > 10) {
 						drag.counter = 0;
 						drag.pos = e.pageY;
 					}
 
 				} else {
-					if (e.pageX > drag.pos) {
-						half = size.hbarsize / 1.5 >> 0;
-						if (off < half)
-							off = half;
-					}
 
-					p = ((e.pageX - drag.offset) / (size.viewWidth - off)) * 100;
-					area[0].scrollLeft = ((size.scrollWidth - size.viewWidth) / 100) * (p > 100 ? 100 : p);
+
+					diff = e.pageX - drag.offset;
+
+					if (diff < 0)
+						diff = 0;
+
+					h = size.hbarlength - size.hbarsize;
+					p = (diff / h) * 100;
+					area[0].scrollLeft = ((size.scrollWidth - size.viewWidth + (options.marginX || 0)) / 100) * (p > 100 ? 100 : p);
+
 					if (drag.counter++ > 5) {
 						drag.counter = 0;
 						drag.pos = e.pageX;
 					}
 				}
+
 				if (p < -20 || p > 120)
 					drag.is = false;
 			}
@@ -9586,8 +9604,8 @@
 		var unbind = function() {
 			animcache.disabled = false;
 			if (drag.binded) {
-				pathy.rclass(n + '-y-show');
-				pathx.rclass(n + '-x-show');
+				pathy && pathy.rclass(n + '-y-show');
+				pathx && pathx.rclass(n + '-x-show');
 				drag.binded = false;
 				var w = $(W).off('mousemove', handlers.onmousemove).off('mouseup', handlers.onmouseup);
 				if (W.parent !== W)
@@ -9717,17 +9735,22 @@
 			size.prevx = x;
 			size.prevy = y;
 
-			if (size.vbar) {
+			if (size.vbar && canY) {
 
 				var minus = (size.hbar ? size.thicknessH : 0);
-				var d = size.scrollHeight - size.clientHeight;
+				var d = ((size.scrollHeight - size.clientHeight) + size.margin);
+
 				p = d ? Math.ceil((y / d) * 100) : 0;
-				pos = ((((size.clientHeight || 0) - (size.vbarsize || 0) - minus) / 100) * p);
+
+				if (p > 100)
+					p = 100;
+
+				max = size.vbarlength - size.vbarsize;
+				pos = ((p / 100) * max) >> 0;
 
 				if (pos < 0)
 					pos = 0;
 				else {
-					max = size.viewHeight - size.vbarsize - minus;
 					if (pos > max)
 						pos = max;
 				}
@@ -9739,14 +9762,18 @@
 				}
 			}
 
-			if (size.hbar) {
+			if (size.hbar && canX) {
 				p = Math.ceil((x / (size.scrollWidth - size.clientWidth)) * 100);
-				pos = ((((size.clientWidth || 0) - (size.hbarsize || 0)) / 100) * p);
+
+				if (p > 100)
+					p = 100;
+
+				max = size.hbarlength - size.hbarsize;
+				pos = ((p / 100) * max) >> 0;
 
 				if (pos < 0)
 					pos = 0;
 				else {
-					max = size.viewWidth - size.hbarsize;
 					if (pos > max)
 						pos = max;
 				}
@@ -9811,7 +9838,7 @@
 			}
 		};
 
-		pathx.on('mousedown', function(e) {
+		pathx && pathx.on('mousedown', function(e) {
 
 			drag.type = 'x';
 
@@ -9827,7 +9854,7 @@
 			} else {
 				// path
 				var p = ((e.offsetX - 50) / (size.viewWidth - size.hbarsize)) * 100;
-				area.prop('scrollLeft', ((size.scrollWidth - size.viewWidth) / 100) * p);
+				area[0].scrollLeft = ((size.scrollWidth - size.viewWidth) / 100) * p;
 				drag.is = false;
 			}
 
@@ -9836,14 +9863,12 @@
 
 			e.preventDefault();
 			e.stopPropagation();
-		});
-
-		pathx.on('mouseup', function() {
+		}).on('mouseup', function() {
 			drag.is = false;
 			unbind();
 		});
 
-		pathy.on('mousedown', function(e) {
+		pathy && pathy.on('mousedown', function(e) {
 
 			drag.type = 'y';
 
@@ -9859,7 +9884,7 @@
 			} else {
 				// path
 				var p = ((e.offsetY - 50) / (size.viewHeight - size.vbarsize)) * 100;
-				area.prop('scrollTop', ((size.scrollHeight - size.viewHeight) / 100) * p);
+				area[0].scrollTop = ((size.scrollHeight - size.viewHeight) / 100) * p;
 				drag.is = false;
 			}
 
@@ -9868,8 +9893,10 @@
 
 			e.preventDefault();
 			e.stopPropagation();
+		}).on('mouseup', function() {
+			drag.is = false;
+			unbind();
 		});
-
 
 		area.on('scroll', handlers.onscroll);
 
@@ -9961,6 +9988,9 @@
 			} else
 				size.empty = 0;
 
+			var mx = canX ? (options.marginX || 0) : 0;
+			var my = canY ? (options.marginY || 0) : 0;
+
 			// Safari iOS
 			if (md) {
 
@@ -9970,25 +10000,29 @@
 				if (size.viewWidth > screen.width)
 					size.viewWidth = screen.width;
 
-				area.css(T_WIDTH, size.viewWidth);
-				area.css(T_HEIGHT, size.viewHeight);
+				area.css(T_WIDTH, size.viewWidth - mx);
+				area.css(T_HEIGHT, size.viewHeight - mx);
 			} else {
-				area.css(T_WIDTH, size.viewWidth + size.margin);
-				area.css(T_HEIGHT, size.viewHeight + size.margin);
+				area.css(T_WIDTH, size.viewWidth + size.margin - mx);
+				area.css(T_HEIGHT, size.viewHeight + size.margin - my);
 			}
 
 			size.scrollWidth = a.scrollWidth || 0;
 			size.scrollHeight = a.scrollHeight || 0;
-			size.clientWidth = Math.ceil(area.innerWidth());
-			size.clientHeight = Math.ceil(area.innerHeight());
+
+			if (canX)
+				size.clientWidth = Math.ceil(area.innerWidth());
+
+			if (canY)
+				size.clientHeight = Math.ceil(area.innerHeight());
 
 			var defthickness = options.thickness || 10;
 
-			if (!size.thicknessV)
-				size.thicknessV = (pathy.width() || defthickness) - 1;
-
-			if (!size.thicknessH)
+			if (!size.thicknessH && canX)
 				size.thicknessH = (pathx.height() || defthickness) - 1;
+
+			if (!size.thicknessV && canY)
+				size.thicknessV = (pathy.width() || defthickness) - 1;
 
 			if (size.hpos == null)
 				size.hpos = 0;
@@ -9996,34 +10030,63 @@
 			if (size.vpos == null)
 				size.vpos = 0;
 
-			cssx.top = size.viewHeight - size.thicknessH;
-			cssx.width = size.viewWidth;
-			cssy.left = size.viewWidth - size.thicknessV;
-			cssy.height = size.viewHeight;
-
-			pathx.css(cssx);
-			pathy.css(cssy);
-
-			size.vbar = (size.scrollHeight - size.clientHeight) > 5;
-
-			if (size.vbar) {
-				size.vbarsize = (size.clientHeight * (size.viewHeight / size.scrollHeight)) >> 0;
-				if (size.vbarsize < 30)
-					size.vbarsize = 30;
-				bary.css(T_HEIGHT, size.vbarsize).attrd('size', size.vbarsize);
+			if (canX) {
+				if (iscc) {
+					cssx.top = size.viewHeight - size.thicknessH;
+					cssx.width = size.viewWidth;
+				} else {
+					cssx.top = size.viewHeight - size.thicknessH;
+					cssx.width = size.viewWidth;
+				}
+				if (options.marginX)
+					cssx.width -= options.marginX;
+				pathx.css(cssx);
 			}
 
-			size.hbar = size.scrollWidth > size.clientWidth;
-			if (size.hbar) {
-				size.hbarsize = (size.clientWidth * (size.viewWidth / size.scrollWidth)) >> 0;
-				if (size.hbarsize < 30)
-					size.hbarsize = 30;
-				barx.css(T_WIDTH, size.hbarsize).attrd('size', size.hbarsize);
+			if (canY) {
+				if (iscc) {
+					cssy.left = controls.width() - size.thicknessV;
+					cssy.height = controls.height();
+				} else {
+					cssy.left = size.viewWidth - size.thicknessV;
+					cssy.height = size.viewHeight;
+				}
+				if (options.marginY)
+					cssy.height -= options.marginY;
+				pathy.css(cssy);
 			}
+
+			if (canY) {
+				size.vbar = (size.scrollHeight - size.clientHeight) > 5;
+				if (size.vbar) {
+					size.vbarsize = (size.clientHeight * (cssy.height / size.scrollHeight)) >> 0;
+					if (size.vbarsize < 30)
+						size.vbarsize = 30;
+					size.vbarlength = cssy.height;
+					bary.css(T_HEIGHT, size.vbarsize).attrd('size', size.vbarsize);
+				}
+			}
+
+			if (canX) {
+				size.hbar = size.scrollWidth > size.clientWidth;
+				if (size.hbar) {
+					size.hbarsize = (size.clientWidth * (cssx.width / size.scrollWidth)) >> 0;
+					size.hbarlength = cssx.width;
+					if (size.hbarsize < 30)
+						size.hbarsize = 30;
+					barx.css(T_WIDTH, size.hbarsize).attrd('size', size.hbarsize);
+				}
+			}
+
+			if (!size.vbarsize)
+				size.vbarsize = 0;
+
+			if (!size.hbarsize)
+				size.hbarsize = 0;
 
 			var n = 'ui-scrollbar-';
-			pathx.tclass((visibleX ? n : '') + T_HIDDEN, !size.hbar);
-			pathy.tclass((visibleY ? n : '') + T_HIDDEN, !size.vbar);
+			canX && pathx.tclass((visibleX ? n : '') + T_HIDDEN, !size.hbar);
+			canY && pathy.tclass((visibleY ? n : '') + T_HIDDEN, !size.vbar);
 
 			if (visibleX && !size.hbar)
 				size.hbar = true;
@@ -10031,7 +10094,7 @@
 			if (visibleY && !size.vbar)
 				size.vbar = true;
 
-			element.tclass(n + 'isx', size.hbar).tclass(n + 'isy', size.vbar).tclass(n + 'touch', md);
+			element.tclass(n + 'isx', size.hbar && canX).tclass(n + 'isy', size.vbar && canY).tclass(n + 'touch', md);
 			path.rclass(n + 'notready');
 
 			if (size.margin) {
@@ -10040,8 +10103,12 @@
 				if (W.isIE == false && sw && navigator.userAgent.indexOf('Edge') === -1)
 					plus = 0;
 
-				cssba['margin-right'] = size.vbar ? (size.thicknessV + plus) : plus;
-				cssba['margin-bottom'] = size.hbar ? (size.thicknessH + plus) : plus;
+				if (canY)
+					cssba['margin-right'] = size.vbar ? (size.thicknessV + plus) : plus;
+
+				if (canX)
+					cssba['margin-bottom'] = size.hbar ? (size.thicknessH + plus) : plus;
+
 				bodyarea.css(cssba);
 			}
 
