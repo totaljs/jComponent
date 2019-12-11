@@ -8115,7 +8115,12 @@
 		$.fn.noscrollbar = function(force) {
 			var t = this;
 			var sw = SCROLLBARWIDTH();
+
 			cssnoscrollbar['overflow-y'] = sw ? 'scroll' : 'auto';
+
+			if (sw && (W.isIE || (/Edge/).test(ua)))
+				sw = 0;
+
 			for (var i = 0; i < t.length; i++) {
 				var m = t[i];
 				if (m && !HIDDEN(m)) {
