@@ -302,7 +302,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.038;
+	M.version = 18.039;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -9851,9 +9851,10 @@
 				drag.counter = 0;
 			} else {
 				// path
-				var p = ((e.offsetX - 50) / (size.viewWidth - size.hbarsize)) * 100;
-				area[0].scrollLeft = ((size.scrollWidth - size.viewWidth) / 100) * p;
+				var p = Math.ceil((e.offsetX / (size.viewWidth - size.hbarsize)) * 100);
+				self.scrollLeft(((size.scrollWidth - size.viewWidth + (options.marginX || 0)) / 100) * (p > 100 ? 100 : p));
 				drag.is = false;
+				return;
 			}
 
 			if (!pathx.hclass(n + '-' + T_HIDDEN))
@@ -9881,9 +9882,10 @@
 				drag.counter = 0;
 			} else {
 				// path
-				var p = ((e.offsetY - 50) / (size.viewHeight - size.vbarsize)) * 100;
-				area[0].scrollTop = ((size.scrollHeight - size.viewHeight) / 100) * p;
+				var p = Math.ceil((e.offsetY / (size.viewHeight - size.vbarsize)) * 100);
+				self.scrollTop(((size.scrollHeight - size.viewHeight + (options.marginY || 0)) / 100) * (p > 100 ? 100 : p));
 				drag.is = false;
+				return;
 			}
 
 			if (!pathy.hclass(n + '-' + T_HIDDEN))
@@ -9891,6 +9893,7 @@
 
 			e.preventDefault();
 			e.stopPropagation();
+
 		}).on('mouseup', function() {
 			drag.is = false;
 			unbind();
