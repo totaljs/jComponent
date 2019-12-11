@@ -294,7 +294,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.164;
+	M.version = 17.165;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -8421,7 +8421,12 @@
 		$.fn.noscrollbar = function(force) {
 			var t = this;
 			var sw = SCROLLBARWIDTH();
+
 			cssnoscrollbar['overflow-y'] = sw ? 'scroll' : 'auto';
+
+			if (sw && (W.isIE || (/Edge/).test(ua)))
+				sw = 0;
+
 			for (var i = 0; i < t.length; i++) {
 				var m = t[i];
 				if (m && !HIDDEN(m)) {
@@ -9916,9 +9921,10 @@
 				drag.counter = 0;
 			} else {
 				// path
-				var p = ((e.offsetX - 50) / (size.viewWidth - size.hbarsize)) * 100;
-				area[0].scrollLeft = ((size.scrollWidth - size.viewWidth) / 100) * p;
+				var p = Math.ceil((e.offsetX / (size.viewWidth - size.hbarsize)) * 100);
+				self.scrollLeft(((size.scrollWidth - size.viewWidth + (options.marginX || 0)) / 100) * (p > 100 ? 100 : p));
 				drag.is = false;
+				return;
 			}
 
 			if (!pathx.hclass(n + '-' + T_HIDDEN))
@@ -9946,9 +9952,10 @@
 				drag.counter = 0;
 			} else {
 				// path
-				var p = ((e.offsetY - 50) / (size.viewHeight - size.vbarsize)) * 100;
-				area[0].scrollTop = ((size.scrollHeight - size.viewHeight) / 100) * p;
+				var p = Math.ceil((e.offsetY / (size.viewHeight - size.vbarsize)) * 100);
+				self.scrollTop(((size.scrollHeight - size.viewHeight + (options.marginY || 0)) / 100) * (p > 100 ? 100 : p));
 				drag.is = false;
+				return;
 			}
 
 			if (!pathy.hclass(n + '-' + T_HIDDEN))
@@ -9956,6 +9963,7 @@
 
 			e.preventDefault();
 			e.stopPropagation();
+
 		}).on('mouseup', function() {
 			drag.is = false;
 			unbind();
