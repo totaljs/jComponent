@@ -294,7 +294,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.165;
+	M.version = 17.166;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -3343,7 +3343,6 @@
 
 		var arr = [];
 		var items;
-		var count = 0;
 
 		items = $(ATTRURL);
 
@@ -3477,7 +3476,6 @@
 				}
 
 				current_element = null;
-				count++;
 				next();
 
 			}, item.expire);
@@ -9633,7 +9631,6 @@
 
 				} else {
 
-
 					diff = e.pageX - drag.offset;
 
 					if (diff < 0)
@@ -9799,6 +9796,7 @@
 			var is = size.prevx !== x || size.prevy !== y;
 			var pos;
 			var p;
+			var d;
 			var max;
 
 			size.prevx = x;
@@ -9806,15 +9804,13 @@
 
 			if (size.vbar && canY) {
 
-				var d = ((size.scrollHeight - size.clientHeight) + size.margin);
-
+				d = (size.scrollHeight - size.clientHeight) + 1;
 				p = d ? Math.ceil((y / d) * 100) : 0;
-
 				if (p > 100)
 					p = 100;
 
-				max = size.vbarlength - size.vbarsize;
-				pos = ((p / 100) * max) >> 0;
+				max = (size.vbarlength || 0) - (size.vbarsize || 0);
+				pos = Math.ceil((p / 100) * max);
 
 				if (pos < 0)
 					pos = 0;
@@ -9831,7 +9827,9 @@
 			}
 
 			if (size.hbar && canX) {
-				p = Math.ceil((x / (size.scrollWidth - size.clientWidth)) * 100);
+
+				d = (size.scrollWidth - size.clientWidth) + 1;
+				p = d ? Math.ceil((x / d) * 100) : 0;
 
 				if (p > 100)
 					p = 100;
@@ -9921,7 +9919,8 @@
 				drag.counter = 0;
 			} else {
 				// path
-				var p = Math.ceil((e.offsetX / (size.viewWidth - size.hbarsize)) * 100);
+				var offsetX = e.offsetX < 10 ? 0 : e.offsetX > (size.viewWidth - 10) ? size.viewWidth : (e.offsetX - 10);
+				var p = Math.ceil((offsetX / (size.viewWidth - size.hbarsize)) * 100);
 				self.scrollLeft(((size.scrollWidth - size.viewWidth + (options.marginX || 0)) / 100) * (p > 100 ? 100 : p));
 				drag.is = false;
 				return;
@@ -9952,7 +9951,8 @@
 				drag.counter = 0;
 			} else {
 				// path
-				var p = Math.ceil((e.offsetY / (size.viewHeight - size.vbarsize)) * 100);
+				var offsetY = e.offsetY < 10 ? 0 : e.offsetY > (size.viewHeight - 10) ? size.viewHeight : (e.offsetY - 10);
+				var p = Math.ceil((offsetY / (size.viewHeight - size.vbarsize)) * 100);
 				self.scrollTop(((size.scrollHeight - size.viewHeight + (options.marginY || 0)) / 100) * (p > 100 ? 100 : p));
 				drag.is = false;
 				return;
