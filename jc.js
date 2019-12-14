@@ -5262,6 +5262,7 @@
 	};
 
 	PPC.parent = SCP.parent = function(sel) {
+		var self = this;
 		if (sel && sel !== 'parent')
 			return sel === 'window' ? $(W) : self.element.closest(sel);
 		return self.element.parent();
