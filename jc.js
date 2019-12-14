@@ -302,7 +302,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.040;
+	M.version = 18.041;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2979,7 +2979,7 @@
 				}
 
 				current_com = obj;
-				com.declaration.call(obj, obj, obj.config);
+				com.declaration.call(obj, obj, obj.config, 'ui-' + obj.name);
 				current_com = null;
 
 				meta[3] && el.attrd('jc-value', meta[3]);
@@ -3470,7 +3470,7 @@
 
 		extensions[obj.name] && extensions[obj.name].forEach(function(item) {
 			item.config && obj.reconfigure(item.config, NOOP);
-			item.fn.call(obj, obj, obj.config);
+			item.fn.call(obj, obj, obj.config, 'ui-' + obj.name);
 		});
 
 		var value = obj.get();
@@ -5262,7 +5262,9 @@
 	};
 
 	PPC.parent = SCP.parent = function(sel) {
-		return this.element.parent(sel);
+		if (sel && sel !== 'parent')
+			return sel === 'window' ? $(W) : self.element.closest(sel);
+		return self.element.parent();
 	};
 
 	var TNB = { number: 1, boolean: 1 };
@@ -5707,7 +5709,7 @@
 			var m = M.components[i];
 			if (!m.$removed || name === m.name){
 				config && m.reconfigure(config, undefined, true);
-				declaration.call(m, m, m.config);
+				declaration.call(m, m, m.config, 'ui–' + m.name);
 			}
 		}
 
