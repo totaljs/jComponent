@@ -302,7 +302,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.041;
+	M.version = 18.042;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8640,7 +8640,7 @@
 						})(v);
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'delay', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', 'click', 'format', 'currency', 'empty', 'release', 'changes') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'resize', 'delay', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', 'click', 'format', 'currency', 'empty', 'release', 'changes') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -8695,6 +8695,7 @@
 								break;
 							case 'currency':
 							case 'focus':
+							case 'resize':
 								fn = v;
 								break;
 							case 'format':
@@ -9350,6 +9351,12 @@
 			}, elf.length ? 100 : 1500, item);
 		}
 
+		if (can && item.resize) {
+			setTimeout(function(el) {
+				el.SETTER('*', 'resize');
+			}, 100, el);
+		}
+
 		if (can && index == null && item.child) {
 			var curr_scope = current_scope;
 			for (var i = 0; i < item.child.length; i++)
@@ -9948,7 +9955,7 @@
 
 		self.size = size;
 		self.resize2 = onresize;
-		self.resize = function(scrolling) {
+		self.resize = function(scrolling, force) {
 
 			if (resizeid) {
 				clearTimeout(resizeid);
@@ -9956,7 +9963,7 @@
 			}
 
 			// Not visible
-			if (HIDDEN(element[0]))
+			if (!force && HIDDEN(element[0]))
 				return;
 
 			animcache.yis = false;
