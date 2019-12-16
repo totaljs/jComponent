@@ -9523,6 +9523,7 @@
 		var orientation = options.orientation;
 		var canX = !orientation || orientation === 'x';
 		var canY = !orientation || orientation === 'y';
+		var isedge = navigator.userAgent.indexOf('Edge') !== -1;
 
 		controls.prepend(('<div class="{0}-path {0}-notready" data-id="{1}">' + (canY ? '<div class="{0}-y" data-id="{1}"><span><b></b></span></div>' : '') + (canX ? '<div class="{0}-x" data-id="{1}"><span><b></b></span></div></div>' : '')).format(n, id));
 		element[0].$scrollbar = self;
@@ -9546,6 +9547,7 @@
 		var synclocked;
 		var syncdelay;
 		var syncid = 'cs' + GUID(5);
+		var scrollbarcache = {};
 
 		self.pathx = pathx;
 		self.pathy = pathy;
@@ -9599,7 +9601,12 @@
 		};
 
 		handlers.onresize = function() {
-			!delayresize && path.aclass(n + '-notready');
+
+			if (!delayresize) {
+				scrollbarcache.ready = 0;
+				path.aclass(n + '-notready');
+			}
+
 			delayresize && clearTimeout(delayresize);
 			delayresize = setTimeout(self.resize, 500);
 		};
@@ -9953,6 +9960,9 @@
 		var cssy = {};
 		var cssba = {};
 
+		var PR = 'padding-right';
+		var PB = 'padding-bottom';
+
 		self.size = size;
 		self.resize2 = onresize;
 		self.resize = function(scrolling, force) {
@@ -10081,7 +10091,10 @@
 					if (size.vbarsize < 30)
 						size.vbarsize = 30;
 					size.vbarlength = cssy.height;
-					bary.css(T_HEIGHT, size.vbarsize).attrd('size', size.vbarsize);
+					if (scrollbarcache.vbarsize !== size.vbarsize) {
+						scrollbarcache.vbarsize = size.vbarsize;
+						bary.css(T_HEIGHT, size.vbarsize).attrd('size', size.vbarsize);
+					}
 				}
 			}
 
@@ -10092,7 +10105,11 @@
 					size.hbarlength = cssx.width;
 					if (size.hbarsize < 30)
 						size.hbarsize = 30;
-					barx.css(T_WIDTH, size.hbarsize).attrd('size', size.hbarsize);
+
+					if (scrollbarcache.hbarsize !== size.hbarsize) {
+						scrollbarcache.hbarsize = size.hbarsize;
+						barx.css(T_WIDTH, size.hbarsize).attrd('size', size.hbarsize);
+					}
 				}
 			}
 
@@ -10103,8 +10120,16 @@
 				size.hbarsize = 0;
 
 			var n = 'ui-scrollbar-';
-			canX && pathx.tclass((visibleX ? n : '') + T_HIDDEN, !size.hbar);
-			canY && pathy.tclass((visibleY ? n : '') + T_HIDDEN, !size.vbar);
+
+			if (canX && scrollbarcache.hbar !== size.hbar) {
+				scrollbarcache.hbar = size.hbar;
+				pathx.tclass((visibleX ? n : '') + T_HIDDEN, !size.hbar);
+			}
+
+			if (canY && scrollbarcache.vbar !== size.vbar) {
+				scrollbarcache.vbar = size.vbar;
+				pathy.tclass((visibleY ? n : '') + T_HIDDEN, !size.vbar);
+			}
 
 			if (visibleX && !size.hbar)
 				size.hbar = true;
@@ -10112,22 +10137,46 @@
 			if (visibleY && !size.vbar)
 				size.vbar = true;
 
-			element.tclass(n + 'isx', size.hbar && canX).tclass(n + 'isy', size.vbar && canY).tclass(n + 'touch', md);
-			path.rclass(n + 'notready');
+			var isx = size.hbar && canX;
+			var isy = size.vbar && canY;
+
+			if (scrollbarcache.isx !== isx) {
+				scrollbarcache.isx = isx;
+				element.tclass(n + 'isx', isx);
+			}
+
+			if (scrollbarcache.isy !== isy) {
+				scrollbarcache.isy = isy;
+				element.tclass(n + 'isy', isy);
+			}
+
+			if (scrollbarcache.md !== md) {
+				scrollbarcache.md = md;
+				element.tclass(n + 'touch', md);
+			}
+
+			if (!scrollbarcache.ready) {
+				scrollbarcache.ready = 1;
+				path.rclass(n + 'notready');
+			}
 
 			if (size.margin) {
 				var plus = size.margin;
 
-				if (W.isIE == false && sw && navigator.userAgent.indexOf('Edge') === -1)
+				if (W.isIE == false && sw && !isedge)
 					plus = 0;
 
 				if (canY)
-					cssba['margin-right'] = size.vbar ? (size.thicknessV + plus) : plus;
+					cssba[PR] = size.vbar ? (size.thicknessV + plus) : plus;
 
 				if (canX)
-					cssba['margin-bottom'] = size.hbar ? (size.thicknessH + plus) : plus;
+					cssba[PB] = size.hbar ? (size.thicknessH + plus) : plus;
 
-				bodyarea.css(cssba);
+				if (scrollbarcache[PR] !== cssba[PR] || scrollbarcache[PB] !== cssba[PB]) {
+					scrollbarcache[PR] = cssba[PR];
+					scrollbarcache[PB] = cssba[PB];
+					bodyarea.css(cssba);
+				}
 			}
 
 			options.onresize && options.onresize(self);
