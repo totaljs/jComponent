@@ -302,7 +302,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.042;
+	M.version = 18.043;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
