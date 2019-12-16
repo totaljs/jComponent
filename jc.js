@@ -114,7 +114,7 @@
 	};
 
 	var prefload = function(data) {
-		if (typeof(data) === 'string')
+		if (typeof(data) === TYPE_S)
 			data = PARSE(data);
 
 		if (data) {
@@ -302,7 +302,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.044;
+	M.version = 18.045;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6766,7 +6766,7 @@
 
 	SP.arg = function(obj, encode, def) {
 
-		if (typeof(encode) === 'string')
+		if (typeof(encode) === TYPE_S)
 			def = encode;
 
 		return this.replace(REGPARAMS, function(text) {
@@ -10033,12 +10033,17 @@
 				aw = size.viewWidth - mx;
 				ah = size.viewHeight - mx;
 
+				if (scrollbarcache.md != md) {
+					// scrollbarcache.md = md; --> is defined below
+					path.tclass(T_HIDDEN, md);
+				}
+
 			} else {
 				aw = size.viewWidth + size.margin - mx;
 				ah = size.viewHeight + size.margin - my;
 			}
 
-			if (scrollbarcache.aw !== aw) {
+			if (!md && scrollbarcache.aw !== aw) {
 				scrollbarcache.aw = aw;
 				area.css(T_WIDTH, aw);
 				bodyarea.css('min-width', size.viewWidth - mx + (W.isIE || isedge || !sw ? size.margin : 0));
@@ -10206,7 +10211,7 @@
 			if (val == null)
 				return area[0].scrollLeft;
 
-			if (typeof(val) === 'string')
+			if (typeof(val) === TYPE_S)
 				val = area[0].scrollLeft + (+val);
 
 			size.hpos = -1;
@@ -10218,7 +10223,7 @@
 			if (val == null)
 				return area[0].scrollTop;
 
-			if (typeof(val) === 'string')
+			if (typeof(val) === TYPE_S)
 				val = area[0].scrollTop + (+val);
 
 			size.vpos = -1;
