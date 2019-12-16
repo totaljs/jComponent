@@ -294,7 +294,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.169;
+	M.version = 17.170;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -10089,12 +10089,17 @@
 				aw = size.viewWidth - mx;
 				ah = size.viewHeight - mx;
 
+				if (scrollbarcache.md != md) {
+					// scrollbarcache.md = md; --> is defined below
+					path.tclass(T_HIDDEN, md);
+				}
+
 			} else {
 				aw = size.viewWidth + size.margin - mx;
 				ah = size.viewHeight + size.margin - my;
 			}
 
-			if (scrollbarcache.aw !== aw) {
+			if (!md && scrollbarcache.aw !== aw) {
 				scrollbarcache.aw = aw;
 				area.css(T_WIDTH, aw);
 				bodyarea.css('min-width', size.viewWidth - mx + (W.isIE || isedge || !sw ? size.margin : 0));
@@ -10262,7 +10267,7 @@
 			if (val == null)
 				return area[0].scrollLeft;
 
-			if (typeof(val) === 'string')
+			if (typeof(val) === TYPE_S)
 				val = area[0].scrollLeft + (+val);
 
 			size.hpos = -1;
@@ -10274,7 +10279,7 @@
 			if (val == null)
 				return area[0].scrollTop;
 
-			if (typeof(val) === 'string')
+			if (typeof(val) === TYPE_S)
 				val = area[0].scrollTop + (+val);
 
 			size.vpos = -1;
