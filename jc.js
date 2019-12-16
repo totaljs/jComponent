@@ -294,7 +294,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.168;
+	M.version = 17.169;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -10074,6 +10074,8 @@
 
 			var mx = canX ? (options.marginX || 0) : 0;
 			var my = canY ? (options.marginY || 0) : 0;
+			var aw;
+			var ah;
 
 			// Safari iOS
 			if (md) {
@@ -10084,11 +10086,23 @@
 				if (size.viewWidth > screen.width)
 					size.viewWidth = screen.width;
 
-				area.css(T_WIDTH, size.viewWidth - mx);
-				area.css(T_HEIGHT, size.viewHeight - mx);
+				aw = size.viewWidth - mx;
+				ah = size.viewHeight - mx;
+
 			} else {
-				area.css(T_WIDTH, size.viewWidth + size.margin - mx);
-				area.css(T_HEIGHT, size.viewHeight + size.margin - my);
+				aw = size.viewWidth + size.margin - mx;
+				ah = size.viewHeight + size.margin - my;
+			}
+
+			if (scrollbarcache.aw !== aw) {
+				scrollbarcache.aw = aw;
+				area.css(T_WIDTH, aw);
+				bodyarea.css('min-width', size.viewWidth - mx + (W.isIE || isedge || !sw ? size.margin : 0));
+			}
+
+			if (scrollbarcache.ah !== ah) {
+				scrollbarcache.ah = ah;
+				area.css(T_HEIGHT, ah);
 			}
 
 			size.scrollWidth = a.scrollWidth || 0;
