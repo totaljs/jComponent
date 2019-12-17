@@ -306,7 +306,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.046;
+	M.version = 18.047;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10047,9 +10047,9 @@
 				ah = size.viewHeight + size.margin - my;
 			}
 
-			if (!md && scrollbarcache.aw !== aw) {
+			if (scrollbarcache.aw !== aw) {
 				scrollbarcache.aw = aw;
-				area.css(T_WIDTH, aw);
+				!md && area.css(T_WIDTH, aw);
 				bodyarea.css('min-width', size.viewWidth - mx + (W.isIE || isedge || !sw ? size.margin : 0));
 			}
 
