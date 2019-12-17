@@ -298,7 +298,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.171;
+	M.version = 17.172;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -10103,9 +10103,9 @@
 				ah = size.viewHeight + size.margin - my;
 			}
 
-			if (!md && scrollbarcache.aw !== aw) {
+			if (scrollbarcache.aw !== aw) {
 				scrollbarcache.aw = aw;
-				area.css(T_WIDTH, aw);
+				!md && area.css(T_WIDTH, aw);
 				bodyarea.css('min-width', size.viewWidth - mx + (W.isIE || isedge || !sw ? size.margin : 0));
 			}
 
