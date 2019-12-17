@@ -39,6 +39,7 @@
 	var KEY_ENV = 'environment';
 	var REG_DATE = /\.|-|\/|\\|:|\s/g;
 	var REG_TIME = /am|pm/i;
+	var T_BODY = 'BODY';
 	var T_DISABLED = 'disabled';
 	var T_HIDDEN = 'hidden';
 	var T_WIDTH = 'width';
@@ -93,6 +94,9 @@
 
 		if (el instanceof jQuery)
 			el = el[0];
+
+		if (el.parentNode && el.parentNode.tagName === T_BODY)
+			return false;
 
 		if (W.isIE)
 			return !el.offsetWidth && !el.offsetHeight;
@@ -302,7 +306,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.045;
+	M.version = 18.046;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2939,7 +2943,7 @@
 						else
 							pc.$children = 1;
 						break;
-					} else if (parent.tagName === 'BODY')
+					} else if (parent.tagName === T_BODY)
 						break;
 					parent = parent.parentNode;
 					if (parent == null)
@@ -3115,7 +3119,7 @@
 		if (el && el.$noscope)
 			return;
 
-		while (el && el.tagName !== 'BODY') {
+		while (el && el.tagName !== T_BODY) {
 
 			var path = el.getAttribute ? (el.getAttribute(ATTRSCOPE2) || el.getAttribute(SCOPENAME)) : null;
 			if (path) {
@@ -3443,7 +3447,7 @@
 		obj.released && obj.released(obj.isreleased);
 		M.components.push(obj);
 		C.init.push(obj);
-		type !== 'BODY' && REGCOM.test(el[0].innerHTML) && compile(el);
+		type !== T_BODY && REGCOM.test(el[0].innerHTML) && compile(el);
 		ready();
 	}
 
@@ -3964,11 +3968,11 @@
 	function inDOM(el) {
 		if (!el)
 			return;
-		if (el.tagName === 'BODY')
+		if (el.tagName === T_BODY)
 			return true;
 		var parent = el.parentNode;
 		while (parent) {
-			if (parent.tagName === 'BODY')
+			if (parent.tagName === T_BODY)
 				return true;
 			parent = parent.parentNode;
 		}
@@ -4057,7 +4061,7 @@
 			component.destroy && component.destroy();
 			$('#css' + component.ID).remove();
 
-			if (c[0].tagName !== 'BODY') {
+			if (c[0].tagName !== T_BODY) {
 				c.off();
 				c.find('*').off();
 				c.remove();
@@ -7932,7 +7936,7 @@
 
 			el = el.parentNode;
 
-			while (el && el.tagName !== 'BODY') {
+			while (el && el.tagName !== T_BODY) {
 				if (el.$scopedata)
 					return el.$scopedata;
 				if (el.$noscope)
@@ -9943,7 +9947,7 @@
 			var is = false;
 
 			while (parent) {
-				if (parent.tagName === 'BODY') {
+				if (parent.tagName === T_BODY) {
 					is = true;
 					break;
 				}
