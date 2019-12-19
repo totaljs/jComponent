@@ -298,7 +298,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.173;
+	M.version = 17.174;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -10248,7 +10248,7 @@
 				if (canY)
 					cssba[PR] = size.vbar ? (size.thicknessV + plus) : plus;
 
-				if (canX)
+				if (canX || orientation === 'y')
 					cssba[PB] = size.hbar ? (size.thicknessH + plus) : plus;
 
 				if (scrollbarcache[PR] !== cssba[PR] || scrollbarcache[PB] !== cssba[PB]) {
