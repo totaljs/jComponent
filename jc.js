@@ -298,7 +298,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.174;
+	M.version = 17.175;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
