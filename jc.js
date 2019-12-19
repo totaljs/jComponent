@@ -306,7 +306,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.049;
+	M.version = 18.050;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10017,8 +10017,18 @@
 				// Mac OS
 				size.empty = 1;
 				size.margin = options.margin == null ? 25 : options.margin;
-			} else
+				self.margin = options.margin == null ? -size.thicknessH : options.margin;
+				self.marginX = canY ? self.margin : 0;
+				self.marginY = canX ? self.margin : 0;
+			} else {
 				size.empty = 0;
+				self.margin = sw;
+				self.marginX = canY ? self.margin : 0;
+				self.marginY = canX ? self.margin : 0;
+			}
+
+			self.thinknessX = size.thicknessH;
+			self.thinknessY = size.thicknessY;
 
 			var mx = canX ? (options.marginX || 0) : 0;
 			var my = canY ? (options.marginY || 0) : 0;
@@ -10043,14 +10053,14 @@
 				}
 
 			} else {
-				aw = size.viewWidth + size.margin - mx;
-				ah = size.viewHeight + size.margin - my;
+				aw = size.viewWidth + (canY ? size.margin : 0) - mx;
+				ah = size.viewHeight + (canX ? size.margin : 0) - my;
 			}
 
 			if (scrollbarcache.aw !== aw) {
 				scrollbarcache.aw = aw;
 				!md && area.css(T_WIDTH, aw);
-				bodyarea.css(orientation === 'y' ? T_WIDTH : 'min-width', size.viewWidth - mx + (W.isIE || isedge || !sw ? size.margin : 0));
+				bodyarea.css(orientation === 'y' ? T_WIDTH : 'min-width', size.viewWidth - mx + (W.isIE || isedge || !sw ? size.margin : 0) - (orientation === 'x' ? size.margin : 0));
 			}
 
 			if (scrollbarcache.ah !== ah) {
@@ -10128,12 +10138,21 @@
 					size.hbarlength = cssx.width;
 					if (size.hbarsize < 30)
 						size.hbarsize = 30;
-
 					if (scrollbarcache.hbarsize !== size.hbarsize) {
 						scrollbarcache.hbarsize = size.hbarsize;
 						barx.css(T_WIDTH, size.hbarsize).attrd('size', size.hbarsize);
 					}
 				}
+			}
+
+			if (scrollbarcache.canX !== canX) {
+				scrollbarcache.canX = canX;
+				area.css('overflow-x', canX ? '' : 'hidden');
+			}
+
+			if (scrollbarcache.canY !== canY) {
+				scrollbarcache.canY = canY;
+				area.css('overflow-y', canY ? '' : 'hidden');
 			}
 
 			if (!size.vbarsize)
@@ -10192,7 +10211,7 @@
 				if (canY)
 					cssba[PR] = size.vbar ? (size.thicknessV + plus) : plus;
 
-				if (canX || orientation === 'y')
+				if (canX)
 					cssba[PB] = size.hbar ? (size.thicknessH + plus) : plus;
 
 				if (scrollbarcache[PR] !== cssba[PR] || scrollbarcache[PB] !== cssba[PB]) {
