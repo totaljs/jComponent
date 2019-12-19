@@ -306,7 +306,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.048;
+	M.version = 18.049;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10192,7 +10192,7 @@
 				if (canY)
 					cssba[PR] = size.vbar ? (size.thicknessV + plus) : plus;
 
-				if (canX)
+				if (canX || orientation === 'y')
 					cssba[PB] = size.hbar ? (size.thicknessH + plus) : plus;
 
 				if (scrollbarcache[PR] !== cssba[PR] || scrollbarcache[PB] !== cssba[PB]) {
