@@ -298,7 +298,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.172;
+	M.version = 17.173;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -10043,7 +10043,7 @@
 
 			var a = area[0];
 			var el = element;
-			var md = isMOBILE && isTOUCH;
+			var md = isMOBILE && !SCROLLBARWIDTH();
 
 			delayresize = null;
 
@@ -10106,7 +10106,7 @@
 			if (scrollbarcache.aw !== aw) {
 				scrollbarcache.aw = aw;
 				!md && area.css(T_WIDTH, aw);
-				bodyarea.css('min-width', size.viewWidth - mx + (W.isIE || isedge || !sw ? size.margin : 0));
+				bodyarea.css(orientation === 'y' ? T_WIDTH : 'min-width', size.viewWidth - mx + (W.isIE || isedge || !sw ? size.margin : 0));
 			}
 
 			if (scrollbarcache.ah !== ah) {
@@ -10315,9 +10315,9 @@
 		self.destroy = function() {
 			clearInterval(intervalresize);
 			unbind();
-			area.off();
-			pathx.off();
-			pathy.off();
+			area && area.off();
+			pathx && pathx.off();
+			pathy && pathy.off();
 			OFF(T_RESIZE, self.resize);
 			var index = M.scrollbars.indexOf(self);
 			if (index !== -1)
