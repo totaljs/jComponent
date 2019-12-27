@@ -306,7 +306,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.050;
+	M.version = 18.051;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1676,6 +1676,12 @@
 
 	function ajaxcustomerror(response, headers, code) {
 		var t = this;
+
+		if (typeof(headers) === TYPE_N) {
+			code = headers;
+			headers = null;
+		}
+
 		t.cancel = false;
 		t.process = true;
 		ajaxprocess(t, code, ATTRDATA, response, headers || EMPTYOBJECT, true);
