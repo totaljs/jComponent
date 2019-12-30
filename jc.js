@@ -4206,7 +4206,7 @@
 
 	SCP.makepath = function(val) {
 		var t = this;
-		return val.replace(/\?\d+/, function(text) {
+		return val.replace(/\?\d+/g, function(text) {
 			var skip = +text.substring(1);
 			var parent = t.parent;
 			for (var i = 1; i < skip; i++) {
@@ -4214,7 +4214,7 @@
 					parent = parent.parent;
 			}
 			return parent ? parent.path : t.path;
-		}).replace(/\?/g, t.path);
+		}).replace(REGSCOPEINLINE, t.path);
 	};
 
 	SCP.unwatch = function(path, fn) {
@@ -7341,7 +7341,7 @@
 		if (element instanceof COM)
 			return element.scope ? element.scope.makepath(t) : element.scopepath(t);
 		else if (element instanceof Plugin)
-			return t.replace(/\?/g, element.name);
+			return t.replace(REGSCOPEINLINE, element.name);
 		else if (element instanceof jQuery || element.nodeName) {
 			var tmp = $(element).scope();
 			return tmp ? tmp.makepath(t) : t;
@@ -8655,7 +8655,7 @@
 						var vbeg = v.indexOf('(');
 						var vfn = vbeg == -1 ? v : v.substring(0, vbeg);
 						var vkey = ATTRDATA + GUID(5);
-						v = new Function('value', 'path', 'el', 'var fn=el[0].' + vkey + ';if(!fn){var scope=el.scope();el[0].' + vkey + '=fn=GET(\'' + vfn + '\'.replace(/\\?/g,scope.path));}if(fn)return fn' + (vbeg == -1 ? '(value,path,el)' : v.substring(vbeg)));
+						v = new Function('value', 'path', 'el', 'var fn=el[0].' + vkey + ';if(!fn){var _s=el.scope();if(_s){el[0].' + vkey + '=fn=GET(_s.makepath(\'' + vfn + '\'))}}if(fn)return fn' + (vbeg == -1 ? '(value,path,el)' : v.substring(vbeg)));
 					}
 
 					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'resize', 'delay', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', 'click', 'format', 'currency', 'empty', 'release', 'changes') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
