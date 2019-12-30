@@ -15,6 +15,7 @@
 	var REGWILDCARD = /\.\*/;
 	var REGISARR = /\[\d+\]$/;
 	var REGSCOPEINLINE = /\?/g;
+	var REGSCOPECHECK = /\?\/|\?\./;
 	var T_COM = '---';
 	var T_DATA = 'data-';
 	var ATTRCOM = '[data-jc],[data--],[data' + T_COM + ']';
@@ -306,7 +307,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.051;
+	M.version = 18.052;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8650,7 +8651,14 @@
 						})(v);
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'resize', 'delay', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', 'click', 'format', 'currency', 'empty', 'release', 'changes') && k.substring(0, 3) !== 'def' ? v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					if (REGSCOPECHECK.test(v)) {
+						var vbeg = v.indexOf('(');
+						var vfn = vbeg == -1 ? v : v.substring(0, vbeg);
+						var vkey = ATTRDATA + GUID(5);
+						v = new Function('value', 'path', 'el', 'var fn=el[0].' + vkey + ';if(!fn){var scope=el.scope();el[0].' + vkey + '=fn=GET(\'' + vfn + '\'.replace(/\\?/g,scope.path));}if(fn)return fn' + (vbeg == -1 ? '(value,path,el)' : v.substring(vbeg)));
+					}
+
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'resize', 'delay', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', 'click', 'format', 'currency', 'empty', 'release', 'changes') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
