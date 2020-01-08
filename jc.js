@@ -16,6 +16,7 @@
 	var REGISARR = /\[\d+\]$/;
 	var REGSCOPEINLINE = /\?/g;
 	var REGSCOPECHECK = /\?\/|\?\./;
+	var REGSCOPEREPLACE = /\?\//g;
 	var T_COM = '---';
 	var T_DATA = 'data-';
 	var ATTRCOM = '[data-jc],[data--],[data' + T_COM + ']';
@@ -64,6 +65,7 @@
 	var T_COMPILED = 'jc-compile';
 	var T_IMPORT = 'import';
 	var T_TMP = 'jctmp.';
+	var T_UNKNOWN = 'UNKNOWN';
 	var ERRCONN = 'ERR_CONNECTION_CLOSED';
 	var OK = Object.keys;
 
@@ -307,7 +309,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.052;
+	M.version = 18.053;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -654,7 +656,7 @@
 		return h;
 	}
 
-	function findFormat(val) {
+	function findformat(val) {
 		var a = val.indexOf('-->');
 		var s = 3;
 
@@ -668,7 +670,15 @@
 				val += '(value)';
 		}
 
-		return a === -1 ? null : { path: val.substring(0, a).trim(), fn: FN(val.substring(a + s).trim()) };
+		var fn = val.substring(a + s).trim();
+		var is = false;
+		if (fn.indexOf('?/') !== -1) {
+			s = fn.indexOf('(');
+			fn = '(value,path,type,scope)=>scope?scope.$format(\'' + fn.substring(2, s) + '\')' + fn.substring(s) + ':value';
+			is = true;
+		}
+
+		return a === -1 ? null : { path: val.substring(0, a).trim(), fn: FN(fn), scope: is };
 	}
 
 	W.UPLOAD = function(url, data, callback, timeout, progress) {
@@ -854,10 +864,11 @@
 		if (name === 'watch') {
 			var arr = [];
 
-			var tmp = findFormat(path);
+			var tmp = findformat(path.replace(REGSCOPEREPLACE, scope || T_UNKNOWN));
 			if (tmp) {
 				path = tmp.path;
 				obj.format = tmp.fn;
+				obj.format.scope = tmp.scope;
 			}
 
 			if (path.substring(path.length - 1) === '.')
@@ -945,7 +956,7 @@
 
 		if (path) {
 			path = path.replace('.*', '').trim();
-			var tmp = findFormat(path);
+			var tmp = findformat(path);
 			if (tmp)
 				path = tmp.path;
 			if (path.substring(path.length - 1) === '.')
@@ -4200,9 +4211,20 @@
 	// SCOPE
 	// ===============================================================
 
-	function Scope() {}
+	function Scope(path) {
+		this.path = path;
+	}
 
 	var SCP = Scope.prototype;
+
+	SCP.$formatnoop = function(value) {
+		return value;
+	};
+
+	SCP.$format = function(endpoint) {
+		var plugin = W.PLUGINS[this.path];
+		return plugin && plugin[endpoint] || SCP.$formatnoop;
+	};
 
 	SCP.makepath = function(val) {
 		var t = this;
@@ -4399,7 +4421,7 @@
 			if (arguments.length) {
 
 				if (self.$format)
-					value = self.$format(value, path, type);
+					value = self.$format(value, path, type, self.scope);
 
 				if (self.$bindreleased) {
 
@@ -5084,11 +5106,14 @@
 		// type 2: scope
 
 		var self = this;
-		var tmp = findFormat(path);
+		var tmp = findformat(path);
 
 		if (tmp) {
 			path = tmp.path;
 			self.$format = tmp.fn;
+			if (tmp.scope)
+				self.$format.scope = true;
+
 		} else if (!type)
 			self.$format = null;
 
@@ -5564,11 +5589,11 @@
 		var self = this;
 		if (self.$pp)
 			return self.owner.data(self.path);
-
 		path = path ? self.makepath(path) : self.path;
-
-		if (path)
-			return get(path);
+		if (path) {
+			var val = get(path);
+			return self.$format ? self.$format(val, path, -1, self.scope) : val;
+		}
 	};
 
 	PPC.skip = function() {
@@ -5804,7 +5829,6 @@
 	W.FN = function(exp, notrim) {
 
 		exp = exp.replace(REGFNPLUGIN, regfnplugin);
-
 		var index = exp.indexOf('=>');
 		if (index === -1)
 			return isValue(exp) ? FN('value=>' + rebinddecode(exp), true) : new Function('return ' + (exp.indexOf('(') === -1 ? 'typeof({0})==\'function\'?{0}.apply(this,arguments):{0}'.format(exp) : exp));
@@ -5821,7 +5845,6 @@
 			is = true;
 			val = val.substring(1, val.length - 1).trim();
 		}
-
 
 		var output = (is ? '' : 'return ') + val;
 		switch (arg.length) {
@@ -8874,10 +8897,11 @@
 						return fn ? fn : null;
 					}
 
-					tmp = findFormat(path);
+					tmp = findformat(path);
 					if (tmp) {
 						path = tmp.path;
 						obj.formatter = tmp.fn;
+						obj.formatter.scope = tmp.scope;
 					}
 
 					// Is virtual path?
@@ -9160,7 +9184,7 @@
 		}
 
 		if (item.formatter)
-			value = item.formatter(value, path);
+			value = item.formatter(value, path, -1, item.formatter.scope ? new Scope(item.scope) : null);
 
 		can = can !== false;
 
