@@ -298,7 +298,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.175;
+	M.version = 17.176;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -5791,9 +5791,9 @@
 		return self;
 	};
 
-	PPC.rewrite = function(value) {
+	PPC.rewrite = function(value, type) {
 		var self = this;
-		REWRITE(self.path, value);
+		REWRITE(self.path, value, type);
 		return self;
 	};
 
