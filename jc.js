@@ -309,7 +309,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.053;
+	M.version = 18.054;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5634,9 +5634,9 @@
 		return self;
 	};
 
-	PPC.rewrite = function(value) {
+	PPC.rewrite = function(value, type) {
 		var self = this;
-		REWRITE(self.path, value);
+		REWRITE(self.path, value, type);
 		return self;
 	};
 
