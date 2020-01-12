@@ -298,7 +298,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.176;
+	M.version = 17.177;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -3051,8 +3051,9 @@
 					con.fn(obj) && obj.reconfigure(typeof(con.config) === TYPE_FN ? con.config.call(obj) : con.config, NOOP);
 				}
 
+				var at = obj.name.lastIndexOf('@');
 				current_com = obj;
-				com.declaration.call(obj, obj, obj.config, 'ui-' + obj.name);
+				com.declaration.call(obj, obj, obj.config, 'ui-' + (at === - 1 ? obj.name : obj.name.substring(0, at)));
 				current_com = null;
 
 				meta[3] && el.attrd('jc-value', meta[3]);
