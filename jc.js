@@ -309,7 +309,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.054;
+	M.version = 18.055;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3000,8 +3000,9 @@
 					con.fn(obj) && obj.reconfigure(typeof(con.config) === TYPE_FN ? con.config.call(obj) : con.config, NOOP);
 				}
 
+				var at = obj.name.lastIndexOf('@');
 				current_com = obj;
-				com.declaration.call(obj, obj, obj.config, 'ui-' + obj.name);
+				com.declaration.call(obj, obj, obj.config, 'ui-' + (at === - 1 ? obj.name : obj.name.substring(0, at)));
 				current_com = null;
 
 				meta[3] && el.attrd('jc-value', meta[3]);
