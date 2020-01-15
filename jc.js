@@ -309,7 +309,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.055;
+	M.version = 18.056;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -9337,6 +9337,18 @@
 				el.prop(T_DISABLED, tmp);
 			}
 			var conf = T_DISABLED + ':' + (tmp == true ? T_TRUE : T_FALSE);
+			for (var i = 0; i < el.length; i++) {
+				var c = el[i].$com;
+				if (c && c.$ready)
+					c.reconfigure(conf);
+				else
+					binderconfig(el[i], conf);
+			}
+		}
+
+		if (item.required && (can || item.required.$nv)) {
+			tmp = !!item.required.call(el, value, path, el);
+			var conf = 'required:' + (tmp == true ? T_TRUE : T_FALSE);
 			for (var i = 0; i < el.length; i++) {
 				var c = el[i].$com;
 				if (c && c.$ready)
