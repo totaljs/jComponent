@@ -66,6 +66,7 @@
 	var T_IMPORT = 'import';
 	var T_TMP = 'jctmp.';
 	var T_UNKNOWN = 'UNKNOWN';
+	var T_CLICK = 'click';
 	var ERRCONN = 'ERR_CONNECTION_CLOSED';
 	var OK = Object.keys;
 
@@ -309,7 +310,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.056;
+	M.version = 18.057;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8675,14 +8676,14 @@
 						})(v);
 					}
 
-					if (REGSCOPECHECK.test(v)) {
+					if (k !== T_CLICK && REGSCOPECHECK.test(v)) {
 						var vbeg = v.indexOf('(');
 						var vfn = vbeg == -1 ? v : v.substring(0, vbeg);
 						var vkey = ATTRDATA + GUID(5);
 						v = new Function('value', 'path', 'el', 'var fn=el[0].' + vkey + ';if(!fn){var _s=el.scope();if(_s){el[0].' + vkey + '=fn=GET(_s.makepath(\'' + vfn + '\'))}}if(fn)return fn' + (vbeg == -1 ? '(value,path,el)' : v.substring(vbeg)));
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'resize', 'delay', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', 'click', 'format', 'currency', 'empty', 'release', 'changes') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'resize', 'delay', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'currency', 'empty', 'release', 'changes') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -8746,7 +8747,7 @@
 								else
 									fn = v;
 								break;
-							case 'click':
+							case T_CLICK:
 								isclick = true;
 								fn = v;
 								break;
@@ -9070,11 +9071,11 @@
 				};
 			};
 
-			obj.click && obj.el.on('click', fn(obj.click));
+			obj.click && obj.el.on(T_CLICK, fn(obj.click));
 			var child = obj.child;
 			if (child) {
 				for (var i = 0; i < child.length; i++)
-					child[i].click && obj.el.on('click', child[i].selector, fn(child[i].click));
+					child[i].click && obj.el.on(T_CLICK, child[i].selector, fn(child[i].click));
 			}
 		}
 
