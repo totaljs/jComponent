@@ -310,7 +310,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.057;
+	M.version = 18.058;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1936,7 +1936,8 @@
 	};
 
 	W.BLOCKED = function(name, timeout, callback) {
-		var key = name;
+
+		var key = name.replace(REGSCOPEINLINE, current_scope || '?');
 		var item = blocked[key];
 		var now = Date.now();
 
@@ -6369,8 +6370,10 @@
 
 	W.NOTMODIFIED = function(path, value, fields) {
 
-		if (value === undefined)
+		if (value === undefined) {
+			path = pathmaker(path);
 			value = get(path);
+		}
 
 		if (value === undefined)
 			value = null;
