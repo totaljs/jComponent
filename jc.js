@@ -122,6 +122,7 @@
 	};
 
 	var prefload = function(data) {
+
 		if (typeof(data) === TYPE_S)
 			data = PARSE(data);
 
@@ -310,7 +311,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.058;
+	M.version = 18.059;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -537,10 +538,12 @@
 	};
 
 	W.ENVIRONMENT = function(name, version, language, env) {
+		var reload = MD.localstorage != name;
 		MD.localstorage = name;
 		MD.version = version || '';
 		MD.languagehtml = language || '';
 		env && ENV(env);
+		reload && load();
 	};
 
 	W.FREE = function(timeout) {
@@ -2744,10 +2747,22 @@
 		}
 	}
 
+	var loaddone = false;
+
 	function load() {
-		clearTimeout($ready);
+
+		$ready && clearTimeout($ready);
 		$ready = null;
+
+		if (loaddone) {
+			// Clears previous cache
+			storage = {};
+			blocked = {};
+		} else
+			loaddone = true;
+
 		var cache;
+
 		try {
 			cache = LS.getItem(MD.localstorage + '.cache');
 			if (cache && typeof(cache) === TYPE_S)
@@ -2758,6 +2773,7 @@
 			if (cache && typeof(cache) === TYPE_S)
 				blocked = PARSE(cache);
 		} catch (e) {}
+
 		if (storage) {
 			var obj = storage[T_PATHS];
 			obj && OK(obj.value).forEach(function(key) {
@@ -8388,6 +8404,8 @@
 				load();
 			}
 
+			var SELECTOR = 'input[' + ATTRJCBIND + '],textarea[' + ATTRJCBIND + '],select[' + ATTRJCBIND + ']';
+
 			$(document).on('input', 'input[' + ATTRJCBIND + '],textarea[' + ATTRJCBIND + ']', function() {
 
 				// realtime binding
@@ -8421,10 +8439,7 @@
 
 				self.$jctimeout && clearTimeout(self.$jctimeout);
 				self.$jctimeout = setTimeout(keypressdelay, self.$jcdelay, self);
-			});
-
-			var SELECTOR = 'input[' + ATTRJCBIND + '],textarea[' + ATTRJCBIND + '],select[' + ATTRJCBIND + ']';
-			$(document).on('focus blur', SELECTOR, function(e) {
+			}).on('focus blur', SELECTOR, function(e) {
 
 				var self = this;
 				var com = self.$com;
@@ -8450,9 +8465,7 @@
 					if (tmp)
 						com.$skip = tmp;
 				}
-			});
-
-			$(document).on('change', SELECTOR, function() {
+			}).on('change', SELECTOR, function() {
 
 				var self = this;
 				var com = self.$com;
