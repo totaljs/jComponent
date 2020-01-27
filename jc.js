@@ -311,7 +311,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.059;
+	M.version = 18.060;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8786,6 +8786,10 @@
 								k = 'disable';
 								backup = true;
 								break;
+							case 'enabled':
+								k = 'enable';
+								backup = true;
+								break;
 							case T_VALUE:
 								k = 'val';
 								backup = true;
@@ -8803,7 +8807,7 @@
 							case T_HTML:
 							case 'text':
 							case 'disable':
-							case 'enabled':
+							case 'enable':
 							case T_CHECKED:
 								backup = true;
 								break;
@@ -8874,7 +8878,7 @@
 							fn = new Function('return ' + v)();
 
 						if (backup && notnull)
-							obj[k + 'bk'] = (k == 'src' || k == 'href' || k == 'title') ? e.attr(k) : k == T_HTML ? e.html() : k == 'text' ? e.text() : k == 'val' ? e.val() : k == T_CHECKED ? e.prop(k) : k === 'disable' ? e.prop(T_DISABLED) : k === 'enabled' ? (e.prop(T_DISABLED) == false) : '';
+							obj[k + 'bk'] = (k == 'src' || k == 'href' || k == 'title') ? e.attr(k) : k == T_HTML ? e.html() : k == 'text' ? e.text() : k == 'val' ? e.val() : k == T_CHECKED ? e.prop(k) : k === 'disable' ? e.prop(T_DISABLED) : k === 'enable' ? (e.prop(T_DISABLED) == false) : '';
 
 						if (s) {
 
@@ -9345,12 +9349,12 @@
 			}
 		}
 
-		if (item.enabled && (can || item.enabled.$nv)) {
-			if (value != null || !item.enabled.$nn) {
-				tmp = !item.enabled.call(el, value, path, el);
+		if (item.enable && (can || item.enable.$nv)) {
+			if (value != null || !item.enable.$nn) {
+				tmp = !item.enable.call(el, value, path, el);
 				el.prop(T_DISABLED, tmp);
 			} else {
-				tmp = item.enabledbk == false;
+				tmp = item.enablebk == false;
 				el.prop(T_DISABLED, tmp);
 			}
 			var conf = T_DISABLED + ':' + (tmp == true ? T_TRUE : T_FALSE);
