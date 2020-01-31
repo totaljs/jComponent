@@ -311,7 +311,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.060;
+	M.version = 18.061;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7238,10 +7238,10 @@
 					return beg + 'd.getDate()' + end;
 				case 'HH':
 				case 'hh':
-					return beg + (half ? 'window.$jcdatempam(d.getHours()).padLeft(2, \'0\')' : 'd.getHours().padLeft(2, \'0\')') + end;
+					return beg + (half ? 'W.$jcdatempam(d.getHours()).padLeft(2, \'0\')' : 'd.getHours().padLeft(2, \'0\')') + end;
 				case 'H':
 				case 'h':
-					return beg + (half ? 'window.$jcdatempam(d.getHours())' : 'd.getHours()') + end;
+					return beg + (half ? 'W.$jcdatempam(d.getHours())' : 'd.getHours()') + end;
 				case 'mm':
 					return beg + 'd.getMinutes().padLeft(2, \'0\')' + end;
 				case 'm':
@@ -7256,13 +7256,13 @@
 					return beg + (key === 'ww' ? 'ww.padLeft(2, \'0\')' : 'ww') + end;
 				case 'a':
 					var b = '\'PM\':\'AM\'';
-					return beg + '(d.getHours() >= 12 ? ' + b + ')' + end;
+					return beg + '(d.getHours()>=12 ? ' + b + ')' + end;
 			}
 		});
 
-		ismm && before.push('var mm = M.months[d.getMonth()];');
-		isdd && before.push('var dd = M.days[d.getDay()];');
-		isww && before.push('var ww = new Date(+d);ww.setHours(0, 0, 0);ww.setDate(ww.getDate() + 4 - (ww.getDay() || 7));ww = Math.ceil((((ww - new Date(ww.getFullYear(), 0, 1)) / 8.64e7) + 1) / 7);');
+		ismm && before.push('var mm=W.MONTHS[d.getMonth()];');
+		isdd && before.push('var dd=W.DAYS[d.getDay()];');
+		isww && before.push('var ww=new Date(+d);ww.setHours(0,0,0);ww.setDate(ww.getDate()+4-(ww.getDay()||7));ww=Math.ceil((((ww-new Date(ww.getFullYear(),0,1))/8.64e7)+1)/7);');
 
 		statics[key] = new Function('d', before.join('\n') + 'return \'' + format + '\';');
 		return statics[key](self);
