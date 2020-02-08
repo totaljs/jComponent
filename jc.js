@@ -298,7 +298,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.177;
+	M.version = 17.178;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -1976,6 +1976,10 @@
 		!W.isPRIVATEMODE && local && LS.setItem(M.$localstorage + '.blocked', JSON.stringify(blocked));
 		callback && callback();
 		return false;
+	};
+
+	M.scope = function(val) {
+		return val === undefined ? current_scope : (current_scope = val);
 	};
 
 	// 1 === manually
