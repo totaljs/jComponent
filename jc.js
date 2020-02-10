@@ -10436,7 +10436,7 @@
 	};
 
 	W.NOTFOCUSED = function() {
-		return !(navigator.onLine || (isMOBILE ? true : document.hasFocus()));
+		return !(navigator.onLine && (isMOBILE ? true : document.hasFocus()));
 	};
 
 	W.QUEUE = function(name, fn) {
