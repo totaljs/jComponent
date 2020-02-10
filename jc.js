@@ -239,6 +239,7 @@
 	var binders = {};
 	var bindersnew = [];
 	var lazycom = {};
+	var repeats = {};
 
 	var current_owner = null;
 	var current_element = null;
@@ -311,7 +312,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.061;
+	M.version = 18.062;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -9543,6 +9544,17 @@
 		if (!self.element)
 			return true;
 
+		var keys = Object.keys(repeats);
+		var id = self.id + '_';
+
+		for (var i = 0; i < keys.length; i++) {
+			var key = keys[i];
+			if (key.substring(0, id.length) === id) {
+				clearInterval(repeats[key]);
+				delete repeats[key];
+			}
+		}
+
 		EMIT('plugin.destroy', self);
 		self.destroy && self.destroy();
 
@@ -10437,6 +10449,57 @@
 
 	W.NOTFOCUSED = function() {
 		return !(navigator.onLine && (isMOBILE ? true : document.hasFocus()));
+	};
+
+	W.REPEAT = function(condition, process, delay, init) {
+
+		if (typeof(process) === TYPE_N) {
+			init = delay;
+			delay = process;
+			process = condition;
+			condition = null;
+		}
+
+		var path;
+		var is = !!condition;
+
+		if (typeof(condition) === TYPE_S) {
+			var tmp = condition.split(REGMETA);
+			path = tmp[0].replace(REGSCOPEINLINE, current_scope);
+			condition = tmp[1] ? FN('value=>' + tmp[1]) : null;
+		}
+
+		var key = ('plug' + current_scope || '') + '_' + GUID(5);
+		var fn = function(scope) {
+
+			if (W.NOTFOCUSED())
+				return;
+
+			if (is) {
+				if (path) {
+					var tmp = GET(path);
+					if (condition) {
+						if (!condition(GET(path)))
+							return;
+					} else if (!tmp)
+						return;
+				} else if (!condition())
+					return;
+			}
+
+			var curr_scope;
+
+			if (scope) {
+				curr_scope = current_scope;
+				current_scope = scope;
+				process(scope);
+				current_scope = curr_scope;
+			} else
+				process();
+		};
+
+		repeats[key] = setInterval(fn, delay, current_scope);
+		init && fn(current_scope);
 	};
 
 	W.QUEUE = function(name, fn) {
