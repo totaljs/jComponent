@@ -92,20 +92,11 @@
 	};
 
 	W.HIDDEN = function(el) {
-
 		if (el == null)
 			return true;
-
 		if (el instanceof jQuery)
 			el = el[0];
-
-		if (el.parentNode && el.parentNode.tagName === T_BODY)
-			return false;
-
-		if (W.isIE)
-			return !el.offsetWidth && !el.offsetHeight;
-		else
-			return !el.offsetParent;
+		return el.parentNode && el.parentNode.tagName === T_BODY ? false : W.isIE ? (!el.offsetWidth && !el.offsetHeight) : !el.offsetParent;
 	};
 
 	var prefsave = function() {
@@ -313,11 +304,11 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.063;
+	M.version = 18.064;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
-	M.performance = {};
+	M.performance = { plugins: {}, scopes: {}, components: {}, binders: {}, events: {}, setters: {}, exec: {}, set: {}, get: {}, watchers: {}, requests: {}, compilation: {}, validation: {}, reset: {}, changes: {}};
 	M.components = [];
 	M.$formatter = [];
 	M.$parser = [];
@@ -745,8 +736,7 @@
 		if (output.cancel)
 			return;
 
-
-		DEF.monitor && monitor_method('UPLOAD', url);
+		DEF.monitor && monitor_method('requests');
 
 		setTimeout(function() {
 
@@ -868,8 +858,6 @@
 				scope = path.substring(0, index);
 		}
 
-		DEF.monitor && monitor_method('ON', name, path);
-
 		var obj = { name: name, fn: fn, owner: owner || current_owner, context: context || (current_com == null ? undefined : current_com), scope: scope };
 
 		if (name === 'watch') {
@@ -924,12 +912,17 @@
 			else
 				watches.unshift(obj);
 
+			DEF.monitor && monitor_method('watchers', 1);
+
 			if (init) {
 				obj.scope && (current_scope = obj.scope);
 				fn.call(context || M, path, obj.format ? obj.format(get(path), path, 0) : get(path), 0);
 			}
 
 		} else {
+
+			DEF.monitor && monitor_method('events', 1);
+
 			if (events[name]) {
 				if (push)
 					events[name].push(obj);
@@ -1028,7 +1021,13 @@
 				delete events[p];
 		});
 
-		DEF.monitor && monitor_method('OFF', name, path);
+		if (DEF.monitor) {
+			if (path)
+				monitor_method('watchers', 2);
+			else
+				monitor_method('events', 2);
+		}
+
 		watches = cleararr(watches, 'watch');
 	};
 
@@ -1043,7 +1042,7 @@
 		for (var i = 1, length = arguments.length; i < length; i++)
 			args.push(arguments[i]);
 
-		DEF.monitor && monitor_method('EMIT', name);
+		DEF.monitor && monitor_method('events');
 
 		for (var i = 0, length = e.length; i < length; i++) {
 			var context = e[i].context;
@@ -1063,7 +1062,6 @@
 	W.CHANGE = function(path, value) {
 		if (value == null)
 			value = true;
-		DEF.monitor && monitor_method('CHANGE', path);
 		path = pathmaker(path);
 		return !com_dirty(path, !value);
 	};
@@ -1252,6 +1250,7 @@
 
 			callback = target;
 			target = 'body';
+
 		} else if (typeof(insert) === TYPE_FN) {
 			preparator = insert;
 			insert = true;
@@ -1330,9 +1329,6 @@
 			}
 		}
 
-		if (ext === '.js' || ext === '.css')
-			DEF.monitor && monitor_method('IMPORT', url);
-
 		var d = document;
 		if (ext === '.js') {
 			var scr = d.createElement(T_SCRIPT);
@@ -1346,6 +1342,7 @@
 			scr.src = makeurl(url, true);
 			d.getElementsByTagName('head')[0].appendChild(scr);
 			events.import && EMIT(T_IMPORT, url, $(scr));
+			DEF.monitor && monitor_method('requests');
 			return;
 		}
 
@@ -1358,6 +1355,7 @@
 			statics[url] = 2;
 			callback && setTimeout(callback, 200, 1);
 			events.import && EMIT(T_IMPORT, url, $(stl));
+			DEF.monitor && monitor_method('requests');
 			return;
 		}
 
@@ -1527,7 +1525,7 @@
 		if (index === -1)
 			return;
 
-		DEF.monitor && monitor_method('AJAX', url);
+		DEF.monitor && monitor_method('requests');
 
 		var sync = false;
 
@@ -1960,8 +1958,6 @@
 		var item = blocked[key];
 		var now = Date.now();
 
-		DEF.monitor && monitor_method('BLOCKED', name);
-
 		if (item > now)
 			return true;
 
@@ -2002,7 +1998,7 @@
 			return;
 
 		!wasset && set(path, get(path), true);
-		DEF.monitor && monitor_method('UPD', path);
+		DEF.monitor && monitor_method('set');
 
 		var state = [];
 
@@ -2099,7 +2095,7 @@
 	W.REWRITE = function(path, value, type) {
 		path = pathmaker(path);
 		if (path) {
-			DEF.monitor && monitor_method('REWRITE', path);
+			DEF.monitor && monitor_method('set');
 			set(path, value);
 			emitwatch(path, value, type);
 		}
@@ -2143,7 +2139,7 @@
 		}
 
 		path = pathmaker(path);
-		DEF.monitor && monitor_method('SET', path);
+		DEF.monitor && monitor_method('set');
 
 		if (!path)
 			return;
@@ -2321,7 +2317,7 @@
 				scope(val);
 			return;
 		}
-		DEF.monitor && monitor_method('GET', path);
+		DEF.monitor && monitor_method('get');
 		return get(path, scope);
 	};
 
@@ -2337,7 +2333,10 @@
 				model = {};
 			set2(model, p.substring(path.length + 1), get(p));
 		}
-		DEF.monitor && monitor_method('GETM', path);
+		if (DEF.monitor && arr.length) {
+			monitor_method('set');
+			monitor_method('get');
+		}
 		return model;
 	};
 
@@ -2374,7 +2373,7 @@
 			!except.length && (except = null);
 		}
 
-		DEF.monitor && monitor_method('VALIDATE', path);
+		DEF.monitor && monitor_method('validation');
 
 		var all = M.components;
 		for (var i = 0, length = all.length; i < length; i++) {
@@ -2506,7 +2505,7 @@
 		var arr = [];
 		var all = M.components;
 
-		DEF.monitor && monitor_method('RESET', path);
+		DEF.monitor && monitor_method('reset');
 
 		for (var i = 0, length = all.length; i < length; i++) {
 			var com = all[i];
@@ -2872,7 +2871,7 @@
 			return;
 		}
 
-		DEF.monitor && monitor_method('compile');
+		DEF.monitor && monitor_method('compilation', 1);
 
 		var has = false;
 		crawler(container, function(name, dom) {
@@ -3223,6 +3222,8 @@
 				scope.parent = findscope(el);
 				scope.elements = [];
 
+				DEF.monitor && monitor_method('scopes', 1);
+
 				var parent = scope.parent;
 
 				if (!parent) {
@@ -3512,6 +3513,9 @@
 		findcontrol2(obj, collection);
 
 		obj.released && obj.released(obj.isreleased);
+
+		DEF.monitor && monitor_method('components', 1);
+
 		M.components.push(obj);
 		C.init.push(obj);
 		type !== T_BODY && REGCOM.test(el[0].innerHTML) && compile(el);
@@ -3684,6 +3688,8 @@
 	}
 
 	function emitwatch(path, value, type) {
+
+		DEF.monitor && monitor_method('watchers');
 
 		for (var i = 0, length = watches.length; i < length; i++) {
 			var self = watches[i];
@@ -4047,6 +4053,8 @@
 
 	function cleaner() {
 
+		DEF.monitor && monitor_method('compilation', 2);
+
 		var keys = OK(events);
 		var is = false;
 		var length = keys.length;
@@ -4074,6 +4082,8 @@
 				if (!arr.length)
 					delete events[key];
 
+				DEF.monitor && monitor_method('events', 2);
+
 				index -= 2;
 				is = true;
 			}
@@ -4090,6 +4100,9 @@
 			item.context.$removed = true;
 			item.context = null;
 			watches.splice(index - 1, 1);
+
+			DEF.monitor && monitor_method('watchers', 2);
+
 			index -= 2;
 			is = true;
 		}
@@ -4152,6 +4165,7 @@
 			all.splice(index, 1);
 			length = M.components.length;
 			is = true;
+			DEF.monitor && monitor_method('components', 2);
 		}
 
 		keys = OK(binders);
@@ -4181,6 +4195,7 @@
 					M.paths[keys[i]]--;
 				delete binders[keys[i]];
 			}
+			DEF.monitor && monitor('binders', 2);
 		}
 
 		clear('find');
@@ -4192,6 +4207,7 @@
 			if (!inDOM(a.element[0]) || !a.element[0].innerHTML) {
 				a.$remove();
 				delete R[key];
+				DEF.monitor && monitor('plugins', 2);
 			}
 		});
 
@@ -4569,62 +4585,61 @@
 	}
 
 	function monitor(obj) {
+
 		var p = M.performance;
+		var o;
+
+		var t = Date.now();
 
 		if (obj.name) {
-			if (!p.components)
-				p.components = {};
-			p = p.components;
+			o = p.components;
+			p.changes.components = 1;
 		} else {
-			if (!p.binders)
-				p.binders = {};
-			p = p.binders;
+			o = p.binders;
+			p.changes.binders = 1;
 		}
 
-		if (!obj.$usage)
-			obj.$usage = { count: 0 };
+		if (o.peak)
+			o.peak++;
+		else
+			o.peak = 1;
+
+		o = obj.$usage;
+
+		if (!o)
+			o = obj.$usage = { count: 0 };
 
 		var t = Date.now();
+		if (o.time)
+			o.diff = t - o.time;
 
-		if (obj.$usage.time)
-			obj.$usage.diff = t - obj.$usage.time;
-
-		obj.$usage.count++;
-		obj.$usage.time = t;
-
-		var key = (obj.name ? (obj.name + '.') : '') + obj.path;
-
-		if (!p[key])
-			p[key] = { count: 0 };
-
-		p[key].count++;
-		if (p[key].time)
-			p[key].diff = t - p[key].time;
-
-		p[key].time = t;
+		o.count++;
+		o.time = t;
 	}
 
-	function monitor_method(name, path, subname) {
-		var p = M.performance;
-		var k = subname ? (path + '|' + subname) : path;
+	function monitor_method(name, type) {
 
-		if (!p[name])
-			p[name] = {};
+		var p = M.performance[name];
+		switch (type) {
+			case 1:
+				p.add = p.add ? (p.add + 1) : 1;
+				break;
+			case 2:
+				p.rem = p.rem ? (p.rem + 1) : 1;
+				break;
+			default:
+				p.peak = p.peak ? (p.peak + 1) : 1;
+				p.count = p.count ? (p.count + 1) : 1;
+				break;
+		}
 
 		var t = Date.now();
-		var o;
-		if (k) {
-			if (!p[name][k])
-				p[name][k] = { count: 0 };
-			o = p[name][k];
-		} else
-			o = p[name];
 
-		o.count = o.count ? (o.count + 1) : 1;
-		if (o.time)
-			o.diff = t - p[name].time;
-		o.time = t;
+		if (p.time)
+			p.diff = t - p.time;
 
+		p.time = t;
+		M.performance.changes[name] = 1;
 	}
 
 	var PPC = COM.prototype;
@@ -6020,7 +6035,7 @@
 			name = arguments[2];
 			isget = name.indexOf('.') !== -1;
 
-			DEF.monitor && monitor_method('SETTER', selector, name);
+			DEF.monitor && monitor_method('setters');
 
 			FIND(selector, true, function(arr) {
 				for (var i = 0, length = arr.length; i < length; i++) {
@@ -6060,7 +6075,7 @@
 			var arr = FIND(selector, true);
 			isget = name.indexOf('.') !== -1;
 
-			DEF.monitor && monitor_method('SETTER', selector, name);
+			DEF.monitor && monitor_method('setters');
 
 			for (var i = 0, length = arr.length; i < length; i++) {
 				var o = arr[i];
@@ -6073,7 +6088,7 @@
 
 	function exechelper(ctx, path, arg) {
 		setTimeout(function() {
-			DEF.monitor && monitor_method('EXEC', path);
+			DEF.monitor && monitor_method('exec');
 			EXEC.call(ctx, true, path, arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6]);
 		}, 200);
 	}
@@ -6096,7 +6111,6 @@
 	};
 
 	W.CMD = function(name, a, b, c, d, e) {
-		DEF.monitor && monitor_method('CMD', name);
 		for (var i = 0, length = M.components.length; i < length; i++) {
 			var com = M.components[i];
 			if (com && com.$loaded && !com.$removed && com.$commands && com.$commands[name]) {
@@ -8714,6 +8728,8 @@
 		var isclick = false;
 		var tmp;
 
+		DEF.monitor && monitor_method('binders', 1);
+
 		for (var i = 0; i < meta.length; i++) {
 			var item = meta[i].trim();
 			if (item) {
@@ -9644,6 +9660,7 @@
 			}
 		}
 
+		DEF.monitor && monitor_method('plugins', 2);
 		EMIT('plugin.destroy', self);
 		self.destroy && self.destroy();
 
@@ -9672,6 +9689,7 @@
 			if (fn) {
 				current_scope = name;
 				fn = new Plugin(name, fn);
+				DEF.monitor && monitor_method('plugins', 1);
 			}
 			return fn || W.PLUGINS[name];
 		} else
