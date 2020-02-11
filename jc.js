@@ -255,6 +255,7 @@
 	var MD = W.DEF = M.defaults = {};
 	var ENV = MD.environment = {};
 
+	MD.monitor = false;
 	MD.scope = W;
 	MD.delay = 555;
 	MD.delaywatcher = 555;
@@ -316,6 +317,7 @@
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
+	M.performance = {};
 	M.components = [];
 	M.$formatter = [];
 	M.$parser = [];
@@ -743,6 +745,9 @@
 		if (output.cancel)
 			return;
 
+
+		DEF.monitor && monitor_method('UPLOAD', url);
+
 		setTimeout(function() {
 
 			var xhr = new XMLHttpRequest();
@@ -791,7 +796,6 @@
 	};
 
 	W.UNWATCH = function(path, fn) {
-
 		if (path.indexOf(MULTIPLE) !== -1) {
 			var arr = path.split(MULTIPLE).trim();
 			for (var i = 0; i < arr.length; i++)
@@ -863,6 +867,8 @@
 			if (index !== -1)
 				scope = path.substring(0, index);
 		}
+
+		DEF.monitor && monitor_method('ON', name, path);
 
 		var obj = { name: name, fn: fn, owner: owner || current_owner, context: context || (current_com == null ? undefined : current_com), scope: scope };
 
@@ -1022,6 +1028,7 @@
 				delete events[p];
 		});
 
+		DEF.monitor && monitor_method('OFF', name, path);
 		watches = cleararr(watches, 'watch');
 	};
 
@@ -1035,6 +1042,8 @@
 
 		for (var i = 1, length = arguments.length; i < length; i++)
 			args.push(arguments[i]);
+
+		DEF.monitor && monitor_method('EMIT', name);
 
 		for (var i = 0, length = e.length; i < length; i++) {
 			var context = e[i].context;
@@ -1054,6 +1063,7 @@
 	W.CHANGE = function(path, value) {
 		if (value == null)
 			value = true;
+		DEF.monitor && monitor_method('CHANGE', path);
 		path = pathmaker(path);
 		return !com_dirty(path, !value);
 	};
@@ -1320,6 +1330,9 @@
 			}
 		}
 
+		if (ext === '.js' || ext === '.css')
+			DEF.monitor && monitor_method('IMPORT', url);
+
 		var d = document;
 		if (ext === '.js') {
 			var scr = d.createElement(T_SCRIPT);
@@ -1513,6 +1526,8 @@
 		var index = url.indexOf(' ');
 		if (index === -1)
 			return;
+
+		DEF.monitor && monitor_method('AJAX', url);
 
 		var sync = false;
 
@@ -1945,6 +1960,8 @@
 		var item = blocked[key];
 		var now = Date.now();
 
+		DEF.monitor && monitor_method('BLOCKED', name);
+
 		if (item > now)
 			return true;
 
@@ -1985,6 +2002,8 @@
 			return;
 
 		!wasset && set(path, get(path), true);
+		DEF.monitor && monitor_method('UPD', path);
+
 		var state = [];
 
 		if (type === undefined)
@@ -2080,6 +2099,7 @@
 	W.REWRITE = function(path, value, type) {
 		path = pathmaker(path);
 		if (path) {
+			DEF.monitor && monitor_method('REWRITE', path);
 			set(path, value);
 			emitwatch(path, value, type);
 		}
@@ -2123,6 +2143,7 @@
 		}
 
 		path = pathmaker(path);
+		DEF.monitor && monitor_method('SET', path);
 
 		if (!path)
 			return;
@@ -2300,6 +2321,7 @@
 				scope(val);
 			return;
 		}
+		DEF.monitor && monitor_method('GET', path);
 		return get(path, scope);
 	};
 
@@ -2315,12 +2337,13 @@
 				model = {};
 			set2(model, p.substring(path.length + 1), get(p));
 		}
+		DEF.monitor && monitor_method('GETM', path);
 		return model;
 	};
 
 	W.GETU = function(path) {
 		var m = get(pathmaker(path));
-		setTimeout(UPD, 1, path);
+		setTimeout(W.UPD, 1, path);
 		return m;
 	};
 
@@ -2350,6 +2373,8 @@
 			!is && (flags = null);
 			!except.length && (except = null);
 		}
+
+		DEF.monitor && monitor_method('VALIDATE', path);
 
 		var all = M.components;
 		for (var i = 0, length = all.length; i < length; i++) {
@@ -2480,6 +2505,8 @@
 
 		var arr = [];
 		var all = M.components;
+
+		DEF.monitor && monitor_method('RESET', path);
 
 		for (var i = 0, length = all.length; i < length; i++) {
 			var com = all[i];
@@ -2844,6 +2871,8 @@
 			})(container);
 			return;
 		}
+
+		DEF.monitor && monitor_method('compile');
 
 		var has = false;
 		crawler(container, function(name, dom) {
@@ -4420,6 +4449,7 @@
 				self.$valuehash = hash;
 			}
 
+			MD.monitor && monitor(self);
 			self.config.$setter && EXEC.call(self, self.config.$setter.SCOPE(self), cache.value, cache.path, cache.type);
 			self.data('', cache.value);
 
@@ -4451,6 +4481,8 @@
 							return;
 						self.$valuehash = hash;
 					}
+
+					MD.monitor && monitor(self);
 
 					// Binds value directly
 					self.config.$setter && EXEC.call(self, self.config.$setter.SCOPE(self), value, path, type);
@@ -4534,6 +4566,65 @@
 					t.value = value;
 			});
 		};
+	}
+
+	function monitor(obj) {
+		var p = M.performance;
+
+		if (obj.name) {
+			if (!p.components)
+				p.components = {};
+			p = p.components;
+		} else {
+			if (!p.binders)
+				p.binders = {};
+			p = p.binders;
+		}
+
+		if (!obj.$usage)
+			obj.$usage = { count: 0 };
+
+		var t = Date.now();
+
+		if (obj.$usage.time)
+			obj.$usage.diff = t - obj.$usage.time;
+
+		obj.$usage.count++;
+		obj.$usage.time = t;
+
+		var key = (obj.name ? (obj.name + '.') : '') + obj.path;
+
+		if (!p[key])
+			p[key] = { count: 0 };
+
+		p[key].count++;
+		if (p[key].time)
+			p[key].diff = t - p[key].time;
+
+		p[key].time = t;
+	}
+
+	function monitor_method(name, path, subname) {
+		var p = M.performance;
+		var k = subname ? (path + '|' + subname) : path;
+
+		if (!p[name])
+			p[name] = {};
+
+		var t = Date.now();
+		var o;
+		if (k) {
+			if (!p[name][k])
+				p[name][k] = { count: 0 };
+			o = p[name][k];
+		} else
+			o = p[name];
+
+		o.count = o.count ? (o.count + 1) : 1;
+		if (o.time)
+			o.diff = t - p[name].time;
+		o.time = t;
+
 	}
 
 	var PPC = COM.prototype;
@@ -5929,18 +6020,14 @@
 			name = arguments[2];
 			isget = name.indexOf('.') !== -1;
 
+			DEF.monitor && monitor_method('SETTER', selector, name);
+
 			FIND(selector, true, function(arr) {
 				for (var i = 0, length = arr.length; i < length; i++) {
 					var o = arr[i];
 					var a = isget ? get(name, o) : o[name];
 					if (typeof(a) === TYPE_FN)
 						a.apply(o, arg);
-					/*
-					else if (isget)
-						set(name, o);
-					else
-						o[name] = arg[0];
-					*/
 				}
 			});
 		} else {
@@ -5973,24 +6060,20 @@
 			var arr = FIND(selector, true);
 			isget = name.indexOf('.') !== -1;
 
+			DEF.monitor && monitor_method('SETTER', selector, name);
+
 			for (var i = 0, length = arr.length; i < length; i++) {
 				var o = arr[i];
 				var a = isget ? get(name, o) : o[name];
 				if (typeof(a) === TYPE_FN)
 					a.apply(o, arg);
-
-				/*
-				else if (isget)
-					set(name, o);
-				else
-					o[name] = arg[0];
-				*/
 			}
 		}
 	};
 
 	function exechelper(ctx, path, arg) {
 		setTimeout(function() {
+			DEF.monitor && monitor_method('EXEC', path);
 			EXEC.call(ctx, true, path, arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6]);
 		}, 200);
 	}
@@ -6013,6 +6096,7 @@
 	};
 
 	W.CMD = function(name, a, b, c, d, e) {
+		DEF.monitor && monitor_method('CMD', name);
 		for (var i = 0, length = M.components.length; i < length; i++) {
 			var com = M.components[i];
 			if (com && com.$loaded && !com.$removed && com.$commands && com.$commands[name]) {
@@ -8461,6 +8545,7 @@
 					if (tmp)
 						com.$skip = false;
 					var val = com.get();
+					MD.monitor && monitor(com);
 					com.setter(val, com.path, 2);
 					com.setter2 && com.setter2(val, com.path, 2);
 					if (tmp)
@@ -8568,6 +8653,7 @@
 		$rebinder && clearTimeout($rebinder);
 		$rebinder = setTimeout(function() {
 			var arr = bindersnew.splice(0);
+			var n = 'binder';
 			for (var i = 0; i < arr.length; i++) {
 				var item = arr[i];
 				if (!item.$init) {
@@ -8577,6 +8663,7 @@
 					else
 						item.exec(GET(item.path), item.path);
 					current_scope = curr_scope;
+					events[n] && EMIT(n, item);
 				}
 			}
 		}, 50);
@@ -9132,6 +9219,8 @@
 		var item = this;
 		if (item.disabled)
 			return;
+
+		MD.monitor && monitor(item);
 
 		var el = item.el;
 		if (index != null) {
