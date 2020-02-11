@@ -312,7 +312,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.062;
+	M.version = 18.063;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8762,7 +8762,7 @@
 								if ((/^\d+$/).test(v))
 									fn = +v;
 								else
-									fn = v;
+									fn = '';
 								break;
 							case T_CLICK:
 								isclick = true;
@@ -9488,7 +9488,7 @@
 	};
 
 	function bindvalue(val, item, prop) {
-		return val === '' ? item.empty : val == null ? (item.empty || (prop ? item[prop + 'bk'] : '')) : item.currency ? val.currency(item.currency) : item.format ? val.format(item.format) : val;
+		return val === '' ? item.empty : val == null ? (item.empty || (prop ? item[prop + 'bk'] : '')) : item.currency ? val.currency(item.currency) : item.format != null ? val.format(val instanceof Date ? item.format ? item.format : null : item.format || 0) : val;
 	}
 
 	function binderconfig(el, val) {
