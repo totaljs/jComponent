@@ -304,7 +304,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.066;
+	M.version = 18.067;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6182,7 +6182,10 @@
 					var tmp = current_scope;
 					current_scope = p;
 					fn.apply(ctx === W ? ctrl : ctx, arg);
-					DEF.monitor && monitor_method('plugins');
+					if (DEF.monitor) {
+						monitor_method('exec');
+						monitor_method('plugins');
+					}
 					current_scope = tmp;
 					ok = 1;
 				}
@@ -6202,7 +6205,10 @@
 				var tmp = current_scope;
 				current_scope = p;
 				ctrl[fn].apply(ctx === W ? ctrl : ctx, arg);
-				DEF.monitor && monitor_method('plugins');
+				if (DEF.monitor) {
+					monitor_method('exec');
+					monitor_method('plugins');
+				}
 				current_scope = tmp;
 				ok = 1;
 			}
@@ -6225,6 +6231,7 @@
 
 		if (typeof(fn) === TYPE_FN) {
 			fn.apply(ctx, arg);
+			DEF.monitor && monitor_method('exec');
 			ok = 1;
 		}
 
