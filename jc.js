@@ -304,7 +304,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.065;
+	M.version = 18.066;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4985,6 +4985,7 @@
 		for (var i = 0; i < childs.length; i++) {
 			var t = childs[i];
 			if (t.$com) {
+				MD.monitor && monitor(self);
 				t.$com.caller = self;
 				t.$com[name] && this.$com[name](a, b, c, d, e);
 			}
@@ -9646,6 +9647,7 @@
 		var self = this;
 		self.scope();
 		var fn = self[name];
+		MD.monitor && monitor_method('plugins');
 		fn && fn.call(self, a, b, c, d, e);
 		return self;
 	};
