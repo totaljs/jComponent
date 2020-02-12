@@ -304,11 +304,11 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.064;
+	M.version = 18.065;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
-	M.performance = { plugins: {}, scopes: {}, components: {}, binders: {}, events: {}, setters: {}, exec: {}, set: {}, get: {}, watchers: {}, requests: {}, compilation: {}, validation: {}, reset: {}, changes: {}};
+	M.performance = { plugins: {}, scopes: {}, components: {}, binders: {}, events: {}, setters: {}, exec: {}, set: {}, get: {}, watchers: {}, requests: {}, compilation: {}, validation: {}, reset: {}, lazy: {}, changes: {} };
 	M.components = [];
 	M.$formatter = [];
 	M.$parser = [];
@@ -2942,6 +2942,7 @@
 							lazycom[name] = lazycom[namea] = { state: 1 };
 						else
 							lazycom[name] = { state: 1 };
+						DEF.monitor && monitor_method('lazy', 1);
 						continue;
 					}
 					if (lo.state === 1)
@@ -4288,7 +4289,11 @@
 
 	SCP.$format = function(endpoint) {
 		var plugin = W.PLUGINS[this.path];
-		return plugin && plugin[endpoint] || SCP.$formatnoop;
+		if (plugin && plugin[endpoint]) {
+			DEF.monitor && monitor_method('plugins');
+			return plugin[endpoint];
+		}
+		return SCP.$formatnoop;
 	};
 
 	SCP.makepath = function(val) {
@@ -4620,6 +4625,7 @@
 	function monitor_method(name, type) {
 
 		var p = M.performance[name];
+
 		switch (type) {
 			case 1:
 				p.add = p.add ? (p.add + 1) : 1;
@@ -6021,6 +6027,7 @@
 					lazycom[selector].state = 2;
 					events.lazy && EMIT('lazy', selector, true);
 					warn('Lazy load: ' + selector);
+					DEF.monitor && monitor_method('lazy', 2);
 					compile();
 				}
 
@@ -6061,6 +6068,7 @@
 
 					lazycom[selector].state = 2;
 					events.lazy && EMIT('lazy', selector, true);
+					DEF.monitor && monitor_method('lazy', 2);
 					warn('Lazy load: ' + selector);
 					compile();
 				}
@@ -6173,6 +6181,7 @@
 					var tmp = current_scope;
 					current_scope = p;
 					fn.apply(ctx === W ? ctrl : ctx, arg);
+					DEF.monitor && monitor_method('plugins');
 					current_scope = tmp;
 					ok = 1;
 				}
@@ -6192,6 +6201,7 @@
 				var tmp = current_scope;
 				current_scope = p;
 				ctrl[fn].apply(ctx === W ? ctrl : ctx, arg);
+				DEF.monitor && monitor_method('plugins');
 				current_scope = tmp;
 				ok = 1;
 			}
@@ -6547,6 +6557,7 @@
 				if (lazycom[value] && lazycom[value].state === 1) {
 					lazycom[value].state = 2;
 					events.lazy && EMIT('lazy', value, true);
+					DEF.monitor && monitor_method('lazy', 2);
 					warn('Lazy load: ' + value);
 					compile();
 				}
@@ -8003,6 +8014,7 @@
 					if (lazycom[selector].state === 1) {
 						lazycom[selector].state = 2;
 						events.lazy && EMIT('lazy', selector, true);
+						DEF.monitor && monitor_method('lazy', 2);
 						warn('Lazy load: ' + selector);
 						compile();
 					}
@@ -8040,6 +8052,7 @@
 					if (lazycom[selector].state === 1) {
 						lazycom[selector].state = 2;
 						events.lazy && EMIT('lazy', selector, true);
+						DEF.monitor && monitor_method('lazy', 2);
 						warn('Lazy load: ' + selector);
 						compile();
 					}
@@ -9689,8 +9702,8 @@
 			if (fn) {
 				current_scope = name;
 				fn = new Plugin(name, fn);
-				DEF.monitor && monitor_method('plugins', 1);
 			}
+			DEF.monitor && monitor_method('plugins', fn ? 1 : 0);
 			return fn || W.PLUGINS[name];
 		} else
 			plugininit.push({ name: name, fn: fn });
