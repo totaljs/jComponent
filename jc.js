@@ -1077,6 +1077,8 @@
 			value = undefined;
 		}
 
+		DEF.monitor && monitor_method('validation');
+
 		if (typeof(value) !== TYPE_B && cache[key] !== undefined)
 			return cache[key];
 
@@ -2372,8 +2374,6 @@
 			!is && (flags = null);
 			!except.length && (except = null);
 		}
-
-		DEF.monitor && monitor_method('validation');
 
 		var all = M.components;
 		for (var i = 0, length = all.length; i < length; i++) {
