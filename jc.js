@@ -246,6 +246,7 @@
 	var MD = W.DEF = M.defaults = {};
 	var ENV = MD.environment = {};
 
+	MD.repeatfocus = true;
 	MD.monitor = false;
 	MD.scope = W;
 	MD.delay = 555;
@@ -304,11 +305,11 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.067;
+	M.version = 18.068;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
-	M.performance = { plugins: {}, scopes: {}, components: {}, binders: {}, events: {}, setters: {}, exec: {}, set: {}, get: {}, watchers: {}, requests: {}, compilation: {}, validation: {}, reset: {}, lazy: {}, changes: {} };
+	M.performance = { plugins: {}, scopes: {}, components: {}, binders: {}, events: {}, setters: {}, exec: {}, set: {}, get: {}, watchers: {}, requests: {}, compilation: {}, validation: {}, reset: {}, lazy: {}, changes: {}, repeat: {}};
 	M.components = [];
 	M.$formatter = [];
 	M.$parser = [];
@@ -8883,10 +8884,7 @@
 								fn = v;
 								break;
 							case 'format':
-								if ((/^\d+$/).test(v))
-									fn = +v;
-								else
-									fn = '';
+								fn = v === 'value' ? '' : (/^\d+$/).test(v) ? (+v) : v;
 								break;
 							case T_CLICK:
 								isclick = true;
@@ -10230,7 +10228,7 @@
 				// Mac OS
 				size.empty = 1;
 				size.margin = options.margin == null ? 25 : options.margin;
-				self.margin = options.margin == null ? -size.thicknessH : options.margin;
+				self.margin = options.margin == null ? (size.thicknessH ? -size.thicknessH : 0) : options.margin;
 				self.marginX = canY ? self.margin : 0;
 				self.marginY = canX ? self.margin : 0;
 			} else {
@@ -10258,7 +10256,7 @@
 					size.viewWidth = screen.width;
 
 				aw = size.viewWidth - mx;
-				ah = size.viewHeight - mx;
+				ah = size.viewHeight - my;
 
 				if (scrollbarcache.md != md) {
 					// scrollbarcache.md = md; --> is defined below
@@ -10327,6 +10325,7 @@
 				}
 				if (options.marginY)
 					cssy.height -= options.marginY;
+
 				pathy.css(cssy);
 			}
 
@@ -10599,36 +10598,49 @@
 		}
 
 		var key = ('plug' + current_scope || '') + '_' + GUID(5);
-		var fn = function(scope) {
+		var indexer = 0;
 
-			if (W.NOTFOCUSED())
+		var fn = function(scope, indexer) {
+
+			if (MD.repeatfocus && W.NOTFOCUSED()) {
+				// accelerated timer
+				repeats[key] = setTimeout(fn, 1000, scope, indexer);
 				return;
+			}
+
+			var skip = false;
 
 			if (is) {
 				if (path) {
 					var tmp = GET(path);
 					if (condition) {
 						if (!condition(GET(path)))
-							return;
+							skip = true;
 					} else if (!tmp)
-						return;
+						skip = true;
 				} else if (!condition())
-					return;
+					skip = true;
 			}
 
-			var curr_scope;
+			repeats[key] = setTimeout(fn, delay, scope, skip ? indexer : (indexer + 1));
 
+			if (skip)
+				return;
+
+			DEF.monitor && monitor_method('repeat');
+
+			var curr_scope;
 			if (scope) {
 				curr_scope = current_scope;
 				current_scope = scope;
-				process(scope);
+				process(indexer + 1, scope);
 				current_scope = curr_scope;
 			} else
-				process();
+				process(indexer + 1, '');
 		};
 
-		repeats[key] = setInterval(fn, delay, current_scope);
-		init && fn(current_scope);
+		init && fn(indexer++, current_scope);
+		repeats[key] = setTimeout(fn, delay, current_scope, indexer);
 	};
 
 	W.QUEUE = function(name, fn) {
