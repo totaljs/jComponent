@@ -300,7 +300,7 @@
 	var MR = M.regexp = {};
 	MR.int = /(-|\+)?[0-9]+/;
 	MR.float = /(-|\+)?[0-9.,]+/;
-	MR.date = /yyyy|yy|MMMM|MMM|MM|M|dddd|ddd|dd|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g;
+	MR.date = /YYYY|yyyy|YY|yy|MMMM|MMM|MM|M|dddd|DDDD|DDD|ddd|DD|dd|D|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g;
 	MR.pluralize = /#{1,}/g;
 	MR.format = /\{\d+\}/g;
 
@@ -7332,8 +7332,10 @@
 		format = format.replace(M.regexp.date, function(key) {
 			switch (key) {
 				case 'yyyy':
+				case 'YYYY':
 					return beg + 'd.getFullYear()' + end;
 				case 'yy':
+				case 'YY':
 					return beg + 'd.getFullYear().toString().substring(2)' + end;
 				case 'MMM':
 					ismm = true;
@@ -7346,14 +7348,18 @@
 				case 'M':
 					return beg + '(d.getMonth() + 1)' + end;
 				case 'ddd':
+				case 'DDD':
 					isdd = true;
 					return beg + 'dd.substring(0, 2).toUpperCase()' + end;
 				case 'dddd':
+				case 'DDDD':
 					isdd = true;
 					return beg + 'dd' + end;
 				case 'dd':
+				case 'DD':
 					return beg + 'd.getDate().padLeft(2, \'0\')' + end;
 				case 'd':
+				case 'D':
 					return beg + 'd.getDate()' + end;
 				case 'HH':
 				case 'hh':
