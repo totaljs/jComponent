@@ -39,7 +39,6 @@
 	var TYPE_B = 'boolean';
 	var TYPE_NULL = 'null';
 	var KEY_ENV = 'environment';
-	var REG_DATE = /\.|-|\/|\\|:|\s/g;
 	var REG_TIME = /am|pm/i;
 	var T_BODY = 'BODY';
 	var T_DISABLED = 'disabled';
@@ -305,7 +304,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.069;
+	M.version = 18.070;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8685,27 +8684,24 @@
 	}
 
 	M.$parser.push(function(path, value, type) {
-
 		switch (type) {
 			case TYPE_N:
 			case 'currency':
 			case 'float':
 				var v = +(typeof(value) == TYPE_S ? value.replace(REGEMPTY, '').replace(REGCOMMA, '.') : value);
 				return isNaN(v) ? null : v;
-
+			case TYPE_B:
+			case 'bool':
+				return value == null ? null : value === true || typeof(value) == TYPE_S ? (value == '1' || value == T_TRUE || value == 'on') : !!value;
 			case 'date':
 			case 'datetime':
-
 				if (!value)
 					return null;
-
 				if (value instanceof Date)
 					return value;
-
 				value = value.parseDate();
 				return value && value.getTime() ? value : null;
 		}
-
 		return value;
 	});
 
