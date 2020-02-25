@@ -90,6 +90,49 @@
 		W.console && W.console.warn.apply(W.console, arguments);
 	};
 
+	// AI('code.name')                       = GET
+	// AI('!code.name')                      = GETR
+	// AI('code.name', '1')                  = SET
+	// AI('!code.name', '1')                 = SETR
+	// AI('code/refresh');                   = EXEC('code/refresh');
+	// AI('GET /api/something/', 'path');    = AJAX + SETR
+	// AI('GET /api/something/', fn);        = AJAX + CALLBACK
+
+	W.AI = function(a, b, c, d) {
+
+		if (a.indexOf(' ') === -1) {
+
+			// Exec --> plugin path
+			if (a.indexOf('/') !== -1) {
+				EXEC(a, b, c, d);
+				return;
+			}
+
+			var r = a.charAt(0) === '!';
+			if (r)
+				a = a.substring(1);
+
+			if (b !== undefined) {
+				if (typeof(b) === TYPE_FN)
+					GET(a, b);
+				else {
+					if (r)
+						SETR(a, b);
+					else
+						SET(a, b);
+				}
+			}
+
+			// PATH
+			return r ? GETR(a) : GET(a);
+		}
+
+		// a {Url}
+		// b {Path/Data/Callback}
+		// c {Path/Callback}
+		AJAX(a, b, c);
+	};
+
 	W.HIDDEN = function(el) {
 		if (el == null)
 			return true;
@@ -1530,6 +1573,16 @@
 		DEF.monitor && monitor_method('requests');
 
 		var sync = false;
+		var cachetime;
+
+		url = url.replace(/<.*?>/, function(text) {
+			cachetime = text.repalce(/<>/g, '');
+		});
+
+		if (cachetime) {
+			AJAXCACHE(url, data, callback, cachetime);
+			return;
+		}
 
 		url = url.replace(/\ssync/i, function() {
 			sync = true;
@@ -3851,13 +3904,12 @@
 	function remap(path, value) {
 
 		var index = path.replace('-->', '->').indexOf('->');
-
 		if (index !== -1) {
 			value = value[path.substring(0, index).trim()];
 			path = path.substring(index + 3).trim();
 		}
 
-		M.set(path.env(), value);
+		M.set(path.env(), value, true); // Added v18.071 reset
 	}
 
 	function set(path, value, is) {
