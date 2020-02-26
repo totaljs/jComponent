@@ -90,49 +90,6 @@
 		W.console && W.console.warn.apply(W.console, arguments);
 	};
 
-	// AI('code.name')                       = GET
-	// AI('!code.name')                      = GETR
-	// AI('code.name', '1')                  = SET
-	// AI('!code.name', '1')                 = SETR
-	// AI('code/refresh');                   = EXEC('code/refresh');
-	// AI('GET /api/something/', 'path');    = AJAX + SETR
-	// AI('GET /api/something/', fn);        = AJAX + CALLBACK
-
-	W.AI = function(a, b, c, d) {
-
-		if (a.indexOf(' ') === -1) {
-
-			// Exec --> plugin path
-			if (a.indexOf('/') !== -1) {
-				EXEC(a, b, c, d);
-				return;
-			}
-
-			var r = a.charAt(0) === '!';
-			if (r)
-				a = a.substring(1);
-
-			if (b !== undefined) {
-				if (typeof(b) === TYPE_FN)
-					GET(a, b);
-				else {
-					if (r)
-						SETR(a, b);
-					else
-						SET(a, b);
-				}
-			}
-
-			// PATH
-			return r ? GETR(a) : GET(a);
-		}
-
-		// a {Url}
-		// b {Path/Data/Callback}
-		// c {Path/Callback}
-		AJAX(a, b, c);
-	};
-
 	W.HIDDEN = function(el) {
 		if (el == null)
 			return true;
@@ -347,7 +304,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.070;
+	M.version = 18.071;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1576,7 +1533,8 @@
 		var cachetime;
 
 		url = url.replace(/<.*?>/, function(text) {
-			cachetime = text.repalce(/<>/g, '');
+			cachetime = text.replace(/<|>/g, '');
+			return '';
 		});
 
 		if (cachetime) {
@@ -3909,7 +3867,7 @@
 			path = path.substring(index + 3).trim();
 		}
 
-		M.set(path.env(), value, true); // Added v18.071 reset
+		M.set(path.env(), value);
 	}
 
 	function set(path, value, is) {
@@ -6457,19 +6415,64 @@
 		M.update(path, reset);
 	};
 
+	var setajax = function(type, path, value, timeout, reset) {
+		// path    = URL
+		// value   = data or callback
+		// timeout = callback or boolean
+		// reset   = boolean
+
+		if (typeof(timeout) === TYPE_B) {
+			reset = timeout;
+			timeout = null;
+		}
+
+		var tmp = typeof(value);
+		var cb = function(response, err) {
+			switch (tmp) {
+				case TYPE_S:
+					switch (type) {
+						case 'set':
+							setbind(value, response, reset);
+							break;
+						case 'push':
+							pushbind(value, response, reset);
+							break;
+						case 'extend':
+							extbind(value, response, reset);
+							break;
+					}
+					break;
+				case TYPE_FN:
+					value(response, err);
+					break;
+			}
+		};
+
+		if (tmp === TYPE_FN || tmp === TYPE_S)
+			AJAX(path, cb);
+		else
+			AJAX(path, value, cb);
+	};
+
 	W.SET = function(path, value, timeout, reset) {
-		var t = typeof(timeout);
-		if (t === TYPE_B)
-			return M.set(path, value, timeout);
-		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
-			return M.set(path, value, timeout);
-		timeouts[path] && clearTimeout(timeouts[path]);
-		timeouts[path] = setTimeout(setbind, timeout, path, value, reset);
+		if (path.indexOf(' ') === -1) {
+			var t = typeof(timeout);
+			if (t === TYPE_B)
+				return M.set(path, value, timeout);
+			if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
+				return M.set(path, value, timeout);
+			timeouts[path] && clearTimeout(timeouts[path]);
+			timeouts[path] = setTimeout(setbind, timeout, path, value, reset);
+		} else
+			setajax('set', path, value, timeout, reset);
 	};
 
 	W.SETR = function(path, value, type) {
-		M.set(path, value, type);
-		RESET(path);
+		if (path.indexOf(' ') === -1) {
+			M.set(path, value, type);
+			RESET(path);
+		} else
+			W.SET(path, value, type, true);
 	};
 
 	W.INC = function(path, value, timeout, reset) {
@@ -6487,23 +6490,29 @@
 	};
 
 	W.EXT = W.EXTEND = function(path, value, timeout, reset) {
-		var t = typeof(timeout);
-		if (t === TYPE_B)
-			return M.extend(path, value, timeout);
-		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
-			return M.extend(path, value, timeout);
-		timeouts[path] && clearTimeout(timeouts[path]);
-		timeouts[path] = setTimeout(extbind, timeout, path, value, reset);
+		if (path.indexOf(' ') === -1) {
+			var t = typeof(timeout);
+			if (t === TYPE_B)
+				return M.extend(path, value, timeout);
+			if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
+				return M.extend(path, value, timeout);
+			timeouts[path] && clearTimeout(timeouts[path]);
+			timeouts[path] = setTimeout(extbind, timeout, path, value, reset);
+		} else
+			setajax('extend', path, value, timeout, reset);
 	};
 
 	W.PUSH = function(path, value, timeout, reset) {
-		var t = typeof(timeout);
-		if (t === TYPE_B)
-			return M.push(path, value, timeout);
-		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
-			return M.push(path, value, timeout);
-		timeouts[path] && clearTimeout(timeouts[path]);
-		timeouts[path] = setTimeout(pushbind, timeout, path, value, reset);
+		if (path.indexOf(' ') === -1) {
+			var t = typeof(timeout);
+			if (t === TYPE_B)
+				return M.push(path, value, timeout);
+			if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
+				return M.push(path, value, timeout);
+			timeouts[path] && clearTimeout(timeouts[path]);
+			timeouts[path] = setTimeout(pushbind, timeout, path, value, reset);
+		} else
+			setajax('push', path, value, timeout, reset);
 	};
 
 	W.TOGGLE2 = function(path, type) {
