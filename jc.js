@@ -304,7 +304,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.071;
+	M.version = 18.072;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6390,23 +6390,27 @@
 	};
 
 	var timeouts = {};
-	var setbind = function(path, value, reset) {
+	var setbind = function(path, value, reset, scope) {
 		delete timeouts[path];
+		scope && (current_scope = scope);
 		M.set(path, value, reset);
 	};
 
-	var incbind = function(path, value, reset) {
+	var incbind = function(path, value, reset, scope) {
 		delete timeouts[path];
+		scope && (current_scope = scope);
 		M.inc(path, value, reset);
 	};
 
-	var extbind = function(path, value, reset) {
+	var extbind = function(path, value, reset, scope) {
 		delete timeouts[path];
+		scope && (current_scope = scope);
 		M.extend(path, value, reset);
 	};
 
-	var pushbind = function(path, value, reset) {
+	var pushbind = function(path, value, reset, scope) {
 		delete timeouts[path];
+		scope && (current_scope = scope);
 		M.push(path, value, reset);
 	};
 
@@ -6462,7 +6466,7 @@
 			if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 				return M.set(path, value, timeout);
 			timeouts[path] && clearTimeout(timeouts[path]);
-			timeouts[path] = setTimeout(setbind, timeout, path, value, reset);
+			timeouts[path] = setTimeout(setbind, timeout, path, value, reset, current_scope);
 		} else
 			setajax('set', path, value, timeout, reset);
 	};
@@ -6486,7 +6490,7 @@
 		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 			return M.inc(path, value, timeout);
 		timeouts[path] && clearTimeout(timeouts[path]);
-		timeouts[path] = setTimeout(incbind, timeout, path, value, reset);
+		timeouts[path] = setTimeout(incbind, timeout, path, value, reset, current_scope);
 	};
 
 	W.EXT = W.EXTEND = function(path, value, timeout, reset) {
@@ -6497,7 +6501,7 @@
 			if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 				return M.extend(path, value, timeout);
 			timeouts[path] && clearTimeout(timeouts[path]);
-			timeouts[path] = setTimeout(extbind, timeout, path, value, reset);
+			timeouts[path] = setTimeout(extbind, timeout, path, value, reset, current_scope);
 		} else
 			setajax('extend', path, value, timeout, reset);
 	};
@@ -6510,7 +6514,7 @@
 			if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
 				return M.push(path, value, timeout);
 			timeouts[path] && clearTimeout(timeouts[path]);
-			timeouts[path] = setTimeout(pushbind, timeout, path, value, reset);
+			timeouts[path] = setTimeout(pushbind, timeout, path, value, reset, current_scope);
 		} else
 			setajax('push', path, value, timeout, reset);
 	};
