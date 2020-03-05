@@ -304,7 +304,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.072;
+	M.version = 18.073;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10704,6 +10704,7 @@
 
 			if (MD.repeatfocus && W.NOTFOCUSED()) {
 				// accelerated timer
+				repeats[key] && clearTimeout(repeats[key]);
 				repeats[key] = setTimeout(fn, 1000, scope, indexer);
 				return;
 			}
@@ -10722,6 +10723,7 @@
 					skip = true;
 			}
 
+			repeats[key] && clearTimeout(repeats[key]);
 			repeats[key] = setTimeout(fn, delay, scope, skip ? indexer : (indexer + 1));
 
 			if (skip)
