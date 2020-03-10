@@ -258,7 +258,7 @@
 	MD.jsoncompress = false;
 	MD.jsondate = true;
 	MD.ajaxerrors = false;
-	MD.ajaxcredentials = true;
+	MD.ajaxcredentials = false;
 	MD.fallback = 'https://cdn.componentator.com/j-{0}.html';
 	MD.fallbackcache = '';
 	MD.version = '';
@@ -305,7 +305,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.074;
+	M.version = 18.075;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
