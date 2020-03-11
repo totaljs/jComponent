@@ -305,7 +305,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.076;
+	M.version = 18.077;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1504,6 +1504,26 @@
 
 	W.AJAXCONFIG = function(name, fn) {
 		ajaxconfig[name] = fn;
+	};
+
+	W.ASETTER = function() {
+		var args = [];
+		for (var i = 0; i < arguments.length; i++)
+			args.push(arguments[i]);
+		return function(response) {
+			args.push(response);
+			SETTER.apply(W, args);
+		};
+	};
+
+	W.AEXEC = function() {
+		var args = [];
+		for (var i = 0; i < arguments.length; i++)
+			args.push(arguments[i]);
+		return function(response) {
+			args.push(response);
+			EXEC.apply(W, args);
+		};
 	};
 
 	W.AJAX = function(url, data, callback, timeout) {
