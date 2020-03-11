@@ -305,7 +305,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.077;
+	M.version = 18.078;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6091,6 +6091,9 @@
 			DEF.monitor && monitor_method('setters');
 
 			FIND(selector, true, function(arr) {
+
+				events.setter && EMIT('setter', selector, name, arg[0], arg[1]);
+
 				for (var i = 0, length = arr.length; i < length; i++) {
 					var o = arr[i];
 					var a = isget ? get(name, o) : o[name];
@@ -6130,6 +6133,7 @@
 			isget = name.indexOf('.') !== -1;
 
 			DEF.monitor && monitor_method('setters');
+			events.setter && EMIT('setter', selector, name, arg[0], arg[1]);
 
 			for (var i = 0, length = arr.length; i < length; i++) {
 				var o = arr[i];
@@ -6198,6 +6202,8 @@
 			arg.push(arguments[i]);
 
 		var c = path.charCodeAt(0);
+
+		events.exec && EMIT('exec', path, arg[0], arg[1], arg[2], arg[3]);
 
 		// Event
 		if (c === 35) {
@@ -8176,15 +8182,12 @@
 				isget = name.indexOf('.') !== -1;
 
 				self.FIND(tmp, true, function(arr) {
+					events.setter && EMIT('setter', tmp, name, arg[0], arg[1]);
 					for (var i = 0, length = arr.length; i < length; i++) {
 						var o = arr[i];
 						var a = isget ? get(name, o) : o[name];
 						if (typeof(a) === TYPE_FN)
 							a.apply(o, arg);
-						/*else if (isget)
-							set(name, o);
-						else
-							o[name] = arg[0];*/
 					}
 				});
 
@@ -8214,15 +8217,13 @@
 				var arr = self.FIND(tmp, true);
 				isget = name.indexOf('.') !== -1;
 
+				events.setter && EMIT('setter', tmp, name, arg[0], arg[1]);
+
 				for (var i = 0, length = arr.length; i < length; i++) {
 					var o = arr[i];
 					var a = isget ? get(name, o) : o[name];
 					if (typeof(a) === TYPE_FN)
 						a.apply(o, arg);
-					/*else if (isget)
-						set(name, o);
-					else
-						o[name] = arg[0];*/
 				}
 			}
 
