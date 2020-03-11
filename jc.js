@@ -305,7 +305,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.075;
+	M.version = 18.076;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1668,6 +1668,12 @@
 			if (options.cancel)
 				return;
 
+			if (options.credentials) {
+				if (!options.xhrFields)
+					options.xhrFields = {};
+				options.xhrFields.withCredentials = true;
+			}
+
 			options.type = options.method;
 			delete options.method;
 
@@ -1683,6 +1689,10 @@
 			output.scope = curr_scope;
 			output.callback = callback;
 			output.duration = options.duration;
+			output.credentials = options.xhrFields && options.xhrFields.withCredentials ? true : false;
+
+			if (options.credentials != null)
+				delete options.credentials;
 
 			if (cancel)
 				cache[mainurl] = { options: options, output: output };
