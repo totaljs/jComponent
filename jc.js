@@ -305,7 +305,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.078;
+	M.version = 18.079;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2351,6 +2351,29 @@
 		var rem = W.PLUGINS[p];
 		return ((rem ? ('PLUGINS.' + p) : (p + '_plugin_not_found')) + '.' + path.substring(index + 1)) + tmp;
 	}
+
+	W.RETURN = function(cmd, multiple) {
+
+		cmd = cmd.split('/').trim();
+		var selector = cmd[0];
+		var prop = cmd[1];
+		var is = prop.indexOf('.') !== -1;
+
+		if (multiple) {
+			var arr = FIND(selector, true);
+			var output = [];
+			for (var i = 0; i < arr.length; i++) {
+				var val = is ? get(prop, arr[i]) : arr[i][prop];
+				if (val !== undefined)
+					output.push(val);
+			}
+			return output;
+		} else {
+			var com = FIND(selector);
+			if (com)
+				return is ? get(prop, com) : com[prop];
+		}
+	};
 
 	W.GET = M.get = function(path, scope) {
 		path = pathmaker(path);
