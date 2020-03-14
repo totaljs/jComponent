@@ -305,7 +305,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.080;
+	M.version = 18.081;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6071,31 +6071,39 @@
 
 		var arg = [];
 		var beg = selector === true ? 3 : 2;
-		var is;
 		var isget;
+		var tmp;
+		var is;
+		var methodname;
+		var myselector;
 
 		for (var i = beg; i < arguments.length; i++)
 			arg.push(arguments[i]);
 
 		if (beg === 3) {
 
-			selector = name;
+			myselector = name;
 
-			if (selector.charAt(0) === '!') {
-				selector = selector.substring(1);
+			if (myselector.charAt(0) === '!') {
+				myselector = myselector.substring(1);
 				is = true;
 			}
 
-			if (lazycom[selector] && lazycom[selector].state !== 3) {
+			tmp = myselector.indexOf('/');
 
-				if (lazycom[selector].state === 1) {
+			if (tmp !== -1) {
+				arg.unshift(arguments[2]);
+				methodname = myselector.substring(tmp + 1);
+				myselector = myselector.substring(0, tmp);
+			}
 
+			if (lazycom[myselector] && lazycom[myselector].state !== 3) {
+				if (lazycom[myselector].state === 1) {
 					if (is)
 						return;
-
-					lazycom[selector].state = 2;
-					events.lazy && EMIT('lazy', selector, true);
-					warn('Lazy load: ' + selector);
+					lazycom[myselector].state = 2;
+					events.lazy && EMIT('lazy', myselector, true);
+					warn('Lazy load: ' + myselector);
 					DEF.monitor && monitor_method('lazy', 2);
 					compile();
 				}
@@ -6108,40 +6116,49 @@
 				return;
 			}
 
-			name = arguments[2];
-			isget = name.indexOf('.') !== -1;
+			if (tmp === -1)
+				methodname = arguments[2];
 
 			DEF.monitor && monitor_method('setters');
 
-			FIND(selector, true, function(arr) {
+			FIND(myselector, true, function(arr) {
 
-				events.setter && EMIT('setter', selector, name, arg[0], arg[1]);
+				isget = methodname.indexOf('.') !== -1;
+				events.setter && EMIT('setter', myselector, methodname, arg[0], arg[1]);
 
 				for (var i = 0, length = arr.length; i < length; i++) {
 					var o = arr[i];
-					var a = isget ? get(name, o) : o[name];
+					var a = isget ? get(methodname, o) : o[methodname];
 					if (typeof(a) === TYPE_FN)
 						a.apply(o, arg);
 				}
 			});
+
 		} else {
 
-			if (selector.charAt(0) === '!') {
-				selector = selector.substring(1);
+			myselector = selector;
+			methodname = name;
+			tmp = myselector.indexOf('/');
+
+			if (tmp !== -1) {
+				arg.unshift(arguments[1]);
+				methodname = myselector.substring(tmp + 1);
+				myselector = myselector.substring(0, tmp);
+			}
+
+			if (myselector.charAt(0) === '!') {
+				myselector = myselector.substring(1);
 				is = true;
 			}
 
-			if (lazycom[selector] && lazycom[selector].state !== 3) {
-
-				if (lazycom[selector].state === 1) {
-
+			if (lazycom[myselector] && lazycom[myselector].state !== 3) {
+				if (lazycom[myselector].state === 1) {
 					if (is)
 						return;
-
-					lazycom[selector].state = 2;
-					events.lazy && EMIT('lazy', selector, true);
+					lazycom[myselector].state = 2;
+					events.lazy && EMIT('lazy', myselector, true);
 					DEF.monitor && monitor_method('lazy', 2);
-					warn('Lazy load: ' + selector);
+					warn('Lazy load: ' + myselector);
 					compile();
 				}
 
@@ -6149,18 +6166,18 @@
 					SETTER.apply(W, arg);
 				}, 555, arguments);
 
-				return SETTER;
+				return;
 			}
 
-			var arr = FIND(selector, true);
-			isget = name.indexOf('.') !== -1;
+			var arr = FIND(myselector, true);
+			isget = methodname.indexOf('.') !== -1;
 
 			DEF.monitor && monitor_method('setters');
-			events.setter && EMIT('setter', selector, name, arg[0], arg[1]);
+			events.setter && EMIT('setter', myselector, methodname, arg[0], arg[1]);
 
 			for (var i = 0, length = arr.length; i < length; i++) {
 				var o = arr[i];
-				var a = isget ? get(name, o) : o[name];
+				var a = isget ? get(methodname, o) : o[methodname];
 				if (typeof(a) === TYPE_FN)
 					a.apply(o, arg);
 			}
@@ -8171,27 +8188,38 @@
 			var self = this;
 			var arg = [];
 			var beg = selector === true ? 3 : 2;
-			var tmp;
 			var isget;
+			var tmp;
+			var methodname;
+			var myselector;
 
 			for (var i = beg; i < arguments.length; i++)
 				arg.push(arguments[i]);
 
 			if (beg === 3) {
-				selector = name;
-				name = arguments[2];
 
-				tmp = selector;
+				myselector = name;
+
+				tmp = myselector.indexOf('/');
+
+				if (tmp !== -1) {
+					arg.unshift(arguments[2]);
+					methodname = myselector.substring(tmp + 1);
+					myselector = myselector.substring(0, tmp);
+				} else
+					methodname = arguments[2];
+
+				tmp = myselector;
 				if (tmp.charAt(0) === '^')
-					selector = selector.substring(1).trim();
+					myselector = myselector.substring(1).trim();
 
-				if (lazycom[selector] && lazycom[selector].state !== 3) {
+				if (lazycom[myselector] && lazycom[myselector].state !== 3) {
 
-					if (lazycom[selector].state === 1) {
-						lazycom[selector].state = 2;
-						events.lazy && EMIT('lazy', selector, true);
+					if (lazycom[myselector].state === 1) {
+						lazycom[myselector].state = 2;
+						events.lazy && EMIT('lazy', myselector, true);
 						DEF.monitor && monitor_method('lazy', 2);
-						warn('Lazy load: ' + selector);
+						warn('Lazy load: ' + myselector);
 						compile();
 					}
 
@@ -8202,13 +8230,13 @@
 					return self;
 				}
 
-				isget = name.indexOf('.') !== -1;
+				isget = methodname.indexOf('.') !== -1;
 
 				self.FIND(tmp, true, function(arr) {
-					events.setter && EMIT('setter', tmp, name, arg[0], arg[1]);
+					events.setter && EMIT('setter', tmp, methodname, arg[0], arg[1]);
 					for (var i = 0, length = arr.length; i < length; i++) {
 						var o = arr[i];
-						var a = isget ? get(name, o) : o[name];
+						var a = isget ? get(methodname, o) : o[methodname];
 						if (typeof(a) === TYPE_FN)
 							a.apply(o, arg);
 					}
@@ -8216,17 +8244,27 @@
 
 			} else {
 
-				tmp = selector;
+				myselector = selector;
+				methodname = name;
+				tmp = myselector.indexOf('/');
+
+				if (tmp !== -1) {
+					arg.unshift(arguments[1]);
+					methodname = myselector.substring(tmp + 1);
+					myselector = myselector.substring(0, tmp);
+				}
+
+				tmp = myselector;
 				if (tmp.charAt(0) === '^')
-					selector = selector.substring(1).trim();
+					myselector = myselector.substring(1).trim();
 
-				if (lazycom[selector] && lazycom[selector].state !== 3) {
+				if (lazycom[myselector] && lazycom[myselector].state !== 3) {
 
-					if (lazycom[selector].state === 1) {
-						lazycom[selector].state = 2;
-						events.lazy && EMIT('lazy', selector, true);
+					if (lazycom[myselector].state === 1) {
+						lazycom[myselector].state = 2;
+						events.lazy && EMIT('lazy', myselector, true);
 						DEF.monitor && monitor_method('lazy', 2);
-						warn('Lazy load: ' + selector);
+						warn('Lazy load: ' + myselector);
 						compile();
 					}
 
@@ -8238,13 +8276,13 @@
 				}
 
 				var arr = self.FIND(tmp, true);
-				isget = name.indexOf('.') !== -1;
+				isget = methodname.indexOf('.') !== -1;
 
-				events.setter && EMIT('setter', tmp, name, arg[0], arg[1]);
+				events.setter && EMIT('setter', tmp, methodname, arg[0], arg[1]);
 
 				for (var i = 0, length = arr.length; i < length; i++) {
 					var o = arr[i];
-					var a = isget ? get(name, o) : o[name];
+					var a = isget ? get(methodname, o) : o[methodname];
 					if (typeof(a) === TYPE_FN)
 						a.apply(o, arg);
 				}
