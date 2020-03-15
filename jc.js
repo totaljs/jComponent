@@ -305,11 +305,11 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.081;
+	M.version = 18.082;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
-	M.performance = { plugins: {}, scopes: {}, components: {}, binders: {}, events: {}, setters: {}, exec: {}, set: {}, get: {}, watchers: {}, requests: {}, compilation: {}, validation: {}, reset: {}, lazy: {}, changes: {}, repeat: {}};
+	M.performance = { plugins: {}, scopes: {}, components: {}, binders: {}, events: {}, setters: {}, exec: {}, set: {}, get: {}, watchers: {}, requests: {}, compilation: {}, validation: {}, reset: {}, lazy: {}, changes: {}, repeat: {}, cmd: {}, returns: {} };
 	M.components = [];
 	M.$formatter = [];
 	M.$parser = [];
@@ -2358,6 +2358,8 @@
 		var selector = cmd[0];
 		var prop = cmd[1];
 		var is = prop.indexOf('.') !== -1;
+
+		DEF.monitor && monitor_method('returns');
 
 		if (multiple) {
 			var arr = FIND(selector, true);
@@ -6209,6 +6211,10 @@
 	};
 
 	W.CMD = function(name, a, b, c, d, e) {
+
+		events.cmd && EMIT('cmd', a, b, c, d);
+		DEF.monitor && monitor_method('cmd');
+
 		for (var i = 0, length = M.components.length; i < length; i++) {
 			var com = M.components[i];
 			if (com && com.$loaded && !com.$removed && com.$commands && com.$commands[name]) {
@@ -6243,8 +6249,6 @@
 
 		var c = path.charCodeAt(0);
 
-		events.exec && EMIT('exec', path, arg[0], arg[1], arg[2], arg[3]);
-
 		// Event
 		if (c === 35) {
 			p = path.substring(1);
@@ -6259,6 +6263,8 @@
 			CMD.call(ctx, path.substring(1), arg[0], arg[1], arg[2], arg[3], arg[4]);
 			return;
 		}
+
+		events.exec && EMIT('exec', path, arg[0], arg[1], arg[2], arg[3]);
 
 		var ok = 0;
 
@@ -8173,6 +8179,8 @@
 		$.fn.CMD = function(name, a, b, c, d, e) {
 			var self = this;
 			var arr = self.FIND('*', true);
+			events.cmd && EMIT('cmd', a, b, c, d);
+			DEF.monitor && monitor_method('cmd');
 			for (var i = 0, length = arr.length; i < length; i++) {
 				var o = arr[i];
 				var cmd = o.$commands ? o.$commands[name] : null;
@@ -9736,8 +9744,10 @@
 		if (item.setter && (can || item.setter.$nv) && (value != null || !item.setter.$nn))
 			item.setter.call(el, value, path, el);
 
-		if (item.change && (value != null || !item.change.$nn))
-			item.change.call(el, bindvalue(value, item), path, el);
+		if (item.change && (value != null || !item.change.$nn)) {
+			// "change" must contain a raw value, not formatted
+			item.change.call(el, value, path, el);
+		}
 
 		if (can && item.refreshbind && (value != null || !item.refreshbind.$nn))
 			item.refreshbind.call(el, value, path, el);
