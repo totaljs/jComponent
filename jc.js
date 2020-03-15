@@ -305,7 +305,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.082;
+	M.version = 18.083;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -819,10 +819,11 @@
 			push = '^';
 		}
 
-		var index = path.indexOf('?');
+		// Commented because if the path doesn't contain scope and WATCH is inside in PLUGIN then scopes aren't work correctly
+		// var index = path.indexOf('?');
+		// ON(push + 'watch', path, fn, init, null, index === -1 ? '' : current_scope);
 		path = pathmaker(path, 1);
-
-		ON(push + 'watch', path, fn, init, null, index === -1 ? '' : current_scope);
+		ON(push + 'watch', path, fn, init, null, current_scope);
 	};
 
 	W.ON = function(name, path, fn, init, context, scope) {
@@ -830,7 +831,7 @@
 		if (name.indexOf(MULTIPLE) !== -1) {
 			var arr = name.split(MULTIPLE).trim();
 			for (var i = 0; i < arr.length; i++)
-				ON(arr[i], path, fn, init, context);
+				ON(arr[i], path, fn, init, context, scope);
 			return;
 		}
 
