@@ -262,6 +262,7 @@
 	MD.fallback = 'https://cdn.componentator.com/j-{0}.html';
 	MD.fallbackcache = '';
 	MD.version = '';
+	MD.versioncomponents = '';
 	MD.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 	MD.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
 	MD.importcache = 'session';
@@ -305,7 +306,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.083;
+	M.version = 18.084;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3003,8 +3004,8 @@
 				if (!is && name.lastIndexOf('@') === -1) {
 					if (versions[name])
 						name += '@' + versions[name];
-					else if (MD.version)
-						name += '@' + MD.version;
+					else if (MD.versioncomponents)
+						name += '@' + MD.versioncomponents;
 				}
 
 				var com = M.$components[name];
