@@ -2356,6 +2356,10 @@
 	W.RETURN = function(cmd, multiple) {
 
 		cmd = cmd.split('/').trim();
+
+		if (cmd.length !== 2)
+			return;
+
 		var selector = cmd[0];
 		var prop = cmd[1];
 		var is = prop.indexOf('.') !== -1;
