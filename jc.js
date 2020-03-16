@@ -306,7 +306,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.084;
+	M.version = 18.085;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -919,10 +919,10 @@
 
 			DEF.monitor && monitor_method('watchers', 1);
 
-			if (init) {
+			init && setTimeout(function(obj, path, context) {
 				obj.scope && (current_scope = obj.scope);
-				fn.call(context || M, path, obj.format ? obj.format(get(path), path, 0) : get(path), 0);
-			}
+				fn.call(context, path, obj.format ? obj.format(get(path), path, 0) : get(path), 0);
+			}, 10, obj, path, context || M);
 
 		} else {
 
@@ -935,6 +935,7 @@
 					events[name].unshift(obj);
 			} else
 				events[name] = [obj];
+
 			(!C.ready && (name === 'ready' || name === 'init')) && fn();
 		}
 	};
@@ -1020,11 +1021,13 @@
 			});
 		};
 
-		OK(events).forEach(function(p) {
+		var keys = OK(events);
+		for (var i = 0; i < keys.length; i++) {
+			var p = keys[i];
 			events[p] = cleararr(events[p], p);
 			if (!events[p].length)
 				delete events[p];
-		});
+		}
 
 		if (DEF.monitor) {
 			if (path)
