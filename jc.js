@@ -99,7 +99,7 @@
 	};
 
 	var prefsave = function() {
-		var keys = Object.keys(PREF);
+		var keys = OK(PREF);
 		for (var i = 0; i < keys.length; i++) {
 			var key = keys[i];
 			var item = PREF[key];
@@ -116,8 +116,10 @@
 		if (typeof(data) === TYPE_S)
 			data = PARSE(data);
 
+		var keys;
+
 		if (data) {
-			var keys = Object.keys(data);
+			keys = OK(data);
 			var remove = false;
 			for (var i = 0; i < keys.length; i++) {
 				var key = keys[i];
@@ -130,9 +132,11 @@
 					remove = true;
 			}
 
-			PREF.PATHS && OK(PREF.PATHS).forEach(function(key) {
-				M.set(key, PREF.PATHS[key], true);
-			});
+			if (PREF.PATHS) {
+				keys = OK(PREF.PATHS);
+				for (var i = 0; i < keys.length; i++)
+					M.set(keys[i], PREF.PATHS[keys[i]], true);
+			}
 
 			remove && setTimeout2('PREF', W.PREF.save, 1000, null, PREF);
 		}
@@ -172,7 +176,7 @@
 	};
 
 	PR.keys = function() {
-		return Object.keys(PREF);
+		return OK(PREF);
 	};
 
 	PR.load = function(callback) {
@@ -306,7 +310,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.085;
+	M.version = 18.086;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -517,10 +521,14 @@
 	W.ENV = function(name, value) {
 
 		if (typeof(name) === TYPE_O) {
-			name && OK(name).forEach(function(key) {
-				ENV[key] = name[key];
-				events[KEY_ENV] && EMIT(KEY_ENV, key, name[key]);
-			});
+			if (name) {
+				var keys = OK(name);
+				for (var i = 0; i < keys.length; i++) {
+					var key = keys[i];
+					ENV[key] = name[key];
+					events[KEY_ENV] && EMIT(KEY_ENV, key, name[key]);
+				}
+			}
 			return name;
 		}
 
@@ -648,11 +656,13 @@
 
 	function parseHeaders(val) {
 		var h = {};
-		val.split('\n').forEach(function(line) {
+		var lines = val.split('\n');
+		for (var i = 0; i < lines.length; i++) {
+			var line = lines[i];
 			var index = line.indexOf(':');
 			if (index !== -1)
 				h[line.substring(0, index).toLowerCase()] = line.substring(index + 1).trim();
-		});
+		}
 		return h;
 	}
 
@@ -917,12 +927,11 @@
 			else
 				watches.unshift(obj);
 
-			DEF.monitor && monitor_method('watchers', 1);
-
-			init && setTimeout(function(obj, path, context) {
+			if (init) {
+				DEF.monitor && monitor_method('watchers', 1);
 				obj.scope && (current_scope = obj.scope);
-				fn.call(context, path, obj.format ? obj.format(get(path), path, 0) : get(path), 0);
-			}, 10, obj, path, context || M);
+				fn.call(context || M, path, obj.format ? obj.format(get(path), path, 0) : get(path), 0);
+			}
 
 		} else {
 
@@ -2883,9 +2892,11 @@
 
 		if (storage) {
 			var obj = storage[T_PATHS];
-			obj && OK(obj.value).forEach(function(key) {
-				M.set(key, obj.value[key], true);
-			});
+			if (obj) {
+				var keys = OK(obj.value);
+				for (var i = 0; i < keys.length; i++)
+					M.set(keys[i], obj.value[keys[i]], true);
+			}
 		}
 	}
 
@@ -3140,6 +3151,7 @@
 					obj.init();
 				}
 
+				// @TODO: here can be a problem with multiple components
 				dom.$com = obj;
 
 				if (!obj.$noscope)
@@ -3624,15 +3636,26 @@
 
 		var el = obj.element;
 
-		extensions[obj.name] && extensions[obj.name].forEach(function(item) {
-			item.config && obj.reconfigure(item.config, NOOP);
-			item.fn.call(obj, obj, obj.config, 'ui-' + obj.name);
-		});
+		if (extensions[obj.name]) {
+			var ext = extensions[obj.name];
+			for (var i = 0; i < ext.length; i++) {
+				var item = ext[i];
+				item.config && obj.reconfigure(item.config, NOOP);
+				item.fn.call(obj, obj, obj.config, 'ui-' + obj.name);
+			}
+		}
 
 		var value = obj.get();
 		var tmp;
 
 		obj.configure && obj.reconfigure(obj.config, undefined, true);
+
+		// Inits datasource after config is loaded
+		if (obj.$confds) {
+			obj.$confds();
+			delete obj.$confds;
+		}
+
 		obj.$loaded = true;
 
 		if (obj.setter) {
@@ -4282,14 +4305,17 @@
 
 		// Checks PLUGINS
 		var R = W.PLUGINS;
-		OK(R).forEach(function(key) {
-			var a = R[key];
+		keys = OK(R);
+
+		for (var i = 0; i < keys.length; i++) {
+			var k = keys[i];
+			var a = R[k];
 			if (!inDOM(a.element[0]) || !a.element[0].innerHTML) {
 				a.$remove();
-				delete R[key];
+				delete R[k];
 				DEF.monitor && monitor('plugins', 2);
 			}
-		});
+		}
 
 		W.NOW = new Date();
 		var now = W.NOW.getTime();
@@ -5288,7 +5314,15 @@
 		if (path) {
 			path = self.makepath(path);
 			self.$datasource = { path: path, fn: callback };
-			self.watch(path, callback, init !== false);
+
+			if (init !== false && !self.$loaded) {
+				self.watch(path, callback);
+				self.$confds = function() {
+					callback.call(self, path, get(path), 0);
+				};
+			} else
+				self.watch(path, callback, init !== false);
+
 		} else
 			self.$datasource = null;
 
@@ -5428,7 +5462,9 @@
 			return self;
 
 		if (typeof(value) === TYPE_O) {
-			OK(value).forEach(function(k) {
+			var keys = OK(value);
+			for (var i = 0; i < keys.length; i++) {
+				var k = keys[i];
 				var prev = self.config[k];
 				if (!init && self.config[k] !== value[k])
 					self.config[k] = value[k];
@@ -5437,7 +5473,7 @@
 				else if (self.configure)
 					self.configure(k, value[k], init, init ? undefined : prev);
 				self.data(T_CONFIG + '.' + k, value[k]);
-			});
+			}
 		} else if (value.charAt(0) === '=') {
 			value = value.substring(1).SCOPE(self);
 			if (self.watch) {
@@ -6011,17 +6047,17 @@
 
 		// Multiple versions
 		if (name.indexOf(',') !== -1) {
-			name.split(',').forEach(function(item, index) {
-				item = item.trim();
-				item && COMPONENT(item, config, declaration, index ? null : dependencies);
-			});
-			return;
+			var tmp = name.split(',');
+			for (var i = 0; i < tmp.length; i++) {
+				var item = tmp[i].trim();
+				item && COMPONENT(item, config, declaration, i ? null : dependencies);
+			}
+		} else {
+			M.$components[name] && warn('Overwriting component:', name);
+			var a = M.$components[name] = { name: name, config: config, declaration: declaration, shared: {}, dependencies: dependencies instanceof Array ? dependencies : null };
+			var e = 'component.compile';
+			events[e] && EMIT(e, name, a);
 		}
-
-		M.$components[name] && warn('Overwriting component:', name);
-		var a = M.$components[name] = { name: name, config: config, declaration: declaration, shared: {}, dependencies: dependencies instanceof Array ? dependencies : null };
-		var e = 'component.compile';
-		events[e] && EMIT(e, name, a);
 	};
 
 	W.WIDTH = function(el) {
@@ -8468,7 +8504,8 @@
 				if (com) {
 					var isarr = com instanceof Array;
 					if (isarr) {
-						com.forEach(function(o) {
+						for (var j = 0; j < com.length; j++) {
+							var o = com[j];
 							if (o && o.$ready && !o.$removed) {
 								if (fn) {
 									fn.call(o, i);
@@ -8478,7 +8515,7 @@
 									output.push(o);
 								}
 							}
-						});
+						}
 					} else if (com && com.$ready && !com.$removed) {
 						if (fn) {
 							fn.call(com, i);
@@ -8677,7 +8714,7 @@
 				}
 			}
 
-			var keys = Object.keys(data);
+			var keys = OK(data);
 			var output = { os: '', browser: '', device: 'desktop' };
 
 			if (data.Tablet)
@@ -9885,7 +9922,7 @@
 		if (!self.element)
 			return true;
 
-		var keys = Object.keys(repeats);
+		var keys = OK(repeats);
 		var id = self.id + '_';
 
 		for (var i = 0; i < keys.length; i++) {
@@ -9901,12 +9938,14 @@
 		self.destroy && self.destroy();
 
 		// Remove all global events
-		OK(events).forEach(function(e) {
-			var evt = events[e];
+		keys = OK(events);
+		for (var i = 0; i < keys.length; i++) {
+			var key = keys[i];
+			var evt = events[key];
 			evt = evt.remove('owner', self.id);
 			if (!evt.length)
-				delete events[e];
-		});
+				delete events[key];
+		}
 
 		watches = watches.remove('owner', self.id);
 
