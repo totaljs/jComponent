@@ -310,7 +310,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.086;
+	M.version = 18.087;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -454,7 +454,7 @@
 						sum += serialize(p ? get(p, item) : item);
 				}
 			}
-			return HASH(sum);
+			return HASH(sum, 1);
 		};
 
 		obj.get = function(index) {
@@ -1383,7 +1383,7 @@
 		}, function() {
 
 			statics[url] = 2;
-			var id = T_IMPORT + HASH(url);
+			var id = T_IMPORT + HASH(url, 1);
 
 			var cb = function(response, code, output) {
 
@@ -2534,7 +2534,7 @@
 
 		// Reset scope
 		var key = path.replace(/\.\*$/, '');
-		var fn = defaults['#' + HASH(key)];
+		var fn = defaults['#' + HASH(key, 1)];
 		var tmp;
 
 		if (fn) {
@@ -3346,7 +3346,7 @@
 				var tmp = meta[2] || attrcom(el, T_VALUE);
 				if (tmp) {
 					var fn = new Function('return ' + tmp);
-					defaults['#' + HASH(path)] = fn; // store by path (DEFAULT() --> can reset scope object)
+					defaults['#' + HASH(path, 1)] = fn; // store by path (DEFAULT() --> can reset scope object)
 					tmp = fn();
 					set(path, tmp);
 					emitwatch(path, tmp, 1);
@@ -3409,6 +3409,7 @@
 			// data.make
 			// data.replace
 			// data.target
+			// data.reevaluate
 
 			// Unique
 			var url = data.url;
@@ -3445,10 +3446,10 @@
 
 				current_element = item.element[0];
 
-				if (statics[key])
+				if (!data.reevaluate && statics[key])
 					response = removescripts(response);
 				else
-					response = importscripts(importstyles(response));
+					response = importscripts(importstyles(response, HASH(key, 1) + ''));
 
 				statics[key] = true;
 				item.toggle && item.toggle.length && item.toggle[0] && toggles.push(item);
@@ -3484,7 +3485,7 @@
 				current_element = null;
 				next();
 
-			}, item.cache || MD.importcache);
+			}, item.cache == null ? MD.importcache : item.cache);
 
 		}, function() {
 			C.importing--;
@@ -3524,7 +3525,7 @@
 		}
 
 		params = STRINGIFY(params);
-		var key = HASH(method + '#' + url.replace(/\//g, '') + params).toString();
+		var key = HASH(method + '#' + url.replace(/\//g, '') + params, 1).toString();
 		return cachestorage(key, value, expire);
 	}
 
@@ -3542,8 +3543,11 @@
 			if (typeof(expire) === TYPE_S)
 				expire = expire.parseExpire();
 
-			storage[key] = { expire: now + expire, value: value };
-			save();
+			if (expire) {
+				storage[key] = { expire: now + expire, value: value };
+				save();
+			}
+
 			return value;
 		}
 
@@ -3917,7 +3921,7 @@
 			var tmp = code.substring(end + 1, code.length - 9).trim();
 			if (!tmp) {
 				output = output.replace(code, '').trim();
-				var eid = 'external' + HASH(code);
+				var eid = 'external' + HASH(code, 1);
 				if (!statics[eid]) {
 					external.push(code);
 					statics[eid] = true;
@@ -4569,7 +4573,7 @@
 			cache.bt = 0; // reset timer id
 
 			if (self.$bindchanges) {
-				var hash = HASH(cache.value);
+				var hash = HASH(cache.value, 1);
 				if (hash === self.$valuehash)
 					return;
 				self.$valuehash = hash;
@@ -4602,7 +4606,7 @@
 				if (self.$bindreleased) {
 
 					if (self.$bindchanges) {
-						var hash = HASH(value);
+						var hash = HASH(value, 2);
 						if (hash === self.$valuehash)
 							return;
 						self.$valuehash = hash;
@@ -6712,7 +6716,7 @@
 			path = path.concat('#', fields);
 
 		var s = STRINGIFY(value, false, fields);
-		var hash = HASH(s);
+		var hash = HASH(s, 1);
 		var key = 'notmodified.' + path;
 
 		if (cache[key] === hash)
@@ -7162,6 +7166,11 @@
 	};
 
 	SP.parseExpire = function() {
+
+		var t = this;
+
+		if (t === '' || t === '-' || t === DEF.empty || t === 'none' || t === '0')
+			return 0;
 
 		var str = this.split(' ');
 		var number = parseInt(str[0]);
@@ -9574,7 +9583,7 @@
 		if (item.changes) {
 			tmp = value;
 			if (typeof(value) === TYPE_O && value)
-				tmp = HASH(value);
+				tmp = HASH(value, 1);
 			if (item.stamp !== tmp || !item.$init)
 				item.stamp = tmp;
 			else
