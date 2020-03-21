@@ -310,7 +310,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.087;
+	M.version = 18.088;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2119,7 +2119,7 @@
 		var $ticks = Math.random().toString().substring(2, 8);
 		for (var j = 0; j < arg.length; j++) {
 			var p = arg[j];
-			binders[p] && binderbind(p, p, $ticks);
+			binders[p] && binderbind(p, p, $ticks, 1);
 		}
 
 		for (var i = 0, length = all.length; i < length; i++) {
@@ -2158,7 +2158,16 @@
 		path = pathmaker(path);
 		if (path) {
 			DEF.monitor && monitor_method('set');
-			set(path, value);
+			set(path, value, null, type); // with data-bind
+			emitwatch(path, value, type);
+		}
+	};
+
+	W.REWRITE2 = function(path, value, type) {
+		path = pathmaker(path);
+		if (path) {
+			DEF.monitor && monitor_method('set');
+			set2(W, path, value); // without data-bind
 			emitwatch(path, value, type);
 		}
 	};
@@ -2223,7 +2232,7 @@
 		if (reset)
 			type = 1;
 
-		set(path, value);
+		set(path, value, null, type);
 
 		if (isUpdate)
 			return M.update(path, reset, type, true);
@@ -2539,7 +2548,7 @@
 
 		if (fn) {
 			tmp = fn();
-			set(key, tmp);
+			set(key, tmp, null, 3);
 		}
 
 		var arr = [];
@@ -3348,7 +3357,7 @@
 					var fn = new Function('return ' + tmp);
 					defaults['#' + HASH(path, 1)] = fn; // store by path (DEFAULT() --> can reset scope object)
 					tmp = fn();
-					set(path, tmp);
+					set(path, tmp, null, 1);
 					emitwatch(path, tmp, 1);
 				}
 
@@ -3676,7 +3685,7 @@
 					obj.$default = defaults[tmp];
 					if (value === undefined) {
 						value = obj.$default();
-						set(obj.path, value);
+						set(obj.path, value, null, 1);
 						emitwatch(obj.path, value, 0);
 					}
 				}
@@ -3966,7 +3975,7 @@
 		M.set(path.env(), value);
 	}
 
-	function set(path, value, is) {
+	function set(path, value, is, settype) {
 
 		if (path == null)
 			return;
@@ -3974,7 +3983,7 @@
 		var key = '+' + path;
 
 		if (paths[key])
-			return paths[key](MD.scope, value, path, binders, binderbind, is);
+			return paths[key](MD.scope, value, path, binders, binderbind, is, settype);
 
 		if (path.indexOf('?') !== -1) {
 			path = '';
@@ -3994,19 +4003,19 @@
 
 		for (var i = 0; i < arr.length - 1; i++) {
 			var item = arr[i];
-			binder.push('binders[\'' + item + '\']&&binderbind(\'' + item + '\',\'' + path + '\',$ticks)');
+			binder.push('binders[\'' + item + '\']&&binderbind(\'' + item + '\',\'' + path + '\',$ticks,c)');
 		}
 
 		var v = arr[arr.length - 1];
-		binder.push('binders[\'' + v + '\']&&binderbind(\'' + v + '\',\'' + path + '\',$ticks)');
-		binder.push('binders[\'!' + v + '\']&&binderbind(\'!' + v + '\',\'' + path + '\',$ticks)');
+		binder.push('binders[\'' + v + '\']&&binderbind(\'' + v + '\',\'' + path + '\',$ticks,c)');
+		binder.push('binders[\'!' + v + '\']&&binderbind(\'!' + v + '\',\'' + path + '\',$ticks,c)');
 
 		if (v.charAt(0) !== '[')
 			v = '.' + v;
 
-		var fn = (new Function('w', 'a', 'b', 'binders', 'binderbind', 'nobind', 'var $ticks=Math.random().toString().substring(2,8);if(!nobind){' + builder.join(';') + ';var v=typeof(a)==\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v}' + binder.join(';') + ';return a'));
+		var fn = (new Function('w', 'a', 'b', 'binders', 'binderbind', 'nobind', 'c', 'var $ticks=Math.random().toString().substring(2,8);if(!nobind){' + builder.join(';') + ';var v=typeof(a)==\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v}' + binder.join(';') + ';return a'));
 		paths[key] = fn;
-		fn(MD.scope, value, path, binders, binderbind, is);
+		fn(MD.scope, value, path, binders, binderbind, is, settype);
 	}
 
 	function set2(scope, path, value) {
@@ -8930,14 +8939,14 @@
 		return value;
 	});
 
-	function binderbind(path, absolutePath, ticks) {
+	function binderbind(path, absolutepath, ticks, type) {
 		var arr = binders[path];
 		for (var i = 0; i < arr.length; i++) {
 			var item = arr[i];
 			if (!item.disabled && item.ticks !== ticks) {
 				item.ticks = ticks;
 				var curr_scope = current_scope;
-				item.exec(GET(item.path), absolutePath);
+				item.exec(GET(item.path), absolutepath, null, null, null, type);
 				current_scope = curr_scope;
 			}
 		}
@@ -9085,7 +9094,7 @@
 						v = new Function('value', 'path', 'el', 'var fn=el[0].' + vkey + ';if(!fn){var _s=el.scope();if(_s){el[0].' + vkey + '=fn=GET(_s.makepath(\'' + vfn + '\'))}}if(fn)return fn' + (vbeg == -1 ? '(value,path,el)' : v.substring(vbeg)));
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'resize', 'delay', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'currency', 'empty', 'release', 'changes') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'tracktype', 'resize', 'delay', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'currency', 'empty', 'release', 'changes') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -9152,6 +9161,12 @@
 								break;
 							case 'track':
 								obj[k] = v.split(',').trim();
+								continue;
+							case 'tracktype':
+								var tt = v.split(',').trim();
+								obj[k] = {};
+								for (var l = 0; l < tt.length; l++)
+									obj[k][tt[l]] = 1;
 								continue;
 							case 'strict':
 								obj[k] = v ? v : true;
@@ -9509,7 +9524,7 @@
 		current_scope = curr_scope;
 	};
 
-	JBP.exec = function(value, path, index, wakeup, can) {
+	JBP.exec = function(value, path, index, wakeup, can, type) {
 
 		var item = this;
 		if (item.disabled)
@@ -9557,10 +9572,12 @@
 			current_scope = item.scope;
 
 		if (item.$init) {
+
 			if (item.strict && item.path !== path) {
 				if (item.strict !== true || path.length > item.path.length)
 					return;
 			}
+
 			if (item.track && item.path !== path) {
 				var can = false;
 				for (var i = 0; i < item.track.length; i++) {
@@ -9569,9 +9586,14 @@
 						break;
 					}
 				}
+
 				if (!can)
 					return;
 			}
+
+			if (item.tracktype && type != null && !item.tracktype[type])
+				return;
+
 		} else
 			item.init && item.init.call(item.el, value, path, item.el);
 
