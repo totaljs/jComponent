@@ -310,7 +310,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.088;
+	M.version = 18.089;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1537,6 +1537,16 @@
 		return function(response) {
 			args.push(response);
 			EXEC.apply(W, args);
+		};
+	};
+
+	W.ACMD = function() {
+		var args = [];
+		for (var i = 0; i < arguments.length; i++)
+			args.push(arguments[i]);
+		return function(response) {
+			args.push(response);
+			CMD.apply(W, args);
 		};
 	};
 
