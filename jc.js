@@ -310,7 +310,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.089;
+	M.version = 18.090;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -9033,6 +9033,7 @@
 
 		for (var i = 0; i < meta.length; i++) {
 			var item = meta[i].trim();
+
 			if (item) {
 				if (i) {
 
@@ -9152,6 +9153,34 @@
 						}
 
 						switch (k) {
+							case 'attr':
+
+								index = s.indexOf(' ');
+
+								var tmp = { attr: s, fn: fn };
+
+								if (notnull)
+									tmp.$nn = 1;
+
+								if (notvisible)
+									tmp.$nv =1;
+
+								if (index === -1) {
+									if (!obj[k])
+										obj[k] = [];
+									obj[k].push(tmp);
+									s = '';
+								} else {
+									tmp.attr = s.substring(0, index);
+									s = s.substring(index + 1);
+									if (!sub[s])
+										sub[s] = {};
+									if (!sub[s][k])
+										sub[s][k] = [];
+									sub[s][k].push(tmp);
+								}
+
+								break;
 							case 'changes':
 								break;
 							case 'empty':
@@ -9293,10 +9322,9 @@
 							if (!sub[s])
 								sub[s] = {};
 
-							if (k !== T_CLASS)
+							if (k !== T_CLASS && k !== 'attr')
 								sub[s][k] = fn;
-
-							else {
+							else if (cls.length) {
 								var p = cls.pop();
 								if (sub[s].cls)
 									sub[s].cls.push(p);
@@ -9304,7 +9332,7 @@
 									sub[s].cls = [p];
 							}
 						} else {
-							if (k !== T_CLASS)
+							if (k !== T_CLASS && k !== 'attr')
 								obj[k] = fn;
 						}
 					}
@@ -9688,6 +9716,14 @@
 				delete item.import;
 				scrhtml.COMPILABLE() && COMPILE();
 				scrhtml = null;
+			}
+		}
+
+		if (item.attr && item.attr.length) {
+			for (var i = 0; i < item.attr.length; i++) {
+				tmp = item.attr[i];
+				if ((can || tmp.$nv) && (value != null || !tmp.$nn))
+					el.attr(tmp.attr, tmp.fn.call(el, value, path, item.el || el));
 			}
 		}
 
