@@ -1,6 +1,7 @@
 (function() {
 
 	// Constants
+	var REGMETHOD = /GET|POST|PATCH|PUT|DELETE\s/i;
 	var REGCOM = /(data--|data---|data-jc|data-import|-bind|bind)=|COMPONENT\(/;
 	var REGSCRIPT = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
@@ -66,6 +67,7 @@
 	var T_TMP = 'jctmp.';
 	var T_UNKNOWN = 'UNKNOWN';
 	var T_CLICK = 'click';
+	var T_CHANGEAT = ' @change';
 	var ERRCONN = 'ERR_CONNECTION_CLOSED';
 	var OK = Object.keys;
 
@@ -246,6 +248,19 @@
 	W.EMPTYOBJECT = {};
 	W.NOW = new Date();
 
+	W.DEFAULT = function(path, timeout, reset) {
+		var arr = path.split(REGMETA);
+		if (arr.length > 1) {
+			var def = arr[1];
+			path = arr[0];
+			var index = path.indexOf('.*');
+			if (index !== -1)
+				path = path.substring(0, index);
+			SET(path + ' @default', new Function('return ' + def)(), timeout > 10 ? timeout : 3, timeout > 10 ? 3 : null);
+		} else
+			M.default(arr[0], timeout, null, reset);
+	};
+
 	var MD = W.DEF = M.defaults = {};
 	var ENV = MD.environment = {};
 
@@ -310,7 +325,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.090;
+	M.version = 18.091;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2051,25 +2066,13 @@
 	// 2 === by input
 	M.update = function(path, reset, type, wasset) {
 
-		if (path instanceof Array) {
-			for (var i = 0; i < path.length; i++)
-				M.update(path[i], reset, type);
-			return;
-		}
+		var meta = compilepath(path.replace(REGWILDCARD, ''));
+		var newpath = meta.pathmaker ? pathmaker(meta.path) : meta.path;
 
-		path = pathmaker(path);
-		if (!path)
+		if (!newpath)
 			return;
 
-		var is = path.charCodeAt(0) === 33;
-		if (is)
-			path = path.substring(1);
-
-		path = path.replace(REGWILDCARD, '');
-		if (!path)
-			return;
-
-		!wasset && set(path, get(path), true);
+		!wasset && set(newpath, get(newpath), true);
 		DEF.monitor && monitor_method('set');
 
 		var state = [];
@@ -2078,22 +2081,27 @@
 			type = 1; // manually
 
 		var all = M.components;
+
 		for (var i = 0, length = all.length; i < length; i++) {
 			var com = all[i];
 
-			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path))
+			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(newpath))
 				continue;
 
 			var result = com.get();
-			if (com.setter) {
+
+			if (meta.flags.default && com.$default) {
+				result = com.$default();
+				com.set(result, 3);
+			} else if (com.setter) {
 				com.$skip = false;
-				com.setterX(result, path, type);
+				com.setterX(result, newpath, type);
 			}
 
 			if (!com.$ready)
 				com.$ready = true;
 
-			if (reset === true) {
+			if (reset === true || meta.flags.reset || meta.flags.default) {
 
 				if (!com.$dirty_disabled)
 					com.$dirty = true;
@@ -2113,12 +2121,14 @@
 			com.state && state.push(com);
 		}
 
-		reset && clear(T_DIRTY, T_VALID);
+		if (reset || meta.flags.reset || meta.flags.default)
+			clear(T_DIRTY, T_VALID);
 
 		for (var i = 0, length = state.length; i < length; i++)
 			state[i].stateX(1, 4);
 
-		emitwatch(path, get(path), type);
+		if (!meta.flags.nowatch)
+			emitwatch(newpath, get(newpath), type);
 	};
 
 	W.NOTIFY = function() {
@@ -2157,45 +2167,44 @@
 	};
 
 	M.extend = function(path, value, type) {
-		path = pathmaker(path);
-		if (path) {
-			var val = get(path);
+		var meta = compilepath(path);
+		var newpath = meta.pathmaker ? pathmaker(meta.path) : meta.path;
+		if (newpath) {
+			DEF.monitor && monitor_method('get');
+			var val = get(newpath);
 			M.set(path, $.extend(val == null ? {} : val, value), type);
 		}
 	};
 
 	W.REWRITE = function(path, value, type) {
-		path = pathmaker(path);
+		var meta = compilepath(path);
+		path = meta.pathmaker ? pathmaker(meta.path) : meta.path;
 		if (path) {
 			DEF.monitor && monitor_method('set');
-			set(path, value, null, type); // with data-bind
-			emitwatch(path, value, type);
+			if (meta.flags.nobind)
+				set2(W, path, value); // without data-bind
+			else
+				set(path, value, null, type); // with data-bind
+			if (!meta.flags.nowatch)
+				emitwatch(path, value, type);
 		}
 	};
 
 	W.REWRITE2 = function(path, value, type) {
-		path = pathmaker(path);
-		if (path) {
-			DEF.monitor && monitor_method('set');
-			set2(W, path, value); // without data-bind
-			emitwatch(path, value, type);
-		}
+		REWRITE(path + ' @nobind', value, type);
 	};
 
 	M.inc = function(path, value, type) {
 
-		if (path instanceof Array) {
-			for (var i = 0; i < path.length; i++)
-				M.inc(path[i], value, type);
-			return;
-		}
+		var meta = compilepath(path);
+		var newpath = meta.pathmaker ? pathmaker(meta.path) : meta.path;
 
-		path = pathmaker(path);
-
-		if (!path)
+		if (!newpath)
 			return;
 
-		var current = get(path);
+		DEF.monitor && monitor_method('get');
+
+		var current = get(newpath);
 		if (!current) {
 			current = 0;
 		} else if (typeof(current) !== TYPE_N) {
@@ -2213,70 +2222,65 @@
 	// 3 === default
 	M.set = function(path, value, type) {
 
-		if (path instanceof Array) {
-			for (var i = 0; i < path.length; i++)
-				M.set(path[i], value, type);
+		if (path.charAt(0) === '+')
+			return M.push(path.substring(1), value, type);
+
+		var meta = compilepath(path);
+
+		if (meta.path.charAt(0) === '~') {
+			M.extend(path.substring(1), value, type);
 			return;
 		}
 
-		path = pathmaker(path);
-		DEF.monitor && monitor_method('set');
-
-		if (!path)
+		var newpath = meta.pathmaker ? pathmaker(meta.path) : meta.path;
+		if (!newpath)
 			return;
 
-		var is = path.charCodeAt(0) === 33;
-		if (is)
-			path = path.substring(1);
-
-		if (path.charCodeAt(0) === 43) {
-			path = path.substring(1);
-			return M.push(path, value, type);
-		}
-
-		if (!path)
-			return;
-
-		var isUpdate = (typeof(value) === TYPE_O && value != null && !(value instanceof Array) && !(value instanceof Date));
+		var isupdate = (typeof(value) === TYPE_O && value != null && !(value instanceof Array) && !(value instanceof Date));
 		var reset = type === true;
 		if (reset)
 			type = 1;
 
-		set(path, value, null, type);
+		set(newpath, value, null, type);
 
-		if (isUpdate)
+		if (isupdate)
 			return M.update(path, reset, type, true);
 
-		var result = get(path);
+		DEF.monitor && monitor_method('set');
+
+		var result = get(newpath);
 		var state = [];
 
 		if (type === undefined)
 			type = 1;
+
+		if (meta.flags.type != null)
+			type = meta.flags.type;
 
 		var all = M.components;
 
 		for (var i = 0, length = all.length; i < length; i++) {
 			var com = all[i];
 
-			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path))
+			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(newpath))
 				continue;
 
-			if (com.setter) {
-				if (com.path === path) {
-					if (com.setter)
-						com.setterX(result, path, type);
-				} else {
-					if (com.setter)
-						com.setterX(get(com.path), path, type);
-				}
+			if (meta.flags.default && com.$default)
+				com.set(com.$default(), 3);
+			else if (com.setter) {
+				if (com.path === newpath)
+					com.setter && com.setterX(result, newpath, type);
+				else
+					com.setter && com.setterX(get(com.path), newpath, type);
 			}
 
 			if (!com.$ready)
 				com.$ready = true;
 
-			type !== 3 && com.state && state.push(com);
+			if (type !== 3 && com.state)
+				state.push(com);
 
-			if (reset) {
+			if (reset || meta.flags.reset || meta.flags.default) {
 				if (!com.$dirty_disabled)
 					com.$dirty = true;
 				if (!com.$valid_disabled) {
@@ -2292,12 +2296,16 @@
 				com.valid(com.validate(result), true);
 		}
 
-		reset && clear(T_DIRTY, T_VALID);
+		if (reset || meta.flags.reset || meta.flags.default)
+			clear(T_DIRTY, T_VALID);
 
 		for (var i = 0, length = state.length; i < length; i++)
 			state[i].stateX(type, 5);
 
-		emitwatch(path, result, type);
+		meta.flags.change && com_dirty(newpath, false);
+
+		if (!meta.flags.nowatch)
+			emitwatch(newpath, result, type);
 	};
 
 	M.push = function(path, value, type) {
@@ -2308,16 +2316,16 @@
 			return;
 		}
 
+		var meta = compilepath(path);
 		var unshift = 0;
 
-		if (path.charAt(0) === '^') {
-			path = path.substring(1);
+		if (meta.path.charAt(0) === '^') {
+			meta.path = meta.path.substring(1);
 			unshift = 1;
 		}
 
-		path = pathmaker(path);
-
-		var arr = get(path);
+		var newpath = meta.pathmaker ? pathmaker(meta.path) : meta.path;
+		var arr = get(newpath);
 		var n = false;
 
 		if (!(arr instanceof Array)) {
@@ -2348,6 +2356,41 @@
 			M.update(path, undefined, type);
 	};
 
+	function compilepath(path) {
+
+		var key = '°' + path;
+		if (paths[key])
+			return paths[key];
+
+		var obj = {};
+		obj.flags = {};
+		obj.flagslist = '';
+
+		path = path.replace(/@[\w:]+/g, function(text) {
+			obj.flagslist += (obj.flagslist ? ' ' : '') + text;
+			var name = text.substring(1);
+			var index = name.indexOf(':');
+			if (index !== -1) {
+				var k = name.substring(0, index);
+				var v = name.substring(index + 1);
+				obj.flags[k] = k == 'type' && v.charCodeAt(0) < 58 ? +v : v;
+			} else
+				obj.flags[name] = 1;
+			return '';
+		}).trim();
+
+		if (obj.flagslist)
+			obj.flagslist = ' ' + obj.flagslist;
+
+		obj.path = path.env();
+
+		if (obj.path.charAt(0) === '%')
+			obj.path = T_TMP + obj.path.substring(1);
+
+		obj.pathmaker = obj.path.charAt(0) === '@' ? false : (/\?|\/|\s|\[/).test(obj.path);
+		return paths[key] = obj;
+	}
+
 	function pathmaker(path, clean, noscope) {
 
 		if (!path)
@@ -2363,6 +2406,8 @@
 			}
 		}
 
+		path = path.env();
+
 		if (!noscope && current_scope)
 			path = path.replace(REGSCOPEINLINE, current_scope);
 
@@ -2376,7 +2421,6 @@
 		}
 
 		var index = path.indexOf('/');
-
 		if (index === -1)
 			return path + tmp;
 
@@ -2414,24 +2458,36 @@
 		}
 	};
 
-	W.GET = M.get = function(path, scope) {
-		path = pathmaker(path);
+	W.GET = function(path, scope) {
+
+		if (!path)
+			return;
+
+		var meta = compilepath(path);
+		var newpath = meta.pathmaker ? pathmaker(meta.path) : meta.path;
+
 		if (scope === true) {
 			scope = null;
 			RESET(path, true);
 		} else if (typeof(scope) === TYPE_FN) {
-			var val = get(path);
+			var val = meta.flags.modified ? getmodified(newpath) : get(newpath);
 			if (val == null) {
 				setTimeout(GET, MD.delaywatcher, path, scope);
-			} else
+			} else {
 				scope(val);
+				DEF.monitor && monitor_method('get');
+				meta.flags.reset && RESET(path, true);
+			}
 			return;
 		}
+
 		DEF.monitor && monitor_method('get');
-		return get(path, scope);
+		meta.flags.reset && W.RESET(path, true);
+		meta.flags.update && setTimeout(W.UPD, 1, path);
+		return meta.flags.modified ? getmodified(newpath) : get(newpath, scope);
 	};
 
-	W.GETM = function(path) {
+	function getmodified(path) {
 		var model = null;
 		var arr = MODIFIED(path);
 		var index = path.indexOf('.*');
@@ -2443,21 +2499,19 @@
 				model = {};
 			set2(model, p.substring(path.length + 1), get(p));
 		}
-		if (DEF.monitor && arr.length) {
-			monitor_method('set');
-			monitor_method('get');
-		}
 		return model;
+	}
+
+	W.GETM = function(path) {
+		return GET(path + ' @modified');
 	};
 
 	W.GETU = function(path) {
-		var m = get(pathmaker(path));
-		setTimeout(W.UPD, 1, path);
-		return m;
+		return GET(path + ' @update');
 	};
 
 	W.GETR = function(path) {
-		return GET(path, true);
+		return GET(path + ' @reset');
 	};
 
 	W.VALIDATE = function(path, except) {
@@ -2465,9 +2519,11 @@
 		var arr = [];
 		var valid = true;
 
-		path = pathmaker(path.replace(REGWILDCARD, ''));
+		var meta = compilepath(path.replace(REGWILDCARD, ''));
+		var newpath = meta.pathmaker ? pathmaker(meta.path) : meta.path;
 
-		var flags = null;
+		var flags = meta.flags;
+
 		if (except) {
 			var is = false;
 			flags = {};
@@ -2486,10 +2542,11 @@
 		var all = M.components;
 		for (var i = 0, length = all.length; i < length; i++) {
 			var com = all[i];
-			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path))
+
+			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(newpath))
 				continue;
 
-			if (flags && ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':disabled')) || (flags.disabled && com.find(SELINPUT).is(':enabled'))))
+			if ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':disabled')) || (flags.disabled && com.find(SELINPUT).is(':enabled')))
 				continue;
 
 			com.state && arr.push(com);
@@ -2599,16 +2656,15 @@
 		}
 	};
 
-	W.RESET = M.reset = function(path, timeout, onlyComponent) {
+	W.RESET = function(path, timeout, onlyComponent) {
 
 		if (timeout > 0) {
-			setTimeout(function() {
-				M.reset(path);
-			}, timeout);
+			setTimeout(W.RESET, timeout, path);
 			return;
 		}
 
-		path = pathmaker(path).replace(REGWILDCARD, '');
+		var meta = compilepath(path);
+		var newpath = meta.pathmaker ? pathmaker(meta.path).replace(REGWILDCARD, '') : meta.path;
 
 		var arr = [];
 		var all = M.components;
@@ -2617,7 +2673,7 @@
 
 		for (var i = 0, length = all.length; i < length; i++) {
 			var com = all[i];
-			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path))
+			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(newpath))
 				continue;
 
 			com.state && arr.push(com);
@@ -2626,6 +2682,9 @@
 				continue;
 
 			findcontrol2(com);
+
+			if (meta.flags.default && com.$default)
+				com.set(com.$default(), 3);
 
 			if (!com.$dirty_disabled)
 				com.$dirty = true;
@@ -3982,7 +4041,7 @@
 			path = path.substring(index + 3).trim();
 		}
 
-		M.set(path.env(), value);
+		M.set(path, value);
 	}
 
 	function set(path, value, is, settype) {
@@ -5719,7 +5778,7 @@
 
 	PPC.reset = function() {
 		var self = this;
-		M.reset(self.path, 0, self);
+		RESET(self.path, 0, self);
 		return self;
 	};
 
@@ -6614,24 +6673,25 @@
 	};
 
 	W.SET = function(path, value, timeout, reset) {
-		if (path.indexOf(' ') === -1) {
-			var t = typeof(timeout);
-			if (t === TYPE_B)
-				return M.set(path, value, timeout);
-			if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
-				return M.set(path, value, timeout);
-			timeouts[path] && clearTimeout(timeouts[path]);
-			timeouts[path] = setTimeout(setbind, timeout, path, value, reset, current_scope);
-		} else
+
+		if (REGMETHOD.test(path)) {
 			setajax('set', path, value, timeout, reset);
+			return;
+		}
+
+		var t = typeof(timeout);
+		if (t === TYPE_B)
+			return M.set(path, value, timeout);
+
+		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
+			return M.set(path, value, timeout);
+
+		timeouts[path] && clearTimeout(timeouts[path]);
+		timeouts[path] = setTimeout(setbind, timeout, path, value, reset, current_scope);
 	};
 
 	W.SETR = function(path, value, type) {
-		if (path.indexOf(' ') === -1) {
-			M.set(path, value, type);
-			RESET(path);
-		} else
-			W.SET(path, value, type, true);
+		W.SET(path + ' @reset', value, type, true);
 	};
 
 	W.INC = function(path, value, timeout, reset) {
@@ -6649,67 +6709,55 @@
 	};
 
 	W.EXT = W.EXTEND = function(path, value, timeout, reset) {
-		if (path.indexOf(' ') === -1) {
-			var t = typeof(timeout);
-			if (t === TYPE_B)
-				return M.extend(path, value, timeout);
-			if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
-				return M.extend(path, value, timeout);
-			timeouts[path] && clearTimeout(timeouts[path]);
-			timeouts[path] = setTimeout(extbind, timeout, path, value, reset, current_scope);
-		} else
+
+		if (REGMETHOD.test(path)) {
 			setajax('extend', path, value, timeout, reset);
+			return;
+		}
+
+		var t = typeof(timeout);
+		if (t === TYPE_B)
+			return M.extend(path, value, timeout);
+		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
+			return M.extend(path, value, timeout);
+		timeouts[path] && clearTimeout(timeouts[path]);
+		timeouts[path] = setTimeout(extbind, timeout, path, value, reset, current_scope);
 	};
 
 	W.PUSH = function(path, value, timeout, reset) {
-		if (path.indexOf(' ') === -1) {
-			var t = typeof(timeout);
-			if (t === TYPE_B)
-				return M.push(path, value, timeout);
-			if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
-				return M.push(path, value, timeout);
-			timeouts[path] && clearTimeout(timeouts[path]);
-			timeouts[path] = setTimeout(pushbind, timeout, path, value, reset, current_scope);
-		} else
+
+		if (REGMETHOD.test(path)) {
 			setajax('push', path, value, timeout, reset);
+			return;
+		}
+
+		var t = typeof(timeout);
+		if (t === TYPE_B)
+			return M.push(path, value, timeout);
+		if (!timeout || timeout < 10 || t !== TYPE_N) // TYPE
+			return M.push(path, value, timeout);
+		timeouts[path] && clearTimeout(timeouts[path]);
+		timeouts[path] = setTimeout(pushbind, timeout, path, value, reset, current_scope);
 	};
 
 	W.TOGGLE2 = function(path, type) {
-		TOGGLE(path, type);
-		CHANGE(path);
+		TOGGLE(path + T_CHANGEAT, type);
 	};
 
 	W.EXT2 = W.EXTEND2 = function(path, value, type) {
-		EXTEND(path, value, type);
-		CHANGE(path);
+		EXTEND(path + T_CHANGEAT, value, type);
 	};
 
 	W.SET2 = function(path, value, type) {
-		SET(path, value, type);
-		CHANGE(path);
+		SET(path + T_CHANGEAT, value, type);
 	};
 
 	W.INC2 = function(path, value, type) {
-		INC(path, value, type);
-		CHANGE(path);
+		INC(path + T_CHANGEAT, value, type);
 	};
 
 	W.PUSH2 = function(path, value, type) {
-		PUSH(path, value, type);
-		CHANGE(path);
-	};
-
-	W.DEFAULT = function(path, timeout, reset) {
-		var arr = path.split(REGMETA);
-		if (arr.length > 1) {
-			var def = arr[1];
-			path = arr[0];
-			var index = path.indexOf('.*');
-			if (index !== -1)
-				path = path.substring(0, index);
-			SET(path, new Function('return ' + def)(), timeout > 10 ? timeout : 3, timeout > 10 ? 3 : null);
-		}
-		M.default(arr[0], timeout, null, reset);
+		PUSH(path + T_CHANGEAT, value, type);
 	};
 
 	W.MODIFIED = function(path) {
@@ -6852,11 +6900,6 @@
 		timeouts[path] = setTimeout(updbind, timeout, path, reset);
 	};
 
-	W.UPD2 = W.UPDATE2 = function(path, type) {
-		UPDATE(path, type);
-		CHANGE(path);
-	};
-
 	W.CSS = function(value, id) {
 		id && $('#css' + id).remove();
 		$('<style type="text/css"' + (id ? ' id="css' + id + '"' : '') + '>' + (value instanceof Array ? value.join('') : value) + '</style>').appendTo('head');
@@ -6883,7 +6926,7 @@
 			hash = ((hash << 5) - hash) + char;
 			hash |= 0; // Convert to 32bit integer
 		}
-		return unsigned ? hash >>> 0 : hash;
+		return unsigned == null ? hash >>> 0 : hash;
 	};
 
 	W.GUID = function(size) {
