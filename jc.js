@@ -2167,12 +2167,75 @@
 	};
 
 	M.extend = function(path, value, type) {
+
+		// @TODO: missing comparing of real extended paths
+
 		var meta = compilepath(path);
 		var newpath = meta.pathmaker ? pathmaker(meta.path) : meta.path;
 		if (newpath) {
-			DEF.monitor && monitor_method('get');
-			var val = get(newpath);
-			M.set(path, $.extend(val == null ? {} : val, value), type);
+
+			var keys = OK(value);
+			var reset = type === true || meta.flags.reset;
+			if (reset)
+				type = 1;
+
+			for (var i = 0; i < keys.length; i++) {
+				var p = newpath + '.' + keys[i];
+				set(p, value[keys[i]], null, type);
+			}
+
+			DEF.monitor && monitor_method('set');
+
+			var all = M.components;
+			var state = [];
+
+			for (var i = 0; i < all.length; i++) {
+				var com = all[i];
+
+				if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(newpath))
+					continue;
+
+				var result = com.get();
+
+				if (meta.flags.default && com.$default) {
+					result = com.$default();
+					com.set(result, 3);
+				} else if (com.setter) {
+					com.$skip = false;
+					com.setterX(result, newpath, type);
+				}
+
+				if (!com.$ready)
+					com.$ready = true;
+
+				if (reset === true || meta.flags.reset || meta.flags.default) {
+
+					if (!com.$dirty_disabled)
+						com.$dirty = true;
+
+					if (!com.$valid_disabled) {
+						com.$valid = true;
+						com.$validate = false;
+						if (com.validate)
+							com.$valid = com.validate(result);
+					}
+
+					findcontrol2(com);
+
+				} else if (com.validate && !com.$valid_disabled)
+					com.valid(com.validate(result), true);
+
+				com.state && state.push(com);
+			}
+
+			if (reset || meta.flags.reset || meta.flags.default)
+				clear(T_DIRTY, T_VALID);
+
+			for (var i = 0, length = state.length; i < length; i++)
+				state[i].stateX(1, 4);
+
+			if (!meta.flags.nowatch)
+				emitwatch(newpath, get(newpath), type);
 		}
 	};
 
@@ -2227,8 +2290,8 @@
 
 		var meta = compilepath(path);
 
-		if (meta.path.charAt(0) === '~') {
-			M.extend(path.substring(1), value, type);
+		if (meta.path.charAt(0) === '~' || meta.flags.extend) {
+			M.extend(meta.flags.extend ? path : path.substring(1), value, type);
 			return;
 		}
 
@@ -2259,7 +2322,8 @@
 
 		var all = M.components;
 
-		for (var i = 0, length = all.length; i < length; i++) {
+		for (var i = 0; i < all.length; i++) {
+
 			var com = all[i];
 
 			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(newpath))
