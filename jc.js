@@ -2168,8 +2168,6 @@
 
 	M.extend = function(path, value, type) {
 
-		// @TODO: missing comparing of real extended paths
-
 		var meta = compilepath(path);
 		var newpath = meta.pathmaker ? pathmaker(meta.path) : meta.path;
 		if (newpath) {
@@ -2192,40 +2190,45 @@
 			for (var i = 0; i < all.length; i++) {
 				var com = all[i];
 
-				if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(newpath))
-					continue;
+				for (var j = 0; j < keys.length; j++) {
 
-				var result = com.get();
+					var p = newpath + '.' + keys[j];
 
-				if (meta.flags.default && com.$default) {
-					result = com.$default();
-					com.set(result, 3);
-				} else if (com.setter) {
-					com.$skip = false;
-					com.setterX(result, newpath, type);
-				}
+					if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(p))
+						continue;
 
-				if (!com.$ready)
-					com.$ready = true;
+					var result = com.get();
 
-				if (reset === true || meta.flags.reset || meta.flags.default) {
-
-					if (!com.$dirty_disabled)
-						com.$dirty = true;
-
-					if (!com.$valid_disabled) {
-						com.$valid = true;
-						com.$validate = false;
-						if (com.validate)
-							com.$valid = com.validate(result);
+					if (meta.flags.default && com.$default) {
+						result = com.$default();
+						com.set(result, 3);
+					} else if (com.setter) {
+						com.$skip = false;
+						com.setterX(result, p, type);
 					}
 
-					findcontrol2(com);
+					if (!com.$ready)
+						com.$ready = true;
 
-				} else if (com.validate && !com.$valid_disabled)
-					com.valid(com.validate(result), true);
+					if (reset === true || meta.flags.reset || meta.flags.default) {
 
-				com.state && state.push(com);
+						if (!com.$dirty_disabled)
+							com.$dirty = true;
+
+						if (!com.$valid_disabled) {
+							com.$valid = true;
+							com.$validate = false;
+							if (com.validate)
+								com.$valid = com.validate(result);
+						}
+
+						findcontrol2(com);
+
+					} else if (com.validate && !com.$valid_disabled)
+						com.valid(com.validate(result), true);
+
+					com.state && state.push(com);
+				}
 			}
 
 			if (reset || meta.flags.reset || meta.flags.default)
@@ -2234,8 +2237,12 @@
 			for (var i = 0, length = state.length; i < length; i++)
 				state[i].stateX(1, 4);
 
-			if (!meta.flags.nowatch)
-				emitwatch(newpath, get(newpath), type);
+			if (!meta.flags.nowatch) {
+				for (var j = 0; j < keys.length; j++) {
+					var p = newpath + '.' + keys[j];
+					emitwatch(p, get(p), type);
+				}
+			}
 		}
 	};
 
