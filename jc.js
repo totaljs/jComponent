@@ -325,7 +325,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.091;
+	M.version = 18.092;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4104,15 +4104,18 @@
 		return str;
 	}
 
-	function remap(path, value) {
+	function remap(path, value, callback) {
 
 		var index = path.replace('-->', '->').indexOf('->');
 		if (index !== -1) {
-			value = value[path.substring(0, index).trim()];
+			value = get(path.substring(0, index).trim(), value);
 			path = path.substring(index + 3).trim();
 		}
 
-		M.set(path, value);
+		if (callback)
+			callback(path, value);
+		else
+			M.set(path, value);
 	}
 
 	function set(path, value, is, settype) {
@@ -6675,28 +6678,37 @@
 	};
 
 	var timeouts = {};
+
 	var setbind = function(path, value, reset, scope) {
-		delete timeouts[path];
-		scope && (current_scope = scope);
-		M.set(path, value, reset);
+		remap(path, value, function(path, value) {
+			delete timeouts[path];
+			scope && (current_scope = scope);
+			M.set(path, value, reset);
+		});
 	};
 
 	var incbind = function(path, value, reset, scope) {
-		delete timeouts[path];
-		scope && (current_scope = scope);
-		M.inc(path, value, reset);
+		remap(path, value, function(path, value) {
+			delete timeouts[path];
+			scope && (current_scope = scope);
+			M.inc(path, value, reset);
+		});
 	};
 
 	var extbind = function(path, value, reset, scope) {
-		delete timeouts[path];
-		scope && (current_scope = scope);
-		M.extend(path, value, reset);
+		remap(path, value, function(path, value) {
+			delete timeouts[path];
+			scope && (current_scope = scope);
+			M.extend(path, value, reset);
+		});
 	};
 
 	var pushbind = function(path, value, reset, scope) {
-		delete timeouts[path];
-		scope && (current_scope = scope);
-		M.push(path, value, reset);
+		remap(path, value, function(path, value) {
+			delete timeouts[path];
+			scope && (current_scope = scope);
+			M.push(path, value, reset);
+		});
 	};
 
 	var updbind = function(path, reset) {
