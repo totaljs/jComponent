@@ -1,7 +1,7 @@
 (function() {
 
 	// Constants
-	var REGMETHOD = /GET|POST|PATCH|PUT|DELETE\s/i;
+	var REGMETHOD = /GET|POST|PATCH|PUT|DELETE\s/;
 	var REGCOM = /(data--|data---|data-jc|data-import|-bind|bind)=|COMPONENT\(/;
 	var REGSCRIPT = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
@@ -325,7 +325,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.092;
+	M.version = 18.093;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2389,13 +2389,14 @@
 
 		var meta = compilepath(path);
 		var unshift = 0;
+		var p = meta.path;
 
-		if (meta.path.charAt(0) === '^') {
-			meta.path = meta.path.substring(1);
+		if (p.charAt(0) === '^') {
+			p = p.substring(1);
 			unshift = 1;
 		}
 
-		var newpath = meta.pathmaker ? pathmaker(meta.path) : meta.path;
+		var newpath = meta.pathmaker ? pathmaker(p) : p;
 		var arr = get(newpath);
 		var n = false;
 
@@ -2422,9 +2423,9 @@
 		}
 
 		if (n)
-			M.set(path, arr, type);
+			M.set(p, arr, type);
 		else if (is)
-			M.update(path, undefined, type);
+			M.update(p, undefined, type);
 	};
 
 	function compilepath(path) {
