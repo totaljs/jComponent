@@ -325,7 +325,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.093;
+	M.version = 18.094;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2661,12 +2661,12 @@
 		return valid;
 	}
 
-	M.default = function(path, timeout, onlyComponent, reset) {
+	M.default = function(path, timeout, onlyComponent, reset, scope) {
 
-		if (timeout > 0) {
-			setTimeout(function() {
-				M.default(path, 0, onlyComponent, reset);
-			}, timeout);
+		console.log('SOM TU');
+
+		if (timeout !== true && timeout > 0) {
+			setTimeout(M.default, timeout, path, 0, onlyComponent, reset, scope || current_scope);
 			return;
 		}
 
@@ -2677,6 +2677,11 @@
 
 		if (reset === undefined)
 			reset = true;
+
+		var curr_scope = current_scope;
+
+		if (scope)
+			current_scope = scope;
 
 		path = pathmaker(path).replace(REGWILDCARD, '');
 
@@ -2726,14 +2731,21 @@
 			clear(T_VALID, T_DIRTY);
 			state(arr, 3, 3);
 		}
+
+		current_scope = curr_scope;
 	};
 
-	W.RESET = function(path, timeout, onlyComponent) {
+	W.RESET = function(path, timeout, onlyComponent, scope) {
 
-		if (timeout > 0) {
-			setTimeout(W.RESET, timeout, path);
+		if (timeout !== true && timeout > 0) {
+			setTimeout(W.RESET, timeout, path, null, scope || current_scope);
 			return;
 		}
+
+		var tmp = current_scope;
+
+		if (scope)
+			current_scope = scope;
 
 		var meta = compilepath(path);
 		var newpath = meta.pathmaker ? pathmaker(meta.path).replace(REGWILDCARD, '') : meta.path;
@@ -2771,6 +2783,8 @@
 
 		clear(T_VALID, T_DIRTY);
 		state(arr, 1, 3);
+
+		current_scope = tmp;
 	};
 
 	M.each = function(fn, path) {
