@@ -325,7 +325,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.094;
+	M.version = 18.095;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -405,6 +405,13 @@
 		} else
 			set2(t.value, path, model);
 
+		t.upd(path);
+		return t;
+	};
+
+	VBP.upd = function(path) {
+		var t = this;
+
 		for (var i = 0; i < t.binders.length; i++) {
 			var b = t.binders[i];
 
@@ -415,7 +422,10 @@
 
 			for (var j = 0; j < b.length; j++) {
 				var bi = b[j];
-				bi && bi.exec(path || !bi.path ? model : get(bi.path, model), bi.path);
+				if (bi) {
+					var can = !path || !bi.path || comparepath(bi.path, path);
+					can && bi.exec(bi.path ? get(bi.path, t.value) : t.value, path || bi.path);
+				}
 			}
 		}
 
@@ -475,6 +485,14 @@
 		obj.get = function(index) {
 			var val = obj.value;
 			return index == null ? val : val[index];
+		};
+
+		obj.upd = function(index) {
+			if (index == null)
+				obj.set(obj.value);
+			else
+				obj.set(index, obj.value[index]);
+			return obj;
 		};
 
 		obj.set = function(index, value) {
@@ -2662,8 +2680,6 @@
 	}
 
 	M.default = function(path, timeout, onlyComponent, reset, scope) {
-
-		console.log('SOM TU');
 
 		if (timeout !== true && timeout > 0) {
 			setTimeout(M.default, timeout, path, 0, onlyComponent, reset, scope || current_scope);
@@ -5006,6 +5022,23 @@
 		return false;
 	};
 
+	function comparepath(path, updated) {
+
+		if (updated.length > path.length) {
+			for (var i = 0; i < path.length; i++) {
+				var a = updated.charAt(i);
+				var b = path.charAt(i);
+				if (a !== b)
+					return false;
+			}
+
+			var c = updated.charAt(i);
+			return c === '.' || c === '[' || c === '';
+		}
+
+		return path === updated;
+	}
+
 	PPC.$compare = function(path) {
 		var self = this;
 
@@ -5024,7 +5057,7 @@
 			return c === '.' || c === '[' || c === '';
 		}
 
-		for (var i = 0, length = self.$path.length; i < length; i++) {
+		for (var i = 0; i < self.$path.length; i++) {
 			if (self.$path[i] === path)
 				return true;
 		}
@@ -9328,6 +9361,8 @@
 								fn = v === T_VALUE ? MD.empty : v;
 								break;
 							case 'currency':
+								fn = v;
+								break;
 							case 'focus':
 							case 'resize':
 								fn = v;
