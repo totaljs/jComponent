@@ -243,6 +243,7 @@
 	var current_scope = null;
 
 	W.MAIN = W.M = M;
+	W.TEMP = {};
 	W.PLUGINS = {};
 	W.EMPTYARRAY = [];
 	W.EMPTYOBJECT = {};
@@ -325,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.095;
+	M.version = 18.096;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8743,6 +8744,7 @@
 			if (knockknockcounter % 5 === 0) {
 				paths = {};
 				cleaner();
+				W.TEMP = {};
 			}
 			temp = {};
 		}, 60000);
