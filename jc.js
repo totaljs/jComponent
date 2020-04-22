@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.097;
+	M.version = 18.098;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -396,7 +396,7 @@
 	// A temporary variable for the performance
 	var VBPA = [null];
 
-	VBP.set = function(path, model) {
+	VBP.set = function(path, model, skipchecksum) {
 
 		var t = this;
 
@@ -407,11 +407,26 @@
 			set2(t.value, path, model);
 
 		t.upd(path);
+
+		// Fixed checksum for VBINDARRAY
+		if (!skipchecksum && t.vbindarray) {
+			var sum = t.vbindarray.$checksum(t.value);
+			if (t.element[0].$bchecksum !== sum)
+				t.element[0].$bchecksum = sum;
+		}
+
 		return t;
 	};
 
 	VBP.upd = function(path) {
 		var t = this;
+
+		// Maybe the model has been changed
+		if (t.vbindarray) {
+			var sum = t.vbindarray.$checksum(t.value);
+			if (t.element[0].$bchecksum !== sum)
+				t.element[0].$bchecksum = sum;
+		}
 
 		for (var i = 0; i < t.binders.length; i++) {
 			var b = t.binders[i];
@@ -466,7 +481,7 @@
 			}
 		};
 
-		var checksum = function(item) {
+		obj.$checksum = function(item) {
 			var sum = 0;
 			var binder = obj.items[0];
 			if (binder) {
@@ -503,7 +518,7 @@
 			if (!(index instanceof Array)) {
 				var item = obj.items[index];
 				if (item) {
-					sum = checksum(value);
+					sum = obj.$checksum(value);
 					var el = item.element[0];
 					if (el.$bchecksum !== sum) {
 						el.$bchecksum = sum;
@@ -532,15 +547,16 @@
 					item.element.attrd('index', i);
 					item.element[0].$vbind = item;
 					item.index = i;
+					item.vbindarray = obj;
 					obj.element.append(item.element);
 				}
 
 				var el = item.element[0];
-				sum = checksum(val);
+				sum = obj.$checksum(val);
 
 				if (el.$bchecksum !== sum) {
 					el.$bchecksum = sum;
-					item.set(val);
+					item.set(val, null, true);
 				}
 			}
 		};
