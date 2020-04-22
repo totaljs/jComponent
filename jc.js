@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.096;
+	M.version = 18.097;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6654,7 +6654,7 @@
 			case TYPE_B:
 				return obj;
 			case TYPE_S:
-				return path ? obj : CLONE(get(pathmaker(obj)), true);
+				return path ? obj : CLONE(GET(obj));
 		}
 
 		if (obj == null)
