@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.100;
+	M.version = 18.101;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8592,12 +8592,35 @@
 			return null;
 		};
 
-		$.fn.aclass = function(a) {
-			return this.addClass(a);
+		var classtimeout = function(el, a, t) {
+
+			if (el.length)
+				delete el[0].$ct;
+
+			if (t === 1)
+				el.aclass(a);
+			else if (t === 2)
+				el.rclass(a);
+			else if (t === 3)
+				el.rclass2(a);
 		};
 
-		$.fn.rclass = function(a) {
-			return a == null ? this.removeClass() : this.removeClass(a);
+		$.fn.aclass = function(a, timeout) {
+			var self = this;
+			if (timeout && self.length) {
+				self[0].$ct && clearTimeout(self[0].$ct);
+				self[0].$ct = setTimeout(classtimeout, timeout, self, a, 1);
+			}
+			return timeout ? self : self.addClass(a);
+		};
+
+		$.fn.rclass = function(a, timeout) {
+			var self = this;
+			if (timeout && self.length) {
+				self[0].$ct && clearTimeout(self[0].$ct);
+				self[0].$ct = setTimeout(classtimeout, timeout, self, a, 2);
+			}
+			return timeout ? self : a == null ? self.removeClass() : self.removeClass(a);
 		};
 
 		$.fn.rattr = function(a) {
@@ -8610,9 +8633,18 @@
 			return this;
 		};
 
-		$.fn.rclass2 = function(a) {
+		$.fn.rclass2 = function(a, timeout) {
 
 			var self = this;
+
+			if (timeout) {
+				if (self.length) {
+					self[0].$ct && clearTimeout(self[0].$ct);
+					self[0].$ct = setTimeout(classtimeout, timeout, self, a, 3);
+				}
+				return self;
+			}
+
 			var arr = (self.attr(T_CLASS) || '').split(' ');
 			var isReg = typeof(a) === TYPE_O;
 
