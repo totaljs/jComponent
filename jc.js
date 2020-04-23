@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.099;
+	M.version = 18.100;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -512,10 +512,15 @@
 				if (item) {
 					sum = obj.$checksum(value);
 					var el = item.element[0];
+
+					// Rebinds reference
+					item.value = value;
+					obj.value[index] = value;
+
+					// Redraws
 					if (el.$bchecksum !== sum) {
 						el.$bchecksum = sum;
 						item.set(value);
-						obj.value[index] = value;
 					}
 				}
 				return obj;
@@ -546,6 +551,10 @@
 				var el = item.element[0];
 				sum = obj.$checksum(val);
 
+				// Rebinds reference
+				item.value = val;
+
+				// Redraws
 				if (el.$bchecksum !== sum) {
 					el.$bchecksum = sum;
 					item.set(val, null, true);
