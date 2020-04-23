@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.098;
+	M.version = 18.099;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -406,23 +406,15 @@
 		} else
 			set2(t.value, path, model);
 
-		t.upd(path);
-
-		// Fixed checksum for VBINDARRAY
-		if (!skipchecksum && t.vbindarray) {
-			var sum = t.vbindarray.$checksum(t.value);
-			if (t.element[0].$bchecksum !== sum)
-				t.element[0].$bchecksum = sum;
-		}
-
+		t.upd(path, skipchecksum);
 		return t;
 	};
 
-	VBP.upd = function(path) {
+	VBP.upd = function(path, skipchecksum) {
 		var t = this;
 
 		// Maybe the model has been changed
-		if (t.vbindarray) {
+		if (!skipchecksum && t.vbindarray) {
 			var sum = t.vbindarray.$checksum(t.value);
 			if (t.element[0].$bchecksum !== sum)
 				t.element[0].$bchecksum = sum;
