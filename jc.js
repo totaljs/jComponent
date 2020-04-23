@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.101;
+	M.version = 18.102;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6158,8 +6158,21 @@
 	W.CONFIG = function(selector, config) {
 
 		if (typeof(selector) === TYPE_S) {
+
+			var arr;
+
+			if (selector.indexOf(',') !== -1) {
+				arr = selector.split(',');
+				for (var i = 0; i < arr.length; i++)
+					CONFIG(arr[i].trim(), config);
+				return;
+			}
+
 			var fn = [];
-			selector.split(' ').forEach(function(sel) {
+			arr = selector.split(' ');
+
+			for (var i = 0; i < arr.length; i++) {
+				var sel = arr[i];
 				var prop = '';
 				switch (sel.trim().charAt(0)) {
 					case '*':
@@ -6179,7 +6192,7 @@
 						break;
 				}
 				fn.push('com.{0}==\'{1}\''.format(prop, prop === '$name' ? sel : sel.substring(1)));
-			});
+			}
 			selector = FN('com=>' + fn.join('&&'));
 		}
 
