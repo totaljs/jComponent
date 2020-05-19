@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.102;
+	M.version = 18.103;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1601,6 +1601,26 @@
 		};
 	};
 
+	var serializedata = function(obj) {
+		var keys = Object.keys(obj);
+		var builder = [];
+		for (var i = 0; i < keys.length; i++) {
+			var val = obj[keys[i]];
+			if (val !== undefined) {
+				if (val != null) {
+					if (val instanceof Array)
+						val = val.join(',');
+					else if (val instanceof Date)
+						val = val.format('iso');
+					else
+						val = val + '';
+				}
+				builder.push(encodeURIComponent(keys[i]) + '=' + (val == null ? '' : encodeURIComponent(val)));
+			}
+		}
+		return builder.length ? builder.join('&') : '';
+	};
+
 	W.AJAX = function(url, data, callback, timeout) {
 
 		if (typeof(url) === TYPE_FN) {
@@ -1705,7 +1725,7 @@
 		setTimeout(function() {
 
 			if (method === 'GET' && data) {
-				var qs = (typeof(data) === TYPE_S ? data : jQuery.param(data, true));
+				var qs = (typeof(data) === TYPE_S ? data : serializedata(data)); // serializedata replaces jQuery.param(data, true)
 				if (qs)
 					url += '?' + qs;
 			}
