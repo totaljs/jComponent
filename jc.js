@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.103;
+	M.version = 18.104;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7223,22 +7223,27 @@
 			tmp.pending = 0;
 			tmp.index = 0;
 			tmp.thread = thread;
+			tmp.scope = current_scope;
 
 			// thread === Boolean then array has to be removed item by item
 			init = true;
 		}
 
 		var item = thread === true ? self.shift() : self[tmp.index++];
-
 		if (item === undefined) {
 			if (!tmp.pending) {
-				callback && callback();
+				if (callback) {
+					current_scope = tmp.scope;
+					callback();
+				}
 				tmp.cancel = true;
 			}
 			return self;
 		}
 
 		tmp.pending++;
+
+		current_scope = tmp.scope;
 		onItem.call(self, item, function() {
 			setTimeout(next_wait, 1, self, onItem, callback, thread, tmp);
 		}, tmp.index);
@@ -11249,13 +11254,14 @@
 			arr = queues[name] = [];
 
 		if (fn) {
-			arr.push(fn);
+			arr.push({ fn: fn, scope: current_scope });
 			W.QUEUE(name);
 		} else if (!arr.isrunning) {
 			var item = arr.shift();
 			if (item) {
 				arr.isrunning = true;
-				item(function() {
+				current_scope = item.scope;
+				item.fn(function() {
 					arr.isrunning = false;
 					W.QUEUE(name);
 				}, arr.length);
