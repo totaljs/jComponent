@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.104;
+	M.version = 18.105;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4431,6 +4431,18 @@
 
 			DEF.monitor && monitor_method('watchers', 2);
 
+			index -= 2;
+			is = true;
+		}
+
+		index = 0;
+		while (true) {
+			var item = M.scrollbars[index++];
+			if (item === undefined)
+				break;
+			if (inDOM(item.element[0]))
+				continue;
+			item.destroy();
 			index -= 2;
 			is = true;
 		}
