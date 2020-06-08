@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.105;
+	M.version = 18.106;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1677,20 +1677,23 @@
 		var repeat = false;
 		var cancel = false;
 		var reqid = null;
+		var json = false;
 
-		url = url.replace(/\s(repeat|cancel|#[a-z]+)/i, function(text) {
+		url = url.replace(/\s(repeat|cancel|json|#[a-z]+)/i, function(text) {
 			var c = text.charAt(1);
 			if (c === '#')
 				reqid = text.substring(2);
 			else if (c.toLowerCase() === 'r')
 				repeat = true;
+			else if (c.toLowerCase() === 'j')
+				json = true;
 			else
 				cancel = true;
 			return '';
 		});
 
 		if (repeat)
-			arg = [url, data, callback, timeout];
+			arg = [rawurl, data, callback, timeout];
 
 		var method = url.substring(0, index).toUpperCase();
 		var isCredentials = method.charAt(0) === '!';
@@ -1798,6 +1801,7 @@
 			output.url = options.url;
 			output.process = true;
 			output.error = false;
+			output.json = json;
 			output.upload = false;
 			output.method = method;
 			output.data = data;
@@ -1833,7 +1837,6 @@
 					// internal error
 					// internet doesn't work
 					setTimeout(function() {
-						arg[0] += ' REPEAT';
 						current_scope = curr_scope;
 						AJAX.apply(M, arg);
 					}, MD.delayrepeat);
@@ -1885,7 +1888,7 @@
 		if (!response && error)
 			response = code + ': ' + status;
 
-		output.response = response;
+		output.raw = output.response = response;
 		output.status = code;
 		output.text = status;
 		output.error = error;
@@ -1894,16 +1897,22 @@
 
 		var callback = output.callback;
 		var ct = output.headers['content-type'];
+		var isjson = false;
+		output.type = ct;
 
 		if (ct && ct.indexOf('/json') !== -1) {
 			try {
 				output.response = PARSE(output.response, MD.jsondate);
+				isjson = true;
 			} catch (e) {}
 		}
 
 		current_scope = output.scope;
 		events[T_RESPONSE] && EMIT(T_RESPONSE, output);
 		current_scope = output.scope;
+
+		if (output.json && !isjson)
+			output.response = null;
 
 		if (output.cancel || !output.process)
 			return;
