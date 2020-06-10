@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.106;
+	M.version = 18.107;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -672,7 +672,7 @@
 
 		var a = M.$formatter;
 		if (a && a.length) {
-			for (var i = 0, length = a.length; i < length; i++) {
+			for (var i = 0; i < a.length; i++) {
 				var val = a[i].call(M, path, value, type);
 				if (val !== undefined)
 					value = val;
@@ -698,7 +698,7 @@
 
 		var a = M.$parser;
 		if (a && a.length) {
-			for (var i = 0, length = a.length; i < length; i++)
+			for (var i = 0; i < a.length; i++)
 				value = a[i].call(M, path, value, type);
 		}
 
@@ -1112,7 +1112,7 @@
 
 		DEF.monitor && monitor_method('events');
 
-		for (var i = 0, length = e.length; i < length; i++) {
+		for (var i = 0; i < e.length; i++) {
 			var context = e[i].context;
 			if (context !== undefined && (context === null || context.$removed))
 				continue;
@@ -1178,7 +1178,7 @@
 		path = pathmaker(path, 0, 1);
 
 		var all = M.components;
-		for (var i = 0, length = all.length; i < length; i++) {
+		for (var i = 0; i < all.length; i++) {
 			var com = all[i];
 
 			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path) || (isExcept && com.$except(except)))
@@ -1256,7 +1256,7 @@
 		path = pathmaker(path, 0, 1);
 
 		var all = M.components;
-		for (var i = 0, length = all.length; i < length; i++) {
+		for (var i = 0; i < all.length; i++) {
 			var com = all[i];
 
 			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path) || (isExcept && com.$except(except)))
@@ -2147,7 +2147,7 @@
 
 		var all = M.components;
 
-		for (var i = 0, length = all.length; i < length; i++) {
+		for (var i = 0; i < all.length; i++) {
 			var com = all[i];
 
 			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(newpath))
@@ -2189,8 +2189,10 @@
 		if (reset || meta.flags.reset || meta.flags.default)
 			clear(T_DIRTY, T_VALID);
 
-		for (var i = 0, length = state.length; i < length; i++)
+		for (var i = 0; i < state.length; i++)
 			state[i].stateX(1, 4);
+
+		meta.flags.change && com_dirty(newpath + '.*', false);
 
 		if (!meta.flags.nowatch)
 			emitwatch(newpath, get(newpath), type);
@@ -2207,7 +2209,7 @@
 			binders[p] && binderbind(p, p, $ticks, 1);
 		}
 
-		for (var i = 0, length = all.length; i < length; i++) {
+		for (var i = 0; i < all.length; i++) {
 			var com = all[i];
 			if (!com || com.$removed || !com.$loaded || !com.path)
 				continue;
@@ -2299,8 +2301,10 @@
 			if (reset || meta.flags.reset || meta.flags.default)
 				clear(T_DIRTY, T_VALID);
 
-			for (var i = 0, length = state.length; i < length; i++)
+			for (var i = 0; i < state.length; i++)
 				state[i].stateX(1, 4);
+
+			meta.flags.change && com_dirty(newpath + '.*', false);
 
 			if (!meta.flags.nowatch) {
 				for (var j = 0; j < keys.length; j++) {
@@ -2435,10 +2439,10 @@
 		if (reset || meta.flags.reset || meta.flags.default)
 			clear(T_DIRTY, T_VALID);
 
-		for (var i = 0, length = state.length; i < length; i++)
+		for (var i = 0; i < state.length; i++)
 			state[i].stateX(type, 5);
 
-		meta.flags.change && com_dirty(newpath, false);
+		meta.flags.change && com_dirty(newpath + '.*', false);
 
 		if (!meta.flags.nowatch)
 			emitwatch(newpath, result, type);
@@ -2677,7 +2681,7 @@
 		}
 
 		var all = M.components;
-		for (var i = 0, length = all.length; i < length; i++) {
+		for (var i = 0; i < all.length; i++) {
 			var com = all[i];
 
 			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(newpath))
@@ -2761,7 +2765,7 @@
 		var arr = [];
 		var all = M.components;
 
-		for (var i = 0, length = all.length; i < length; i++) {
+		for (var i = 0; i < all.length; i++) {
 			var com = all[i];
 
 			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path))
@@ -2818,7 +2822,7 @@
 
 		DEF.monitor && monitor_method('reset');
 
-		for (var i = 0, length = all.length; i < length; i++) {
+		for (var i = 0; i < all.length; i++) {
 			var com = all[i];
 			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(newpath))
 				continue;
@@ -2856,7 +2860,7 @@
 			path = path.replace('.*', '');
 		var all = M.components;
 		var index = 0;
-		for (var i = 0, length = all.length; i < length; i++) {
+		for (var i = 0; i < all.length; i++) {
 			var com = all[i];
 			if (!com || !com.$loaded || com.$removed || (path && (!com.path || !com.$compare(path))))
 				continue;
@@ -2921,7 +2925,7 @@
 		else
 			level++;
 
-		for (var i = 0, length = arr.length; i < length; i++) {
+		for (var i = 0; i < arr.length; i++) {
 			var el = arr[i];
 			if (el) {
 
@@ -2955,7 +2959,7 @@
 			}
 		}
 
-		for (var i = 0, length = sub.length; i < length; i++) {
+		for (var i = 0; i < sub.length; i++) {
 			el = sub[i];
 			el && crawler(el, onComponent, level, released);
 		}
@@ -2977,7 +2981,7 @@
 		var version = '';
 		var index;
 
-		for (var i = 0, length = s.length; i < length; i++) {
+		for (var i = 0; i < s.length; i++) {
 			switch (s[i].charAt(0)) {
 				case '*':
 					break;
@@ -3031,7 +3035,7 @@
 				}
 			}
 		} else {
-			for (var i = 0, length = M.components.length; i < length; i++) {
+			for (var i = 0; i < M.components.length; i++) {
 				var com = M.components[i];
 				if (!com || !com.$loaded || com.$removed || (id && com.id !== id) || (name && com.$name !== name) || (version && com.$version !== version) || ((path && (com.$pp || (com.path !== path && (!com.pathscope || ((com.pathscope + '.' + path) !== com.path)))))))
 					continue;
@@ -3074,7 +3078,7 @@
 		else
 			level++;
 
-		for (var i = 0, length = arr.length; i < length; i++) {
+		for (var i = 0; i < arr.length; i++) {
 			var el = arr[i];
 			if (el && el.tagName) {
 				el.childNodes.length && el.tagName !== 'SCRIPT' && !attrcom(el) && sub.push(el);
@@ -3083,7 +3087,7 @@
 			}
 		}
 
-		for (var i = 0, length = sub.length; i < length; i++) {
+		for (var i = 0; i < sub.length; i++) {
 			el = sub[i];
 			if (el && findcontrol(el, onElement, level) === false)
 				return;
@@ -3491,7 +3495,7 @@
 			return nextpending();
 
 		async(toggles, function(item, next) {
-			for (var i = 0, length = item.toggle.length; i < length; i++)
+			for (var i = 0; i < item.toggle.length; i++)
 				item.element.tclass(item.toggle[i]);
 			next();
 		}, nextpending);
@@ -3585,7 +3589,7 @@
 					(function(cls) {
 						cls = cls.split(' ');
 						setTimeout(function() {
-							for (var i = 0, length = cls.length; i < length; i++)
+							for (var i = 0; i < cls.length; i++)
 								scope.element.tclass(cls[i]);
 						}, 5);
 					})(cls);
@@ -3937,7 +3941,7 @@
 			setTimeout(function() {
 				cls = cls.split(' ');
 				var tmp = el[0].$jclass || {};
-				for (var i = 0, length = cls.length; i < length; i++) {
+				for (var i = 0; i < cls.length; i++) {
 					if (!tmp[cls[i]]) {
 						el.tclass(cls[i]);
 						tmp[cls[i]] = true;
@@ -4026,7 +4030,7 @@
 
 		DEF.monitor && monitor_method('watchers');
 
-		for (var i = 0, length = watches.length; i < length; i++) {
+		for (var i = 0; i < watches.length; i++) {
 			var self = watches[i];
 
 			if (self.$pathfixed) {
@@ -4048,7 +4052,7 @@
 					self.fn.call(self.context, path, self.format ? self.format(val, path, type) : val, type);
 				}
 			} else {
-				for (var j = 0, jl = self.$path.length; j < jl; j++) {
+				for (var j = 0; j < self.$path.length; j++) {
 					if (self.$path[j] === path) {
 						var val = GET(self.path);
 						self.scope && (current_scope = self.scope);
@@ -4105,7 +4109,7 @@
 
 			if (C.ready) {
 				var arr = C.ready;
-				for (var i = 0, length = arr.length; i < length; i++)
+				for (var i = 0; i < arr.length; i++)
 					arr[i](count);
 				C.ready = undefined;
 				compile();
@@ -4289,7 +4293,7 @@
 		var arr = parsepath(path);
 		var builder = [];
 
-		for (var i = 0, length = arr.length - 1; i < length; i++) {
+		for (var i = 0; i < arr.length; i++) {
 			var item = arr[i];
 			if (item.charAt(0) !== '[')
 				item = '.' + item;
@@ -4353,7 +4357,7 @@
 
 		var arr = OK(cache);
 
-		for (var i = 0, length = arr.length; i < length; i++) {
+		for (var i = 0; i < arr.length; i++) {
 			var key = arr[i];
 			var remove = false;
 			var a = arguments;
@@ -4619,7 +4623,7 @@
 	// 5. set
 	function state(arr, type, what) {
 		arr && arr.length && setTimeout(function() {
-			for (var i = 0, length = arr.length; i < length; i++)
+			for (var i = 0; i < arr.length; i++)
 				arr[i].stateX(type, what);
 		}, 2, arr);
 	}
@@ -5125,7 +5129,7 @@
 	function removewaiter(obj) {
 		if (obj.$W) {
 			var keys = OK(obj.$W);
-			for (var i = 0, length = keys.length; i < length; i++) {
+			for (var i = 0; i < keys.length; i++) {
 				var v = obj.$W[keys[i]];
 				v.id && clearInterval(v.id);
 			}
@@ -5845,7 +5849,7 @@
 		var self = this;
 
 		if (self.$children) {
-			for (var i = 0, length = M.components.length; i < length; i++) {
+			for (var i = 0; i < M.components.length; i++) {
 				var m = M.components[i];
 				!m.$removed && m.owner === self && m.remove();
 			}
@@ -6036,13 +6040,13 @@
 
 		var a = self.$formatter;
 		if (a && a.length) {
-			for (var i = 0, length = a.length; i < length; i++)
+			for (var i = 0; i < a.length; i++)
 				value = a[i].call(self, self.path, value, self.type);
 		}
 
 		a = M.$formatter;
 		if (a && a.length) {
-			for (var i = 0, length = a.length; i < length; i++)
+			for (var i = 0; i < a.length; i++)
 				value = a[i].call(self, self.path, value, self.type);
 		}
 
@@ -6070,13 +6074,13 @@
 
 		var a = self.$parser;
 		if (a && a.length) {
-			for (var i = 0, length = a.length; i < length; i++)
+			for (var i = 0; i < a.length; i++)
 				value = a[i].call(self, self.path, value, self.type);
 		}
 
 		a = M.$parser;
 		if (a && a.length) {
-			for (var i = 0, length = a.length; i < length; i++)
+			for (var i = 0; i < a.length; i++)
 				value = a[i].call(self, self.path, value, self.type);
 		}
 
@@ -6266,7 +6270,7 @@
 		else
 			extensions[name] = [{ config: config, fn: declaration, name: note }];
 
-		for (var i = 0, length = M.components.length; i < length; i++) {
+		for (var i = 0; i < M.components.length; i++) {
 			var m = M.components[i];
 			if (!m.$removed || name === m.name){
 				config && m.reconfigure(config, undefined, true);
@@ -6449,7 +6453,7 @@
 				isget = methodname.indexOf('.') !== -1;
 				events.setter && EMIT('setter', myselector, methodname, arg[0], arg[1]);
 
-				for (var i = 0, length = arr.length; i < length; i++) {
+				for (var i = 0; i < arr.length; i++) {
 					var o = arr[i];
 					var a = isget ? get(methodname, o) : o[methodname];
 					if (typeof(a) === TYPE_FN)
@@ -6498,7 +6502,7 @@
 			DEF.monitor && monitor_method('setters');
 			events.setter && EMIT('setter', myselector, methodname, arg[0], arg[1]);
 
-			for (var i = 0, length = arr.length; i < length; i++) {
+			for (var i = 0; i < arr.length; i++) {
 				var o = arr[i];
 				var a = isget ? get(methodname, o) : o[methodname];
 				if (typeof(a) === TYPE_FN)
@@ -6536,7 +6540,7 @@
 		events.cmd && EMIT('cmd', a, b, c, d);
 		DEF.monitor && monitor_method('cmd');
 
-		for (var i = 0, length = M.components.length; i < length; i++) {
+		for (var i = 0; i < M.components.length; i++) {
 			var com = M.components[i];
 			if (com && com.$loaded && !com.$removed && com.$commands && com.$commands[name]) {
 				var cmd = com.$commands[name];
@@ -7378,7 +7382,7 @@
 		var num = /^(-)?[0-9.]+$/;
 		var colon = /(https|http|wss|ws):\/\//gi;
 
-		for (var i = 0, length = arr.length; i < length; i++) {
+		for (var i = 0; i < arr.length; i++) {
 
 			var item = arr[i].replace(/\0/g, ';').replace(/\\:/g, '\0').replace(colon, function(text) {
 				return text.replace(/:/g, '\0');
@@ -7499,7 +7503,7 @@
 
 	SP.removeDiacritics = function() {
 		var buf = '';
-		for (var i = 0, length = this.length; i < length; i++) {
+		for (var i = 0; i < this.length; i++) {
 			var c = this[i];
 			var code = c.charCodeAt(0);
 			var isUpper = false;
@@ -7528,7 +7532,7 @@
 		var buf = [];
 		var prev = '';
 
-		for (var i = 0, length = str.length; i < length; i++) {
+		for (var i = 0; i < str.length; i++) {
 			var c = str.substring(i, i + 1);
 			if (c === 'y')
 				c = 'i';
@@ -7607,7 +7611,7 @@
 	AP.trim = function(empty) {
 		var self = this;
 		var output = [];
-		for (var i = 0, length = self.length; i < length; i++) {
+		for (var i = 0; i < self.length; i++) {
 			if (typeof(self[i]) === TYPE_S)
 				self[i] = self[i].trim();
 			if (empty || self[i])
@@ -7622,7 +7626,7 @@
 		var isFN = typeof(cb) === TYPE_FN;
 		var isV = value !== undefined;
 
-		for (var i = 0, length = self.length; i < length; i++) {
+		for (var i = 0; i < self.length; i++) {
 			if (isFN) {
 				if (cb.call(self, self[i], i))
 					return i;
@@ -7642,7 +7646,7 @@
 		var isV = value !== undefined;
 		var arr = [];
 
-		for (var i = 0, length = self.length; i < length; i++) {
+		for (var i = 0; i < self.length; i++) {
 			if (isFN) {
 				cb.call(self, self[i], i) && arr.push(self[i]);
 			} else if (isV) {
@@ -7697,7 +7701,7 @@
 		var isFN = typeof(cb) === TYPE_FN;
 		var isV = value !== undefined;
 
-		for (var i = 0, length = self.length; i < length; i++) {
+		for (var i = 0; i < self.length; i++) {
 			if (isFN) {
 				!cb.call(self, self[i], i) && arr.push(self[i]);
 			} else if (isV) {
@@ -8243,7 +8247,7 @@
 
 		var def = W.NOW = new Date();
 
-		for (var i = 0, length = parsed.length; i < length; i++) {
+		for (var i = 0; i < parsed.length; i++) {
 			if (isNaN(parsed[i]))
 				parsed[i] = 0;
 
@@ -8505,7 +8509,7 @@
 			var arr = self.FIND('*', true);
 			events.cmd && EMIT('cmd', a, b, c, d);
 			DEF.monitor && monitor_method('cmd');
-			for (var i = 0, length = arr.length; i < length; i++) {
+			for (var i = 0; i < arr.length; i++) {
 				var o = arr[i];
 				var cmd = o.$commands ? o.$commands[name] : null;
 				if (cmd && cmd.length) {
@@ -8566,7 +8570,7 @@
 
 				self.FIND(tmp, true, function(arr) {
 					events.setter && EMIT('setter', tmp, methodname, arg[0], arg[1]);
-					for (var i = 0, length = arr.length; i < length; i++) {
+					for (var i = 0; i < arr.length; i++) {
 						var o = arr[i];
 						var a = isget ? get(methodname, o) : o[methodname];
 						if (typeof(a) === TYPE_FN)
@@ -8612,7 +8616,7 @@
 
 				events.setter && EMIT('setter', tmp, methodname, arg[0], arg[1]);
 
-				for (var i = 0, length = arr.length; i < length; i++) {
+				for (var i = 0; i < arr.length; i++) {
 					var o = arr[i];
 					var a = isget ? get(methodname, o) : o[methodname];
 					if (typeof(a) === TYPE_FN)
@@ -8707,7 +8711,7 @@
 			var arr = (self.attr(T_CLASS) || '').split(' ');
 			var isReg = typeof(a) === TYPE_O;
 
-			for (var i = 0, length = arr.length; i < length; i++) {
+			for (var i = 0; i < arr.length; i++) {
 				var cls = arr[i];
 				if (cls) {
 					if (isReg) {
@@ -8846,7 +8850,7 @@
 		setInterval(function() {
 			W.NOW = new Date();
 			var c = M.components;
-			for (var i = 0, length = c.length; i < length; i++)
+			for (var i = 0; i < c.length; i++)
 				c[i].knockknock && c[i].knockknock(knockknockcounter);
 			EMIT('knockknock', knockknockcounter++);
 			if (knockknockcounter % 5 === 0) {
@@ -9739,7 +9743,7 @@
 				obj.com.$data[path].items.push(obj);
 			} else {
 				var skiparr = false;
-				for (var i = 0, length = arr.length; i < length; i++) {
+				for (var i = 0; i < arr.length; i++) {
 					p += (p ? '.' : '') + arr[i];
 					var k = i === length - 1 ? p : '!' + p;
 					if (!skiparr) {
