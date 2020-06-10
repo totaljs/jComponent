@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.107;
+	M.version = 18.108;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10232,7 +10232,8 @@
 	};
 
 	function bindvalue(val, item, prop) {
-		return val === '' ? item.empty : val == null ? (item.empty || (prop ? item[prop + 'bk'] : '')) : item.currency ? val.currency(item.currency) : item.format != null ? val.format(val instanceof Date ? item.format ? item.format : null : item.format || 0) : val;
+		var res = val === '' ? item.empty : val == null ? (item.empty || (prop ? item[prop + 'bk'] : '')) : item.currency ? val.currency(item.currency) : item.format != null ? val.format(val instanceof Date ? item.format ? item.format : null : item.format || 0) : val;
+		return res == null ? '' : res;
 	}
 
 	function binderconfig(el, val) {
