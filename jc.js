@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.110;
+	M.version = 18.111;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1107,7 +1107,7 @@
 
 		var args = [];
 
-		for (var i = 1, length = arguments.length; i < length; i++)
+		for (var i = 1; i < arguments.length; i++)
 			args.push(arguments[i]);
 
 		DEF.monitor && monitor_method('events');
@@ -4226,12 +4226,14 @@
 			builder.push('if(typeof(' + p + ')!==\'object\'||' + p + '==null)' + p + '=' + type);
 		}
 
+		var v;
+
 		for (var i = 0; i < arr.length - 1; i++) {
-			var item = arr[i];
-			binder.push('binders[\'' + item + '\']&&binderbind(\'' + item + '\',\'' + path + '\',$ticks,c)');
+			v = arr[i];
+			binder.push('binders[\'' + v + '\']&&binderbind(\'' + v + '\',\'' + path + '\',$ticks,c)');
 		}
 
-		var v = arr[arr.length - 1];
+		v = arr[arr.length - 1];
 		binder.push('binders[\'' + v + '\']&&binderbind(\'' + v + '\',\'' + path + '\',$ticks,c)');
 		binder.push('binders[\'!' + v + '\']&&binderbind(\'!' + v + '\',\'' + path + '\',$ticks,c)');
 
@@ -7290,8 +7292,7 @@
 	AP.take = function(count) {
 		var arr = [];
 		var self = this;
-		var length = self.length;
-		for (var i = 0; i < length; i++) {
+		for (var i = 0; i < self.length; i++) {
 			arr.push(self[i]);
 			if (arr.length >= count)
 				return arr;
@@ -7302,8 +7303,7 @@
 	AP.skip = function(count) {
 		var arr = [];
 		var self = this;
-		var length = self.length;
-		for (var i = 0; i < length; i++)
+		for (var i = 0; i < self.length; i++)
 			i >= count && arr.push(self[i]);
 		return arr;
 	};
@@ -7311,8 +7311,7 @@
 	AP.takeskip = function(take, skip) {
 		var arr = [];
 		var self = this;
-		var length = self.length;
-		for (var i = 0; i < length; i++) {
+		for (var i = 0; i < self.length; i++) {
 			if (i < skip)
 				continue;
 			if (arr.length >= take)
@@ -9743,9 +9742,10 @@
 				obj.com.$data[path].items.push(obj);
 			} else {
 				var skiparr = false;
-				for (var i = 0; i < arr.length; i++) {
+				var length = arr.length;
+				for (var i = 0; i < length; i++) {
 					p += (p ? '.' : '') + arr[i];
-					var k = i === length - 1 ? p : '!' + p;
+					var k = i === (length - 1) ? p : '!' + p;
 					if (!skiparr) {
 						var index = arr[i].indexOf('[');
 						if (index !== -1) {
@@ -9757,6 +9757,7 @@
 							skiparr = true;
 						}
 					}
+
 					if (binders[k])
 						binders[k].push(obj);
 					else
