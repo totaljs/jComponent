@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.108;
+	M.version = 18.109;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4297,7 +4297,7 @@
 			var item = arr[i];
 			if (item.charAt(0) !== '[')
 				item = '.' + item;
-			builder.push('if(!w' + item + ')return');
+			builder.push('if(!w' + item + ')return w' + item);
 		}
 
 		var v = arr[arr.length - 1];
