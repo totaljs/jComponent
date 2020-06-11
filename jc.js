@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.109;
+	M.version = 18.110;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7422,10 +7422,10 @@
 			var l = text.charCodeAt(1) === 123 ? 2 : 1;
 			var val = get(text.substring(l, text.length - l).trim(), obj);
 
-			if (encode && encode === 'json')
+			if (encode === 'json')
 				return JSON.stringify(val);
 
-			return val == null ? (def == null ? text : def) : encode ? encodeURIComponent(val + '') : val;
+			return val == null ? (def == null ? text : def) : encode ? encode === 'escape' ? Thelpers.encode(val) : encodeURIComponent(val + '') : val;
 		});
 	};
 
