@@ -9,45 +9,17 @@
 	<meta name="format-detection" content="telephone=no" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<meta name="robots" content="all,follow" />
-	<link rel="stylesheet" href="//cdn.componentator.com/spa.min@15.css" />
+	<link rel="stylesheet" href="//cdn.componentator.com/spa.min@18.css" />
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 	<script src="jc.js"></script>
-	<style>
-		.newtask { height: 40px; padding: 0; border: 1px solid #E0E0E0; border-radius: 3px; }
-		.newtask-input { margin-right: 100px; }
-		.newtask-input input { background-color: transparent; border: 0; font-size: 16px; width: 100%; outline: 0; padding: 10px 10px 0; }
-		.newtask-button { float: right; width: 100px; font-size: 14px; font-weight: bold; }
-		.newtask-button .fa { margin-right: 5px; }
-		.newtask-button button { width: 100%; background-color: red; outline: 0; height: 38px; border: 0; border-radius: 0 3px 3px 0; color: white; }
-		.newtask-button button:hover { opacity: 0.8; }
-		.newtask-button button:disabled { color: gray; background-color: #F0F0F0; opacity: 1 !important; }
-	</style>
 </head>
 <body style="font-family:Arial">
 
-	<div style="padding:50px">
-		<div class="newtask" data-jc="newtask__form.name">
-			<div class="newtask-button"><button disabled data-bind="@__disabled:!value || !value.length"><i class="fa fa-keyboard"></i>ADD</button></div>
-			<div class="newtask-input"><input type="text" placeholder="Type a task" maxlength="1000" data-jc-bind="" /></div>
-		</div>
-		<div data-bind="form__html:JSON.stringify(value)"></div>
-		<div data-bind="form__track:name__html:value.name"></div>
-	</div>
+	<div data-bind="form__track:price__text:JSON.stringify(value)" class="padding"></div>
 
 	<script>
+	var form = { price: 10 };
 
-		var form = {};
-
-		COMPONENT('newtask', function(self, config) {
-			self.make = function() {
-			};
-
-			self.watch(function(path, value) {
-				console.log(path, value);
-			});
-		});
-
-		WATCH('form.name', console.log);
 	</script>
 
 </body>
