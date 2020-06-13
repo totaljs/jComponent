@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.111;
+	M.version = 18.112;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1491,9 +1491,12 @@
 				target = null;
 			}
 
+			var scope = current_scope;
 			url.wait(function(url, next) {
+				current_scope = scope;
 				IMPORTCACHE(url, null, target, next, insert, preparator);
 			}, function() {
+				current_scope = scope;
 				callback && callback();
 			});
 		} else
@@ -1575,8 +1578,10 @@
 		var args = [];
 		for (var i = 0; i < arguments.length; i++)
 			args.push(arguments[i]);
+		var scope = current_scope;
 		return function(response) {
 			args.push(response);
+			current_scope = scope;
 			SETTER.apply(W, args);
 		};
 	};
@@ -1585,7 +1590,9 @@
 		var args = [];
 		for (var i = 0; i < arguments.length; i++)
 			args.push(arguments[i]);
+		var scope = current_scope;
 		return function(response) {
+			current_scope = scope;
 			args.push(response);
 			EXEC.apply(W, args);
 		};
@@ -6405,6 +6412,7 @@
 		var is;
 		var methodname;
 		var myselector;
+		var scope = current_scope;
 
 		for (var i = beg; i < arguments.length; i++)
 			arg.push(arguments[i]);
@@ -6438,6 +6446,7 @@
 				}
 
 				setTimeout(function(arg) {
+					current_scope = scope;
 					arg[0] = true;
 					SETTER.apply(W, arg);
 				}, 555, arguments);
@@ -6452,6 +6461,7 @@
 
 			FIND(myselector, true, function(arr) {
 
+				current_scope = scope;
 				isget = methodname.indexOf('.') !== -1;
 				events.setter && EMIT('setter', myselector, methodname, arg[0], arg[1]);
 
@@ -6492,6 +6502,7 @@
 				}
 
 				setTimeout(function(arg) {
+					current_scope = scope;
 					SETTER.apply(W, arg);
 				}, 555, arguments);
 
