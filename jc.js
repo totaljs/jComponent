@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.112;
+	M.version = 18.113;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2821,8 +2821,8 @@
 		if (scope)
 			current_scope = scope;
 
-		var meta = compilepath(path);
-		var newpath = meta.pathmaker ? pathmaker(meta.path).replace(REGWILDCARD, '') : meta.path;
+		var meta = compilepath(path.replace(REGWILDCARD, ''));
+		var newpath = (meta.pathmaker ? pathmaker(meta.path) : meta.path);
 
 		var arr = [];
 		var all = M.components;
