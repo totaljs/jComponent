@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.113;
+	M.version = 18.114;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -346,9 +346,10 @@
 	C.ready = [];
 	C.counter = 0;
 
-	if (Object.freeze) {
-		Object.freeze(EMPTYOBJECT);
-		Object.freeze(EMPTYARRAY);
+	var OF = Object.freeze;
+	if (OF) {
+		OF(EMPTYOBJECT);
+		OF(EMPTYARRAY);
 	}
 
 	M.compile = compile;
@@ -656,7 +657,7 @@
 		}
 	};
 
-	W.FORMATTER = function(value, path, type) {
+	W.FORMATTER = function(value, path, type, format) {
 
 		if (typeof(value) === TYPE_FN) {
 			!M.$formatter && (M.$formatter = []);
@@ -673,7 +674,7 @@
 		var a = M.$formatter;
 		if (a && a.length) {
 			for (var i = 0; i < a.length; i++) {
-				var val = a[i].call(M, path, value, type);
+				var val = a[i].call(M, path, value, type, format);
 				if (val !== undefined)
 					value = val;
 			}
@@ -682,7 +683,7 @@
 		return value;
 	};
 
-	W.PARSER = function(value, path, type) {
+	W.PARSER = function(value, path, type, format) {
 
 		if (typeof(value) === TYPE_FN) {
 			!M.$parser && (M.$parser = []);
@@ -699,7 +700,7 @@
 		var a = M.$parser;
 		if (a && a.length) {
 			for (var i = 0; i < a.length; i++)
-				value = a[i].call(M, path, value, type);
+				value = a[i].call(M, path, value, type, format);
 		}
 
 		return value;
@@ -6047,16 +6048,19 @@
 			return self;
 		}
 
+		var format = self.format || self.config.format;
+		var type = self.type || self.config.type;
+
 		var a = self.$formatter;
 		if (a && a.length) {
 			for (var i = 0; i < a.length; i++)
-				value = a[i].call(self, self.path, value, self.type);
+				value = a[i].call(self, self.path, value, type, format);
 		}
 
 		a = M.$formatter;
 		if (a && a.length) {
 			for (var i = 0; i < a.length; i++)
-				value = a[i].call(self, self.path, value, self.type);
+				value = a[i].call(self, self.path, value, type, format);
 		}
 
 		return value;
@@ -6081,16 +6085,19 @@
 		if (self.trim && type === TYPE_S)
 			value = value.trim();
 
+		var format = self.format || self.config.format;
+		var type = self.type || self.config.type;
+
 		var a = self.$parser;
 		if (a && a.length) {
 			for (var i = 0; i < a.length; i++)
-				value = a[i].call(self, self.path, value, self.type);
+				value = a[i].call(self, self.path, value, type, format);
 		}
 
 		a = M.$parser;
 		if (a && a.length) {
 			for (var i = 0; i < a.length; i++)
-				value = a[i].call(self, self.path, value, self.type);
+				value = a[i].call(self, self.path, value, type, format);
 		}
 
 		return value;
