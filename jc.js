@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.114;
+	M.version = 18.115;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1440,6 +1440,12 @@
 			var cb = function(response, code, output) {
 
 				if (!response) {
+					callback && callback(0);
+					return;
+				}
+
+				if (typeof(response) !== 'string') {
+					WARN('jC: invalid response for IMPORT("{0}")'.format(url), response);
 					callback && callback(0);
 					return;
 				}
