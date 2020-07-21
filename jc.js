@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.115;
+	M.version = 18.116;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4658,6 +4658,12 @@
 		return value;
 	};
 
+	SCP.apply = function() {
+		var self = this;
+		current_scope = self.path;
+		return self;
+	};
+
 	SCP.$format = function(endpoint) {
 		var plugin = W.PLUGINS[this.path];
 		if (plugin && plugin[endpoint]) {
@@ -4682,13 +4688,13 @@
 
 	SCP.unwatch = function(path, fn) {
 		var self = this;
-		OFF(SCOPENAME + self._id + '#watch', self.path + (path ? '.' + path : ''), fn);
+		OFF(SCOPENAME + self._id + '#watch', makescopepath(self, path), fn);
 		return self;
 	};
 
 	SCP.watch = function(path, fn, init) {
 		var self = this;
-		ON(SCOPENAME + self._id + '#watch', self.path + (path ? '.' + path : ''), fn, init, self);
+		ON(SCOPENAME + self._id + '#watch', makescopepath(self, path), fn, init, self);
 		return self;
 	};
 
@@ -4697,7 +4703,7 @@
 			timeout = path;
 			path = '';
 		}
-		return RESET(this.path + '.' + (path ? + path : '*'), timeout);
+		return RESET(makescopepath(this, path), timeout);
 	};
 
 	SCP.default = function(path, timeout) {
@@ -4705,31 +4711,35 @@
 			timeout = path;
 			path = '';
 		}
-		return DEFAULT(this.path + '.' + (path ? path : '*'), timeout);
+		return DEFAULT(makescopepath(this, path), timeout);
 	};
 
+	function makescopepath(scope, path) {
+		return !path || path.indexOf('?') === -1 ? (scope.path + (path ? '.' + path : '')) : scope.makepath(path);
+	}
+
 	SCP.set = function(path, value, timeout, reset) {
-		return SET(this.path + (path ? '.' + path : ''), value, timeout, reset);
+		return SET(makescopepath(this, path), value, timeout, reset);
 	};
 
 	SCP.push = function(path, value, timeout, reset) {
-		return PUSH(this.path + (path ? '.' + path : ''), value, timeout, reset);
+		return PUSH(makescopepath(this, path), value, timeout, reset);
 	};
 
 	SCP.update = function(path, timeout, reset) {
-		return UPDATE(this.path + (path ? '.' + path : ''), timeout, reset);
+		return UPDATE(makescopepath(this, path), timeout, reset);
 	};
 
 	SCP.get = function(path) {
-		return GET(this.path + (path ? '.' + path : ''));
+		return GET(makescopepath(this, path));
 	};
 
 	SCP.can = function(except) {
-		return CAN(this.path + '.*', except);
+		return CAN(this.path, except);
 	};
 
 	SCP.errors = function(except, highlight) {
-		return ERRORS(this.path + '.*', except, highlight);
+		return ERRORS(this.path, except, highlight);
 	};
 
 	SCP.remove = function() {
