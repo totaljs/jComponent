@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.116;
+	M.version = 18.117;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2639,7 +2639,7 @@
 		DEF.monitor && monitor_method('get');
 		meta.flags.reset && W.RESET(path, true);
 		meta.flags.update && setTimeout(W.UPD, 1, path);
-		return meta.flags.modified ? getmodified(newpath) : get(newpath, scope);
+		return meta.flags.modified ? getmodified(newpath) : meta.flags.clone ? CLONE(get(newpath, scope)) : get(newpath, scope);
 	};
 
 	function getmodified(path) {
