@@ -326,7 +326,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.117;
+	M.version = 18.118;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7368,6 +7368,10 @@
 		else if (!noBase && b)
 			url = typeof(b) === TYPE_FN ? b(url) : ext.test(url) ? url : (b + url);
 		return url.replace(/[^:]\/{2,}/, replace);
+	};
+
+	SP.encode = function() {
+		return Thelpers.encode(this);
 	};
 
 	SP.env = function() {
