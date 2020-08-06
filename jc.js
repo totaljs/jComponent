@@ -75,14 +75,15 @@
 	var cssnoscrollbar = {};
 	var clsnoscrollbar = 'noscrollbar';
 	var selnoscrollbar = '.' + clsnoscrollbar;
+	var W = window;
+	var D = document;
 
-	var LCOMPARER = window.Intl ? window.Intl.Collator().compare : function(a, b) {
+	var LCOMPARER = W.Intl ? W.Intl.Collator().compare : function(a, b) {
 		return a.localeCompare(b);
 	};
 
 	var C = {}; // COMPILER
 	var M = {}; // MAIN
-	var W = window;
 	var LS = W.localStorage;
 	var PREF = {};
 	var PREFBLACKLIST = { set: 1, get: 1, save: 1, load: 1, keys: 1 };
@@ -191,7 +192,7 @@
 
 	// temporary
 	W.jctmp = {};
-	W.W = window;
+	W.W = W;
 	W.FUNC = {};
 	W.REPO = {};
 
@@ -326,7 +327,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.118;
+	M.version = 18.120;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -631,7 +632,7 @@
 	W.COOKIES = {
 		get: function(name) {
 			name = name.env();
-			var arr = document.cookie.split(';');
+			var arr = D.cookie.split(';');
 			for (var i = 0; i < arr.length; i++) {
 				var c = arr[i];
 				if (c.charAt(0) === ' ')
@@ -650,7 +651,7 @@
 				expire = date;
 			} else if (type === TYPE_S)
 				expire = new Date(Date.now() + expire.parseExpire());
-			document.cookie = name.env() + '=' + value + '; expires=' + expire.toGMTString() + '; path=/' + (samesite ? ('; samesite=' + samesite.charAt(0).toUpperCase() + samesite.substring(1)) : '');
+			D.cookie = name.env() + '=' + value + '; expires=' + expire.toGMTString() + '; path=/' + (samesite ? ('; samesite=' + samesite.charAt(0).toUpperCase() + samesite.substring(1)) : '');
 		},
 		rem: function(name) {
 			COOKIES.set(name.env(), '', -1);
@@ -1400,7 +1401,7 @@
 			}
 		}
 
-		var d = document;
+		var d = D;
 		if (ext === '.js') {
 			var scr = d.createElement(T_SCRIPT);
 			scr.type = 'text/java' + T_SCRIPT;
@@ -1538,9 +1539,9 @@
 		var id = 'jcscrollbarwidth';
 		if (scrollbarwidth != null)
 			return scrollbarwidth;
-		var b = document.body;
+		var b = D.body;
 		$(b).append('<div id="{0}" style="width{1}height{1}overflow:scroll;position:absolute;top{2}left{2}"></div>'.format(id, ':100px;', ':9999px;'));
-		var el = document.getElementById(id);
+		var el = D.getElementById(id);
 		if (el) {
 			scrollbarwidth = el.offsetWidth - el.clientWidth;
 			b.removeChild(el);
@@ -2905,7 +2906,7 @@
 		if (container)
 			container = $(container)[0];
 		else
-			container = document.body;
+			container = D.body;
 
 		if (!container)
 			return;
@@ -4086,7 +4087,7 @@
 			initialize();
 
 			var count = M.components.length;
-			$(document).trigger('components', [count]);
+			$(D).trigger('components', [count]);
 
 			if (!$loaded) {
 				$loaded = true;
@@ -5841,7 +5842,7 @@
 	PPC.parent = SCP.parent = function(sel) {
 		var self = this;
 		if (sel && sel !== 'parent')
-			return sel === 'window' ? $(W) : self.element.closest(sel);
+			return sel === 'window' ? $(W) : sel === 'document' ? D : self.element.closest(sel);
 		return self.element.parent();
 	};
 
@@ -6344,7 +6345,7 @@
 				W[ck] = config;
 			}
 
-			$(element || document.body).append('<div data---="{0}"{1}>{2}</div>'.format(value, ck ? ' data-jc-config="%' + ck + '"' : '', content || ''));
+			$(element || D.body).append('<div data---="{0}"{1}>{2}</div>'.format(value, ck ? ' data-jc-config="%' + ck + '"' : '', content || ''));
 			recompile();
 		}
 	};
@@ -8779,14 +8780,14 @@
 		$.fn.asvg = function(tag) {
 
 			if (tag.indexOf('<') === -1) {
-				var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+				var el = D.createElementNS('http://www.w3.org/2000/svg', tag);
 				this.append(el);
 				return $(el);
 			}
 
-			var d = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+			var d = D.createElementNS('http://www.w3.org/1999/xhtml', 'div');
 			d.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg">' + tag + '</svg>';
-			var f = document.createDocumentFragment();
+			var f = D.createDocumentFragment();
 			while (d.firstChild.firstChild)
 				f.appendChild(d.firstChild.firstChild);
 			f = $(f);
@@ -8797,14 +8798,14 @@
 		$.fn.psvg = function(tag) {
 
 			if (tag.indexOf('<') === -1) {
-				var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+				var el = D.createElementNS('http://www.w3.org/2000/svg', tag);
 				this.prepend(el);
 				return $(el);
 			}
 
-			var d = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
+			var d = D.createElementNS('http://www.w3.org/1999/xhtml', 'div');
 			d.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg">' + tag + '</svg>';
-			var f = document.createDocumentFragment();
+			var f = D.createDocumentFragment();
 			while (d.firstChild.firstChild)
 				f.appendChild(d.firstChild.firstChild);
 			f = $(f);
@@ -8926,7 +8927,7 @@
 
 		function displaymode() {
 			var d = WIDTH();
-			var b = $(document.body);
+			var b = $(D.body);
 			b.rclass('jc-lg jc-md jc-sm jc-xs');
 			b.aclass('jc-' + d);
 		}
@@ -9094,9 +9095,9 @@
 
 		$(W).on(T_RESIZE, resize);
 
-		$(document).ready(function() {
+		$(D).ready(function() {
 
-			var body = $(document.body);
+			var body = $(D.body);
 
 			if (isPRIVATEMODE)
 				body.aclass('jc-nostorage');
@@ -9117,8 +9118,8 @@
 			var cd = (function () {
 				var cookies = navigator.cookieEnabled;
 				if (!cookies) {
-					document.cookie = ATTRDATA;
-					cookies = document.cookie.indexOf(ATTRDATA) != -1;
+					D.cookie = ATTRDATA;
+					cookies = D.cookie.indexOf(ATTRDATA) != -1;
 				}
 				return cookies;
 			})();
@@ -9134,7 +9135,7 @@
 
 			var SELECTOR = 'input[' + ATTRJCBIND + '],textarea[' + ATTRJCBIND + '],select[' + ATTRJCBIND + ']';
 
-			$(document).on('input', 'input[' + ATTRJCBIND + '],textarea[' + ATTRJCBIND + ']', function() {
+			$(D).on('input', 'input[' + ATTRJCBIND + '],textarea[' + ATTRJCBIND + ']', function() {
 
 				// realtime binding
 				var self = this;
@@ -9867,8 +9868,10 @@
 		if (obj.child) {
 			for (var i = 0; i < obj.child.length; i++) {
 				var child = obj.child[i];
-				child.format = obj.format;
-				child.empty = obj.empty;
+				if (child.format == null)
+					child.format = obj.format;
+				if (child.empty == null)
+					child.empty = obj.empty;
 			}
 		}
 
@@ -10294,7 +10297,7 @@
 		(/\W/).test(name) && warn('Plugin name must contain A-Z chars only.');
 		W.PLUGINS[name] && W.PLUGINS[name].$remove(true);
 		var t = this;
-		t.element = $(current_element || document.body);
+		t.element = $(current_element || D.body);
 		t.id = 'plug' + name;
 		t.name = name;
 		W.PLUGINS[name] = t;
@@ -11238,7 +11241,7 @@
 	};
 
 	W.NOTFOCUSED = function() {
-		return !(navigator.onLine && (isMOBILE ? true : document.hasFocus()));
+		return !(navigator.onLine && (isMOBILE ? true : D.hasFocus()));
 	};
 
 	W.REPEAT = function(condition, process, delay, init) {
