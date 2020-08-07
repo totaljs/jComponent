@@ -327,7 +327,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.120;
+	M.version = 18.121;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2156,6 +2156,9 @@
 		DEF.monitor && monitor_method('set');
 
 		var state = [];
+
+		if (meta.flags.type != null)
+			type = meta.flags.type;
 
 		if (type === undefined)
 			type = 1; // manually
