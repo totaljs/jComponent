@@ -327,7 +327,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.122;
+	M.version = 18.123;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5940,7 +5940,7 @@
 			fn = path;
 			path = self.path;
 		} else
-			path = self.makepath(path);
+			path = path.replace(REGSCOPEREPLACE, self.path);
 
 		self.on('watch', path, fn, init);
 		return self;
@@ -6040,7 +6040,7 @@
 			name = name.substring(1).trim();
 		}
 
-		ON(push + 'com' + self._id + '#' + name, typeof(path) === 'string' ? path.replace(REGSCOPEREPLACE, self.path) : path, fn, init, self);
+		ON(push + 'com' + self._id + '#' + name, path, fn, init, self);
 		return self;
 	};
 
