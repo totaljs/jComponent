@@ -327,7 +327,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.121;
+	M.version = 18.122;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6024,6 +6024,7 @@
 	};
 
 	PPC.on = function(name, path, fn, init) {
+
 		if (typeof(path) === TYPE_FN) {
 			init = fn;
 			fn = path;
@@ -6039,7 +6040,7 @@
 			name = name.substring(1).trim();
 		}
 
-		ON(push + 'com' + self._id + '#' + name, path, fn, init, self);
+		ON(push + 'com' + self._id + '#' + name, typeof(path) === 'string' ? path.replace(REGSCOPEREPLACE, self.path) : path, fn, init, self);
 		return self;
 	};
 
