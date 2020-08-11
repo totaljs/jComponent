@@ -327,7 +327,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.123;
+	M.version = 18.124;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -814,12 +814,12 @@
 
 			xhr.addEventListener('error', function() {
 				var req = this;
-				ajaxprocess(output, req.status, req.statusText || ERRCONN, req.responseText, parseHeaders(req.getAllResponseHeaders()), output.status > 399);
+				ajaxprocess(output, req.status, req.statusText || ERRCONN, req.responseText, parseHeaders(req.getAllResponseHeaders()), req.status > 399);
 			});
 
 			xhr.addEventListener('load', function() {
 				var req = this;
-				ajaxprocess(output, req.status, req.statusText, req.responseText, parseHeaders(req.getAllResponseHeaders()));
+				ajaxprocess(output, req.status, req.statusText, req.responseText, parseHeaders(req.getAllResponseHeaders()), req.status > 399);
 			}, false);
 
 			xhr.upload.onprogress = function(evt) {
