@@ -327,7 +327,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.124;
+	M.version = 18.125;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11341,6 +11341,53 @@
 		}
 
 		return arr.length;
+	};
+
+	W.NODEINDEXOF = function(el) {
+		if (el instanceof jQuery)
+			el = el[0];
+		var children = el.parentNode.children;
+		for (var i = 0; i < children.length; i++) {
+			if (children[i] === el)
+				return i;
+		}
+		return -1;
+	};
+
+	W.NODEINSERT = function(a, b, before) {
+		if (a instanceof jQuery)
+			a = a[0];
+		if (b instanceof jQuery)
+			b = b[0];
+		if (before)
+			b.parentNode.insertBefore(a, b);
+		else if (b.nextSibling)
+			b.parentNode.insertBefore(a, b.nextSibling);
+		else
+			b.parentNode.appendChild(a);
+	};
+
+	W.NODEMOVE = function(el, up) {
+		if (el instanceof jQuery) {
+			for (var i = 0; i < el.length; i++)
+				W.NODEMOVE(el[i], up);
+		} else {
+			var index = W.NODEINDEXOF(el);
+			if (index > -1) {
+				var parent = el.parentNode;
+				var children = parent.children;
+				if (up) {
+					if (index > 0)
+						parent.insertBefore(el, children[index - 1]);
+				} else {
+					var dom = children[index + 2];
+					if (dom)
+						parent.insertBefore(el, dom);
+					else
+						parent.appendChild(el);
+				}
+			}
+		}
 	};
 
 })();
