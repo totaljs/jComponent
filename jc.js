@@ -327,7 +327,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.125;
+	M.version = 18.126;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7148,10 +7148,45 @@
 		timeouts[path] = setTimeout(updbind, timeout, path, reset);
 	};
 
-	W.CSS = function(value, id) {
+	W.CSS = function(value, id, selector) {
 		id && $('#css' + id).remove();
-		$('<style type="text/css"' + (id ? ' id="css' + id + '"' : '') + '>' + (value instanceof Array ? value.join('') : value) + '</style>').appendTo('head');
+		var val = (value instanceof Array ? value.join('') : value);
+		$('<style type="text/css"' + (id ? ' id="css' + id + '"' : '') + '>' + (wrap ? wrap(selector, val) : val) + '</style>').appendTo('head');
 	};
+
+	function wrap(selector, css) {
+
+		var beg = css.indexOf('{');
+		var builder = [];
+
+		while (beg !== -1) {
+
+			var sel = css.substring(0, beg);
+			var end = css.indexOf('}', beg + 1);
+
+			if (end === -1)
+				break;
+
+			end++;
+
+			var tmp = [];
+
+			if (sel.indexOf('@') === -1) {
+				var arr = sel.split(',');
+				for (var i = 0; i < arr.length; i++) {
+					var a = arr[i].trim();
+					tmp.push(selector + ' ' + a);
+				}
+			} else
+				tmp.push(sel);
+
+			builder.push(tmp.join(',') + css.substring(beg, end));
+			css = css.substring(end);
+			beg = css.indexOf('{');
+		}
+
+		return builder.join('');
+	}
 
 	W.HASH = function(s, unsigned) {
 		if (!s)
