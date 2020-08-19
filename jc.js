@@ -327,7 +327,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.126;
+	M.version = 18.127;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7151,7 +7151,7 @@
 	W.CSS = function(value, id, selector) {
 		id && $('#css' + id).remove();
 		var val = (value instanceof Array ? value.join('') : value);
-		$('<style type="text/css"' + (id ? ' id="css' + id + '"' : '') + '>' + (wrap ? wrap(selector, val) : val) + '</style>').appendTo('head');
+		$('<style type="text/css"' + (id ? ' id="css' + id + '"' : '') + '>' + (selector ? wrap(selector, val) : val) + '</style>').appendTo('head');
 	};
 
 	function wrap(selector, css) {
