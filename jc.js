@@ -8173,23 +8173,6 @@
 		return +(Math.round(this + 'e+' + decimals) + 'e-' + decimals);
 	};
 
-	NP.VAT = function(percentage, decimals, includedVAT) {
-		var num = this;
-		var type = typeof(decimals);
-
-		if (type === 'boolean') {
-			var tmp = includedVAT;
-			includedVAT = decimals;
-			decimals = tmp;
-			type = typeof(decimals);
-		}
-
-		if (type === 'undefined')
-			decimals = 2;
-
-		return !percentage || !num ? num.round(decimals) : includedVAT ? (num / ((percentage / 100) + 1)).round(decimals) : (num * ((percentage / 100) + 1)).round(decimals);
-	};
-
 	SP.format = function() {
 		var arg = arguments;
 		return this.replace(M.regexp.format, function(text) {
