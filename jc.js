@@ -8169,6 +8169,10 @@
 		return new Date(this + (offset || 0));
 	};
 
+	NP.round = function(decimals) {
+		return +(Math.round(this + 'e+' + decimals) + 'e-' + decimals);
+	};
+
 	SP.format = function() {
 		var arg = arguments;
 		return this.replace(M.regexp.format, function(text) {
