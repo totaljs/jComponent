@@ -79,7 +79,15 @@
 	var D = document;
 
 	var LCOMPARER = W.Intl ? W.Intl.Collator().compare : function(a, b) {
-		return a.localeCompare(b);
+		return (a + '').localeCompare(b + '');
+	};
+
+	var LCOMPARER_DESC = W.Intl ? function(a, b) {
+		var val = W.Intl.Collator().compare(a + '', b + '');
+		return val ? val * - 1 : 0;
+	} : function(a, b) {
+		var val = (a + '').localeCompare(b + '');
+		return val ? val * -1 : 0;
 	};
 
 	var C = {}; // COMPILER
@@ -327,7 +335,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.128;
+	M.version = 18.129;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8170,6 +8178,8 @@
 	};
 
 	NP.round = function(decimals) {
+		if (decimals == null)
+			decimals = 0;
 		return +(Math.round(this + 'e+' + decimals) + 'e-' + decimals);
 	};
 
@@ -8360,100 +8370,125 @@
 		return item === undefined ? def : item;
 	};
 
-	AP.quicksort = function(name, asc, type) {
+	function sortcomparer(sort) {
+
+		var key = 'sort_' + sort;
+		var meta = temp[key];
+
+		if (!meta) {
+			meta = [];
+			sort = sort.replace(/\s/g, '').split(',');
+			for (var i = 0; i < sort.length; i++) {
+				var tmp = sort[i].split('_');
+				var obj = { name: tmp[0], type: null, desc: tmp[1] === 'desc' };
+				if (tmp[0].indexOf('.') !== -1)
+					obj.read = new Function('val', 'return val.' + tmp[0].replace(/\./g, '?.'));
+				meta.push(obj);
+			}
+			temp[key] = meta;
+		}
+
+		return function(a, b) {
+			for (var i = 0; i < meta.length; i++) {
+				var col = meta[i];
+				var va = col.read ? col.read(a) : a[col.name];
+				var vb = col.read ? col.read(b) : b[col.name];
+
+				if (!col.type) {
+					if (va != null)
+						col.type = va instanceof Date ? 4 : typeof(va);
+					else if (vb != null)
+						col.type = vb instanceof Date ? 4: typeof(vb);
+					switch (col.type) {
+						case 'string':
+							col.type = 1;
+							break;
+						case 'number':
+							col.type = 2;
+							break;
+						case 'boolean':
+							col.type = 3;
+							break;
+						case 'object':
+							col.type = 5;
+							break;
+					}
+				}
+
+				if (col.type) {
+					switch (col.type) {
+						case 1:
+							tmp = va && vb ? (col.desc ? LCOMPARER(vb, va) : LCOMPARER(va, vb)) : 0;
+							if (tmp)
+								return tmp;
+							break;
+						case 2:
+							tmp = va > vb ? (col.desc ? -1 : 1) : va < vb ? (col.desc ? 1 : -1) : 0;
+							if (tmp)
+								return tmp;
+							break;
+						case 3:
+							tmp = va === true && vb === false ? (col.desc ? -1 : 1) : va === false && vb === true ? (col.desc ? 1 : -1) : 0;
+							if (tmp)
+								return tmp;
+							break;
+						case 4:
+
+							if (!va && !vb)
+								break;
+
+							if (va && !vb)
+								return col.desc ? -1 : 1;
+
+							if (!va && vb)
+								return col.desc ? 1 : -1;
+
+							if (!va.getTime)
+								va = new Date(va);
+
+							if (!vb.getTime)
+								vb = new Date(vb);
+
+							tmp = va > vb ? (col.desc ? -1 : 1) : va < vb ? (col.desc ? 1 : -1) : 0;
+
+							if (tmp)
+								return tmp;
+
+							break;
+					}
+				} else
+					return 0;
+			}
+
+			return 0;
+		};
+	}
+
+	AP.quicksort = function(sort) {
 
 		var self = this;
-		var length = self.length;
-		if (!length || length === 1)
+
+		if (self.length < 2)
 			return self;
 
-		if (typeof(name) === TYPE_B) {
-			asc = name;
-			name = undefined;
+		var self = this;
+
+		// Backward compatibility
+		if (sort === true) {
+			self.sort(LCOMPARER);
+			return self;
 		}
 
-		if (asc == null || asc === 'asc')
-			asc = true;
-		else if (asc === 'desc')
-			asc = false;
-
-		switch (type) {
-			case 'date':
-				type = 4;
-				break;
-			case TYPE_S:
-				type = 1;
-				break;
-			case TYPE_N:
-				type = 2;
-				break;
-			case 'bool':
-			case TYPE_B:
-				type = 3;
-				break;
-			default:
-				type = 0;
-				break;
+		// Backward compatibility
+		if (sort === false) {
+			self.sort(LCOMPARER_DESC);
+			return self;
 		}
 
-		if (!type) {
-			var index = 0;
-			while (!type) {
-				var field = self[index++];
-				if (field === undefined)
-					return self;
-				if (name)
-					field = field[name];
-				switch (typeof(field)) {
-					case TYPE_S:
-						type = field.isJSONDate() ? 4 : 1;
-						break;
-					case TYPE_N:
-						type = 2;
-						break;
-					case TYPE_B:
-						type = 3;
-						break;
-					default:
-						if (field instanceof Date)
-							type = 4;
-						break;
-				}
-			}
-		}
+		if (arguments[1] === false || arguments[1] === 'desc')
+			sort += '_desc';
 
-		self.sort(function(a, b) {
-
-			var va = name ? a[name] : a;
-			var vb = name ? b[name] : b;
-
-			if (va == null)
-				return asc ? -1 : 1;
-
-			if (vb == null)
-				return asc ? 1 : -1;
-
-			// String
-			if (type === 1) {
-				return va && vb ? (asc ? LCOMPARER(va, vb) : LCOMPARER(vb, va)) : 0;
-			} else if (type === 2) {
-				return va > vb ? (asc ? 1 : -1) : va < vb ? (asc ? -1 : 1) : 0;
-			} else if (type === 3) {
-				return va === true && vb === false ? (asc ? 1 : -1) : va === false && vb === true ? (asc ? -1 : 1) : 0;
-			} else if (type === 4) {
-				if (!va || !vb)
-					return 0;
-				if (!va.getTime)
-					va = new Date(va);
-				if (!vb.getTime)
-					vb = new Date(vb);
-				var at = va.getTime();
-				var bt = vb.getTime();
-				return at > bt ? (asc ? 1 : -1) : at < bt ? (asc ? -1 : 1) : 0;
-			}
-			return 0;
-		});
-
+		self.sort(sortcomparer(sort));
 		return self;
 	};
 
