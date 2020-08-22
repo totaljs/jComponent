@@ -335,7 +335,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.129;
+	M.version = 18.130;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8474,7 +8474,7 @@
 		var self = this;
 
 		// Backward compatibility
-		if (sort === true) {
+		if (!sort || sort === true) {
 			self.sort(LCOMPARER);
 			return self;
 		}
