@@ -335,7 +335,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.130;
+	M.version = 18.131;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10029,7 +10029,8 @@
 			if (item.track && item.path !== path) {
 				var can = false;
 				for (var i = 0; i < item.track.length; i++) {
-					if (item.track[i] === path) {
+					var t = item.track[i];
+					if (t === path || (path.length < t.length && t.substring(0, path.length) === path)) {
 						can = true;
 						break;
 					}
