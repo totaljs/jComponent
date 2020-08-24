@@ -3368,7 +3368,7 @@
 				obj.element = el;
 				obj.dom = dom;
 
-				var p = attrcom(el, 'path') || (meta ? meta[1] === TYPE_NULL ? '' : meta[1] : '') || obj._id;
+				var p = attrcom(el, 'path') || (meta ? meta[1] === TYPE_NULL ? '' : meta[1] : ''); // || obj._id;
 				var tmp = attrcom(el, T_CONFIG) || (meta ? meta[2] === TYPE_NULL ? '' : meta[2] : '');
 
 				if (p.charAt(0) === '%' || (tmp && tmp.indexOf('$noscope:') !== -1))
@@ -5677,11 +5677,18 @@
 		} else
 			self.$pp = false;
 
+		path = path.env();
+
 		// Temporary
 		if (path.charCodeAt(0) === 37)
 			path = T_TMP + path.substring(1);
 
-		path = path.env();
+		// data-bind value (current element or parent -> parent -> parent)
+		if (path === '.') {
+			self.path = '';
+			self.$path = EMPTYARRAY;
+			return;
+		}
 
 		// !path = fixed path
 		if (path.charCodeAt(0) === 33) {
@@ -6149,7 +6156,7 @@
 		var self = this;
 		if (self.$pp)
 			return self.owner.data(self.path);
-		path = path ? self.makepath(path) : self.path;
+		path = path ? self.makepath(path) : (self.path || self.$jcbindpath);
 		if (path) {
 			var val = get(path);
 			return self.$format ? self.$format(val, path, -1, self.scope) : val;
@@ -6176,33 +6183,39 @@
 		// Backwards compatibility
 		if (arg.length === 3)
 			M.set(self.makepath(arg[0]), arg[1], arg[2]);
-		else
-			M.set(self.path, value, type);
+		else {
+			var p = self.path || self.$jcbindpath;
+			p && M.set(p, value, type);
+		}
 
 		return self;
 	};
 
 	PPC.inc = function(value, type) {
 		var self = this;
-		M.inc(self.path, value, type);
+		var p = self.path || self.$jcbindpath;
+		p && M.inc(p, value, type);
 		return self;
 	};
 
 	PPC.extend = function(value, type) {
 		var self = this;
-		M.extend(self.path, value, type);
+		var p = self.path || self.$jcbindpath;
+		p && M.extend(p, value, type);
 		return self;
 	};
 
 	PPC.rewrite = function(value, type) {
 		var self = this;
-		REWRITE(self.path, value, type);
+		var p = self.path || self.$jcbindpath;
+		p && REWRITE(p, value, type);
 		return self;
 	};
 
 	PPC.push = function(value, type) {
 		var self = this;
-		M.push(self.path, value, type);
+		var p = self.path || self.$jcbindpath;
+		p && M.push(p, value, type);
 		return self;
 	};
 
@@ -9715,6 +9728,9 @@
 								fn.$compile = tmp.COMPILABLE();
 								r && !ns && scr.remove();
 								break;
+							case 'path':
+								k = 'setpath';
+								break;
 						}
 
 						if (k === 'def')
@@ -9972,6 +9988,28 @@
 		current_scope = curr_scope;
 	};
 
+	function bindsetterx(item, value, path, type, counter) {
+		if (!item || !item.el || !item.set)
+			return;
+		var com = item.el[0].$com;
+		if (com) {
+			if (com.$jcbind !== item) {
+				com.$jcbind = item;
+				com.$jcbindpath = item.path;
+			}
+			com.setterX(value, path, type);
+			if (item.setid) {
+				clearTimeout(item.setid);
+				delete item.setid;
+			}
+		} else {
+			if (!counter || counter < 30) {
+				item.setid && clearTimeout(item.setid);
+				item.setid = setTimeout(bindsetterx, 200, item, value, path, type, counter || 1);
+			}
+		}
+	}
+
 	JBP.exec = function(value, path, index, wakeup, can, type) {
 
 		var item = this;
@@ -10063,6 +10101,12 @@
 
 		if (item.formatter)
 			value = item.formatter(value, path, -1, item.formatter.scope ? new Scope(item.scope) : null);
+
+		if (item.set) {
+			tmp = item.set.call(item.el, value, path, item.el);
+			console.log(tmp);
+			bindsetterx(item, tmp, path, type);
+		}
 
 		can = can !== false;
 
