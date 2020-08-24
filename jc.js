@@ -335,7 +335,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.132;
+	M.version = 18.133;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -457,6 +457,7 @@
 	W.VBINDARRAY = function(html, el) {
 		var obj = {};
 		obj.html = html;
+		obj.compile = html.COMPILABLE();
 		obj.items = [];
 		obj.element = el instanceof COM ? el.element : $(el);
 		obj.element[0].$vbindarray = obj;
@@ -547,7 +548,6 @@
 			for (var i = 0; i < value.length; i++) {
 				var val = value[i];
 				var item = obj.items[i];
-
 				if (!item) {
 					item = VBIND(obj.html);
 					obj.items.push(item);
@@ -555,6 +555,8 @@
 					item.element[0].$vbind = item;
 					item.index = i;
 					item.vbindarray = obj;
+					for (var j = 0; j < item.binders.length; j++)
+						item.binders[j].vbind = item;
 					obj.element.append(item.element);
 				}
 
@@ -570,6 +572,8 @@
 					item.set(val, null, true);
 				}
 			}
+
+			obj.compile && COMPILE();
 		};
 
 		return obj;
@@ -2723,7 +2727,7 @@
 
 			com.$validate = true;
 			if (com.validate) {
-				com.$valid = com.validate(get(com.path));
+				com.$valid = com.validate(com.get());
 				if (!com.$valid)
 					valid = false;
 			}
@@ -2746,7 +2750,7 @@
 		com.$validate = true;
 
 		if (com.validate) {
-			com.$valid = com.validate(get(com.path));
+			com.$valid = com.validate(com.get());
 			if (!com.$valid)
 				valid = false;
 		}
@@ -6156,9 +6160,9 @@
 		var self = this;
 		if (self.$pp)
 			return self.owner.data(self.path);
-		path = path ? self.makepath(path) : (self.path || self.$jcbindpath);
+		path = path ? self.makepath(path) : (self.path || self.$jcbindget);
 		if (path) {
-			var val = get(path);
+			var val = self.$jcbind && self.$jcbind.vbind ? get(path, self.$jcbind.vbind.value) : get(path);
 			return self.$format ? self.$format(val, path, -1, self.scope) : val;
 		}
 	};
@@ -6184,7 +6188,7 @@
 		if (arg.length === 3)
 			M.set(self.makepath(arg[0]), arg[1], arg[2]);
 		else {
-			var p = self.path || self.$jcbindpath;
+			var p = self.path || self.$jcbindset;
 			p && M.set(p, value, type);
 		}
 
@@ -6193,28 +6197,28 @@
 
 	PPC.inc = function(value, type) {
 		var self = this;
-		var p = self.path || self.$jcbindpath;
+		var p = self.path || self.$jcbindset;
 		p && M.inc(p, value, type);
 		return self;
 	};
 
 	PPC.extend = function(value, type) {
 		var self = this;
-		var p = self.path || self.$jcbindpath;
+		var p = self.path || self.$jcbindset;
 		p && M.extend(p, value, type);
 		return self;
 	};
 
 	PPC.rewrite = function(value, type) {
 		var self = this;
-		var p = self.path || self.$jcbindpath;
+		var p = self.path || self.$jcbindset;
 		p && REWRITE(p, value, type);
 		return self;
 	};
 
 	PPC.push = function(value, type) {
 		var self = this;
-		var p = self.path || self.$jcbindpath;
+		var p = self.path || self.$jcbindset;
 		p && M.push(p, value, type);
 		return self;
 	};
@@ -10010,21 +10014,20 @@
 	};
 
 	function bindsetterx(item, value, path, type, counter) {
-		if (!item || !item.el || !item.set)
-			return;
-		var com = item.el[0].$com;
-		if (com) {
-			if (com.$jcbind !== item) {
-				com.$jcbind = item;
-				com.$jcbindpath = item.path;
-			}
-			com.setterX(value, path, type);
-			if (item.setid) {
-				clearTimeout(item.setid);
-				delete item.setid;
-			}
-		} else {
-			if (!counter || counter < 30) {
+		if (item && item.el && item.set) {
+			var com = item.el[0].$com;
+			if (com) {
+				if (com.$jcbind !== item) {
+					com.$jcbind = item;
+					com.$jcbindset = item.vbind ? null : item.path;
+					com.$jcbindget = item.path;
+				}
+				com.setterX(value, path, type);
+				if (item.setid) {
+					clearTimeout(item.setid);
+					delete item.setid;
+				}
+			} else if (!counter || counter < 30) {
 				item.setid && clearTimeout(item.setid);
 				item.setid = setTimeout(bindsetterx, 200, item, value, path, type, counter || 1);
 			}
@@ -10125,7 +10128,6 @@
 
 		if (item.set) {
 			tmp = item.set.call(item.el, value, path, item.el);
-			console.log(tmp);
 			bindsetterx(item, tmp, path, type);
 		}
 
