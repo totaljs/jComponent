@@ -335,7 +335,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.131;
+	M.version = 18.132;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6362,6 +6362,27 @@
 			for (var i = 0; i < value.length; i++)
 				ADD(value[i], element, config, content);
 		} else {
+
+			var name = value.split('__')[0];
+			if (name.charAt(0) === '!') {
+
+				value = value.substring(1);
+				name = name.substring(1);
+
+				var keys = Object.keys(M.$components);
+				var index = name.indexOf('@');
+				if (index !== -1)
+					name = name.substring(0, index);
+
+				for (var i = 0; i < keys.length; i++) {
+					var key = keys[i];
+					index = key.indexOf('@');
+					if (index !== -1)
+						key = key.substring(0, index);
+					if (key === name)
+						return;
+				}
+			}
 
 			var ck = '';
 
