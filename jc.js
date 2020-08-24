@@ -3372,7 +3372,7 @@
 				obj.element = el;
 				obj.dom = dom;
 
-				var p = attrcom(el, 'path') || (meta ? meta[1] === TYPE_NULL ? '' : meta[1] : ''); // || obj._id;
+				var p = attrcom(el, 'path') || (meta ? meta[1] === TYPE_NULL ? '' : meta[1] : '') || ''; // || obj._id;
 				var tmp = attrcom(el, T_CONFIG) || (meta ? meta[2] === TYPE_NULL ? '' : meta[2] : '');
 
 				if (p.charAt(0) === '%' || (tmp && tmp.indexOf('$noscope:') !== -1))
