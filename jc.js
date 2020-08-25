@@ -335,7 +335,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.133;
+	M.version = 18.134;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7897,6 +7897,11 @@
 				return dt;
 		}
 		return dt;
+	};
+
+	DP.toUTC = function(ticks) {
+		var dt = this.getTime() + this.getTimezoneOffset() * 60000;
+		return ticks ? dt : new Date(dt);
 	};
 
 	DP.format = function(format, utc) {
