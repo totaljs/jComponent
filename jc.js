@@ -335,7 +335,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.134;
+	M.version = 18.135;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10021,7 +10021,7 @@
 	function bindsetterx(item, value, path, type, counter) {
 		if (item && item.el && item.set) {
 			var com = item.el[0].$com;
-			if (com) {
+			if (com && !com.$removed && com.$loaded && !com.path && com.setter) {
 				if (com.$jcbind !== item) {
 					com.$jcbind = item;
 					com.$jcbindset = item.vbind ? null : item.path;
@@ -10034,7 +10034,7 @@
 				}
 			} else if (!counter || counter < 30) {
 				item.setid && clearTimeout(item.setid);
-				item.setid = setTimeout(bindsetterx, 200, item, value, path, type, counter || 1);
+				item.setid = setTimeout(bindsetterx, 100, item, value, path, type, counter || 1);
 			}
 		}
 	}
