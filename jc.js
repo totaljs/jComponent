@@ -335,7 +335,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.135;
+	M.version = 18.136;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -474,18 +474,18 @@
 		var serialize = function(val) {
 			switch (typeof(val)) {
 				case TYPE_N:
-					return val + '';
+					return val.toString(36);
 				case TYPE_B:
 					return val ? '1' : '0';
 				case TYPE_S:
-					return val;
+					return HASH(val).toString(36);
 				default:
-					return val == null ? '' : val instanceof Date ? val.getTime() : JSON.stringify(val);
+					return val == null ? '' : val instanceof Date ? val.getTime().toString(36) : HASH(JSON.stringify(val).replace(/\"|\:|\{|\}|\[|\]/g, '')).toString(36);
 			}
 		};
 
 		obj.$checksum = function(item) {
-			var sum = 0;
+			var sum = '';
 			var binder = obj.items[0];
 			if (binder) {
 				for (var j = 0; j < binder.binders.length; j++) {
@@ -498,7 +498,7 @@
 						sum += serialize(p ? get(p, item) : item);
 				}
 			}
-			return HASH(sum, 1);
+			return HASH(sum).toString(36);
 		};
 
 		obj.get = function(index) {
@@ -10759,7 +10759,7 @@
 		};
 
 		handlers.forcey = function() {
-			bary.css('top', size.vpos);
+			bary[0].style.top = size.vpos + 'px';
 			if (MD.scrollbaranimate && !animcache.disabled && (size.vpos === 0 || size.vpos === size.vmax)) {
 				size.animvpost && clearTimeout(size.animvpost);
 				size.animvpost = setTimeout(animyt, 10, size.vpos, size.vmax);
@@ -10767,11 +10767,21 @@
 		};
 
 		handlers.forcex = function() {
-			barx.css('left', size.hpos);
+			barx[0].style.left = size.hpos + 'px';
 			if (MD.scrollbaranimate && !animcache.disabled && (size.hpos === 0 || size.hpos === size.hmax)) {
 				size.animhpost && clearTimeout(size.animhpost);
 				size.animhpost = setTimeout(animxt, 10, size.hpos, size.hmax);
 			}
+		};
+
+		handlers.clearscroll = function() {
+			delay = null;
+			notemmited = true;
+			size.animvpos = false;
+			animcache.y = -1;
+			animcache.x = -1;
+			options.onidle && options.onidle(self);
+			events.scrollidle && EMIT('scrollidle', area);
 		};
 
 		handlers.onscroll = function() {
@@ -10846,13 +10856,7 @@
 				}
 
 				delay && clearTimeout(delay);
-				delay = setTimeout(function() {
-					delay = null;
-					notemmited = true;
-					size.animvpos = false;
-					animcache.y = -1;
-					animcache.x = -1;
-				}, 700);
+				delay = setTimeout(handlers.clearscroll, 700);
 
 				options.onscroll && options.onscroll(self);
 
@@ -11175,12 +11179,12 @@
 
 			if (scrollbarcache.canX !== canX) {
 				scrollbarcache.canX = canX;
-				area.css('overflow-x', canX ? '' : 'hidden');
+				area[0].style['overflow-x'] = canX ? '' : 'hidden';
 			}
 
 			if (scrollbarcache.canY !== canY) {
 				scrollbarcache.canY = canY;
-				area.css('overflow-y', canY ? '' : 'hidden');
+				area[0].style['overflow-y'] = canY ? '' : 'hidden';
 			}
 
 			if (!size.vbarsize)
