@@ -335,7 +335,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.136;
+	M.version = 18.137;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7255,7 +7255,7 @@
 			hash = ((hash << 5) - hash) + char;
 			hash |= 0; // Convert to 32bit integer
 		}
-		return unsigned == null ? hash >>> 0 : hash;
+		return unsigned != false ? hash >>> 0 : hash;
 	};
 
 	W.GUID = function(size) {
