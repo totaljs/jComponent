@@ -70,6 +70,7 @@
 	var T_CHANGEAT = ' @change';
 	var ERRCONN = 'ERR_CONNECTION_CLOSED';
 	var OK = Object.keys;
+	var SKIPBODYENCRYPTOR = { ':': 1, '"': 1, '[': 1, ']': 1, '\'': 1, '_': 1, '{': 1, '}': 1, '&': 1, '=': 1, '+': 1, '-': 1, '\\': 1, '/': 1, ',': 1 };
 
 	// No scrollbar
 	var cssnoscrollbar = {};
@@ -273,6 +274,12 @@
 
 	var MD = W.DEF = M.defaults = {};
 	var ENV = MD.environment = {};
+	var encryptsecret = '';
+
+	MD.secret = function(key) {
+		encryptsecret = key;
+		delete MD.secret;
+	};
 
 	MD.repeatfocus = true;
 	MD.monitor = false;
@@ -335,7 +342,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.137;
+	M.version = 18.139;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -480,7 +487,7 @@
 				case TYPE_S:
 					return HASH(val).toString(36);
 				default:
-					return val == null ? '' : val instanceof Date ? val.getTime().toString(36) : HASH(JSON.stringify(val).replace(/\"|\:|\{|\}|\[|\]/g, '')).toString(36);
+					return val == null ? '' : val instanceof Date ? val.getTime().toString(36) : HASH(JSON.stringify(val).replace(/"|:|\{|\}|\[|\]/g, '')).toString(36);
 			}
 		};
 
@@ -1705,8 +1712,9 @@
 		var cancel = false;
 		var reqid = null;
 		var json = false;
+		var noencrypt = false;
 
-		url = url.replace(/\s(repeat|cancel|json|#[a-z]+)/i, function(text) {
+		url = url.replace(/\s(repeat|cancel|json|noencrypt|#[a-z]+)/i, function(text) {
 			var c = text.charAt(1);
 			if (c === '#')
 				reqid = text.substring(2);
@@ -1714,6 +1722,8 @@
 				repeat = true;
 			else if (c.toLowerCase() === 'j')
 				json = true;
+			else if (c.toLowerCase() === 'n')
+				noencrypt = true;
 			else
 				cancel = true;
 			return '';
@@ -1769,11 +1779,14 @@
 
 			if (method !== 'GET') {
 				if (typeof(data) === TYPE_S) {
-					options.data = data;
+					options.data = encryptsecret && !noencrypt ? encrypt_body(data, encryptsecret) : data;
 				} else {
+					var tmp = STRINGIFY(data);
 					options.contentType = 'application/json; charset=utf-8';
-					options.data = STRINGIFY(data);
+					options.data = encryptsecret && !noencrypt ? encrypt_body(tmp, encryptsecret) : tmp;
 				}
+				if (encryptsecret && !noencrypt)
+					headers['X-Encrypted'] = 'a';
 			}
 
 			options.headers = $.extend(headers, MD.headers);
@@ -1914,6 +1927,9 @@
 
 		if (!response && error)
 			response = code + ': ' + status;
+
+		if (headers && headers['X-Encrypted'] && encryptsecret && typeof(response) === TYPE_S)
+			output.response = decrypt_body(response, encryptsecret);
 
 		output.raw = output.response = response;
 		output.status = code;
@@ -2145,7 +2161,7 @@
 
 		var local = timeout > 10000;
 		blocked[key] = now + timeout;
-		!W.isPRIVATEMODE && local && LS.setItem(MD.localstorage + '.blocked', JSON.stringify(blocked));
+		!W.isPRIVATEMODE && local && LS.setItem(MD.localstorage + '.blocked', STRINGIFY(blocked));
 		callback && callback();
 		return false;
 	};
@@ -4611,7 +4627,7 @@
 			}
 		}
 
-		is2 && !W.isPRIVATEMODE && LS.setItem(MD.localstorage + '.blocked', JSON.stringify(blocked));
+		is2 && !W.isPRIVATEMODE && LS.setItem(MD.localstorage + '.blocked', STRINGIFY(blocked));
 
 		for (var key in storage) {
 			var item = storage[key];
@@ -4630,7 +4646,7 @@
 	}
 
 	function save() {
-		!W.isPRIVATEMODE && LS.setItem(MD.localstorage + '.cache', JSON.stringify(storage));
+		!W.isPRIVATEMODE && LS.setItem(MD.localstorage + '.cache', STRINGIFY(storage));
 	}
 
 	function refresh() {
@@ -6828,10 +6844,10 @@
 		return PARSE(JSON.stringify(obj));
 	};
 
-	W.STRINGIFY = function(obj, compress, fields) {
+	W.STRINGIFY = function(obj, compress, fields, encrypt) {
 		compress === undefined && (compress = MD.jsoncompress);
 		var tf = typeof(fields);
-		return JSON.stringify(obj, function(key, value) {
+		var tmp = JSON.stringify(obj, function(key, value) {
 
 			if (!key)
 				return value;
@@ -6858,6 +6874,7 @@
 
 			return value;
 		});
+		return encrypt && encryptsecret ? encrypt_body(tmp, encryptsecret) : tmp;
 	};
 
 	W.PARSE = function(value, date) {
@@ -11540,5 +11557,59 @@
 			}
 		}
 	};
+
+	function encrypt_body(value, key) {
+
+		var builder = [];
+		var index = 0;
+		var length = key.length;
+
+		for (var i = 0; i < value.length; i++) {
+
+			var c = value.charAt(i);
+			if (SKIPBODYENCRYPTOR[c]) {
+				builder.push(c);
+				continue;
+			}
+
+			if (index === length)
+				index = 0;
+
+			var a = value.charCodeAt(i) + 2;
+			var b = key.charCodeAt(index++);
+			var t = (a + b).toString(36);
+			builder.push(t.length + t);
+		}
+
+		return builder.join('');
+	}
+
+	function decrypt_body(value, key) {
+
+		var index = 0;
+		var length = key.length;
+		var builder = [];
+
+		for (var i = 0; i < value.length; i++) {
+
+			var c = value.charAt(i);
+
+			if (SKIPBODYENCRYPTOR[c]) {
+				builder.push(c);
+				continue;
+			}
+
+			if (index === length)
+				index = 0;
+
+			var l = +value.charAt(i);
+			var code = parseInt(value.substring(i + 1, i + 1 + l), 36);
+			var b = key.charCodeAt(index++);
+			builder.push(String.fromCharCode(code - b - 2));
+			i += l;
+		}
+
+		return builder.join('');
+	}
 
 })();
