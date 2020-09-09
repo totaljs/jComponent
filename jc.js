@@ -342,7 +342,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.139;
+	M.version = 18.140;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1928,8 +1928,8 @@
 		if (!response && error)
 			response = code + ': ' + status;
 
-		if (headers && headers['X-Encrypted'] && encryptsecret && typeof(response) === TYPE_S)
-			output.response = decrypt_body(response, encryptsecret);
+		if (headers && headers['x-encrypted'] && encryptsecret && typeof(response) === TYPE_S)
+			response = decrypt_body(response, encryptsecret);
 
 		output.raw = output.response = response;
 		output.status = code;
