@@ -342,7 +342,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.140;
+	M.version = 18.141;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5656,7 +5656,14 @@
 
 	PPC.makepath = function(path) {
 		var self = this;
-		return path.indexOf('?') !== -1 && self.pathscope ? self.scope.makepath(path) : path;
+		if (path.indexOf('?') !== -1) {
+			var scope = self.pathscope ? self.scope : self.$scopepath;
+			if (self.$scopepath === undefined)
+				self.$scopepath = self.element.scope() || null;
+			if (scope)
+				path = scope.makepath(path);
+		}
+		return path;
 	};
 
 	PPC.scopepath = function(path) {
