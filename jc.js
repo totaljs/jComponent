@@ -342,7 +342,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.141;
+	M.version = 18.142;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4869,6 +4869,7 @@
 				self.$state = key;
 				self.config.$state && EXEC.call(self, self.config.$state.SCOPE(self), type, what);
 				self.state(type, what);
+				self.state2 && self.state2(type, what);
 			}
 		};
 
@@ -5062,6 +5063,19 @@
 	}
 
 	var PPC = COM.prototype;
+
+	PPC.parsesource = function(value) {
+		var arr = value.split(',');
+		var output = [];
+		for (var i = 0; i < arr.length; i++) {
+			var item = arr[i].split('|');
+			var id = item[0];
+			if (self.type === 'number' || self.config.type === 'number')
+				id = id ? id.parseInt() : null;
+			output.push({ id: id, name: item[1] });
+		}
+		return output;
+	};
 
 	PPC.command = function(name, fn) {
 		var t = this;
