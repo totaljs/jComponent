@@ -342,7 +342,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.142;
+	M.version = 18.143;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5065,6 +5065,7 @@
 	var PPC = COM.prototype;
 
 	PPC.parsesource = function(value) {
+		var self = this;
 		var arr = value.split(',');
 		var output = [];
 		for (var i = 0; i < arr.length; i++) {
