@@ -275,9 +275,11 @@
 	var MD = W.DEF = M.defaults = {};
 	var ENV = MD.environment = {};
 	var encryptsecret = '';
+	var encryptvalidator;
 
-	MD.secret = function(key) {
+	MD.secret = function(key, validator) {
 		encryptsecret = key;
+		encryptvalidator = validator;
 		delete MD.secret;
 	};
 
@@ -342,7 +344,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.143;
+	M.version = 18.144;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1777,18 +1779,6 @@
 			if (reqid)
 				options.id = reqid;
 
-			if (method !== 'GET') {
-				if (typeof(data) === TYPE_S) {
-					options.data = encryptsecret && !noencrypt ? encrypt_body(data, encryptsecret) : data;
-				} else {
-					var tmp = STRINGIFY(data);
-					options.contentType = 'application/json; charset=utf-8';
-					options.data = encryptsecret && !noencrypt ? encrypt_body(tmp, encryptsecret) : tmp;
-				}
-				if (encryptsecret && !noencrypt)
-					headers['X-Encrypted'] = 'a';
-			}
-
 			options.headers = $.extend(headers, MD.headers);
 			options.scope = curr_scope;
 			options.process = true;
@@ -1821,6 +1811,23 @@
 			if (!options.url)
 				options.url = url;
 
+			var canencrypt = encryptsecret && !noencrypt && (!encryptvalidator || encryptvalidator(options));
+
+			if (method !== 'GET') {
+				if (typeof(data) === TYPE_S) {
+					options.data = canencrypt ? encrypt_body(data, encryptsecret) : data;
+				} else {
+					var tmp = STRINGIFY(data);
+					options.contentType = options.headers['Content-Type'] = 'application/json; charset=utf-8';
+					options.data = canencrypt ? encrypt_body(tmp, encryptsecret) : tmp;
+				}
+			}
+
+			if (canencrypt) {
+				options.headers['X-Encrypted'] = 'a';
+				options.encrypted = true;
+			}
+
 			events.request && EMIT('request', options);
 
 			if (options.cancel)
@@ -1847,6 +1854,7 @@
 			output.data = data;
 			output.scope = curr_scope;
 			output.callback = callback;
+			output.encrypted = options.encrypted;
 			output.duration = options.duration;
 			output.credentials = options.xhrFields && options.xhrFields.withCredentials ? true : false;
 
@@ -1928,7 +1936,7 @@
 		if (!response && error)
 			response = code + ': ' + status;
 
-		if (headers && headers['x-encrypted'] && encryptsecret && typeof(response) === TYPE_S)
+		if (((headers && headers['x-encrypted']) || output.encrypted) && encryptsecret && typeof(response) === TYPE_S)
 			response = decrypt_body(response, encryptsecret);
 
 		output.raw = output.response = response;
@@ -5073,7 +5081,7 @@
 			var id = item[0];
 			if (self.type === 'number' || self.config.type === 'number')
 				id = id ? id.parseInt() : null;
-			output.push({ id: id, name: item[1] });
+			output.push({ id: id, name: item[1], icon: item[2] || '' });
 		}
 		return output;
 	};
