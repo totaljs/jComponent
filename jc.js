@@ -344,7 +344,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.144;
+	M.version = 18.145;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3947,7 +3947,7 @@
 
 		obj.$loaded = true;
 
-		if (obj.setter) {
+		if (obj.setter && obj.path) {
 			if (!obj.$prepared) {
 
 				obj.$prepared = true;
@@ -4256,7 +4256,7 @@
 
 	function set(path, value, is, settype) {
 
-		if (path == null)
+		if (!path)
 			return;
 
 		var key = '+' + path;
@@ -4264,10 +4264,8 @@
 		if (paths[key])
 			return paths[key](MD.scope, value, path, binders, binderbind, is, settype);
 
-		if (path.indexOf('?') !== -1) {
-			path = '';
+		if (!path || path.indexOf('?') !== -1)
 			return;
-		}
 
 		var arr = parsepath(path);
 		var builder = [];
