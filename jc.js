@@ -344,7 +344,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.145;
+	M.version = 18.146;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3947,7 +3947,7 @@
 
 		obj.$loaded = true;
 
-		if (obj.setter && obj.path) {
+		if (obj.setter) {
 			if (!obj.$prepared) {
 
 				obj.$prepared = true;
@@ -3959,7 +3959,7 @@
 					if (!defaults[tmp])
 						defaults[tmp] = new Function('return ' + tmp);
 					obj.$default = defaults[tmp];
-					if (value === undefined) {
+					if (value === undefined && obj.path) {
 						value = obj.$default();
 						set(obj.path, value, null, 1);
 						emitwatch(obj.path, value, 0);
