@@ -344,7 +344,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.146;
+	M.version = 18.147;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3371,6 +3371,11 @@
 				if (fallback[name] === 1) {
 					fallback.$--;
 					delete fallback[name];
+				}
+
+				if (statics['$ST_' + com.name]) {
+					remove(el);
+					continue;
 				}
 
 				var obj = new COM(com.name);
