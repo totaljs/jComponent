@@ -344,7 +344,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.147;
+	M.version = 18.148;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -9768,7 +9768,7 @@
 								fn = v;
 								break;
 							case T_VBINDARR:
-								var scr = e.find(T_SCRIPT);
+								var scr = e.find(T_SCRIPT + ',' + T_TEMPLATE).eq(0);
 								var r = false;
 								if (scr.length)
 									r = true;
@@ -9792,7 +9792,7 @@
 								}).trim();
 
 								var et = s ? e.find(s) : e;
-								var scr = ns ? $(ns) : et.find(T_SCRIPT);
+								var scr = ns ? $(ns) : et.find(T_SCRIPT + ',' + T_TEMPLATE).eq(0);
 								var r = false;
 								if (scr.length)
 									r = true;
@@ -10243,7 +10243,7 @@
 				IMPORT(item.import, el);
 				delete item.import;
 			} else {
-				var scr = item.el.find(T_SCRIPT);
+				var scr = item.el.find(T_SCRIPT + ',' + T_TEMPLATE).eq(0);
 				var scrhtml = scr.html();
 				scr.replaceWith(scrhtml);
 				delete item.import;
