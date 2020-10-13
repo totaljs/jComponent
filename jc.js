@@ -344,7 +344,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.148;
+	M.version = 18.149;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5007,9 +5007,11 @@
 
 				if (t.type === a || t.type === 'select') {
 					var el = $(t);
-					el.val() !== value && el.val(value);
+					if (el.val() !== value)
+						el.val(value);
 				} else if (t.value !== value)
 					t.value = value;
+
 			});
 		};
 	}
@@ -9981,6 +9983,9 @@
 
 		obj.path = path == TYPE_NULL ? null : path;
 
+		if (obj.vbindarray)
+			obj.vbindarray.path = obj.path;
+
 		if (obj.track) {
 			for (var i = 0; i < obj.track.length; i++) {
 				var objk = obj.track[i] = path + '.' + obj.track[i];
@@ -10074,7 +10079,10 @@
 			if (com && !com.$removed && com.$loaded && !com.path && com.setter) {
 				if (com.$jcbind !== item) {
 					com.$jcbind = item;
-					com.$jcbindset = item.vbind ? null : item.path;
+					if (item.vbind && item.vbind.vbindarray)
+						com.$jcbindset = item.vbind.vbindarray.path + '[' + item.vbind.index + '].' + item.path;
+					else
+						com.$jcbindset = item.vbind ? null : item.path;
 					com.$jcbindget = item.path;
 				}
 				com.setterX(value, path, type);
