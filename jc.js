@@ -344,7 +344,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.149;
+	M.version = 18.150;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -526,6 +526,13 @@
 		obj.set = function(index, value) {
 
 			var sum = null;
+
+			if (index == null) {
+				var arr = obj.items.splice(0);
+				for (var i = 0; i < arr.length; i++)
+					arr[i].remove();
+				return obj;
+			}
 
 			if (!(index instanceof Array)) {
 				var item = obj.items[index];
