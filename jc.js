@@ -344,7 +344,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.150;
+	M.version = 18.151;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5921,9 +5921,19 @@
 
 	PPC.parent = SCP.parent = function(sel) {
 		var self = this;
-		if (sel && sel !== 'parent')
+		if (sel && sel.substring(0, 6) !== 'parent')
 			return sel === 'window' ? $(W) : sel === 'document' ? D : self.element.closest(sel);
-		return self.element.parent();
+
+		var count = parent.substring(6);
+		var parent = self.element.parent();
+
+		if (count) {
+			count = +count;
+			for (var i = 0; i < count; i++)
+				parent = parent.parent();
+		}
+
+		return parent;
 	};
 
 	var TNB = { number: 1, boolean: 1 };
