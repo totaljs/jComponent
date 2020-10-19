@@ -298,7 +298,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.179;
+	M.version = 17.181;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -5805,6 +5805,18 @@
 	PPC.push = function(value, type) {
 		var self = this;
 		M.push(self.path, value, type);
+		return self;
+	};
+
+	PPC.EXEC = function(path, a, b, c, d) {
+		var self = this;
+		EXEC(self.makepath(path), a, b, c, d);
+		return self;
+	};
+
+	PPC.SEEX = function(path, a, b, c, d) {
+		var self = this;
+		SEEX(self.makepath(path), a, b, c, d);
 		return self;
 	};
 
