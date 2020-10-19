@@ -344,7 +344,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.153;
+	M.version = 18.154;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5589,6 +5589,18 @@
 		setTimeout(function() {
 			el.tclass(cls, visible);
 		}, timeout);
+		return self;
+	};
+
+	PPC.EXEC = function(path, a, b, c, d) {
+		var self = this;
+		EXEC(self.makepath(path), a, b, c, d);
+		return self;
+	};
+
+	PPC.SEEX = function(path, a, b, c, d) {
+		var self = this;
+		SEEX(self.makepath(path), a, b, c, d);
 		return self;
 	};
 
