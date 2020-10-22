@@ -8885,6 +8885,7 @@
 			} else {
 
 				myselector = selector;
+				execsetterflags = [];
 				myselector = myselector.replace(REG_FLAGS, parseexecsetterflags);
 				execsetterflags.length && emitflags(execsetterflags, myselector);
 
