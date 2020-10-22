@@ -71,6 +71,7 @@
 	var ERRCONN = 'ERR_CONNECTION_CLOSED';
 	var OK = Object.keys;
 	var SKIPBODYENCRYPTOR = { ':': 1, '"': 1, '[': 1, ']': 1, '\'': 1, '_': 1, '{': 1, '}': 1, '&': 1, '=': 1, '+': 1, '-': 1, '\\': 1, '/': 1, ',': 1 };
+	var REG_FLAGS = /\s@[a-z0-9]+/gi;
 
 	// No scrollbar
 	var cssnoscrollbar = {};
@@ -344,7 +345,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.156;
+	M.version = 18.157;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6615,6 +6616,9 @@
 		if (beg === 3) {
 
 			myselector = name;
+			execsetterflags = [];
+			myselector = myselector.replace(REG_FLAGS, parseexecsetterflags);
+			execsetterflags.length && emitflags(execsetterflags, myselector);
 
 			if (myselector.charAt(0) === '!') {
 				myselector = myselector.substring(1);
@@ -6671,6 +6675,11 @@
 		} else {
 
 			myselector = selector;
+
+			execsetterflags = [];
+			myselector = myselector.replace(REG_FLAGS, parseexecsetterflags);
+			execsetterflags.length && emitflags(execsetterflags, myselector);
+
 			methodname = name;
 			tmp = myselector.indexOf('/');
 
@@ -6758,6 +6767,13 @@
 		}
 	};
 
+	var execsetterflags;
+
+	function parseexecsetterflags(text) {
+		execsetterflags.push(text.substring(2));
+		return '';
+	}
+
 	W.EXEC = function(path) {
 
 		var arg = [];
@@ -6781,6 +6797,10 @@
 			arg.push(arguments[i]);
 
 		var c = path.charCodeAt(0);
+
+		execsetterflags = [];
+		path = path.replace(REG_FLAGS, parseexecsetterflags);
+		execsetterflags.length && emitflags(execsetterflags, path);
 
 		// Event
 		if (c === 35) {
@@ -8816,6 +8836,9 @@
 			if (beg === 3) {
 
 				myselector = name;
+				execsetterflags = [];
+				myselector = myselector.replace(REG_FLAGS, parseexecsetterflags);
+				execsetterflags.length && emitflags(execsetterflags, myselector);
 
 				tmp = myselector.indexOf('/');
 
@@ -8862,6 +8885,9 @@
 			} else {
 
 				myselector = selector;
+				myselector = myselector.replace(REG_FLAGS, parseexecsetterflags);
+				execsetterflags.length && emitflags(execsetterflags, myselector);
+
 				methodname = name;
 				tmp = myselector.indexOf('/');
 
