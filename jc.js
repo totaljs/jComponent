@@ -344,7 +344,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.155;
+	M.version = 18.156;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1722,11 +1722,14 @@
 		var reqid = null;
 		var json = false;
 		var noencrypt = false;
+		var customflags = [];
 
-		url = url.replace(/\s(repeat|cancel|json|noencrypt|#[a-z]+)/i, function(text) {
+		url = url.replace(/\s(repeat|cancel|json|noencrypt|#[a-z0-9]+|@[a-z0-9]+)/i, function(text) {
 			var c = text.charAt(1);
 			if (c === '#')
 				reqid = text.substring(2);
+			if (c === '@')
+				customflags.push(text.substring(2));
 			else if (c.toLowerCase() === 'r')
 				repeat = true;
 			else if (c.toLowerCase() === 'j')
@@ -1770,6 +1773,9 @@
 
 		var curr_scope = current_scope;
 		pendingrequest++;
+
+		if (customflags.length)
+			emitflags(customflags, url);
 
 		setTimeout(function() {
 
@@ -2615,7 +2621,7 @@
 	}
 
 	function emitflags(meta, path, value, type) {
-		var flags = meta.flags2;
+		var flags = meta instanceof Array ? meta : meta.flags2;
 		for (var i = 0; i < flags.length; i++) {
 			var name = '@flag ' + flags[i];
 			events[name] && EMIT(name, path, value, type);
