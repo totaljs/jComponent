@@ -344,7 +344,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.154;
+	M.version = 18.155;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2195,8 +2195,10 @@
 		if (!newpath)
 			return;
 
-		!wasset && set(newpath, get(newpath), true);
+		var value = get(newpath);
+		!wasset && set(newpath, value, true);
 		DEF.monitor && monitor_method('set');
+		meta.flags2 && emitflags(meta, newpath, value, type);
 
 		var state = [];
 
@@ -2311,6 +2313,7 @@
 			}
 
 			DEF.monitor && monitor_method('set');
+			meta.flags2 && emitflags(meta, newpath, value, type);
 
 			var all = M.components;
 			var state = [];
@@ -2387,6 +2390,7 @@
 				set(path, value, null, type); // with data-bind
 			if (!meta.flags.nowatch)
 				emitwatch(path, value, type);
+			meta.flags2 && emitflags(meta, path, value, type);
 		}
 	};
 
@@ -2450,6 +2454,8 @@
 
 		var result = get(newpath);
 		var state = [];
+
+		meta.flags2 && emitflags(meta, newpath, result, type);
 
 		if (type === undefined)
 			type = 1;
@@ -2561,8 +2567,9 @@
 	function compilepath(path) {
 
 		var key = '°' + path;
-		if (paths[key])
-			return paths[key];
+		var pv = paths[key];
+		if (pv)
+			return pv;
 
 		var obj = {};
 		obj.flags = {};
@@ -2589,8 +2596,30 @@
 		if (obj.path.charAt(0) === '%')
 			obj.path = T_TMP + obj.path.substring(1);
 
+		obj.flags2 = [];
+
+		var keys = Object.keys(obj.flags);
+		var skip = { reset: 1, default: 1, change: 1, extend: 1, nowatch: 1, type: 1, nobind: 1 };
+
+		for (var i = 0; i < keys.length; i++) {
+			var key = keys[i];
+			if (!skip[key])
+				obj.flags2.push(key);
+		}
+
+		if (!obj.flags2.length)
+			delete obj.flags2;
+
 		obj.pathmaker = obj.path.charAt(0) === '@' ? false : (/\?|\/|\s|\[/).test(obj.path);
 		return paths[key] = obj;
+	}
+
+	function emitflags(meta, path, value, type) {
+		var flags = meta.flags2;
+		for (var i = 0; i < flags.length; i++) {
+			var name = '@flag ' + flags[i];
+			events[name] && EMIT(name, path, value, type);
+		}
 	}
 
 	function pathmaker(path, clean, noscope) {
@@ -2686,7 +2715,9 @@
 		DEF.monitor && monitor_method('get');
 		meta.flags.reset && W.RESET(path, true);
 		meta.flags.update && setTimeout(W.UPD, 1, path);
-		return meta.flags.modified ? getmodified(newpath) : meta.flags.clone ? CLONE(get(newpath, scope)) : get(newpath, scope);
+		var value = meta.flags.modified ? getmodified(newpath) : meta.flags.clone ? CLONE(get(newpath, scope)) : get(newpath, scope);
+		meta.flags2 && emitflags(meta, newpath, value);
+		return value;
 	};
 
 	function getmodified(path) {
