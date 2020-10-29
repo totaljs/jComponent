@@ -345,7 +345,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.157;
+	M.version = 18.158;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5744,7 +5744,7 @@
 		if (path.indexOf('?') !== -1) {
 			var scope = self.pathscope ? self.scope : self.$scopepath;
 			if (self.$scopepath === undefined)
-				self.$scopepath = self.element.scope() || null;
+				scope = self.$scopepath = self.element.scope() || null;
 			if (scope)
 				path = scope.makepath(path);
 		}
