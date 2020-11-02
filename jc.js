@@ -1474,7 +1474,7 @@
 					return;
 				}
 
-				if (typeof(response) !== 'string') {
+				if (typeof(response) !== TYPE_S) {
 					WARN('jC: invalid response for IMPORT("{0}")'.format(url), response);
 					callback && callback(0);
 					return;
@@ -1663,6 +1663,53 @@
 			}
 		}
 		return builder.length ? builder.join('&') : '';
+	};
+
+	function apicallback(url, model, callback) {
+		AJAX('POST ' + url.env(), model, callback);
+	}
+
+	W.API = function(url, schema, data, callback) {
+
+		var type = typeof(data);
+
+		if (type === TYPE_FN || type === TYPE_S) {
+			callback = data;
+			data = null;
+		}
+
+		var meta = { schema: schema.env() };
+		var api = {};
+
+		if (data)
+			meta.data = data;
+
+		api.query = function(value) {
+			if (value)
+				meta.query = typeof(value) === TYPE_S ? value : jQuery.param(value);
+			return this;
+		};
+
+		api.params = function(value) {
+			if (value)
+				meta.params = typeof(value) === TYPE_S ? value : jQuery.param(value);
+			return this;
+		};
+
+		api.data = function(value) {
+			if (value)
+				meta.data = value;
+			return this;
+		};
+
+		api.id = function(value) {
+			if (value)
+				meta.id = value;
+			return this;
+		};
+
+		setTimeout(apicallback, 1, url, meta, callback);
+		return api;
 	};
 
 	W.AJAX = function(url, data, callback, timeout) {
@@ -5129,7 +5176,7 @@
 		for (var i = 0; i < arr.length; i++) {
 			var item = arr[i].split('|');
 			var id = item[0];
-			if (self.type === 'number' || self.config.type === 'number')
+			if (self.type === TYPE_N || self.config.type === TYPE_N)
 				id = id ? id.parseInt() : null;
 			output.push({ id: id, name: item[1], icon: item[2] || '' });
 		}
@@ -8585,16 +8632,16 @@
 					else if (vb != null)
 						col.type = vb instanceof Date ? 4: typeof(vb);
 					switch (col.type) {
-						case 'string':
+						case TYPE_S:
 							col.type = 1;
 							break;
-						case 'number':
+						case TYPE_N:
 							col.type = 2;
 							break;
-						case 'boolean':
+						case TYPE_B:
 							col.type = 3;
 							break;
-						case 'object':
+						case TYPE_O:
 							col.type = 5;
 							break;
 					}
@@ -11622,7 +11669,7 @@
 
 	W.QUEUE = function(name, fn) {
 
-		if (typeof(name) == 'function') {
+		if (typeof(name) == TYPE_FN) {
 			fn = name;
 			name = T_COM;
 		}
