@@ -11705,8 +11705,8 @@
 		var mask = Math.floor(Math.random() * 999999999);
 		var maskarr = [];
 
- 	  	for (var i = 3; i >= 0; i--)
-        	maskarr.push((mask >> (8 * i)) & 255);
+		for (var i = 3; i >= 0; i--)
+			maskarr.push((mask >> (8 * i)) & 255);
 
 		for (var i = 0; i < value.length; i++) {
 
