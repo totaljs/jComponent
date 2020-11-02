@@ -345,7 +345,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.158;
+	M.version = 18.159;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1829,16 +1829,16 @@
 
 			if (method !== 'GET') {
 				if (typeof(data) === TYPE_S) {
-					options.data = canencrypt ? encrypt_body(data, encryptsecret) : data;
+					options.data = canencrypt ? encrypt_data(data, encryptsecret) : data;
 				} else {
 					var tmp = STRINGIFY(data);
 					options.contentType = options.headers['Content-Type'] = 'application/json; charset=utf-8';
-					options.data = canencrypt ? encrypt_body(tmp, encryptsecret) : tmp;
+					options.data = canencrypt ? encrypt_data(tmp, encryptsecret) : tmp;
 				}
 			}
 
 			if (canencrypt) {
-				options.headers['X-Encrypted'] = 'a';
+				options.headers['X-Encryption'] = 'a';
 				options.encrypted = true;
 			}
 
@@ -1951,7 +1951,7 @@
 			response = code + ': ' + status;
 
 		if (((headers && headers['x-encrypted']) || output.encrypted) && encryptsecret && typeof(response) === TYPE_S)
-			response = decrypt_body(response, encryptsecret);
+			response = decrypt_data(response, encryptsecret);
 
 		output.raw = output.response = response;
 		output.status = code;
@@ -6999,7 +6999,7 @@
 
 			return value;
 		});
-		return encrypt && encryptsecret ? encrypt_body(tmp, encryptsecret) : tmp;
+		return encrypt && encryptsecret ? encrypt_data(tmp, encryptsecret) : tmp;
 	};
 
 	W.PARSE = function(value, date) {
@@ -11696,15 +11696,22 @@
 		}
 	};
 
-	function encrypt_body(value, key) {
+	function encrypt_data(value, key) {
 
 		var builder = [];
 		var index = 0;
 		var length = key.length;
 
+		var mask = Math.floor(Math.random() * 999999999);
+		var maskarr = [];
+
+ 	  	for (var i = 3; i >= 0; i--)
+        	maskarr.push((mask >> (8 * i)) & 255);
+
 		for (var i = 0; i < value.length; i++) {
 
 			var c = value.charAt(i);
+
 			if (SKIPBODYENCRYPTOR[c]) {
 				builder.push(c);
 				continue;
@@ -11719,14 +11726,35 @@
 			builder.push(t.length + t);
 		}
 
-		return builder.join('');
+		var output = [];
+
+		builder = builder.join('');
+		for (var i = 0; i < builder.length; i++)
+			output.push(String.fromCharCode(builder.charCodeAt(i) ^ maskarr[i % 4]));
+
+		for (var i = maskarr.length - 1; i > -1; i--)
+			output.unshift(String.fromCharCode(maskarr[i]));
+
+		return btoa(output.join(''));
 	}
 
-	function decrypt_body(value, key) {
+	function decrypt_data(value, key) {
+
+		var v = atob(value);
+
+		var mask = [];
+		for (var i = 0; i < 4; i++)
+			mask[i] = v.charCodeAt(i);
+
+		var output = [];
+		for (var i = 4; i < v.length; i++)
+			output.push(String.fromCharCode(v.charCodeAt(i) ^ mask[i % 4]));
 
 		var index = 0;
 		var length = key.length;
 		var builder = [];
+
+		value = output.join('');
 
 		for (var i = 0; i < value.length; i++) {
 
