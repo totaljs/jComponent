@@ -353,7 +353,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.165;
+	M.version = 18.166;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1673,7 +1673,8 @@
 		return builder.length ? builder.join('&') : '';
 	};
 
-	function apicallback(url, model, callback) {
+	function apicallback(url, model, callback, scope) {
+		current_scope = scope;
 		AJAX('POST ' + url.env(), model, callback);
 	}
 
@@ -1722,7 +1723,7 @@
 			return this;
 		};
 
-		setTimeout(apicallback, 1, url, meta, callback);
+		setTimeout(apicallback, 1, url, meta, callback, current_scope);
 		return api;
 	};
 
