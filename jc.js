@@ -353,7 +353,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.166;
+	M.version = 18.167;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1694,7 +1694,7 @@
 		var end = schema.indexOf(' ');
 		if (end !== -1) {
 			plus = schema.substring(end);
-			schema.substring(0, end);
+			schema = schema.substring(0, end);
 		}
 
 		var meta = { schema: schema.env() };
