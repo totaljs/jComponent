@@ -345,7 +345,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.161;
+	M.version = 18.162;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11787,7 +11787,13 @@
 
 	function decrypt_data(value, key) {
 
-		var v = atob(value);
+		var v;
+
+		try {
+			v = atob(value);
+		} catch (e) {
+			return '';
+		}
 
 		var mask = [];
 		for (var i = 0; i < 4; i++)
