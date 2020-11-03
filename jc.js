@@ -277,10 +277,18 @@
 	var ENV = MD.environment = {};
 	var encryptsecret = '';
 	var encryptvalidator;
+	var encrypthtml;
 
-	MD.secret = function(key, validator) {
+	MD.secret = function(key, validator, html) {
 		encryptsecret = key;
-		encryptvalidator = validator;
+
+		if (validator === true) {
+			html = true;
+		} else {
+			encryptvalidator = validator;
+			encrypthtml = html == true;
+		}
+
 		delete MD.secret;
 	};
 
@@ -345,7 +353,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.163;
+	M.version = 18.165;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2006,8 +2014,10 @@
 		if (!response && error)
 			response = code + ': ' + status;
 
-		if (((headers && headers['x-encrypted']) || output.encrypted) && encryptsecret && typeof(response) === TYPE_S)
-			response = decrypt_data(response, encryptsecret);
+		if (((headers && headers['x-encryption']) || output.encrypted) && encryptsecret && typeof(response) === TYPE_S) {
+			if (encrypthtml || output.url.indexOf('.html') === -1)
+				response = decrypt_data(response, encryptsecret);
+		}
 
 		output.raw = output.response = response;
 		output.status = code;
