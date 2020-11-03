@@ -1669,7 +1669,7 @@
 		AJAX('POST ' + url.env(), model, callback);
 	}
 
-	W.API = function(url, schema, data, callback) {
+	W.API = function(url, data, callback) {
 
 		var type = typeof(data);
 
@@ -1678,21 +1678,24 @@
 			data = null;
 		}
 
-		var meta = { schema: schema.env() };
+		var index = url.indexOf(' ');
+		var meta = { schema: url.substring(index).trim().env() };
 		var api = {};
+
+		url = url.substring(0, index).trim();
 
 		if (data)
 			meta.data = data;
 
 		api.query = function(value) {
 			if (value)
-				meta.query = typeof(value) === TYPE_S ? value : jQuery.param(value);
+				meta.schema = (meta.schema.lastIndexOf('?') === -1 ? '?' : '&') + typeof(value) === TYPE_S ? value : jQuery.param(value);
 			return this;
 		};
 
 		api.params = function(value) {
 			if (value)
-				meta.params = typeof(value) === TYPE_S ? value : jQuery.param(value);
+				meta.schema = meta.schema.arg(value);
 			return this;
 		};
 
@@ -1702,17 +1705,14 @@
 			return this;
 		};
 
-		api.id = function(value) {
-			if (value)
-				meta.id = value;
-			return this;
-		};
-
 		setTimeout(apicallback, 1, url, meta, callback);
 		return api;
 	};
 
 	W.AJAX = function(url, data, callback, timeout) {
+
+		if (url.charAt(0) === '@')
+			return W.API(url.substring(1, index).trim(), data, callback);
 
 		if (typeof(url) === TYPE_FN) {
 			timeout = callback;
