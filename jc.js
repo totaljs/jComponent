@@ -345,7 +345,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.162;
+	M.version = 18.163;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1678,11 +1678,20 @@
 			data = null;
 		}
 
-		var index = url.indexOf(' ');
-		var meta = { schema: url.substring(index).trim().env() };
+		var beg = url.indexOf(' ');
+		var schema = url.substring(beg).trim();
+		var plus = '';
+
+		var end = schema.indexOf(' ');
+		if (end !== -1) {
+			plus = schema.substring(end);
+			schema.substring(0, end);
+		}
+
+		var meta = { schema: schema.env() };
 		var api = {};
 
-		url = url.substring(0, index).trim();
+		url = url.substring(0, beg).trim() + plus;
 
 		if (data)
 			meta.data = data;
