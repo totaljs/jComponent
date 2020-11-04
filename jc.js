@@ -72,6 +72,7 @@
 	var OK = Object.keys;
 	var SKIPBODYENCRYPTOR = { ':': 1, '"': 1, '[': 1, ']': 1, '\'': 1, '_': 1, '{': 1, '}': 1, '&': 1, '=': 1, '+': 1, '-': 1, '\\': 1, '/': 1, ',': 1 };
 	var REG_FLAGS = /\s@[a-z0-9]+/gi;
+	var debug = false;
 
 	// No scrollbar
 	var cssnoscrollbar = {};
@@ -279,6 +280,11 @@
 	var encryptvalidator;
 	var encrypthtml;
 
+	W.DEBUG = function() {
+		if (!encryptsecret)
+			debug = true;
+	};
+
 	MD.secret = function(key, validator, html) {
 		encryptsecret = key;
 
@@ -353,7 +359,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.168;
+	M.version = 18.169;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1675,7 +1681,10 @@
 
 	function apicallback(url, model, callback, scope) {
 		current_scope = scope;
-		AJAX('POST ' + url.env(), model, callback);
+		url = url.env();
+		if (!encryptsecret && debug)
+			url += (url.indexOf('?') === -1 ? '?' : '&') + 'schema=' + model.schema;
+		AJAX('POST ' + url, model, callback);
 	}
 
 	W.API = function(url, data, callback) {
