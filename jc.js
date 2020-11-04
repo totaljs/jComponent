@@ -346,7 +346,7 @@
 	W.MONTHS = M.months = 'January,February,March,April,May,June,July,August,September,October,November,December'.split(',');
 	W.DAYS = M.days = 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'.split(',');
 
-	var MV = M.validators = {};
+	var MV = DEF.validators = {};
 	MV.url = /http(s)?:\/\/[^,{}\\]*$/i;
 	MV.phone = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,8}$/im;
 	MV.email = /^[a-zA-Z0-9-_.+]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i;
@@ -359,7 +359,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.169;
+	M.version = 18.170;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
