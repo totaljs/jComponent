@@ -351,7 +351,7 @@
 	MV.phone = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,8}$/im;
 	MV.email = /^[a-zA-Z0-9-_.+]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i;
 
-	var MR = M.regexp = {};
+	var MR = DEF.regexp = {};
 	MR.int = /(-|\+)?[0-9]+/;
 	MR.float = /(-|\+)?[0-9.,]+/;
 	MR.date = /YYYY|yyyy|YY|yy|MMMM|MMM|MM|M|dddd|DDDD|DDD|ddd|DD|dd|D|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g;
@@ -7930,7 +7930,7 @@
 
 	SP.parseInt = function(def) {
 		var str = this.trim();
-		var val = str.match(M.regexp.int);
+		var val = str.match(MR.int);
 		if (!val)
 			return def || 0;
 		val = +val[0];
@@ -7939,7 +7939,7 @@
 
 	SP.parseFloat = function(def) {
 		var str = this.trim();
-		var val = str.match(M.regexp.float);
+		var val = str.match(MR.float);
 		if (!val)
 			return def || 0;
 		val = val[0];
@@ -8154,7 +8154,7 @@
 		var isdd = false;
 		var isww = false;
 
-		format = format.replace(M.regexp.date, function(key) {
+		format = format.replace(MR.date, function(key) {
 			switch (key) {
 				case 'yyyy':
 				case 'YYYY':
@@ -8277,7 +8277,7 @@
 		else
 			value = other;
 
-		return value.indexOf('#') === -1 ? value : value.replace(M.regexp.pluralize, function(text) {
+		return value.indexOf('#') === -1 ? value : value.replace(MR.pluralize, function(text) {
 			return text === '##' ? num.format() : num.toString();
 		});
 
@@ -8473,7 +8473,7 @@
 
 	SP.format = function() {
 		var arg = arguments;
-		return this.replace(M.regexp.format, function(text) {
+		return this.replace(MR.format, function(text) {
 			var value = arg[+text.substring(1, text.length - 1)];
 			return value == null ? '' : value instanceof Array ? value.join('') : value;
 		});
