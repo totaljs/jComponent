@@ -39,7 +39,7 @@
 	var TYPE_O = 'object';
 	var TYPE_B = 'boolean';
 	var TYPE_NULL = 'null';
-	var KEY_ENV = 'environment';
+	var KEY_ENV = 'env';
 	var REG_TIME = /am|pm/i;
 	var T_BODY = 'BODY';
 	var T_DISABLED = 'disabled';
@@ -6830,7 +6830,7 @@
 
 	W.CMD = function(name, a, b, c, d, e) {
 
-		events.cmd && EMIT('cmd', a, b, c, d);
+		events.cmd && EMIT('cmd', name, a, b, c, d, e);
 		DEF.monitor && monitor_method('cmd');
 
 		for (var i = 0; i < M.components.length; i++) {
