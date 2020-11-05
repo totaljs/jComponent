@@ -9467,6 +9467,9 @@
 		}
 
 		$(W).on(T_RESIZE, resize);
+		$(W).on('visibilitychange', function() {
+			W.EMIT('visible', !document.hidden);
+		});
 
 		$(D).ready(function() {
 
@@ -9804,7 +9807,7 @@
 						v = new Function('value', 'path', 'el', 'var fn=el[0].' + vkey + ';if(!fn){var _s=el.scope();if(_s){el[0].' + vkey + '=fn=GET(_s.makepath(\'' + vfn + '\'))}}if(fn)return fn' + (vbeg == -1 ? '(value,path,el)' : v.substring(vbeg)));
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'tracktype', 'resize', 'delay', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'currency', 'empty', 'release', 'changes') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'tracktype', T_RESIZE, 'delay', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'currency', 'empty', 'release', 'changes') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -9889,7 +9892,7 @@
 								fn = v;
 								break;
 							case 'focus':
-							case 'resize':
+							case T_RESIZE:
 								fn = v;
 								break;
 							case 'format':
@@ -10625,7 +10628,7 @@
 
 		if (can && item.resize) {
 			setTimeout(function(el) {
-				el.SETTER('*', 'resize');
+				el.SETTER('*', T_RESIZE);
 			}, 100, el);
 		}
 
