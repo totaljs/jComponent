@@ -359,7 +359,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.170;
+	M.version = 18.171;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1683,7 +1683,7 @@
 		current_scope = scope;
 		url = url.env();
 		if (!encryptsecret && debug)
-			url += (url.indexOf('?') === -1 ? '?' : '&') + 'schema=' + model.schema;
+			url += (url.indexOf('?') === -1 ? '?' : '&') + 'schema=' + model.schema.replace(/\?/g, '&');
 		AJAX('POST ' + url, model, callback);
 	}
 
@@ -1716,7 +1716,7 @@
 
 		api.query = function(value) {
 			if (value)
-				meta.schema = (meta.schema.lastIndexOf('?') === -1 ? '?' : '&') + typeof(value) === TYPE_S ? value : jQuery.param(value);
+				meta.schema = (meta.schema.lastIndexOf('?') === -1 ? '?' : '&') + typeof(value) === TYPE_S ? value.replace(/\?/g, '&') : jQuery.param(value);
 			return this;
 		};
 
