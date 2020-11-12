@@ -359,7 +359,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.171;
+	M.version = 18.172;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1686,6 +1686,10 @@
 			url += (url.indexOf('?') === -1 ? '?' : '&') + 'schema=' + model.schema.replace(/\?/g, '&');
 		AJAX('POST ' + url, model, callback);
 	}
+
+	W.DAPI = function(url, data, callback) {
+		return W.API(DEF.api + ' ' + url, data, callback);
+	};
 
 	W.API = function(url, data, callback) {
 
