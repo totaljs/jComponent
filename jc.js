@@ -359,7 +359,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.173;
+	M.version = 18.174;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3687,7 +3687,7 @@
 
 	function findscope(el) {
 
-		el = el.parentNode;
+		// OLD: el = el.parentNode;
 
 		// For quick DOM travelsation (this is a simple cache)
 		if (el && el.$noscope)
@@ -3727,7 +3727,8 @@
 				el.$scopedata = scope;
 
 				// find parent
-				scope.parent = findscope(el);
+				// OLD: scope.parent = findscope(el);
+				scope.parent = findscope(el.parentNode);
 				scope.elements = [];
 
 				DEF.monitor && monitor_method('scopes', 1);
