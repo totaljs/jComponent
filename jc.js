@@ -359,7 +359,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.176;
+	M.version = 18.177;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6061,7 +6061,7 @@
 			while (true) {
 				if (dom.tagName === 'BODY')
 					break;
-				if (dom.style.height)
+				if (dom.style.height && !dom.classList.contains('ui-scrollbar-area'))
 					return $(dom);
 				dom = dom.parentNode;
 			}
