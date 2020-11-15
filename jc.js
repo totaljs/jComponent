@@ -298,7 +298,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.182;
+	M.version = 17.183;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -5455,10 +5455,36 @@
 	};
 
 	PPC.parent = SCP.parent = function(sel) {
+
 		var self = this;
-		if (sel && sel !== 'parent')
-			return sel === 'window' ? $(W) : self.element.closest(sel);
-		return self.element.parent();
+		if (!sel)
+			return self.element.parent();
+
+		if (sel === 'auto') {
+			var dom = self.dom.parentNode;
+			while (true) {
+				if (dom.tagName === 'BODY')
+					break;
+				if (dom.style.height)
+					return $(dom);
+				dom = dom.parentNode;
+			}
+			return $(W);
+		}
+
+		if (sel.substring(0, 6) !== 'parent')
+			return sel === 'window' ? $(W) : sel === 'document' ? $(document) : self.element.closest(sel);
+
+		var count = sel.substring(6);
+		var parent = self.element.parent();
+
+		if (count) {
+			count = +count;
+			for (var i = 0; i < count; i++)
+				parent = parent.parent();
+		}
+
+		return parent;
 	};
 
 	var TNB = { number: 1, boolean: 1 };
