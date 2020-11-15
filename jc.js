@@ -298,7 +298,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.183;
+	M.version = 17.184;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -5465,7 +5465,7 @@
 			while (true) {
 				if (dom.tagName === 'BODY')
 					break;
-				if (dom.style.height)
+				if (dom.style.height && !dom.classList.contains('ui-scrollbar-area'))
 					return $(dom);
 				dom = dom.parentNode;
 			}
