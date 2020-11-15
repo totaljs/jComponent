@@ -359,7 +359,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.174;
+	M.version = 18.175;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -9310,14 +9310,21 @@
 			b.aclass('jc-' + d);
 		}
 
+		var windowresizeinterval;
+
+		function resize_noscrollbar() {
+			windowresizeinterval = null;
+			$(selnoscrollbar).noscrollbar();
+			displaymode();
+			events.resize2 && EMIT('resize2');
+		}
+
 		function resize() {
 			var w = $(W);
 			W.WW = w.width();
 			W.WH = w.height();
-			setTimeout2(clsnoscrollbar, function() {
-				$(selnoscrollbar).noscrollbar();
-				displaymode();
-			}, 300);
+			windowresizeinterval && clearTimeout(windowresizeinterval);
+			windowresizeinterval = setTimeout(resize_noscrollbar, 300);
 		}
 
 		resize();
