@@ -298,7 +298,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.181;
+	M.version = 17.182;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -8466,13 +8466,20 @@
 			return t;
 		};
 
+		var windowresizeinterval;
+
+		function resize_noscrollbar() {
+			windowresizeinterval = null;
+			$(selnoscrollbar).noscrollbar();
+			events.resize2 && EMIT('resize2');
+		}
+
 		function resize() {
 			var w = $(W);
 			W.WW = w.width();
 			W.WH = w.height();
-			setTimeout2(clsnoscrollbar, function() {
-				$(selnoscrollbar).noscrollbar();
-			}, 300);
+			windowresizeinterval && clearTimeout(windowresizeinterval);
+			windowresizeinterval = setTimeout(resize_noscrollbar, 300);
 		}
 
 		resize();
