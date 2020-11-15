@@ -359,7 +359,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.175;
+	M.version = 18.176;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6055,6 +6055,18 @@
 		var self = this;
 		if (!sel)
 			return self.element.parent();
+
+		if (sel === 'auto') {
+			var dom = self.dom.parentNode;
+			while (true) {
+				if (dom.tagName === 'BODY')
+					break;
+				if (dom.style.height)
+					return $(dom);
+				dom = dom.parentNode;
+			}
+			return $(W);
+		}
 
 		if (sel.substring(0, 6) !== 'parent')
 			return sel === 'window' ? $(W) : sel === 'document' ? D : self.element.closest(sel);
