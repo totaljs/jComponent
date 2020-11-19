@@ -1742,9 +1742,7 @@
 
 	W.AJAX = function(url, data, callback, timeout) {
 
-		if (url.charAt(0) === '@')
-			return W.API(url.substring(1, index).trim(), data, callback);
-		else if (url.substring(0, 4) === 'API ')
+		if (url.substring(0, 4) === 'API ')
 			return W.API(url.substring(4), data, callback);
 
 		if (typeof(url) === TYPE_FN) {
