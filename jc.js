@@ -7069,6 +7069,9 @@
 			url = '';
 		}
 
+		if (!obj)
+			return url;
+
 		var arg = [];
 		var keys = Object.keys(obj);
 		for (var i = 0; i < keys.length; i++) {
