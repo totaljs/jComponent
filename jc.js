@@ -359,7 +359,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.178;
+	M.version = 18.179;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7905,7 +7905,11 @@
 		}
 	};
 
-	SP.removeDiacritics = function() {
+	SP.removeTags = function() {
+		return this.replace(/<\/?[^>]+(>|$)/g, '');
+	};
+
+	SP.removeDiacritics = SP.toASCII = function() {
 		var buf = '';
 		for (var i = 0; i < this.length; i++) {
 			var c = this[i];
