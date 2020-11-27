@@ -359,7 +359,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.179;
+	M.version = 18.180;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4752,7 +4752,7 @@
 			}
 		}
 
-		W.NOW = new Date();
+		SET('NOW', new Date());
 		var now = W.NOW.getTime();
 		var is2 = false;
 		var is3 = false;
