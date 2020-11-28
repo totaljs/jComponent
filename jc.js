@@ -248,6 +248,7 @@
 	var bindersnew = [];
 	var lazycom = {};
 	var repeats = {};
+	var pluginableplugins = {};
 
 	var current_owner = null;
 	var current_element = null;
@@ -359,7 +360,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.177;
+	M.version = 18.178;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6913,49 +6914,49 @@
 		events.exec && EMIT('exec', path, arg[0], arg[1], arg[2], arg[3]);
 
 		var ok = 0;
+		var index;
+		var plugin_name;
+		var plugin_method;
+		var tmp;
 
-		// PLUGINS
 		if (c === 64) {
-			var index = path.indexOf('.');
-			p = path.substring(1, index);
-			var ctrl = W.PLUGINS[p];
-			if (ctrl) {
-				var fn = ctrl[path.substring(index + 1)];
-				if (typeof(fn) === TYPE_FN) {
-					var tmp = current_scope;
-					current_scope = p;
-					fn.apply(ctx === W ? ctrl : ctx, arg);
-					if (DEF.monitor) {
-						monitor_method('exec');
-						monitor_method('plugins');
-					}
-					current_scope = tmp;
-					ok = 1;
-				}
-			}
-
-			wait && !ok && exechelper(ctx, path, arg);
-			return;
+			index = path.indexOf('.');
+			plugin_name = path.substring(1, index);
+			plugin_method = path.substring(index + 1);
 		}
 
-		// PLUGINS
-		var index = path.indexOf('/');
-		if (index !== -1) {
-			p = path.substring(0, index);
-			var ctrl = W.PLUGINS[p];
-			var fn = path.substring(index + 1);
-			if (ctrl && typeof(ctrl[fn]) === TYPE_FN) {
-				var tmp = current_scope;
-				current_scope = p;
-				ctrl[fn].apply(ctx === W ? ctrl : ctx, arg);
+		if (!plugin_name) {
+			index = path.indexOf('/');
+			if (index !== -1) {
+				plugin_name = path.substring(0, index);
+				plugin_method = path.substring(index + 1);
+			}
+		}
+
+		if (plugin_name) {
+			var ctrl = W.PLUGINS[plugin_name];
+			if (ctrl && typeof(ctrl[plugin_method]) === TYPE_FN) {
+				tmp = current_scope;
+				current_scope = plugin_name;
+				ctrl[plugin_method].apply(ctx === W ? ctrl : ctx, arg);
 				if (DEF.monitor) {
 					monitor_method('exec');
 					monitor_method('plugins');
 				}
 				current_scope = tmp;
 				ok = 1;
+			} else if (plugin_name) {
+				tmp = pluginableplugins[plugin_name];
+				if (tmp) {
+					delete pluginableplugins[plugin_name];
+					warn('Initializing: ' + plugin_name);
+					W.PLUGIN(tmp.name, tmp.fn, tmp.init, function() {
+						exechelper(ctx, path, arg);
+					});
+					return;
+				} else
+					wait = true;
 			}
-
 			wait && !ok && exechelper(ctx, path, arg);
 			return;
 		}
@@ -10741,20 +10742,37 @@
 		return index !== -1 ? (((/\W/).test(val)) || val === T_VALUE) : false;
 	}
 
-	function Plugin(name, fn) {
-		(/\W/).test(name) && warn('Plugin name must contain A-Z chars only.');
-		W.PLUGINS[name] && W.PLUGINS[name].$remove(true);
-		var t = this;
-		t.element = $(current_element || D.body);
-		t.id = 'plug' + name;
-		t.name = name;
-		W.PLUGINS[name] = t;
+	function plugindone(t, fn, done) {
 		var a = current_owner;
 		current_owner = t.id;
 		fn.call(t, t);
 		current_owner = a;
 		current_scope = null;
 		events.plugin && EMIT('plugin', t);
+		DEF.monitor && monitor_method('plugins', fn ? 1 : 0);
+		W.PLUGINS[t.name] = t;
+		done && done();
+	}
+
+	function Plugin(name, fn, init, done) {
+		(/\W/).test(name) && warn('Plugin name must contain A-Z chars only.');
+		W.PLUGINS[name] && W.PLUGINS[name].$remove(true);
+		var t = this;
+		t.element = $(current_element || D.body);
+		t.id = 'plug' + name;
+		t.name = name;
+		if (init) {
+			if (typeof(init) === 'string') {
+				MIDDLEWARE(init.split(/\s|,/).trim(), function() {
+					plugindone(t, fn, done);
+				});
+			} else {
+				init(function() {
+					plugindone(t, fn, done);
+				});
+			}
+		} else
+			plugindone(t, fn, done);
 	}
 
 	var PP = Plugin.prototype;
@@ -10817,16 +10835,25 @@
 		return true;
 	};
 
-	W.PLUGIN = function(name, fn) {
+	W.PLUGINABLE = function(name, fn, init) {
+		pluginableplugins[name] = { name: name, fn: fn, init: init };
+	};
+
+	W.PLUGIN = function(name, fn, init, done) {
 		if (PREFLOADED) {
+
 			if (fn) {
 				current_scope = name;
-				fn = new Plugin(name, fn);
+				fn = new Plugin(name, fn, init, done);
 			}
-			DEF.monitor && monitor_method('plugins', fn ? 1 : 0);
-			return fn || W.PLUGINS[name];
+
+			if (!init) {
+				DEF.monitor && monitor_method('plugins', fn ? 1 : 0);
+				return fn || W.PLUGINS[name];
+			}
+
 		} else
-			plugininit.push({ name: name, fn: fn });
+			plugininit.push({ name: name, fn: fn, init: init, done: done });
 	};
 
 	function CustomScrollbar(element, options) {
