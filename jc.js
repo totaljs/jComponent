@@ -360,7 +360,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.178;
+	M.version = 18.181;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1743,8 +1743,8 @@
 
 	W.AJAX = function(url, data, callback, timeout) {
 
-		if (url.charAt(0) === '@')
-			return W.API(url.substring(1, index).trim(), data, callback);
+		if (url.substring(0, 4) === 'API ')
+			return W.API(url.substring(4), data, callback);
 
 		if (typeof(url) === TYPE_FN) {
 			timeout = callback;
@@ -4753,7 +4753,7 @@
 			}
 		}
 
-		W.NOW = new Date();
+		SET('NOW', new Date());
 		var now = W.NOW.getTime();
 		var is2 = false;
 		var is3 = false;
@@ -7063,6 +7063,52 @@
 		return PARSE(JSON.stringify(obj));
 	};
 
+	W.QUERIFY = function(url, obj) {
+
+		if (typeof(url) !== 'string') {
+			obj = url;
+			url = '';
+		}
+
+		if (!obj)
+			return url;
+
+		var arg = [];
+		var keys = Object.keys(obj);
+		for (var i = 0; i < keys.length; i++) {
+			var key = keys[i];
+			var val = obj[key];
+			if (val != null) {
+
+				if (val instanceof Date)
+					val = val.toISOString();
+				else if (val instanceof Array)
+					val = val.join(',');
+
+				val = val + '';
+
+				if (val)
+					arg.push(encodeURIComponent(key) + '=' + encodeURIComponent(val));
+			}
+		}
+
+		var beg = url;
+		var end = '';
+
+		if (url) {
+			var index = url.indexOf(' ');
+			if (index !== -1)
+				index = url.indexOf(' ', index + 1);
+
+			if (index !== -1) {
+				beg = beg.substring(0, index);
+				end = url.substring(index);
+			}
+		}
+
+		return beg + (arg.length ? ((beg.indexOf('?') === -1 ? '?' : '&') + arg.join('&')) : '') + end;
+	};
+
 	W.STRINGIFY = function(obj, compress, fields, encrypt) {
 		compress === undefined && (compress = MD.jsoncompress);
 		var tf = typeof(fields);
@@ -7860,7 +7906,11 @@
 		}
 	};
 
-	SP.removeDiacritics = function() {
+	SP.removeTags = function() {
+		return this.replace(/<\/?[^>]+(>|$)/g, '');
+	};
+
+	SP.removeDiacritics = SP.toASCII = function() {
 		var buf = '';
 		for (var i = 0; i < this.length; i++) {
 			var c = this[i];
