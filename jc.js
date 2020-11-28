@@ -360,7 +360,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.181;
+	M.version = 18.182;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10817,9 +10817,9 @@
 					plugindone(t, fn, done);
 				});
 			} else {
-				init(function() {
+				init.call(t, function() {
 					plugindone(t, fn, done);
-				});
+				}, t);
 			}
 		} else
 			plugindone(t, fn, done);
