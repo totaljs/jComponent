@@ -360,7 +360,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.182;
+	M.version = 18.183;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4689,6 +4689,8 @@
 			if (M.paths[component.path])
 				M.paths[component.path]--;
 
+			component.$assigned && SET(component.$assigned, null);
+			component.$assigned = null;
 			component.$main = undefined;
 			component.$data = null;
 			component.dom = null;
@@ -6014,6 +6016,13 @@
 		if (cfg.$type) {
 			self.type = cfg.$type;
 			delete cfg.$type;
+		}
+
+		if (cfg.$assign) {
+			self.$assigned && SET(self.$assigned, null);
+			self.$assigned = cfg.$assign;
+			SET(cfg.$assign, self);
+			delete cfg.$assign;
 		}
 
 		if (cfg.$id) {
