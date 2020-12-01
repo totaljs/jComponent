@@ -29,7 +29,7 @@
 	var DIACRITICS = { 225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o' };
 	var ACTRLS = { INPUT: true, TEXTAREA: true, SELECT: true };
 	var DEFMODEL = { value: null };
-	var MULTIPLE = ' + ';
+	var MULTIPLE = /\s\+\s|\s/;
 	var SCOPENAME = 'scope';
 	var ATTRSCOPE2 = T_DATA + '' + SCOPENAME;
 	var ATTRREL2 = T_DATA + 'released';
@@ -360,7 +360,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.184;
+	M.version = 18.185;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -897,7 +897,7 @@
 	};
 
 	W.UNWATCH = function(path, fn) {
-		if (path.indexOf(MULTIPLE) !== -1) {
+		if (MULTIPLE.test(path)) {
 			var arr = path.split(MULTIPLE).trim();
 			for (var i = 0; i < arr.length; i++)
 				UNWATCH(arr[i], fn);
@@ -907,7 +907,7 @@
 
 	W.WATCH = function(path, fn, init) {
 
-		if (path.indexOf(MULTIPLE) !== -1) {
+		if (MULTIPLE.test(path)) {
 			var arr = path.split(MULTIPLE).trim();
 			for (var i = 0; i < arr.length; i++)
 				WATCH(arr[i], fn, init);
@@ -936,12 +936,20 @@
 
 	W.ON = function(name, path, fn, init, context, scope) {
 
-		if (name.indexOf(MULTIPLE) !== -1) {
+		var isflag = name.indexOf('@flag ') !== -1;
+
+		if (isflag)
+			name = name.replace(/@flag\s/g, '@flag_');
+
+		if (MULTIPLE.test(name)) {
 			var arr = name.split(MULTIPLE).trim();
 			for (var i = 0; i < arr.length; i++)
 				ON(arr[i], path, fn, init, context, scope);
 			return;
 		}
+
+		if (isflag)
+			name = name.replace(/@flag_/g, '@flag ');
 
 		var push = true;
 
@@ -1146,6 +1154,8 @@
 	};
 
 	W.EMIT = function(name) {
+
+		name = makeandexecflags(name);
 
 		var e = events[name];
 		if (!e)
@@ -6718,10 +6728,7 @@
 
 		if (beg === 3) {
 
-			myselector = name;
-			execsetterflags = [];
-			myselector = myselector.replace(REG_FLAGS, parseexecsetterflags);
-			execsetterflags.length && emitflags(execsetterflags, myselector);
+			myselector = makeandexecflags(name);
 
 			if (myselector.charAt(0) === '!') {
 				myselector = myselector.substring(1);
@@ -6777,12 +6784,7 @@
 
 		} else {
 
-			myselector = selector;
-
-			execsetterflags = [];
-			myselector = myselector.replace(REG_FLAGS, parseexecsetterflags);
-			execsetterflags.length && emitflags(execsetterflags, myselector);
-
+			myselector = makeandexecflags(selector);
 			methodname = name;
 			tmp = myselector.indexOf('/');
 
@@ -6872,6 +6874,13 @@
 
 	var execsetterflags;
 
+	function makeandexecflags(path) {
+		execsetterflags = [];
+		path = path.replace(REG_FLAGS, parseexecsetterflags);
+		execsetterflags.length && emitflags(execsetterflags, path);
+		return path;
+	}
+
 	function parseexecsetterflags(text) {
 		execsetterflags.push(text.substring(2));
 		return '';
@@ -6901,9 +6910,7 @@
 
 		var c = path.charCodeAt(0);
 
-		execsetterflags = [];
-		path = path.replace(REG_FLAGS, parseexecsetterflags);
-		execsetterflags.length && emitflags(execsetterflags, path);
+		path = makeandexecflags(path);
 
 		// Event
 		if (c === 35) {
@@ -9054,11 +9061,7 @@
 
 			if (beg === 3) {
 
-				myselector = name;
-				execsetterflags = [];
-				myselector = myselector.replace(REG_FLAGS, parseexecsetterflags);
-				execsetterflags.length && emitflags(execsetterflags, myselector);
-
+				myselector = makeandexecflags(name);
 				tmp = myselector.indexOf('/');
 
 				if (tmp !== -1) {
@@ -9103,11 +9106,7 @@
 
 			} else {
 
-				myselector = selector;
-				execsetterflags = [];
-				myselector = myselector.replace(REG_FLAGS, parseexecsetterflags);
-				execsetterflags.length && emitflags(execsetterflags, myselector);
-
+				myselector = makeandexecflags(selector);
 				methodname = name;
 				tmp = myselector.indexOf('/');
 
