@@ -360,7 +360,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.183;
+	M.version = 18.184;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7643,6 +7643,45 @@
 	var SP = String.prototype;
 	var NP = Number.prototype;
 	var DP = Date.prototype;
+
+	AP.async = function(thread, callback, pending) {
+
+		var self = this;
+
+		if (typeof(thread) === 'function') {
+			callback = thread;
+			thread = 1;
+		} else if (thread === undefined)
+			thread = 1;
+
+		if (pending === undefined)
+			pending = 0;
+
+		var item = self.shift();
+		if (item === undefined) {
+			if (!pending) {
+				pending = undefined;
+				callback && callback();
+			}
+			return self;
+		}
+
+		for (var i = 0; i < thread; i++) {
+
+			if (i)
+				item = self.shift();
+
+			pending++;
+			item(function() {
+				setTimeout(function() {
+					pending--;
+					self.async(1, callback, pending);
+				}, 1);
+			});
+		}
+
+		return self;
+	};
 
 	AP.wait = function(onItem, callback, thread, tmp) {
 
