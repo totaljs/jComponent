@@ -360,7 +360,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.186;
+	M.version = 18.187;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1240,7 +1240,7 @@
 			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path) || (isExcept && com.$except(except)))
 				continue;
 
-			if (flags && ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':disabled')) || (flags.disabled && com.find(SELINPUT).is(':enabled'))))
+			if (flags && ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':' + T_DISABLED)) || (flags.disabled && com.find(SELINPUT).is(':enabled'))))
 				continue;
 
 			if (com.$valid_disabled) {
@@ -1318,7 +1318,7 @@
 			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path) || (isExcept && com.$except(except)))
 				continue;
 
-			if (flags && ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':disabled')) || (flags.disabled && com.find(SELINPUT).is(':enabled'))))
+			if (flags && ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':' + T_DISABLED)) || (flags.disabled && com.find(SELINPUT).is(':enabled'))))
 				continue;
 
 			if (com.$dirty_disabled) {
@@ -2227,7 +2227,7 @@
 			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path) || (isExcept && com.$except(except)))
 				return;
 
-			if (flags && ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':disabled')) || (flags.disabled && com.find(SELINPUT).is(':enabled'))))
+			if (flags && ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':' + T_DISABLED)) || (flags.disabled && com.find(SELINPUT).is(':enabled'))))
 				return;
 
 			if (!com.$valid)
@@ -2877,7 +2877,7 @@
 			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(newpath))
 				continue;
 
-			if ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':disabled')) || (flags.disabled && com.find(SELINPUT).is(':enabled')))
+			if ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':' + T_DISABLED)) || (flags.disabled && com.find(SELINPUT).is(':enabled')))
 				continue;
 
 			com.state && arr.push(com);
@@ -5974,7 +5974,13 @@
 	};
 
 	PPC.reconfigure = function(value, callback, init) {
+
 		var self = this;
+
+		if (self.dom.$binderconfig) {
+			clearTimeout(self.dom.$binderconfig);
+			delete self.dom.$binderconfig;
+		}
 
 		if (value == null)
 			return self;
@@ -10667,6 +10673,7 @@
 				tmp = item.disablebk;
 				el.prop(T_DISABLED, tmp == true);
 			}
+
 			var conf = T_DISABLED + ':' + (tmp == true ? T_TRUE : T_FALSE);
 			for (var i = 0; i < el.length; i++) {
 				var c = el[i].$com;
@@ -10824,13 +10831,17 @@
 	}
 
 	function binderconfig(el, val) {
-		setTimeout(function() {
-			var c = el.$com;
-			if (c && c.$ready)
-				c.reconfigure(val);
-			else
-				binderconfig(el, val);
-		}, MD.delaybinder, el, val);
+		el.$binderconfig && clearTimeout(el.$binderconfig);
+		el.$binderconfig = setTimeout(binderconfigforce, MD.delaybinder, el, val);
+	}
+
+	function binderconfigforce(el, val) {
+		el.$binderconfig = null;
+		var c = el.$com;
+		if (c && c.$ready)
+			c.reconfigure(val);
+		else
+			binderconfig(el, val);
 	}
 
 	function isValue(val) {
