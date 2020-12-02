@@ -360,7 +360,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.185;
+	M.version = 18.186;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6876,7 +6876,7 @@
 
 	function makeandexecflags(path) {
 		execsetterflags = [];
-		path = path.replace(REG_FLAGS, parseexecsetterflags);
+		path = path && typeof(path) === 'string' ? path.replace(REG_FLAGS, parseexecsetterflags) : path;
 		execsetterflags.length && emitflags(execsetterflags, path);
 		return path;
 	}
@@ -6909,7 +6909,6 @@
 			arg.push(arguments[i]);
 
 		var c = path.charCodeAt(0);
-
 		path = makeandexecflags(path);
 
 		// Event
