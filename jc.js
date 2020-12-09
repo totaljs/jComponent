@@ -360,7 +360,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.187;
+	M.version = 18.188;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5378,6 +5378,12 @@
 					var k = keys[i];
 					var o = t.$W[k];
 					o.id = setInterval(function(t, prop) {
+
+						if (t.$removed) {
+							clearInterval(o.id);
+							return;
+						}
+
 						var o = t.$W[prop];
 						var v = t[prop]();
 						if (v) {
@@ -5416,6 +5422,12 @@
 
 		if (!t.isreleased) {
 			t.$W[prop].id = setInterval(function(t, prop) {
+
+				if (t.$removed) {
+					clearInterval(o.id);
+					return;
+				}
+
 				var o = t.$W[prop];
 				var v = t[prop]();
 				if (v) {
@@ -5431,6 +5443,12 @@
 
 	PPC.hidden = function(callback) {
 		var t = this;
+
+		if (t.$removed) {
+			callback = null;
+			return 1;
+		}
+
 		var v = !HIDDEN(t.dom);
 		if (callback) {
 			if (v)
@@ -5443,6 +5461,12 @@
 
 	PPC.visible = function(callback) {
 		var t = this;
+
+		if (t.$removed) {
+			callback = null;
+			return 0;
+		}
+
 		var v = !HIDDEN(t.dom);
 		if (callback) {
 			if (v)
@@ -5455,6 +5479,12 @@
 
 	PPC.width = function(callback) {
 		var t = this;
+
+		if (t.$removed) {
+			callback = null;
+			return 0;
+		}
+
 		var v = t.element ? t.dom.offsetWidth : 0;
 		if (callback) {
 			if (v)
@@ -5467,6 +5497,12 @@
 
 	PPC.height = function(callback) {
 		var t = this;
+
+		if (t.$removed) {
+			callback = null;
+			return 0;
+		}
+
 		var v = t.element ? t.dom.offsetHeight : 0;
 		if (callback) {
 			if (v)
