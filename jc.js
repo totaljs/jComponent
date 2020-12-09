@@ -360,7 +360,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.188;
+	M.version = 18.189;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4699,6 +4699,7 @@
 			if (M.paths[component.path])
 				M.paths[component.path]--;
 
+			removewaiter(component);
 			component.$assigned && SET(component.$assigned, null);
 			component.$assigned = null;
 			component.$main = undefined;
@@ -5358,6 +5359,7 @@
 				var v = obj.$W[keys[i]];
 				v.id && clearInterval(v.id);
 			}
+			delete obj.$W;
 		}
 	}
 
@@ -5379,10 +5381,8 @@
 					var o = t.$W[k];
 					o.id = setInterval(function(t, prop) {
 
-						if (t.$removed) {
-							clearInterval(o.id);
+						if (t.$removed)
 							return;
-						}
 
 						var o = t.$W[prop];
 						var v = t[prop]();
@@ -5423,10 +5423,8 @@
 		if (!t.isreleased) {
 			t.$W[prop].id = setInterval(function(t, prop) {
 
-				if (t.$removed) {
-					clearInterval(o.id);
+				if (t.$removed)
 					return;
-				}
 
 				var o = t.$W[prop];
 				var v = t[prop]();
