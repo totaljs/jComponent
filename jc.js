@@ -360,7 +360,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.189;
+	M.version = 18.190;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2316,7 +2316,7 @@
 
 			var result = com.get();
 
-			if (meta.flags.default && com.$default) {
+			if (meta.flags.default && com.$default && result === undefined) {
 				result = com.$default();
 				com.set(result, 3);
 			} else if (com.setter) {
@@ -4037,12 +4037,11 @@
 		findcontrol2(obj, collection);
 
 		obj.released && obj.released(obj.isreleased);
-
 		DEF.monitor && monitor_method('components', 1);
-
 		M.components.push(obj);
 		C.init.push(obj);
 		type !== T_BODY && REGCOM.test(el[0].innerHTML) && compile(el);
+		obj.$initialized = true;
 		ready();
 	}
 
@@ -4700,6 +4699,12 @@
 				M.paths[component.path]--;
 
 			removewaiter(component);
+
+			if (component.dom.$binderconfig) {
+				clearTimeout(component.dom.$binderconfig);
+				component.dom.$binderconfig = null;
+			}
+
 			component.$assigned && SET(component.$assigned, null);
 			component.$assigned = null;
 			component.$main = undefined;
@@ -4963,12 +4968,13 @@
 		self._id = self.ID = ATTRDATA + (C.counter++);
 		self.$dirty = true;
 		self.$valid = true;
-		self.$validate = false;
 		self.$parser = [];
 		self.$formatter = [];
-		self.$skip = false;
-		self.$ready = false;
-		self.$path;
+		// self.$validate = false;
+		// self.$skip = false;
+		// self.$ready = false;
+		// self.$initialized = false;
+		// self.$path;
 		self.trim = true;
 		self.isreleased = false;
 		self.$bindreleased = true;
@@ -5528,7 +5534,7 @@
 							var tmp = com[i];
 							if (tmp.$removed || (tmp.$releasetype && (tmp.$releasetype === 3 || (tmp.$releasetype === 1 && !value) || (tmp.$releasetype === 2 && value))))
 								continue;
-							if (tmp.$ready)
+							if (tmp.$initialized)
 								tmp.release(value, null, true);
 							else
 								tmp.$releaseready = value;
@@ -5539,7 +5545,7 @@
 					} else {
 						if (com.$removed || (com.$releasetype === 3 && (com.$releasetype === 3 || (com.$releasetype === 1 && !value) || (com.$releasetype === 2 && value))))
 							return;
-						if (com.$ready)
+						if (com.$initialized)
 							com.release(value, null, true);
 						else
 							com.$releaseready = value;
@@ -6011,10 +6017,11 @@
 
 		var self = this;
 
-		if (self.dom.$binderconfig) {
-			clearTimeout(self.dom.$binderconfig);
-			delete self.dom.$binderconfig;
-		}
+		// It cancels execution of config|disable command in data-bind therefor is disabled
+		// if (self.dom.$binderconfig) {
+		// 	clearTimeout(self.dom.$binderconfig);
+		// 	delete self.dom.$binderconfig;
+		// }
 
 		if (value == null)
 			return self;
@@ -10648,7 +10655,7 @@
 				if (tmp) {
 					for (var i = 0; i < el.length; i++) {
 						var c = el[i].$com;
-						if (c && c.$ready)
+						if (c && c.$initialized)
 							c.reconfigure(tmp);
 						else
 							binderconfig(el[i], tmp);
@@ -10711,7 +10718,7 @@
 			var conf = T_DISABLED + ':' + (tmp == true ? T_TRUE : T_FALSE);
 			for (var i = 0; i < el.length; i++) {
 				var c = el[i].$com;
-				if (c && c.$ready)
+				if (c && c.$initialized)
 					c.reconfigure(conf);
 				else
 					binderconfig(el[i], conf);
@@ -10729,7 +10736,7 @@
 			var conf = T_DISABLED + ':' + (tmp == true ? T_TRUE : T_FALSE);
 			for (var i = 0; i < el.length; i++) {
 				var c = el[i].$com;
-				if (c && c.$ready)
+				if (c && c.$initialized)
 					c.reconfigure(conf);
 				else
 					binderconfig(el[i], conf);
@@ -10741,7 +10748,7 @@
 			var conf = 'required:' + (tmp == true ? T_TRUE : T_FALSE);
 			for (var i = 0; i < el.length; i++) {
 				var c = el[i].$com;
-				if (c && c.$ready)
+				if (c && c.$initialized)
 					c.reconfigure(conf);
 				else
 					binderconfig(el[i], conf);
@@ -10872,7 +10879,7 @@
 	function binderconfigforce(el, val) {
 		el.$binderconfig = null;
 		var c = el.$com;
-		if (c && c.$ready)
+		if (c && c.$initialized)
 			c.reconfigure(val);
 		else
 			binderconfig(el, val);
