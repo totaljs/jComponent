@@ -360,7 +360,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.190;
+	M.version = 18.191;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5829,6 +5829,13 @@
 		self.$parser = null;
 		self.$formatter = null;
 		return self;
+	};
+
+	PPC.faicon = function(value) {
+		if (value)
+			return (value.indexOf(' ') === -1 ? 'fa fa-' : '') + value;
+		else
+			return '';
 	};
 
 	PPC.novalidate = PPC.noValid = PPC.noValidate = function(val) {
