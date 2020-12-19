@@ -298,7 +298,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.184;
+	M.version = 17.185;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -5202,6 +5202,13 @@
 		self.$parser = null;
 		self.$formatter = null;
 		return self;
+	};
+
+	PPC.faicon = function(value) {
+		if (value)
+			return (value.indexOf(' ') === -1 ? 'fa fa-' : '') + value;
+		else
+			return '';
 	};
 
 	PPC.novalidate = PPC.noValid = PPC.noValidate = function(val) {
