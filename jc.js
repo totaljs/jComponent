@@ -7132,7 +7132,7 @@
 		return PARSE(JSON.stringify(obj));
 	};
 
-	var QUERIFYMETHODS = { GET: 1, POST: 1, DELETE: 1, PUT: 1, PATCH: 1 };
+	var QUERIFYMETHODS = { GET: 1, POST: 1, DELETE: 1, PUT: 1, PATCH: 1, API: 1 };
 
 	W.QUERIFY = function(url, obj) {
 
