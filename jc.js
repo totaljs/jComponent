@@ -360,7 +360,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.192;
+	M.version = 18.193;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -832,6 +832,7 @@
 		output.throw = ajaxcustomerror;
 		output.respond = ajaxcustomresponse;
 		output.url = url;
+		output.headers = headers;
 		output.process = true;
 		output.error = false;
 		output.upload = true;
