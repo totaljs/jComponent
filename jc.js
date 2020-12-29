@@ -104,6 +104,33 @@
 		W.console && W.console.warn.apply(W.console, arguments);
 	};
 
+	// Source: https://stackoverflow.com/questions/5353934/check-if-element-is-visible-on-screen
+	W.VISIBLE = function(el, threshold, mode) {
+
+		if (el instanceof jQuery)
+			el = el[0];
+
+		if (el.parentNode && el.parentNode.tagName !== T_BODY) {
+			if (W.isIE) {
+				if (!el.offsetWidth && !el.offsetHeight)
+					return false;
+			} else if (!el.offsetParent)
+				return false;
+		}
+
+		if (!threshold)
+			threshold = 0;
+
+		if (!mode)
+			mode = 'visible';
+
+		var rect = el.getBoundingClientRect();
+		var vw = Math.max(document.documentElement.clientHeight, W.innerHeight);
+		var above = rect.bottom - threshold < 0;
+		var below = rect.top - vw + threshold >= 0;
+		return mode === 'above' ? above : (mode === 'below' ? below : !above && !below);
+	};
+
 	W.HIDDEN = function(el) {
 		if (el == null)
 			return true;
@@ -360,7 +387,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.193;
+	M.version = 18.194;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
