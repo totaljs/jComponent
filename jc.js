@@ -387,7 +387,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.194;
+	M.version = 18.195;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1840,9 +1840,10 @@
 		var reqid = null;
 		var json = false;
 		var noencrypt = false;
+		var nodecrypt = false;
 		var customflags = [];
 
-		url = url.replace(/\s(repeat|cancel|json|noencrypt|#[a-z0-9]+|@[a-z0-9]+)/i, function(text) {
+		url = url.replace(/\s(repeat|cancel|json|noencrypt|nodecrypt|#[a-z0-9]+|@[a-z0-9]+)/i, function(text) {
 			var c = text.charAt(1);
 			if (c === '#')
 				reqid = text.substring(2);
@@ -1852,9 +1853,12 @@
 				repeat = true;
 			else if (c.toLowerCase() === 'j')
 				json = true;
-			else if (c.toLowerCase() === 'n')
-				noencrypt = true;
-			else
+			else if (c.toLowerCase() === 'n') {
+				if (text.substring(1, 4).toLowerCase() === 'noe')
+					noencrypt = true;
+				else
+					nodecrypt = true;
+			} else
 				cancel = true;
 			return '';
 		});
@@ -1988,6 +1992,7 @@
 			output.encrypted = options.encrypted;
 			output.duration = options.duration;
 			output.credentials = options.xhrFields && options.xhrFields.withCredentials ? true : false;
+			output.decryption = !nodecrypt;
 
 			if (options.credentials != null)
 				delete options.credentials;
@@ -2067,7 +2072,7 @@
 		if (!response && error)
 			response = code + ': ' + status;
 
-		if (((headers && headers['x-encryption']) || output.encrypted) && encryptsecret && typeof(response) === TYPE_S) {
+		if (output.decryption && ((headers && headers['x-encryption']) || output.encrypted) && encryptsecret && typeof(response) === TYPE_S) {
 			if (encrypthtml || output.url.indexOf('.html') === -1)
 				response = decrypt_data(response, encryptsecret);
 		}
