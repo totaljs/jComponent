@@ -387,7 +387,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.195;
+	M.version = 18.196;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10246,10 +10246,10 @@
 								sub[s][k] = fn;
 							else if (cls.length) {
 								var p = cls.pop();
-								if (sub[s].cls)
-									sub[s].cls.push(p);
+								if (sub[s].classes)
+									sub[s].classes.push(p);
 								else
-									sub[s].cls = [p];
+									sub[s].classes = [p];
 							}
 						} else {
 							if (k !== T_CLASS && k !== 'attr')
