@@ -261,6 +261,7 @@
 	var versions = {};
 	var autofill = [];
 	var plugininit = [];
+	var pluginscope = {};
 	var defaults = {};
 	var waits = {};
 	var statics = {};
@@ -387,7 +388,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.196;
+	M.version = 18.197;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3762,13 +3763,27 @@
 				if (isolated)
 					path = path.substring(1);
 
-				if (!path || path === '?')
-					path = GUID(25).replace(/\d/g, '');
+				var tmp = path.split(' ');
+
+				if (!tmp[0] || tmp[0] === '?')
+					path = GUID(10).replace(/\d/g, '') + Date.now().toString(36);
 
 				scope._id = scope.ID = scope.id = GUID(10);
 				scope.element = $(el);
 				scope.config = conf;
 				el.$scopedata = scope;
+
+				if (tmp[1]) {
+					var plugin = pluginscope[tmp[1]];
+					if (plugin) {
+						current_element = el;
+						W.PLUGINS[path] = scope.plugin = new Plugin(path, plugin.fn);
+						scope.plugin.scope = scope;
+					} else {
+						WARN('Plugin "? {0}" not found'.format(tmp[1]));
+						return;
+					}
+				}
 
 				// find parent
 				// OLD: scope.parent = findscope(el);
@@ -3826,7 +3841,7 @@
 
 				tmp = conf.init || attrcom(el, 'init');
 				if (tmp) {
-					tmp = GET(tmp);
+					tmp = GET(tmp.replace(/\?/g, path));
 					if (tmp) {
 						var a = current_owner;
 						current_owner = SCOPENAME + scope._id;
@@ -11023,7 +11038,14 @@
 	};
 
 	W.PLUGIN = function(name, fn, init, done) {
+
 		if (PREFLOADED) {
+
+			if (name.charAt(0) === '?') {
+				var arr = name.split(' ').trim();
+				pluginscope[arr[1]] = { fn: fn, element: current_element };
+				return;
+			}
 
 			if (fn) {
 				current_scope = name;
@@ -11037,6 +11059,7 @@
 
 		} else
 			plugininit.push({ name: name, fn: fn, init: init, done: done });
+
 	};
 
 	function CustomScrollbar(element, options) {
