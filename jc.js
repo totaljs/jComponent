@@ -12165,7 +12165,7 @@
 		if (index !== -1) {
 			if (!type)
 				type = '';
-			var hash = +hex.substring(index + 1);
+			var hash = hex.substring(index + 1);
 			var o = hex.substring(type.length, index);
 			var t = type ? hex.substring(0, type.length) : '';
 			if (t === type && HASH(o + (key || '') + type).toString(32) === hash) {
