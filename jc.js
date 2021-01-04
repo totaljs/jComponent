@@ -388,7 +388,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.197;
+	M.version = 18.198;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1964,6 +1964,7 @@
 				options.encrypted = true;
 			}
 
+			options.headers['X-Checksum'] = HASH(options.data).toString(36) + '-' + Date.now().toString(36) + '-a';
 			events.request && EMIT('request', options);
 
 			if (options.cancel)
@@ -12158,5 +12159,33 @@
 
 		return builder.join('');
 	}
+
+	W.DECRYPT = function(hex, key, type) {
+		var index = hex.lastIndexOf('x');
+		if (index !== -1) {
+			if (!type)
+				type = '';
+			var hash = +hex.substring(index + 1);
+			var o = hex.substring(type.length, index);
+			var t = type ? hex.substring(0, type.length) : '';
+			if (t === type && HASH(o + (key || '') + type).toString(32) === hash) {
+				o = decodeURIComponent(o.replace(/(..)/g, '%$1'));
+				var c = o.charAt(0);
+				return c === '[' || c === '{' || c === '"' ? PARSE(o) : o;
+			}
+		}
+	};
+
+	W.ENCRYPT = function(str, key, type) {
+		if (typeof(str) === 'object')
+			str = STRINGIFY(str, true);
+		var arr = unescape(encodeURIComponent(str)).split('');
+		for (var i = 0; i < arr.length; i++)
+			arr[i] = arr[i].charCodeAt(0).toString(16);
+		if (!type)
+			type = '';
+		var o = arr.join('');
+		return type + o + 'x' + HASH(o + (key || '') + type).toString(32);
+	};
 
 })();
