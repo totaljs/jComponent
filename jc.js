@@ -388,7 +388,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.198;
+	M.version = 18.199;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1964,7 +1964,6 @@
 				options.encrypted = true;
 			}
 
-			options.headers['X-Checksum'] = HASH(options.data).toString(36) + '-' + Date.now().toString(36) + '-a';
 			events.request && EMIT('request', options);
 
 			if (options.cancel)
