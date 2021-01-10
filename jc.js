@@ -388,7 +388,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.199;
+	M.version = 18.201;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7592,6 +7592,35 @@
 		id && $('#css' + id).remove();
 		var val = (value instanceof Array ? value.join('') : value);
 		$('<style type="text/css"' + (id ? ' id="css' + id + '"' : '') + '>' + (selector ? wrap(selector, val) : val) + '</style>').appendTo('head');
+	};
+
+	W.APPEARANCE = function(obj) {
+
+		var keys = Object.keys(obj);
+		var dark = obj.dark || obj.darkmode;
+		var large = obj.large || obj.largemode;
+		var builder = [];
+		var id = 'appearance';
+
+		for (var i = 0; i < keys.length; i++) {
+			var key = keys[i];
+			switch (key) {
+				case 'dark':
+				case 'darkmode':
+				case 'large':
+				case 'largemode':
+					break;
+				default:
+					builder.push('--' + key.trim() + ':' + (obj[key] + '').trim());
+					break;
+			}
+		}
+
+		$('body').tclass('ui-dark', !!dark).tclass('ui-large', !!large);
+		if (builder.length)
+			CSS(':root{' + builder.join(';') + '}', id);
+		else
+			$('#css' + id).remove();
 	};
 
 	function wrap(selector, css) {
