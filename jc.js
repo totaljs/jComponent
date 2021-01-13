@@ -388,7 +388,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.201;
+	M.version = 18.202;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11127,6 +11127,19 @@
 		var bary = canY ? $(pathy.find('span')[0]) : null;
 		var bodyarea = element.find('.' + n + '-body' + di);
 		var area = $(element.find('> .' + n + '-area' + di)[0]);
+		var shadowtop;
+		var shadowbottom;
+		var sc = 'shadow';
+		var shadowheight = 0;
+
+		if (options[sc]) {
+			element.prepend('<div class="{0}-{1}"><div class="{0}-{1}-top {0}-{1}-v" style="opacity:0"></div><div class="{0}-{1}-bottom {0}-{1}-v" style="opacity:0"></div></div>'.format(n, sc));
+			var shadow = element.find('> .' + n + '-' + sc);
+			shadowtop = shadow.find('> .' + n + '-' + sc + '-top');
+			shadowbottom = shadow.find('> .' + n + '-'  + sc + '-bottom');
+			shadowheight = shadowtop.height();
+		}
+
 		var notemmited = true;
 		var intervalresize;
 		var delayresize;
@@ -11356,6 +11369,35 @@
 			size.prevx = x;
 			size.prevy = y;
 
+			if (shadowtop) {
+
+				if (!shadowheight)
+					shadowheight = shadowtop.height();
+
+				if (y > shadowheight) {
+					if (!size.shadowtop) {
+						size.shadowtop = true;
+						shadowtop.stop().animate({ opacity: 1 }, 200);
+					}
+				} else {
+					if (size.shadowtop) {
+						size.shadowtop = false;
+						shadowtop.stop().animate({ opacity: 0 }, 200);
+					}
+				}
+				if (y < ((size.scrollHeight - size.clientHeight) - shadowheight)) {
+					if (!size.shadowbottom) {
+						size.shadowbottom = true;
+						shadowbottom.stop().animate({ opacity: 1 }, 200);
+					}
+				} else {
+					if (size.shadowbottom) {
+						size.shadowbottom = false;
+						shadowbottom.stop().animate({ opacity: 0 }, 200);
+					}
+				}
+			}
+
 			if (size.vbar && canY) {
 
 				d = (size.scrollHeight - size.clientHeight) + 1;
@@ -11372,7 +11414,6 @@
 					if (pos > max)
 						pos = max;
 				}
-
 				if (size.vpos !== pos) {
 					size.vpos = pos;
 					size.vmax = max;
@@ -11650,12 +11691,17 @@
 			if (scrollbarcache.aw !== aw) {
 				scrollbarcache.aw = aw;
 				!md && area.css(T_WIDTH, aw);
+				if (shadowtop) {
+					shadowtop.css('width', size.viewWidth);
+					shadowbottom.css('width', size.viewWidth);
+				}
 				bodyarea.css(orientation === 'y' ? T_WIDTH : 'min-width', size.viewWidth - mx + (W.isIE || isedge || !sw ? size.margin : 0) - (orientation === 'x' ? size.margin : 0));
 			}
 
 			if (scrollbarcache.ah !== ah) {
 				scrollbarcache.ah = ah;
 				area.css(T_HEIGHT, ah);
+				shadowbottom && shadowbottom.css('top', ah - shadowheight);
 			}
 
 			size.scrollWidth = a.scrollWidth || 0;
