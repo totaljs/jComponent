@@ -388,7 +388,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.202;
+	M.version = 18.203;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11129,15 +11129,27 @@
 		var area = $(element.find('> .' + n + '-area' + di)[0]);
 		var shadowtop;
 		var shadowbottom;
+		var shadowleft;
+		var shadowright;
 		var sc = 'shadow';
 		var shadowheight = 0;
 
 		if (options[sc]) {
-			element.prepend('<div class="{0}-{1}"><div class="{0}-{1}-top {0}-{1}-v" style="opacity:0"></div><div class="{0}-{1}-bottom {0}-{1}-v" style="opacity:0"></div></div>'.format(n, sc));
+
+			element.prepend(('<div class="{0}-{1}">' + (canX ? '<div class="{0}-{1}-left {0}-{1}-h" style="opacity:0"></div><div class="{0}-{1}-right {0}-{1}-h" style="opacity:0"></div>' : '') + (canY ? '<div class="{0}-{1}-top {0}-{1}-v" style="opacity:0"></div><div class="{0}-{1}-bottom {0}-{1}-v" style="opacity:0"></div>' : '') + '</div>').format(n, sc));
 			var shadow = element.find('> .' + n + '-' + sc);
-			shadowtop = shadow.find('> .' + n + '-' + sc + '-top');
-			shadowbottom = shadow.find('> .' + n + '-'  + sc + '-bottom');
-			shadowheight = shadowtop.height();
+
+			if (canY) {
+				shadowtop = shadow.find('> .' + n + '-' + sc + '-top');
+				shadowbottom = shadow.find('> .' + n + '-'  + sc + '-bottom');
+			}
+
+			if (canX) {
+				shadowleft = shadow.find('> .' + n + '-' + sc + '-left');
+				shadowright = shadow.find('> .' + n + '-'  + sc + '-right');
+			}
+
+			shadowheight = shadowtop ? shadowtop.height() : shadowleft.width();
 		}
 
 		var notemmited = true;
@@ -11369,31 +11381,60 @@
 			size.prevx = x;
 			size.prevy = y;
 
-			if (shadowtop) {
+			if (shadowtop || shadowleft) {
 
 				if (!shadowheight)
-					shadowheight = shadowtop.height();
+					shadowheight = shadowtop ? shadowtop.height() : shadowleft.width();
 
-				if (y > shadowheight) {
-					if (!size.shadowtop) {
-						size.shadowtop = true;
-						shadowtop.stop().animate({ opacity: 1 }, 200);
+				if (canY) {
+					if (y > shadowheight) {
+						if (!size.shadowtop) {
+							size.shadowtop = true;
+							shadowtop.stop().animate({ opacity: 1 }, 200);
+						}
+					} else {
+						if (size.shadowtop) {
+							size.shadowtop = false;
+							shadowtop.stop().animate({ opacity: 0 }, 200);
+						}
 					}
-				} else {
-					if (size.shadowtop) {
-						size.shadowtop = false;
-						shadowtop.stop().animate({ opacity: 0 }, 200);
+
+					if (y < ((size.scrollHeight - size.clientHeight) - shadowheight)) {
+						if (!size.shadowbottom) {
+							size.shadowbottom = true;
+							shadowbottom.stop().animate({ opacity: 1 }, 200);
+						}
+					} else {
+						if (size.shadowbottom) {
+							size.shadowbottom = false;
+							shadowbottom.stop().animate({ opacity: 0 }, 200);
+						}
 					}
 				}
-				if (y < ((size.scrollHeight - size.clientHeight) - shadowheight)) {
-					if (!size.shadowbottom) {
-						size.shadowbottom = true;
-						shadowbottom.stop().animate({ opacity: 1 }, 200);
+
+				if (canX) {
+					if (x > shadowheight) {
+						if (!size.shadowleft) {
+							size.shadowleft = true;
+							shadowleft.stop().animate({ opacity: 1 }, 200);
+						}
+					} else {
+						if (size.shadowleft) {
+							size.shadowleft = false;
+							shadowleft.stop().animate({ opacity: 0 }, 200);
+						}
 					}
-				} else {
-					if (size.shadowbottom) {
-						size.shadowbottom = false;
-						shadowbottom.stop().animate({ opacity: 0 }, 200);
+
+					if (x < ((size.scrollWidth - size.clientWidth) - shadowheight)) {
+						if (!size.shadowright) {
+							size.shadowright = true;
+							shadowright.stop().animate({ opacity: 1 }, 200);
+						}
+					} else {
+						if (size.shadowright) {
+							size.shadowright = false;
+							shadowright.stop().animate({ opacity: 0 }, 200);
+						}
 					}
 				}
 			}
@@ -11692,10 +11733,12 @@
 				scrollbarcache.aw = aw;
 				!md && area.css(T_WIDTH, aw);
 				if (shadowtop) {
-					shadowtop.css('width', size.viewWidth);
-					shadowbottom.css('width', size.viewWidth);
+					var shadowm = options.marginshadowY || 0;
+					shadowtop.css(T_WIDTH, size.viewWidth - shadowm);
+					shadowbottom.css(T_WIDTH, size.viewWidth - shadowm);
 				}
-				bodyarea.css(orientation === 'y' ? T_WIDTH : 'min-width', size.viewWidth - mx + (W.isIE || isedge || !sw ? size.margin : 0) - (orientation === 'x' ? size.margin : 0));
+				shadowright && shadowright.css('left', aw - shadowheight);
+				bodyarea.css(orientation === 'y' ? T_WIDTH : 'min-' + T_WIDTH, size.viewWidth - mx + (W.isIE || isedge || !sw ? size.margin : 0) - (orientation === 'x' ? size.margin : 0));
 			}
 
 			if (scrollbarcache.ah !== ah) {
@@ -11728,6 +11771,7 @@
 				size.vpos = 0;
 
 			if (canX) {
+
 				if (iscc) {
 					cssx.top = size.viewHeight - size.thicknessH;
 					cssx.width = size.viewWidth;
@@ -11735,8 +11779,19 @@
 					cssx.top = size.viewHeight - size.thicknessH;
 					cssx.width = size.viewWidth;
 				}
+
+				if (options.marginXY)
+					cssx.top -= options.marginXY;
+
 				if (options.marginX)
 					cssx.width -= options.marginX;
+
+				if (shadowleft) {
+					var shadowm = options.marginshadowX || 0;
+					shadowleft.css(T_HEIGHT, cssx.top - (options.marginshadowX || 0));
+					shadowright.css(T_HEIGHT, cssx.top - (options.marginshadowX || 0));
+				}
+
 				pathx.css(cssx);
 			}
 
@@ -11748,6 +11803,10 @@
 					cssy.left = size.viewWidth - size.thicknessV;
 					cssy.height = size.viewHeight;
 				}
+
+				if (options.marginYX)
+					cssx.left -= options.marginYX;
+
 				if (options.marginY)
 					cssy.height -= options.marginY;
 
