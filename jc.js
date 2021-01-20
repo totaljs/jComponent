@@ -388,7 +388,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.203;
+	M.version = 18.204;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6565,7 +6565,7 @@
 	// ===============================================================
 
 	var ua = navigator.userAgent || '';
-	W.isMOBILE = /Mobi/.test(ua);
+	W.isMOBILE = (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i).test(ua);
 	W.isROBOT = (/search|agent|bot|crawler|spider/i).test(ua);
 	W.isSTANDALONE = navigator.standalone || W.matchMedia('(display-mode: standalone)').matches;
 	W.isTOUCH = !!('ontouchstart' in W || navigator.maxTouchPoints);
