@@ -388,7 +388,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.205;
+	M.version = 18.206;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3778,7 +3778,7 @@
 					if (plugin) {
 						current_element = el;
 						W.PLUGINS[path] = scope.plugin = new Plugin(path, plugin.fn);
-						scope.plugin.scope = scope;
+						scope.plugin.scopedata = scope;
 					} else {
 						WARN('Plugin "? {0}" not found'.format(tmp[1]));
 						return;
@@ -3845,6 +3845,7 @@
 					if (tmp) {
 						var a = current_owner;
 						current_owner = SCOPENAME + scope._id;
+						current_scope = path;
 						tmp.call(scope, path, scope.element);
 						current_owner = a;
 					}
