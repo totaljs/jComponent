@@ -388,7 +388,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.204;
+	M.version = 18.205;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4170,7 +4170,7 @@
 		obj.state && obj.stateX(0, 3);
 
 		obj.$init && setTimeout(function() {
-			var fn = get(obj.$init);
+			var fn = get(obj.makepath(obj.$init));
 			typeof(fn) === TYPE_FN && fn.call(obj, obj);
 			obj.$init = undefined;
 		}, 5);
@@ -6119,6 +6119,16 @@
 		return self;
 	};
 
+	function reconfigure_assign(self, path) {
+		self.$assigned && SET(self.$assigned, null);
+		self.$assigned = self.makepath(path);
+		SET(self.$assigned, self);
+	}
+
+	function reconfigure_exec(self, path) {
+		EXEC.call(self, self.makepath(path.$reconfigure), self);
+	}
+
 	PPC.$reconfigure = function() {
 		var self = this;
 		var cfg = self.config;
@@ -6131,9 +6141,7 @@
 		}
 
 		if (cfg.$assign) {
-			self.$assigned && SET(self.$assigned, null);
-			self.$assigned = cfg.$assign;
-			SET(cfg.$assign, self);
+			setTimeout(reconfigure_assign, cfg.$assign.indexOf('?') === -1 ? 1 : 10, self, cfg.$assign);
 			delete cfg.$assign;
 		}
 
@@ -6163,7 +6171,7 @@
 		}
 
 		if (cfg.$reconfigure) {
-			EXEC.call(self, cfg.$reconfigure.SCOPE(self), self);
+			setTimeout(reconfigure_exec, cfg.$reconfigure.indexOf('?') === -1 ? 1 : 10, self, cfg.$reconfigure);
 			delete cfg.$reconfigure;
 		}
 	};
