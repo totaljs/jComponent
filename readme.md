@@ -1,13 +1,10 @@
-[![MIT License][license-image]][license-url] [![Gitter chat](https://badges.gitter.im/totaljs/framework.png)](https://gitter.im/totaljs/jComponent)
+# jComponent library
 
-[![Support](https://www.totaljs.com/img/button-support.png?v=2)](https://www.totaljs.com/support/)
+- [Documentation](https://docs.totaljs.com/components/)
+- [Join Total.js Telegram](https://t.me/totaljs)
+- [Support](https://www.totaljs.com/support/)
 
-- [__Live chat with professional support__](https://messenger.totaljs.com)
-- [__HelpDesk with professional support__](https://helpdesk.totaljs.com)
-
-# jQuery reusable component library
-
-> __Download__: more than 80 jComponents free for everyone <https://componentator.com>
+> __Download__: more than 230 jComponents free for everyone <https://componentator.com>
 
 - Current version: `v18`
 - `>= jQuery +1.7`
@@ -36,7 +33,3 @@ __YOU NEED TO SEE:__
 ## Authors + Contacts
 
 - Peter Širka - <https://www.petersirka.com> / <petersirka@gmail.com>
-- Denis Granec - <https://granec.cz> / <denis@granec.cz>
-
-[license-image]: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
-[license-url]: license.txt
