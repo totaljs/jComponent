@@ -388,7 +388,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.206;
+	M.version = 18.207;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -826,6 +826,18 @@
 		if (!url)
 			url = location.pathname;
 
+		var nodecrypt = false;
+		var customflags = [];
+
+		url = url.replace(/\s(nodecrypt|@[a-z0-9]+)/gi, function(text) {
+			var c = text.charAt(1);
+			if (c === '@')
+				customflags.push(text.substring(2));
+			else if (c.toLowerCase() === 'n')
+				nodecrypt = true;
+			return '';
+		});
+
 		var method = 'POST';
 		var index = url.indexOf(' ');
 		var tmp = null;
@@ -870,8 +882,11 @@
 		output.callback = callback;
 		output.duration = Date.now();
 		output.progress = progress;
-
+		output.decryption = !nodecrypt;
 		events.request && EMIT('request', output);
+
+		if (customflags.length)
+			emitflags(customflags, url);
 
 		if (output.cancel)
 			return;
@@ -1844,7 +1859,7 @@
 		var nodecrypt = false;
 		var customflags = [];
 
-		url = url.replace(/\s(repeat|cancel|json|noencrypt|nodecrypt|#[a-z0-9]+|@[a-z0-9]+)/i, function(text) {
+		url = url.replace(/\s(repeat|cancel|json|noencrypt|nodecrypt|#[a-z0-9]+|@[a-z0-9]+)/gi, function(text) {
 			var c = text.charAt(1);
 			if (c === '#')
 				reqid = text.substring(2);
