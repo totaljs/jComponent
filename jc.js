@@ -388,7 +388,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.207;
+	M.version = 18.208;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10078,7 +10078,7 @@
 						v = new Function('value', 'path', 'el', 'var fn=el[0].' + vkey + ';if(!fn){var _s=el.scope();if(_s){el[0].' + vkey + '=fn=GET(_s.makepath(\'' + vfn + '\'))}}if(fn)return fn' + (vbeg == -1 ? '(value,path,el)' : v.substring(vbeg)));
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'tracktype', T_RESIZE, 'delay', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'helper', 'currency', 'empty', 'release', 'changes') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'tracktype', T_RESIZE, 'delay', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'helper', 'currency', 'empty', 'release', 'changes', 'assign') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -10086,6 +10086,11 @@
 					for (var j = 0; j < keys.length; j++) {
 
 						k = keys[j].trim();
+
+						if (k === 'assign') {
+							SET(v, $(el));
+							continue;
+						}
 
 						var s = ''; // as nested selector
 						var notvisible = false;
@@ -10253,6 +10258,7 @@
 							case 'tclass':
 								fn = v;
 								break;
+
 							case T_VBINDARR:
 								var scr = e.find(T_SCRIPT + ',' + T_TEMPLATE).eq(0);
 								var r = false;
@@ -10265,6 +10271,7 @@
 									fn.$nv = 1;
 								r && scr.remove();
 								break;
+
 							case T_TEMPLATE:
 
 								// Only for backward compatibility:
