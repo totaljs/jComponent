@@ -388,7 +388,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.209;
+	M.version = 18.210;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1517,14 +1517,16 @@
 		}
 
 		if (ext === '.css') {
-			var stl = d.createElement('link');
-			stl.type = 'text/css';
-			stl.rel = 'stylesheet';
-			stl.href = makeurl(url, true);
-			d.getElementsByTagName('head')[0].appendChild(stl);
+			var link = d.createElement('link');
+			link.type = 'text/css';
+			link.rel = 'stylesheet';
+			link.href = makeurl(url, true);
+			link.onload = function() {
+				callback && setTimeout(callback, 2, 1);
+			};
+			d.getElementsByTagName('head')[0].appendChild(link);
 			statics[url] = 2;
-			callback && setTimeout(callback, 200, 1);
-			events.import && EMIT(T_IMPORT, url, $(stl));
+			events.import && EMIT(T_IMPORT, url, $(link));
 			DEF.monitor && monitor_method('requests');
 			return;
 		}
@@ -3397,7 +3399,7 @@
 		}, function() {
 			declaration.importing = false;
 			callback(obj, el);
-		}, 3);
+		});
 	}
 
 	function compile(container) {
