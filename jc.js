@@ -18,6 +18,7 @@
 	var REGSCOPEINLINE = /\?/g;
 	var REGSCOPECHECK = /\?\/|\?\./;
 	var REGSCOPEREPLACE = /\?\//g;
+	var REGNUM = /^(-)?[0-9.]+$/;
 	var T_COM = '---';
 	var T_DATA = 'data-';
 	var ATTRCOM = '[data-jc],[data--],[data' + T_COM + ']';
@@ -388,7 +389,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.210;
+	M.version = 18.211;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6086,6 +6087,71 @@
 		return self;
 	};
 
+	PPC.configdisplay = function(key, value) {
+
+		if (typeof(value) !== 'string' || !(/@(xs|sm|md|lg)=/).test(value))
+			return value;
+
+		var self = this;
+
+		if (!self.$configdisplay)
+			self.$configdisplay = {};
+
+		if (!self.$configdisplay[key])
+			self.$configdisplay[key] = {};
+
+		var values = self.$configdisplay[key];
+		if (values.cache !== value) {
+			values.cache = value;
+			var arr = value.split(/,|\s/);
+			for (var i = 0; i < arr.length; i++) {
+				var kv = arr[i].split('=');
+				var v = kv[1];
+				if (v === T_TRUE || v === T_FALSE)
+					v = v === T_TRUE;
+				else if (REGNUM.test(v)) {
+					var tmp = +v;
+					if (!isNaN(tmp))
+						v = tmp;
+				}
+				values[kv[0].substring(1)] = v;
+			}
+		}
+
+		var d = WIDTH();
+		v = values[d];
+
+		if (v == null) {
+			if (d === 'xs') {
+				v = values.sm;
+				if (v == null)
+					v = values.md;
+				if (v == null)
+					v = values.lg;
+			} else if (d === 'sm')
+				v = values.xs;
+				if (v == null)
+					v = values.md;
+				if (v == null)
+					v = values.lg;
+			else if (d === 'md') {
+				v = values.sm;
+				if (v == null)
+					v = values.lg;
+				if (v == null)
+					v = values.xs;
+			} else if (d === 'lg') {
+				v = values.md;
+				if (v == null)
+					v = values.sm;
+				if (v == null)
+					v = values.xs;
+			}
+		}
+
+		return v;
+	};
+
 	PPC.reconfigure = function(value, callback, init) {
 
 		var self = this;
@@ -6103,14 +6169,15 @@
 			var keys = OK(value);
 			for (var i = 0; i < keys.length; i++) {
 				var k = keys[i];
+				var v = self.configdisplay(k, value[k]);
 				var prev = self.config[k];
-				if (!init && self.config[k] !== value[k])
-					self.config[k] = value[k];
+				if (!init && self.config[k] !== v)
+					self.config[k] = v;
 				if (callback)
-					callback(k, value[k], init, init ? undefined : prev);
+					callback(k, v, init, init ? undefined : prev);
 				else if (self.configure)
-					self.configure(k, value[k], init, init ? undefined : prev);
-				self.data(T_CONFIG + '.' + k, value[k]);
+					self.configure(k, v, init, init ? undefined : prev);
+				self.data(T_CONFIG + '.' + k, v);
 			}
 		} else if (value.charAt(0) === '=') {
 			value = value.substring(1).SCOPE(self);
@@ -6123,6 +6190,7 @@
 		} else {
 			value.parseConfig(function(k, v) {
 				var prev = self.config[k];
+				v = self.configdisplay(k, v);
 				if (!init && self.config[k] !== v)
 					self.config[k] = v;
 				self.data(T_CONFIG + '.' + k, v);
@@ -7990,7 +8058,6 @@
 		}
 
 		var arr = this.env().replace(/\\;/g, '\0').split(';');
-		var num = /^(-)?[0-9.]+$/;
 		var colon = /(https|http|wss|ws):\/\//gi;
 
 		for (var i = 0; i < arr.length; i++) {
@@ -8010,7 +8077,7 @@
 
 			if (v === T_TRUE || v === T_FALSE)
 				v = v === T_TRUE;
-			else if (num.test(v)) {
+			else if (REGNUM.test(v)) {
 				var tmp = +v;
 				if (!isNaN(tmp))
 					v = tmp;
@@ -9572,11 +9639,35 @@
 		}
 
 		var windowresizeinterval;
+		var windowresized = false;
+		var windowsize;
 
 		function resize_noscrollbar() {
+
 			windowresizeinterval = null;
 			$(selnoscrollbar).noscrollbar();
 			displaymode();
+
+			if (windowresized) {
+				var d = WIDTH();
+				if (windowsize !== d) {
+					windowsize = d;
+					for (var i = 0; i < M.components.length; i++) {
+						var com = M.components[i];
+						if (!com.removed && !com.$removed && com.$configdisplay && com.$ready) {
+							// reconfigure
+							var obj = {};
+							for (var key in com.$configdisplay)
+								obj[key] = com.$configdisplay[key].cache;
+							com.reconfigure(obj);
+						}
+					}
+				}
+			} else {
+				windowsize = WIDTH();
+				windowresized = true;
+			}
+
 			events.resize2 && EMIT('resize2');
 		}
 
