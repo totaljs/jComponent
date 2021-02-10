@@ -12,6 +12,7 @@
 	var REGSEARCH = /[^a-zA-Zá-žÁ-Žа-яА-Я\d\s:]/g;
 	var REGFNPLUGIN = /[a-z0-9_-]+\/[a-z0-9_]+\(|(^|(?=[^a-z0-9]))@[a-z0-9-_]+\./i;
 	var REGMETA = /_{2,}/;
+	var REGAJAXFLAGS = /\s(repeat|cancel|json|noencrypt|nodecrypt|nocsrf|#[a-z0-9]+|@[a-z0-9]+)/gi;
 	var REGBINDERCOMPARE = /^[^a-z0-9.]/;
 	var REGWILDCARD = /\.\*/;
 	var REGISARR = /\[\d+\]$/;
@@ -42,6 +43,7 @@
 	var TYPE_NULL = 'null';
 	var KEY_ENV = 'env';
 	var REG_TIME = /am|pm/i;
+	var T_CSRF = 'x-csrf-token';
 	var T_BODY = 'BODY';
 	var T_DISABLED = 'disabled';
 	var T_HIDDEN = 'hidden';
@@ -389,7 +391,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.211;
+	M.version = 18.212;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -828,14 +830,20 @@
 			url = location.pathname;
 
 		var nodecrypt = false;
+		var nocsrf = false;
 		var customflags = [];
 
-		url = url.replace(/\s(nodecrypt|@[a-z0-9]+)/gi, function(text) {
+		url = url.replace(REGAJAXFLAGS, function(text) {
 			var c = text.charAt(1);
 			if (c === '@')
 				customflags.push(text.substring(2));
-			else if (c.toLowerCase() === 'n')
-				nodecrypt = true;
+			else {
+				c = text.substring(1, 4).toLowerCase();
+				if (c === 'nod')
+					nodecrypt = true;
+				else if (c === 'noc')
+					nocsrf = true;
+			}
 			return '';
 		});
 
@@ -868,6 +876,9 @@
 			timeout = callback;
 			callback = undefined;
 		}
+
+		if (DEF.csrf && !nocsrf)
+			headers[T_CSRF] = DEF.csrf;
 
 		var output = {};
 		output.throw = ajaxcustomerror;
@@ -1860,9 +1871,10 @@
 		var json = false;
 		var noencrypt = false;
 		var nodecrypt = false;
+		var nocsrf = false;
 		var customflags = [];
 
-		url = url.replace(/\s(repeat|cancel|json|noencrypt|nodecrypt|#[a-z0-9]+|@[a-z0-9]+)/gi, function(text) {
+		url = url.replace(REGAJAXFLAGS, function(text) {
 			var c = text.charAt(1);
 			if (c === '#')
 				reqid = text.substring(2);
@@ -1873,7 +1885,10 @@
 			else if (c.toLowerCase() === 'j')
 				json = true;
 			else if (c.toLowerCase() === 'n') {
-				if (text.substring(1, 4).toLowerCase() === 'noe')
+				c = text.substring(1, 4).toLowerCase();
+				if (c === 'noc')
+					nocsrf = true;
+				else if (c === 'noe')
 					noencrypt = true;
 				else
 					nodecrypt = true;
@@ -1901,6 +1916,9 @@
 			if (typeof(tmp) === TYPE_O)
 				headers = tmp;
 		}
+
+		if (DEF.csrf && !nocsrf)
+			headers[T_CSRF] = DEF.csrf;
 
 		url = url.substring(index).trim().$env();
 
