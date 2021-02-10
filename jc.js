@@ -877,9 +877,6 @@
 			callback = undefined;
 		}
 
-		if (DEF.csrf && !nocsrf)
-			headers[T_CSRF] = DEF.csrf;
-
 		var output = {};
 		output.throw = ajaxcustomerror;
 		output.respond = ajaxcustomresponse;
@@ -895,6 +892,12 @@
 		output.duration = Date.now();
 		output.progress = progress;
 		output.decryption = !nodecrypt;
+
+		if (DEF.csrf && !nocsrf) {
+			headers[T_CSRF] = DEF.csrf;
+			output.csrf = true;
+		}
+
 		events.request && EMIT('request', output);
 
 		if (customflags.length)
@@ -1917,9 +1920,6 @@
 				headers = tmp;
 		}
 
-		if (DEF.csrf && !nocsrf)
-			headers[T_CSRF] = DEF.csrf;
-
 		url = url.substring(index).trim().$env();
 
 		var mainurl = (reqid || (method + ' ' + url));
@@ -1982,6 +1982,11 @@
 
 			if (!options.url)
 				options.url = url;
+
+			if (DEF.csrf && !nocsrf && options.url.indexOf('.html') === -1) {
+				headers[T_CSRF] = DEF.csrf;
+				options.csrf = true;
+			}
 
 			var canencrypt = encryptsecret && !noencrypt && (!encryptvalidator || encryptvalidator(options));
 
