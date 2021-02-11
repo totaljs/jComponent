@@ -82,6 +82,7 @@
 	var clsnoscrollbar = 'noscrollbar';
 	var selnoscrollbar = '.' + clsnoscrollbar;
 	var W = window;
+	var $W = $(W);
 	var D = document;
 
 	var LCOMPARER = W.Intl ? W.Intl.Collator().compare : function(a, b) {
@@ -391,7 +392,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.212;
+	M.version = 18.213;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6151,13 +6152,13 @@
 					v = values.md;
 				if (v == null)
 					v = values.lg;
-			} else if (d === 'sm')
+			} else if (d === 'sm') {
 				v = values.xs;
 				if (v == null)
 					v = values.md;
 				if (v == null)
 					v = values.lg;
-			else if (d === 'md') {
+			} else if (d === 'md') {
 				v = values.sm;
 				if (v == null)
 					v = values.lg;
@@ -6304,11 +6305,11 @@
 					return $(dom);
 				dom = dom.parentNode;
 			}
-			return $(W);
+			return $W;
 		}
 
 		if (sel.substring(0, 6) !== 'parent')
-			return sel === 'window' ? $(W) : sel === 'document' ? D : self.element.closest(sel);
+			return sel === 'window' ? $W : sel === 'document' ? D : self.element.closest(sel);
 
 		var count = sel.substring(6);
 		var parent = self.element.parent();
@@ -6879,7 +6880,7 @@
 
 	W.WIDTH = function(el) {
 		if (!el)
-			el = $(W);
+			el = $W;
 		var w = el.width();
 		var d = MD.devices;
 		return w >= d.md.min && w <= d.md.max ? 'md' : w >= d.sm.min && w <= d.sm.max ? 'sm' : w > d.lg.min ? 'lg' : w <= d.xs.max ? 'xs' : '';
@@ -6889,7 +6890,6 @@
 		var l = v.length;
 		return pathmaker(v.substring(0, l - 1), 0, 1) + v.substring(l - 1);
 	};
-
 
 	W.FN = function(exp, notrim) {
 
@@ -9173,7 +9173,7 @@
 	}, function() {
 
 		// Fixed IE <button tags
-		W.isIE && $(W).on('keydown', function(e) {
+		W.isIE && $W.on('keydown', function(e) {
 			if (e.keyCode === 13) {
 				var n = e.target.tagName;
 				if (n === 'BUTTON' || n === 'INPUT' || n === 'SELECT')
@@ -9656,9 +9656,12 @@
 
 		function displaymode() {
 			var d = WIDTH();
-			var b = $(D.body);
-			b.rclass('jc-lg jc-md jc-sm jc-xs');
-			b.aclass('jc-' + d);
+			if (D.body) {
+				var b = $(D.body);
+				b.rclass('jc-lg jc-md jc-sm jc-xs');
+				b.aclass('jc-' + d);
+			} else
+				setTimeout(displaymode, 50);
 		}
 
 		var windowresizeinterval;
@@ -9668,11 +9671,17 @@
 		function resize_noscrollbar() {
 
 			windowresizeinterval = null;
+
+			var d = WIDTH();
+			if (!d) {
+				setTimeout(resize_noscrollbar, 50);
+				return;
+			}
+
 			$(selnoscrollbar).noscrollbar();
 			displaymode();
 
 			if (windowresized) {
-				var d = WIDTH();
 				if (windowsize !== d) {
 					windowsize = d;
 					for (var i = 0; i < M.components.length; i++) {
@@ -9687,7 +9696,7 @@
 					}
 				}
 			} else {
-				windowsize = WIDTH();
+				windowsize = d;
 				windowresized = true;
 			}
 
@@ -9695,7 +9704,7 @@
 		}
 
 		function resize() {
-			var w = $(W);
+			var w = $W;
 			W.WW = w.width();
 			W.WH = w.height();
 			windowresizeinterval && clearTimeout(windowresizeinterval);
@@ -9853,8 +9862,8 @@
 			MAIN.ua = output;
 		}
 
-		$(W).on(T_RESIZE, resize);
-		$(W).on('visibilitychange', function() {
+		$W.on(T_RESIZE, resize);
+		$W.on('visibilitychange', function() {
 			W.EMIT('visible', !document.hidden);
 		});
 
@@ -11383,7 +11392,7 @@
 			animcache.disabled = true;
 			if (!drag.binded) {
 				drag.binded = true;
-				var w = $(W).on('mousemove', handlers.onmousemove).on('mouseup', handlers.onmouseup);
+				var w = $W.on('mousemove', handlers.onmousemove).on('mouseup', handlers.onmouseup);
 				if (W.parent !== W)
 					w.on('mouseout', handlers.onmouseout);
 			}
@@ -11395,7 +11404,7 @@
 				pathy && pathy.rclass(n + '-y-show');
 				pathx && pathx.rclass(n + '-x-show');
 				drag.binded = false;
-				var w = $(W).off('mousemove', handlers.onmousemove).off('mouseup', handlers.onmouseup);
+				var w = $W.off('mousemove', handlers.onmousemove).off('mouseup', handlers.onmouseup);
 				if (W.parent !== W)
 					w.off('mouseout', handlers.onmouseout);
 			}
@@ -12147,7 +12156,7 @@
 		};
 
 		if (options.autoresize == null || options.autoresize) {
-			$(W).on(T_RESIZE, onresize);
+			$W.on(T_RESIZE, onresize);
 			ON(T_RESIZE, self.resize);
 		}
 
