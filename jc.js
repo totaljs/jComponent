@@ -392,7 +392,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.213;
+	M.version = 18.214;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7105,7 +7105,7 @@
 		return '';
 	}
 
-	W.EXEC = function(path) {
+	W.EXE = W.EXEC = function(path) {
 
 		var arg = [];
 		var f = 1;
