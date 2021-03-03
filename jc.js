@@ -85,16 +85,24 @@
 	var $W = $(W);
 	var D = document;
 
-	var LCOMPARER = W.Intl ? W.Intl.Collator().compare : function(a, b) {
-		return (a + '').localeCompare(b + '');
+	var LCOMPARER = function(a, b) {
+		if (!a && !b)
+			return 0;
+		if (!a && b)
+			return -1;
+		if (a && !b)
+			return 1;
+		return W.Intl ? W.Intl.Collator().compare(a, b) : (a + '').localeCompare(b + '');
 	};
 
-	var LCOMPARER_DESC = W.Intl ? function(a, b) {
-		var val = W.Intl.Collator().compare(a + '', b + '');
-		return val ? val * - 1 : 0;
-	} : function(a, b) {
-		var val = (a + '').localeCompare(b + '');
-		return val ? val * -1 : 0;
+	var LCOMPARER_DESC = function(a, b) {
+		if (!a && !b)
+			return 0;
+		if (!a && b)
+			return 1;
+		if (a && !b)
+			return -1;
+		return (W.Intl ? W.Intl.Collator().compare(a, b) : (a + '').localeCompare(b + '')) * -1;
 	};
 
 	var C = {}; // COMPILER
@@ -392,7 +400,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.214;
+	M.version = 18.215;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -9070,7 +9078,7 @@
 				if (col.type) {
 					switch (col.type) {
 						case 1:
-							tmp = va && vb ? (col.desc ? LCOMPARER(vb, va) : LCOMPARER(va, vb)) : 0;
+							tmp = col.desc ? LCOMPARER_DESC(va, vb) : LCOMPARER(va, vb);
 							if (tmp)
 								return tmp;
 							break;
@@ -9119,7 +9127,6 @@
 	AP.quicksort = function(sort) {
 
 		var self = this;
-
 		if (self.length < 2)
 			return self;
 
@@ -9137,7 +9144,8 @@
 			return self;
 		}
 
-		if (arguments[1] === false || arguments[1] === 'desc')
+		var args = arguments;
+		if (args[1] === false || args[1] === 'desc' || args[1] === 2)
 			sort += '_desc';
 
 		self.sort(sortcomparer(sort));
