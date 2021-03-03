@@ -400,7 +400,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.215;
+	M.version = 18.216;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -9039,7 +9039,7 @@
 			meta = [];
 			sort = sort.replace(/\s/g, '').split(',');
 			for (var i = 0; i < sort.length; i++) {
-				var tmp = sort[i].split('_');
+				var tmp = sort[i].split((/_(desc|asc)/));
 				var obj = { name: tmp[0], type: null, desc: tmp[1] === 'desc' };
 				if (tmp[0].indexOf('.') !== -1)
 					obj.read = new Function('val', 'return val.' + tmp[0].replace(/\./g, '?.'));
