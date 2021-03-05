@@ -400,7 +400,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.216;
+	M.version = 18.217;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11334,6 +11334,7 @@
 		var syncid = 'cs' + GUID(5);
 		var scrollbarcache = {};
 
+		self.options = options;
 		self.pathx = pathx;
 		self.pathy = pathy;
 		self.barx = barx;
