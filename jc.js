@@ -400,7 +400,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.217;
+	M.version = 18.218;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5100,19 +5100,17 @@
 		self.getter = function(value, realtime, nobind) {
 
 			var self = this;
-
 			value = self.parser(value);
 			self.getter2 && self.getter2(value, realtime);
-
-			if (realtime)
-				self.$skip = true;
 
 			// Binds a value
 			if (nobind)
 				com_validate2(self);
-			else if (value !== self.get())
+			else if (value !== self.get()) {
+				if (realtime)
+					self.$skip = true;
 				self.set(value, 2);
-			else if (realtime === 3) {
+			} else if (realtime === 3) {
 				// A validation for same values, "realtime=3" is in "blur" event
 				// Because we need to validate the input if the user leaves from the control
 				com_validate2(self);
