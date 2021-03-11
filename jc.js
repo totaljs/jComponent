@@ -400,7 +400,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.218;
+	M.version = 18.219;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -12327,6 +12327,59 @@
 		return arr.length;
 	};
 
+	W.WORKFLOW = function(declaration, tasks) {
+
+		var $ = {};
+		$.tasks = tasks || {};
+		$.scope = current_scope;
+
+		$.next = $.trigger = function(next, val) {
+
+			if (!$)
+				return;
+
+			$.prev = $.current;
+			var fn = $.tasks[next];
+			if (fn) {
+				var tmp = current_scope;
+				current_scope = $.scope;
+				$.current = next;
+				fn($, val);
+				current_scope = tmp;
+			} else
+				$.destroy();
+		};
+
+		$.next2 = function(name) {
+			return function(val) {
+				$ && $.next(name, val);
+			};
+		};
+
+		$.invalid = function(e) {
+			if ($.error)
+				$.error(e, $);
+			else
+				WARN('WORKFLOW: ' + $.current, e);
+			$.destroy();
+		};
+
+		$.push = function(name, cb) {
+			$.tasks[name] = cb;
+		};
+
+		$.clone = function() {
+			return W.WORKFLOW(null, $.tasks);
+		};
+
+		$.destroy = function() {
+			$ = null;
+		};
+
+		declaration && declaration($);
+		return $;
+	};
+
 	W.NODEINDEXOF = function(el) {
 		if (el instanceof jQuery)
 			el = el[0];
@@ -12489,5 +12542,7 @@
 		var o = arr.join('');
 		return type + o + 'x' + HASH(o + (key || '') + type).toString(32);
 	};
+
+	W.QUEUE
 
 })();
