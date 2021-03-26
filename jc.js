@@ -400,7 +400,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.219;
+	M.version = 18.220;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -12542,7 +12542,5 @@
 		var o = arr.join('');
 		return type + o + 'x' + HASH(o + (key || '') + type).toString(32);
 	};
-
-	W.QUEUE
 
 })();
