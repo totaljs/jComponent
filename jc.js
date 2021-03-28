@@ -400,7 +400,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.220;
+	M.version = 18.221;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7899,9 +7899,12 @@
 	var NP = Number.prototype;
 	var DP = Date.prototype;
 
-	AP.async = function(thread, callback, pending) {
+	AP.async = function(thread, callback, pending, scope) {
 
 		var self = this;
+
+		if (scope == null)
+			scope = current_scope;
 
 		if (typeof(thread) === 'function') {
 			callback = thread;
@@ -7916,6 +7919,8 @@
 		if (item === undefined) {
 			if (!pending) {
 				pending = undefined;
+				if (scope)
+					current_scope = scope;
 				callback && callback();
 			}
 			return self;
@@ -7927,10 +7932,12 @@
 				item = self.shift();
 
 			pending++;
+			if (scope)
+				current_scope = scope;
 			item(function() {
 				setTimeout(function() {
 					pending--;
-					self.async(1, callback, pending);
+					self.async(1, callback, pending, scope);
 				}, 1);
 			});
 		}
