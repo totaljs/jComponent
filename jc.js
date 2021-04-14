@@ -400,7 +400,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.221;
+	M.version = 18.222;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7828,7 +7828,7 @@
 		var run = false;
 
 		if (is) {
-			var result = get(fn);
+			var result = get(fn.replace(REGSCOPEINLINE, curr_scope));
 			if (result)
 				run = true;
 		} else if (fn())
@@ -7858,7 +7858,7 @@
 		waits[key] = setInterval(function() {
 
 			if (is) {
-				var result = get(fn);
+				var result = get(fn.replace(REGSCOPEINLINE, curr_scope));
 				if (result == null)
 					return;
 			} else if (!fn())
