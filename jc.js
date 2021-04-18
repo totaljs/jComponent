@@ -400,7 +400,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.222;
+	M.version = 18.223;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6091,6 +6091,10 @@
 		return this;
 	};
 
+	PPC.attrd2 = SCP.attrd2 = function(name) {
+		return this.element.attrd2(name);
+	};
+
 	PPC.css = SCP.css = function(name, value) {
 		var el = this.element;
 		if (value === undefined)
@@ -9516,6 +9520,25 @@
 		$.fn.attrd = function(a, v) {
 			a = T_DATA + a;
 			return v == null ? this.attr(a) : this.attr(a, v);
+		};
+
+		$.fn.attrd2 = function(a) {
+
+			a = T_DATA + a;
+
+			var v = null;
+			var c = this;
+
+			while (v == null) {
+				v = c.attr(a);
+				if (!v) {
+					if (c[0].tagName === 'BODY')
+						break;
+					c = c.parent();
+				}
+			}
+
+			return v;
 		};
 
 		// Appends an SVG element
