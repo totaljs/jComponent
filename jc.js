@@ -400,7 +400,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.224;
+	M.version = 18.225;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6125,6 +6125,7 @@
 
 		if (typeof(value) !== 'string' || !(/@(xs|sm|md|lg|dark|light)=/).test(value))
 			return value;
+
 		var self = this;
 
 		if (!self.$configdisplay)
@@ -6151,10 +6152,12 @@
 			}
 		}
 
-		var d = document.body.classList.contains('ui-dark') ? 'dark' : 'light';
-		v = values[d];
-		if (d === 'dark' || d === 'light')
-			return v;
+		if (values.dark != null || values.light != null) {
+			var d = document.body.classList.contains('ui-dark') ? 'dark' : 'light';
+			v = values[d];
+			if (d === 'dark' || d === 'light')
+				return v;
+		}
 
 		d = WIDTH();
 		v = values[d];
