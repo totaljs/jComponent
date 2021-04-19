@@ -9554,7 +9554,7 @@
 			var v = null;
 			var c = this;
 
-			while (v == null) {
+			while (c[0] && v == null) {
 				v = c.attr(a);
 				if (!v) {
 					if (c[0].tagName === 'BODY')
