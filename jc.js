@@ -400,7 +400,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.223;
+	M.version = 18.224;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6123,9 +6123,8 @@
 
 	PPC.configdisplay = function(key, value) {
 
-		if (typeof(value) !== 'string' || !(/@(xs|sm|md|lg)=/).test(value))
+		if (typeof(value) !== 'string' || !(/@(xs|sm|md|lg|dark|light)=/).test(value))
 			return value;
-
 		var self = this;
 
 		if (!self.$configdisplay)
@@ -6152,7 +6151,12 @@
 			}
 		}
 
-		var d = WIDTH();
+		var d = document.body.classList.contains('ui-dark') ? 'dark' : 'light';
+		v = values[d];
+		if (d === 'dark' || d === 'light')
+			return v;
+
+		d = WIDTH();
 		v = values[d];
 
 		if (v == null) {
@@ -7721,6 +7725,8 @@
 		$('<style type="text/css"' + (id ? ' id="css' + id + '"' : '') + '>' + (selector ? wrap(selector, val) : val) + '</style>').appendTo('head');
 	};
 
+	var windowappearance = 'light';
+
 	W.APPEARANCE = function(obj) {
 
 		var keys = Object.keys(obj);
@@ -7748,6 +7754,12 @@
 			CSS(':root{' + builder.join(';') + '}', id);
 		else
 			$('#css' + id).remove();
+
+		var k = dark ? 'dark' : 'light';
+		if (windowappearance !== k) {
+			windowappearance = k;
+			reconfigure_components();
+		}
 	};
 
 	function wrap(selector, css) {
@@ -9184,6 +9196,19 @@
 		return self;
 	};
 
+	function reconfigure_components() {
+		for (var i = 0; i < M.components.length; i++) {
+			var com = M.components[i];
+			// reconfigure
+			if (!com.removed && !com.$removed && com.$configdisplay && com.$ready) {
+				var obj = {};
+				for (var key in com.$configdisplay)
+					obj[key] = com.$configdisplay[key].cache;
+				com.reconfigure(obj);
+			}
+		}
+	}
+
 	// Waits for jQuery
 	WAIT(function() {
 		return !!W.jQuery;
@@ -9720,16 +9745,7 @@
 			if (windowresized) {
 				if (windowsize !== d) {
 					windowsize = d;
-					for (var i = 0; i < M.components.length; i++) {
-						var com = M.components[i];
-						if (!com.removed && !com.$removed && com.$configdisplay && com.$ready) {
-							// reconfigure
-							var obj = {};
-							for (var key in com.$configdisplay)
-								obj[key] = com.$configdisplay[key].cache;
-							com.reconfigure(obj);
-						}
-					}
+					reconfigure_components();
 				}
 			} else {
 				windowsize = d;
