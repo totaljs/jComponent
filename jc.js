@@ -353,6 +353,7 @@
 	MD.jsondate = true;
 	MD.ajaxerrors = false;
 	MD.ajaxcredentials = false;
+	MD.ajaxcredentialshtml = false;
 	MD.fallback = 'https://cdn.componentator.com/j-{0}.html';
 	MD.fallbackcache = '';
 	MD.version = '';
@@ -400,7 +401,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.225;
+	M.version = 18.226;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -901,6 +902,7 @@
 		output.duration = Date.now();
 		output.progress = progress;
 		output.decryption = !nodecrypt;
+		output.credentials = isCredentials;
 
 		if (DEF.csrf && !nocsrf) {
 			headers[T_CSRF] = DEF.csrf;
@@ -921,7 +923,7 @@
 
 			var xhr = new XMLHttpRequest();
 
-			if (isCredentials)
+			if (output.credentials)
 				xhr.withCredentials = true;
 
 			xhr.addEventListener('error', function() {
@@ -1969,12 +1971,11 @@
 			options.throw = ajaxcustomerror;
 			options.respond = ajaxcustomresponse;
 			options.duration = Date.now();
+			options.credentials = isCredentials;
 
 			if (url.match(/http:\/\/|https:\/\//i)) {
 				options.crossDomain = true;
 				delete options.headers['X-Requested-With'];
-				if (isCredentials)
-					options.xhrFields = { withCredentials: true };
 			} else
 				url = url.ROOT();
 
@@ -1982,7 +1983,7 @@
 			if (custom) {
 				url = url.replace(custom, '').replace(/\s+/g, '');
 				options.url = url;
-				custom = custom.toString().replace(/\(|\)/g, '').split(',');
+				custom = (custom + '').replace(/\(|\)/g, '').split(',');
 				for (var i = 0; i < custom.length; i++) {
 					var opt = ajaxconfig[custom[i].trim()];
 					opt && opt(options);
@@ -1992,13 +1993,17 @@
 			if (!options.url)
 				options.url = url;
 
-			if (DEF.csrf && !nocsrf && options.url.indexOf('.html') === -1) {
+			var ishtml = options.url.indexOf('.html') !== -1;
+
+			if (options.credentials && ishtml && !DEF.ajaxcredentialshtml)
+				options.credentials = false;
+
+			if (DEF.csrf && !nocsrf && !ishtml) {
 				headers[T_CSRF] = DEF.csrf;
 				options.csrf = true;
 			}
 
 			var canencrypt = encryptsecret && !noencrypt && (!encryptvalidator || encryptvalidator(options));
-
 			if (method !== 'GET') {
 				if (typeof(data) === TYPE_S) {
 					options.data = canencrypt ? encrypt_data(data, encryptsecret) : data;
@@ -2023,7 +2028,8 @@
 				if (!options.xhrFields)
 					options.xhrFields = {};
 				options.xhrFields.withCredentials = true;
-			}
+			} else if (options.xhrFields)
+				delete options.xhrFields;
 
 			options.type = options.method;
 			delete options.method;
@@ -2042,7 +2048,7 @@
 			output.callback = callback;
 			output.encrypted = options.encrypted;
 			output.duration = options.duration;
-			output.credentials = options.xhrFields && options.xhrFields.withCredentials ? true : false;
+			output.credentials = options.credentials;
 			output.decryption = !nodecrypt;
 
 			if (options.credentials != null)
@@ -2079,6 +2085,7 @@
 					ajaxprocess(output, code, s, req.responseText, parseHeaders(req.getAllResponseHeaders()), true);
 			};
 			var xhr = $.ajax(makeurl(output.url), options);
+
 			if (cancel)
 				cache[mainurl].xhr = xhr;
 
@@ -2448,7 +2455,7 @@
 		var arg = arguments;
 		var all = M.components;
 
-		var $ticks = Math.random().toString().substring(2, 8);
+		var $ticks = (Math.random() + '').substring(2, 8);
 		for (var j = 0; j < arg.length; j++) {
 			var p = arg[j];
 			binders[p] && binderbind(p, p, $ticks, 1);
@@ -4051,7 +4058,7 @@
 		}
 
 		params = STRINGIFY(params);
-		var key = HASH(method + '#' + url.replace(/\//g, '') + params, 1).toString();
+		var key = HASH(method + '#' + url.replace(/\//g, '') + params, 1) + '';
 		return cachestorage(key, value, expire);
 	}
 
@@ -4532,7 +4539,7 @@
 		if (v.charAt(0) !== '[')
 			v = '.' + v;
 
-		var fn = (new Function('w', 'a', 'b', 'binders', 'binderbind', 'nobind', 'c', 'var $ticks=Math.random().toString().substring(2,8);if(!nobind){' + builder.join(';') + ';var v=typeof(a)==\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v}' + binder.join(';') + ';return a'));
+		var fn = (new Function('w', 'a', 'b', 'binders', 'binderbind', 'nobind', 'c', 'var $ticks=(Math.random()+\'\').substring(2,8);if(!nobind){' + builder.join(';') + ';var v=typeof(a)==\'function\'?a(MAIN.compiler.get(b)):a;w' + v + '=v}' + binder.join(';') + ';return a'));
 		paths[key] = fn;
 		fn(MD.scope, value, path, binders, binderbind, is, settype);
 	}
@@ -5236,7 +5243,7 @@
 					return;
 
 				if (t.type === 'checkbox') {
-					var tmp = value != null ? value.toString().toLowerCase() : '';
+					var tmp = value != null ? (value + '').toLowerCase() : '';
 					tmp = tmp === T_TRUE || tmp === '1' || tmp === 'on';
 					tmp !== t.checked && (t.checked = tmp);
 					return;
@@ -8526,7 +8533,7 @@
 			format = MD.dateformat;
 
 		if (!format || format === 'iso')
-			return self.getFullYear() + '-' + (self.getMonth() + 1).toString().padLeft(2, '0') + '-' + self.getDate().toString().padLeft(2, '0') + 'T' + self.getHours().toString().padLeft(2, '0') + ':' + self.getMinutes().toString().padLeft(2, '0') + ':' + self.getSeconds().toString().padLeft(2, '0') + '.' + self.getMilliseconds().toString().padLeft(3, '0') + 'Z';
+			return self.getFullYear() + '-' + ((self.getMonth() + 1) + '').padLeft(2, '0') + '-' + (self.getDate() + '').padLeft(2, '0') + 'T' + (self.getHours() + '').padLeft(2, '0') + ':' + (self.getMinutes() + '').padLeft(2, '0') + ':' + (self.getSeconds() + '').padLeft(2, '0') + '.' + (self.getMilliseconds() + '').padLeft(3, '0') + 'Z';
 
 		var key = 'dt_' + format;
 
@@ -8557,7 +8564,7 @@
 					return beg + 'd.getFullYear()' + end;
 				case 'yy':
 				case 'YY':
-					return beg + 'd.getFullYear().toString().substring(2)' + end;
+					return beg + '(d.getFullYear()+\'\').substring(2)' + end;
 				case 'MMM':
 					ismm = true;
 					return beg + 'mm.substring(0, 3)' + end;
@@ -8674,7 +8681,7 @@
 			value = other;
 
 		return value.indexOf('#') === -1 ? value : value.replace(MR.pluralize, function(text) {
-			return text === '##' ? num.format() : num.toString();
+			return text === '##' ? num.format() : (num + '');
 		});
 
 	};
@@ -8691,7 +8698,7 @@
 	NP.format = function(decimals, separator, separatorDecimal) {
 
 		var self = this;
-		var num = self.toString();
+		var num = self + '';
 		var dec = '';
 		var output = '';
 		var minus = num.charAt(0) === '-' ? '-' : '';
@@ -8767,21 +8774,21 @@
 	};
 
 	SP.padLeft = function(t, e) {
-		var r = this.toString();
+		var r = this + '';
 		return Array(Math.max(0, t - r.length + 1)).join(e || ' ') + r;
 	};
 
 	SP.padRight = function(t, e) {
-		var r = this.toString();
+		var r = this + '';
 		return r + Array(Math.max(0, t - r.length + 1)).join(e || ' ');
 	};
 
 	NP.padLeft = function(t, e) {
-		return this.toString().padLeft(t, e || '0');
+		return (this + '').padLeft(t, e || '0');
 	};
 
 	NP.padRight = function(t, e) {
-		return this.toString().padRight(t, e || '0');
+		return (this + '').padRight(t, e || '0');
 	};
 
 	NP.add = NP.inc = function(value, decimals) {
@@ -9184,9 +9191,9 @@
 			if (value == null)
 				return self;
 		} else if (value === undefined)
-			value = name.toString();
+			value = name + '';
 
-		self.push(name + '="' + value.toString().env().toString().replace(/[<>&"]/g, function(c) {
+		self.push(name + '="' + ((value + '').env() + '').replace(/[<>&"]/g, function(c) {
 			switch (c) {
 				case '&': return '&amp;';
 				case '<': return '&lt;';
