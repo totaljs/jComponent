@@ -401,7 +401,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.226;
+	M.version = 18.227;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7205,12 +7205,23 @@
 				ok = 1;
 			} else if (plugin_name) {
 				tmp = pluginableplugins[plugin_name];
-				if (tmp) {
-					delete pluginableplugins[plugin_name];
+				if (tmp && !tmp.pending) {
 					warn('Initializing: ' + plugin_name);
-					W.PLUGIN(tmp.name, tmp.fn, tmp.init, function() {
-						exechelper(ctx, path, arg);
-					});
+					tmp.pending = true;
+					if (typeof(tmp.fn) === 'string') {
+						// URL address
+						IMPORT(tmp.fn, function() {
+							tmp = pluginableplugins[plugin_name];
+							tmp && W.PLUGIN(tmp.name, tmp.fn, tmp.init, function() {
+								exechelper(ctx, path, arg);
+							});
+						});
+					} else {
+						delete pluginableplugins[plugin_name];
+						W.PLUGIN(tmp.name, tmp.fn, tmp.init, function() {
+							exechelper(ctx, path, arg);
+						});
+					}
 					return;
 				} else
 					wait = true;
@@ -11196,6 +11207,7 @@
 	function plugindone(t, fn, done) {
 		var a = current_owner;
 		current_owner = t.id;
+		delete t.pending;
 		fn.call(t, t);
 		current_owner = a;
 		current_scope = null;
@@ -11213,6 +11225,7 @@
 		t.id = 'plug' + name;
 		t.name = name;
 		if (init) {
+			t.pending = true;
 			if (typeof(init) === 'string') {
 				MIDDLEWARE(init.split(/\s|,/).trim(), function() {
 					plugindone(t, fn, done);
@@ -11287,7 +11300,12 @@
 	};
 
 	W.PLUGINABLE = function(name, fn, init) {
-		pluginableplugins[name] = { name: name, fn: fn, init: init };
+		var tmp = pluginableplugins[name];
+		if (tmp && tmp.pending) {
+			tmp.fn = fn;
+			tmp.init = init;
+		} else
+			pluginableplugins[name] = { name: name, fn: fn, init: init };
 	};
 
 	W.PLUGIN = function(name, fn, init, done) {
