@@ -1,4 +1,5 @@
 {
 	"mangle": true,
+	"compress": true,
 	"output": { "quote_style": 1 }
 }
