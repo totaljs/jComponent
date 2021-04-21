@@ -172,10 +172,8 @@
 		var keys;
 
 		if (data) {
-			keys = OK(data);
 			var remove = false;
-			for (var i = 0; i < keys.length; i++) {
-				var key = keys[i];
+			for (var key in data) {
 				var item = data[key];
 				if (item && item.expire > NOW) {
 					PREF[key] = item;
@@ -186,9 +184,8 @@
 			}
 
 			if (PREF.PATHS) {
-				keys = OK(PREF.PATHS);
-				for (var i = 0; i < keys.length; i++)
-					M.set(keys[i], PREF.PATHS[keys[i]], true);
+				for (var key in PREF.PATHS)
+					M.set(key, PREF.PATHS[key], true);
 			}
 
 			remove && setTimeout2('PREF', W.PREF.save, 1000, null, PREF);
@@ -401,7 +398,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.227;
+	M.version = 18.228;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -660,9 +657,7 @@
 
 		if (typeof(name) === TYPE_O) {
 			if (name) {
-				var keys = OK(name);
-				for (var i = 0; i < keys.length; i++) {
-					var key = keys[i];
+				for (var key in name) {
 					ENV[key] = name[key];
 					events[KEY_ENV] && EMIT(KEY_ENV, key, name[key]);
 				}
@@ -951,14 +946,12 @@
 
 			xhr.open(method, makeurl(output.url));
 
-			var keys = OK(MD.headers);
-			for (var i = 0; i < keys.length; i++)
-				xhr.setRequestHeader(keys[i].env(), MD.headers[keys[i]].env());
+			for (var key in MD.headers)
+				xhr.setRequestHeader(key.env(), MD.headers[key].env());
 
 			if (headers) {
-				var keys = OK(headers);
-				for (var i = 0; i < keys.length; i++)
-					xhr.setRequestHeader(keys[i], headers[keys[i]]);
+				for (var key in headers)
+					xhr.setRequestHeader(key, headers[key]);
 			}
 
 			xhr.send(data);
@@ -1205,9 +1198,7 @@
 			});
 		};
 
-		var keys = OK(events);
-		for (var i = 0; i < keys.length; i++) {
-			var p = keys[i];
+		for (var p in events) {
 			events[p] = cleararr(events[p], p);
 			if (!events[p].length)
 				delete events[p];
@@ -1688,11 +1679,8 @@
 
 	W.MODIFY = function(path, value, timeout) {
 		if (path && typeof(path) === TYPE_O) {
-			var keys = OK(path);
-			for (var i = 0; i < keys.length; i++) {
-				var key = keys[i];
+			for (var key in path)
 				MODIFY(key, path[key], value);
-			}
 		} else {
 			if (typeof(value) === TYPE_FN)
 				value = value(GET(path));
@@ -3405,9 +3393,8 @@
 		if (storage) {
 			var obj = storage[T_PATHS];
 			if (obj) {
-				var keys = OK(obj.value);
-				for (var i = 0; i < keys.length; i++)
-					M.set(keys[i], obj.value[keys[i]], true);
+				for (var key in obj.value)
+					M.set(key, obj.value[key], true);
 			}
 		}
 	}
@@ -3636,37 +3623,11 @@
 
 				obj.setPath(pathmaker(p, 1, 1), 1);
 
-				if (tmp && tmp.charAt(0) === '%')
-					obj.config = W[tmp.substring(1)] || {};
-				else
-					obj.config = {};
-
-				// Default config
-				com.config && obj.reconfigure(com.config, NOOP);
-				tmp && obj.reconfigure(tmp, NOOP);
-
 				if (!obj.id)
 					obj.id = obj._id;
 
 				obj.siblings = all.length > 1;
 				obj.$lazy = lo;
-
-				for (var i = 0; i < configs.length; i++) {
-					var con = configs[i];
-					con.fn(obj) && obj.reconfigure(typeof(con.config) === TYPE_FN ? con.config.call(obj) : con.config, NOOP);
-				}
-
-				var at = obj.name.lastIndexOf('@');
-				current_com = obj;
-				com.declaration.call(obj, obj, obj.config, 'ui-' + (at === - 1 ? obj.name : obj.name.substring(0, at)));
-				current_com = null;
-
-				meta[3] && el.attrd('jc-value', meta[3]);
-
-				if (obj.init && !statics[name]) {
-					statics[name] = true;
-					obj.init();
-				}
 
 				// @TODO: here can be a problem with multiple components
 				dom.$com = obj;
@@ -3705,6 +3666,32 @@
 						obj.scope = scope;
 						obj.pathscope = scope.path;
 					}
+				}
+
+				if (tmp && tmp.charAt(0) === '%')
+					obj.config = W[tmp.substring(1)] || {};
+				else
+					obj.config = {};
+
+				// Default config
+				com.config && obj.reconfigure(com.config, NOOP);
+				tmp && obj.reconfigure(tmp, NOOP);
+
+				for (var i = 0; i < configs.length; i++) {
+					var con = configs[i];
+					con.fn(obj) && obj.reconfigure(typeof(con.config) === TYPE_FN ? con.config.call(obj) : con.config, NOOP);
+				}
+
+				var at = obj.name.lastIndexOf('@');
+				current_com = obj;
+				com.declaration.call(obj, obj, obj.config, 'ui-' + (at === - 1 ? obj.name : obj.name.substring(0, at)));
+				current_com = null;
+
+				meta[3] && el.attrd('jc-value', meta[3]);
+
+				if (obj.init && !statics[name]) {
+					statics[name] = true;
+					obj.init();
 				}
 
 				instances.push(obj);
@@ -4656,10 +4643,7 @@
 			return;
 		}
 
-		var arr = OK(cache);
-
-		for (var i = 0; i < arr.length; i++) {
-			var key = arr[i];
+		for (var key in cache) {
 			var remove = false;
 			var a = arguments;
 
@@ -4697,14 +4681,11 @@
 
 		DEF.monitor && monitor_method('compilation', 2);
 
-		var keys = OK(events);
 		var is = false;
-		var length = keys.length;
 		var index;
 		var arr;
 
-		for (var i = 0; i < length; i++) {
-			var key = keys[i];
+		for (var key in events) {
 			index = 0;
 			arr = events[key];
 			while (true) {
@@ -4742,9 +4723,7 @@
 			item.context.$removed = true;
 			item.context = null;
 			watches.splice(index - 1, 1);
-
 			DEF.monitor && monitor_method('watchers', 2);
-
 			index -= 2;
 			is = true;
 		}
@@ -4831,9 +4810,8 @@
 			DEF.monitor && monitor_method('components', 2);
 		}
 
-		keys = OK(binders);
-		for (var i = 0; i < keys.length; i++) {
-			arr = binders[keys[i]];
+		for (var key in binders) {
+			arr = binders[key];
 			var j = 0;
 			while (true) {
 				var o = arr[j++];
@@ -4854,9 +4832,9 @@
 				arr.splice(j, 1);
 			}
 			if (!arr.length) {
-				if (M.paths[keys[i]])
-					M.paths[keys[i]]--;
-				delete binders[keys[i]];
+				if (M.paths[key])
+					M.paths[key]--;
+				delete binders[key];
 			}
 			DEF.monitor && monitor('binders', 2);
 		}
@@ -4865,10 +4843,8 @@
 
 		// Checks PLUGINS
 		var R = W.PLUGINS;
-		keys = OK(R);
 
-		for (var i = 0; i < keys.length; i++) {
-			var k = keys[i];
+		for (var k in R) {
 			var a = R[k];
 			if (!inDOM(a.element[0]) || !a.element[0].innerHTML) {
 				a.$remove();
@@ -5076,6 +5052,9 @@
 		self.$valid = true;
 		self.$parser = [];
 		self.$formatter = [];
+		self.$configwatcher = {};
+		self.$configchanges = {};
+
 		// self.$validate = false;
 		// self.$skip = false;
 		// self.$ready = false;
@@ -5464,9 +5443,8 @@
 
 	function removewaiter(obj) {
 		if (obj.$W) {
-			var keys = OK(obj.$W);
-			for (var i = 0; i < keys.length; i++) {
-				var v = obj.$W[keys[i]];
+			for (var key in obj.$W) {
+				var v = obj.$W[key];
 				v.id && clearInterval(v.id);
 			}
 			delete obj.$W;
@@ -5479,38 +5457,41 @@
 		return NOTMODIFIED(t._id, t.get(), fields);
 	};
 
+	function waiter(self, obj, prop) {
+		obj.id && clearInterval(obj.id);
+		obj.id = setInterval(function(self, obj, prop) {
+
+			if (self.$removed)
+				return;
+
+			var o = self.$W[prop];
+			var v = self[prop]();
+			if (v) {
+				clearInterval(obj.id);
+				for (var i = 0; i < obj.callback.length; i++)
+					obj.callback[i].call(self, v);
+				delete self.$W[prop];
+			}
+
+		}, MD.delaywatcher, self, obj, prop);
+	}
+
 	PPC.$waiter = function(prop, callback) {
 
 		var t = this;
 
 		if (prop === true) {
 			if (t.$W) {
-				var keys = OK(t.$W);
-				for (var i = 0; i < keys.length; i++) {
-					var k = keys[i];
+				for (var k in t.$W) {
 					var o = t.$W[k];
-					o.id = setInterval(function(t, prop) {
-
-						if (t.$removed)
-							return;
-
-						var o = t.$W[prop];
-						var v = t[prop]();
-						if (v) {
-							clearInterval(o.id);
-							for (var i = 0; i < o.callback.length; i++)
-								o.callback[i].call(t, v);
-							delete t.$W[prop];
-						}
-					}, MD.delaywatcher, t, k);
+					waiter(t, o, k);
 				}
 			}
 			return;
 		} else if (prop === false) {
 			if (t.$W) {
-				var keys = OK(t.$W);
-				for (var i = 0; i < keys.length; i++) {
-					var a = t.$W[keys[i]];
+				for (var key in t.$W) {
+					var a = t.$W[key];
 					a && clearInterval(a.id);
 				}
 			}
@@ -5530,22 +5511,9 @@
 		} else
 			t.$W[prop] = { callback: [callback] };
 
-		if (!t.isreleased) {
-			t.$W[prop].id = setInterval(function(t, prop) {
+		if (!t.isreleased)
+			waiter(t, t.$W[prop], prop);
 
-				if (t.$removed)
-					return;
-
-				var o = t.$W[prop];
-				var v = t[prop]();
-				if (v) {
-					clearInterval(o.id);
-					for (var i = 0; i < o.callback.length; i++)
-						o.callback[i].call(t, v);
-					delete t.$W[prop];
-				}
-			}, MD.delaywatcher, t, prop);
-		}
 		return t;
 	};
 
@@ -6200,24 +6168,45 @@
 		return v;
 	};
 
+	function updateconfig(com) {
+		com.$configtimeout = null;
+		com.reconfigure(com.$configchanges);
+		com.$configchanges = {};
+	}
+
+	PPC.$configmonitor = function(path) {
+		var self = this;
+		return function(p, v) {
+			self.$configchanges[path] = v;
+			self.$configtimeout && clearTimeout(self.$configtimeout);
+			self.$configtimeout = setTimeout(updateconfig, 50, self);
+		};
+	};
+
 	PPC.reconfigure = function(value, callback, init) {
 
 		var self = this;
-
-		// It cancels execution of config|disable command in data-bind therefor is disabled
-		// if (self.dom.$binderconfig) {
-		// 	clearTimeout(self.dom.$binderconfig);
-		// 	delete self.dom.$binderconfig;
-		// }
 
 		if (value == null)
 			return self;
 
 		if (typeof(value) === TYPE_O) {
-			var keys = OK(value);
-			for (var i = 0; i < keys.length; i++) {
-				var k = keys[i];
-				var v = self.configdisplay(k, value[k]);
+			for (k in value) {
+
+				var v = value[k];
+				var iswatcher = k.charAt(0) === '=';
+
+				if (iswatcher) {
+					k = k.substring(1);
+					if (!self.$configwatcher[k]) {
+						self.$configwatcher[k] = v = self.makepath(v);
+						self.watch(v, self.$configmonitor(k));
+					}
+					v = GET(v);
+				}
+
+				if (!iswatcher)
+					v = self.configdisplay(k, v);
 				var prev = self.config[k];
 				if (!init && self.config[k] !== v)
 					self.config[k] = v;
@@ -6227,21 +6216,41 @@
 					self.configure(k, v, init, init ? undefined : prev);
 				self.data(T_CONFIG + '.' + k, v);
 			}
-		} else if (value.charAt(0) === '=') {
+		} else if (value.charAt(0) === '=' && value.indexOf(':') === -1) {
 			value = value.substring(1).SCOPE(self);
+
 			if (self.watch) {
 				self.$rcwatch && self.unwatch(self.$rcwatch, self.rcwatch);
 				self.watch(value, self.rcwatch);
 				self.$rcwatch = value;
 			}
+
 			self.reconfigure(get(value), callback, init);
+
 		} else {
+
 			value.parseConfig(function(k, v) {
+
 				var prev = self.config[k];
-				v = self.configdisplay(k, v);
+				var iswatcher = k.charAt(0) === '=';
+
+				if (iswatcher) {
+					k = k.substring(1);
+					if (!self.$configwatcher[k]) {
+						self.$configwatcher[k] = v = self.makepath(v);
+						self.watch(v, self.$configmonitor(k));
+					}
+					v = GET(v);
+				}
+
+				if (!iswatcher)
+					v = self.configdisplay(k, v);
+
 				if (!init && self.config[k] !== v)
 					self.config[k] = v;
+
 				self.data(T_CONFIG + '.' + k, v);
+
 				if (callback)
 					callback(k, v, init, init ? undefined : prev);
 				else if (self.configure)
@@ -7205,26 +7214,28 @@
 				ok = 1;
 			} else if (plugin_name) {
 				tmp = pluginableplugins[plugin_name];
-				if (tmp && !tmp.pending) {
-					warn('Initializing: ' + plugin_name);
-					tmp.pending = true;
-					if (typeof(tmp.fn) === 'string') {
-						// URL address
-						IMPORT(tmp.fn, function() {
-							tmp = pluginableplugins[plugin_name];
-							tmp && W.PLUGIN(tmp.name, tmp.fn, tmp.init, function() {
+				if (tmp) {
+					if (!tmp.pending) {
+						warn('Initializing: ' + plugin_name);
+						tmp.pending = true;
+						if (typeof(tmp.fn) === 'string') {
+							// URL address
+							IMPORT(tmp.fn, function() {
+								tmp = pluginableplugins[plugin_name];
+								tmp && W.PLUGIN(tmp.name, tmp.fn, tmp.init, function() {
+									exechelper(ctx, path, arg);
+								});
+							});
+						} else {
+							delete pluginableplugins[plugin_name];
+							W.PLUGIN(tmp.name, tmp.fn, tmp.init, function() {
 								exechelper(ctx, path, arg);
 							});
-						});
-					} else {
-						delete pluginableplugins[plugin_name];
-						W.PLUGIN(tmp.name, tmp.fn, tmp.init, function() {
-							exechelper(ctx, path, arg);
-						});
-					}
-					return;
-				} else
-					wait = true;
+						}
+						return;
+					} else
+						wait = true;
+				}
 			}
 			wait && !ok && exechelper(ctx, path, arg);
 			return;
@@ -10612,9 +10623,7 @@
 			}
 		}
 
-		var keys = OK(sub);
-		for (var i = 0; i < keys.length; i++) {
-			var key = keys[i];
+		for (var key in sub) {
 			if (!obj.child)
 				obj.child = [];
 			var o = sub[key];
@@ -11262,11 +11271,8 @@
 		if (!self.element)
 			return true;
 
-		var keys = OK(repeats);
 		var id = self.id + '_';
-
-		for (var i = 0; i < keys.length; i++) {
-			var key = keys[i];
+		for (var key in repeats) {
 			if (key.substring(0, id.length) === id) {
 				clearInterval(repeats[key]);
 				delete repeats[key];
@@ -11278,9 +11284,7 @@
 		self.destroy && self.destroy();
 
 		// Remove all global events
-		keys = OK(events);
-		for (var i = 0; i < keys.length; i++) {
-			var key = keys[i];
+		for (var key in events) {
 			var evt = events[key];
 			evt = evt.remove('owner', self.id);
 			if (!evt.length)
