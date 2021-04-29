@@ -397,7 +397,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.229;
+	M.version = 18.230;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3690,8 +3690,6 @@
 				current_com = obj;
 				com.declaration.call(obj, obj, obj.config, 'ui-' + (at === - 1 ? obj.name : obj.name.substring(0, at)));
 				current_com = null;
-
-				meta[3] && el.attrd('jc-value', meta[3]);
 
 				if (obj.init && !statics[name]) {
 					statics[name] = true;
@@ -10767,10 +10765,15 @@
 		}
 
 		obj.$init = 0;
+
+		if (!DEF.inspectable)
+			el.removeAttribute(T_DATA + 'bind');
+
 		if (!obj.virtual) {
 			M.binders.push(obj);
 			bindersnew.push(obj);
 		}
+
 		return obj;
 	}
 
