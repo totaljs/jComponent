@@ -169,8 +169,6 @@
 		if (typeof(data) === TYPE_S)
 			data = PARSE(data);
 
-		var keys;
-
 		if (data) {
 			var remove = false;
 			for (var key in data) {
@@ -399,7 +397,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.228;
+	M.version = 18.229;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4752,8 +4750,8 @@
 		}
 
 		var all = M.components;
+		var length = all.length;
 		index = 0;
-		length = all.length;
 
 		while (index < length) {
 
@@ -5475,7 +5473,6 @@
 			if (self.$removed)
 				return;
 
-			var o = self.$W[prop];
 			var v = self[prop]();
 			if (v) {
 				clearInterval(obj.id);
@@ -6202,7 +6199,7 @@
 			return self;
 
 		if (typeof(value) === TYPE_O) {
-			for (k in value) {
+			for (var k in value) {
 
 				var v = value[k];
 				var iswatcher = k.charAt(0) === '=';
