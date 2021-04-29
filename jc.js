@@ -336,6 +336,7 @@
 		delete MD.secret;
 	};
 
+	MD.inspectable = true;
 	MD.repeatfocus = true;
 	MD.monitor = false;
 	MD.scope = W;
@@ -3668,6 +3669,11 @@
 					}
 				}
 
+				if (!DEF.inspectable) {
+					dom.removeAttribute(T_DATA + '-');
+					dom.removeAttribute(T_DATA + '--');
+				}
+
 				if (tmp && tmp.charAt(0) === '%')
 					obj.config = W[tmp.substring(1)] || {};
 				else
@@ -3784,11 +3790,16 @@
 
 		while (el && el.tagName !== T_BODY) {
 
+			if (el.$scopedata)
+				return el.$scopedata;
+
 			var path = el.getAttribute ? (el.getAttribute(ATTRSCOPE2) || el.getAttribute(SCOPENAME)) : null;
 			if (path) {
 
-				if (el.$scopedata)
-					return el.$scopedata;
+				if (!DEF.inspectable) {
+					el.removeAttribute(ATTRSCOPE2, '');
+					el.removeAttribute(SCOPENAME, '');
+				}
 
 				var independent = path.charAt(0) === '!';
 				if (independent)
