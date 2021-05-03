@@ -5729,7 +5729,7 @@
 
 		if (remove)
 			prev.off().remove();
-		else
+		else if (!DEF.inspectable)
 			self.attrd('jc-replaced', T_TRUE);
 
 		self.element = $(el);
@@ -5742,8 +5742,11 @@
 			data.element = self.element;
 		}
 
-		self.attrd(T_, self.name);
-		scope && self.attrd(n, scope);
+		if (!DEF.inspectable) {
+			self.attrd(T_, self.name);
+			scope && self.attrd(n, scope);
+		}
+
 		self.siblings = false;
 		return self;
 	};

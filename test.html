@@ -10,17 +10,30 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<meta name="robots" content="all,follow" />
 	<link rel="stylesheet" href="//cdn.componentator.com/spa.min@18.css" />
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-	<script src="jc.js"></script>
+	<script src="spa.min@18.js"></script>
 </head>
-<body style="font-family:Arial">
+<body style="font-family:Arial" data-id="Peter">
 
-	<div data-bind="form__track:price__text:JSON.stringify(value)" class="padding"></div>
+	<div data---="test__null__color:@dark=#404040"></div>
 
 	<script>
-	var form = { price: 10 };
+
+		COMPONENT('test', '', function(self, config) {
+
+			// self.singleton();
+			// self.readonly();
+			// self.bindchanges();
+			// self.bindvisible();
+			// self.bindexact();
+			// self.blind();
+
+			self.configure = function(key, value) {
+				console.log(key, value);
+			};
+		});
+
 
 	</script>
 
-</body>
+	</body>
 </html>
