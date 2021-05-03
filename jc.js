@@ -21,6 +21,7 @@
 	var REGSCOPEREPLACE = /\?\//g;
 	var REGNUM = /^(-)?[0-9.]+$/;
 	var T_COM = '---';
+	var T_ = '--';
 	var T_DATA = 'data-';
 	var ATTRCOM = '[data-jc],[data--],[data' + T_COM + ']';
 	var ATTRBIND = '[data-bind],[bind],[data-vbind]';
@@ -397,7 +398,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.231;
+	M.version = 18.232;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3145,7 +3146,7 @@
 	function attrcom(el, name) {
 		if (!el.attrd)
 			el = $(el);
-		return name ? el.attrd(ATTRDATA + '-' + name) : (el.attrd(ATTRDATA) || el.attrd('-') || el.attrd('--') || el.attrd(T_COM));
+		return name ? el.attrd(ATTRDATA + '-' + name) : (el.attrd(ATTRDATA) || el.attrd('-') || el.attrd(T_) || el.attrd(T_COM));
 	}
 
 	function attrrel(el) {
@@ -3669,7 +3670,7 @@
 
 				if (!DEF.inspectable) {
 					dom.removeAttribute(T_DATA + '-');
-					dom.removeAttribute(T_DATA + '--');
+					dom.removeAttribute(T_DATA + T_);
 				}
 
 				if (tmp && tmp.charAt(0) === '%')
@@ -5721,7 +5722,7 @@
 		var scope = prev.attrd(n);
 		var data = prev[0].$scopedata;
 
-		prev.rattrd(ATTRDATA, '-', '--', T_COM);
+		prev.rattrd(ATTRDATA, '-', T_, T_COM);
 		prev[0].$com = prev[0].$scopedata = null;
 
 		scope && self.element.rattrd(n);
@@ -5741,7 +5742,7 @@
 			data.element = self.element;
 		}
 
-		self.attrd(T_COM, self.name);
+		self.attrd(T_, self.name);
 		scope && self.attrd(n, scope);
 		self.siblings = false;
 		return self;
@@ -7784,7 +7785,7 @@
 				case 'largemode':
 					break;
 				default:
-					builder.push('--' + key.trim() + ':' + (obj[key] + '').trim());
+					builder.push(T_ + key.trim() + ':' + (obj[key] + '').trim());
 					break;
 			}
 		}
