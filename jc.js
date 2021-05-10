@@ -398,7 +398,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.232;
+	M.version = 18.233;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -12001,14 +12001,16 @@
 					shadowtop.css(T_WIDTH, size.viewWidth - shadowm);
 					shadowbottom.css(T_WIDTH, size.viewWidth - shadowm);
 				}
-				shadowright && shadowright.css('left', aw - shadowheight);
+				// shadowright && shadowright.css('left', aw - shadowheight);
+				shadowright && shadowright.css('left', size.viewWidth - shadowheight);
 				bodyarea.css(orientation === 'y' ? T_WIDTH : 'min-' + T_WIDTH, size.viewWidth - mx + (W.isIE || isedge || !sw ? size.margin : 0) - (orientation === 'x' ? size.margin : 0));
 			}
 
 			if (scrollbarcache.ah !== ah) {
 				scrollbarcache.ah = ah;
 				area.css(T_HEIGHT, ah);
-				shadowbottom && shadowbottom.css('top', ah - shadowheight);
+				// shadowbottom && shadowbottom.css('top', ah - shadowheight);
+				shadowbottom && shadowbottom.css('top', size.viewHeight - shadowheight);
 			}
 
 			size.scrollWidth = a.scrollWidth || 0;
