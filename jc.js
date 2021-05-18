@@ -398,7 +398,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.233;
+	M.version = 18.234;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -9759,12 +9759,17 @@
 			return t;
 		};
 
+		var displaymodeprev;
+
 		function displaymode() {
 			var d = WIDTH();
 			if (D.body) {
-				var b = $(D.body);
-				b.rclass('jc-lg jc-md jc-sm jc-xs');
-				b.aclass('jc-' + d);
+				if (d !== displaymodeprev) {
+					displaymodeprev = d;
+					var b = $(D.body);
+					b.rclass('jc-lg jc-md jc-sm jc-xs');
+					b.aclass('jc-' + d);
+				}
 			} else
 				setTimeout(displaymode, 50);
 		}
@@ -9982,6 +9987,8 @@
 			pua.browser && body.aclass('jc-' + pua.browser.toLowerCase());
 			pua.os && body.aclass('jc-' + pua.os.toLowerCase());
 			pua.device && body.aclass('jc-' + pua.device.toLowerCase());
+
+			displaymode();
 
 			var cd = (function () {
 				var cookies = navigator.cookieEnabled;
