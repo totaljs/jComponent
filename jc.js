@@ -1219,7 +1219,7 @@
 		name = makeandexecflags(name);
 
 		var e = events[name];
-		if (!e)
+		if (!e || !e.length)
 			return false;
 
 		var args = [];
@@ -1229,13 +1229,18 @@
 
 		DEF.monitor && monitor_method('events');
 
+		var scope = current_scope;
+
 		for (var i = 0; i < e.length; i++) {
-			var context = e[i].context;
+			var m = e[i];
+			var context = m.context;
 			if (context !== undefined && (context === null || context.$removed))
 				continue;
-			e[i].fn.apply(context || W, args);
+			current_scope = m.scope ? m.scope : scope;
+			m.fn.apply(context || W, args);
 		}
 
+		current_scope = scope;
 		return true;
 	};
 
