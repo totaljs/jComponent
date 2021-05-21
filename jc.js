@@ -398,7 +398,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.234;
+	M.version = 18.235;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1229,18 +1229,18 @@
 
 		DEF.monitor && monitor_method('events');
 
-		var scope = current_scope;
+		var oldscope = current_scope;
 
 		for (var i = 0; i < e.length; i++) {
 			var m = e[i];
 			var context = m.context;
 			if (context !== undefined && (context === null || context.$removed))
 				continue;
-			current_scope = m.scope ? m.scope : scope;
+			current_scope = m.scope ? m.scope : oldscope;
 			m.fn.apply(context || W, args);
 		}
 
-		current_scope = scope;
+		current_scope = oldscope;
 		return true;
 	};
 
