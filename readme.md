@@ -4,7 +4,7 @@
 - [Join Total.js Telegram](https://t.me/totaljs)
 - [Support](https://www.totaljs.com/support/)
 
-> __Download__: more than 230 jComponents free for everyone <https://componentator.com>
+> __Download__: more than 250 jComponents free for everyone <https://componentator.com>
 
 - Current version: `v18`
 - `>= jQuery +1.7`
