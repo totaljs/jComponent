@@ -195,6 +195,7 @@
 			var tmp = plugininit[i];
 			W.PLUGIN(tmp.name, tmp.fn);
 		}
+		NOTIFY('PREF');
 		compile();
 	};
 
@@ -220,6 +221,7 @@
 				W.PREF[key] = value;
 		}
 
+		NOTIFY('PREF.' + key);
 		setTimeout2('PREF', prefsave, MD.delaypref);
 		return value;
 	};
@@ -398,7 +400,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.235;
+	M.version = 18.236;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
