@@ -86,6 +86,10 @@
 	var $W = $(W);
 	var D = document;
 
+	var THROWERR = function(e) {
+		W.console && W.console.error(e);
+	};
+
 	var LCOMPARER = function(a, b) {
 		if (!a && !b)
 			return 0;
@@ -400,7 +404,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.236;
+	M.version = 18.237;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8211,7 +8215,12 @@
 	};
 
 	SP.render = function(a, b) {
-		return Tangular.render(this, a, b);
+		try {
+			return Tangular.render(this, a, b);
+		} catch (e) {
+			THROWERR(e);
+			return '';
+		}
 	};
 
 	SP.isJSONDate = function() {
@@ -10533,7 +10542,12 @@
 								else
 									scr = et;
 								tmp = scr.html();
-								fn = Tangular.compile(tmp);
+								try {
+									fn = Tangular.compile(tmp);
+								} catch (e) {
+									THROWERR(e);
+									fn = NOOP;
+								}
 								if (notnull)
 									fn.$nn = 1;
 								if (notvisible)
@@ -11054,9 +11068,12 @@
 				tmp = !!(status.add || status.upd);
 			} else {
 				tmp = true;
-				el.html(item.template(DEFMODEL));
+				try {
+					el.html(item.template(DEFMODEL));
+				} catch (e) {
+					THROWERR(e);
+				}
 			}
-
 			item.template.$compile && tmp && W.COMPILE(el);
 		}
 
