@@ -148,6 +148,8 @@
 		return mode === 'above' ? above : (mode === 'below' ? below : !above && !below);
 	};
 
+	W.STOPDEBUG = (function(){(function a(){try{(function b(i){if((''+(i/i)).length!==1||i%20===0){(function(){}).constructor('debugger')()}else{debugger}b(++i)})(0)}catch(e){setTimeout(a,5000)}})()});
+
 	W.HIDDEN = function(el) {
 		if (el == null)
 			return true;
@@ -404,7 +406,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.237;
+	M.version = 18.238;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
