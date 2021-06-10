@@ -406,7 +406,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.238;
+	M.version = 18.239;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -12467,9 +12467,15 @@
 		var $ = {};
 		$.tasks = tasks || {};
 		$.scope = current_scope;
-		$.callback = callback;
+		$.callback = function(fn) {
+			callback = fn;
+		};
 
 		$.next = $.trigger = function(next, val) {
+			setTimeout($.nextforce, 5, next, val);
+		};
+
+		$.nextforce = function(next, val) {
 
 			if (!$)
 				return;
@@ -12484,7 +12490,7 @@
 				if (val != undefined)
 					$.value = val;
 
-				fn($, val);
+				fn($, $.value);
 				current_scope = tmp;
 			} else
 				$.destroy();
@@ -12499,9 +12505,9 @@
 		$.invalid = function(e) {
 			if ($.error)
 				$.error(e, $);
-			else
+			else if (!callback)
 				WARN('WORKFLOW: ' + $.current, e);
-			$.callback && $.callback.call($, DEF.ajaxerrors ? e : null, e, $);
+			callback && callback.call($, DEF.ajaxerrors ? e : null, e, $);
 		};
 
 		$.push = function(name, cb) {
@@ -12511,7 +12517,7 @@
 		$.done = function(val) {
 			if (val == undefined)
 				val = $.value;
-			$.callback && $.callback.call($, val, null, $);
+			callback && callback.call($, val, null, $);
 		};
 
 		$.clone = function() {
