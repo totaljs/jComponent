@@ -1771,6 +1771,76 @@
 		AJAX('POST ' + url, model, callback);
 	}
 
+	var wapisocket;
+	var wapisocket_online = false;
+	var wapisocket_callbacks = {};
+	var wapisocket_counter = 0;
+
+	/*
+		{
+			TYPE: 'api',
+			callbackid: '1',
+			data: { id: 'op', data: data }
+		}
+	*/
+
+	W.DWAPI = function(opt) {
+
+		wapisocket && wapisocket.close();
+
+		var onopen = function() {
+			wapisocket_online = true;
+			opt.open && opt.open();
+			if (opt.callback) {
+				opt.callback();
+				opt.callback = null;
+			}
+		};
+
+		var onclose = function(e) {
+			wapisocket_online = false;
+			opt.close && opt.close(e);
+
+			if (opt.callback) {
+				opt.callback(e.code);
+				opt.callback = null;
+			}
+
+			if (e.code !== 4001 && opt.reconnect !== false)
+				setTimeout(connect, opt.reconnect || 2000);
+
+		};
+
+		var onmessage = function(e) {
+			try {
+				var data = PARSE(e.data);
+				opt.message && opt.message(data);
+
+				switch (data.TYPE) {
+					case 'api':
+						break;
+				}
+
+			} catch (e) {
+				opt.error && opt.error(e, e.data);
+			}
+		};
+
+		var connect = function() {
+			wapisocket = new WebSocket(opt.url.env(true));
+			wapisocket.onopen = onopen;
+			wapisocket.onclose = onclose;
+			wapisocket.onmessage = onmessage;
+		};
+
+		connect();
+
+	};
+
+	W.WAPI = function(name, data, callback) {
+		return W.API('--socket-- ' + name, data, callback);
+	};
+
 	W.DAPI = function(url, data, callback) {
 		return W.API(DEF.api + ' ' + url, data, callback);
 	};
@@ -2085,6 +2155,7 @@
 				} else
 					ajaxprocess(output, code, s, req.responseText, parseHeaders(req.getAllResponseHeaders()), true);
 			};
+
 			var xhr = $.ajax(makeurl(output.url), options);
 
 			if (cancel)
