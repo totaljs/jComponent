@@ -12455,11 +12455,17 @@
 		return arr.length;
 	};
 
-	W.WORKFLOW = function(declaration, tasks) {
+	W.WORKFLOW = function(declaration, tasks, callback) {
+
+		if (typeof(tasks) === TYPE_FN) {
+			callback = tasks;
+			tasks = undefined;
+		}
 
 		var $ = {};
 		$.tasks = tasks || {};
 		$.scope = current_scope;
+		$.callback = callback;
 
 		$.next = $.trigger = function(next, val) {
 
@@ -12472,6 +12478,10 @@
 				var tmp = current_scope;
 				current_scope = $.scope;
 				$.current = next;
+
+				if (val != undefined)
+					$.value = val;
+
 				fn($, val);
 				current_scope = tmp;
 			} else
@@ -12489,11 +12499,17 @@
 				$.error(e, $);
 			else
 				WARN('WORKFLOW: ' + $.current, e);
-			$.destroy();
+			$.callback && $.callback.call($, DEF.ajaxerrors ? e : null, e, $);
 		};
 
 		$.push = function(name, cb) {
 			$.tasks[name] = cb;
+		};
+
+		$.done = function(val) {
+			if (val == undefined)
+				val = $.value;
+			$.callback && $.callback.call($, val, null, $);
 		};
 
 		$.clone = function() {
