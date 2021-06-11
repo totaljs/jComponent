@@ -1852,7 +1852,12 @@
 		var connect = function() {
 			events.reconnect && opt.emit('reconnect');
 			socket && socket.close();
-			socket = new WebSocket(opt.url.env(true));
+
+			var url = opt.url.env(true);
+			if (url.charAt(0) === '/')
+				url = location.origin.replace(/^http/, 'ws') + url;
+
+			socket = new WebSocket(url);
 			socket.onopen = onopen;
 			socket.onclose = onclose;
 			socket.onmessage = onmessage;
@@ -2192,14 +2197,14 @@
 
 			delete options.url;
 
-			output.$success = options.success = function(r, s, req) {
+			options.success = function(r, s, req) {
 				if (cancel)
 					delete cache[mainurl];
 				pendingrequest--;
 				ajaxprocess(output, req.status, s, r, req.getAllResponseHeaders ? parseHeaders(req.getAllResponseHeaders()) : req.headers);
 			};
 
-			output.$error = options.error = function(req, s) {
+			options.error = function(req, s) {
 
 				if (cancel)
 					delete cache[mainurl];
@@ -2219,6 +2224,8 @@
 			};
 
 			if (output.url === '--socket--') {
+				output.$success = options.success;
+				output.$error = options.error;
 				socket && socket(output);
 				return;
 			}
