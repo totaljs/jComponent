@@ -406,7 +406,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.239;
+	M.version = 18.240;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1763,43 +1763,58 @@
 		return builder.length ? builder.join('&') : '';
 	};
 
-	function apicallback(url, model, callback, scope) {
+	function apicallback(url, model, callback, scope, socket) {
 		current_scope = scope;
 		url = url.env();
 		if (!encryptsecret && debug)
 			url += (url.indexOf('?') === -1 ? '?' : '&') + 'schema=' + model.schema.replace(/\?/g, '&');
-		AJAX('POST ' + url, model, callback);
+		AJAX('POST ' + url, model, callback, null, socket);
 	}
 
-	var wapisocket;
-	var wapisocket_online = false;
-	var wapisocket_callbacks = {};
-	var wapisocket_counter = 0;
+	var wdapi;
 
-	/*
-		{
-			TYPE: 'api',
-			callbackid: '1',
-			data: { id: 'op', data: data }
-		}
-	*/
+	W.WAPI_INIT = function(opt) {
 
-	W.DWAPI = function(opt) {
+		var uid = Date.now().toString(36);
+		var callbacks = {};
+		var counter = 0;
+		var online = false;
+		var socket;
+		var pending = 0;
+		var events = {};
 
-		wapisocket && wapisocket.close();
+		opt.emit = function(name, a, b, c, d) {
+			var arr = events[name];
+			if (arr && arr.length) {
+				for (var i = 0; i < arr.length; i++)
+					arr[i](a, b, c, d);
+			}
+		};
+
+		opt.on = function(name, fn) {
+			if (events[name])
+				events[name].push(fn);
+			else
+				events[name] = [fn];
+		};
 
 		var onopen = function() {
-			wapisocket_online = true;
+			pending = 2;
+			online = true;
 			opt.open && opt.open();
 			if (opt.callback) {
 				opt.callback();
 				opt.callback = null;
 			}
+			events.open && opt.emit('open');
 		};
 
 		var onclose = function(e) {
-			wapisocket_online = false;
+			pending = 3;
+			online = false;
+			socket = null;
 			opt.close && opt.close(e);
+			events.close && opt.emit('close');
 
 			if (opt.callback) {
 				opt.callback(e.code);
@@ -1808,44 +1823,91 @@
 
 			if (e.code !== 4001 && opt.reconnect !== false)
 				setTimeout(connect, opt.reconnect || 2000);
-
 		};
 
 		var onmessage = function(e) {
 			try {
 				var data = PARSE(e.data);
 				opt.message && opt.message(data);
-
-				switch (data.TYPE) {
-					case 'api':
-						break;
+				if (data) {
+					switch (data.TYPE) {
+						case 'api':
+							var output = callbacks[data.callbackid];
+							if (output) {
+								output.timeout && clearTimeout(output.timeout);
+								output.timeout = null;
+								delete callbacks[data.callbackid];
+								ajaxprocess(output, 200, '', data.data, EMPTYOBJECT);
+							}
+							break;
+					}
 				}
-
+				events.message && opt.emit('message', data);
 			} catch (e) {
+				events.error && opt.emit('error');
 				opt.error && opt.error(e, e.data);
 			}
 		};
 
 		var connect = function() {
-			wapisocket = new WebSocket(opt.url.env(true));
-			wapisocket.onopen = onopen;
-			wapisocket.onclose = onclose;
-			wapisocket.onmessage = onmessage;
+			events.reconnect && opt.emit('reconnect');
+			socket && socket.close();
+			socket = new WebSocket(opt.url.env(true));
+			socket.onopen = onopen;
+			socket.onclose = onclose;
+			socket.onmessage = onmessage;
 		};
 
-		connect();
+		var timeouthandler = function(output) {
+			var t = 'Timeout';
+			output.$error({ code: 408, responseText: t, headers: EMPTYOBJECT }, t);
+		};
 
+		opt.send = function(name, data, callback, timeout) {
+
+			var prepare = function(output) {
+
+				if (pending === 1) {
+					setTimeout(prepare, 100, output);
+					return;
+				}
+
+				if (online) {
+					var id = uid + (counter++) + '';
+					output.timeout = setTimeout(timeouthandler, timeout || 10000, output);
+					callbacks[id] = output;
+					var msg = { TYPE: 'api', callbackid: id, data: output.data };
+					if (output.encrypted)
+						msg.encrypted = output.encrypted;
+					socket.send(STRINGIFY(msg));
+				} else
+					output.$error({ code: 0, responseText: ERRCONN, headers: EMPTYOBJECT }, ERRCONN);
+			};
+
+			return W.API('--socket-- ' + name, data, callback, prepare);
+		};
+
+		wdapi = opt;
+		pending = 1;
+		connect();
+		return opt;
 	};
 
-	W.WAPI = function(name, data, callback) {
-		return W.API('--socket-- ' + name, data, callback);
+	W.WAPI = function(name, data, callback, timeout) {
+		if (!name)
+			return wdapi;
+		if (typeof(name) === 'object')
+			return WAPI_INIT(name);
+		if (wdapi)
+			return wdapi.send(name, data, callback, timeout);
+		setTimeout(W.WAPI, 100, name, data, callback, timeout);
 	};
 
 	W.DAPI = function(url, data, callback) {
 		return W.API(DEF.api + ' ' + url, data, callback);
 	};
 
-	W.API = function(url, data, callback) {
+	W.API = function(url, data, callback, socket) {
 
 		var type = typeof(data);
 
@@ -1890,14 +1952,14 @@
 			return this;
 		};
 
-		setTimeout(apicallback, 1, url, meta, callback, current_scope);
+		setTimeout(apicallback, 1, url, meta, callback, current_scope, socket);
 		return api;
 	};
 
-	W.AJAX = function(url, data, callback, timeout) {
+	W.AJAX = function(url, data, callback, timeout, socket) {
 
 		if (url.substring(0, 4) === 'API ')
-			return W.API(url.substring(4), data, callback);
+			return W.API(url.substring(4), data, callback, socket);
 
 		if (typeof(url) === TYPE_FN) {
 			timeout = callback;
@@ -2130,14 +2192,14 @@
 
 			delete options.url;
 
-			options.success = function(r, s, req) {
+			output.$success = options.success = function(r, s, req) {
 				if (cancel)
 					delete cache[mainurl];
 				pendingrequest--;
-				ajaxprocess(output, req.status, s, r, parseHeaders(req.getAllResponseHeaders()));
+				ajaxprocess(output, req.status, s, r, req.getAllResponseHeaders ? parseHeaders(req.getAllResponseHeaders()) : req.headers);
 			};
 
-			options.error = function(req, s) {
+			output.$error = options.error = function(req, s) {
 
 				if (cancel)
 					delete cache[mainurl];
@@ -2153,8 +2215,13 @@
 						AJAX.apply(M, arg);
 					}, MD.delayrepeat);
 				} else
-					ajaxprocess(output, code, s, req.responseText, parseHeaders(req.getAllResponseHeaders()), true);
+					ajaxprocess(output, code, s, req.responseText, req.getAllResponseHeaders ? parseHeaders(req.getAllResponseHeaders()) : req.headers, true);
 			};
+
+			if (output.url === '--socket--') {
+				socket && socket(output);
+				return;
+			}
 
 			var xhr = $.ajax(makeurl(output.url), options);
 
