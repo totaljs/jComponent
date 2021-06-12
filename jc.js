@@ -406,7 +406,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.240;
+	M.version = 18.241;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1827,8 +1827,16 @@
 
 		var onmessage = function(e) {
 			try {
-				var data = PARSE(e.data);
+
+				var data = e.data;
+
+				if (encryptsecret)
+					data = decrypt_data(data, encryptsecret);
+
+				data = PARSE(data);
+
 				opt.message && opt.message(data);
+
 				if (data) {
 					switch (data.TYPE) {
 						case 'api':
@@ -1882,9 +1890,12 @@
 					output.timeout = setTimeout(timeouthandler, timeout || 10000, output);
 					callbacks[id] = output;
 					var msg = { TYPE: 'api', callbackid: id, data: output.data };
+					msg = STRINGIFY(msg);
+
 					if (output.encrypted)
-						msg.encrypted = output.encrypted;
-					socket.send(STRINGIFY(msg));
+						msg = encrypt_data(msg, encryptsecret);
+
+					socket.send(msg);
 				} else
 					output.$error({ code: 0, responseText: ERRCONN, headers: EMPTYOBJECT }, ERRCONN);
 			};
