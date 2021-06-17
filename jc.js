@@ -406,7 +406,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.241;
+	M.version = 18.242;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1839,6 +1839,12 @@
 
 				if (data) {
 					switch (data.TYPE) {
+						case 'ping':
+							var msg = STRINGIFY({ TYPE: 'pong' });
+							if (output.encrypted)
+								msg = encrypt_data(msg, encryptsecret);
+							socket.send(msg);
+							break;
 						case 'api':
 							var output = callbacks[data.callbackid];
 							if (output) {
@@ -1896,6 +1902,7 @@
 						msg = encrypt_data(msg, encryptsecret);
 
 					socket.send(msg);
+
 				} else
 					output.$error({ code: 0, responseText: ERRCONN, headers: EMPTYOBJECT }, ERRCONN);
 			};
