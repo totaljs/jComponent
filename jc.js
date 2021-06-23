@@ -1814,7 +1814,7 @@
 			online = false;
 			socket = null;
 			opt.close && opt.close(e);
-			events.close && opt.emit('close');
+			events.close && opt.emit('close', e);
 
 			if (opt.callback) {
 				opt.callback(e.code);
@@ -1858,7 +1858,7 @@
 				}
 				events.message && opt.emit('message', data);
 			} catch (e) {
-				events.error && opt.emit('error');
+				events.error && opt.emit('error', e);
 				opt.error && opt.error(e, e.data);
 			}
 		};
