@@ -2994,6 +2994,11 @@
 					delete fallback[name];
 				}
 
+				if (statics['$ST_' + com.name]) {
+					remove(el);
+					continue;
+				}
+
 				var obj = new COM(com.name);
 				var parent = dom.parentNode;
 
