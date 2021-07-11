@@ -158,6 +158,23 @@
 		return el.parentNode && el.parentNode.tagName === T_BODY ? false : W.isIE ? (!el.offsetWidth && !el.offsetHeight) : !el.offsetParent;
 	};
 
+	W.LOCALIZE = function(str) {
+
+		if (!DEF.dictionary || !str || typeof(str) !== 'string')
+			return str;
+
+		return str.replace(/@\([^\n]+\)/g, function(text) {
+			var key = HASH(text.substring(2, text.length - 1).trim(), 1).toString(36);
+			var tmp = DEF.dictionary[key];
+			if (tmp)
+				return tmp;
+			key = 'T' + key;
+			tmp = DEF.dictionary[key];
+			return tmp ? tmp : key;
+		});
+
+	};
+
 	var prefsave = function() {
 		var keys = OK(PREF);
 		for (var i = 0; i < keys.length; i++) {
@@ -1581,35 +1598,49 @@
 					return;
 				}
 
-				url = '$import' + url;
+				var opt = {};
+				opt.id = id;
+				opt.url = url;
+				opt.response = response;
+				opt.code = code;
+				opt.output = output;
+				opt.next = function() {
 
-				if (preparator)
-					response = preparator(response, output);
+					var response = opt.response;
 
-				var is = REGCOM.test(response);
-				response = importscripts(importstyles(response, id)).trim();
-				target = $(target);
+					url = '$import' + url;
+					response = LOCALIZE(response);
 
-				if (response) {
-					current_element = target[0];
-					if (insert === false)
-						target.html(response);
-					else
-						target.append(response);
-					current_element = null;
-				}
+					if (preparator)
+						response = preparator(response, output);
 
-				setTimeout(function() {
-					// is && compile(response ? target : null);
-					// because of scopes
-					is && compile();
-					callback && WAIT(function() {
-						return C.is == false;
-					}, function() {
-						callback(1);
-					});
-					events.import && EMIT(T_IMPORT, url, target);
-				}, 10);
+					var is = REGCOM.test(response);
+					response = importscripts(importstyles(response, id)).trim();
+					target = $(target);
+
+					if (response) {
+						current_element = target[0];
+						if (insert === false)
+							target.html(response);
+						else
+							target.append(response);
+						current_element = null;
+					}
+
+					setTimeout(function() {
+						// is && compile(response ? target : null);
+						// because of scopes
+						is && compile();
+						callback && WAIT(function() {
+							return C.is == false;
+						}, function() {
+							callback(1);
+						});
+						events.import && EMIT(T_IMPORT, url, target);
+					}, 10);
+				};
+
+				opt.next();
 			};
 
 			if (expire)
@@ -3792,7 +3823,7 @@
 				obj.dom = dom;
 
 				var p = attrcom(el, 'path') || (meta ? meta[1] === TYPE_NULL ? '' : meta[1] : '') || ''; // || obj._id;
-				var tmp = attrcom(el, T_CONFIG) || (meta ? meta[2] === TYPE_NULL ? '' : meta[2] : '');
+				var tmp = LOCALIZE(attrcom(el, T_CONFIG) || (meta ? meta[2] === TYPE_NULL ? '' : meta[2] : ''));
 
 				if (p.charAt(0) === '%' || (tmp && tmp.indexOf('$noscope:') !== -1))
 					obj.$noscope = true;
@@ -3985,7 +4016,7 @@
 					path = meta[0];
 
 				var scope = new Scope();
-				var conf = (meta[1] || '').replace(/\$/g, '').parseConfig();
+				var conf = LOCALIZE((meta[1] || '').replace(/\$/g, '').parseConfig());
 				var isolated = path.charAt(0) === '!';
 
 				scope.isolated = isolated || !!conf.isolated;
@@ -6417,7 +6448,7 @@
 
 		} else {
 
-			value.parseConfig(function(k, v) {
+			LOCALIZE(value).parseConfig(function(k, v) {
 
 				var prev = self.config[k];
 				var iswatcher = k.charAt(0) === '=';
@@ -10414,7 +10445,7 @@
 		DEF.monitor && monitor_method('binders', 1);
 
 		for (var i = 0; i < meta.length; i++) {
-			var item = meta[i].trim();
+			var item = LOCALIZE(meta[i].trim());
 
 			if (item) {
 				if (i) {
@@ -10681,7 +10712,7 @@
 									r = true;
 								else
 									scr = e;
-								fn = VBINDARRAY(scr.html(), e);
+								fn = VBINDARRAY(LOCALIZE(scr.html()), e);
 								if (notvisible)
 									fn.$nv = 1;
 								r && scr.remove();
@@ -10706,7 +10737,7 @@
 									r = true;
 								else
 									scr = et;
-								tmp = scr.html();
+								tmp = LOCALIZE(scr.html());
 								try {
 									fn = Tangular.compile(tmp);
 								} catch (e) {
