@@ -160,19 +160,73 @@
 
 	W.LOCALIZE = function(str) {
 
-		if (!DEF.dictionary || !str || typeof(str) !== 'string')
+		var arr = str.split('\n');
+
+		for (var i = 0; i < arr.length; i++) {
+			var line = arr[i].trim();
+			if (line && line.substring(0, 2) !== '//') {
+				var index = line.indexOf(':');
+				if (index !== -1) {
+					var key = line.substring(0, index).trim();
+					var val = line.substring(index + 1).trim();
+					DEF.dictionary[key] = val;
+				}
+			}
+		}
+	};
+
+	W.TRANSLATE = function(str) {
+
+		if (!str || typeof(str) !== 'string' || str.indexOf('@(') === -1)
 			return str;
 
-		return str.replace(/@\([^\n]+\)/g, function(text) {
-			var key = HASH(text.substring(2, text.length - 1).trim(), 1).toString(36);
-			var tmp = DEF.dictionary[key];
-			if (tmp)
-				return tmp;
-			key = 'T' + key;
-			tmp = DEF.dictionary[key];
-			return tmp ? tmp : key;
-		});
+		var index = 0;
+		var arr = [];
 
+		while (true) {
+
+			index = str.indexOf('@(', index);
+
+			if (index === -1)
+				break;
+
+			var length = str.length;
+			var count = 0;
+
+			for (var i = index + 2; i < length; i++) {
+				var c = str[i];
+
+				if (c === '(') {
+					count++;
+					continue;
+				}
+
+				if (c !== ')')
+					continue;
+				else if (count) {
+					count--;
+					continue;
+				}
+
+				arr.push(str.substring(index, i + 1));
+				index = i;
+				break;
+			}
+		}
+
+		for (var i = 0; i < arr.length; i++) {
+			var raw = arr[i];
+			var text = raw.substring(2, raw.length - 1);
+			var key = HASH(text, 1).toString(36);
+			var tmp = DEF.dictionary[key];
+			if (!tmp) {
+				key = 'T' + key;
+				tmp = DEF.dictionary[key];
+			}
+			str = str.replace(raw, tmp || text);
+		}
+
+		return str;
 	};
 
 	var prefsave = function() {
@@ -342,6 +396,8 @@
 	var encryptvalidator;
 	var encrypthtml;
 
+	MD.dictionary = {};
+
 	W.DEBUG = function() {
 		if (!encryptsecret)
 			debug = true;
@@ -423,7 +479,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.242;
+	M.version = 18.243;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1598,49 +1654,36 @@
 					return;
 				}
 
-				var opt = {};
-				opt.id = id;
-				opt.url = url;
-				opt.response = response;
-				opt.code = code;
-				opt.output = output;
-				opt.next = function() {
+				url = '$import' + url;
+				response = TRANSLATE(response);
 
-					var response = opt.response;
+				if (preparator)
+					response = preparator(response, output);
 
-					url = '$import' + url;
-					response = LOCALIZE(response);
+				var is = REGCOM.test(response);
+				response = importscripts(importstyles(response, id)).trim();
+				target = $(target);
 
-					if (preparator)
-						response = preparator(response, output);
+				if (response) {
+					current_element = target[0];
+					if (insert === false)
+						target.html(response);
+					else
+						target.append(response);
+					current_element = null;
+				}
 
-					var is = REGCOM.test(response);
-					response = importscripts(importstyles(response, id)).trim();
-					target = $(target);
-
-					if (response) {
-						current_element = target[0];
-						if (insert === false)
-							target.html(response);
-						else
-							target.append(response);
-						current_element = null;
-					}
-
-					setTimeout(function() {
-						// is && compile(response ? target : null);
-						// because of scopes
-						is && compile();
-						callback && WAIT(function() {
-							return C.is == false;
-						}, function() {
-							callback(1);
-						});
-						events.import && EMIT(T_IMPORT, url, target);
-					}, 10);
-				};
-
-				opt.next();
+				setTimeout(function() {
+					// is && compile(response ? target : null);
+					// because of scopes
+					is && compile();
+					callback && WAIT(function() {
+						return C.is == false;
+					}, function() {
+						callback(1);
+					});
+					events.import && EMIT(T_IMPORT, url, target);
+				}, 10);
 			};
 
 			if (expire)
@@ -3823,7 +3866,7 @@
 				obj.dom = dom;
 
 				var p = attrcom(el, 'path') || (meta ? meta[1] === TYPE_NULL ? '' : meta[1] : '') || ''; // || obj._id;
-				var tmp = LOCALIZE(attrcom(el, T_CONFIG) || (meta ? meta[2] === TYPE_NULL ? '' : meta[2] : ''));
+				var tmp = TRANSLATE(attrcom(el, T_CONFIG) || (meta ? meta[2] === TYPE_NULL ? '' : meta[2] : ''));
 
 				if (p.charAt(0) === '%' || (tmp && tmp.indexOf('$noscope:') !== -1))
 					obj.$noscope = true;
@@ -4016,7 +4059,7 @@
 					path = meta[0];
 
 				var scope = new Scope();
-				var conf = LOCALIZE((meta[1] || '').replace(/\$/g, '').parseConfig());
+				var conf = TRANSLATE((meta[1] || '').replace(/\$/g, '').parseConfig());
 				var isolated = path.charAt(0) === '!';
 
 				scope.isolated = isolated || !!conf.isolated;
@@ -6448,7 +6491,7 @@
 
 		} else {
 
-			LOCALIZE(value).parseConfig(function(k, v) {
+			TRANSLATE(value).parseConfig(function(k, v) {
 
 				var prev = self.config[k];
 				var iswatcher = k.charAt(0) === '=';
@@ -10445,7 +10488,7 @@
 		DEF.monitor && monitor_method('binders', 1);
 
 		for (var i = 0; i < meta.length; i++) {
-			var item = LOCALIZE(meta[i].trim());
+			var item = TRANSLATE(meta[i].trim());
 
 			if (item) {
 				if (i) {
@@ -10712,7 +10755,7 @@
 									r = true;
 								else
 									scr = e;
-								fn = VBINDARRAY(LOCALIZE(scr.html()), e);
+								fn = VBINDARRAY(TRANSLATE(scr.html()), e);
 								if (notvisible)
 									fn.$nv = 1;
 								r && scr.remove();
@@ -10737,7 +10780,7 @@
 									r = true;
 								else
 									scr = et;
-								tmp = LOCALIZE(scr.html());
+								tmp = TRANSLATE(scr.html());
 								try {
 									fn = Tangular.compile(tmp);
 								} catch (e) {
