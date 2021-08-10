@@ -479,7 +479,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.244;
+	M.version = 18.245;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2000,7 +2000,7 @@
 			return WAPI_INIT(name);
 		if (wdapi)
 			return wdapi.send(name, data, callback, timeout, scope);
-		setTimeout(W.WAPI, 100, name, data, callback, timeout, current_scope);
+		setTimeout(W.WAPI, 100, name, data, callback, timeout, scope || current_scope);
 	};
 
 	W.DAPI = function(url, data, callback) {
