@@ -479,7 +479,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.243;
+	M.version = 18.244;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1956,7 +1956,7 @@
 			output.$error({ code: 408, responseText: t, headers: EMPTYOBJECT }, t);
 		};
 
-		opt.send = function(name, data, callback, timeout) {
+		opt.send = function(name, data, callback, timeout, scope) {
 
 			var prepare = function(output) {
 
@@ -1981,6 +1981,9 @@
 					output.$error({ code: 0, responseText: ERRCONN, headers: EMPTYOBJECT }, ERRCONN);
 			};
 
+			if (scope !== undefined)
+				current_scope = scope;
+
 			return W.API('--socket-- ' + name, data, callback, prepare);
 		};
 
@@ -1990,14 +1993,14 @@
 		return opt;
 	};
 
-	W.WAPI = function(name, data, callback, timeout) {
+	W.WAPI = function(name, data, callback, timeout, scope) {
 		if (!name)
 			return wdapi;
 		if (typeof(name) === 'object')
 			return WAPI_INIT(name);
 		if (wdapi)
-			return wdapi.send(name, data, callback, timeout);
-		setTimeout(W.WAPI, 100, name, data, callback, timeout);
+			return wdapi.send(name, data, callback, timeout, scope);
+		setTimeout(W.WAPI, 100, name, data, callback, timeout, current_scope);
 	};
 
 	W.DAPI = function(url, data, callback) {
