@@ -479,7 +479,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.245;
+	M.version = 18.246;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -9744,26 +9744,7 @@
 
 		$.fn.scope = function() {
 			var el = this;
-			if (!el.length)
-				return null;
-
-			el = el[0];
-
-			var data = el.$scopedata;
-			if (data)
-				return data;
-
-			el = el.parentNode;
-
-			while (el && el.tagName !== T_BODY) {
-				if (el.$scopedata)
-					return el.$scopedata;
-				if (el.$noscope)
-					return null;
-				el = el.parentNode;
-			}
-
-			return null;
+			return el.length ? findscope(el[0]) : null;
 		};
 
 		var classtimeout = function(el, a, t) {
