@@ -479,7 +479,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.246;
+	M.version = 18.247;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -986,9 +986,7 @@
 		}
 
 		events.request && EMIT('request', output);
-
-		if (customflags.length)
-			emitflags(customflags, url);
+		customflags.length && emitflags(customflags, url);
 
 		if (output.cancel)
 			return;
@@ -2413,7 +2411,8 @@
 					callback && callback.call(output, output.response, output.status, output);
 			} else {
 				events.error && EMIT('error', output);
-				typeof(callback) === TYPE_FN && callback.call(output, output.response, output.status, output);
+				if (typeof(callback) === TYPE_FN)
+					callback.call(output, output.response, output.status, output);
 			}
 		} else {
 			if (typeof(callback) === TYPE_S)
@@ -4779,12 +4778,12 @@
 
 		for (var i = 0; i < arr.length - 1; i++) {
 			v = arr[i];
-			binder.push('binders[\'' + v + '\']&&binderbind(\'' + v + '\',\'' + path + '\',$ticks,c)');
+			binder.push('binders[\'' + v + '\']&&setTimeout(binderbind,1,\'' + v + '\',\'' + path + '\',$ticks,c)');
 		}
 
 		v = arr[arr.length - 1];
-		binder.push('binders[\'' + v + '\']&&binderbind(\'' + v + '\',\'' + path + '\',$ticks,c)');
-		binder.push('binders[\'!' + v + '\']&&binderbind(\'!' + v + '\',\'' + path + '\',$ticks,c)');
+		binder.push('binders[\'' + v + '\']&&setTimeout(binderbind,1,\'' + v + '\',\'' + path + '\',$ticks,c)');
+		binder.push('binders[\'!' + v + '\']&&setTimeout(binderbind,1,\'!' + v + '\',\'' + path + '\',$ticks,c)');
 
 		if (v.charAt(0) !== '[')
 			v = '.' + v;
@@ -11045,6 +11044,21 @@
 		current_scope = curr_scope;
 	};
 
+	function jbind_focus(item) {
+		item.el.find(item.focus).eq(0).focus();
+	}
+
+	function jbind_resize(el) {
+		el.SETTER('*', T_RESIZE);
+	}
+
+	function jbind_delay(obj, value, path, index, can) {
+		obj.$delay = null;
+		var curr_scope = current_scope;
+		obj.exec(value, path, index, true, can);
+		current_scope = curr_scope;
+	}
+
 	function bindsetterx(item, value, path, type, counter) {
 		if (item && item.el && item.set) {
 			var com = item.el[0].$com;
@@ -11104,12 +11118,7 @@
 
 		if (!wakeup && item.delay) {
 			item.$delay && clearTimeout(item.$delay);
-			item.$delay = setTimeout(function(obj, value, path, index, can) {
-				obj.$delay = null;
-				var curr_scope = current_scope;
-				obj.exec(value, path, index, true, can);
-				current_scope = curr_scope;
-			}, item.delay, item, value, path, index, can);
+			item.$delay = setTimeout(jbind_delay, item.delay, item, value, path, index, can);
 			return;
 		}
 
@@ -11392,18 +11401,11 @@
 		if (can && item.refreshbind && (value != null || !item.refreshbind.$nn))
 			item.refreshbind.call(el, value, path, el);
 
-		if (can && item.focus) {
-			var elf = el.find(item.focus);
-			setTimeout(function(item) {
-				item.el.find(item.focus).eq(0).focus();
-			}, elf.length ? 100 : 1500, item);
-		}
+		if (can && item.focus)
+			setTimeout(jbind_focus, el.find(item.focus).length ? 100 : 1500, item);
 
-		if (can && item.resize) {
-			setTimeout(function(el) {
-				el.SETTER('*', T_RESIZE);
-			}, 100, el);
-		}
+		if (can && item.resize)
+			setTimeout(jbind_resize, 100, el);
 
 		if (can && index == null && item.child) {
 			var curr_scope = current_scope;
