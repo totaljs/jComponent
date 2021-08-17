@@ -479,7 +479,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.247;
+	M.version = 18.248;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2203,6 +2203,7 @@
 			options.respond = ajaxcustomresponse;
 			options.duration = Date.now();
 			options.credentials = isCredentials;
+			options.dataType = 'text';
 
 			if (url.match(/http:\/\/|https:\/\//i)) {
 				options.crossDomain = true;
