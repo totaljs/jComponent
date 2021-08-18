@@ -479,7 +479,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.248;
+	M.version = 18.249;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2860,6 +2860,10 @@
 			return M.push(path.substring(1), value, type);
 
 		var meta = compilepath(path);
+		path = meta.rawpath;
+
+		if (meta.format)
+			value = meta.format.fn(value, newpath, 1, meta.format.scope && current_scope ? PLUGINS[current_scope] : null);
 
 		if (meta.path.charAt(0) === '~' || meta.flags.extend) {
 			M.extend(meta.flags.extend ? path : path.substring(1), value, type);
@@ -3004,6 +3008,11 @@
 		var obj = {};
 		obj.flags = {};
 		obj.flagslist = '';
+		obj.format = findformat(path);
+		obj.rawpath = path;
+
+		if (obj.format)
+			obj.rawpath = path = obj.format.path;
 
 		path = path.replace(/@[\w:]+/g, function(text) {
 			obj.flagslist += (obj.flagslist ? ' ' : '') + text;
@@ -3126,6 +3135,7 @@
 
 		var meta = compilepath(path);
 		var newpath = meta.pathmaker ? pathmaker(meta.path) : meta.path;
+		path = meta.rawpath;
 
 		if (scope === true) {
 			scope = null;
@@ -3147,6 +3157,8 @@
 		meta.flags.update && setTimeout(W.UPD, 1, path);
 		var value = meta.flags.modified ? getmodified(newpath) : meta.flags.clone ? CLONE(get(newpath, scope)) : get(newpath, scope);
 		meta.flags2 && emitflags(meta, newpath, value);
+		if (meta.format)
+			value = meta.format.fn(value, newpath, 1, meta.format.scope && current_scope ? PLUGINS[current_scope] : null);
 		return value;
 	};
 
@@ -3166,7 +3178,7 @@
 	}
 
 	W.GETM = function(path) {
-		return GET(path + ' @modified');
+		return GET(path + ' @modified');
 	};
 
 	W.GETU = function(path) {
@@ -11523,6 +11535,15 @@
 	}
 
 	var PP = Plugin.prototype;
+
+	PP.$format = function(endpoint) {
+		var plugin = this;
+		if (plugin && plugin[endpoint]) {
+			DEF.monitor && monitor_method('plugins');
+			return plugin[endpoint];
+		}
+		return SCP.$formatnoop;
+	};
 
 	PP.exec = function(name, a, b, c, d, e) {
 		var self = this;
