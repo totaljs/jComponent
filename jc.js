@@ -479,7 +479,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.249;
+	M.version = 18.251;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10484,9 +10484,11 @@
 		DEF.monitor && monitor_method('binders', 1);
 
 		for (var i = 0; i < meta.length; i++) {
+
 			var item = TRANSLATE(meta[i].trim());
 
 			if (item) {
+
 				if (i) {
 
 					var k, v = '';
@@ -10841,6 +10843,7 @@
 					}
 
 					tmp = findformat(path);
+
 					if (tmp) {
 						path = tmp.path;
 						obj.formatter = tmp.fn;
@@ -10919,7 +10922,7 @@
 			var bj = obj.com && path.charAt(0) === '@';
 			path = bj ? path : pathmaker(path, 0, 1);
 
-			if (path.indexOf('?') !== -1) {
+			if (path.indexOf('?') !== -1 || (obj.formatter && obj.formatter.scope)) {
 				var scope = findscope(el);
 				if (scope) {
 					path = scope.makepath(path);
@@ -11161,12 +11164,15 @@
 
 			if (item.tracktype && type != null && !item.tracktype[type])
 				return;
-
-		} else
-			item.init && item.init.call(item.el, value, path, item.el);
+		}
 
 		if (item.def && value == null)
 			value = item.def;
+
+		if (item.formatter)
+			value = item.formatter(value, path, -1, item.formatter.scope ? PLUGINS[item.scope] : null);
+
+		item.init && item.init.call(item.el, value, path, item.el);
 
 		var tmp = null;
 
@@ -11179,9 +11185,6 @@
 			else
 				return;
 		}
-
-		if (item.formatter)
-			value = item.formatter(value, path, -1, item.formatter.scope ? new Scope(item.scope) : null);
 
 		if (item.set) {
 			tmp = item.set.call(item.el, value, path, item.el);
