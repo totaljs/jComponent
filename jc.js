@@ -479,7 +479,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.251;
+	M.version = 18.252;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11614,7 +11614,7 @@
 
 		if (PREFLOADED) {
 
-			if (name.charAt(0) === '?') {
+			if (name.indexOf(' ') !== -1) {
 				var arr = name.split(' ').trim();
 				pluginscope[arr[1]] = { fn: fn, element: current_element };
 				return;
