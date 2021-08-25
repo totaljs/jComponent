@@ -4086,6 +4086,8 @@
 
 				if (!tmp[0] || tmp[0] === '?')
 					path = GUID(10).replace(/\d/g, '') + Date.now().toString(36);
+				else if (tmp[1]) // dynamically assigned plugin
+					path = tmp[0];
 
 				scope._id = scope.ID = scope.id = GUID(10);
 				scope.element = $(el);
@@ -4253,7 +4255,17 @@
 					response = response.replace(/~PATH~/g, item.path);
 
 				if (item.make) {
-					var fn = get(item.make);
+					var fn = null;
+					if (item.make.indexOf('/') === -1)
+						fn = get(item.make);
+					else {
+						var tmp = item.make.replace('?', item.path).split('/');
+						var plugin = W.PLUGINS[tmp[0]];
+						if (plugin) {
+							fn = plugin[tmp[1]];
+							fn && plugin.scope();
+						}
+					}
 					if (fn && typeof(fn) === TYPE_FN) {
 						response = fn(response, item.element, item.path);
 						if (!response) {
@@ -4272,9 +4284,12 @@
 					item.element.html(response);
 
 				if (item.init) {
-					var init = get(item.init);
-					if (typeof(init) === TYPE_FN)
-						init(item.element);
+					if (item.init.indexOf('/') === -1) {
+						var init = get(item.init);
+						if (typeof(init) === TYPE_FN)
+							init(item.element);
+					} else
+						EXEC(true, item.init.replace('?', item.path || ''), item.element);
 				}
 
 				current_element = null;
@@ -11563,7 +11578,7 @@
 		return self;
 	};
 
-	PP.$remove = function() {
+	PP.remove = PP.$remove = function() {
 
 		var self = this;
 		if (!self.element)
