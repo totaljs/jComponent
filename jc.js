@@ -479,7 +479,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.253;
+	M.version = 18.254;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11521,22 +11521,25 @@
 		var a = current_owner;
 		current_owner = t.id;
 		delete t.pending;
+		current_scope = t.name;
 		fn.call(t, t);
 		current_owner = a;
-		current_scope = null;
 		events.plugin && EMIT('plugin', t);
 		DEF.monitor && monitor_method('plugins', fn ? 1 : 0);
 		W.PLUGINS[t.name] = t;
+		current_scope = null;
 		done && done();
 	}
 
 	function Plugin(name, fn, init, done) {
+
 		(/\W/).test(name) && warn('Plugin name must contain A-Z chars only.');
 		W.PLUGINS[name] && W.PLUGINS[name].$remove(true);
 		var t = this;
 		t.element = $(current_element || D.body);
 		t.id = 'plug' + name;
 		t.name = name;
+
 		if (init) {
 			t.pending = true;
 			if (typeof(init) === 'string') {
