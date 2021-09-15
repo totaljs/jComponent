@@ -177,6 +177,7 @@
 
 	W.TRANSLATE = function(str) {
 
+
 		if (!str || typeof(str) !== 'string' || str.indexOf('@(') === -1)
 			return str;
 
@@ -479,7 +480,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.254;
+	M.version = 18.255;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4242,6 +4243,9 @@
 				key = '$import' + key;
 
 				current_element = item.element[0];
+
+				if (response)
+					response = TRANSLATE(response);
 
 				if (!data.reevaluate && statics[key])
 					response = removescripts(response);
