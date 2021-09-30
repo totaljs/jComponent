@@ -5337,15 +5337,25 @@
 	};
 
 	// ===============================================================
-	// COMPONENT DECLARATION
+	// MACRO DECLARATION
 	// ===============================================================
 
-	function Macro(el, binder) {
-		this.name = binder.macro;
-		this.binder = binder;
-		this.element = el;
-		this.dom = el[0];
+	function Macro(name, binder) {
+		var t = this;
+		t.name = name;
+		t.binder = binder;
+		t.element = binder.el;
+		t.dom = binder.el[0];
+		var macro = M.macros[name];
+		macro(t, binder.el, 'm-' + name);
+		t.make && t.make();
+		if (t.binder.scope)
+			t.scope = t.element.scope();
 	}
+
+	// ===============================================================
+	// COMPONENT DECLARATION
+	// ===============================================================
 
 	function COM(name) {
 		var self = this;
@@ -5609,6 +5619,19 @@
 	var PPC = COM.prototype;
 	var MPC = Macro.prototype;
 
+	MPC.set = function(value) {
+		return SET(this.binder.path, value);
+	};
+
+	MPC.get = function() {
+		return GET(this.binder.path);
+	};
+
+	MPC.refresh = function() {
+		this.binder.refresh();
+		return this;
+	};
+
 	PPC.parsesource = function(value) {
 		var self = this;
 		var arr = value.split(',');
@@ -5778,7 +5801,7 @@
 		}, MD.delaywatcher, self, obj, prop);
 	}
 
-	PPC.$waiter = function(prop, callback) {
+	MPC.$waiter = PPC.$waiter = function(prop, callback) {
 
 		var t = this;
 
@@ -5819,7 +5842,7 @@
 		return t;
 	};
 
-	PPC.hidden = function(callback) {
+	MPC.hidden = PPC.hidden = function(callback) {
 		var t = this;
 
 		if (t.$removed) {
@@ -5837,7 +5860,7 @@
 		return v;
 	};
 
-	PPC.visible = function(callback) {
+	MPC.visible = PPC.visible = function(callback) {
 		var t = this;
 
 		if (t.$removed) {
@@ -5855,7 +5878,7 @@
 		return v;
 	};
 
-	PPC.width = function(callback) {
+	MPC.width = PPC.width = function(callback) {
 		var t = this;
 
 		if (t.$removed) {
@@ -5873,7 +5896,7 @@
 		return v;
 	};
 
-	PPC.height = function(callback) {
+	MPC.height = PPC.height = function(callback) {
 		var t = this;
 
 		if (t.$removed) {
@@ -6088,7 +6111,7 @@
 		return self;
 	};
 
-	PPC.hclass = function(cls) {
+	MPC.hclass = PPC.hclass = function(cls) {
 		return this.element.hclass(cls);
 	};
 
@@ -6138,6 +6161,18 @@
 		setTimeout(function() {
 			el.tclass(cls, visible);
 		}, timeout);
+		return self;
+	};
+
+	MPC.EXEC = function(path, a, b, c, d) {
+		var self = this;
+		EXEC(self.scope ? self.scope.makepath(path) : path, a, b, c, d);
+		return self;
+	};
+
+	MPC.SEEX = function(path, a, b, c, d) {
+		var self = this;
+		SEEX(self.scope ? self.scope.makepath(path) : path, a, b, c, d);
 		return self;
 	};
 
@@ -10683,8 +10718,10 @@
 							case 'empty':
 								fn = v === T_VALUE ? MD.empty : v;
 								break;
-							case 'currency':
 							case 'macro':
+								fn = v.split(',').trim();
+								break;
+							case 'currency':
 								fn = v;
 								break;
 							case 'focus':
@@ -11001,6 +11038,14 @@
 		if (obj.vbindarray)
 			obj.vbindarray.path = obj.path;
 
+		if (obj.macro) {
+			obj.$macros = [];
+			for (var i = 0; i < obj.macro.length; i++) {
+				var m = jbind_macro_init(obj, obj.macro[i]);
+				m && obj.$macros.push(m);
+			}
+		}
+
 		if (obj.track) {
 			for (var i = 0; i < obj.track.length; i++) {
 				var objk = obj.track[i] = path + '.' + obj.track[i];
@@ -11101,15 +11146,16 @@
 		el.SETTER('*', T_RESIZE);
 	}
 
+	function jbind_macro_init(item, name) {
+		var macro = M.macros[name];
+		if (macro)
+			return new Macro(name, item);
+	}
+
 	function jbind_macro(el, item, value, path, type) {
-		var macro = M.macros[item.macro];
-		if (macro) {
-			if (!item.$macro) {
-				item.$macro = new Macro(el, item);
-				macro(item.$macro);
-				item.$macro.make && item.$macro.make();
-			}
-			item.$macro.setter && item.$macro.setter(value, path, type);
+		for (var i = 0; i < item.$macros.length; i++) {
+			var m = item.$macros[i];
+			m.setter && m.setter(value, path, type);
 		}
 	}
 
@@ -11468,7 +11514,6 @@
 		if (can && item.resize)
 			setTimeout(jbind_resize, 100, el);
 
-		console.log('OK');
 		item.macro && jbind_macro(el, item, value, path, type);
 
 		if (can && index == null && item.child) {
