@@ -480,10 +480,11 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.255;
+	M.version = 18.256;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
+	M.macros = {};
 	M.performance = { plugins: {}, scopes: {}, components: {}, binders: {}, events: {}, setters: {}, exec: {}, set: {}, get: {}, watchers: {}, requests: {}, compilation: {}, validation: {}, reset: {}, lazy: {}, changes: {}, repeat: {}, cmd: {}, returns: {} };
 	M.components = [];
 	M.$formatter = [];
@@ -5339,6 +5340,13 @@
 	// COMPONENT DECLARATION
 	// ===============================================================
 
+	function Macro(el, binder) {
+		this.name = binder.macro;
+		this.binder = binder;
+		this.element = el;
+		this.dom = el[0];
+	}
+
 	function COM(name) {
 		var self = this;
 		self._id = self.ID = ATTRDATA + (C.counter++);
@@ -5599,6 +5607,7 @@
 	}
 
 	var PPC = COM.prototype;
+	var MPC = Macro.prototype;
 
 	PPC.parsesource = function(value) {
 		var self = this;
@@ -6064,13 +6073,13 @@
 		return self;
 	};
 
-	PPC.tclass = function(cls, v) {
+	MPC.tclass = PPC.tclass = function(cls, v) {
 		var self = this;
 		self.element.tclass(cls, v);
 		return self;
 	};
 
-	PPC.aclass = function(cls, timeout) {
+	MPC.aclass = PPC.aclass = function(cls, timeout) {
 		var self = this;
 		if (timeout)
 			setTimeout(function() { self.element.aclass(cls); }, timeout);
@@ -6083,7 +6092,7 @@
 		return this.element.hclass(cls);
 	};
 
-	PPC.rclass = function(cls, timeout) {
+	MPC.rclass = PPC.rclass = function(cls, timeout) {
 		var self = this;
 		var e = self.element;
 		if (timeout)
@@ -6097,7 +6106,7 @@
 		return self;
 	};
 
-	PPC.rclass2 = function(search) {
+	MPC.rclass2 = PPC.rclass2 = function(search) {
 		this.element.rclass2(search);
 		return this;
 	};
@@ -6199,7 +6208,7 @@
 		return self;
 	};
 
-	PPC.faicon = function(value) {
+	MPC.faicon = PPC.faicon = function(value) {
 		if (value)
 			return (value.indexOf(' ') === -1 ? 'fa fa-' : '') + value;
 		else
@@ -6345,7 +6354,7 @@
 		return self;
 	};
 
-	PPC.attr = SCP.attr = function(name, value) {
+	MPC.attr = PPC.attr = SCP.attr = function(name, value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.attr(name);
@@ -6353,7 +6362,7 @@
 		return this;
 	};
 
-	PPC.attrd = SCP.attrd = function(name, value) {
+	MPC.attrd = PPC.attrd = SCP.attrd = function(name, value) {
 		name = T_DATA + name;
 		var el = this.element;
 		if (value === undefined)
@@ -6362,11 +6371,11 @@
 		return this;
 	};
 
-	PPC.attrd2 = SCP.attrd2 = function(name) {
+	MPC.attrd2 = PPC.attrd2 = SCP.attrd2 = function(name) {
 		return this.element.attrd2(name);
 	};
 
-	PPC.css = SCP.css = function(name, value) {
+	MPC.css = PPC.css = SCP.css = function(name, value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.css(name);
@@ -6615,11 +6624,11 @@
 		}
 	};
 
-	PPC.closest = SCP.closest = function(sel) {
+	MPC.closest = PPC.closest = SCP.closest = function(sel) {
 		return this.element.closest(sel);
 	};
 
-	PPC.parent = SCP.parent = function(sel) {
+	MPC.parent = PPC.parent = SCP.parent = function(sel) {
 
 		var self = this;
 		if (!sel)
@@ -6654,7 +6663,7 @@
 
 	var TNB = { number: 1, boolean: 1 };
 
-	PPC.html = function(value) {
+	MPC.html = PPC.html = function(value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.html();
@@ -6667,7 +6676,7 @@
 		return v;
 	};
 
-	PPC.text = function(value) {
+	MPC.text = PPC.text = function(value) {
 		var el = this.element;
 		if (value === undefined)
 			return el.text();
@@ -6677,7 +6686,7 @@
 		return (value || TNB[type]) ? el.empty().text(value) : el.empty();
 	};
 
-	PPC.empty = function() {
+	MPC.empty = PPC.empty = function() {
 
 		var self = this;
 
@@ -6694,7 +6703,7 @@
 		return el;
 	};
 
-	PPC.append = SCP.append = function(value) {
+	MPC.append = PPC.append = SCP.append = function(value) {
 		var el = this.element;
 		if (value instanceof Array)
 			value = value.join('');
@@ -6704,7 +6713,7 @@
 		return v;
 	};
 
-	PPC.event = SCP.event = function() {
+	MPC.event = PPC.event = SCP.event = function() {
 		var self = this;
 		if (self.element)
 			self.element.on.apply(self.element, arguments);
@@ -6716,7 +6725,7 @@
 		return self;
 	};
 
-	PPC.find = SCP.find = function(selector) {
+	MPC.find = PPC.find = SCP.find = function(selector) {
 		return this.element.find(selector);
 	};
 
@@ -7093,6 +7102,10 @@
 	function recompile() {
 		setTimeout2('$compile', COMPILE, 700);
 	}
+
+	W.MACRO = function(name, declaration) {
+		M.macros[name] = declaration;
+	};
 
 	W.EXTENSION = function(name, config, declaration) {
 
@@ -10588,7 +10601,7 @@
 						v = new Function('value', 'path', 'el', 'var fn=el[0].' + vkey + ';if(!fn){var _s=el.scope();if(_s){el[0].' + vkey + '=fn=GET(_s.makepath(\'' + vfn + '\'))}}if(fn)return fn' + (vbeg == -1 ? '(value,path,el)' : v.substring(vbeg)));
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'tracktype', T_RESIZE, 'delay', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'helper', 'currency', 'empty', 'release', 'changes') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'tracktype', T_RESIZE, 'delay', 'macro', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'helper', 'currency', 'empty', 'release', 'changes') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -10671,6 +10684,7 @@
 								fn = v === T_VALUE ? MD.empty : v;
 								break;
 							case 'currency':
+							case 'macro':
 								fn = v;
 								break;
 							case 'focus':
@@ -11087,6 +11101,18 @@
 		el.SETTER('*', T_RESIZE);
 	}
 
+	function jbind_macro(el, item, value, path, type) {
+		var macro = M.macros[item.macro];
+		if (macro) {
+			if (!item.$macro) {
+				item.$macro = new Macro(el, item);
+				macro(item.$macro);
+				item.$macro.make && item.$macro.make();
+			}
+			item.$macro.setter && item.$macro.setter(value, path, type);
+		}
+	}
+
 	function jbind_delay(obj, value, path, index, can) {
 		obj.$delay = null;
 		var curr_scope = current_scope;
@@ -11441,6 +11467,9 @@
 
 		if (can && item.resize)
 			setTimeout(jbind_resize, 100, el);
+
+		console.log('OK');
+		item.macro && jbind_macro(el, item, value, path, type);
 
 		if (can && index == null && item.child) {
 			var curr_scope = current_scope;
