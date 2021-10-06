@@ -298,7 +298,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 17.186;
+	M.version = 17.187;
 	M.$localstorage = ATTRDATA;
 	M.$version = '';
 	M.$language = '';
@@ -5336,6 +5336,26 @@
 		if (value === undefined)
 			return el.attr(name);
 		el.attr(name, value);
+		return this;
+	};
+
+	var autofocus = function(el, selector, counter) {
+		if (!isMOBILE) {
+			if (typeof(counter) !== 'number')
+				counter = 0;
+			var target = el.find(typeof(selector) === 'string' ? selector : 'input[type="text"],select,textarea')[0];
+			if (target) {
+				target.focus();
+				if (document.activeElement == target)
+					return;
+			}
+			if (counter < 15)
+				setTimeout(autofocus, 200, el, selector, counter + 1);
+		}
+	};
+
+	PPC.autofocus = SCP.autofocus = function(selector, counter) {
+		autofocus(this.element, selector, counter);
 		return this;
 	};
 
