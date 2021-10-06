@@ -11159,7 +11159,7 @@
 	};
 
 	function jbind_focus(item) {
-		item.el.find(item.focus).eq(0).focus();
+		autofocus(item.el, item.focus);
 	}
 
 	function jbind_resize(el) {
