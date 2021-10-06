@@ -6410,7 +6410,7 @@
 			if (counter < 15)
 				setTimeout(autofocus, 200, el, selector, counter + 1);
 		}
-	}
+	};
 
 	MPC.autofocus = PPC.autofocus = SCP.autofocus = function(selector, counter) {
 		autofocus(this.element, selector, counter);
