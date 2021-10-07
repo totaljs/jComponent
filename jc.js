@@ -480,7 +480,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.257;
+	M.version = 18.258;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4132,14 +4132,26 @@
 						break;
 				}
 
-				scope.elements.push(el);
-
 				if (scope.isolated)
 					scope.path = path;
-				else if (scope.parent)
-					scope.path = scope.parent.path + '.' + path;
-				else
+				else if (scope.parent) {
+					if (path.indexOf('?') !== -1) {
+						path = path.replace(/\?(\d)*\./, function(text) {
+							var skip = text.length > 2 ? +text.substring(1, text.length - 1) : 0;
+							if (skip) {
+								for (var i = 0; i < skip; i++)
+									scope.elements.shift();
+								scope.parent = scope.elements.length ? scope.elements[0].$scopedata : null;
+							}
+							return '';
+						});
+						scope.path = scope.parent.path + '.' + path;
+					} else
+						scope.path = scope.parent.path + '.' + path;
+				} else
 					scope.path = path;
+
+				scope.elements.push(el);
 
 				var tmp = meta[2] || attrcom(el, T_VALUE);
 				if (tmp) {
