@@ -422,6 +422,7 @@
 	MD.monitor = false;
 	MD.scope = W;
 	MD.delay = 555;
+	MD.delaykeypress = 200;
 	MD.delaywatcher = 555;
 	MD.delaybinder = 200;
 	MD.delayrepeat = 2000;
@@ -480,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.258;
+	M.version = 18.259;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8054,6 +8055,9 @@
 			// noCache can be timeout
 		}
 
+		if (typeof(value) === 'string' && value.indexOf('?') !== -1)
+			value = value.replace(REGSCOPEINLINE, current_scope);
+
 		if (isWaiting) {
 			WAIT(function() {
 				var val = FIND(value, many, noCache);
@@ -10386,7 +10390,7 @@
 				}
 
 				if (self.$jcdelay === undefined)
-					self.$jcdelay = +(attrcom(self, 'keypress-delay') || com.config.$delay || MD.delay);
+					self.$jcdelay = +(attrcom(self, 'keypress-delay') || com.config.$delay || MD.delaykeypress);
 
 				if (self.$jconly === undefined)
 					self.$jconly = attrcom(self, 'keypress-only') === T_TRUE || com.config.$keypress === true || com.config.$binding === 2;
