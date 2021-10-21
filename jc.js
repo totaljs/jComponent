@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.262;
+	M.version = 18.263;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11232,7 +11232,6 @@
 		current_scope = curr_scope;
 	}
 
-
 	function bindsetterx(item, value, path, type, counter) {
 		if (item && item.el && item.set) {
 			var com = item.el[0].$com;
@@ -11284,7 +11283,7 @@
 			item.wcomrunning = 1;
 			for (var i = 0; i < item.wcom.length; i++) {
 				var com = item.wcom[i];
-				if (com && com.parentNode && (!com.$com || !com.$com.$ready)) {
+				if (com && com.parentNode && (!com.$com || !com.$com.$loaded)) {
 					setTimeout(jbind_com, 100, item, value, path, index, can, type);
 					return;
 				}
