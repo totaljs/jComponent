@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.261;
+	M.version = 18.262;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10682,7 +10682,7 @@
 						v = new Function('value', 'path', 'el', 'var fn=el[0].' + vkey + ';if(!fn){var _s=el.scope();if(_s){el[0].' + vkey + '=fn=GET(_s.makepath(\'' + vfn + '\'))}}if(fn)return fn' + (vbeg == -1 ? '(value,path,el)' : v.substring(vbeg)));
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'tracktype', T_RESIZE, 'delay', 'macro', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'helper', 'currency', 'empty', 'release', 'changes') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'tracktype', T_RESIZE, 'delay', 'macro', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'helper', 'currency', 'empty', 'release', 'changes', 'ready') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -10760,6 +10760,7 @@
 
 								break;
 							case 'changes':
+							case 'ready':
 								break;
 							case 'empty':
 								fn = v === T_VALUE ? MD.empty : v;
@@ -10951,6 +10952,9 @@
 						path = path.substring(1);
 						obj.notnull = true;
 					}
+
+					if (path === '-')
+						path = (attrcom(obj.el) || '').split(REGMETA)[1];
 
 					if (meta.length === 1) {
 						var fn = GET(path);
@@ -11166,6 +11170,15 @@
 			el.removeAttribute(T_DATA + 'bind');
 
 		if (!obj.virtual) {
+			var tmp = obj.el.filter(ATTRCOM);
+			if (obj.ready && !tmp.length)
+				tmp = obj.el.find(ATTRCOM);
+			if (tmp.length) {
+				obj.wcom = [];
+				for (var i = 0; i < tmp.length; i++)
+					obj.wcom.push(tmp[i]);
+
+			}
 			M.binders.push(obj);
 			bindersnew.push(obj);
 		}
@@ -11205,12 +11218,20 @@
 		}
 	}
 
-	function jbind_delay(obj, value, path, index, can) {
+	function jbind_delay(obj, value, path, index, can, type) {
 		obj.$delay = null;
 		var curr_scope = current_scope;
-		obj.exec(value, path, index, true, can);
+		obj.exec(value, path, index, true, can, type);
 		current_scope = curr_scope;
 	}
+
+	function jbind_com(obj, value, path, index, can, type) {
+		var curr_scope = current_scope;
+		delete obj.wcomrunning;
+		obj.exec(value, path, index, true, can, type);
+		current_scope = curr_scope;
+	}
+
 
 	function bindsetterx(item, value, path, type, counter) {
 		if (item && item.el && item.set) {
@@ -11239,6 +11260,7 @@
 	JBP.exec = function(value, path, index, wakeup, can, type) {
 
 		var item = this;
+
 		if (item.disabled)
 			return;
 
@@ -11256,6 +11278,21 @@
 		if (item.notnull && value == null)
 			return;
 
+		if (item.wcom) {
+			if (item.wcomrunning)
+				return;
+			item.wcomrunning = 1;
+			for (var i = 0; i < item.wcom.length; i++) {
+				var com = item.wcom[i];
+				if (com && com.parentNode && (!com.$com || !com.$com.$ready)) {
+					setTimeout(jbind_com, 100, item, value, path, index, can, type);
+					return;
+				}
+			}
+			delete item.$running;
+			delete item.wcom;
+		}
+
 		if (item.selector) {
 			if (item.cache)
 				el = item.cache;
@@ -11271,12 +11308,9 @@
 
 		if (!wakeup && item.delay) {
 			item.$delay && clearTimeout(item.$delay);
-			item.$delay = setTimeout(jbind_delay, item.delay, item, value, path, index, can);
+			item.$delay = setTimeout(jbind_delay, item.delay, item, value, path, index, can, type);
 			return;
 		}
-
-		if (item.scope)
-			current_scope = item.scope;
 
 		if (item.$init) {
 
@@ -11302,6 +11336,9 @@
 			if (item.tracktype && type != null && !item.tracktype[type])
 				return;
 		}
+
+		if (item.scope)
+			current_scope = item.scope;
 
 		if (item.def && value == null)
 			value = item.def;
