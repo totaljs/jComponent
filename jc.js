@@ -1,3 +1,4 @@
+
 (function() {
 
 	// Constants
@@ -481,7 +482,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.263;
+	M.version = 18.264;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11278,13 +11279,12 @@
 			return;
 
 		if (item.wcom) {
-			if (item.wcomrunning)
-				return;
-			item.wcomrunning = 1;
+			item.wcomrunning && clearTimeout(item.wcomrunning);
+			item.wcomrunning = null;
 			for (var i = 0; i < item.wcom.length; i++) {
 				var com = item.wcom[i];
 				if (com && com.parentNode && (!com.$com || !com.$com.$loaded)) {
-					setTimeout(jbind_com, 100, item, value, path, index, can, type);
+					item.wcomrunning = setTimeout(jbind_com, 100, item, value, path, index, can, type);
 					return;
 				}
 			}
