@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.265;
+	M.version = 18.266;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -9032,7 +9032,7 @@
 
 		ismm && before.push('var mm=W.MONTHS[d.getMonth()];');
 		isdd && before.push('var dd=W.DAYS[d.getDay()];');
-		isww && before.push('var ww = new Date(+d);ww.setHours(0,0,0,0);ww.setDate(ww.getDate()+3-(ww.getDay()+6)%7);var ww1=new Date(ww.getFullYear(),0,4);return 1+Math.round(((ww.getTime()-ww1.getTime())/86400000-3+(ww1.getDay()+6)%7)/7);');
+		isww && before.push('var ww = new Date(+d);ww.setHours(0,0,0,0);ww.setDate(ww.getDate()+3-(ww.getDay()+6)%7);var ww1=new Date(ww.getFullYear(),0,4);ww=1+Math.round(((ww.getTime()-ww1.getTime())/86400000-3+(ww1.getDay()+6)%7)/7);');
 
 		statics[key] = new Function('d', before.join('\n') + 'return \'' + format + '\';');
 		return statics[key](self);
