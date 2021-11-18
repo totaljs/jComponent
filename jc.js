@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.266;
+	M.version = 18.267;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10599,7 +10599,6 @@
 		for (var i = 0; i < meta.length; i++) {
 
 			var item = TRANSLATE(meta[i].trim());
-
 			if (item) {
 
 				if (i) {
@@ -10906,8 +10905,19 @@
 									fn.$nn = 1;
 								if (notvisible)
 									fn.$nv = 1;
+
+								if (v) {
+									var attr = '';
+									v = v.replace(/(-)?->.*/, function(text) {
+										attr = text.replace(/(-)?->/g, '').trim();
+										return '';
+									})
+									fn.$vdomattr = attr;
+								}
+
 								fn.$vdom = v;
 								fn.$compile = tmp.COMPILABLE();
+
 								r && !ns && scr.remove();
 								break;
 							case 'path':
@@ -11484,7 +11494,7 @@
 			DEFMODEL.path = path;
 
 			if (item.template.$vdom) {
-				var status = DIFFDOM(el, item.template.$vdom, item.template(DEFMODEL));
+				var status = DIFFDOM(el, item.template.$vdom, item.template(DEFMODEL), item.template.$vdomattr);
 				tmp = !!(status.add || status.upd);
 			} else {
 				tmp = true;
@@ -11610,7 +11620,11 @@
 		}
 	};
 
-	W.DIFFDOM = function(el, selector, html) {
+	function diffdomchecksum(el, type) {
+		return type ? el.getAttribute(type) : el.outerHTML;
+	}
+
+	W.DIFFDOM = function(el, selector, html, attr) {
 
 		var vdom = $(html);
 		var varr = vdom.filter(selector);
@@ -11618,33 +11632,54 @@
 		var output = { add: 0, upd: 0, rem: 0 };
 		var compareindex = 0;
 		var is = false;
-		var prop = 'outerHTML';
+		var arr = [];
 
-		for (var i = 0; i < vels.length; i++) {
-			var a = vels[compareindex++];
-			var b = varr[i];
+		for (var node of vels)
+			node.$diffdom = 1;
 
-			if (b == null) {
-				a && a.parentNode.removeChild(a);
-				output.rem++;
-			} else if (a && a[prop] !== b[prop]) {
-				var next = vels[compareindex];
-				if (next && next[prop] === b[prop] && !is) {
-					is = true;
-					a.parentNode.removeChild(a);
-					compareindex++;
-				} else {
-					is = false;
-					a.parentNode.replaceChild(b, a);
+		for (var i = 0; i < varr.length; i++) {
+			var item = varr[i];
+			var obj = {};
+			obj.virtual = item;
+			obj.checksum = diffdomchecksum(item, attr);
+			for (var node of vels) {
+				var checksum = diffdomchecksum(node, attr);
+				if (checksum === obj.checksum) {
+					delete node.$diffdom;
+					obj.node = node;
+					break;
 				}
-				output.upd++;
-			} else
-				is = false;
+			}
+			arr.push(obj);
 		}
 
-		for (var i = vels.length; i < varr.length; i++) {
-			el[0].appendChild(varr[i]);
-			output.add++;
+		var dom = el[0];
+		var rem = [];
+
+		for (var node of vels) {
+			if (node.$diffdom)
+				rem.push(node);
+		}
+
+		output.rem = rem.length;
+
+		for (var node of rem)
+			dom.removeChild(node);
+
+		for (var i = 0; i < arr.length; i++) {
+			var node = dom.children[i];
+			var item = arr[i];
+			if (item.node) {
+				output.upd++;
+				if (node && item.node !== node)
+					NODEINSERT(item.node, node, true);
+			} else {
+				output.add++;
+				if (node)
+					NODEINSERT(item.virtual, node, true);
+				else
+					dom.appendChild(item.virtual);
+			}
 		}
 
 		return output;
