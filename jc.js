@@ -10911,7 +10911,7 @@
 									v = v.replace(/(-)?->.*/, function(text) {
 										attr = text.replace(/(-)?->/g, '').trim();
 										return '';
-									})
+									});
 									fn.$vdomattr = attr;
 								}
 
@@ -11630,8 +11630,6 @@
 		var varr = vdom.filter(selector);
 		var vels = el.find(selector);
 		var output = { add: 0, upd: 0, rem: 0 };
-		var compareindex = 0;
-		var is = false;
 		var arr = [];
 
 		for (var node of vels)
