@@ -11875,7 +11875,7 @@
 		element[0].$scrollbar = self;
 
 		if (options.padding == null)
-			options.padding = 5;
+			options.padding = 0;
 
 		if (!options.minsize)
 			options.minsize = 50;
