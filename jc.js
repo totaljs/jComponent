@@ -4388,7 +4388,7 @@
 			collection = el;
 
 		findcontrol2(obj, collection);
-
+		obj.released && obj.released(HIDDEN(dom));
 		DEF.monitor && monitor_method('components', 1);
 		M.components.push(obj);
 		C.init.push(obj);
@@ -5399,6 +5399,10 @@
 			self.setter2 && self.setter2(cache.value, cache.path, cache.type);
 		};
 
+		var checkvisibility = function(self) {
+			self.setterX(self.$bindcache.value, self.$bindcache.path, self.$bindcache.type);
+		};
+
 		self.setterX = function(value, path, type) {
 
 			if (!self.setter || (self.$bindexact && self.path !== path && self.path.indexOf(path + '.') === -1 && type))
@@ -5411,12 +5415,19 @@
 					value = self.$format(value, path, type, self.scope);
 
 				if (self.$bindvisible) {
+
+					if (cache.check) {
+						clearTimeout(cache.check);
+						cache.check = null;
+					}
+
 					if (HIDDEN(self.dom)) {
-						cache.is = true;
 						cache.value = value;
 						cache.path = path;
 						cache.type = type;
 						cache.bt && clearTimeout(cache.bt);
+						cache.is = true;
+						cache.check = setTimeout(checkvisibility, 500, self);
 					} else {
 						cache.value = value;
 						cache.path = path;
