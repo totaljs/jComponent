@@ -2,7 +2,7 @@
 
 	// Constants
 	var REGMETHOD = /GET|POST|PATCH|PUT|DELETE\s/;
-	var REGCOM = /(data--|data---|data-jc|data-import|-bind|bind)=|COMPONENT\(/;
+	var REGCOM = /(data--|data---|data-import|-bind|bind)=|COMPONENT\(/;
 	var REGSCRIPT = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGENV = /(\[.*?\])/gi;
@@ -23,8 +23,8 @@
 	var T_COM = '---';
 	var T_ = '--';
 	var T_DATA = 'data-';
-	var ATTRCOM = '[data-jc],[data--],[data' + T_COM + ']';
-	var ATTRBIND = '[data-bind],[bind],[data-vbind]';
+	var ATTRCOM = '[data--],[data' + T_COM + ']';
+	var ATTRBIND = '[data-bind],[bind]';
 	var ATTRJCBIND = 'data-jc-bind';
 	var ATTRDATA = 'jc';
 	var ATTRDEL = T_DATA + 'jc-removed';
@@ -35,7 +35,6 @@
 	var MULTIPLE = /\s\+\s|\s/;
 	var SCOPENAME = 'scope';
 	var ATTRSCOPE2 = T_DATA + '' + SCOPENAME;
-	var ATTRREL2 = T_DATA + 'released';
 	var TYPE_FN = 'function';
 	var TYPE_S = 'string';
 	var TYPE_N = 'number';
@@ -71,7 +70,6 @@
 	var T_TMP = 'jctmp.';
 	var T_UNKNOWN = 'UNKNOWN';
 	var T_CLICK = 'click';
-	var T_CHANGEAT = ' @change';
 	var ERRCONN = 'ERR_CONNECTION_CLOSED';
 	var OK = Object.keys;
 	var SKIPBODYENCRYPTOR = { ':': 1, '"': 1, '[': 1, ']': 1, '\'': 1, '_': 1, '{': 1, '}': 1, '&': 1, '=': 1, '+': 1, '-': 1, '\\': 1, '/': 1, ',': 1 };
@@ -79,9 +77,6 @@
 	var debug = false;
 
 	// No scrollbar
-	var cssnoscrollbar = {};
-	var clsnoscrollbar = 'noscrollbar';
-	var selnoscrollbar = '.' + clsnoscrollbar;
 	var W = window;
 	var $W = $(W);
 	var D = document;
@@ -178,7 +173,7 @@
 	W.TRANSLATE = function(str) {
 
 
-		if (!str || typeof(str) !== 'string' || str.indexOf('@(') === -1)
+		if (!str || typeof(str) !== TYPE_S || str.indexOf('@(') === -1)
 			return str;
 
 		var index = 0;
@@ -481,7 +476,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.268;
+	M.version = 19.001;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1266,8 +1261,6 @@
 					v = key === name && item.owner === owner && item.fn === fn;
 				else if (type === 5 || type === 6)
 					v = key === name && item.fn === fn;
-				else if (type === 6)
-					v = item.fn === fn;
 				else if (type === 7)
 					v = key === name && item.path === path;
 				else
@@ -1765,21 +1758,6 @@
 		save();
 	};
 
-	W.MODIFY = function(path, value, timeout) {
-		if (path && typeof(path) === TYPE_O) {
-			for (var key in path)
-				MODIFY(key, path[key], value);
-		} else {
-			if (typeof(value) === TYPE_FN)
-				value = value(GET(path));
-			SET(path, value, timeout);
-			if (timeout)
-				setTimeout(CHANGE, timeout + 5, path);
-			else
-				CHANGE(path);
-		}
-	};
-
 	W.AJAXCONFIG = function(name, fn) {
 		ajaxconfig[name] = fn;
 	};
@@ -1997,7 +1975,7 @@
 	W.WAPI = function(name, data, callback, timeout, scope) {
 		if (!name)
 			return wdapi;
-		if (typeof(name) === 'object')
+		if (typeof(name) === TYPE_O)
 			return WAPI_INIT(name);
 		if (wdapi)
 			return wdapi.send(name, data, callback, timeout, scope);
@@ -3180,18 +3158,6 @@
 		return model;
 	}
 
-	W.GETM = function(path) {
-		return GET(path + ' @modified');
-	};
-
-	W.GETU = function(path) {
-		return GET(path + ' @update');
-	};
-
-	W.GETR = function(path) {
-		return GET(path + ' @reset');
-	};
-
 	W.VALIDATE = function(path, except) {
 
 		var arr = [];
@@ -3414,16 +3380,10 @@
 	function attrcom(el, name) {
 		if (!el.attrd)
 			el = $(el);
-		return name ? el.attrd(ATTRDATA + '-' + name) : (el.attrd(ATTRDATA) || el.attrd('-') || el.attrd(T_) || el.attrd(T_COM));
+		return name ? el.attrd(ATTRDATA + '-' + name) : (el.attrd(T_COM) || el.attrd(T_));
 	}
 
-	function attrrel(el) {
-		if (el instanceof jQuery)
-			el = el[0];
-		return el.getAttribute(ATTRREL2) || el.getAttribute(T_DATA + 'jc-released');
-	}
-
-	function crawler(container, onComponent, level, released) {
+	function crawler(container, onComponent, level) {
 
 		if (container)
 			container = $(container)[0];
@@ -3436,9 +3396,6 @@
 		var comp = container ? attrcom(container, 'compile') : '1';
 		if (comp === '0' || comp === T_FALSE)
 			return;
-
-		if (!released)
-			released = container ? attrrel(container) === T_TRUE : false;
 
 		var b = null;
 		var binders = null;
@@ -3475,10 +3432,8 @@
 
 				if (el.$com === undefined) {
 					name = attrcom(el);
-					if (name != null) {
-						released && el.setAttribute(ATTRREL2, T_TRUE);
+					if (name != null)
 						onComponent(name || '', el, level);
-					}
 				}
 
 				if (!el.$jcbind) {
@@ -3498,7 +3453,7 @@
 
 		for (var i = 0; i < sub.length; i++) {
 			el = sub[i];
-			el && crawler(el, onComponent, level, released);
+			el && crawler(el, onComponent, level);
 		}
 
 		if (binders) {
@@ -3969,9 +3924,6 @@
 
 				instances.push(obj);
 
-				if (attrrel(el) === T_TRUE)
-					obj.isreleased = true;
-
 				if (typeof(obj.make) === TYPE_S) {
 
 					if (obj.make.indexOf('<') !== -1) {
@@ -4437,7 +4389,6 @@
 
 		findcontrol2(obj, collection);
 
-		obj.released && obj.released(obj.isreleased);
 		DEF.monitor && monitor_method('components', 1);
 		M.components.push(obj);
 		C.init.push(obj);
@@ -4454,10 +4405,6 @@
 			!item.$removed && prepare(item);
 			initialize();
 		}
-	}
-
-	function resizenoscrollbar(el) {
-		el.find(selnoscrollbar).noscrollbar();
 	}
 
 	function prepare(obj) {
@@ -4546,13 +4493,6 @@
 				el[0].$jclass = tmp;
 			}, 5);
 		})(cls);
-
-		setTimeout(resizenoscrollbar, 777, el);
-
-		if (obj.$releaseready != null) {
-			obj.release(obj.$releaseready, null, true);
-			delete obj.$releaseready;
-		}
 
 		obj.id && EMIT('#' + obj.id, obj);
 
@@ -5386,8 +5326,6 @@
 		// self.$initialized = false;
 		// self.$path;
 		self.trim = true;
-		self.isreleased = false;
-		self.$bindreleased = true;
 		self.$data = {};
 
 		var version = name.lastIndexOf('@');
@@ -5406,7 +5344,6 @@
 		self.destroy;
 		self.state;
 		self.validate;
-		self.released;
 
 		self.getter = function(value, realtime, nobind) {
 
@@ -5473,7 +5410,25 @@
 				if (self.$format)
 					value = self.$format(value, path, type, self.scope);
 
-				if (self.$bindreleased) {
+				if (self.$bindvisible) {
+					if (HIDDEN(self.dom)) {
+						cache.is = true;
+						cache.value = value;
+						cache.path = path;
+						cache.type = type;
+						cache.bt && clearTimeout(cache.bt);
+					} else {
+						cache.value = value;
+						cache.path = path;
+						cache.type = type;
+						if (!cache.bt) {
+							if (cache.is)
+								self.setterX();
+							else
+								setterXbinder(self);
+						}
+					}
+				} else {
 
 					if (self.$bindchanges) {
 						var hash = HASH(value, 2);
@@ -5495,28 +5450,9 @@
 						self.$skipsetter = false;
 
 					self.setter2 && self.setter2(value, path, type);
-
-				} else {
-					if (self.isreleased) {
-						cache.is = true;
-						cache.value = value;
-						cache.path = path;
-						cache.type = type;
-						cache.bt && clearTimeout(cache.bt);
-					} else {
-						cache.value = value;
-						cache.path = path;
-						cache.type = type;
-						if (!cache.bt) {
-							if (cache.is)
-								self.setterX();
-							else
-								setterXbinder(self);
-						}
-					}
 				}
 
-			} else if (!self.isreleased && cache && cache.is) {
+			} else if (!HIDDEN(self.dom) && cache && cache.is) {
 				cache.is = false;
 				cache.bt && clearTimeout(cache.bt);
 				cache.bt = setTimeout(setterXbinder, self.$bindtimeout, self);
@@ -5796,13 +5732,8 @@
 		return NOTMODIFIED(t._id, t.get(), fields);
 	};
 
-	function waiter(self, obj, prop) {
-		obj.id && clearInterval(obj.id);
-		obj.id = setInterval(function(self, obj, prop) {
-
-			if (self.$removed)
-				return;
-
+	function waiter_worker(self, obj, prop) {
+		if (!self.$removed) {
 			var v = self[prop]();
 			if (v) {
 				clearInterval(obj.id);
@@ -5810,8 +5741,12 @@
 					obj.callback[i].call(self, v);
 				delete self.$W[prop];
 			}
+		}
+	}
 
-		}, MD.delaywatcher, self, obj, prop);
+	function waiter(self, obj, prop) {
+		obj.id && clearInterval(obj.id);
+		obj.id = setInterval(waiter_worker, MD.delaywatcher, self, obj, prop);
 	}
 
 	MPC.$waiter = PPC.$waiter = function(prop, callback) {
@@ -5849,9 +5784,7 @@
 		} else
 			t.$W[prop] = { callback: [callback] };
 
-		if (!t.isreleased)
-			waiter(t, t.$W[prop], prop);
-
+		waiter(t, t.$W[prop], prop);
 		return t;
 	};
 
@@ -5927,99 +5860,10 @@
 		return v;
 	};
 
-	function releasecomponents(type, dom, value, init, ischildren) {
-
-		// type = 0   - current component and all nested components
-		// type = 1   - only nested components
-		// type = 2   - only current component
-
-		if (dom) {
-
-			if (type === 0 || type === 2) {
-				if (dom.$com) {
-					var com = dom.$com;
-					var is = false;
-					if (com instanceof Array) {
-						for (var i = 0; i < com.length; i++) {
-							var tmp = com[i];
-							if (tmp.$removed || (tmp.$releasetype && (tmp.$releasetype === 3 || (tmp.$releasetype === 1 && !value) || (tmp.$releasetype === 2 && value))))
-								continue;
-							if (tmp.$initialized)
-								tmp.release(value, null, true);
-							else
-								tmp.$releaseready = value;
-							is = true;
-						}
-						if (!is)
-							return;
-					} else {
-						if (com.$removed || (com.$releasetype === 3 && (com.$releasetype === 3 || (com.$releasetype === 1 && !value) || (com.$releasetype === 2 && value))))
-							return;
-						if (com.$initialized)
-							com.release(value, null, true);
-						else
-							com.$releaseready = value;
-					}
-				} else if (ischildren && dom.$jcbind && dom.$jcbind.release) {
-					// A binder controls nested children by itself
-					return;
-				} else
-					attrcom(dom) && dom.setAttribute(ATTRREL2, value ? T_TRUE : T_FALSE);
-			}
-
-			if ((type === 0 || type === 1) && dom.children) {
-				for (var i = 0; i < dom.children.length; i++)
-					releasecomponents(0, dom.children[i], value, init, true);
-			}
-		}
-	}
-
-	PPC.releasemode = function(type) {
+	// Backward compatibility
+	PPC.release = function(value) {
 		var self = this;
-		switch (type) {
-			case 'auto':
-			case 0:
-				type = null;
-				break;
-			case 1:
-			case true:
-			case 'true':
-				type = 1; // accept only released
-				break;
-			case 2:
-			case false:
-			case 'false':
-				type = 2; // accept only unreleased
-				break;
-			default:
-				type = 3; // manual
-				break;
-		}
-		self.$releasetype = type;
-		return self;
-	};
-
-	PPC.release = function(value, container, skipnested) {
-
-		var self = this;
-		if (value === undefined || self.$removed)
-			return self.isreleased;
-
-		self.attr(ATTRREL2, value ? T_TRUE : T_FALSE);
-
-		if (!container && self.isreleased !== value) {
-			self.isreleased = value;
-			self.released && self.released(value, self);
-			self.$waiter(!value);
-			!value && self.setterX();
-		}
-
-		if (!skipnested) {
-			var el = container || self.element;
-			releasecomponents(1, el instanceof jQuery ? el[0] : el, value, 0, 0, true);
-		}
-
-		return value;
+		return value === undefined || self.$removed ? HIDDEN(self.dom) : value;
 	};
 
 	PPC.validate2 = function() {
@@ -6147,36 +5991,6 @@
 		return this;
 	};
 
-	PPC.toggle = function(cls, visible, timeout) {
-
-		var manual = false;
-		var self = this;
-
-		if (typeof(cls) !== TYPE_S) {
-			timeout = visible;
-			visible = cls;
-			cls = T_HIDDEN;
-			manual = true;
-		}
-
-		if (typeof(visible) === TYPE_N) {
-			timeout = visible;
-			visible = undefined;
-		} else if (manual && visible !== undefined)
-			visible = !visible;
-
-		var el = self.element;
-		if (!timeout) {
-			el.tclass(cls, visible);
-			return self;
-		}
-
-		setTimeout(function() {
-			el.tclass(cls, visible);
-		}, timeout);
-		return self;
-	};
-
 	MPC.EXEC = function(path, a, b, c, d) {
 		var self = this;
 		EXEC(self.scope ? self.scope.makepath(path) : path, a, b, c, d);
@@ -6227,19 +6041,19 @@
 		return self;
 	};
 
-	PPC.bindchanges = PPC.bindChanges = function(enable) {
+	PPC.bindchanges = function(enable) {
 		this.$bindchanges = enable == null || enable === true;
 		return this;
 	};
 
-	PPC.bindexact = PPC.bindExact = function(enable) {
+	PPC.bindexact = function(enable) {
 		this.$bindexact = enable == null || enable === true;
 		return this;
 	};
 
-	PPC.bindvisible = PPC.bindVisible = function(timeout) {
+	PPC.bindvisible = function(timeout) {
 		var self = this;
-		self.$bindreleased = false;
+		self.$bindvisible = true;
 		self.$bindtimeout = timeout || MD.delaybinder;
 		self.$bindcache = {};
 		return self;
@@ -6412,9 +6226,9 @@
 
 	var autofocus = function(el, selector, counter) {
 		if (!isMOBILE) {
-			if (typeof(counter) !== 'number')
+			if (typeof(counter) !== TYPE_N)
 				counter = 0;
-			var target = el.find(typeof(selector) === 'string' ? selector : 'input[type="text"],select,textarea')[0];
+			var target = el.find(typeof(selector) === TYPE_S ? selector : 'input[type="text"],select,textarea')[0];
 			if (target) {
 				target.focus();
 				if (document.activeElement == target)
@@ -6471,7 +6285,7 @@
 
 	PPC.configdisplay = function(key, value) {
 
-		if (typeof(value) !== 'string' || !(/@(xs|sm|md|lg|dark|light)=/).test(value))
+		if (typeof(value) !== TYPE_S || !(/@(xs|sm|md|lg|dark|light)=/).test(value))
 			return value;
 
 		var self = this;
@@ -6681,11 +6495,6 @@
 			delete cfg.$class;
 		}
 
-		if (cfg.$released) {
-			self.release(cfg.$released == true);
-			delete cfg.$released;
-		}
-
 		if (cfg.$reconfigure) {
 			setTimeout(reconfigure_exec, cfg.$reconfigure.indexOf('?') === -1 ? 1 : 10, self, cfg.$reconfigure);
 			delete cfg.$reconfigure;
@@ -6877,13 +6686,6 @@
 		return self;
 	};
 
-	PPC.setDefault = function(value) {
-		this.$default = function() {
-			return value;
-		};
-		return this;
-	};
-
 	PPC.default = function(reset) {
 		var self = this;
 		M.default(self.path, 0, self, reset);
@@ -7007,14 +6809,6 @@
 	PPC.emit = function() {
 		EMIT.apply(M, arguments);
 		return this;
-	};
-
-	PPC.evaluate = function(path, expression, nopath) {
-		if (!expression) {
-			expression = path;
-			path = this.path;
-		}
-		return EVALUATE(path, expression, nopath);
 	};
 
 	PPC.get = function(path) {
@@ -7505,7 +7299,7 @@
 
 	function makeandexecflags(path) {
 		execsetterflags = [];
-		path = path && typeof(path) === 'string' ? path.replace(REG_FLAGS, parseexecsetterflags) : path;
+		path = path && typeof(path) === TYPE_S ? path.replace(REG_FLAGS, parseexecsetterflags) : path;
 		execsetterflags.length && emitflags(execsetterflags, path);
 		return path;
 	}
@@ -7595,7 +7389,7 @@
 					if (!tmp.pending) {
 						warn('Initializing: ' + plugin_name);
 						tmp.pending = true;
-						if (typeof(tmp.fn) === 'string') {
+						if (typeof(tmp.fn) === TYPE_S) {
 							// URL address
 							IMPORT(tmp.fn, function() {
 								tmp = pluginableplugins[plugin_name];
@@ -7724,7 +7518,7 @@
 
 	W.QUERIFY = function(url, obj) {
 
-		if (typeof(url) !== 'string') {
+		if (typeof(url) !== TYPE_S) {
 			obj = url;
 			url = '';
 		}
@@ -7918,10 +7712,6 @@
 		timeouts[path] = setTimeout(setbind, timeout, path, value, reset, current_scope);
 	};
 
-	W.SETR = function(path, value, type) {
-		W.SET(path + ' @reset', value, type, true);
-	};
-
 	W.INC = function(path, value, timeout, reset) {
 
 		if (value == null)
@@ -7966,26 +7756,6 @@
 			return M.push(path, value, timeout);
 		timeouts[path] && clearTimeout(timeouts[path]);
 		timeouts[path] = setTimeout(pushbind, timeout, path, value, reset, current_scope);
-	};
-
-	W.TOGGLE2 = function(path, type) {
-		TOGGLE(path + T_CHANGEAT, type);
-	};
-
-	W.EXT2 = W.EXTEND2 = function(path, value, type) {
-		EXTEND(path + T_CHANGEAT, value, type);
-	};
-
-	W.SET2 = function(path, value, type) {
-		SET(path + T_CHANGEAT, value, type);
-	};
-
-	W.INC2 = function(path, value, type) {
-		INC(path + T_CHANGEAT, value, type);
-	};
-
-	W.PUSH2 = function(path, value, type) {
-		PUSH(path + T_CHANGEAT, value, type);
 	};
 
 	W.MODIFIED = function(path) {
@@ -8055,7 +7825,7 @@
 			// noCache can be timeout
 		}
 
-		if (typeof(value) === 'string' && value.indexOf('?') !== -1)
+		if (typeof(value) === TYPE_S && value.indexOf('?') !== -1)
 			value = value.replace(REGSCOPEINLINE, current_scope);
 
 		if (isWaiting) {
@@ -8232,13 +8002,33 @@
 		return unsigned != false ? hash >>> 0 : hash;
 	};
 
+	function rnd() {
+		return Math.floor(Math.random() * 65536).toString(36);
+	}
+
+	function rnd2() {
+		return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+	}
+
+	function rnd3() {
+		return arguments[Math.floor(Math.random() * arguments.length)];
+	}
+
 	W.GUID = function(size) {
-		if (!size)
-			size = 10;
+
+		if (!size) {
+			var ticks = Date.now();
+			var low = ticks.toString(16);
+			var sec = (ticks / 60000 >> 0).toString(16);
+			return low.substring(0, 8) + '-' + (low.length < 8 ? low.substring(8).padLeft(4, '0') : low.substring(4, 8)) + '-' + rnd3(1, 2, 3, 4, 5) + sec.substring(1, 4) + '-' + rnd3(0, 8, 9, 'a', 'b') + sec.substring(4, 7) + '-' + rnd2() + rnd2() + rnd2();
+		}
+
 		var l = ((size / 10) >> 0) + 1;
 		var b = [];
+
 		for (var i = 0; i < l; i++)
 			b.push(Math.random().toString(36).substring(2));
+
 		return b.join('').substring(0, size);
 	};
 
@@ -8334,7 +8124,7 @@
 		if (scope == null)
 			scope = current_scope;
 
-		if (typeof(thread) === 'function') {
+		if (typeof(thread) === TYPE_FN) {
 			callback = thread;
 			thread = 1;
 		} else if (thread === undefined)
@@ -8662,7 +8452,7 @@
 		return this.replace(/<\/?[^>]+(>|$)/g, '');
 	};
 
-	SP.removeDiacritics = SP.toASCII = function() {
+	SP.toASCII = function() {
 		var buf = '';
 		for (var i = 0; i < this.length; i++) {
 			var c = this[i];
@@ -10097,32 +9887,6 @@
 			temp = {};
 		}, 60000);
 
-		$.fn.noscrollbar = function(force) {
-			var t = this;
-			var sw = SCROLLBARWIDTH();
-
-			cssnoscrollbar['overflow-y'] = sw ? 'scroll' : 'auto';
-
-			if (sw && (W.isIE || (/Edge/).test(ua)))
-				sw = 0;
-
-			for (var i = 0; i < t.length; i++) {
-				var m = t[i];
-				if (m && !HIDDEN(m)) {
-					var el = $(m);
-					var w = $(el[0].parentNode).width();
-					if (force || m.$noscrollbarwidth !== w) {
-						m.$noscrollbarwidth = w;
-						cssnoscrollbar.width = Math.ceil(w + sw) + 'px';
-						el.css(cssnoscrollbar);
-						if ((el.attr(T_CLASS) || '').indexOf(clsnoscrollbar) === -1)
-							el.aclass(clsnoscrollbar);
-					}
-				}
-			}
-			return t;
-		};
-
 		var displaymodeprev;
 
 		function displaymode() {
@@ -10152,7 +9916,6 @@
 				return;
 			}
 
-			$(selnoscrollbar).noscrollbar();
 			displaymode();
 
 			if (windowresized) {
@@ -10681,7 +10444,7 @@
 						v = new Function('value', 'path', 'el', 'var fn=el[0].' + vkey + ';if(!fn){var _s=el.scope();if(_s){el[0].' + vkey + '=fn=GET(_s.makepath(\'' + vfn + '\'))}}if(fn)return fn' + (vbeg == -1 ? '(value,path,el)' : v.substring(vbeg)));
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'tracktype', T_RESIZE, 'delay', 'macro', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'helper', 'currency', 'empty', 'release', 'changes', 'ready') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'tracktype', T_RESIZE, 'delay', 'macro', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'helper', 'currency', 'empty', 'changes', 'ready') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -11177,7 +10940,7 @@
 		obj.$init = 0;
 
 		if (!DEF.inspectable)
-			el.removeAttribute(T_DATA + 'bind');
+			el.removeAttribute(T_DATA + T_BIND);
 
 		if (!obj.virtual) {
 			var tmp = obj.el.filter(ATTRCOM);
@@ -11401,11 +11164,6 @@
 			el.tclass('invisible', tmp);
 			if (tmp)
 				can = false;
-		}
-
-		if (item.release) {
-			item.el.attr(ATTRREL2, !can);
-			releasecomponents(0, item.el[0], !can, !item.$init);
 		}
 
 		if (!item.$init)
@@ -11736,7 +11494,7 @@
 
 		if (init) {
 			t.pending = true;
-			if (typeof(init) === 'string') {
+			if (typeof(init) === TYPE_S) {
 				MIDDLEWARE(init.split(/\s|,/).trim(), function() {
 					plugindone(t, fn, done);
 				});
@@ -11875,7 +11633,7 @@
 		element[0].$scrollbar = self;
 
 		if (options.padding == null)
-			options.padding = 0;
+			options.padding = 5;
 
 		if (!options.minsize)
 			options.minsize = 50;
@@ -12500,7 +12258,6 @@
 					shadowtop.css(T_WIDTH, size.viewWidth - shadowm);
 					shadowbottom.css(T_WIDTH, size.viewWidth - shadowm);
 				}
-				// shadowright && shadowright.css('left', aw - shadowheight);
 				shadowright && shadowright.css('left', size.viewWidth - shadowheight);
 				bodyarea.css(orientation === 'y' ? T_WIDTH : 'min-' + T_WIDTH, size.viewWidth - mx + (W.isIE || isedge || !sw ? size.margin : 0) - (orientation === 'x' ? size.margin : 0));
 			}
@@ -12508,7 +12265,6 @@
 			if (scrollbarcache.ah !== ah) {
 				scrollbarcache.ah = ah;
 				area.css(T_HEIGHT, ah);
-				// shadowbottom && shadowbottom.css('top', ah - shadowheight);
 				shadowbottom && shadowbottom.css('top', size.viewHeight - shadowheight);
 			}
 
@@ -12553,8 +12309,9 @@
 
 				if (shadowleft) {
 					var shadowm = options.marginshadowX || 0;
-					shadowleft.css(T_HEIGHT, cssx.top - (options.marginshadowX || 0));
-					shadowright.css(T_HEIGHT, cssx.top - (options.marginshadowX || 0));
+					var shadowplus = options.floating === false ? 0 : pathx.height();
+					shadowleft.css(T_HEIGHT, cssx.top - (options.marginshadowX || 0) + shadowplus);
+					shadowright.css(T_HEIGHT, cssx.top - (options.marginshadowX || 0) + shadowplus);
 				}
 
 				var pl = pathx.css('left');
@@ -13173,7 +12930,7 @@
 	};
 
 	W.ENCRYPT = function(str, key, type) {
-		if (typeof(str) === 'object')
+		if (typeof(str) === TYPE_O)
 			str = STRINGIFY(str, true);
 		var arr = unescape(encodeURIComponent(str)).split('');
 		for (var i = 0; i < arr.length; i++)
