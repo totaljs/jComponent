@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.267;
+	M.version = 18.268;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11632,15 +11632,16 @@
 		var output = { add: 0, upd: 0, rem: 0 };
 		var arr = [];
 
-		for (var node of vels)
-			node.$diffdom = 1;
+		for (var j = 0; j < vels.length; j++)
+			vels[j].$diffdom = 1;
 
 		for (var i = 0; i < varr.length; i++) {
 			var item = varr[i];
 			var obj = {};
 			obj.virtual = item;
 			obj.checksum = diffdomchecksum(item, attr);
-			for (var node of vels) {
+			for (var j = 0; j < vels.length; j++) {
+				var node = vels[j];
 				var checksum = diffdomchecksum(node, attr);
 				if (checksum === obj.checksum) {
 					delete node.$diffdom;
@@ -11654,15 +11655,16 @@
 		var dom = el[0];
 		var rem = [];
 
-		for (var node of vels) {
+		for (var j = 0; j < vels.length; j++) {
+			var node = vels[j];
 			if (node.$diffdom)
 				rem.push(node);
 		}
 
 		output.rem = rem.length;
 
-		for (var node of rem)
-			dom.removeChild(node);
+		for (var j = 0; j < rem.length; j++)
+			dom.removeChild(rem[j]);
 
 		for (var i = 0; i < arr.length; i++) {
 			var node = dom.children[i];
@@ -11871,6 +11873,12 @@
 
 		controls.prepend(('<div class="{0}-path {0}-notready" data-id="{1}">' + (canY ? '<div class="{0}-y" data-id="{1}"><span><b></b></span></div>' : '') + (canX ? '<div class="{0}-x" data-id="{1}"><span><b></b></span></div></div>' : '')).format(n, id));
 		element[0].$scrollbar = self;
+
+		if (options.padding == null)
+			options.padding = 5;
+
+		if (!options.minsize)
+			options.minsize = 50;
 
 		var di = '[data-id="{0}"]'.format(id);
 		var pe = 'pointer-events';
@@ -12549,10 +12557,20 @@
 					shadowright.css(T_HEIGHT, cssx.top - (options.marginshadowX || 0));
 				}
 
+				var pl = pathx.css('left');
+				if (pl) {
+					pl = pl.parseInt();
+					cssx.width -= (pl * 2);
+				}
+
+				if (options.padding)
+					cssx.top -= options.padding;
+
 				pathx.css(cssx);
 			}
 
 			if (canY) {
+
 				if (iscc) {
 					cssy.left = controls.width() - size.thicknessV;
 					cssy.height = controls.height();
@@ -12561,21 +12579,28 @@
 					cssy.height = size.viewHeight;
 				}
 
-				if (options.marginYX)
+				if (options.padding)
+					cssy.left -= options.padding;
+
+				var pt = pathy.css('top');
+				if (pt) {
+					pt = pt.parseInt();
+					cssy.height -= (pt * 2);
+				}
+
+				if (options.marginYX && cssx.left != null)
 					cssx.left -= options.marginYX;
 
 				if (options.marginY)
 					cssy.height -= options.marginY;
 
 				pathy.css(cssy);
-			}
 
-			if (canY) {
 				size.vbar = (size.scrollHeight - size.clientHeight) > 5;
 				if (size.vbar) {
 					size.vbarsize = (size.clientHeight * (cssy.height / size.scrollHeight)) >> 0;
-					if (size.vbarsize < 30)
-						size.vbarsize = 30;
+					if (size.vbarsize < options.minsize)
+						size.vbarsize = options.minsize;
 					size.vbarlength = cssy.height;
 					if (scrollbarcache.vbarsize !== size.vbarsize) {
 						scrollbarcache.vbarsize = size.vbarsize;
@@ -12589,8 +12614,8 @@
 				if (size.hbar) {
 					size.hbarsize = (size.clientWidth * (cssx.width / size.scrollWidth)) >> 0;
 					size.hbarlength = cssx.width;
-					if (size.hbarsize < 30)
-						size.hbarsize = 30;
+					if (size.hbarsize < options.minsize)
+						size.hbarsize = options.minsize;
 					if (scrollbarcache.hbarsize !== size.hbarsize) {
 						scrollbarcache.hbarsize = size.hbarsize;
 						barx.css(T_WIDTH, size.hbarsize).attrd('size', size.hbarsize);
@@ -12661,11 +12686,17 @@
 				if (W.isIE == false && sw && !isedge)
 					plus = 0;
 
-				if (canY)
-					cssba[PR] = size.vbar ? (size.thicknessV + plus) : plus;
-
-				if (canX)
-					cssba[PB] = size.hbar ? (size.thicknessH + plus) : plus;
+				if (options.floating == false) {
+					if (canY)
+						cssba[PR] = size.vbar ? (size.thicknessV + plus) : plus;
+					if (canX)
+						cssba[PB] = size.hbar ? (size.thicknessH + plus) : plus;
+				} else {
+					if (canY)
+						cssba[PR] = plus;
+					if (canX)
+						cssba[PB] = plus;
+				}
 
 				if (scrollbarcache[PR] !== cssba[PR] || scrollbarcache[PB] !== cssba[PB]) {
 					scrollbarcache[PR] = cssba[PR];
