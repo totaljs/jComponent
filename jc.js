@@ -8490,7 +8490,7 @@
 
 	SP.toSearch = function() {
 
-		var str = this.replace(REGSEARCH, '').trim().toLowerCase().removeDiacritics();
+		var str = this.replace(REGSEARCH, '').trim().toLowerCase().toASCII();
 		var buf = [];
 		var prev = '';
 
@@ -8510,7 +8510,7 @@
 	SP.slug = function(max) {
 		max = max || 60;
 
-		var self = this.trim().toLowerCase().removeDiacritics();
+		var self = this.trim().toLowerCase().toASCII();
 		var builder = '';
 		var length = self.length;
 
