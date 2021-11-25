@@ -10110,6 +10110,8 @@
 
 			var body = $(D.body);
 
+			body.aclass('jc-' + (M.version >> 0));
+
 			if (isPRIVATEMODE)
 				body.aclass('jc-nostorage');
 
