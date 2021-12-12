@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.268;
+	M.version = 18.269;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -13182,6 +13182,16 @@
 			type = '';
 		var o = arr.join('');
 		return type + o + 'x' + HASH(o + (key || '') + type).toString(32);
+	};
+
+	W.ATTRD = function(el, attrd) {
+		if (el instanceof jQuery)
+			return el.attrd(attrd || 'id');
+		else if (el instanceof jQuery.Event)
+			return $(el.currentTarget).attrd(attrd || 'id');
+		else if (typeof(el.getAttribute) === 'function')
+			return el.getAttribute(T_DATA + (attrd || 'id'));
+		return el;
 	};
 
 })();
