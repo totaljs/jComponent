@@ -476,7 +476,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.001;
+	M.version = 19.002;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7442,6 +7442,16 @@
 		}
 
 		wait && !ok && exechelper(ctx, path, arg);
+	};
+
+	W.ATTRD = function(el, attrd) {
+		if (el instanceof jQuery)
+			return el.attrd(attrd || 'id');
+		else if (el instanceof jQuery.Event)
+			return $(el.currentTarget).attrd(attrd || 'id');
+		else if (typeof(el.getAttribute) === 'function')
+			return el.getAttribute(T_DATA + (attrd || 'id'));
+		return el;
 	};
 
 	W.MAKE = function(obj, fn, update) {
