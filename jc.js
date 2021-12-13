@@ -13186,11 +13186,11 @@
 
 	W.ATTRD = function(el, attrd) {
 		if (el instanceof jQuery)
-			return el.attrd(attrd || 'id');
+			return el.attrd2(attrd || 'id');
 		else if (el instanceof jQuery.Event)
-			return $(el.currentTarget).attrd(attrd || 'id');
+			return $(el.currentTarget).attrd2(attrd || 'id');
 		else if (typeof(el.getAttribute) === 'function')
-			return el.getAttribute(T_DATA + (attrd || 'id'));
+			return W.ATTRD($(el), attrd);
 		return el;
 	};
 
