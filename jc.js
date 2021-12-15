@@ -4048,6 +4048,7 @@
 				scope.element = $(el);
 				scope.config = conf;
 				el.$scopedata = scope;
+				conf.aclass && scope.element.aclass(path);
 
 				if (tmp[1]) {
 					var plugin = pluginscope[tmp[1]];
@@ -4157,42 +4158,42 @@
 		for (var i = 0; i < items.length; i++) {
 
 			var t = items[i];
-			if (t.$downloaded)
-				continue;
+			if (!t.$downloaded) {
 
-			var el = $(t);
-			t.$downloaded = 1;
+				var el = $(t);
+				var data = el.attrd(T_IMPORT).parseConfig();
 
-			var data = el.attrd(T_IMPORT).parseConfig();
+				t.$downloaded = 1;
 
-			// data.url
-			// data.cache
-			// data.init
-			// data.path
-			// data.class
-			// data.make
-			// data.replace
-			// data.target
-			// data.reevaluate
+				// data.url
+				// data.cache
+				// data.init
+				// data.path
+				// data.class
+				// data.make
+				// data.replace
+				// data.target
+				// data.reevaluate
 
-			// Unique
-			var url = data.url;
+				// Unique
+				var url = data.url;
 
-			var once = url.substring(0, 5).toLowerCase() === 'once ';
-			if (url.charAt(0) === '!' || once) {
-				if (once)
-					url = url.substring(5);
-				else
-					url = url.substring(1);
-				if (statics[url])
-					continue;
-				statics[url] = 2;
+				var once = url.substring(0, 5).toLowerCase() === 'once ';
+				if (url.charAt(0) === '!' || once) {
+					if (once)
+						url = url.substring(5);
+					else
+						url = url.substring(1);
+					if (statics[url])
+						continue;
+					statics[url] = 2;
+				}
+
+				data.url = url;
+				data.element = el;
+				data.toggle = data.class;
+				arr.push(data);
 			}
-
-			data.url = url;
-			data.element = el;
-			data.toggle = data.class;
-			arr.push(data);
 		}
 
 		if (!arr.length)
@@ -5901,7 +5902,7 @@
 		if (C.is)
 			C.recompile = true;
 
-		var n = 'scope';
+		var n = SCOPENAME;
 		var prev = self.element;
 		var scope = prev.attrd(n);
 		var data = prev[0].$scopedata;
