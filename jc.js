@@ -476,7 +476,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.003;
+	M.version = 19.004;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6239,12 +6239,16 @@
 		if (!isMOBILE) {
 			if (typeof(counter) !== TYPE_N)
 				counter = 0;
-			var target = el.find(typeof(selector) === TYPE_S ? selector : 'input,select,textarea')[0];
-			if (target) {
-				target.focus();
-				if (document.activeElement == target)
-					return;
+			var target = el.find(typeof(selector) === TYPE_S ? selector : 'input,select,textarea');
+			for (var i = 0; i < target.length; i++) {
+				var item = target[i];
+				if (item && !HIDDEN(item)) {
+					target.focus();
+					if (document.activeElement == target)
+						return;
+				}
 			}
+
 			if (counter < 15)
 				setTimeout(autofocus, 200, el, selector, counter + 1);
 		}
@@ -8022,10 +8026,6 @@
 		}
 		return unsigned != false ? hash >>> 0 : hash;
 	};
-
-	function rnd() {
-		return Math.floor(Math.random() * 65536).toString(36);
-	}
 
 	function rnd2() {
 		return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
