@@ -476,7 +476,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.002;
+	M.version = 19.003;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6239,7 +6239,7 @@
 		if (!isMOBILE) {
 			if (typeof(counter) !== TYPE_N)
 				counter = 0;
-			var target = el.find(typeof(selector) === TYPE_S ? selector : 'input[type="text"],select,textarea')[0];
+			var target = el.find(typeof(selector) === TYPE_S ? selector : 'input,select,textarea')[0];
 			if (target) {
 				target.focus();
 				if (document.activeElement == target)
