@@ -6244,8 +6244,8 @@
 			for (var i = 0; i < target.length; i++) {
 				var item = target[i];
 				if (item && !HIDDEN(item)) {
-					target.focus();
-					if (document.activeElement == target)
+					item.focus();
+					if (document.activeElement == item)
 						return;
 				}
 			}
