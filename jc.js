@@ -116,6 +116,10 @@
 		W.console && W.console.warn.apply(W.console, arguments);
 	};
 
+	var throwerror = function(e) {
+		W.console && W.console.error(e);
+	};
+
 	// Source: https://stackoverflow.com/questions/5353934/check-if-element-is-visible-on-screen
 	W.VISIBLE = function(el, threshold, mode) {
 
@@ -476,7 +480,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.004;
+	M.version = 19.005;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2621,6 +2625,7 @@
 
 		var all = M.components;
 
+
 		for (var i = 0; i < all.length; i++) {
 			var com = all[i];
 
@@ -2634,7 +2639,11 @@
 				com.set(result, 3);
 			} else if (com.setter) {
 				com.$skip = false;
-				com.setterX(result, newpath, type);
+				try {
+					com.setterX(result, newpath, type);
+				} catch (e) {
+					throwerror(e);
+				}
 			}
 
 			if (!com.$ready)
@@ -2698,7 +2707,14 @@
 
 			if (is) {
 				var val = com.get();
-				com.setter && com.setterX(val, com.path, 1);
+				if (com.setter) {
+					try {
+						com.setterX(val, com.path, 1);
+					} catch (e) {
+						throwerror(e);
+					}
+				}
+
 				com.state && com.stateX(1, 6);
 			}
 		}
@@ -2746,7 +2762,11 @@
 						com.set(result, 3);
 					} else if (com.setter) {
 						com.$skip = false;
-						com.setterX(result, p, type);
+						try {
+							com.setterX(result, p, type);
+						} catch (e) {
+							throwerror(e);
+						}
 					}
 
 					if (!com.$ready)
@@ -2890,10 +2910,21 @@
 			if (meta.flags.default && com.$default)
 				com.set(com.$default(), 3);
 			else if (com.setter) {
-				if (com.path === newpath)
-					com.setter && com.setterX(result, newpath, type);
-				else
-					com.setter && com.setterX(get(com.path), newpath, type);
+				if (com.path === newpath) {
+					if (com.setter) {
+						try {
+							com.setterX(result, newpath, type);
+						} catch (e) {
+							throwerror(e);
+						}
+					}
+				} else if (com.setter) {
+					try {
+						com.setterX(get(com.path), newpath, type);
+					} catch (e) {
+						throwerror(er);
+					}
+				}
 			}
 
 			if (!com.$ready)
@@ -4458,7 +4489,11 @@
 
 				if (!obj.$binded) {
 					obj.$binded = true;
-					obj.setterX(value, obj.path, 0);
+					try {
+						obj.setterX(value, obj.path, 0);
+					} catch (e) {
+						throwerror(e);
+					}
 				}
 			}
 		} else
@@ -5668,8 +5703,13 @@
 			var c = M.components;
 			for (var i = 0; i < c.length; i++) {
 				var com = c[i];
-				if (com.owner === self && com.$pp && key === com.path)
-					com.setterX(value, value, 2);
+				if (com.owner === self && com.$pp && key === com.path) {
+					try {
+						com.setterX(value, value, 2);
+					} catch (e) {
+						throwerror(e);
+					}
+				}
 			}
 		}
 
