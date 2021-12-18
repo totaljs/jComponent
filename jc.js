@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.271;
+	M.version = 18.272;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -13201,12 +13201,16 @@
 	};
 
 	W.ATTRD = function(el, attrd) {
-		if (el instanceof jQuery)
-			return el.attrd2(attrd || 'id');
-		else if (el instanceof jQuery.Event)
-			return $(el.currentTarget).attrd2(attrd || 'id');
-		else if (typeof(el.getAttribute) === 'function')
-			return W.ATTRD($(el), attrd);
+		if (el) {
+			if (el instanceof jQuery)
+				return el.attrd2(attrd || 'id');
+			else if (el instanceof jQuery.Event)
+				return $(el.currentTarget).attrd2(attrd || 'id');
+			else if (typeof(el.getAttribute) === TYPE_FN)
+				return W.ATTRD($(el), attrd);
+			else if (typeof(el) === TYPE_O)
+				return el[attrd || 'id'];
+		}
 		return el;
 	};
 
