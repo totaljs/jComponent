@@ -480,7 +480,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.006;
+	M.version = 19.007;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1714,6 +1714,13 @@
 	};
 
 	W.CACHEPATH = function(path, expire, rebind, preferences) {
+
+		var arr = path.split(REGMETA);
+		path = pathmaker(arr[0], 1);
+
+		if (arr[1])
+			arr[1] = new Function('return ' + arr[1]);
+
 		WATCH(path, function(p, value) {
 			var obj = preferences ? W.PREF.get(T_PATHS) : cachestorage(T_PATHS);
 			if (obj)
@@ -1729,10 +1736,14 @@
 		});
 
 		if (rebind === undefined || rebind) {
-			var p = pathmaker(path, 1);
 			var cache = preferences ? W.PREF.get(T_PATHS) : cachestorage(T_PATHS);
-			cache && cache[p] !== undefined && cache[p] !== get(p) && M.set(p, cache[p], true);
+			if (cache && cache[path] !== undefined) {
+				if (cache[path] !== get(path))
+					M.set(path, cache[path], true);
+			} else if (arr[1])
+				M.set(path, arr[1], true);
 		}
+
 	};
 
 	W.CACHE = function(key, value, expire) {
