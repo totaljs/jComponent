@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.269;
+	M.version = 18.271;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1717,6 +1717,13 @@
 	};
 
 	W.CACHEPATH = function(path, expire, rebind, preferences) {
+
+		var arr = path.split(REGMETA);
+		path = pathmaker(arr[0], 1);
+
+		if (arr[1])
+			arr[1] = new Function('return ' + arr[1]);
+
 		WATCH(path, function(p, value) {
 			var obj = preferences ? W.PREF.get(T_PATHS) : cachestorage(T_PATHS);
 			if (obj)
@@ -1730,10 +1737,16 @@
 			else
 				cachestorage(T_PATHS, obj, expire);
 		});
+
 		if (rebind === undefined || rebind) {
 			var cache = preferences ? W.PREF.get(T_PATHS) : cachestorage(T_PATHS);
-			cache && cache[path] !== undefined && cache[path] !== get(path) && M.set(path, cache[path], true);
+			if (cache && cache[path] !== undefined) {
+				if (cache[path] !== get(path))
+					M.set(path, cache[path], true);
+			} else if (arr[1])
+				M.set(path, arr[1], true);
 		}
+
 	};
 
 	W.CACHE = function(key, value, expire) {
@@ -6412,13 +6425,16 @@
 
 	var autofocus = function(el, selector, counter) {
 		if (!isMOBILE) {
-			if (typeof(counter) !== 'number')
+			if (typeof(counter) !== TYPE_N)
 				counter = 0;
-			var target = el.find(typeof(selector) === 'string' ? selector : 'input[type="text"],select,textarea')[0];
-			if (target) {
-				target.focus();
-				if (document.activeElement == target)
-					return;
+			var target = el.find(typeof(selector) === TYPE_S ? selector : 'input,select,textarea');
+			for (var i = 0; i < target.length; i++) {
+				var item = target[i];
+				if (item && !HIDDEN(item)) {
+					item.focus();
+					if (document.activeElement == item)
+						return;
+				}
 			}
 			if (counter < 15)
 				setTimeout(autofocus, 200, el, selector, counter + 1);
