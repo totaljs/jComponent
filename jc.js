@@ -480,7 +480,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.005;
+	M.version = 19.006;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1727,9 +1727,11 @@
 			else
 				cachestorage(T_PATHS, obj, expire);
 		});
+
 		if (rebind === undefined || rebind) {
+			var p = pathmaker(path, 1);
 			var cache = preferences ? W.PREF.get(T_PATHS) : cachestorage(T_PATHS);
-			cache && cache[path] !== undefined && cache[path] !== get(path) && M.set(path, cache[path], true);
+			cache && cache[p] !== undefined && cache[p] !== get(p) && M.set(p, cache[p], true);
 		}
 	};
 
