@@ -480,7 +480,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.008;
+	M.version = 19.009;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11572,6 +11572,24 @@
 		t.element = $(current_element || D.body);
 		t.id = 'plug' + name;
 		t.name = name;
+
+		Object.defineProperty(this, 'model', {
+			get() {
+				t.scope();
+				return GET('?');
+			},
+			set(value) {
+				t.scope();
+				SET('?', value);
+			}
+		});
+
+		Object.defineProperty(this, 'data', {
+			get() {
+				t.scope();
+				return GET('? @reset');
+			}
+		});
 
 		if (init) {
 			t.pending = true;
