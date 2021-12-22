@@ -3895,6 +3895,7 @@
 				obj.global = com.shared;
 				obj.element = el;
 				obj.dom = dom;
+				obj.version && obj.aclass('jc-v' + obj.version);
 
 				var p = attrcom(el, 'path') || (meta ? meta[1] === TYPE_NULL ? '' : meta[1] : '') || ''; // || obj._id;
 				var tmp = TRANSLATE(attrcom(el, T_CONFIG) || (meta ? meta[2] === TYPE_NULL ? '' : meta[2] : ''));
@@ -5372,6 +5373,7 @@
 		t.binder = binder;
 		t.element = binder.el;
 		t.dom = binder.el[0];
+		t.path = binder.path;
 		var macro = M.macros[name];
 		macro(t, binder.el, 'm-' + name);
 		t.make && t.make();
@@ -11749,6 +11751,27 @@
 		t.element = $(current_element || D.body);
 		t.id = 'plug' + name;
 		t.name = name;
+
+	/*
+		var ext = {
+			get() {
+				t.scope();
+				return GET('?');
+			},
+			set(value) {
+				t.scope();
+				SET('?', value);
+			}
+		};
+
+		Object.defineProperty(t, 'model', ext);
+		Object.defineProperty(t, 'data', ext);
+		Object.defineProperty(t, 'form', {
+			get() {
+				t.scope();
+				return GET('? @reset');
+			}
+		});*/
 
 		if (init) {
 			t.pending = true;
