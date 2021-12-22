@@ -480,7 +480,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.009;
+	M.version = 19.011;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11614,11 +11614,19 @@
 	var PP = Plugin.prototype;
 
 	PP.set = function(path, value) {
+		this.scope();
 		SET('?.' + path, value);
 		return this;
 	};
 
+	PP.upd = function(path) {
+		this.scope();
+		UPD('?.' + path);
+		return this;
+	};
+
 	PP.get = function(path) {
+		this.scope();
 		return GET('?.' + path);
 	};
 
