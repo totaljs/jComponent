@@ -3561,7 +3561,7 @@
 				var childs = container[j].querySelectorAll(ATTRCOM);
 				for (var i = 0; i < childs.length; i++) {
 					var com = childs[i].$com;
-					if (!com || !com.$loaded || com.$removed || (id && com.id !== id) || (name && com.$name !== name) || (version && com.$version !== version) || (path && (com.$pp || (com.path !== path && (!com.pathscope || ((com.pathscope + '.' + path) !== com.path))))))
+					if (!com || !com.$loaded || com.$removed || (id && com.id !== id) || (name && com.$name !== name) || (version && com.version !== version) || (path && (com.$pp || (com.path !== path && (!com.pathscope || ((com.pathscope + '.' + path) !== com.path))))))
 						continue;
 					if (callback) {
 						if (callback(com) === false)
@@ -3573,7 +3573,7 @@
 		} else {
 			for (var i = 0; i < M.components.length; i++) {
 				var com = M.components[i];
-				if (!com || !com.$loaded || com.$removed || (id && com.id !== id) || (name && com.$name !== name) || (version && com.$version !== version) || ((path && (com.$pp || (com.path !== path && (!com.pathscope || ((com.pathscope + '.' + path) !== com.path)))))))
+				if (!com || !com.$loaded || com.$removed || (id && com.id !== id) || (name && com.$name !== name) || (version && com.version !== version) || ((path && (com.$pp || (com.path !== path && (!com.pathscope || ((com.pathscope + '.' + path) !== com.path)))))))
 					continue;
 				if (callback) {
 					if (callback(com) === false)
@@ -3881,6 +3881,7 @@
 				obj.global = com.shared;
 				obj.element = el;
 				obj.dom = dom;
+				obj.version && obj.aclass('jc-v' + obj.version);
 
 				var p = attrcom(el, 'path') || (meta ? meta[1] === TYPE_NULL ? '' : meta[1] : '') || ''; // || obj._id;
 				var tmp = TRANSLATE(attrcom(el, T_CONFIG) || (meta ? meta[2] === TYPE_NULL ? '' : meta[2] : ''));
@@ -5348,6 +5349,7 @@
 		t.binder = binder;
 		t.element = binder.el;
 		t.dom = binder.el[0];
+		t.path = binder.path;
 		var macro = M.macros[name];
 		macro(t, binder.el, 'm-' + name);
 		t.make && t.make();
@@ -5382,6 +5384,7 @@
 		self.name = name;
 		self.$name = version === -1 ? name : name.substring(0, version);
 		self.version = version === -1 ? '' : name.substring(version + 1);
+
 		self.path;
 		self.type;
 		self.id;
@@ -11573,7 +11576,7 @@
 		t.id = 'plug' + name;
 		t.name = name;
 
-		Object.defineProperty(this, 'model', {
+		var ext = {
 			get() {
 				t.scope();
 				return GET('?');
@@ -11582,9 +11585,11 @@
 				t.scope();
 				SET('?', value);
 			}
-		});
+		};
 
-		Object.defineProperty(this, 'data', {
+		Object.defineProperty(t, 'model', ext);
+		Object.defineProperty(t, 'data', ext);
+		Object.defineProperty(t, 'form', {
 			get() {
 				t.scope();
 				return GET('? @reset');
