@@ -11579,7 +11579,7 @@
 		var ext = {
 			get() {
 				t.scope();
-				return GET('?');
+				return GET('?') || {};
 			},
 			set(value) {
 				t.scope();
@@ -11592,7 +11592,7 @@
 		Object.defineProperty(t, 'form', {
 			get() {
 				t.scope();
-				return GET('? @reset');
+				return GET('? @reset') || {};
 			}
 		});
 
@@ -11612,6 +11612,15 @@
 	}
 
 	var PP = Plugin.prototype;
+
+	PP.set = function(path) {
+		SET('?.' + path);
+		return this;
+	};
+
+	PP.get = function(path) {
+		return GET('?.' + path);
+	};
 
 	PP.$format = function(endpoint) {
 		var plugin = this;
