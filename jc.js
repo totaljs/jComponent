@@ -1852,6 +1852,22 @@
 		var socket;
 		var pending = 0;
 		var events = {};
+		var timeout;
+		var paused = false;
+
+		opt.pause = function(is) {
+			if (is) {
+				if (pending === 2) {
+					paused = true;
+					socket && socket.close();
+				}
+			} else {
+				if (pending !== 2) {
+					paused = false;
+					connect('reconnect');
+				}
+			}
+		};
 
 		opt.emit = function(name, a, b, c, d) {
 			var arr = events[name];
@@ -1880,6 +1896,7 @@
 		};
 
 		var onclose = function(e) {
+
 			pending = 3;
 			online = false;
 			socket = null;
@@ -1891,8 +1908,12 @@
 				opt.callback = null;
 			}
 
-			if (e.code !== 4001 && opt.reconnect !== false)
-				setTimeout(connect, opt.reconnect || 2000);
+			timeout && clearTimeout(timeout);
+			timeout = null;
+
+			if (e.code !== 4001 && opt.reconnect !== false && !paused)
+				setTimeout(connect, opt.reconnect || 2000, 'reconnect');
+
 		};
 
 		var onmessage = function(e) {
@@ -1904,7 +1925,6 @@
 					data = decrypt_data(data, encryptsecret);
 
 				data = PARSE(data);
-
 				opt.message && opt.message(data);
 
 				if (data) {
@@ -1933,8 +1953,20 @@
 			}
 		};
 
-		var connect = function() {
-			events.reconnect && opt.emit('reconnect');
+		var connect = function(type) {
+
+			if (type === 'timeout') {
+				// We have open some callbacks
+				if (Object.keys(callbacks).length) {
+					setTimeout(connect, 200, type);
+					return;
+				}
+			}
+
+			timeout && clearTimeout(timeout);
+			timeout = null;
+
+			events.reconnect && opt.emit('reconnect', type);
 			socket && socket.close();
 
 			var url = opt.url.env(true);
@@ -1945,6 +1977,15 @@
 			socket.onopen = onopen;
 			socket.onclose = onclose;
 			socket.onmessage = onmessage;
+
+			if (opt.expire) {
+				timeout && clearTimeout(timeout);
+				timeout = setTimeout(function() {
+					pending = 3;
+					connect('expire');
+				}, opt.expire);
+			}
+
 		};
 
 		var timeouthandler = function(output) {
@@ -1956,7 +1997,7 @@
 
 			var prepare = function(output) {
 
-				if (pending === 1) {
+				if (pending !== 2) {
 					setTimeout(prepare, 100, output);
 					return;
 				}
@@ -1985,7 +2026,7 @@
 
 		wdapi = opt;
 		pending = 1;
-		connect();
+		connect('init');
 		return opt;
 	};
 
@@ -12726,7 +12767,7 @@
 	};
 
 	W.NOTFOCUSED = function() {
-		return !(navigator.onLine && (isMOBILE ? true : D.hasFocus()));
+		return document.hidden || document.msHidden || document.webkitHidden;
 	};
 
 	W.REPEAT = function(condition, process, delay, init) {
