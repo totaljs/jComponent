@@ -11613,8 +11613,8 @@
 
 	var PP = Plugin.prototype;
 
-	PP.set = function(path) {
-		SET('?.' + path);
+	PP.set = function(path, value) {
+		SET('?.' + path, value);
 		return this;
 	};
 
