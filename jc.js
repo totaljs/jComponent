@@ -2564,7 +2564,7 @@
 		if (typeof(arr) === 'function') {
 			error = success;
 			success = arr;
-			arr = null;
+			arr = true;
 		}
 
 		if (arr !== true) {
