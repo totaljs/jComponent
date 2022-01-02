@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.272;
+	M.version = 18.273;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7498,10 +7498,41 @@
 	};
 
 	W.SEEX = function(path, a, b, c, d) {
-		if (path.indexOf('.') === -1)
+		if (typeof(path) === 'function')
+			path(a, b, c, d);
+		else if (path.indexOf('.') === -1)
 			EXEC(path, a, b, c, d);
 		else
 			SET(path, a);
+	};
+
+	W.ERROR = function(arr, success, error) {
+
+		if (typeof(arr) === 'function') {
+			error = success;
+			success = arr;
+			arr = null;
+		}
+
+		if (arr !== true) {
+			if (arr) {
+				var iserr = arr instanceof Error ? true : arr instanceof Array && arr.length ? arr[0].error != null : arr.error != null;
+				if (iserr) {
+					events.ERROR && EMIT('ERROR', arr);
+					error && W.SEEX(error, arr);
+					return true;
+				}
+			}
+			success && W.SEEX(success, arr);
+			return false;
+		}
+
+		var scope = current_scope;
+		return function(response) {
+			current_scope = scope;
+			W.ERROR(response, success, error);
+		};
+
 	};
 
 	W.CMD = function(name, a, b, c, d, e) {
