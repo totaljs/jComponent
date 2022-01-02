@@ -7406,13 +7406,9 @@
 	}
 
 	W.SEEX = function(path, a, b, c, d) {
-
-		if (typeof(path) === 'function') {
+		if (typeof(path) === 'function')
 			path(a, b, c, d);
-			return;
-		}
-
-		if (path.indexOf('.') === -1)
+		else if (path.indexOf('.') === -1)
 			EXEC(path, a, b, c, d);
 		else
 			SET(path, a);
