@@ -7528,7 +7528,11 @@
 		}
 
 		var scope = current_scope;
-		return function(response) {
+		return function(response, err) {
+
+			if ((!response || typeof(response) === 'string') && err > 0)
+				response = [{ error: response || err }];
+
 			current_scope = scope;
 			W.ERROR(response, success, error);
 		};
