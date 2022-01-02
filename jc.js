@@ -480,7 +480,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.012;
+	M.version = 19.013;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2557,6 +2557,35 @@
 			rem(k + '.cache');
 			rem(k + '.blocked');
 		}
+	};
+
+	W.ERROR = function(arr, success, error) {
+
+		if (typeof(arr) === 'function') {
+			error = success;
+			success = arr;
+			arr = null;
+		}
+
+		if (arr !== true) {
+			if (arr) {
+				var iserr = arr instanceof Error ? true : arr instanceof Array && arr.length ? arr[0].error != null : arr.error != null;
+				if (iserr) {
+					events.ERROR && EMIT('ERROR', arr);
+					error && W.SEEX(error, arr);
+					return true;
+				}
+			}
+			success && W.SEEX(success, arr);
+			return false;
+		}
+
+		var scope = current_scope;
+		return function(response) {
+			current_scope = scope;
+			W.ERROR(response, success, error);
+		};
+
 	};
 
 	W.ERRORS = function(path, except, highlight) {
@@ -7376,17 +7405,13 @@
 		}, 200);
 	}
 
-	W.EXEC2 = function(path, tmp) {
-		var is = path === true;
-		return function(a, b, c, d) {
-			if (is)
-				EXEC(tmp, path, a, b, c, d);
-			else
-				EXEC(path, a, b, c, d);
-		};
-	};
-
 	W.SEEX = function(path, a, b, c, d) {
+
+		if (typeof(path) === 'function') {
+			path(a, b, c, d);
+			return;
+		}
+
 		if (path.indexOf('.') === -1)
 			EXEC(path, a, b, c, d);
 		else
