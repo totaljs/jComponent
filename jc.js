@@ -453,6 +453,7 @@
 	MD.thousandsseparator = ' ';
 	MD.decimalseparator = '.';
 	MD.dateformat = null;
+	MD.dateformatutc = null;
 	// MD.currency = ''; DEFAULT CURRENCY
 	MD.localstorage = ATTRDATA;
 	MD.languagekey = 'language';
@@ -8882,7 +8883,7 @@
 
 	DP.format = function(format, utc) {
 
-		var self = utc ? this.toUTC() : this;
+		var self = (utc || MD.dateformatutc) ? this.toUTC() : this;
 
 		if (format == null)
 			format = MD.dateformat;
