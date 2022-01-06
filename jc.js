@@ -453,7 +453,7 @@
 	MD.thousandsseparator = ' ';
 	MD.decimalseparator = '.';
 	MD.dateformat = null;
-	MD.dateformatutc = null;
+	MD.dateformatutc = false;
 	// MD.currency = ''; DEFAULT CURRENCY
 	MD.localstorage = ATTRDATA;
 	MD.languagekey = 'language';
@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.013;
+	M.version = 19.014;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
