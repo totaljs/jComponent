@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.014;
+	M.version = 19.015;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10542,6 +10542,21 @@
 						continue;
 					}
 
+					if (k === 'helpers') {
+						if (v.indexOf('?') !== -1) {
+							var scope = findscope(el);
+							if (scope)
+								v = scope.makepath(v);
+						}
+						(function(obj, k, v) {
+							obj[k] = function() {
+								var val = GET(v);
+								return typeof(val) === TYPE_FN ? val() : val;
+							};
+						})(obj, k, v);
+						continue;
+					}
+
 					if (k === 'assign') {
 						if (v.indexOf('?') !== -1) {
 							var scope = findscope(el);
@@ -10595,7 +10610,7 @@
 						v = new Function('value', 'path', 'el', 'var fn=el[0].' + vkey + ';if(!fn){var _s=el.scope();if(_s){el[0].' + vkey + '=fn=GET(_s.makepath(\'' + vfn + '\'))}}if(fn)return fn' + (vbeg == -1 ? '(value,path,el)' : v.substring(vbeg)));
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'tracktype', T_RESIZE, 'delay', 'macro', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'helper', 'currency', 'empty', 'changes', 'ready') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'tracktype', T_RESIZE, 'delay', 'macro', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'helper', 'helpers', 'currency', 'empty', 'changes', 'ready') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -11408,16 +11423,17 @@
 		}
 
 		if (item.template && (can || item.template.$nv) && (value != null || !item.template.$nn)) {
+
 			DEFMODEL.value = value;
 			DEFMODEL.path = path;
 
 			if (item.template.$vdom) {
-				var status = DIFFDOM(el, item.template.$vdom, item.template(DEFMODEL), item.template.$vdomattr);
+				var status = DIFFDOM(el, item.template.$vdom, item.template(DEFMODEL, null, item.helpers ? item.helpers() : null), item.template.$vdomattr);
 				tmp = !!(status.add || status.upd);
 			} else {
 				tmp = true;
 				try {
-					el.html(item.template(DEFMODEL));
+					el.html(item.template(DEFMODEL, null, item.helpers ? item.helpers() : null));
 				} catch (e) {
 					THROWERR(e);
 				}
@@ -11691,19 +11707,37 @@
 
 	PP.set = function(path, value) {
 		this.scope();
-		SET('?.' + path, value);
+		SET('?' + (path ? ('.' + path) : ''), value);
+		return this;
+	};
+
+	PP.push = function(path, value) {
+		this.scope();
+		PUSH('?' + (path ? ('.' + path) : ''), value);
+		return this;
+	};
+
+	PP.inc = function(path, value) {
+		this.scope();
+		INC('?' + (path ? ('.' + path) : ''), value);
+		return this;
+	};
+
+	PP.toggle = function(path) {
+		this.scope();
+		TOGGLE('?' + (path ? ('.' + path) : ''));
 		return this;
 	};
 
 	PP.upd = function(path) {
 		this.scope();
-		UPD('?.' + path);
+		UPD('?' + (path ? ('.' + path) : ''));
 		return this;
 	};
 
 	PP.get = function(path) {
 		this.scope();
-		return GET('?.' + path);
+		return GET('?' + (path ? ('.' + path) : ''));
 	};
 
 	PP.$format = function(endpoint) {
