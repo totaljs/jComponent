@@ -8057,7 +8057,7 @@
 	W.CSS = function(value, id, selector) {
 		id && $('#css' + id).remove();
 		var val = (value instanceof Array ? value.join('') : value);
-		$('<style type="text/css"' + (id ? ' id="css' + id + '"' : '') + '>' + (selector ? wrap(selector, val) : val) + '</style>').appendTo('head');
+		val && $('<style type="text/css"' + (id ? ' id="css' + id + '"' : '') + '>' + (selector ? wrap(selector, val) : val) + '</style>').appendTo('head');
 	};
 
 	var windowappearance = 'light';
