@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.015;
+	M.version = 19.016;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11661,7 +11661,7 @@
 
 	function Plugin(name, fn, init, done) {
 
-		(/\W/).test(name) && warn('Plugin name must contain A-Z chars only.');
+		// (/\W/).test(name) && warn('Plugin name must contain A-Z chars only.');
 		W.PLUGINS[name] && W.PLUGINS[name].$remove(true);
 		var t = this;
 		t.element = $(current_element || D.body);
