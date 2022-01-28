@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.016;
+	M.version = 19.017;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1722,7 +1722,14 @@
 		if (arr[1])
 			arr[1] = new Function('return ' + arr[1]);
 
+
+		var skip = false;
+
 		WATCH(path, function(p, value) {
+
+			if (skip)
+				return;
+
 			var obj = preferences ? W.PREF.get(T_PATHS) : cachestorage(T_PATHS);
 			if (obj)
 				obj[path] = value;
@@ -1737,12 +1744,14 @@
 		});
 
 		if (rebind === undefined || rebind) {
+			skip = true;
 			var cache = preferences ? W.PREF.get(T_PATHS) : cachestorage(T_PATHS);
 			if (cache && cache[path] !== undefined) {
 				if (cache[path] !== get(path))
 					M.set(path, cache[path], true);
 			} else if (arr[1])
-				M.set(path, arr[1], true);
+				M.set(path, arr[1](), true);
+			skip = false;
 		}
 
 	};
