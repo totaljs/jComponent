@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.017;
+	M.version = 19.018;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4148,10 +4148,6 @@
 					el.removeAttribute(ATTRSCOPE2, '');
 					el.removeAttribute(SCOPENAME, '');
 				}
-
-				var independent = path.charAt(0) === '!';
-				if (independent)
-					path = path.substring(1);
 
 				var meta = path.split(REGMETA);
 				if (meta.length > 1)
