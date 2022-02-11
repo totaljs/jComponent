@@ -2722,7 +2722,6 @@
 
 		var all = M.components;
 
-
 		for (var i = 0; i < all.length; i++) {
 			var com = all[i];
 
