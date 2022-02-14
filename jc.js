@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.018;
+	M.version = 19.019;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1654,7 +1654,7 @@
 				}
 
 				url = '$import' + url;
-				response = TRANSLATE(response);
+				response = TRANSLATE(response).VARIABLES();
 
 				if (preparator)
 					response = preparator(response, output);
@@ -8402,6 +8402,30 @@
 			arr.push(self[i]);
 		}
 		return arr;
+	};
+
+	SP.VARIABLES = function(args) {
+
+		var str = this;
+
+		if (!args)
+			args = {};
+
+		str = str.replace(/--(\s)?[a-zA-Z\s]+(=|:)+.*?--/g, function(text) {
+			for (var i = 2; i < text.length; i++) {
+				var c = text.charAt(i);
+				if (c === '=' || c === ':') {
+					args[text.substring(2, i).trim()] = text.substring(i + 1, text.length - 2).trim();
+					break;
+				}
+			}
+			return '';
+		});
+
+		return str.replace(/--\w+--/g, function(text) {
+			return args[text.substring(2, text.length - 2).trim()] || '';
+		});
+
 	};
 
 	SP.ROOT = function(noBase) {
