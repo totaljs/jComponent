@@ -8423,7 +8423,7 @@
 		});
 
 		return str.replace(/--\w+--/g, function(text) {
-			return args[text.substring(2, text.length - 2).trim()] || '';
+			return args[text.substring(2, text.length - 2).trim()] || text;
 		});
 
 	};
