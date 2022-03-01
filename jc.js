@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.019;
+	M.version = 19.021;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2571,7 +2571,7 @@
 
 	W.ERROR = function(arr, success, error) {
 
-		if (typeof(arr) === 'function') {
+		if (typeof(arr) === TYPE_FN) {
 			error = success;
 			success = arr;
 			arr = true;
@@ -6200,9 +6200,14 @@
 
 	PPC.bindvisible = function(timeout) {
 		var self = this;
-		self.$bindvisible = true;
-		self.$bindtimeout = timeout || MD.delaybinder;
-		self.$bindcache = {};
+		if (timeout === false) {
+			self.$bindvisible = false;
+			self.$bindcache = null;
+		} else {
+			self.$bindvisible = true;
+			self.$bindtimeout = timeout || MD.delaybinder;
+			self.$bindcache = {};
+		}
 		return self;
 	};
 
@@ -6640,6 +6645,9 @@
 			self.$init = cfg.$init;
 			delete cfg.$init;
 		}
+
+		if (cfg.$bindvisible != null)
+			self.bindvisible(cfg.$bindvisible ? 0 : false);
 
 		if (cfg.$class) {
 			self.tclass(cfg.$class);
@@ -7415,12 +7423,14 @@
 	}
 
 	W.SEEX = function(path, a, b, c, d) {
-		if (typeof(path) === 'function')
+		if (typeof(path) === TYPE_FN) {
 			path(a, b, c, d);
-		else if (path.indexOf('.') === -1)
-			EXEC(path, a, b, c, d);
-		else
-			SET(path, a);
+		} else {
+			if (path.indexOf('/') !== -1 || typeof(GET(path)) === TYPE_FN)
+				EXEC(path, a, b, c, d);
+			else
+				SET(path, a);
+		}
 	};
 
 	W.CMD = function(name, a, b, c, d, e) {
