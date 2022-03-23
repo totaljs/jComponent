@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.021;
+	M.version = 19.022;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8211,7 +8211,9 @@
 		var run = false;
 
 		if (is) {
-			var result = get(fn.replace(REGSCOPEINLINE, curr_scope));
+			fn = fn.replace(REGSCOPEINLINE, curr_scope);
+			fn = fn.flags(fn);
+			var result = get(fn);
 			if (result)
 				run = true;
 		} else if (fn())
