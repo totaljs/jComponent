@@ -7056,13 +7056,15 @@
 				return;
 			statics[key2] = (statics[key2] || 0) + 1;
 			statics[key] && clearTimeout(statics[key]);
-			return statics[key] = setTimeout(function(param) {
+			statics[key] = setTimeout(function(param) {
 				statics[key2] = undefined;
 				fn && fn(param);
 			}, timeout, param);
+		} else {
+			statics[key] && clearTimeout(statics[key]);
+			statics[key] = setTimeout(fn, timeout, param);
 		}
-		statics[key] && clearTimeout(statics[key]);
-		return statics[key] = setTimeout(fn, timeout, param);
+		return name;
 	};
 
 	W.clearTimeout2 = function(name) {
