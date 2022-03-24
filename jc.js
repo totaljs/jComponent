@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.022;
+	M.version = 19.023;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8209,6 +8209,7 @@
 
 		var is = typeof(fn) === TYPE_S;
 		var run = false;
+		var curr_scope = current_scope;
 
 		if (is) {
 			fn = fn.replace(REGSCOPEINLINE, curr_scope);
@@ -8218,8 +8219,6 @@
 				run = true;
 		} else if (fn())
 			run = true;
-
-		var curr_scope = current_scope;
 
 		if (run) {
 			callback(null, function(sleep) {
