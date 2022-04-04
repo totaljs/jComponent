@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.023;
+	M.version = 19.024;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4336,7 +4336,7 @@
 				current_element = item.element[0];
 
 				if (response)
-					response = TRANSLATE(response);
+					response = TRANSLATE(response).VARIABLES();
 
 				if (!data.reevaluate && statics[key])
 					response = removescripts(response);
@@ -4348,6 +4348,9 @@
 
 				if (item.path)
 					response = response.replace(/~PATH~/g, item.path);
+
+				if (item.id)
+					response = response.replace(/~ID~/g, item.id);
 
 				if (item.make) {
 					var fn = null;
