@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.024;
+	M.version = 19.025;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5378,6 +5378,10 @@
 
 	SCP.update = function(path, timeout, reset) {
 		return UPDATE(makescopepath(this, path), timeout, reset);
+	};
+
+	SCP.change = function(path) {
+		return CHANGE(makescopepath(this, path), true);
 	};
 
 	SCP.get = function(path) {
