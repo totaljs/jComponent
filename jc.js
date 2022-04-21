@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.025;
+	M.version = 19.026;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1077,6 +1077,15 @@
 		// ON(push + 'watch', path, fn, init, null, index === -1 ? '' : current_scope);
 		path = pathmaker(path, 1);
 		ON(push + 'watch', path, fn, init, null, current_scope);
+	};
+
+	W.WATCHONCE = function(path, fn) {
+		path = pathmaker(path, 1);
+		var cb = function(p, value, type) {
+			UNWATCH(path, cb);
+			fn(p, value, type);
+		};
+		WATCH(path, cb);
 	};
 
 	W.ON = function(name, path, fn, init, context, scope) {
