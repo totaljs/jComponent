@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.026;
+	M.version = 19.027;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6239,10 +6239,7 @@
 	};
 
 	MPC.faicon = PPC.faicon = function(value) {
-		if (value)
-			return (value.indexOf(' ') === -1 ? 'fa fa-' : '') + value;
-		else
-			return '';
+		return value ? ((value.indexOf(' ') === -1 ? 'fa fa-' : '') + value) : '';
 	};
 
 	PPC.novalidate = PPC.noValid = PPC.noValidate = function(val) {
@@ -7512,6 +7509,13 @@
 				!events[p] && exechelper(ctx, path, arg);
 			else
 				EMIT.call(ctx, p, arg[0], arg[1], arg[2], arg[3], arg[4]);
+			return;
+		}
+
+		if (c === 45 && path.substring(0, 3) === '---') {
+			var args = [path.substring(3).trim(), arg[0], arg[1], arg[2], arg[3], arg[4]];
+			wait && args.unshift(wait);
+			SETTER.apply(W, args);
 			return;
 		}
 
@@ -11727,12 +11731,10 @@
 
 		var ext = {
 			get() {
-				t.scope();
-				return GET('?') || {};
+				return GET(t.makepath()) || {};
 			},
 			set(value) {
-				t.scope();
-				SET('?', value);
+				SET(t.makepath(), value);
 			}
 		};
 
@@ -11740,8 +11742,7 @@
 		Object.defineProperty(t, 'data', ext);
 		Object.defineProperty(t, 'form', {
 			get() {
-				t.scope();
-				return GET('? @reset') || {};
+				return GET(t.makepath() + ' @reset') || {};
 			}
 		});
 
@@ -11763,38 +11764,38 @@
 	var PP = Plugin.prototype;
 
 	PP.set = function(path, value) {
-		this.scope();
-		SET('?' + (path ? ('.' + path) : ''), value);
-		return this;
+		var t = this;
+		SET(t.makepath(path), value);
+		return t;
 	};
 
 	PP.push = function(path, value) {
-		this.scope();
-		PUSH('?' + (path ? ('.' + path) : ''), value);
-		return this;
+		var t = this;
+		PUSH(t.makepath(path), value);
+		return t;
 	};
 
 	PP.inc = function(path, value) {
-		this.scope();
-		INC('?' + (path ? ('.' + path) : ''), value);
-		return this;
+		var t = this;
+		INC(t.makepath(path), value);
+		return t;
 	};
 
 	PP.toggle = function(path) {
-		this.scope();
-		TOGGLE('?' + (path ? ('.' + path) : ''));
-		return this;
+		var t = this;
+		t.scope();
+		TOGGLE(t.makepath(path));
+		return t;
 	};
 
 	PP.upd = function(path) {
-		this.scope();
-		UPD('?' + (path ? ('.' + path) : ''));
-		return this;
+		var t = this;
+		UPD(t.makepath(path));
+		return t;
 	};
 
 	PP.get = function(path) {
-		this.scope();
-		return GET('?' + (path ? ('.' + path) : ''));
+		return GET(this.makepath(path));
 	};
 
 	PP.$format = function(endpoint) {
@@ -11819,6 +11820,12 @@
 		var self = this;
 		current_scope = path === null ? null : (path || self.name);
 		return self;
+	};
+
+	PP.makepath = function(path) {
+		var self = this;
+		self.scope();
+		return self.name + (path ? ('.' + path) : '');
 	};
 
 	PP.remove = PP.$remove = function() {
