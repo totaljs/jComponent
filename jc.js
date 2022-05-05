@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.027;
+	M.version = 19.028;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2602,7 +2602,7 @@
 		var scope = current_scope;
 		return function(response, err) {
 
-			if ((!response || typeof(response) === 'string') && err > 0)
+			if ((!response || typeof(response) === TYPE_S) && err > 0)
 				response = [{ error: response || err }];
 
 			current_scope = scope;
@@ -4344,8 +4344,17 @@
 
 				current_element = item.element[0];
 
-				if (response)
+				if (typeof(response) === TYPE_S) {
+
 					response = TRANSLATE(response).VARIABLES();
+
+					if (item.path)
+						response = response.replace(/~PATH~/g, item.path);
+
+					if (item.id)
+						response = response.replace(/~ID~/g, item.id);
+
+				}
 
 				if (!data.reevaluate && statics[key])
 					response = removescripts(response);
@@ -4354,12 +4363,6 @@
 
 				statics[key] = true;
 				item.toggle && item.toggle.length && item.toggle[0] && toggles.push(item);
-
-				if (item.path)
-					response = response.replace(/~PATH~/g, item.path);
-
-				if (item.id)
-					response = response.replace(/~ID~/g, item.id);
 
 				if (item.make) {
 					var fn = null;
