@@ -481,7 +481,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.028;
+	M.version = 19.029;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2049,18 +2049,23 @@
 		return opt;
 	};
 
+	W.TAPI = function(name, data, callback) {
+		var m = DEF.api ? W.DAPI : W.WAPI;
+		return m(name, data, callback);
+	};
+
 	W.WAPI = function(name, data, callback, timeout, scope) {
 		if (!name)
 			return wdapi;
 		if (typeof(name) === TYPE_O)
-			return WAPI_INIT(name);
+			return W.WAPI_INIT(name);
 		if (wdapi)
 			return wdapi.send(name, data, callback, timeout, scope);
 		setTimeout(W.WAPI, 100, name, data, callback, timeout, scope || current_scope);
 	};
 
-	W.DAPI = function(url, data, callback) {
-		return W.API(DEF.api + ' ' + url, data, callback);
+	W.DAPI = function(name, data, callback) {
+		return W.API(DEF.api + ' ' + name, data, callback);
 	};
 
 	W.API = function(url, data, callback, socket) {
