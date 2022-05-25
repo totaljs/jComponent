@@ -396,6 +396,7 @@
 	var encryptvalidator;
 	var encrypthtml;
 
+	MD.cl = {};
 	MD.dictionary = {};
 
 	W.DEBUG = function() {
@@ -481,7 +482,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.029;
+	M.version = 19.031;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -492,6 +493,7 @@
 	M.$parser = [];
 	M.compiler = C;
 	M.paths = {};
+	M.cl = {};
 
 	C.is = false;
 	C.recompile = false;
@@ -3154,8 +3156,12 @@
 
 		obj.path = path.env();
 
-		if (obj.path.charAt(0) === '%')
+		var c = obj.path.charAt(0);
+
+		if (c === '%')
 			obj.path = T_TMP + obj.path.substring(1);
+		else if (c === '#')
+			obj.path = 'DEF.cl.' + obj.path.substring(1);
 
 		obj.flags2 = [];
 
@@ -3248,6 +3254,61 @@
 			if (com)
 				return is ? get(prop, com) : com[prop];
 		}
+	};
+
+	W.CL_INIT = function(name, callback, expire, init) {
+
+		if (typeof(expire) === TYPE_B) {
+			init = expire;
+			expire = '';
+		}
+
+		if (typeof(callback) === 'string') {
+			var url = callback;
+			callback = function(next) {
+				var tmp = url.split(' ');
+				tmp[0] = tmp[0].toLowerCase();
+				if (tmp[0].charAt(0) === '!')
+					tmp[0] === tmp[0].substring(1);
+				switch (tmp[0]) {
+					case 'get':
+					case 'post':
+					case 'put':
+					case 'delete':
+					case 'patch':
+						AJAX(url, next);
+						break;
+					default:
+						TAPI(url, next);
+						break;
+				}
+			};
+		}
+
+		name = pathmaker(name);
+		M.cl[name] = { callback: callback, expire: expire };
+		init && W.CL(name, NOOP);
+	};
+
+	W.CL = function(name, callback) {
+		var arr = name.split(',').trim();
+		arr.wait(function(key, next) {
+			key = pathmaker(key);
+			var item = M.cl[key];
+			if (item) {
+				if (!item.reload && DEF.cl[key]) {
+					next();
+				} else {
+					item.callback(function(val) {
+						SET('DEF.cl.' + key, val, 1);
+						item.date = NOW = new Date();
+						item.reload = false;
+						next();
+					});
+				}
+			} else
+				next();
+		}, callback);
 	};
 
 	W.GET = function(path, scope) {
@@ -10096,6 +10157,15 @@
 			var c = M.components;
 			for (var i = 0; i < c.length; i++)
 				c[i].knockknock && c[i].knockknock(knockknockcounter);
+			for (var key in M.cl) {
+				var cl = M.cl[key];
+				if (cl.expire && cl.date) {
+					if (cl.date <= NOW.add('-' + cl.expire)) {
+						cl.reload = true;
+						cl.date = null;
+					}
+				}
+			}
 			EMIT('knockknock', knockknockcounter++);
 			if (knockknockcounter % 5 === 0) {
 				paths = {};
