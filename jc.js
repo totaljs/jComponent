@@ -7520,7 +7520,7 @@
 			return;
 		}
 
-		if (c === 45 && path.substring(0, 3) === '---') {
+		if (c === 45 && path.substring(0, 3) === T_COM) {
 			var args = [path.substring(3).trim(), arg[0], arg[1], arg[2], arg[3], arg[4]];
 			wait && args.unshift(wait);
 			SETTER.apply(W, args);
