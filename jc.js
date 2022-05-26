@@ -3299,8 +3299,12 @@
 				if (!item.reload && DEF.cl[key]) {
 					next();
 				} else {
-					item.callback(function(val) {
-						SET('DEF.cl.' + key, val, 1);
+					item.callback(function(val, extend) {
+						var p = 'DEF.cl';
+						if (extend === true)
+							EXTEND(p, val);
+						else
+							SET(p + '.' + key, val);
 						item.date = NOW = new Date();
 						item.reload = false;
 						next();
