@@ -482,7 +482,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.032;
+	M.version = 19.033;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8517,15 +8517,17 @@
 		if (!args)
 			args = {};
 
-		str = str.replace(/--(\s)?[a-zA-Z\s]+(=|:)+.*?--/g, function(text) {
+		str = str.replace(/--(\s)?[a-zA-Z\s]+=+.*?--/g, function(text) {
+			var is = false;
 			for (var i = 2; i < text.length; i++) {
 				var c = text.charAt(i);
-				if (c === '=' || c === ':') {
+				if (c === '=') {
 					args[text.substring(2, i).trim()] = text.substring(i + 1, text.length - 2).trim();
+					is = true;
 					break;
 				}
 			}
-			return '';
+			return is ? '' : text;
 		});
 
 		return str.replace(/--\w+--/g, function(text) {
