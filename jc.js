@@ -482,7 +482,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.031;
+	M.version = 19.032;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10225,12 +10225,26 @@
 
 		function resize() {
 			var w = $W;
+			var width = W.WW;
+			var height = W.WH;
 			W.WW = w.width();
 			W.WH = w.height();
-			windowresizeinterval && clearTimeout(windowresizeinterval);
-			windowresizeinterval = setTimeout(resize_noscrollbar, 300);
+			if (W.WW != width && W.WH !== height) {
+				windowresizeinterval && clearTimeout(windowresizeinterval);
+				windowresizeinterval = setTimeout(resize_noscrollbar, 300);
+			}
 		}
 
+		function viewportheight() {
+			if (screen.orientation) {
+				var viewport = document.querySelector('meta[name=viewport]');
+				if (viewport && viewport.content && viewport.content.indexOf('height') === -1)
+					viewport.setAttribute('content', viewport.content + ', height=' + W.innerHeight);
+			}
+		}
+
+		W.addEventListener('load', viewportheight);
+		W.addEventListener('deviceorientation', viewportheight, true);
 		resize();
 
 		function parseUA() {
