@@ -398,6 +398,7 @@
 
 	MD.cl = {};
 	MD.dictionary = {};
+	MD.cdn = '';
 
 	W.DEBUG = function() {
 		if (!encryptsecret)
@@ -482,7 +483,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.033;
+	M.version = 19.034;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1665,7 +1666,7 @@
 				}
 
 				url = '$import' + url;
-				response = TRANSLATE(response).VARIABLES();
+				response = TRANSLATE(response).VARIABLES().replace(/~CDN~/g, DEF.cdn);
 
 				if (preparator)
 					response = preparator(response, output);
@@ -4416,7 +4417,7 @@
 
 				if (typeof(response) === TYPE_S) {
 
-					response = TRANSLATE(response).VARIABLES();
+					response = TRANSLATE(response).VARIABLES().replace(/~CDN~/g, DEF.cdn);
 
 					if (item.path)
 						response = response.replace(/~PATH~/g, item.path);
@@ -10199,6 +10200,7 @@
 		var windowresizeinterval;
 		var windowresized = false;
 		var windowsize;
+		var windowwh = {};
 
 		function resize_noscrollbar() {
 
@@ -10209,6 +10211,12 @@
 				setTimeout(resize_noscrollbar, 50);
 				return;
 			}
+
+			if (WW === windowwh.w && WH === windowwh.h)
+				return;
+
+			windowwh.w = WW;
+			windowwh.h = WH;
 
 			displaymode();
 
@@ -10227,14 +10235,10 @@
 
 		function resize() {
 			var w = $W;
-			var width = W.WW;
-			var height = W.WH;
 			W.WW = w.width();
 			W.WH = w.height();
-			if (W.WW != width && W.WH !== height) {
-				windowresizeinterval && clearTimeout(windowresizeinterval);
-				windowresizeinterval = setTimeout(resize_noscrollbar, 300);
-			}
+			windowresizeinterval && clearTimeout(windowresizeinterval);
+			windowresizeinterval = setTimeout(resize_noscrollbar, 300);
 		}
 
 		function viewportheight() {
