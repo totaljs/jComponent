@@ -6849,7 +6849,17 @@
 	};
 
 	MPC.find = PPC.find = SCP.find = function(selector) {
-		return this.element.find(selector);
+
+		var el = this.element;
+
+		if (selector && typeof(selector) === 'object') {
+			var tmp = {};
+			for (var key in selector)
+				tmp[key] = el.find(selector[key]);
+			return tmp;
+		}
+
+		return el.find(selector);
 	};
 
 	PPC.isInvalid = function() {
