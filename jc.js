@@ -483,7 +483,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.034;
+	M.version = 19.035;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7655,6 +7655,8 @@
 								tmp && W.PLUGIN(tmp.name, tmp.fn, tmp.init, function() {
 									exechelper(ctx, path, arg);
 								});
+							}, function(response) {
+								return response.replace(/~PATH~|~ID~/g, tmp.name);
 							});
 						} else {
 							delete pluginableplugins[plugin_name];
