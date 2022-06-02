@@ -483,7 +483,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.035;
+	M.version = 19.036;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6230,25 +6230,68 @@
 
 	MPC.EXEC = function(path, a, b, c, d) {
 		var self = this;
-		EXEC(self.scope ? self.scope.makepath(path) : path, a, b, c, d);
+		var p = self.scope ? self.scope.makepath(path) : path;
+		if (p.charAt(0) === '@') {
+			p = p.substring(1);
+			var com = self.parent().component();
+			com && com[p] && com[p](a, b, c, d);
+		} else
+			EXEC(p, a, b, c, d);
 		return self;
 	};
 
 	MPC.SEEX = function(path, a, b, c, d) {
+
 		var self = this;
-		SEEX(self.scope ? self.scope.makepath(path) : path, a, b, c, d);
+		var p = self.scope ? self.scope.makepath(path) : path;
+
+		if (p.charAt(0) === '@') {
+			p = p.substring(1);
+			var com = self.parent().component();
+			if (com) {
+				if (typeof(com[p]) === 'function')
+					com[p](a, b, c, d);
+				else
+					com[p] = a;
+			}
+		} else
+			SEEX(p, a, b, c, d);
+
 		return self;
 	};
 
 	PPC.EXEC = function(path, a, b, c, d) {
+
 		var self = this;
-		EXEC(self.makepath(path), a, b, c, d);
+		var p = self.makepath(path);
+
+		if (p.charAt(0) === '@') {
+			p = p.substring(1);
+			var com = self.parent().component();
+			com && com[p] && com[p](a, b, c, d);
+		} else
+			EXEC(p, a, b, c, d);
+
 		return self;
 	};
 
 	PPC.SEEX = function(path, a, b, c, d) {
+
 		var self = this;
-		SEEX(self.makepath(path), a, b, c, d);
+		var p = self.makepath(path);
+
+		if (p.charAt(0) === '@') {
+			p = p.substring(1);
+			var com = self.parent().component();
+			if (com) {
+				if (typeof(com[p]) === 'function')
+					com[p](a, b, c, d);
+				else
+					com[p] = a;
+			}
+		} else
+			SEEX(p, a, b, c, d);
+
 		return self;
 	};
 
@@ -11236,11 +11279,19 @@
 
 					var el = $(t);
 					var scope = el.scope();
+					var fn;
 
 					click = scope ? scope.makepath(click) : click;
 
-					var fn = GET(click);
+					if (click.charAt(0) === '@') {
+						click = click.substring(1);
+						var com = el.component();
+						fn = com ? com[click] : null;
+					} else
+						fn = GET(click);
+
 					if (fn) {
+
 						var val;
 						if (obj.virtual) {
 							var tmp = obj.el.vbind();
