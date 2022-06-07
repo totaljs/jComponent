@@ -483,7 +483,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.036;
+	M.version = 19.037;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -12191,8 +12191,8 @@
 					}
 				}
 
-				if (p < -20 || p > 120)
-					drag.is = false;
+				// if (p < -20 || p > 120)
+				// 	drag.is = false;
 			}
 		};
 
@@ -12288,7 +12288,7 @@
 			}
 		};
 
-		var animyt = function(pos, max) {
+		var animyt2 = function(pos, max) {
 			size.animvpost = null;
 			if (pos === max) {
 				size.animvpos = true;
@@ -12299,7 +12299,7 @@
 			}
 		};
 
-		var animxt = function(pos, max) {
+		var animxt2 = function(pos, max) {
 			size.animhpost = null;
 			if (pos === max) {
 				size.animhpos = true;
@@ -12327,7 +12327,7 @@
 			bary[0].style.top = size.vpos + 'px';
 			if (MD.scrollbaranimate && !animcache.disabled && (size.vpos === 0 || size.vpos === size.vmax)) {
 				size.animvpost && clearTimeout(size.animvpost);
-				size.animvpost = setTimeout(animyt, 10, size.vpos, size.vmax);
+				size.animvpost = setTimeout(animyt2, 10, size.vpos, size.vmax);
 			}
 		};
 
@@ -12335,7 +12335,7 @@
 			barx[0].style.left = size.hpos + 'px';
 			if (MD.scrollbaranimate && !animcache.disabled && (size.hpos === 0 || size.hpos === size.hmax)) {
 				size.animhpost && clearTimeout(size.animhpost);
-				size.animhpost = setTimeout(animxt, 10, size.hpos, size.hmax);
+				size.animhpost = setTimeout(animxt2, 10, size.hpos, size.hmax);
 			}
 		};
 
@@ -12812,7 +12812,6 @@
 					cssy.height -= options.marginY;
 
 				pathy.css(cssy);
-
 				size.vbar = (size.scrollHeight - size.clientHeight) > 5;
 				if (size.vbar) {
 					size.vbarsize = (size.clientHeight * (cssy.height / size.scrollHeight)) >> 0;
@@ -12821,7 +12820,7 @@
 					size.vbarlength = cssy.height;
 					if (scrollbarcache.vbarsize !== size.vbarsize) {
 						scrollbarcache.vbarsize = size.vbarsize;
-						bary.css(T_HEIGHT, size.vbarsize).attrd('size', size.vbarsize);
+						bary.stop().css(T_HEIGHT, size.vbarsize).attrd('size', size.vbarsize);
 					}
 				}
 			}
@@ -12835,7 +12834,7 @@
 						size.hbarsize = options.minsize;
 					if (scrollbarcache.hbarsize !== size.hbarsize) {
 						scrollbarcache.hbarsize = size.hbarsize;
-						barx.css(T_WIDTH, size.hbarsize).attrd('size', size.hbarsize);
+						barx.stop().css(T_WIDTH, size.hbarsize).attrd('size', size.hbarsize);
 					}
 				}
 			}
