@@ -483,7 +483,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.037;
+	M.version = 19.038;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4951,6 +4951,7 @@
 			M.set(path, value);
 	}
 
+
 	function set(path, value, is, settype) {
 
 		if (!path)
@@ -4978,11 +4979,11 @@
 		var v;
 
 		for (var i = 0; i < arr.length - 1; i++) {
-			v = arr[i];
+			v = arr[i].replace(/'/g, '"');
 			binder.push('binders[\'' + v + '\']&&setTimeout(binderbind,1,\'' + v + '\',\'' + path + '\',$ticks,c)');
 		}
 
-		v = arr[arr.length - 1];
+		v = arr[arr.length - 1].replace(/'/g, '"');
 		binder.push('binders[\'' + v + '\']&&setTimeout(binderbind,1,\'' + v + '\',\'' + path + '\',$ticks,c)');
 		binder.push('binders[\'!' + v + '\']&&setTimeout(binderbind,1,\'!' + v + '\',\'' + path + '\',$ticks,c)');
 
