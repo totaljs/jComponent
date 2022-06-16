@@ -399,6 +399,9 @@
 	MD.cl = {};
 	MD.dictionary = {};
 	MD.cdn = '';
+	MD.prefixcsscomponents = 'ui-';
+	MD.prefixcssmacros = 'm-';
+	MD.prefixcsslibrary = 'ui-';
 
 	W.DEBUG = function() {
 		if (!encryptsecret)
@@ -483,7 +486,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.038;
+	M.version = 19.039;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4120,7 +4123,7 @@
 
 				var at = obj.name.lastIndexOf('@');
 				current_com = obj;
-				com.declaration.call(obj, obj, obj.config, 'ui-' + (at === - 1 ? obj.name : obj.name.substring(0, at)));
+				com.declaration.call(obj, obj, obj.config, MD.prefixcsscomponents + (at === - 1 ? obj.name : obj.name.substring(0, at)));
 				current_com = null;
 
 				meta[3] && el.attrd('jc-value', meta[3]);
@@ -4630,7 +4633,7 @@
 			for (var i = 0; i < ext.length; i++) {
 				var item = ext[i];
 				item.config && obj.reconfigure(item.config, NOOP);
-				item.fn.call(obj, obj, obj.config, 'ui-' + obj.name);
+				item.fn.call(obj, obj, obj.config, MD.prefixcsscomponents + obj.name);
 			}
 		}
 
@@ -5521,7 +5524,7 @@
 		t.dom = binder.el[0];
 		t.path = binder.path;
 		var macro = M.macros[name];
-		macro(t, binder.el, 'm-' + name);
+		macro(t, binder.el, MD.prefixcssmacros + name);
 		t.make && t.make();
 		if (t.binder.scope)
 			t.scope = t.element.scope();
@@ -6602,7 +6605,7 @@
 		}
 
 		if (values.dark != null || values.light != null) {
-			var d = document.body.classList.contains('ui-dark') ? 'dark' : 'light';
+			var d = document.body.classList.contains(MD.prefixcsslibrary + 'dark') ? 'dark' : 'light';
 			v = values[d];
 			if (d === 'dark' || d === 'light')
 				return v;
@@ -6806,7 +6809,7 @@
 			while (true) {
 				if (dom.tagName === 'BODY')
 					break;
-				if (dom.style.height && !dom.classList.contains('ui-scrollbar-area'))
+				if (dom.style.height && !dom.classList.contains(MD.prefixcsslibrary + 'scrollbar-area'))
 					return $(dom);
 				dom = dom.parentNode;
 			}
@@ -8250,7 +8253,7 @@
 			}
 		}
 
-		$('body').tclass('ui-dark', !!dark).tclass('ui-large', !!large);
+		$('body').tclass(prefixcsslibrary + 'dark', !!dark).tclass(prefixcsslibrary + 'large', !!large);
 		if (builder.length)
 			CSS(':root{' + builder.join(';') + '}', id);
 		else
@@ -12075,7 +12078,7 @@
 		if (!options)
 			options = {};
 
-		var n = 'ui-scrollbar';
+		var n = prefixcsslibrary + '-scrollbar';
 		var id = GUID(5);
 
 		element.aclass(n);
@@ -12856,7 +12859,7 @@
 			if (!size.hbarsize)
 				size.hbarsize = 0;
 
-			var n = 'ui-scrollbar-';
+			var n = MD.prefixcsslibrary + 'scrollbar-';
 
 			if (canX && scrollbarcache.hbar !== size.hbar) {
 				scrollbarcache.hbar = size.hbar;
