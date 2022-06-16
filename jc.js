@@ -8253,7 +8253,7 @@
 			}
 		}
 
-		$('body').tclass(prefixcsslibrary + 'dark', !!dark).tclass(prefixcsslibrary + 'large', !!large);
+		$('body').tclass(MD.prefixcsslibrary + 'dark', !!dark).tclass(MD.prefixcsslibrary + 'large', !!large);
 		if (builder.length)
 			CSS(':root{' + builder.join(';') + '}', id);
 		else
@@ -12078,7 +12078,7 @@
 		if (!options)
 			options = {};
 
-		var n = prefixcsslibrary + '-scrollbar';
+		var n = MD.prefixcsslibrary + 'scrollbar';
 		var id = GUID(5);
 
 		element.aclass(n);
