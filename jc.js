@@ -486,7 +486,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.039;
+	M.version = 19.041;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3228,7 +3228,8 @@
 
 		var p = path.substring(0, index);
 		var rem = W.PLUGINS[p];
-		return ((rem ? ('PLUGINS.' + p) : (p + '_plugin_not_found')) + '.' + path.substring(index + 1)) + tmp;
+
+		return ((rem ? ('PLUGINS[\'' + p + '\']') : (p + '_plugin_not_found')) + '.' + path.substring(index + 1)) + tmp;
 	}
 
 	W.RETURN = function(cmd, multiple) {
@@ -4248,26 +4249,18 @@
 
 				if (!tmp[0] || tmp[0] === '?')
 					path = GUID(10).replace(/\d/g, '') + Date.now().toString(36);
-				else if (tmp[1]) // dynamically assigned plugin
+				else if (tmp[1]) {
+					// dynamically assigned plugin
 					path = tmp[0];
+				}
+
+			//console.log(path, tmp);
 
 				scope._id = scope.ID = scope.id = GUID(10);
 				scope.element = $(el);
 				scope.config = conf;
 				el.$scopedata = scope;
 				conf.aclass && scope.element.aclass(path);
-
-				if (tmp[1]) {
-					var plugin = pluginscope[tmp[1]];
-					if (plugin) {
-						current_element = el;
-						W.PLUGINS[path] = scope.plugin = new Plugin(path, plugin.fn);
-						scope.plugin.scopedata = scope;
-					} else {
-						WARN('Plugin "? {0}" not found'.format(tmp[1]));
-						return;
-					}
-				}
 
 				// find parent
 				// OLD: scope.parent = findscope(el);
@@ -4312,9 +4305,24 @@
 				} else
 					scope.path = path;
 
+				path = scope.path;
+
+				if (tmp[1]) {
+
+					var plugin = pluginscope[tmp[1]];
+					if (plugin) {
+						current_element = el;
+						W.PLUGINS[scope.path] = scope.plugin = new Plugin(path, plugin.fn);
+						scope.plugin.scopedata = scope;
+					} else {
+						WARN('Plugin "? {0}" not found'.format(tmp[1]));
+						return;
+					}
+				}
+
 				scope.elements.push(el);
 
-				var tmp = meta[2] || attrcom(el, T_VALUE);
+				tmp = meta[2] || attrcom(el, T_VALUE);
 				if (tmp) {
 					var fn = new Function('return ' + tmp);
 					defaults['#' + HASH(path)] = fn; // store by path (DEFAULT() --> can reset scope object)
@@ -5044,6 +5052,13 @@
 
 		if (path.indexOf('?') !== -1)
 			return;
+
+		if (path.substring(0, 9) === 'PLUGINS[\'') {
+			var index = path.indexOf(']');
+			var fn = (new Function('w', 'var p=w.{0};return p?p[\'{1}\']:undefined'.format(path.substring(0, index + 1), path.substring(index + 2))));
+			paths[key] = fn;
+			return fn(scope || MD.scope);
+		}
 
 		var arr = parsepath(path);
 		var builder = [];
