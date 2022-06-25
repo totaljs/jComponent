@@ -486,7 +486,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.041;
+	M.version = 19.042;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5299,13 +5299,13 @@
 				var o = arr[j++];
 				if (!o)
 					break;
-				if (inDOM(o.el[0]))
+				if (o.el && inDOM(o.el[0]))
 					continue;
 				index = M.binders.indexOf(o);
 				if (index !== -1)
 					M.binders.splice(index, 1);
 				var e = o.el;
-				if (!e[0].$br) {
+				if (e && !e[0].$br) {
 					e.off();
 					e.find('*').off();
 					e[0].$br = 1;
@@ -7623,6 +7623,7 @@
 		return '';
 	}
 
+	W.inDOM = inDOM;
 	W.EXE = W.EXEC = function(path) {
 
 		var arg = [];
@@ -10847,7 +10848,7 @@
 						v = new Function('value', 'path', 'el', 'var fn=el[0].' + vkey + ';if(!fn){var _s=el.scope();if(_s){el[0].' + vkey + '=fn=GET(_s.makepath(\'' + vfn + '\'))}}if(fn)return fn' + (vbeg == -1 ? '(value,path,el)' : v.substring(vbeg)));
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'tracktype', T_RESIZE, 'delay', 'macro', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'helper', 'helpers', 'currency', 'empty', 'changes', 'ready') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'tracktype', T_RESIZE, 'delay', 'macro', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'helper', 'helpers', 'currency', 'empty', 'changes', 'ready', 'once') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 					if (!fn)
 						return null;
 
@@ -10926,6 +10927,7 @@
 								break;
 							case 'changes':
 							case 'ready':
+							case 'once':
 								break;
 							case 'empty':
 								fn = v === T_VALUE ? MD.empty : v;
@@ -11796,6 +11798,15 @@
 		if (item.tclass) {
 			el.tclass(item.tclass);
 			delete item.tclass;
+		}
+
+		if (item.once) {
+			var index = M.binders.indexOf(item);
+			if (index !== -1) {
+				item.el = null;
+				item.disabled = true;
+				FREE(1000);
+			}
 		}
 	};
 
