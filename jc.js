@@ -486,7 +486,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.042;
+	M.version = 19.043;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4438,7 +4438,7 @@
 
 				}
 
-				if (!data.reevaluate && statics[key])
+				if (!item.reevaluate && statics[key])
 					response = removescripts(response);
 				else
 					response = importscripts(importstyles(response, HASH(key) + ''));
@@ -7291,12 +7291,6 @@
 
 	W.EXTENSION = function(name, config, declaration) {
 
-		if (typeof(config) === TYPE_FN) {
-			var tmp = declaration;
-			declaration = config;
-			config = tmp;
-		}
-
 		// component_name: DESCRIPTION OF EXTENSION
 		var index = name.indexOf(':');
 		var note = '';
@@ -7304,6 +7298,26 @@
 		if (index !== -1) {
 			note = name.substring(index + 1).trim();
 			name = name.substring(0, index).trim();
+		}
+
+		if (name.charAt(0) === '@') {
+			var id = name.substring(1).trim();
+			var obj = W.PLUGINS[id];
+			if (obj) {
+				config.call(obj, obj);
+			} else {
+				if (extensions[name])
+					extensions[name].push(config);
+				else
+					extensions[name] = [config];
+			}
+			return;
+		}
+
+		if (typeof(config) === TYPE_FN) {
+			var tmp = declaration;
+			declaration = config;
+			config = tmp;
 		}
 
 		if (extensions[name])
@@ -11902,17 +11916,33 @@
 	}
 
 	function plugindone(t, fn, done) {
+
 		var a = current_owner;
 		current_owner = t.id;
 		delete t.pending;
+
 		current_scope = t.name;
 		fn.call(t, t);
-		current_owner = a;
+
+		// extensions
+		var exts = extensions['@' + t.name];
+		if (exts) {
+			for (var ext of exts)
+				ext.call(t, t);
+		}
+
+		exts = extensions['@' + t.id];
+		if (exts) {
+			for (var ext of exts)
+				ext.call(t, t);
+		}
+
 		events.plugin && EMIT('plugin', t);
 		DEF.monitor && monitor_method('plugins', fn ? 1 : 0);
 		W.PLUGINS[t.name] = t;
 		current_scope = null;
 		done && done();
+		current_owner = a;
 	}
 
 	function Plugin(name, fn, init, done) {
