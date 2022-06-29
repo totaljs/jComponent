@@ -7306,7 +7306,7 @@
 			if (obj) {
 				config.call(obj, obj);
 			} else {
-				if (extensions[name])
+				if (extensions[name] && extensions[name].indexOf(config) === -1)
 					extensions[name].push(config);
 				else
 					extensions[name] = [config];
