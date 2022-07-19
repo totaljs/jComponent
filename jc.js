@@ -486,7 +486,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.043;
+	M.version = 19.044;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3345,9 +3345,9 @@
 		}
 
 		DEF.monitor && monitor_method('get');
-		meta.flags.reset && W.RESET(path, true);
 		meta.flags.update && setTimeout(W.UPD, 1, path);
 		var value = meta.flags.modified ? getmodified(newpath) : meta.flags.clone ? CLONE(get(newpath, scope)) : get(newpath, scope);
+		meta.flags.reset && W.RESET(path, true);
 		meta.flags2 && emitflags(meta, newpath, value);
 		if (meta.format)
 			value = meta.format.fn(value, newpath, 1, meta.format.scope && current_scope ? PLUGINS[current_scope] : null);
@@ -11970,6 +11970,11 @@
 				return GET(t.makepath() + ' @reset') || {};
 			}
 		});
+		Object.defineProperty(t, 'modified', {
+			get() {
+				return GET(t.makepath() + ' @reset @modified') || {};
+			}
+		});
 
 		if (init) {
 			t.pending = true;
@@ -12016,6 +12021,12 @@
 	PP.upd = function(path) {
 		var t = this;
 		UPD(t.makepath(path));
+		return t;
+	};
+
+	PP.reset = function(path) {
+		var t = this;
+		RESET(t.makepath(path));
 		return t;
 	};
 
