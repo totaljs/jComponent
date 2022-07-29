@@ -4,10 +4,9 @@
 - [Join Total.js Telegram](https://t.me/totaljs)
 - [Support](https://www.totaljs.com/support/)
 
-> __Download__: more than 250 jComponents free for everyone <https://componentator.com>
+> __Download__: more than 290 jComponents free for everyone <https://componentator.com>
 
 - Current version: `v19`
-- `>= jQuery +1.7`
 - `>= IE9`
 - works with [Electron](electron.atom.io), [PhoneGap](http://phonegap.com/) or [NW.js](https://github.com/nwjs/nw.js/)
 - works with [Bootstrap](http://getbootstrap.com/), [Foundation](http://foundation.zurb.com/), [Pure](http://purecss.io/), [Material Design](http://www.getmdl.io/) and others
