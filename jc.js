@@ -486,7 +486,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.044;
+	M.version = 19.045;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5306,6 +5306,12 @@
 					M.binders.splice(index, 1);
 				var e = o.el;
 				if (e && !e[0].$br) {
+					if (o.$macros) {
+						for (var m of o.$macros) {
+							if (m.destroy)
+								m.destroy();
+						}
+					}
 					e.off();
 					e.find('*').off();
 					e[0].$br = 1;
@@ -10249,10 +10255,24 @@
 		$.components = M;
 
 		setInterval(function() {
+
+			knockknockcounter++;
 			W.NOW = new Date();
-			var c = M.components;
-			for (var i = 0; i < c.length; i++)
-				c[i].knockknock && c[i].knockknock(knockknockcounter);
+
+			EMIT('service', knockknockcounter);
+			EMIT('knockknock', knockknockcounter);
+
+			for (var a of M.components)
+				a.service && a.service(knockknockcounter);
+
+			for (var a of M.binders) {
+				var arr = a.$macros;
+				if (arr) {
+					for (var m of arr)
+						m.service && m.service(knockknockcounter);
+				}
+			}
+
 			for (var key in M.cl) {
 				var cl = M.cl[key];
 				if (cl.expire && cl.date) {
@@ -10262,13 +10282,17 @@
 					}
 				}
 			}
-			EMIT('knockknock', knockknockcounter++);
+
 			if (knockknockcounter % 5 === 0) {
 				paths = {};
-				cleaner();
 				W.TEMP = {};
 			}
+
+			if (knockknockcounter % 3 === 0)
+				cleaner();
+
 			temp = {};
+
 		}, 60000);
 
 		var displaymodeprev;
