@@ -7,7 +7,6 @@
 	var REGCSS = /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi;
 	var REGENV = /(\[.*?\])/gi;
 	var REGPARAMS = /\{{1,2}[a-z0-9_.-\s]+\}{1,2}/gi;
-	var REGEMPTY = /\s/g;
 	var REGCOMMA = /,/g;
 	var REGSEARCH = /[^a-zA-Zá-žÁ-Žа-яА-Я\d\s:]/g;
 	var REGFNPLUGIN = /[a-z0-9_-]+\/[a-z0-9_]+\(|(^|(?=[^a-z0-9]))@[a-z0-9-_]+\./i;
@@ -20,6 +19,8 @@
 	var REGSCOPECHECK = /\?\/|\?\./;
 	var REGSCOPEREPLACE = /\?\//g;
 	var REGNUM = /^(-)?[0-9.]+$/;
+	var REGFLAGS = /\s@[a-z0-9]+/gi;
+	var REGCL = /\s#[a-z0-9_-]+/gi;
 	var T_COM = '---';
 	var T_ = '--';
 	var T_DATA = 'data-';
@@ -73,7 +74,6 @@
 	var ERRCONN = 'ERR_CONNECTION_CLOSED';
 	var OK = Object.keys;
 	var SKIPBODYENCRYPTOR = { ':': 1, '"': 1, '[': 1, ']': 1, '\'': 1, '_': 1, '{': 1, '}': 1, '&': 1, '=': 1, '+': 1, '-': 1, '\\': 1, '/': 1, ',': 1 };
-	var REG_FLAGS = /\s@[a-z0-9]+/gi;
 	var debug = false;
 
 	// No scrollbar
@@ -175,7 +175,6 @@
 	};
 
 	W.TRANSLATE = function(str) {
-
 
 		if (!str || typeof(str) !== TYPE_S || str.indexOf('@(') === -1)
 			return str;
@@ -457,7 +456,7 @@
 
 	MD.thousandsseparator = ' ';
 	MD.decimalseparator = '.';
-	MD.dateformat = null;
+	MD.dateformat = 'yyyy-MM-dd';
 	MD.dateformatutc = false;
 	// MD.currency = ''; DEFAULT CURRENCY
 	MD.localstorage = ATTRDATA;
@@ -486,7 +485,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.045;
+	M.version = 19.046;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -927,12 +926,17 @@
 		var nodecrypt = false;
 		var nocsrf = false;
 		var customflags = [];
+		var cl = null;
 
 		url = url.replace(REGAJAXFLAGS, function(text) {
 			var c = text.charAt(1);
-			if (c === '@')
+			if (c === '@') {
 				customflags.push(text.substring(2));
-			else {
+			} if (c === '#') {
+				if (!cl)
+					cl = [];
+				cl.push(text.substring(2));
+			} else {
 				c = text.substring(1, 4).toLowerCase();
 				if (c === 'nod')
 					nodecrypt = true;
@@ -1002,7 +1006,7 @@
 
 		DEF.monitor && monitor_method('requests');
 
-		setTimeout(function() {
+		var $call = function() {
 
 			var xhr = new XMLHttpRequest();
 
@@ -1044,7 +1048,12 @@
 
 			xhr.send(data);
 
-		}, timeout || 0);
+		};
+
+		if (cl)
+			W.CL(cl.join(','), () => setTimeout($call, timeout || 0));
+		else
+			setTimeout($call, timeout || 0);
 	};
 
 	W.UNWATCH = function(path, fn) {
@@ -2190,9 +2199,9 @@
 
 		url = url.replace(REGAJAXFLAGS, function(text) {
 			var c = text.charAt(1);
-			if (c === '#')
+			if (c === '#') {
 				reqid = text.substring(2);
-			if (c === '@')
+			} if (c === '@')
 				customflags.push(text.substring(2));
 			else if (c.toLowerCase() === 'r')
 				repeat = true;
@@ -2247,7 +2256,7 @@
 		if (customflags.length)
 			emitflags(customflags, url);
 
-		setTimeout(function() {
+		var $call = function() {
 
 			if (method === 'GET' && data) {
 				var qs = (typeof(data) === TYPE_S ? data : serializedata(data)); // serializedata replaces jQuery.param(data, true)
@@ -2398,7 +2407,9 @@
 			if (cancel)
 				cache[mainurl].xhr = xhr;
 
-		}, timeout || 0);
+		};
+
+		setTimeout($call, timeout || 0);
 	};
 
 	function ajaxcustomerror(response, headers, code) {
@@ -2727,74 +2738,77 @@
 		if (!newpath)
 			return;
 
-		var value = get(newpath);
-		!wasset && set(newpath, value, true);
-		DEF.monitor && monitor_method('set');
-		meta.flags2 && emitflags(meta, newpath, value, type);
+		CL(meta.cl, function() {
 
-		var state = [];
+			var value = get(newpath);
+			!wasset && set(newpath, value, true);
+			DEF.monitor && monitor_method('set');
+			meta.flags2 && emitflags(meta, newpath, value, type);
 
-		if (meta.flags.type != null)
-			type = meta.flags.type;
+			var state = [];
 
-		if (type === undefined)
-			type = 1; // manually
+			if (meta.flags.type != null)
+				type = meta.flags.type;
 
-		var all = M.components;
+			if (type === undefined)
+				type = 1; // manually
 
-		for (var i = 0; i < all.length; i++) {
-			var com = all[i];
+			var all = M.components;
 
-			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(newpath))
-				continue;
+			for (var i = 0; i < all.length; i++) {
+				var com = all[i];
 
-			var result = com.get();
+				if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(newpath))
+					continue;
 
-			if (meta.flags.default && com.$default && result === undefined) {
-				result = com.$default();
-				com.set(result, 3);
-			} else if (com.setter) {
-				com.$skip = false;
-				try {
-					com.setterX(result, newpath, type);
-				} catch (e) {
-					throwerror(e);
+				var result = com.get();
+
+				if (meta.flags.default && com.$default && result === undefined) {
+					result = com.$default();
+					com.set(result, 3);
+				} else if (com.setter) {
+					com.$skip = false;
+					try {
+						com.setterX(result, newpath, type);
+					} catch (e) {
+						throwerror(e);
+					}
 				}
+
+				if (!com.$ready)
+					com.$ready = true;
+
+				if (reset === true || meta.flags.reset || meta.flags.default) {
+
+					if (!com.$dirty_disabled)
+						com.$dirty = true;
+
+					if (!com.$valid_disabled) {
+						com.$valid = true;
+						com.$validate = false;
+						if (com.validate)
+							com.$valid = com.validate(result);
+					}
+
+					findcontrol2(com);
+
+				} else if (com.validate && !com.$valid_disabled)
+					com.valid(com.validate(result), true);
+
+				com.state && state.push(com);
 			}
 
-			if (!com.$ready)
-				com.$ready = true;
+			if (reset || meta.flags.reset || meta.flags.default)
+				clear(T_DIRTY, T_VALID);
 
-			if (reset === true || meta.flags.reset || meta.flags.default) {
+			for (var i = 0; i < state.length; i++)
+				state[i].stateX(1, 4);
 
-				if (!com.$dirty_disabled)
-					com.$dirty = true;
+			meta.flags.change && com_dirty(newpath + '.*', false);
 
-				if (!com.$valid_disabled) {
-					com.$valid = true;
-					com.$validate = false;
-					if (com.validate)
-						com.$valid = com.validate(result);
-				}
-
-				findcontrol2(com);
-
-			} else if (com.validate && !com.$valid_disabled)
-				com.valid(com.validate(result), true);
-
-			com.state && state.push(com);
-		}
-
-		if (reset || meta.flags.reset || meta.flags.default)
-			clear(T_DIRTY, T_VALID);
-
-		for (var i = 0; i < state.length; i++)
-			state[i].stateX(1, 4);
-
-		meta.flags.change && com_dirty(newpath + '.*', false);
-
-		if (!meta.flags.nowatch)
-			emitwatch(newpath, get(newpath), type);
+			if (!meta.flags.nowatch)
+				emitwatch(newpath, get(newpath), type);
+		});
 	};
 
 	W.NOTIFY = function() {
@@ -2844,85 +2858,86 @@
 		var meta = compilepath(path);
 		var newpath = meta.pathmaker ? pathmaker(meta.path) : meta.path;
 		if (newpath) {
+			CL(meta.cl, function() {
+				var keys = OK(value);
+				var reset = type === true || meta.flags.reset;
+				if (reset)
+					type = 1;
 
-			var keys = OK(value);
-			var reset = type === true || meta.flags.reset;
-			if (reset)
-				type = 1;
+				for (var i = 0; i < keys.length; i++) {
+					var p = newpath + '.' + keys[i];
+					set(p, value[keys[i]], null, type);
+				}
 
-			for (var i = 0; i < keys.length; i++) {
-				var p = newpath + '.' + keys[i];
-				set(p, value[keys[i]], null, type);
-			}
+				DEF.monitor && monitor_method('set');
+				meta.flags2 && emitflags(meta, newpath, value, type);
 
-			DEF.monitor && monitor_method('set');
-			meta.flags2 && emitflags(meta, newpath, value, type);
+				var all = M.components;
+				var state = [];
 
-			var all = M.components;
-			var state = [];
+				for (var i = 0; i < all.length; i++) {
+					var com = all[i];
 
-			for (var i = 0; i < all.length; i++) {
-				var com = all[i];
+					for (var j = 0; j < keys.length; j++) {
 
-				for (var j = 0; j < keys.length; j++) {
+						var p = newpath + '.' + keys[j];
 
-					var p = newpath + '.' + keys[j];
+						if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(p))
+							continue;
 
-					if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(p))
-						continue;
+						var result = com.get();
 
-					var result = com.get();
-
-					if (meta.flags.default && com.$default) {
-						result = com.$default();
-						com.set(result, 3);
-					} else if (com.setter) {
-						com.$skip = false;
-						try {
-							com.setterX(result, p, type);
-						} catch (e) {
-							throwerror(e);
+						if (meta.flags.default && com.$default) {
+							result = com.$default();
+							com.set(result, 3);
+						} else if (com.setter) {
+							com.$skip = false;
+							try {
+								com.setterX(result, p, type);
+							} catch (e) {
+								throwerror(e);
+							}
 						}
+
+						if (!com.$ready)
+							com.$ready = true;
+
+						if (reset === true || meta.flags.reset || meta.flags.default) {
+
+							if (!com.$dirty_disabled)
+								com.$dirty = true;
+
+							if (!com.$valid_disabled) {
+								com.$valid = true;
+								com.$validate = false;
+								if (com.validate)
+									com.$valid = com.validate(result);
+							}
+
+							findcontrol2(com);
+
+						} else if (com.validate && !com.$valid_disabled)
+							com.valid(com.validate(result), true);
+
+						com.state && state.push(com);
 					}
-
-					if (!com.$ready)
-						com.$ready = true;
-
-					if (reset === true || meta.flags.reset || meta.flags.default) {
-
-						if (!com.$dirty_disabled)
-							com.$dirty = true;
-
-						if (!com.$valid_disabled) {
-							com.$valid = true;
-							com.$validate = false;
-							if (com.validate)
-								com.$valid = com.validate(result);
-						}
-
-						findcontrol2(com);
-
-					} else if (com.validate && !com.$valid_disabled)
-						com.valid(com.validate(result), true);
-
-					com.state && state.push(com);
 				}
-			}
 
-			if (reset || meta.flags.reset || meta.flags.default)
-				clear(T_DIRTY, T_VALID);
+				if (reset || meta.flags.reset || meta.flags.default)
+					clear(T_DIRTY, T_VALID);
 
-			for (var i = 0; i < state.length; i++)
-				state[i].stateX(1, 4);
+				for (var i = 0; i < state.length; i++)
+					state[i].stateX(1, 4);
 
-			meta.flags.change && com_dirty(newpath + '.*', false);
+				meta.flags.change && com_dirty(newpath + '.*', false);
 
-			if (!meta.flags.nowatch) {
-				for (var j = 0; j < keys.length; j++) {
-					var p = newpath + '.' + keys[j];
-					emitwatch(p, get(p), type);
+				if (!meta.flags.nowatch) {
+					for (var j = 0; j < keys.length; j++) {
+						var p = newpath + '.' + keys[j];
+						emitwatch(p, get(p), type);
+					}
 				}
-			}
+			});
 		}
 	};
 
@@ -2930,14 +2945,16 @@
 		var meta = compilepath(path);
 		path = meta.pathmaker ? pathmaker(meta.path) : meta.path;
 		if (path) {
-			DEF.monitor && monitor_method('set');
-			if (meta.flags.nobind)
-				set2(W, path, value); // without data-bind
-			else
-				set(path, value, null, type); // with data-bind
-			if (!meta.flags.nowatch)
-				emitwatch(path, value, type);
-			meta.flags2 && emitflags(meta, path, value, type);
+			CL(meta.cl, function() {
+				DEF.monitor && monitor_method('set');
+				if (meta.flags.nobind)
+					set2(W, path, value); // without data-bind
+				else
+					set(path, value, null, type); // with data-bind
+				if (!meta.flags.nowatch)
+					emitwatch(path, value, type);
+				meta.flags2 && emitflags(meta, path, value, type);
+			});
 		}
 	};
 
@@ -2953,19 +2970,19 @@
 		if (!newpath)
 			return;
 
-		DEF.monitor && monitor_method('get');
-
-		var current = get(newpath);
-		if (!current) {
-			current = 0;
-		} else if (typeof(current) !== TYPE_N) {
-			current = parseFloat(current);
-			if (isNaN(current))
+		CL(meta.cl, function() {
+			DEF.monitor && monitor_method('get');
+			var current = get(newpath);
+			if (!current) {
 				current = 0;
-		}
-
-		current += value;
-		M.set(path, current, type);
+			} else if (typeof(current) !== TYPE_N) {
+				current = parseFloat(current);
+				if (isNaN(current))
+					current = 0;
+			}
+			current += value;
+			M.set(path, current, type);
+		});
 	};
 
 	// 1 === manually
@@ -2983,7 +3000,7 @@
 			value = meta.format.fn(value, newpath, 1, meta.format.scope && current_scope ? PLUGINS[current_scope] : null);
 
 		if (meta.path.charAt(0) === '~' || meta.flags.extend) {
-			M.extend(meta.flags.extend ? path : path.substring(1), value, type);
+			CL(meta.cl, () => M.extend(meta.flags.extend ? path : path.substring(1), value, type));
 			return;
 		}
 
@@ -2996,85 +3013,87 @@
 		if (reset)
 			type = 1;
 
-		set(newpath, value, null, type);
+		CL(meta.cl, function() {
+			set(newpath, value, null, type);
 
-		if (isupdate)
-			return M.update(path, reset, type, true);
+			if (isupdate)
+				return M.update(path, reset, type, true);
 
-		DEF.monitor && monitor_method('set');
+			DEF.monitor && monitor_method('set');
 
-		var result = get(newpath);
-		var state = [];
+			var result = get(newpath);
+			var state = [];
 
-		meta.flags2 && emitflags(meta, newpath, result, type);
+			meta.flags2 && emitflags(meta, newpath, result, type);
 
-		if (type === undefined)
-			type = 1;
+			if (type === undefined)
+				type = 1;
 
-		if (meta.flags.type != null)
-			type = meta.flags.type;
+			if (meta.flags.type != null)
+				type = meta.flags.type;
 
-		var all = M.components;
+			var all = M.components;
 
-		for (var i = 0; i < all.length; i++) {
+			for (var i = 0; i < all.length; i++) {
 
-			var com = all[i];
+				var com = all[i];
 
-			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(newpath))
-				continue;
+				if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(newpath))
+					continue;
 
-			if (meta.flags.default && com.$default)
-				com.set(com.$default(), 3);
-			else if (com.setter) {
-				if (com.path === newpath) {
-					if (com.setter) {
+				if (meta.flags.default && com.$default)
+					com.set(com.$default(), 3);
+				else if (com.setter) {
+					if (com.path === newpath) {
+						if (com.setter) {
+							try {
+								com.setterX(result, newpath, type);
+							} catch (e) {
+								throwerror(e);
+							}
+						}
+					} else if (com.setter) {
 						try {
-							com.setterX(result, newpath, type);
+							com.setterX(get(com.path), newpath, type);
 						} catch (e) {
-							throwerror(e);
+							throwerror(er);
 						}
 					}
-				} else if (com.setter) {
-					try {
-						com.setterX(get(com.path), newpath, type);
-					} catch (e) {
-						throwerror(er);
-					}
 				}
+
+				if (!com.$ready)
+					com.$ready = true;
+
+				if (type !== 3 && com.state)
+					state.push(com);
+
+				if (reset || meta.flags.reset || meta.flags.default) {
+					if (!com.$dirty_disabled)
+						com.$dirty = true;
+					if (!com.$valid_disabled) {
+						com.$valid = true;
+						com.$validate = false;
+						if (com.validate)
+							com.$valid = com.validate(result);
+					}
+
+					findcontrol2(com);
+
+				} else if (com.validate && !com.$valid_disabled)
+					com.valid(com.validate(result), true);
 			}
 
-			if (!com.$ready)
-				com.$ready = true;
+			if (reset || meta.flags.reset || meta.flags.default)
+				clear(T_DIRTY, T_VALID);
 
-			if (type !== 3 && com.state)
-				state.push(com);
+			for (var i = 0; i < state.length; i++)
+				state[i].stateX(type, 5);
 
-			if (reset || meta.flags.reset || meta.flags.default) {
-				if (!com.$dirty_disabled)
-					com.$dirty = true;
-				if (!com.$valid_disabled) {
-					com.$valid = true;
-					com.$validate = false;
-					if (com.validate)
-						com.$valid = com.validate(result);
-				}
+			meta.flags.change && com_dirty(newpath + '.*', false);
 
-				findcontrol2(com);
-
-			} else if (com.validate && !com.$valid_disabled)
-				com.valid(com.validate(result), true);
-		}
-
-		if (reset || meta.flags.reset || meta.flags.default)
-			clear(T_DIRTY, T_VALID);
-
-		for (var i = 0; i < state.length; i++)
-			state[i].stateX(type, 5);
-
-		meta.flags.change && com_dirty(newpath + '.*', false);
-
-		if (!meta.flags.nowatch)
-			emitwatch(newpath, result, type);
+			if (!meta.flags.nowatch)
+				emitwatch(newpath, result, type);
+		});
 	};
 
 	M.push = function(path, value, type) {
@@ -3094,36 +3113,39 @@
 			unshift = 1;
 		}
 
-		var newpath = meta.pathmaker ? pathmaker(p) : p;
-		var arr = get(newpath);
-		var n = false;
+		CL(meta.cl, function() {
 
-		if (!(arr instanceof Array)) {
-			arr = [];
-			n = true;
-		}
+			var newpath = meta.pathmaker ? pathmaker(p) : p;
+			var arr = get(newpath);
+			var n = false;
 
-		var is = true;
+			if (!(arr instanceof Array)) {
+				arr = [];
+				n = true;
+			}
 
-		if (value instanceof Array) {
-			if (value.length) {
+			var is = true;
+
+			if (value instanceof Array) {
+				if (value.length) {
+					if (unshift)
+						arr.unshift.apply(arr, value);
+					else
+						arr.push.apply(arr, value);
+				} else
+					is = false;
+			} else {
 				if (unshift)
-					arr.unshift.apply(arr, value);
+					arr.unshift(value);
 				else
-					arr.push.apply(arr, value);
-			} else
-				is = false;
-		} else {
-			if (unshift)
-				arr.unshift(value);
-			else
-				arr.push(value);
-		}
+					arr.push(value);
+			}
 
-		if (n)
-			M.set(p, arr, type);
-		else if (is)
-			M.update(p, undefined, type);
+			if (n)
+				M.set(p, arr, type);
+			else if (is)
+				M.update(p, undefined, type);
+		});
 	};
 
 	function compilepath(path) {
@@ -3136,6 +3158,16 @@
 		var obj = {};
 		obj.flags = {};
 		obj.flagslist = '';
+
+		if (path.indexOf(' #') !== -1) {
+			obj.cl = [];
+			path = path.replace(REGCL, function(text) {
+				obj.cl.push(text.trim().substring(1));
+				return '';
+			}).trim();
+			obj.cl = obj.cl.join(',');
+		}
+
 		obj.format = findformat(path);
 		obj.rawpath = path;
 
@@ -3296,6 +3328,12 @@
 	};
 
 	W.CL = function(name, callback) {
+
+		if (!name) {
+			callback && callback();
+			return;
+		}
+
 		var arr = name.split(',').trim();
 		arr.wait(function(key, next) {
 			key = pathmaker(key);
@@ -3327,6 +3365,7 @@
 
 		var meta = compilepath(path);
 		var newpath = meta.pathmaker ? pathmaker(meta.path) : meta.path;
+
 		path = meta.rawpath;
 
 		if (scope === true) {
@@ -3349,8 +3388,10 @@
 		var value = meta.flags.modified ? getmodified(newpath) : meta.flags.clone ? CLONE(get(newpath, scope)) : get(newpath, scope);
 		meta.flags.reset && W.RESET(path, true);
 		meta.flags2 && emitflags(meta, newpath, value);
+
 		if (meta.format)
 			value = meta.format.fn(value, newpath, 1, meta.format.scope && current_scope ? PLUGINS[current_scope] : null);
+
 		return value;
 	};
 
@@ -4254,8 +4295,6 @@
 					path = tmp[0];
 				}
 
-			//console.log(path, tmp);
-
 				scope._id = scope.ID = scope.id = GUID(10);
 				scope.element = $(el);
 				scope.config = conf;
@@ -4950,18 +4989,27 @@
 
 	function remap(path, value, callback) {
 
+		var cl;
+
+		if (path.indexOf(' #') !== -1) {
+			var tmp = makecl(path);
+			cl = tmp.cl;
+			path = tmp.path;
+		}
+
 		var index = path.replace('-->', '->').indexOf('->');
 		if (index !== -1) {
 			value = get(path.substring(0, index).trim(), value);
 			path = path.substring(index + 3).trim();
 		}
 
-		if (callback)
-			callback(path, value);
-		else
-			M.set(path, value);
+		CL(cl, function() {
+			if (callback)
+				callback(path, value);
+			else
+				M.set(path, value);
+		});
 	}
-
 
 	function set(path, value, is, settype) {
 
@@ -7485,11 +7533,18 @@
 		var methodname;
 		var myselector;
 		var scope = current_scope;
+		var cl;
 
 		for (var i = beg; i < arguments.length; i++)
 			arg.push(arguments[i]);
 
 		if (beg === 3) {
+
+			if (name.indexOf(' #') !== -1) {
+				tmp = makecl(name);
+				cl = tmp.cl;
+				name = tmp.path;
+			}
 
 			myselector = makeandexecflags(name);
 
@@ -7520,7 +7575,7 @@
 				setTimeout(function(arg) {
 					current_scope = scope;
 					arg[0] = true;
-					SETTER.apply(W, arg);
+					CL(cl, () => SETTER.apply(W, arg));
 				}, 555, arguments);
 
 				return;
@@ -7531,21 +7586,29 @@
 
 			DEF.monitor && monitor_method('setters');
 
-			FIND(myselector, true, function(arr) {
+			CL(cl, function() {
+				FIND(myselector, true, function(arr) {
 
-				current_scope = scope;
-				isget = methodname.indexOf('.') !== -1;
-				events.setter && EMIT('setter', myselector, methodname, arg[0], arg[1]);
+					current_scope = scope;
+					isget = methodname.indexOf('.') !== -1;
+					events.setter && EMIT('setter', myselector, methodname, arg[0], arg[1]);
 
-				for (var i = 0; i < arr.length; i++) {
-					var o = arr[i];
-					var a = isget ? get(methodname, o) : o[methodname];
-					if (typeof(a) === TYPE_FN)
-						a.apply(o, arg);
-				}
+					for (var i = 0; i < arr.length; i++) {
+						var o = arr[i];
+						var a = isget ? get(methodname, o) : o[methodname];
+						if (typeof(a) === TYPE_FN)
+							a.apply(o, arg);
+					}
+				});
 			});
 
 		} else {
+
+			if (selector.indexOf(' #') !== -1) {
+				tmp = makecl(selector);
+				cl = tmp.cl;
+				selector = tmp.path;
+			}
 
 			myselector = makeandexecflags(selector);
 			methodname = name;
@@ -7575,7 +7638,7 @@
 
 				setTimeout(function(arg) {
 					current_scope = scope;
-					SETTER.apply(W, arg);
+					CL(cl, () => SETTER.apply(W, arg));
 				}, 555, arguments);
 
 				return;
@@ -7587,19 +7650,23 @@
 			DEF.monitor && monitor_method('setters');
 			events.setter && EMIT('setter', myselector, methodname, arg[0], arg[1]);
 
-			for (var i = 0; i < arr.length; i++) {
-				var o = arr[i];
-				var a = isget ? get(methodname, o) : o[methodname];
-				if (typeof(a) === TYPE_FN)
-					a.apply(o, arg);
-			}
+			CL(cl, function() {
+				for (var i = 0; i < arr.length; i++) {
+					var o = arr[i];
+					var a = isget ? get(methodname, o) : o[methodname];
+					if (typeof(a) === TYPE_FN)
+						a.apply(o, arg);
+				}
+			});
 		}
 	};
 
-	function exechelper(ctx, path, arg) {
+	function exechelper(ctx, path, arg, cl) {
 		setTimeout(function() {
-			DEF.monitor && monitor_method('exec');
-			EXEC.call(ctx, true, path, arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6]);
+			CL(cl, function() {
+				DEF.monitor && monitor_method('exec');
+				EXEC.call(ctx, true, path, arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], arg[6]);
+			});
 		}, 200);
 	}
 
@@ -7631,9 +7698,21 @@
 
 	var execsetterflags;
 
+	function makecl(path) {
+
+		var cl = [];
+
+		path = path.replace(REGCL, function(text) {
+			cl.push(text.trim().substring(1));
+			return '';
+		});
+
+		return { path: path, cl: cl.length ? cl.join(',') : '' };
+	}
+
 	function makeandexecflags(path) {
 		execsetterflags = [];
-		path = path && typeof(path) === TYPE_S ? path.replace(REG_FLAGS, parseexecsetterflags) : path;
+		path = path && typeof(path) === TYPE_S ? path.replace(REGFLAGS, parseexecsetterflags) : path;
 		execsetterflags.length && emitflags(execsetterflags, path);
 		return path;
 	}
@@ -7667,27 +7746,36 @@
 			arg.push(arguments[i]);
 
 		var c = path.charCodeAt(0);
+		var tmp;
+		var cl;
+
+		if (path.indexOf(' #') !== -1) {
+			tmp = makecl(path);
+			cl = tmp.cl;
+			path = tmp.path;
+		}
+
 		path = makeandexecflags(path);
 
 		// Event
 		if (c === 35) {
 			p = path.substring(1);
-			if (wait)
-				!events[p] && exechelper(ctx, path, arg);
-			else
-				EMIT.call(ctx, p, arg[0], arg[1], arg[2], arg[3], arg[4]);
+			if (wait) {
+				!events[p] && exechelper(ctx, path, arg, cl);
+			} else
+				CL(cl, () => EMIT.call(ctx, p, arg[0], arg[1], arg[2], arg[3], arg[4]));
 			return;
 		}
 
 		if (c === 45 && path.substring(0, 3) === T_COM) {
 			var args = [path.substring(3).trim(), arg[0], arg[1], arg[2], arg[3], arg[4]];
 			wait && args.unshift(wait);
-			SETTER.apply(W, args);
+			CL(cl, () => SETTER.apply(W, args));
 			return;
 		}
 
 		if (c === 38) {
-			CMD.call(ctx, path.substring(1), arg[0], arg[1], arg[2], arg[3], arg[4]);
+			CL(cl, () => CMD.call(ctx, path.substring(1), arg[0], arg[1], arg[2], arg[3], arg[4]));
 			return;
 		}
 
@@ -7697,7 +7785,6 @@
 		var index;
 		var plugin_name;
 		var plugin_method;
-		var tmp;
 
 		if (c === 64) {
 			index = path.indexOf('.');
@@ -7718,13 +7805,15 @@
 			if (ctrl && typeof(ctrl[plugin_method]) === TYPE_FN) {
 				tmp = current_scope;
 				current_scope = plugin_name;
-				ctrl[plugin_method].apply(ctx === W ? ctrl : ctx, arg);
-				if (DEF.monitor) {
-					monitor_method('exec');
-					monitor_method('plugins');
-				}
-				current_scope = tmp;
-				ok = 1;
+				CL(cl, function() {
+					ctrl[plugin_method].apply(ctx === W ? ctrl : ctx, arg);
+					if (DEF.monitor) {
+						monitor_method('exec');
+						monitor_method('plugins');
+					}
+					current_scope = tmp;
+					ok = 1;
+				});
 			} else if (plugin_name) {
 				tmp = pluginableplugins[plugin_name];
 				if (tmp) {
@@ -7733,48 +7822,46 @@
 						tmp.pending = true;
 						if (typeof(tmp.fn) === TYPE_S) {
 							// URL address
-							IMPORT(tmp.fn, function() {
-								tmp = pluginableplugins[plugin_name];
-								tmp && W.PLUGIN(tmp.name, tmp.fn, tmp.init, function() {
-									exechelper(ctx, path, arg);
-								});
-							}, function(response) {
-								return response.replace(/~PATH~|~ID~/g, tmp.name);
+							CL(cl, function() {
+								IMPORT(tmp.fn, function() {
+									tmp = pluginableplugins[plugin_name];
+									tmp && W.PLUGIN(tmp.name, tmp.fn, tmp.init, () => exechelper(ctx, path, arg));
+								}, response => response.replace(/~PATH~|~ID~/g, tmp.name));
 							});
 						} else {
 							delete pluginableplugins[plugin_name];
-							W.PLUGIN(tmp.name, tmp.fn, tmp.init, function() {
-								exechelper(ctx, path, arg);
-							});
+							CL(cl, () => W.PLUGIN(tmp.name, tmp.fn, tmp.init, () => exechelper(ctx, path, arg)));
 						}
 						return;
 					} else
 						wait = true;
 				}
 			}
-			wait && !ok && exechelper(ctx, path, arg);
+			wait && !ok && exechelper(ctx, path, arg, cl);
 			return;
 		}
 
 		if (path.substring(0, 5) === 'FUNC') {
 			var fn = FUNC[path.substring(6)];
 			if (fn) {
+				CL(cl, () => fn.apply(ctx === W ? ctrl : ctx, arg));
 				ok = 1;
-				fn.apply(ctx === W ? ctrl : ctx, arg);
 			}
-			wait && !ok && exechelper(ctx, path, arg);
+			wait && !ok && exechelper(ctx, path, arg, cl);
 			return;
 		}
 
 		var fn = get(path);
 
 		if (typeof(fn) === TYPE_FN) {
-			fn.apply(ctx, arg);
-			DEF.monitor && monitor_method('exec');
+			CL(cl, function() {
+				fn.apply(ctx, arg);
+				DEF.monitor && monitor_method('exec');
+			});
 			ok = 1;
 		}
 
-		wait && !ok && exechelper(ctx, path, arg);
+		wait && !ok && exechelper(ctx, path, arg, cl);
 	};
 
 	W.ATTRD = function(el, attrd) {
@@ -9932,15 +10019,22 @@
 			var self = this;
 			var arg = [];
 			var beg = selector === true ? 3 : 2;
-			var isget;
-			var tmp;
 			var methodname;
 			var myselector;
+			var isget;
+			var tmp;
+			var cl;
 
 			for (var i = beg; i < arguments.length; i++)
 				arg.push(arguments[i]);
 
 			if (beg === 3) {
+
+				if (name.indexOf(' #') !== -1) {
+					tmp = makecl(name);
+					cl = tmp.cl;
+					name = tmp.path;
+				}
 
 				myselector = makeandexecflags(name);
 				tmp = myselector.indexOf('/');
@@ -9967,7 +10061,7 @@
 					}
 
 					setTimeout(function(arg) {
-						$.fn.SETTER.apply(self, arg);
+						CL(cl, () => $.fn.SETTER.apply(self, arg));
 					}, 555, arguments);
 
 					return self;
@@ -9975,17 +10069,25 @@
 
 				isget = methodname.indexOf('.') !== -1;
 
-				self.FIND(tmp, true, function(arr) {
-					events.setter && EMIT('setter', tmp, methodname, arg[0], arg[1]);
-					for (var i = 0; i < arr.length; i++) {
-						var o = arr[i];
-						var a = isget ? get(methodname, o) : o[methodname];
-						if (typeof(a) === TYPE_FN)
-							a.apply(o, arg);
-					}
+				CL(cl, function() {
+					self.FIND(tmp, true, function(arr) {
+						events.setter && EMIT('setter', tmp, methodname, arg[0], arg[1]);
+						for (var i = 0; i < arr.length; i++) {
+							var o = arr[i];
+							var a = isget ? get(methodname, o) : o[methodname];
+							if (typeof(a) === TYPE_FN)
+								a.apply(o, arg);
+						}
+					});
 				});
 
 			} else {
+
+				if (selector.indexOf(' #') !== -1) {
+					tmp = makecl(selector);
+					cl = tmp.cl;
+					selector = tmp.path;
+				}
 
 				myselector = makeandexecflags(selector);
 				methodname = name;
@@ -10012,7 +10114,7 @@
 					}
 
 					setTimeout(function(arg) {
-						$.fn.SETTER.apply(self, arg);
+						CL(cl, () => $.fn.SETTER.apply(self, arg));
 					}, 555, arguments);
 
 					return self;
@@ -10021,14 +10123,15 @@
 				var arr = self.FIND(tmp, true);
 				isget = methodname.indexOf('.') !== -1;
 
-				events.setter && EMIT('setter', tmp, methodname, arg[0], arg[1]);
-
-				for (var i = 0; i < arr.length; i++) {
-					var o = arr[i];
-					var a = isget ? get(methodname, o) : o[methodname];
-					if (typeof(a) === TYPE_FN)
-						a.apply(o, arg);
-				}
+				CL(cl, function() {
+					events.setter && EMIT('setter', tmp, methodname, arg[0], arg[1]);
+					for (var i = 0; i < arr.length; i++) {
+						var o = arr[i];
+						var a = isget ? get(methodname, o) : o[methodname];
+						if (typeof(a) === TYPE_FN)
+							a.apply(o, arg);
+					}
+				});
 			}
 
 			return self;
@@ -10687,11 +10790,42 @@
 			case TYPE_N:
 			case 'currency':
 			case 'float':
-				var v = +(typeof(value) == TYPE_S ? value.replace(REGEMPTY, '').replace(REGCOMMA, '.') : value);
+
+				var t = typeof(value);
+				var v = null;
+
+				if (t == TYPE_S) {
+					switch (MD.thousandsseparator) {
+						case ' ':
+							value = value.replace(/\s/g, '');
+							break;
+						case ',':
+							value = value.replace(/\s/g, '');
+							break;
+						case '.':
+							value = value.replace(/\s/g, '');
+							break;
+					}
+
+					if (MD.decimalseparator === ',')
+						value = value.replace(REGCOMMA, '.');
+
+					if (value)
+						v = +value;
+					else
+						return null;
+
+				} else if (t === 'number')
+					v = value;
+				else
+					return null;
+
 				return isNaN(v) ? null : v;
+
 			case TYPE_B:
 			case 'bool':
 				return value == null ? null : value === true || typeof(value) == TYPE_S ? (value == '1' || value == T_TRUE || value == 'on') : !!value;
+
 			case 'date':
 			case 'datetime':
 				if (!value)
