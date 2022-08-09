@@ -10800,10 +10800,10 @@
 							value = value.replace(/\s/g, '');
 							break;
 						case ',':
-							value = value.replace(/\s/g, '');
+							value = value.replace(/\s|,/g, '');
 							break;
 						case '.':
-							value = value.replace(/\s/g, '');
+							value = value.replace(/\s|\./g, '');
 							break;
 					}
 
