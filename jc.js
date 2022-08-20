@@ -485,7 +485,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.047;
+	M.version = 19.048;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4463,6 +4463,13 @@
 
 				key = '$import' + key;
 
+				if (typeof(response) !== 'string') {
+					statics[key] = true;
+					current_element = null;
+					next();
+					return;
+				}
+
 				current_element = item.element[0];
 
 				if (typeof(response) === TYPE_S) {
@@ -4966,6 +4973,7 @@
 	}
 
 	function importstyles(str, id) {
+
 		var builder = [];
 
 		str = str.replace(REGCSS, function(text) {
