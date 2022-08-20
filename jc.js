@@ -485,7 +485,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.046;
+	M.version = 19.047;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4378,7 +4378,7 @@
 						setTimeout(function() {
 							for (var i = 0; i < cls.length; i++)
 								scope.element.tclass(cls[i]);
-						}, 5);
+						}, conf.delay || 300);
 					})(cls);
 				}
 
