@@ -485,7 +485,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.048;
+	M.version = 19.049;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10704,7 +10704,7 @@
 					self.$jcdelay = +(attrcom(self, 'keypress-delay') || com.config.$delay || MD.delaykeypress);
 
 				if (self.$jconly === undefined)
-					self.$jconly = attrcom(self, 'keypress-only') === T_TRUE || com.config.$keypress === true || com.config.$binding === 2;
+					self.$jconly = attrcom(self, 'keypress-only') === T_TRUE || com.config.$binding === 2;
 
 				self.$jctimeout && clearTimeout(self.$jctimeout);
 				self.$jctimeout = setTimeout(keypressdelay, self.$jcdelay, self);
