@@ -11,7 +11,7 @@
 	var REGSEARCH = /[^a-zA-Zá-žÁ-Žа-яА-Я\d\s:]/g;
 	var REGFNPLUGIN = /[a-z0-9_-]+\/[a-z0-9_]+\(|(^|(?=[^a-z0-9]))@[a-z0-9-_]+\./i;
 	var REGMETA = /_{2,}/;
-	var REGAJAXFLAGS = /\s(repeat|cancel|json|noencrypt|nodecrypt|nocsrf|#[a-z0-9]+|@[a-z0-9]+)/gi;
+	var REGAJAXFLAGS = /\s(repeat|cancel|urlencoded|json|noencrypt|nodecrypt|nocsrf|#[a-z0-9]+|@[a-z0-9]+)/gi;
 	var REGBINDERCOMPARE = /^[^a-z0-9.]/;
 	var REGWILDCARD = /\.\*/;
 	var REGISARR = /\[\d+\]$/;
@@ -485,7 +485,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.049;
+	M.version = 19.051;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2192,6 +2192,7 @@
 		var cancel = false;
 		var reqid = null;
 		var json = false;
+		var urlencoded = false;
 		var noencrypt = false;
 		var nodecrypt = false;
 		var nocsrf = false;
@@ -2199,15 +2200,18 @@
 
 		url = url.replace(REGAJAXFLAGS, function(text) {
 			var c = text.charAt(1);
+			var l = c.toLowerCase();
 			if (c === '#') {
 				reqid = text.substring(2);
 			} if (c === '@')
 				customflags.push(text.substring(2));
-			else if (c.toLowerCase() === 'r')
+			else if (l === 'r')
 				repeat = true;
-			else if (c.toLowerCase() === 'j')
+			else if (l === 'u')
+				urlencoded = true;
+			else if (l === 'j')
 				json = true;
-			else if (c.toLowerCase() === 'n') {
+			else if (l === 'n') {
 				c = text.substring(1, 4).toLowerCase();
 				if (c === 'noc')
 					nocsrf = true;
@@ -2318,8 +2322,9 @@
 				if (typeof(data) === TYPE_S) {
 					options.data = canencrypt ? encrypt_data(data, encryptsecret) : data;
 				} else {
-					var tmp = STRINGIFY(data);
-					options.contentType = options.headers['Content-Type'] = 'application/json; charset=utf-8';
+					var tmp = urlencoded ? QUERIFY(data).substring(1) : STRINGIFY(data);
+					if (!urlencoded)
+						options.contentType = options.headers['Content-Type'] = 'application/json; charset=utf-8';
 					options.data = canencrypt ? encrypt_data(tmp, encryptsecret) : tmp;
 				}
 			}
