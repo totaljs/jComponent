@@ -5106,6 +5106,8 @@
 		var code = path.charCodeAt(0);
 		if (code === 37)
 			path = T_TMP + path.substring(1);
+		else if (code === 35)
+			path = 'DEF.cl.' + path.substring(1);
 
 		var key = '=' + path;
 		if (paths[key])
