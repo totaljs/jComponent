@@ -485,7 +485,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.052;
+	M.version = 19.053;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -929,6 +929,7 @@
 		var cl = null;
 
 		url = url.replace(REGAJAXFLAGS, function(text) {
+
 			var c = text.charAt(1);
 			if (c === '@') {
 				customflags.push(text.substring(2));
@@ -2224,6 +2225,7 @@
 			return '';
 		});
 
+
 		if (repeat)
 			arg = [rawurl, data, callback, timeout];
 
@@ -2293,7 +2295,7 @@
 			} else
 				url = url.ROOT();
 
-			var custom = url.match(/\([a-z0-9\-.,]+\)/i);
+			var custom = url.match(/\s\([a-z0-9\-.,]+\)/i);
 			if (custom) {
 				url = url.replace(custom, '').replace(/\s+/g, '');
 				options.url = url;
