@@ -485,7 +485,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.053;
+	M.version = 19.054;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -9630,7 +9630,12 @@
 				h += 12;
 		}
 
-		return new Date((dt.y || dt.Y) || 0, (dt.M || 1) - 1, dt.d || dt.D || 0, h || 0, dt.m || 0, dt.s || 0);
+		var y = (dt.y || dt.Y) || 0;
+
+		if (y < 1000)
+			y += 2000;
+
+		return new Date(y, (dt.M || 1) - 1, dt.d || dt.D || 0, h || 0, dt.m || 0, dt.s || 0);
 	}
 
 	SP.parseDate = function(format) {
