@@ -485,7 +485,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.054;
+	M.version = 19.055;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1163,8 +1163,14 @@
 			if (path.substring(path.length - 1) === '.')
 				path = path.substring(0, path.length - 1);
 
+			var c = path.charAt(0);
+
+			// Codelist
+			if (c === '#')
+				path = 'DEF.cl.' + path.substring(1);
+
 			// Temporary
-			if (path.charCodeAt(0) === 37)
+			if (c === '%')
 				path = T_TMP + path.substring(1);
 
 			path = path.env();
