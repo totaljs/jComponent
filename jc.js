@@ -11,7 +11,7 @@
 	var REGSEARCH = /[^a-zA-Zá-žÁ-Žа-яА-Я\d\s:]/g;
 	var REGFNPLUGIN = /[a-z0-9_-]+\/[a-z0-9_]+\(|(^|(?=[^a-z0-9]))@[a-z0-9-_]+\./i;
 	var REGMETA = /_{2,}/;
-	var REGAJAXFLAGS = /\s(repeat|cancel|urlencoded|json|noencrypt|nodecrypt|nocsrf|#[a-z0-9]+|@[a-z0-9]+)/gi;
+	var REGAJAXFLAGS = /\s(repeat|cancel|urlencoded|json|noencrypt|nodecrypt|nocsrf|#[a-z0-9_-]+|@[a-z0-9_-]+)/gi;
 	var REGBINDERCOMPARE = /^[^a-z0-9.]/;
 	var REGWILDCARD = /\.\*/;
 	var REGISARR = /\[\d+\]$/;
@@ -485,7 +485,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.055;
+	M.version = 19.056;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
