@@ -485,7 +485,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.056;
+	M.version = 19.057;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -12179,34 +12179,103 @@
 
 	var PP = Plugin.prototype;
 
-	PP.set = function(path, value) {
-		var t = this;
-		SET(t.makepath(path), value);
-		return t;
+	function ppcall(plugin, type, name, data, callback) {
+
+		if (callback == null) {
+			callback = data;
+			data = null;
+		}
+
+		plugin.scope();
+
+		if (typeof(callback) === TYPE_S)
+			callback = plugin.makepath(callback);
+
+		W[type](name, data, callback);
+		return plugin;
+	}
+
+	PP.tapi = function(name, data, callback) {
+		return ppcall(this, 'TAPI', name, data, callback);
 	};
 
-	PP.push = function(path, value) {
-		var t = this;
-		PUSH(t.makepath(path), value);
-		return t;
+	PP.dapi = function(name, data, callback) {
+		return ppcall(this, 'DAPI', name, data, callback);
 	};
 
-	PP.inc = function(path, value) {
-		var t = this;
-		INC(t.makepath(path), value);
-		return t;
+	PP.wapi = function(name, data, callback) {
+		return ppcall(this, 'wapi', name, data, callback);
 	};
 
-	PP.toggle = function(path) {
+	PP.ajax = function(name, data, callback) {
+		return ppcall(this, 'AJAX', name, data, callback);
+	};
+
+	PP.watch = function(name, callback, init) {
 		var t = this;
 		t.scope();
-		TOGGLE(t.makepath(path));
+		WATCH(t.makepath(name), callback, init);
 		return t;
 	};
 
-	PP.upd = function(path) {
+	PP.set = function(path, value, type) {
 		var t = this;
-		UPD(t.makepath(path));
+
+		if (value === undefined) {
+			value = path;
+			path = null;
+		}
+
+		SET(t.makepath(path), value, type);
+		return t;
+	};
+
+	PP.push = function(path, value, type) {
+		var t = this;
+
+		if (value === undefined) {
+			value = path;
+			path = null;
+		}
+
+		PUSH(t.makepath(path), value, type);
+		return t;
+	};
+
+	PP.extend = function(path, value, type) {
+		var t = this;
+
+		if (value === undefined) {
+			value = path;
+			path = null;
+		}
+
+		EXTEND(t.makepath(path), value, type);
+		return t;
+	};
+
+	PP.inc = function(path, value, type) {
+		var t = this;
+
+		if (value === undefined) {
+			value = path;
+			path = null;
+		}
+
+		INC(t.makepath(path), value, type);
+		return t;
+	};
+
+	PP.toggle = function(path, type) {
+		var t = this;
+		t.scope();
+		TOGGLE(t.makepath(path), type);
+		return t;
+	};
+
+	PP.upd = function(path, type) {
+		var t = this;
+		UPD(t.makepath(path), type);
 		return t;
 	};
 
@@ -12247,7 +12316,7 @@
 	PP.makepath = function(path) {
 		var self = this;
 		self.scope();
-		return self.name + (path ? ('.' + path) : '');
+		return self.name + (path ? ('.' + path).replace(/\?(\.)?/, '') : '');
 	};
 
 	PP.remove = PP.$remove = function() {
