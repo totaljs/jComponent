@@ -485,7 +485,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.057;
+	M.version = 19.058;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6269,7 +6269,13 @@
 		return this;
 	};
 
-	PPC.update = PPC.refresh = function(notify, type) {
+	PPC.update = function(type) {
+		var self = this;
+		self.$binded && self.set(self.get(), type);
+		return self;
+	};
+
+	PPC.refresh = function(notify, type) {
 		var self = this;
 		if (self.$binded) {
 
