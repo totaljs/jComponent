@@ -434,6 +434,7 @@
 	MD.scrollbaranimate = true;
 	MD.jsoncompress = false;
 	MD.jsondate = true;
+	MD.iconprefix = 'fa fa-';
 	MD.ajaxerrors = false;
 	MD.ajaxcredentials = false;
 	MD.ajaxcredentialshtml = false;
@@ -485,7 +486,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.058;
+	M.version = 19.059;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6458,7 +6459,7 @@
 	};
 
 	MPC.faicon = PPC.faicon = function(value) {
-		return value ? ((value.indexOf(' ') === -1 ? 'fa fa-' : '') + value) : '';
+		return value ? ((value.indexOf(' ') === -1 ? MD.iconprefix : '') + value) : '';
 	};
 
 	PPC.novalidate = PPC.noValid = PPC.noValidate = function(val) {
