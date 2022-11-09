@@ -434,7 +434,7 @@
 	MD.scrollbaranimate = true;
 	MD.jsoncompress = false;
 	MD.jsondate = true;
-	MD.iconprefix = 'fa fa-';
+	MD.iconprefix = 'ti ti-';
 	MD.ajaxerrors = false;
 	MD.ajaxcredentials = false;
 	MD.ajaxcredentialshtml = false;
