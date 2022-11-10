@@ -10646,14 +10646,14 @@
 						break;
 				}
 			}
-			MAIN.ua = output;
+			M.ua = output;
 		}
 
 		parseUA();
 
 		W.addEventListener('load', viewportheight);
 
-		if (MAIN.ua.device === 'mobile' || MAIN.ua.browser !== 'Firefox')
+		if (M.ua.device === 'mobile' || M.ua.browser !== 'Firefox')
 			W.addEventListener('deviceorientation', viewportheight, true);
 
 		resize();
@@ -10678,7 +10678,7 @@
 			if (isSTANDALONE)
 				body.aclass('jc-standalone');
 
-			var pua = MAIN.ua;
+			var pua = M.ua;
 			pua.browser && body.aclass('jc-' + pua.browser.toLowerCase());
 			pua.os && body.aclass('jc-' + pua.os.toLowerCase());
 			pua.device && body.aclass('jc-' + pua.device.toLowerCase());
