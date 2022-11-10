@@ -486,7 +486,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.059;
+	M.version = 19.061;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10500,10 +10500,6 @@
 			}
 		}
 
-		W.addEventListener('load', viewportheight);
-		W.addEventListener('deviceorientation', viewportheight, true);
-		resize();
-
 		function parseUA() {
 			var arr = ua.match(/[a-z]+/gi);
 			if (arr) {
@@ -10653,6 +10649,15 @@
 			MAIN.ua = output;
 		}
 
+		parseUA();
+
+		W.addEventListener('load', viewportheight);
+
+		if (MAIN.ua.device === 'mobile' || MAIN.ua.browser !== 'Firefox')
+			W.addEventListener('deviceorientation', viewportheight, true);
+
+		resize();
+
 		$W.on(T_RESIZE, resize);
 		$W.on('visibilitychange', function() {
 			W.EMIT('visible', !document.hidden);
@@ -10672,8 +10677,6 @@
 
 			if (isSTANDALONE)
 				body.aclass('jc-standalone');
-
-			parseUA();
 
 			var pua = MAIN.ua;
 			pua.browser && body.aclass('jc-' + pua.browser.toLowerCase());
