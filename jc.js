@@ -486,7 +486,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.061;
+	M.version = 19.062;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -12222,9 +12222,19 @@
 	};
 
 	PP.watch = function(name, callback, init) {
+
 		var t = this;
+		var fn = callback;
+
 		t.scope();
-		WATCH(t.makepath(name), callback, init);
+
+		if (typeof(fn) === 'function') {
+			fn = function(path, value, type) {
+				callback(value, path, type);
+			};
+		}
+
+		WATCH(t.makepath(name), fn, init);
 		return t;
 	};
 
