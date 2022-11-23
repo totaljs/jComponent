@@ -35,7 +35,9 @@
 	var DEFMODEL = { value: null };
 	var MULTIPLE = /\s\+\s|\s/;
 	var SCOPENAME = 'scope';
+	var PLUGINNAME = 'plugin';
 	var ATTRSCOPE2 = T_DATA + '' + SCOPENAME;
+	var ATTRPLUGIN = T_DATA + '' + PLUGINNAME;
 	var TYPE_FN = 'function';
 	var TYPE_S = 'string';
 	var TYPE_N = 'number';
@@ -486,7 +488,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.062;
+	M.version = 19.063;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4279,12 +4281,14 @@
 			if (el.$scopedata)
 				return el.$scopedata;
 
-			var path = el.getAttribute ? (el.getAttribute(ATTRSCOPE2) || el.getAttribute(SCOPENAME)) : null;
+			var path = el.getAttribute ? (el.getAttribute(ATTRPLUGIN) || el.getAttribute(PLUGINNAME) || el.getAttribute(ATTRSCOPE2) || el.getAttribute(SCOPENAME)) : null;
 			if (path) {
 
 				if (!DEF.inspectable) {
 					el.removeAttribute(ATTRSCOPE2, '');
 					el.removeAttribute(SCOPENAME, '');
+					el.removeAttribute(ATTRPLUGIN, '');
+					el.removeAttribute(PLLUGINNAME, '');
 				}
 
 				var meta = path.split(REGMETA);
@@ -4359,10 +4363,10 @@
 					scope.path = path;
 
 				path = scope.path;
+				var plugin;
 
 				if (tmp[1]) {
-
-					var plugin = pluginscope[tmp[1]];
+					plugin = pluginscope[tmp[1]];
 					if (plugin) {
 						current_element = el;
 						W.PLUGINS[scope.path] = scope.plugin = new Plugin(path, plugin.fn);
@@ -4371,6 +4375,11 @@
 						WARN('Plugin "? {0}" not found'.format(tmp[1]));
 						return;
 					}
+				} else {
+					// Tries to assign an element into the plugin
+					scope.plugin = plugin = W.PLUGINS[scope.path];
+					if (plugin)
+						plugin.element = scope.element;
 				}
 
 				scope.elements.push(el);
@@ -5407,6 +5416,7 @@
 		for (var k in R) {
 			var a = R[k];
 			if (!inDOM(a.element[0]) || !a.element[0].innerHTML) {
+				console.log('REMOVE', k, a.element[0]);
 				a.$remove();
 				delete R[k];
 				DEF.monitor && monitor('plugins', 2);
@@ -5650,18 +5660,18 @@
 		self.name = name;
 		self.$name = version === -1 ? name : name.substring(0, version);
 		self.version = version === -1 ? '' : name.substring(version + 1);
-
-		self.path;
-		self.type;
-		self.id;
 		self.removed = false;
 
-		self.make;
-		self.done;
-		self.prerender;
-		self.destroy;
-		self.state;
-		self.validate;
+		// self.path;
+		// self.type;
+		// self.id;
+
+		// self.make;
+		// self.done;
+		// self.prerender;
+		// self.destroy;
+		// self.state;
+		// self.validate;
 
 		self.getter = function(value, realtime, nobind) {
 
@@ -6227,6 +6237,12 @@
 		var n = SCOPENAME;
 		var prev = self.element;
 		var scope = prev.attrd(n);
+
+		if (!scope) {
+			n = PLUGINNAME;
+			scope = prev.attrd(n);
+		}
+
 		var data = prev[0].$scopedata;
 
 		prev.rattrd(ATTRDATA, '-', T_, T_COM);
@@ -6241,12 +6257,18 @@
 
 		self.element = $(el);
 
+		if (scope)
+			self.element.attrd(n, scope);
+
 		self.dom = self.element[0];
 		self.dom.$com = self;
 
 		if (data) {
 			self.dom.$scopedata = data;
 			data.element = self.element;
+			var ctx = PLUGINS[data.path];
+			if (ctx)
+				ctx.element = self.element;
 		}
 
 		if (!DEF.inspectable) {
@@ -7836,6 +7858,7 @@
 				tmp = current_scope;
 				current_scope = plugin_name;
 				CL(cl, function() {
+					ctrl.caller = tmp ? W.PLUGINS[tmp] : null;
 					ctrl[plugin_method].apply(ctx === W ? ctrl : ctx, arg);
 					if (DEF.monitor) {
 						monitor_method('exec');
@@ -12143,7 +12166,6 @@
 
 	function Plugin(name, fn, init, done) {
 
-		// (/\W/).test(name) && warn('Plugin name must contain A-Z chars only.');
 		W.PLUGINS[name] && W.PLUGINS[name].$remove(true);
 		var t = this;
 		t.element = $(current_element || D.body);
