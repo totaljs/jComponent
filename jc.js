@@ -488,7 +488,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.063;
+	M.version = 19.064;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5416,7 +5416,6 @@
 		for (var k in R) {
 			var a = R[k];
 			if (!inDOM(a.element[0]) || !a.element[0].innerHTML) {
-				console.log('REMOVE', k, a.element[0]);
 				a.$remove();
 				delete R[k];
 				DEF.monitor && monitor('plugins', 2);
