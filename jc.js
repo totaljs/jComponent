@@ -489,7 +489,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.065;
+	M.version = 19.066;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7873,6 +7873,7 @@
 						monitor_method('plugins');
 					}
 
+					current_scope = tmp;
 					ok = 1;
 
 				});
