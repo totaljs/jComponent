@@ -11,7 +11,7 @@
 	var REGSEARCH = /[^a-zA-Zá-žÁ-Žа-яА-Я\d\s:]/g;
 	var REGFNPLUGIN = /[a-z0-9_-]+\/[a-z0-9_]+\(|(^|(?=[^a-z0-9]))@[a-z0-9-_]+\./i;
 	var REGMETA = /_{2,}/;
-	var REGAJAXFLAGS = /\s(repeat|cancel|urlencoded|json|noencrypt|nodecrypt|nocsrf|#[a-z0-9_-]+|@[a-z0-9_-]+)/gi;
+	var REGAJAXFLAGS = /\s(repeat|cancel|urlencoded|json|noencrypt|nodecrypt|nocsrf|error|#[a-z0-9_-]+|@[a-z0-9_-]+)/gi;
 	var REGBINDERCOMPARE = /^[^a-z0-9.]/;
 	var REGWILDCARD = /\.\*/;
 	var REGISARR = /\[\d+\]$/;
@@ -935,21 +935,18 @@
 		var wraperror = false;
 
 		url = url.replace(REGAJAXFLAGS, function(text) {
-
 			var c = text.charAt(1);
 			if (c === '@') {
-				tmp = text.substring(2);
-				if (tmp == 'error')
-					wraperror = true;
-				else
-					customflags.push(tmp);
+				customflags.push(text.substring(2));
 			} if (c === '#') {
 				if (!cl)
 					cl = [];
 				cl.push(text.substring(2));
 			} else {
 				c = text.substring(1, 4).toLowerCase();
-				if (c === 'nod')
+				if (c === 'err')
+					wraperror = true;
+				else if (c === 'nod')
 					nodecrypt = true;
 				else if (c === 'noc')
 					nocsrf = true;
@@ -2223,20 +2220,18 @@
 		url = url.replace(REGAJAXFLAGS, function(text) {
 			var c = text.charAt(1);
 			var l = c.toLowerCase();
-			if (c === '#') {
+			if (c === '#')
 				reqid = text.substring(2);
-			} if (c === '@') {
-				tmp = text.substring(2);
-				if (tmp === 'error')
-					wraperror = true;
-				else
-					customflags.push(tmp);
-			} else if (l === 'r')
+			else if (c === '@')
+				customflags.push(text.substring(2));
+			else if (l === 'r')
 				repeat = true;
 			else if (l === 'u')
 				urlencoded = true;
 			else if (l === 'j')
 				json = true;
+			else if (l === 'e') // error
+				wraperror = true;
 			else if (l === 'n') {
 				c = text.substring(1, 4).toLowerCase();
 				if (c === 'noc')
