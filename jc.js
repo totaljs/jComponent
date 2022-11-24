@@ -370,6 +370,7 @@
 	var current_element = null;
 	var current_com = null;
 	var current_scope = null;
+	var current_caller = null;
 
 	W.MAIN = W.M = M;
 	W.TEMP = {};
@@ -488,7 +489,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.064;
+	M.version = 19.065;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3021,6 +3022,7 @@
 		}
 
 		var newpath = meta.pathmaker ? pathmaker(meta.path) : meta.path;
+
 		if (!newpath)
 			return;
 
@@ -3030,6 +3032,7 @@
 			type = 1;
 
 		CL(meta.cl, function() {
+
 			set(newpath, value, null, type);
 
 			if (isupdate)
@@ -4368,8 +4371,7 @@
 				if (tmp[1]) {
 					plugin = pluginscope[tmp[1]];
 					if (plugin) {
-						current_element = el;
-						W.PLUGINS[scope.path] = scope.plugin = new Plugin(path, plugin.fn);
+						W.PLUGINS[scope.path] = scope.plugin = new Plugin(path, plugin.fn, 0, 0, current_caller && PLUGINS[current_caller]);
 						scope.plugin.scopedata = scope;
 					} else {
 						WARN('Plugin "? {0}" not found'.format(tmp[1]));
@@ -7832,10 +7834,10 @@
 
 		events.exec && EMIT('exec', path, arg[0], arg[1], arg[2], arg[3]);
 
+		var plugin_method = null;
+		var plugin_name = null;
+		var index = null;
 		var ok = 0;
-		var index;
-		var plugin_name;
-		var plugin_method;
 
 		if (c === 64) {
 			index = path.indexOf('.');
@@ -7854,18 +7856,27 @@
 		if (plugin_name) {
 			var ctrl = W.PLUGINS[plugin_name];
 			if (ctrl && typeof(ctrl[plugin_method]) === TYPE_FN) {
-				tmp = current_scope;
+				current_caller = tmp = current_scope;
 				current_scope = plugin_name;
+
 				CL(cl, function() {
-					ctrl.caller = tmp ? W.PLUGINS[tmp] : null;
+
+					var caller = current_caller && W.PLUGINS[current_caller];
+					if (caller && caller !== ctrl)
+						ctrl.caller = caller;
+
+					current_caller = plugin_name;
 					ctrl[plugin_method].apply(ctx === W ? ctrl : ctx, arg);
+
 					if (DEF.monitor) {
 						monitor_method('exec');
 						monitor_method('plugins');
 					}
-					current_scope = tmp;
+
 					ok = 1;
+
 				});
+
 			} else if (plugin_name) {
 				tmp = pluginableplugins[plugin_name];
 				if (tmp) {
@@ -12138,7 +12149,6 @@
 		var a = current_owner;
 		current_owner = t.id;
 		delete t.pending;
-
 		current_scope = t.name;
 		fn.call(t, t);
 
@@ -12163,13 +12173,15 @@
 		current_owner = a;
 	}
 
-	function Plugin(name, fn, init, done) {
+	function Plugin(name, fn, init, done, caller) {
 
 		W.PLUGINS[name] && W.PLUGINS[name].$remove(true);
+
 		var t = this;
 		t.element = $(current_element || D.body);
 		t.id = 'plug' + name;
 		t.name = name;
+		t.caller = caller;
 
 		var ext = {
 			get() {
@@ -12350,7 +12362,7 @@
 
 	PP.scope = function(path) {
 		var self = this;
-		current_scope = path === null ? null : (path || self.name);
+		current_caller = current_scope = path === null ? null : (path || self.name);
 		return self;
 	};
 
@@ -12419,7 +12431,7 @@
 
 			if (fn) {
 				current_scope = name;
-				fn = new Plugin(name, fn, init, done);
+				fn = new Plugin(name, fn, init, done, current_caller && PLUGINS[current_caller]);
 			}
 
 			if (!init) {
