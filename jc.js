@@ -489,7 +489,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.066;
+	M.version = 19.067;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -931,12 +931,18 @@
 		var nocsrf = false;
 		var customflags = [];
 		var cl = null;
+		var tmp = null;
+		var wraperror = false;
 
 		url = url.replace(REGAJAXFLAGS, function(text) {
 
 			var c = text.charAt(1);
 			if (c === '@') {
-				customflags.push(text.substring(2));
+				tmp = text.substring(2);
+				if (tmp == 'error')
+					wraperror = true;
+				else
+					customflags.push(tmp);
 			} if (c === '#') {
 				if (!cl)
 					cl = [];
@@ -951,9 +957,10 @@
 			return '';
 		});
 
+		tmp = null;
+
 		var method = 'POST';
 		var index = url.indexOf(' ');
-		var tmp = null;
 
 		if (index !== -1)
 			method = url.substring(0, index).toUpperCase();
@@ -997,6 +1004,9 @@
 		output.progress = progress;
 		output.decryption = !nodecrypt;
 		output.credentials = isCredentials;
+
+		if (callback && wraperror)
+			callback = ERROR(true, callback);
 
 		if (DEF.csrf && !nocsrf) {
 			headers[T_CSRF] = DEF.csrf;
@@ -2208,15 +2218,20 @@
 		var nodecrypt = false;
 		var nocsrf = false;
 		var customflags = [];
+		var wraperror = false;
 
 		url = url.replace(REGAJAXFLAGS, function(text) {
 			var c = text.charAt(1);
 			var l = c.toLowerCase();
 			if (c === '#') {
 				reqid = text.substring(2);
-			} if (c === '@')
-				customflags.push(text.substring(2));
-			else if (l === 'r')
+			} if (c === '@') {
+				tmp = text.substring(2);
+				if (tmp === 'error')
+					wraperror = true;
+				else
+					customflags.push(tmp);
+			} else if (l === 'r')
 				repeat = true;
 			else if (l === 'u')
 				urlencoded = true;
@@ -2235,6 +2250,8 @@
 			return '';
 		});
 
+		if (callback && wraperror)
+			callback = ERROR(true, callback);
 
 		if (repeat)
 			arg = [rawurl, data, callback, timeout];
@@ -5417,7 +5434,7 @@
 
 		for (var k in R) {
 			var a = R[k];
-			if (!inDOM(a.element[0]) || !a.element[0].innerHTML) {
+			if (!a.element || !inDOM(a.element[0]) || !a.element[0].innerHTML) {
 				a.$remove();
 				delete R[k];
 				DEF.monitor && monitor('plugins', 2);
@@ -12238,6 +12255,10 @@
 		W[type](name, data, callback);
 		return plugin;
 	}
+
+	PP.upload = function(name, data, callback) {
+		return ppcall(this, 'UPLOAD', name, data, callback);
+	};
 
 	PP.tapi = function(name, data, callback) {
 		return ppcall(this, 'TAPI', name, data, callback);
