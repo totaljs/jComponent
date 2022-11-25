@@ -489,7 +489,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.067;
+	M.version = 19.068;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -13794,6 +13794,37 @@
 			type = '';
 		var o = arr.join('');
 		return type + o + 'x' + HASH(o + (key || '') + type).toString(32);
+	};
+
+	W.UNAUTHORIZED = function() {
+
+		var user = W.user;
+		if (user) {
+
+			if (user.sa || user.su)
+				return false;
+
+			var compare = user.permissions || user.roles;
+			var args = arguments;
+
+			if (compare) {
+				if (compare instanceof Array) {
+					for (var i = 0; i < compare.length; i++) {
+						for (var j = 0; j < args.length; j++) {
+							if (args[j] === compare[i])
+								return false;
+						}
+					}
+				} else {
+					for (var j = 0; j < args.length; j++) {
+						if (compare[args[j]])
+							return false;
+					}
+				}
+			}
+		}
+
+		return true;
 	};
 
 })();
