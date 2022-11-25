@@ -12386,7 +12386,8 @@
 	PP.makepath = function(path) {
 		var self = this;
 		self.scope();
-		return self.name + (path ? ('.' + path).replace(/\?(\.)?/, '') : '');
+		var c = path ? path.charAt(0) : '';
+		return (c === '%' || c === '#') ? path : (self.name + (path ? ('.' + path).replace(/\?(\.)?/, '') : ''));
 	};
 
 	PP.remove = PP.$remove = function() {
