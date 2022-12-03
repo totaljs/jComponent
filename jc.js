@@ -3100,7 +3100,7 @@
 						try {
 							com.setterX(get(com.path), newpath, type);
 						} catch (e) {
-							throwerror(er);
+							throwerror(e);
 						}
 					}
 				}
