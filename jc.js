@@ -489,7 +489,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.068;
+	M.version = 19.071;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1002,8 +1002,14 @@
 		output.decryption = !nodecrypt;
 		output.credentials = isCredentials;
 
-		if (callback && wraperror)
+		if (callback && wraperror) {
+			/*
+			if (typeof(callback) === 'string') {
+				var target = callback;
+				callback = response => remap(target, response);
+			}*/
 			callback = ERROR(true, callback);
+		}
 
 		if (DEF.csrf && !nocsrf) {
 			headers[T_CSRF] = DEF.csrf;
@@ -2245,8 +2251,14 @@
 			return '';
 		});
 
-		if (callback && wraperror)
+		if (callback && wraperror) {
+			/*
+			if (typeof(callback) === 'string') {
+				var target = callback;
+				callback = response => remap(target, response);
+			}*/
 			callback = ERROR(true, callback);
+		}
 
 		if (repeat)
 			arg = [rawurl, data, callback, timeout];
@@ -2282,7 +2294,7 @@
 		pendingrequest++;
 
 		if (customflags.length)
-			emitflags(customflags, url);
+			emitflags(customflags, url, data);
 
 		var $call = function() {
 
@@ -2772,6 +2784,7 @@
 			var value = get(newpath);
 			!wasset && set(newpath, value, true);
 			DEF.monitor && monitor_method('set');
+
 			meta.flags2 && emitflags(meta, newpath, value, type);
 
 			var state = [];
@@ -3181,7 +3194,7 @@
 
 	function compilepath(path) {
 
-		var key = '°' + path;
+		var key = '__' + path;
 		var pv = paths[key];
 		if (pv)
 			return pv;
@@ -7735,11 +7748,16 @@
 		}, 200);
 	}
 
+	function safeget(path) {
+		var index = path.indexOf(' ');
+		return index === -1 ? path : path.substring(0, index);
+	}
+
 	W.SEEX = function(path, a, b, c, d) {
 		if (typeof(path) === TYPE_FN) {
 			path(a, b, c, d);
 		} else {
-			if (path.indexOf('/') !== -1 || typeof(GET(path)) === TYPE_FN)
+			if (path.indexOf('/') !== -1 || typeof(safeget(path)) === TYPE_FN)
 				EXEC(path, a, b, c, d);
 			else
 				SET(path, a);
@@ -12300,6 +12318,12 @@
 		return t;
 	};
 
+	PP.nul = function(path, type) {
+		var t = this;
+		SET(t.makepath(path), null, type);
+		return t;
+	};
+
 	PP.push = function(path, value, type) {
 		var t = this;
 
@@ -12384,9 +12408,16 @@
 	};
 
 	PP.makepath = function(path) {
+
 		var self = this;
 		self.scope();
+
 		var c = path ? path.charAt(0) : '';
+
+		// Does it contain flags only?
+		if (c === '@')
+			return self.name + ' ' + path;
+
 		return (c === '%' || c === '#') ? path : (self.name + (path ? ('.' + path).replace(/\?(\.)?/, '') : ''));
 	};
 
