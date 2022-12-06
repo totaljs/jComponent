@@ -29,7 +29,6 @@
 	var ATTRJCBIND = 'data-jc-bind';
 	var ATTRDATA = 'jc';
 	var ATTRDEL = T_DATA + 'jc-removed';
-	var SELINPUT = 'input,textarea,select';
 	var DIACRITICS = { 225:'a',228:'a',269:'c',271:'d',233:'e',283:'e',357:'t',382:'z',250:'u',367:'u',252:'u',369:'u',237:'i',239:'i',244:'o',243:'o',246:'o',353:'s',318:'l',314:'l',253:'y',255:'y',263:'c',345:'r',341:'r',328:'n',337:'o' };
 	var ACTRLS = { INPUT: true, TEXTAREA: true, SELECT: true };
 	var DEFMODEL = { value: null };
@@ -489,7 +488,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.071;
+	M.version = 19.073;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1372,177 +1371,61 @@
 		return true;
 	};
 
-	W.CHANGED = function(path) {
-		path = pathmaker(path);
-		return !com_dirty(path);
-	};
-
 	W.CHANGE = function(path, value) {
 		if (value == null)
 			value = true;
-		path = pathmaker(path);
-		return !com_dirty(path, !value);
+		var arr = findcomponents(pathmaker(path), EMPTYOBJECT);
+		for (var com of arr)
+			com.$state.touched = value === undefined || value === true;
+		state(arr, 1, 2);
 	};
 
-	function com_valid(path, value, onlyComponent) {
+	// DEF.monitor && monitor_method('validation');
+	// state(arr, 1, 1);
 
-		var isExcept = value instanceof Array;
-		var key = T_VALID + path + (isExcept ? '>' + value.join('|') : '');
-		var except = null;
+	function findcomponents(path, flags) {
 
-		if (isExcept) {
-			except = value;
-			value = undefined;
+		if (typeof(flags) === TYPE_S) {
+			var tmp = {};
+			var arr = flags.split(',');
+			for (var m of arr)
+				tmp[m.trim()] = 1;
+			flags = tmp;
+		} else if (flags instanceof Array) {
+			var tmp = {};
+			for (var m of flags) {
+				if (m.charAt(0) === '@')
+					m = m.substring(1);
+				tmp[m] = 1;
+			}
+			flags = tmp;
 		}
 
-		DEF.monitor && monitor_method('validation');
-
-		if (typeof(value) !== TYPE_B && cache[key] !== undefined)
-			return cache[key];
-
-		var flags = null;
-
-		if (isExcept) {
-			var is = false;
-			flags = {};
-			except = except.remove(function(item) {
-				if (item.charAt(0) === '@') {
-					flags[item.substring(1)] = true;
-					is = true;
-					return true;
-				}
-				return false;
-			});
-			!is && (flags = null);
-			isExcept = except.length > 0;
-		}
-
-		var valid = true;
-		var arr = value !== undefined ? [] : null;
+		// @flags {Object} -- "visible", "disabled", "enabled", "hidden", "readonly"
 
 		var index = path.lastIndexOf('.*');
-		var wildcard = index !== -1;
 		if (index !== -1)
 			path = path.substring(0, index);
 
 		path = pathmaker(path, 0, 1);
 
+		var output = [];
 		var all = M.components;
+
 		for (var i = 0; i < all.length; i++) {
 			var com = all[i];
 
-			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path) || (isExcept && com.$except(except)))
+			//  || (isExcept && com.$except(except))
+			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path))
 				continue;
 
-			if (flags && ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':' + T_DISABLED)) || (flags.disabled && com.find(SELINPUT).is(':enabled'))))
+			if (flags && ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && !com.config.disabled) || (flags.disabled && com.config.disabled)))
 				continue;
 
-			if (com.$valid_disabled) {
-				arr && com.state && arr.push(com);
-				continue;
-			}
-
-			if (value === undefined) {
-				if (com.$valid === false)
-					valid = false;
-				continue;
-			}
-
-			com.state && arr.push(com);
-
-			if (!onlyComponent) {
-				if (wildcard || com.path === path)
-					com.$valid = value;
-			} else if (onlyComponent._id === com._id)
-				com.$valid = value;
-			if (com.$valid === false)
-				valid = false;
+			output.push(com);
 		}
 
-		clear(T_VALID);
-		cache[key] = valid;
-		state(arr, 1, 1);
-		return valid;
-	}
-
-	function com_dirty(path, value, onlyComponent, skipEmitState) {
-
-		var isExcept = value instanceof Array;
-		var key = T_DIRTY + path + (isExcept ? '>' + value.join('|') : '');
-		var except = null;
-
-		if (isExcept) {
-			except = value;
-			value = undefined;
-		}
-
-		if (typeof(value) !== TYPE_B && cache[key] !== undefined)
-			return cache[key];
-
-		var dirty = true;
-		var arr = value !== undefined ? [] : null;
-		var flags = null;
-
-		if (isExcept) {
-			var is = false;
-			flags = {};
-			except = except.remove(function(item) {
-				if (item.charAt(0) === '@') {
-					flags[item.substring(1)] = true;
-					is = true;
-					return true;
-				}
-				return false;
-			});
-			!is && (flags = null);
-			isExcept = except.length > 0;
-		}
-
-		var index = path.lastIndexOf('.*');
-		var wildcard = index !== -1;
-		if (index !== -1)
-			path = path.substring(0, index);
-
-		path = pathmaker(path, 0, 1);
-
-		var all = M.components;
-		for (var i = 0; i < all.length; i++) {
-			var com = all[i];
-
-			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path) || (isExcept && com.$except(except)))
-				continue;
-
-			if (flags && ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':' + T_DISABLED)) || (flags.disabled && com.find(SELINPUT).is(':enabled'))))
-				continue;
-
-			if (com.$dirty_disabled) {
-				arr && com.state && arr.push(com);
-				continue;
-			}
-
-			if (value === undefined) {
-				if (com.$dirty === false)
-					dirty = false;
-				continue;
-			}
-
-			com.state && arr.push(com);
-
-			if (!onlyComponent) {
-				if (wildcard || com.path === path)
-					com.$dirty = value;
-			} else if (onlyComponent._id === com._id)
-				com.$dirty = value;
-			if (com.$dirty === false)
-				dirty = false;
-		}
-
-		clear(T_DIRTY);
-		cache[key] = dirty;
-
-		// For double hitting component.state() --> look into COM.invalid()
-		!skipEmitState && state(arr, 1, 2);
-		return dirty;
+		return output;
 	}
 
 	W.IMPORTCACHE = function(url, expire, target, callback, insert, preparator) {
@@ -2674,75 +2557,73 @@
 
 	};
 
-	W.ERRORS = function(path, except, highlight) {
+	W.ERRORS = function(path, flags, highlight) {
 
 		if (path instanceof Array) {
-			except = path;
+			flags = path;
 			path = undefined;
 		}
 
-		if (except === true) {
-			except = highlight instanceof Array ? highlight : null;
+		if (flags === true) {
+			flags = highlight instanceof Array ? highlight : null;
 			highlight = true;
 		}
 
 		path = path.replace('.*', '');
 
-		var isExcept = except instanceof Array;
-		var flags = null;
+		var arr = findcomponents(path, flags);
+		var statelist = [];
 
-		if (isExcept) {
-			var is = false;
-			flags = {};
-			except = except.remove(function(item) {
-				if (item.charAt(0) === '@') {
-					flags[item.substring(1)] = true;
-					is = true;
-					return true;
-				}
-				return false;
-			});
-			!is && (flags = null);
-			isExcept = except.length > 0;
+		for (var com of arr) {
+			if (com.$state.touched && com.$state.invalid)
+				statelist.push(com);
 		}
 
-		var arr = [];
-
-		M.each(function(com) {
-
-			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path) || (isExcept && com.$except(except)))
-				return;
-
-			if (flags && ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':' + T_DISABLED)) || (flags.disabled && com.find(SELINPUT).is(':enabled'))))
-				return;
-
-			if (!com.$valid)
-				arr.push(com);
-
-		}, pathmaker(path));
-
-		highlight && state(arr, 1, 1);
-		return arr;
+		highlight && state(statelist, 1, 1);
+		return statelist;
 	};
 
-	W.CAN = function(path, except) {
-		path = pathmaker(path);
-		return !com_dirty(path, except) && com_valid(path, except);
+	W.CAN = function(path, flags) {
+
+		var arr = findcomponents(pathmaker(path), flags);
+
+		var touched = false;
+		var invalid = false;
+
+		for (var com of arr) {
+
+			if (com.$state.touched)
+				touched = true;
+
+			if (com.$state.invalid)
+				invalid = true;
+		}
+
+		return invalid == false && touched === true;
 	};
 
-	W.VALID = function(path, except) {
-		return com_valid(pathmaker(path), except);
+	W.VALID = function(path, flags) {
+		var arr = findcomponents(pathmaker(path), flags);
+		for (var com of arr) {
+			if (com.$state.invalid)
+				return false;
+		}
+		return true;
 	};
 
-	W.DISABLED = function(path, except) {
-		return !CAN(path, except);
+	W.DISABLED = function(path, flags) {
+		return !CAN(path, flags);
 	};
 
-	W.INVALID = function(path, onlyComponent) {
+	W.INVALID = function(path, flags) {
 		path = pathmaker(path);
 		if (path) {
-			com_dirty(path, false, onlyComponent, true);
-			com_valid(path, false, onlyComponent);
+			var arr = findcomponents(path, flags);
+			for (var com of arr) {
+				com.$state.touched = true;
+				com.$state.invalid = true;
+			}
+			state(com, 1, 7);
 		}
 	};
 
@@ -2787,7 +2668,7 @@
 
 			meta.flags2 && emitflags(meta, newpath, value, type);
 
-			var state = [];
+			var statelist = [];
 
 			if (meta.flags.type != null)
 				type = meta.flags.type;
@@ -2795,16 +2676,11 @@
 			if (type === undefined)
 				type = 1; // manually
 
-			var all = M.components;
+			var arr = findcomponents(newpath);
 
-			for (var i = 0; i < all.length; i++) {
-				var com = all[i];
-
-				if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(newpath))
-					continue;
+			for (var com of arr) {
 
 				var result = com.get();
-
 				if (meta.flags.default && com.$default && result === undefined) {
 					result = com.$default();
 					com.set(result, 3);
@@ -2817,36 +2693,23 @@
 					}
 				}
 
+				if (reset === true || meta.flags.reset || meta.flags.default) {
+					com.$state.modified = false;
+					com.$state.touched = false;
+				}
+
+				if (meta.flags.change)
+					com.$state.touched = true;
+
+				com.$state.invalid = com.validate ? (!com.validate(result)) : false;
+
 				if (!com.$ready)
 					com.$ready = true;
 
-				if (reset === true || meta.flags.reset || meta.flags.default) {
-
-					if (!com.$dirty_disabled)
-						com.$dirty = true;
-
-					if (!com.$valid_disabled) {
-						com.$valid = true;
-						com.$validate = false;
-						if (com.validate)
-							com.$valid = com.validate(result);
-					}
-
-					findcontrol2(com);
-
-				} else if (com.validate && !com.$valid_disabled)
-					com.valid(com.validate(result), true);
-
-				com.state && state.push(com);
+				statelist.push(com);
 			}
 
-			if (reset || meta.flags.reset || meta.flags.default)
-				clear(T_DIRTY, T_VALID);
-
-			for (var i = 0; i < state.length; i++)
-				state[i].stateX(1, 4);
-
-			meta.flags.change && com_dirty(newpath + '.*', false);
+			state(statelist, 1, 4);
 
 			if (!meta.flags.nowatch)
 				emitwatch(newpath, get(newpath), type);
@@ -2886,7 +2749,6 @@
 						throwerror(e);
 					}
 				}
-
 				com.state && com.stateX(1, 6);
 			}
 		}
@@ -2900,6 +2762,7 @@
 		var meta = compilepath(path);
 		var newpath = meta.pathmaker ? pathmaker(meta.path) : meta.path;
 		if (newpath) {
+
 			CL(meta.cl, function() {
 				var keys = OK(value);
 				var reset = type === true || meta.flags.reset;
@@ -2914,17 +2777,16 @@
 				DEF.monitor && monitor_method('set');
 				meta.flags2 && emitflags(meta, newpath, value, type);
 
-				var all = M.components;
-				var state = [];
+				var statelist = [];
+				var arr = findcomponents(newpath);
 
-				for (var i = 0; i < all.length; i++) {
-					var com = all[i];
+				for (var com of arr) {
 
 					for (var j = 0; j < keys.length; j++) {
 
 						var p = newpath + '.' + keys[j];
 
-						if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(p))
+						if (!com.$compare(p))
 							continue;
 
 						var result = com.get();
@@ -2945,37 +2807,23 @@
 							com.$ready = true;
 
 						if (reset === true || meta.flags.reset || meta.flags.default) {
+							com.$state.modified = false;
+							com.$state.touched = false;
+						}
 
-							if (!com.$dirty_disabled)
-								com.$dirty = true;
+						if (meta.flags.change)
+							com.$state.touched = true;
 
-							if (!com.$valid_disabled) {
-								com.$valid = true;
-								com.$validate = false;
-								if (com.validate)
-									com.$valid = com.validate(result);
-							}
-
-							findcontrol2(com);
-
-						} else if (com.validate && !com.$valid_disabled)
-							com.valid(com.validate(result), true);
-
-						com.state && state.push(com);
+						com.$state.invalid = com.validate ? (!com.validate(result)) : false;
+						com.state && statelist.push(com);
 					}
 				}
 
-				if (reset || meta.flags.reset || meta.flags.default)
-					clear(T_DIRTY, T_VALID);
-
-				for (var i = 0; i < state.length; i++)
-					state[i].stateX(1, 4);
-
-				meta.flags.change && com_dirty(newpath + '.*', false);
+				state(statelist, 1, 4);
 
 				if (!meta.flags.nowatch) {
-					for (var j = 0; j < keys.length; j++) {
-						var p = newpath + '.' + keys[j];
+					for (key of keys) {
+						var p = newpath + '.' + key;
 						emitwatch(p, get(p), type);
 					}
 				}
@@ -3047,7 +2895,6 @@
 		}
 
 		var newpath = meta.pathmaker ? pathmaker(meta.path) : meta.path;
-
 		if (!newpath)
 			return;
 
@@ -3066,7 +2913,7 @@
 			DEF.monitor && monitor_method('set');
 
 			var result = get(newpath);
-			var state = [];
+			var statelist = [];
 
 			meta.flags2 && emitflags(meta, newpath, result, type);
 
@@ -3076,14 +2923,8 @@
 			if (meta.flags.type != null)
 				type = meta.flags.type;
 
-			var all = M.components;
-
-			for (var i = 0; i < all.length; i++) {
-
-				var com = all[i];
-
-				if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(newpath))
-					continue;
+			var arr = findcomponents(newpath);
+			for (var com of arr) {
 
 				if (meta.flags.default && com.$default)
 					com.set(com.$default(), 3);
@@ -3108,32 +2949,22 @@
 				if (!com.$ready)
 					com.$ready = true;
 
+				// @TODO: Why type !== 3?
 				if (type !== 3 && com.state)
-					state.push(com);
+					statelist.push(com);
 
 				if (reset || meta.flags.reset || meta.flags.default) {
-					if (!com.$dirty_disabled)
-						com.$dirty = true;
-					if (!com.$valid_disabled) {
-						com.$valid = true;
-						com.$validate = false;
-						if (com.validate)
-							com.$valid = com.validate(result);
-					}
+					com.$state.touched = false;
+					com.$state.modified = false;
+				}
 
-					findcontrol2(com);
+				if (meta.flags.change)
+					com.$state.touched = true;
 
-				} else if (com.validate && !com.$valid_disabled)
-					com.valid(com.validate(result), true);
+				com.$state.invalid = com.validate ? (!com.validate(result)) : false;
 			}
 
-			if (reset || meta.flags.reset || meta.flags.default)
-				clear(T_DIRTY, T_VALID);
-
-			for (var i = 0; i < state.length; i++)
-				state[i].stateX(type, 5);
-
-			meta.flags.change && com_dirty(newpath + '.*', false);
+			state(statelist, type, 5);
 
 			if (!meta.flags.nowatch)
 				emitwatch(newpath, result, type);
@@ -3454,7 +3285,7 @@
 		return model;
 	}
 
-	W.VALIDATE = function(path, except) {
+	W.VALIDATE = function(path, flags) {
 
 		var arr = [];
 		var valid = true;
@@ -3462,71 +3293,28 @@
 		var meta = compilepath(path.replace(REGWILDCARD, ''));
 		var newpath = meta.pathmaker ? pathmaker(meta.path) : meta.path;
 
-		var flags = meta.flags;
+		var arr = findcomponents(newpath, flags);
+		var statelist = [];
+		var valid = true;
 
-		if (except) {
-			var is = false;
-			flags = {};
-			except = except.remove(function(item) {
-				if (item.charAt(0) === '@') {
-					flags[item.substring(1)] = true;
-					is = true;
-					return true;
-				}
-				return false;
-			});
-			!is && (flags = null);
-			!except.length && (except = null);
-		}
-
-		var all = M.components;
-		for (var i = 0; i < all.length; i++) {
-			var com = all[i];
-
-			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(newpath))
-				continue;
-
-			if ((flags.visible && !com.visible()) || (flags.hidden && !com.hidden()) || (flags.enabled && com.find(SELINPUT).is(':' + T_DISABLED)) || (flags.disabled && com.find(SELINPUT).is(':enabled')))
-				continue;
-
-			com.state && arr.push(com);
-
-			if (com.$valid_disabled)
-				continue;
-
-			com.$validate = true;
+		for (var com of arr) {
 			if (com.validate) {
-				com.$valid = com.validate(com.get());
-				if (!com.$valid)
+				com.$state.invalid = !com.validate(com.get());
+				if (com.$state.invalid)
 					valid = false;
 			}
+			statelist.push(com);
 		}
 
-		clear(T_VALID);
-		state(arr, 1, 1);
+		state(statelist, 1, 1);
+		meta.flags && meta.flags.flags(newpath, GET(newpath));
 		return valid;
 	};
 
 	function com_validate2(com) {
-
-		var valid = true;
-
-		if (com.$valid_disabled)
-			return valid;
-
-		var arr = [];
-		com.state && arr.push(com);
-		com.$validate = true;
-
-		if (com.validate) {
-			com.$valid = com.validate(com.get());
-			if (!com.$valid)
-				valid = false;
-		}
-
-		clear(T_VALID);
-		state(arr, 1, 1);
-		return valid;
+		com.$state.invalid = com.validate ? (!com.validate(com.get())) : false;
+		state([com], 1, 1);
+		return !com.$state.invalid;
 	}
 
 	M.default = function(path, timeout, onlyComponent, reset, scope) {
@@ -3581,22 +3369,13 @@
 			if (!reset)
 				return;
 
-			findcontrol2(com);
-
-			if (!com.$dirty_disabled)
-				com.$dirty = true;
-			if (!com.$valid_disabled) {
-				com.$valid = true;
-				com.$validate = false;
-				if (com.validate)
-					com.$valid = com.validate(com.get());
-			}
+			com.$state.touched = false;
+			com.$state.modified = false;
+			com.$state.invalid = com.validate ? (!com.validate(com.get())) : false;
 		}
 
-		if (reset) {
-			clear(T_VALID, T_DIRTY);
+		if (reset)
 			state(arr, 3, 3);
-		}
 
 		current_scope = curr_scope;
 	};
@@ -3617,39 +3396,30 @@
 		var newpath = (meta.pathmaker ? pathmaker(meta.path) : meta.path);
 
 		var arr = [];
-		var all = M.components;
+		var components = findcomponents(newpath);
 
 		DEF.monitor && monitor_method('reset');
 
-		for (var i = 0; i < all.length; i++) {
-			var com = all[i];
-			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(newpath))
-				continue;
+		for (var com of components) {
 
 			com.state && arr.push(com);
 
 			if (onlyComponent && onlyComponent._id !== com._id)
 				continue;
 
-			findcontrol2(com);
-
 			if (meta.flags.default && com.$default)
 				com.set(com.$default(), 3);
 
-			if (!com.$dirty_disabled)
-				com.$dirty = true;
+			com.$state.touched = false;
+			com.$state.modified = false;
 
-			if (!com.$valid_disabled) {
-				com.$valid = true;
-				com.$validate = false;
-				if (com.validate)
-					com.$valid = com.validate(com.get());
-			}
+			if (com.validate)
+				com.$state.invalid = !com.validate(com.get());
+			else
+				com.$state.invalid = false;
 		}
 
-		clear(T_VALID, T_DIRTY);
 		state(arr, 1, 3);
-
 		current_scope = tmp;
 	};
 
@@ -3836,22 +3606,6 @@
 		}
 
 		return arr;
-	}
-
-	function findcontrol2(com, input) {
-		if (com.$inputcontrol) {
-			if (com.$inputcontrol % 2 !== 0) {
-				com.$inputcontrol++;
-				return;
-			}
-		}
-		var target = input ? input : com.element;
-		findcontrol(target[0], function(el) {
-			if (!el.$com || el.$com !== com) {
-				el.$com = com;
-				com.$inputcontrol = 1;
-			}
-		});
 	}
 
 	function findcontrol(container, onElement, level) {
@@ -4693,19 +4447,8 @@
 	}
 
 	function init(el, obj) {
-
 		var dom = el[0];
 		var type = dom.tagName;
-		var collection;
-
-		// autobind
-		if (ACTRLS[type]) {
-			obj.$input = true;
-			collection = obj.element;
-		} else
-			collection = el;
-
-		findcontrol2(obj, collection);
 		obj.released && obj.released(HIDDEN(dom));
 		DEF.monitor && monitor_method('components', 1);
 		M.components.push(obj);
@@ -4785,8 +4528,8 @@
 		} else
 			obj.$binded = true;
 
-		if (obj.validate && !obj.$valid_disabled)
-			obj.$valid = obj.validate(obj.get(), true);
+		if (obj.validate)
+			obj.$state.invalid = !obj.validate(obj.get(), true);
 
 		obj.done && setTimeout(obj.done, 20);
 		obj.state && obj.stateX(0, 3);
@@ -4949,7 +4692,7 @@
 						if (val) {
 							var tmp = com.parser(val);
 							if (tmp) {
-								com.dirty(false, true);
+								com.$state.touched = true;
 								com.set(tmp, 0);
 							}
 						}
@@ -5664,20 +5407,20 @@
 	// ===============================================================
 
 	function COM(name) {
+
 		var self = this;
 		self._id = self.ID = ATTRDATA + (C.counter++);
-		self.$dirty = true;
-		self.$valid = true;
 		self.$parser = [];
 		self.$formatter = [];
 		self.$configwatcher = {};
 		self.$configchanges = {};
+		self.$state = { modified: false, touched: false, invalid: false };
 
-		// self.$validate = false;
 		// self.$skip = false;
 		// self.$ready = false;
 		// self.$initialized = false;
 		// self.$path;
+
 		self.trim = true;
 		self.$data = {};
 
@@ -5711,7 +5454,10 @@
 			else if (value !== self.get()) {
 				if (realtime)
 					self.$skip = true;
+
+				self.$state.touched = true;
 				self.set(value, 2);
+
 			} else if (realtime === 3) {
 				// A validation for same values, "realtime=3" is in "blur" event
 				// Because we need to validate the input if the user leaves from the control
@@ -5721,15 +5467,16 @@
 
 		self.stateX = function(type, what) {
 			var key = type + 'x' + what;
-			if (!self.$bindchanges || self.$state !== key) {
-				self.$state = key;
+			if (!self.$bindchanges || self.$statekey !== key) {
+				self.$statekey = key;
 				self.config.$state && EXEC.call(self, self.config.$state.SCOPE(self), type, what);
-				self.state(type, what);
+				self.state && self.state(type, what);
 				self.state2 && self.state2(type, what);
 			}
 		};
 
 		var setterXbinder = function(self) {
+
 			var cache = self.$bindcache;
 			cache.bt = 0; // reset timer id
 
@@ -5836,6 +5583,7 @@
 			}
 
 			var a = 'select-one';
+
 			value = self.formatter(value);
 
 			findcontrol(self.dom, function(t) {
@@ -5958,6 +5706,14 @@
 			output.push({ id: id, name: item[1], icon: item[2] || '' });
 		}
 		return output;
+	};
+
+	PPC.modify = function(value, type) {
+		var self = this;
+		value = self.parser(value);
+		self.$state.touched = true;
+		self.set(value, type == null ? 2 : type);
+		return self;
 	};
 
 	PPC.command = function(name, fn) {
@@ -6497,34 +6253,23 @@
 
 	PPC.readonly = function() {
 		var self = this;
-		self.noDirty();
-		self.noValid();
+		self.validate = null;
 		self.getter = null;
 		self.setter = null;
-		self.$parser = null;
-		self.$formatter = null;
 		return self;
 	};
 
-	MPC.faicon = PPC.faicon = function(value) {
+	MPC.faicon = PPC.faicon = PPC.icon = function(value) {
 		return value ? ((value.indexOf(' ') === -1 ? MD.iconprefix : '') + value) : '';
 	};
 
-	PPC.novalidate = PPC.noValid = PPC.noValidate = function(val) {
-		if (val === undefined)
-			val = true;
-		var self = this;
-		self.$valid_disabled = val;
-		self.$valid = val;
+	PPC.novalidate = PPC.noValid = PPC.noValidate = function() {
+		// @TODO: remove
 		return self;
 	};
 
-	PPC.nodirty = PPC.noDirty = function(val) {
-		if (val === undefined)
-			val = true;
-		var self = this;
-		self.$dirty_disabled = val;
-		self.$dirty = !val;
+	PPC.nodirty = PPC.noDirty = function() {
+		// @TODO: remove
 		return self;
 	};
 
@@ -7058,10 +6803,7 @@
 
 	PPC.isInvalid = function() {
 		var self = this;
-		var is = !self.$valid;
-		if (is && !self.$validate)
-			is = !self.$dirty;
-		return is;
+		return self.$state.touched && self.$state.invalid;
 	};
 
 	PPC.unwatch = function(path, fn) {
@@ -7089,28 +6831,9 @@
 		return INVALID(this.path, this);
 	};
 
-	PPC.valid = function(value, noEmit) {
-
+	PPC.change = PPC.touched = function(value) {
 		var self = this;
-
-		if (value === undefined)
-			return self.$valid;
-
-		if (self.$valid_disabled)
-			return self;
-
-		self.$valid = value;
-		self.$validate = false;
-		clear(T_VALID);
-		!noEmit && self.state && self.stateX(1, 1);
-		return self;
-	};
-
-	PPC.change = function(value) {
-		var self = this;
-		self.$dirty_disabled = false;
-		self.$dirty = true;
-		CHANGE(self.path, value === undefined ? true : value, self);
+		CHANGE(self.path, value === undefined ? true : value);
 		return self;
 	};
 
@@ -7119,20 +6842,22 @@
 		var self = this;
 
 		if (value === undefined)
-			return self.$dirty;
+			return !self.$state.touched;
 
-		if (self.$dirty_disabled)
-			return self;
+		self.$state.touched = !value;
 
-		self.$dirty = value;
-		clear(T_DIRTY);
-		!noEmit && self.state && self.stateX(2, 2);
+		if (!noEmit)
+			state([self], 2, 2);
+
 		return self;
 	};
 
 	PPC.reset = function() {
 		var self = this;
-		RESET(self.path, 0, self);
+		self.$state.modified = false;
+		self.$state.touched = false;
+		self.$state.invalid = self.validate ? (!self.validate(self.get())) : false;
+		self.stateX(1, 3);
 		return self;
 	};
 
@@ -7289,6 +7014,8 @@
 
 		var arg = arguments;
 
+		self.$state.modified = true;
+
 		// Backwards compatibility
 		if (arg.length === 3)
 			M.set(self.makepath(arg[0]), arg[1], arg[2]);
@@ -7303,6 +7030,7 @@
 	PPC.inc = function(value, type) {
 		var self = this;
 		var p = self.path || self.$jcbindset;
+		self.$state.modified = true;
 		p && M.inc(p, value, type);
 		return self;
 	};
@@ -7310,6 +7038,7 @@
 	PPC.extend = function(value, type) {
 		var self = this;
 		var p = self.path || self.$jcbindset;
+		self.$state.modified = true;
 		p && M.extend(p, value, type);
 		return self;
 	};
@@ -7317,6 +7046,7 @@
 	PPC.rewrite = function(value, type) {
 		var self = this;
 		var p = self.path || self.$jcbindset;
+		self.$state.modified = true;
 		p && REWRITE(p, value, type);
 		return self;
 	};
@@ -7324,6 +7054,7 @@
 	PPC.push = function(value, type) {
 		var self = this;
 		var p = self.path || self.$jcbindset;
+		self.$state.modified = true;
 		p && M.push(p, value, type);
 		return self;
 	};
@@ -7640,9 +7371,12 @@
 			}
 
 			if (lazycom[myselector] && lazycom[myselector].state !== 3) {
+
 				if (lazycom[myselector].state === 1) {
+
 					if (is)
 						return;
+
 					lazycom[myselector].state = 2;
 					events.lazy && EMIT('lazy', myselector, true);
 					warn('Lazy load: ' + myselector);
@@ -8297,12 +8031,13 @@
 		timeouts[path] = setTimeout(pushbind, timeout, path, value, reset, current_scope);
 	};
 
-	W.MODIFIED = function(path) {
+	W.MODIFIED = function(path, flags) {
 		var output = [];
-		M.each(function(obj) {
-			if (!obj.$dirty_disabled && obj.$dirty === false)
-				output.push(obj.path);
-		}, pathmaker(path));
+		var arr = findcomponents(path, flags);
+		for (var com of arr) {
+			if (com.$state.touched && com.$state.modified)
+				output.push(com.path);
+		}
 		return output;
 	};
 
@@ -8428,7 +8163,6 @@
 			path && set(path, get(path), true);
 		}
 	};
-
 
 	W.UPD = W.UPDATE = function(path, timeout, reset) {
 		var t = typeof(timeout);
@@ -10807,13 +10541,21 @@
 				var self = this;
 				var com = self.$com;
 
+				if (e.type === 'focusin' && !com && !self.$jccheck) {
+					// try to find
+					var parent = self;
+					var elcom = $(self).closest(ATTRCOM);
+					if (elcom)
+						self.$com = elcom[0].$com;
+				}
+
 				if (!com || com.$removed || !com.getter)
 					return;
 
 				if (e.type === 'focusin')
 					self.$jcevent = 1;
 				else if (self.$jcevent === 1) {
-					com.dirty(false, true);
+					com.$state.touched = true;
 					com.getter(self.value, 3);
 				} else if (self.$jcskip) {
 					self.$jcskip = false;
@@ -10848,13 +10590,13 @@
 					case 'SELECT':
 						var sel = self[self.selectedIndex];
 						self.$jcevent = 2;
-						com.dirty(false, true);
+						com.$state.touched = true;
 						com.getter(sel.value, false);
 						return;
 					case 'INPUT':
 						if (self.type === 'checkbox' || self.type === 'radio') {
 							self.$jcevent = 2;
-							com.dirty(false, true);
+							com.$state.touched = true;
 							com.getter(self.checked, false);
 							return;
 						}
@@ -10862,7 +10604,7 @@
 				}
 
 				if (self.$jctimeout) {
-					com.dirty(false, true);
+					com.$state.touched = true;
 					com.getter(self.value, true);
 					clearTimeout(self.$jctimeout);
 					self.$jctimeout = 0;
@@ -10881,9 +10623,7 @@
 		var com = self.$com;
 		// Reset timeout
 		self.$jctimeout = 0;
-		// It's not dirty
-		com.dirty(false, true);
-		// Binds a value
+		com.$state.touched = true;
 		com.getter(self.value, true);
 	}
 
@@ -12302,7 +12042,10 @@
 			};
 		}
 
-		WATCH(t.makepath(name), fn, init);
+		name = name.split(',').trim();
+		for (var i = 0; i < name.length; i++)
+			name[i] = t.makepath(name[i]);
+		WATCH(name.join(','), fn, init);
 		return t;
 	};
 
