@@ -4070,7 +4070,7 @@
 					el.removeAttribute(ATTRSCOPE2, '');
 					el.removeAttribute(SCOPENAME, '');
 					el.removeAttribute(ATTRPLUGIN, '');
-					el.removeAttribute(PLLUGINNAME, '');
+					el.removeAttribute(PLUGINNAME, '');
 				}
 
 				var meta = path.split(REGMETA);
