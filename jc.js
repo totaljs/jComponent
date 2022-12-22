@@ -488,7 +488,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.075;
+	M.version = 19.076;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1978,6 +1978,10 @@
 
 			if (scope !== undefined)
 				current_scope = scope;
+
+			// Backward compatibility
+			if (!callback)
+				callback = NOOP;
 
 			return W.API('--socket-- ' + name, data, callback, prepare);
 		};
