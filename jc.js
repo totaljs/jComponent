@@ -488,7 +488,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.074;
+	M.version = 19.075;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -922,6 +922,9 @@
 			progress = timeout;
 			timeout = null;
 		}
+
+		if (!callback)
+			return promiseajax('UPLOAD', url, data, timeout, progress);
 
 		if (!url)
 			url = location.pathname;
