@@ -488,7 +488,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.073;
+	M.version = 19.074;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1375,8 +1375,9 @@
 		if (value == null)
 			value = true;
 		var arr = findcomponents(pathmaker(path), EMPTYOBJECT);
+		var is = value === undefined || value === true;
 		for (var com of arr)
-			com.$state.touched = value === undefined || value === true;
+			com.config.touched = is;
 		state(arr, 1, 2);
 	};
 
@@ -1782,6 +1783,19 @@
 		AJAX('POST ' + url, model, callback, null, socket);
 	}
 
+	function promiseajax(name, a, b, d, e) {
+		return new Promise(function(resolve, reject) {
+			W[name](a, b, function(response, err) {
+				if (!MD.ajaxerrors && err > 399) {
+					if (response instanceof Array)
+						response = response[0].error;
+					reject(response ? response.toString() : (err + ''));
+				} else
+					resolve(response);
+			}, d, e);
+		});
+	}
+
 	var wdapi;
 
 	W.WAPI_INIT = function(opt) {
@@ -1979,10 +1993,21 @@
 	W.WAPI = function(name, data, callback, timeout, scope) {
 		if (!name)
 			return wdapi;
+
 		if (typeof(name) === TYPE_O)
 			return W.WAPI_INIT(name);
+
+		if (typeof(data) === 'function' && !callback) {
+			callback = data;
+			data = null;
+		}
+
+		if (!callback)
+			return promiseajax('WAPI', name, data, timeout, scope);
+
 		if (wdapi)
 			return wdapi.send(name, data, callback, timeout, scope);
+
 		setTimeout(W.WAPI, 100, name, data, callback, timeout, scope || current_scope);
 	};
 
@@ -1998,6 +2023,9 @@
 			callback = data;
 			data = null;
 		}
+
+		if (!callback)
+			return promiseajax('API', url, data, socket);
 
 		var beg = url.indexOf(' ');
 		var schema = url.substring(beg).trim();
@@ -2041,9 +2069,6 @@
 
 	W.AJAX = function(url, data, callback, timeout, socket) {
 
-		if (url.substring(0, 4) === 'API ')
-			return W.API(url.substring(4), data, callback, socket);
-
 		if (typeof(url) === TYPE_FN) {
 			timeout = callback;
 			callback = data;
@@ -2061,6 +2086,12 @@
 			callback = data;
 			data = undefined;
 		}
+
+		if (!callback)
+			return promiseajax('AJAX', url, data, timeout, socket);
+
+		if (url.substring(0, 4) === 'API ')
+			return W.API(url.substring(4), data, callback, socket);
 
 		var index = url.indexOf(' ');
 		if (index === -1)
@@ -2134,14 +2165,8 @@
 			return '';
 		});
 
-		if (callback && wraperror) {
-			/*
-			if (typeof(callback) === 'string') {
-				var target = callback;
-				callback = response => remap(target, response);
-			}*/
+		if (callback && wraperror)
 			callback = ERROR(true, callback);
-		}
 
 		if (repeat)
 			arg = [rawurl, data, callback, timeout];
@@ -2575,7 +2600,7 @@
 		var statelist = [];
 
 		for (var com of arr) {
-			if (com.$state.touched && com.$state.invalid)
+			if (com.config.touched && com.config.invalid)
 				statelist.push(com);
 		}
 
@@ -2591,12 +2616,12 @@
 		var invalid = false;
 
 		for (var com of arr) {
-
-			if (com.$state.touched)
+			if (com.config.touched)
 				touched = true;
-
-			if (com.$state.invalid)
+			if (com.config.invalid)
 				invalid = true;
+			if (invalid && touched)
+				break;
 		}
 
 		return invalid == false && touched === true;
@@ -2605,7 +2630,7 @@
 	W.VALID = function(path, flags) {
 		var arr = findcomponents(pathmaker(path), flags);
 		for (var com of arr) {
-			if (com.$state.invalid)
+			if (com.config.invalid)
 				return false;
 		}
 		return true;
@@ -2620,8 +2645,8 @@
 		if (path) {
 			var arr = findcomponents(path, flags);
 			for (var com of arr) {
-				com.$state.touched = true;
-				com.$state.invalid = true;
+				com.config.touched = true;
+				com.config.invalid = true;
 			}
 			state(com, 1, 7);
 		}
@@ -2684,7 +2709,7 @@
 				if (meta.flags.default && com.$default && result === undefined) {
 					result = com.$default();
 					com.set(result, 3);
-				} else if (com.setter) {
+				} else if (com.setter || (com.dom && com.dom.setter)) {
 					com.$skip = false;
 					try {
 						com.setterX(result, newpath, type);
@@ -2694,14 +2719,15 @@
 				}
 
 				if (reset === true || meta.flags.reset || meta.flags.default) {
-					com.$state.modified = false;
-					com.$state.touched = false;
+					com.config.modified = false;
+					com.config.touched = false;
 				}
 
-				if (meta.flags.change)
-					com.$state.touched = true;
+				if (meta.flags.change || meta.flags.touch)
+					com.config.touched = true;
 
-				com.$state.invalid = com.validate ? (!com.validate(result)) : false;
+				var invalid = com.validate ? (!com.validate(result)) : false;
+				com.config.invalid = invalid;
 
 				if (!com.$ready)
 					com.$ready = true;
@@ -2742,7 +2768,7 @@
 
 			if (is) {
 				var val = com.get();
-				if (com.setter) {
+				if (com.setter || (com.dom && com.dom.setter)) {
 					try {
 						com.setterX(val, com.path, 1);
 					} catch (e) {
@@ -2794,7 +2820,7 @@
 						if (meta.flags.default && com.$default) {
 							result = com.$default();
 							com.set(result, 3);
-						} else if (com.setter) {
+						} else if (com.setter || (com.dom && com.dom.setter)) {
 							com.$skip = false;
 							try {
 								com.setterX(result, p, type);
@@ -2807,14 +2833,14 @@
 							com.$ready = true;
 
 						if (reset === true || meta.flags.reset || meta.flags.default) {
-							com.$state.modified = false;
-							com.$state.touched = false;
+							com.config.modified = false;
+							com.config.touched = false;
 						}
 
-						if (meta.flags.change)
-							com.$state.touched = true;
+						if (meta.flags.change || meta.flags.touch)
+							com.config.touched = true;
 
-						com.$state.invalid = com.validate ? (!com.validate(result)) : false;
+						com.config.invalid = com.validate ? (!com.validate(result)) : false;
 						com.state && statelist.push(com);
 					}
 				}
@@ -2822,7 +2848,7 @@
 				state(statelist, 1, 4);
 
 				if (!meta.flags.nowatch) {
-					for (key of keys) {
+					for (let key of keys) {
 						var p = newpath + '.' + key;
 						emitwatch(p, get(p), type);
 					}
@@ -2924,22 +2950,22 @@
 				type = meta.flags.type;
 
 			var arr = findcomponents(newpath);
+
 			for (var com of arr) {
 
 				if (meta.flags.default && com.$default)
 					com.set(com.$default(), 3);
-				else if (com.setter) {
+				else if (com.setter || (com.dom && com.dom.setter)) {
 					if (com.path === newpath) {
-						if (com.setter) {
-							try {
-								com.setterX(result, newpath, type);
-							} catch (e) {
-								throwerror(e);
-							}
-						}
-					} else if (com.setter) {
 						try {
-							com.setterX(get(com.path), newpath, type);
+							com.setterX(result, newpath, type);
+						} catch (e) {
+							throwerror(e);
+						}
+					} else {
+						try {
+							var val = get(com.path);
+							com.setterX(val, newpath, type);
 						} catch (e) {
 							throwerror(e);
 						}
@@ -2949,19 +2975,18 @@
 				if (!com.$ready)
 					com.$ready = true;
 
-				// @TODO: Why type !== 3?
-				if (type !== 3 && com.state)
+				if (type !== 3)
 					statelist.push(com);
 
 				if (reset || meta.flags.reset || meta.flags.default) {
-					com.$state.touched = false;
-					com.$state.modified = false;
+					com.config.touched = false;
+					com.config.modified = false;
 				}
 
-				if (meta.flags.change)
-					com.$state.touched = true;
+				if (meta.flags.change || meta.flags.touch)
+					com.config.touched = true;
 
-				com.$state.invalid = com.validate ? (!com.validate(result)) : false;
+				com.config.invalid = com.validate ? (!com.validate(result)) : false;
 			}
 
 			state(statelist, type, 5);
@@ -3299,8 +3324,8 @@
 
 		for (var com of arr) {
 			if (com.validate) {
-				com.$state.invalid = !com.validate(com.get());
-				if (com.$state.invalid)
+				com.config.invalid = !com.validate(com.get());
+				if (com.config.invalid)
 					valid = false;
 			}
 			statelist.push(com);
@@ -3312,9 +3337,9 @@
 	};
 
 	function com_validate2(com) {
-		com.$state.invalid = com.validate ? (!com.validate(com.get())) : false;
+		com.config.invalid = com.validate ? (!com.validate(com.get())) : false;
 		state([com], 1, 1);
-		return !com.$state.invalid;
+		return !com.config.invalid;
 	}
 
 	M.default = function(path, timeout, onlyComponent, reset, scope) {
@@ -3369,9 +3394,9 @@
 			if (!reset)
 				return;
 
-			com.$state.touched = false;
-			com.$state.modified = false;
-			com.$state.invalid = com.validate ? (!com.validate(com.get())) : false;
+			com.config.touched = false;
+			com.config.modified = false;
+			com.config.invalid = com.validate ? (!com.validate(com.get())) : false;
 		}
 
 		if (reset)
@@ -3410,13 +3435,13 @@
 			if (meta.flags.default && com.$default)
 				com.set(com.$default(), 3);
 
-			com.$state.touched = false;
-			com.$state.modified = false;
+			com.config.touched = false;
+			com.config.modified = false;
 
 			if (com.validate)
-				com.$state.invalid = !com.validate(com.get());
+				com.config.invalid = !com.validate(com.get());
 			else
-				com.$state.invalid = false;
+				com.config.invalid = false;
 		}
 
 		state(arr, 1, 3);
@@ -3597,6 +3622,7 @@
 				var com = M.components[i];
 				if (!com || !com.$loaded || com.$removed || (id && com.id !== id) || (name && com.$name !== name) || (version && com.version !== version) || ((path && (com.$pp || (com.path !== path && (!com.pathscope || ((com.pathscope + '.' + path) !== com.path)))))))
 					continue;
+
 				if (callback) {
 					if (callback(com) === false)
 						break;
@@ -3952,6 +3978,10 @@
 				else
 					obj.config = {};
 
+				obj.config.modified = false;
+				obj.config.touched = false;
+				obj.config.invalid = false;
+
 				// Default config
 				com.config && obj.reconfigure(com.config, NOOP);
 				tmp && obj.reconfigure(tmp, NOOP);
@@ -4063,7 +4093,7 @@
 			if (el.$scopedata)
 				return el.$scopedata;
 
-			var path = el.getAttribute ? (el.getAttribute(ATTRPLUGIN) || el.getAttribute(PLUGINNAME) || el.getAttribute(ATTRSCOPE2) || el.getAttribute(SCOPENAME)) : null;
+			var path = el.tagName === 'UI-PLUGIN' ? el.getAttribute('path') : (el.getAttribute ? (el.getAttribute(ATTRPLUGIN) || el.getAttribute(PLUGINNAME) || el.getAttribute(ATTRSCOPE2) || el.getAttribute(SCOPENAME)) : null);
 			if (path) {
 
 				if (!DEF.inspectable) {
@@ -4497,7 +4527,7 @@
 
 		obj.$loaded = true;
 
-		if (obj.setter) {
+		if (obj.setter || (obj.dom && obj.dom.setter)) {
 			if (!obj.$prepared) {
 
 				obj.$prepared = true;
@@ -4529,7 +4559,7 @@
 			obj.$binded = true;
 
 		if (obj.validate)
-			obj.$state.invalid = !obj.validate(obj.get(), true);
+			obj.config.invalid = !obj.validate(obj.get(), true);
 
 		obj.done && setTimeout(obj.done, 20);
 		obj.state && obj.stateX(0, 3);
@@ -4692,7 +4722,7 @@
 						if (val) {
 							var tmp = com.parser(val);
 							if (tmp) {
-								com.$state.touched = true;
+								com.config.touched = true;
 								com.set(tmp, 0);
 							}
 						}
@@ -5247,9 +5277,9 @@
 	// 4. update
 	// 5. set
 	function state(arr, type, what) {
-		arr && arr.length && setTimeout(function() {
-			for (var i = 0; i < arr.length; i++)
-				arr[i].stateX(type, what);
+		arr && arr.length && setTimeout(function(arr) {
+			for (var m of arr)
+				m.stateX(type, what);
 		}, 2, arr);
 	}
 
@@ -5414,7 +5444,6 @@
 		self.$formatter = [];
 		self.$configwatcher = {};
 		self.$configchanges = {};
-		self.$state = { modified: false, touched: false, invalid: false };
 
 		// self.$skip = false;
 		// self.$ready = false;
@@ -5441,182 +5470,6 @@
 		// self.destroy;
 		// self.state;
 		// self.validate;
-
-		self.getter = function(value, realtime, nobind) {
-
-			var self = this;
-			value = self.parser(value);
-			self.getter2 && self.getter2(value, realtime);
-
-			// Binds a value
-			if (nobind)
-				com_validate2(self);
-			else if (value !== self.get()) {
-				if (realtime)
-					self.$skip = true;
-
-				self.$state.touched = true;
-				self.set(value, 2);
-
-			} else if (realtime === 3) {
-				// A validation for same values, "realtime=3" is in "blur" event
-				// Because we need to validate the input if the user leaves from the control
-				com_validate2(self);
-			}
-		};
-
-		self.stateX = function(type, what) {
-			var key = type + 'x' + what;
-			if (!self.$bindchanges || self.$statekey !== key) {
-				self.$statekey = key;
-				self.config.$state && EXEC.call(self, self.config.$state.SCOPE(self), type, what);
-				self.state && self.state(type, what);
-				self.state2 && self.state2(type, what);
-			}
-		};
-
-		var setterXbinder = function(self) {
-
-			var cache = self.$bindcache;
-			cache.bt = 0; // reset timer id
-
-			if (self.$bindchanges) {
-				var hash = HASH(cache.value);
-				if (hash === self.$valuehash)
-					return;
-				self.$valuehash = hash;
-			}
-
-			MD.monitor && monitor(self);
-			self.config.$setter && EXEC.call(self, self.config.$setter.SCOPE(self), cache.value, cache.path, cache.type);
-			self.data('', cache.value);
-
-			if (!self.$skipsetter)
-				self.setter(cache.value, cache.path, cache.type);
-
-			if (self.$skipsetter)
-				self.$skipsetter = false;
-
-			self.setter2 && self.setter2(cache.value, cache.path, cache.type);
-		};
-
-		var checkvisibility = function(self) {
-			self.setterX(self.$bindcache.value, self.$bindcache.path, self.$bindcache.type);
-		};
-
-		self.setterX = function(value, path, type) {
-
-			if (!self.setter || (self.$bindexact && self.path !== path && self.path.indexOf(path + '.') === -1 && type))
-				return;
-
-			var cache = self.$bindcache;
-			if (arguments.length) {
-
-				if (self.$format)
-					value = self.$format(value, path, type, self.scope);
-
-				if (self.$bindvisible) {
-
-					if (cache.check) {
-						clearTimeout(cache.check);
-						cache.check = null;
-					}
-
-					if (HIDDEN(self.dom)) {
-						cache.value = value;
-						cache.path = path;
-						cache.type = type;
-						cache.bt && clearTimeout(cache.bt);
-						cache.is = true;
-						cache.check = setTimeout(checkvisibility, 500, self);
-					} else {
-						cache.value = value;
-						cache.path = path;
-						cache.type = type;
-						if (!cache.bt) {
-							if (cache.is)
-								self.setterX();
-							else
-								setterXbinder(self);
-						}
-					}
-				} else {
-
-					if (self.$bindchanges) {
-						var hash = HASH(value);
-						if (hash === self.$valuehash)
-							return;
-						self.$valuehash = hash;
-					}
-
-					MD.monitor && monitor(self);
-
-					// Binds value directly
-					self.config.$setter && EXEC.call(self, self.config.$setter.SCOPE(self), value, path, type);
-					self.data('', value);
-
-					if (!self.$skipsetter)
-						self.setter(value, path, type);
-
-					if (self.$skipsetter)
-						self.$skipsetter = false;
-
-					self.setter2 && self.setter2(value, path, type);
-				}
-
-			} else if (!HIDDEN(self.dom) && cache && cache.is) {
-				cache.is = false;
-				cache.bt && clearTimeout(cache.bt);
-				cache.bt = setTimeout(setterXbinder, self.$bindtimeout, self);
-			}
-		};
-
-		self.setter = function(value, path, type) {
-
-			var self = this;
-
-			if (type === 2) {
-				if (self.$skip) {
-					self.$skip = false;
-					return;
-				}
-			}
-
-			var a = 'select-one';
-
-			value = self.formatter(value);
-
-			findcontrol(self.dom, function(t) {
-
-				if (t.$com !== self)
-					t.$com = self;
-
-				var path = t.$com.path;
-				if (path && path.length && path !== self.path)
-					return;
-
-				if (t.type === 'checkbox') {
-					var tmp = value != null ? (value + '').toLowerCase() : '';
-					tmp = tmp === T_TRUE || tmp === '1' || tmp === 'on';
-					tmp !== t.checked && (t.checked = tmp);
-					return;
-				}
-
-				if (value == null)
-					value = '';
-
-				if (!type && self.$autofill && t.type !== a && t.type !== 'range' && !self.$default)
-					autofill.push(t.$com);
-
-				if (t.type === a || t.type === 'select') {
-					var el = $(t);
-					if (el.val() !== value)
-						el.val(value);
-				} else if (t.value !== value)
-					t.value = value;
-
-			});
-		};
 	}
 
 	function monitor(obj) {
@@ -5694,6 +5547,219 @@
 		return this;
 	};
 
+	function setterXbinder(self) {
+
+		var cache = self.$bindcache;
+		cache.bt = 0; // reset timer id
+
+		if (self.$bindchanges) {
+			var hash = HASH(cache.value);
+			if (hash === self.$valuehash)
+				return;
+			self.$valuehash = hash;
+		}
+
+		MD.monitor && monitor(self);
+		self.config.$setter && EXEC.call(self, self.config.$setter.SCOPE(self), cache.value, cache.path, cache.type);
+		self.data && self.data('', cache.value);
+
+		if (!self.$skipsetter) {
+			self.setter(cache.value, cache.path, cache.type);
+			self.dom.setter && self.dom.setter(cache.value, cache.path, cache.type);
+		}
+
+		if (self.$skipsetter)
+			self.$skipsetter = false;
+
+		self.setter2 && self.setter2(cache.value, cache.path, cache.type);
+	}
+
+	function setterXvisibility(self) {
+		self.setterX(self.$bindcache.value, self.$bindcache.path, self.$bindcache.type);
+	}
+
+	PPC.setterX = function(value, path, type) {
+
+		var self = this;
+
+		if ((!self.setter && !self.dom.setter) || (self.$bindexact && self.path !== path && self.path.indexOf(path + '.') === -1 && type))
+			return;
+
+		var cache = self.$bindcache;
+		if (arguments.length) {
+
+			if (self.$format)
+				value = self.$format(value, path, type, self.scope);
+
+			if (self.$bindvisible) {
+
+				if (cache.check) {
+					clearTimeout(cache.check);
+					cache.check = null;
+				}
+
+				if (HIDDEN(self.dom)) {
+					cache.value = value;
+					cache.path = path;
+					cache.type = type;
+					cache.bt && clearTimeout(cache.bt);
+					cache.is = true;
+					cache.check = setTimeout(setterXvisibility, 500, self);
+				} else {
+					cache.value = value;
+					cache.path = path;
+					cache.type = type;
+					if (!cache.bt) {
+						if (cache.is)
+							self.setterX();
+						else
+							setterXbinder(self);
+					}
+				}
+			} else {
+
+				if (self.$bindchanges) {
+					var hash = HASH(value);
+					if (hash === self.$valuehash)
+						return;
+					self.$valuehash = hash;
+				}
+
+				MD.monitor && monitor(self);
+
+				// Binds value directly
+				self.config.$setter && EXEC.call(self, self.config.$setter.SCOPE(self), value, path, type);
+				self.data && self.data('', value);
+
+				if (!self.$skipsetter) {
+					self.setter && self.setter(value, path, type);
+					self.dom.setter && self.dom.setter(value, path, type);
+				}
+
+				if (self.$skipsetter)
+					self.$skipsetter = false;
+
+				self.setter2 && self.setter2(value, path, type);
+			}
+
+		} else if (!HIDDEN(self.dom) && cache && cache.is) {
+			cache.is = false;
+			cache.bt && clearTimeout(cache.bt);
+			cache.bt = setTimeout(setterXbinder, self.$bindtimeout, self);
+		}
+	};
+
+	PPC.stateX = function(type, what) {
+
+		var self = this;
+		var key = type + 'x' + what;
+		var config = self.config;
+
+		if (!self.$bindchanges || self.$statekey !== key) {
+			self.$statekey = key;
+			config.$state && EXEC.call(self, config.$state.SCOPE(self), type, what);
+			self.state && self.state(type, what);
+			self.dom.state && self.dom.state(config);
+			self.state2 && self.state2(type, what);
+		}
+
+		if (!self.$stateprev)
+			self.$stateprev = { modified: false, touched: false, invalid: false };
+
+		var tmp = self.$stateprev;
+		var update = [];
+
+		if (tmp.modified != config.modified)
+			update.push('modified');
+
+		if (tmp.touched != config.touched)
+			update.push('touched');
+
+		if (tmp.invalid != config.invalid)
+			update.push('invalid');
+
+		if (update.length) {
+			for (var key of update) {
+				if (self.configure)
+					self.configure(key, config[key], false, tmp[key]);
+				if (self.dom.configure)
+					self.dom.configure(key, config[key], false, tmp[key]);
+				tmp[key] = config[key];
+			}
+		}
+
+	};
+
+	PPC.getter = function(value, realtime, nobind) {
+
+		var self = this;
+		value = self.parser(value);
+		self.getter2 && self.getter2(value, realtime);
+
+		// Binds a value
+		if (nobind)
+			com_validate2(self);
+		else if (value !== self.get()) {
+			if (realtime)
+				self.$skip = true;
+
+			self.config.touched = true;
+			self.set(value, 2);
+
+		} else if (realtime === 3) {
+			// A validation for same values, "realtime=3" is in "blur" event
+			// Because we need to validate the input if the user leaves from the control
+			com_validate2(self);
+		}
+	};
+
+	PPC.setter = function(value, path, type) {
+
+		var self = this;
+
+		if (type === 2) {
+			if (self.$skip) {
+				self.$skip = false;
+				return;
+			}
+		}
+
+		var a = 'select-one';
+
+		value = self.formatter(value);
+
+		findcontrol(self.dom, function(t) {
+
+			if (t.$com !== self)
+				t.$com = self;
+
+			var path = t.$com.path;
+			if (path && path.length && path !== self.path)
+				return;
+
+			if (t.type === 'checkbox') {
+				var tmp = value != null ? (value + '').toLowerCase() : '';
+				tmp = tmp === T_TRUE || tmp === '1' || tmp === 'on';
+				tmp !== t.checked && (t.checked = tmp);
+				return;
+			}
+
+			if (value == null)
+				value = '';
+
+			if (!type && self.$autofill && t.type !== a && t.type !== 'range' && !self.$default)
+				autofill.push(t.$com);
+
+			if (t.type === a || t.type === 'select') {
+				var el = $(t);
+				if (el.val() !== value)
+					el.val(value);
+			} else if (t.value !== value)
+				t.value = value;
+
+		});
+	};
+
 	PPC.parsesource = function(value) {
 		var self = this;
 		var arr = value.split(',');
@@ -5711,7 +5777,7 @@
 	PPC.modify = function(value, type) {
 		var self = this;
 		value = self.parser(value);
-		self.$state.touched = true;
+		self.config.touched = true;
 		self.set(value, type == null ? 2 : type);
 		return self;
 	};
@@ -6300,12 +6366,17 @@
 	PPC.makepath = function(path) {
 		var self = this;
 		if (path.indexOf('?') !== -1) {
+
+			if (self.$new === 1)
+				return M.makepath(self.plugin, path);
+
 			var scope = self.pathscope ? self.scope : self.$scopepath;
 			if (self.$scopepath === undefined)
 				scope = self.$scopepath = self.element.scope() || null;
 			if (scope)
 				path = scope.makepath(path);
 		}
+
 		return path;
 	};
 
@@ -6552,7 +6623,7 @@
 		};
 	};
 
-	PPC.reconfigure = function(value, callback, init) {
+	PPC.reconfigure = function(value, callback, init, noemit) {
 
 		var self = this;
 
@@ -6581,9 +6652,15 @@
 					self.config[k] = v;
 				if (callback)
 					callback(k, v, init, init ? undefined : prev);
-				else if (self.configure)
-					self.configure(k, v, init, init ? undefined : prev);
-				self.data(T_CONFIG + '.' + k, v);
+				else {
+					if (!noemit) {
+						if (self.configure)
+							self.configure(k, v, init, init ? undefined : prev);
+						if (self.dom.configure)
+							self.dom.configure(k, v, init, init ? undefined : prev);
+					}
+				}
+				self.data && self.data(T_CONFIG + '.' + k, v);
 			}
 		} else if (value.charAt(0) === '=' && value.indexOf(':') === -1) {
 			value = value.substring(1).SCOPE(self);
@@ -6615,15 +6692,21 @@
 				if (!iswatcher)
 					v = self.configdisplay(k, v);
 
-				if (!init && self.config[k] !== v)
+				if ((self.$new || !init) && self.config[k] !== v)
 					self.config[k] = v;
 
-				self.data(T_CONFIG + '.' + k, v);
+				self.data && self.data(T_CONFIG + '.' + k, v);
 
 				if (callback)
 					callback(k, v, init, init ? undefined : prev);
-				else if (self.configure)
-					self.configure(k, v, init, init ? undefined : prev);
+				else {
+					if (!noemit) {
+						if (self.configure)
+							self.configure(k, v, init, init ? undefined : prev);
+						if (self.dom && self.dom.configure)
+							self.dom.configure(k, v, init, init ? undefined : prev);
+					}
+				}
 			});
 		}
 
@@ -6645,7 +6728,7 @@
 		var self = this;
 		var cfg = self.config;
 
-		self.data(T_CONFIG, cfg);
+		self.data && self.data(T_CONFIG, cfg);
 
 		if (cfg.$type) {
 			self.type = cfg.$type;
@@ -6662,7 +6745,7 @@
 			delete cfg.$id;
 		}
 
-		if (cfg.$compile == false) {
+		if (cfg.$compile == false && self.nocompile) {
 			self.nocompile();
 			delete cfg.$compile;
 		}
@@ -6803,7 +6886,7 @@
 
 	PPC.isInvalid = function() {
 		var self = this;
-		return self.$state.touched && self.$state.invalid;
+		return self.config.touched && self.config.invalid;
 	};
 
 	PPC.unwatch = function(path, fn) {
@@ -6842,9 +6925,9 @@
 		var self = this;
 
 		if (value === undefined)
-			return !self.$state.touched;
+			return !self.config.touched;
 
-		self.$state.touched = !value;
+		self.config.touched = !value;
 
 		if (!noEmit)
 			state([self], 2, 2);
@@ -6854,9 +6937,9 @@
 
 	PPC.reset = function() {
 		var self = this;
-		self.$state.modified = false;
-		self.$state.touched = false;
-		self.$state.invalid = self.validate ? (!self.validate(self.get())) : false;
+		self.config.modified = false;
+		self.config.touched = false;
+		self.config.invalid = self.validate ? (!self.validate(self.get())) : false;
 		self.stateX(1, 3);
 		return self;
 	};
@@ -7014,7 +7097,7 @@
 
 		var arg = arguments;
 
-		self.$state.modified = true;
+		self.config.modified = true;
 
 		// Backwards compatibility
 		if (arg.length === 3)
@@ -7030,7 +7113,7 @@
 	PPC.inc = function(value, type) {
 		var self = this;
 		var p = self.path || self.$jcbindset;
-		self.$state.modified = true;
+		self.config.modified = true;
 		p && M.inc(p, value, type);
 		return self;
 	};
@@ -7038,7 +7121,7 @@
 	PPC.extend = function(value, type) {
 		var self = this;
 		var p = self.path || self.$jcbindset;
-		self.$state.modified = true;
+		self.config.modified = true;
 		p && M.extend(p, value, type);
 		return self;
 	};
@@ -7046,7 +7129,7 @@
 	PPC.rewrite = function(value, type) {
 		var self = this;
 		var p = self.path || self.$jcbindset;
-		self.$state.modified = true;
+		self.config.modified = true;
 		p && REWRITE(p, value, type);
 		return self;
 	};
@@ -7054,7 +7137,7 @@
 	PPC.push = function(value, type) {
 		var self = this;
 		var p = self.path || self.$jcbindset;
-		self.$state.modified = true;
+		self.config.modified = true;
 		p && M.push(p, value, type);
 		return self;
 	};
@@ -7408,6 +7491,10 @@
 					for (var i = 0; i < arr.length; i++) {
 						var o = arr[i];
 						var a = isget ? get(methodname, o) : o[methodname];
+
+						if (!a && o.$new)
+							a = isget ? get(methodname, o.node) : o.node[methodname];
+
 						if (typeof(a) === TYPE_FN)
 							a.apply(o, arg);
 					}
@@ -7466,6 +7553,10 @@
 				for (var i = 0; i < arr.length; i++) {
 					var o = arr[i];
 					var a = isget ? get(methodname, o) : o[methodname];
+
+					if (!a && o.$new)
+						a = isget ? get(methodname, o.node) : o.node[methodname];
+
 					if (typeof(a) === TYPE_FN)
 						a.apply(o, arg);
 				}
@@ -8035,7 +8126,7 @@
 		var output = [];
 		var arr = findcomponents(path, flags);
 		for (var com of arr) {
-			if (com.$state.touched && com.$state.modified)
+			if (com.config.touched && com.config.modified)
 				output.push(com.path);
 		}
 		return output;
@@ -10543,7 +10634,6 @@
 
 				if (e.type === 'focusin' && !com && !self.$jccheck) {
 					// try to find
-					var parent = self;
 					var elcom = $(self).closest(ATTRCOM);
 					if (elcom)
 						self.$com = elcom[0].$com;
@@ -10555,7 +10645,7 @@
 				if (e.type === 'focusin')
 					self.$jcevent = 1;
 				else if (self.$jcevent === 1) {
-					com.$state.touched = true;
+					com.config.touched = true;
 					com.getter(self.value, 3);
 				} else if (self.$jcskip) {
 					self.$jcskip = false;
@@ -10590,13 +10680,13 @@
 					case 'SELECT':
 						var sel = self[self.selectedIndex];
 						self.$jcevent = 2;
-						com.$state.touched = true;
+						com.config.touched = true;
 						com.getter(sel.value, false);
 						return;
 					case 'INPUT':
 						if (self.type === 'checkbox' || self.type === 'radio') {
 							self.$jcevent = 2;
-							com.$state.touched = true;
+							com.config.touched = true;
 							com.getter(self.checked, false);
 							return;
 						}
@@ -10604,7 +10694,7 @@
 				}
 
 				if (self.$jctimeout) {
-					com.$state.touched = true;
+					com.config.touched = true;
 					com.getter(self.value, true);
 					clearTimeout(self.$jctimeout);
 					self.$jctimeout = 0;
@@ -10623,7 +10713,7 @@
 		var com = self.$com;
 		// Reset timeout
 		self.$jctimeout = 0;
-		com.$state.touched = true;
+		com.config.touched = true;
 		com.getter(self.value, true);
 	}
 
@@ -11435,7 +11525,7 @@
 	function bindsetterx(item, value, path, type, counter) {
 		if (item && item.el && item.set) {
 			var com = item.el[0].$com;
-			if (com && !com.$removed && com.$loaded && !com.path && com.setter) {
+			if (com && !com.$removed && com.$loaded && !com.path && (com.setter || (com.dom && com.dom.setter))) {
 				if (com.$jcbind !== item) {
 					com.$jcbind = item;
 					if (item.vbind && item.vbind.vbindarray)
@@ -12004,6 +12094,8 @@
 
 		if (typeof(callback) === TYPE_S)
 			callback = plugin.makepath(callback);
+		else if (!callback)
+			return promiseajax(type, name, data);
 
 		W[type](name, data, callback);
 		return plugin;
@@ -12015,6 +12107,10 @@
 
 	PP.tapi = function(name, data, callback) {
 		return ppcall(this, 'TAPI', name, data, callback);
+	};
+
+	PP.api = function(url, data, callback) {
+		return ppcall(this, 'API', url, data, callback);
 	};
 
 	PP.dapi = function(name, data, callback) {
@@ -13601,5 +13697,398 @@
 
 		return true;
 	};
+
+	function extendcomponent(com) {
+		com.on = PPC.on;
+		com.off = PPC.off;
+		com.watch = PPC.watch;
+		com.unwatch = PPC.unwatch;
+		com.parsesource = PPC.parsesource;
+		com.modify = PPC.modify;
+		com.icon = PPC.icon;
+		com.$reconfigure = PPC.reconfigure;
+		com.$reconfigure2 = PPC.$reconfigure;
+		com.configdisplay = PPC.configdisplay;
+		com.$configmonitor = PPC.$configmonitor;
+		com.parent = PPC.parent;
+		com.html = PPC.html;
+		com.text = PPC.text;
+		com.empty = PPC.empty;
+		com.append = PPC.append;
+		com.event = PPC.event;
+		com.find = PPC.find;
+		com.formatter = PPC.formatter;
+		com.parser = PPC.parser;
+		com.makepath = PPC.makepath;
+		com.setterX = PPC.setterX;
+		com.stateX = PPC.stateX;
+		com.setPath = PPC.setPath;
+		com.hidden = PPC.hidden;
+		com.visible = PPC.visible;
+		com.$compare = PPC.$compare;
+	}
+
+	class HTMLPlugin extends HTMLElement {
+		constructor() {
+			super();
+			this.ui = { $new: 1, $type: 'plugin' };
+		}
+	}
+
+	class HTMLBinder extends HTMLElement {
+
+		constructor() {
+			super();
+		}
+
+		static get observedAttributes() {
+			return ['path'];
+		}
+
+		connectedCallback() {
+			var t = this;
+			t.ui = parsebinder(t, t.getAttribute('path'));
+			t.ui.$new = 1;
+			t.ui.$type = 'binder';
+		}
+	}
+
+	class UIComponent {
+
+		// |--- Properties:
+		//   |-- this.$path {String} backuped path
+		//   |-- this.path {String}
+
+		// |--- Handlers:
+		//   |-- this.configure(key, value);
+		//   |-- this.onconfig(config);
+		//   |-- this.validate(value, init);
+
+		// |--- Methods:
+		//   |-- this.kill();
+		//   |-- this.configure([config]);
+		//   |-- this.remap([path]);
+		//   |-- this.reset();
+		//   |-- this.get();
+		//   |-- this.set(value, [type]);
+		//   |-- this.update([type]);
+		//   |-- this.aclass(cls, [timeout]);
+		//   |-- this.rclass(cls, [timeout]);
+		//   |-- this.rclass2(cls, [timeout]);
+		//   |-- this.tclass(cls, [timeout]);
+		//   |-- this.hclass(cls);
+		//   |-- this.attr(name, [value]);
+		//   |-- this.attrd(name, [value]);
+		//   |-- this.css(name, [value]);
+
+		constructor(el) {
+			var t = this;
+			t._id = t.ID = 'wc' + (M.compiler.counter++);
+			t.$name = t.name = el.tagName.toLowerCase().substring(3);
+			t.$new = 1; // internal
+			t.config = { disabled: false, invalid: false, modified: false, touched: false };
+			t.$configwatcher = {};
+			t.$configchanges = {};
+			t.$formatter = [];
+			t.$parser = [];
+			t.$loaded = true;
+			t.trim = true;
+			t.node = t.dom = el;
+			t.node.config = t.config;
+			t.$type = 'component';
+			t.element = $(el);
+			extendcomponent(t);
+			t.remap();
+			M.components.push(t);
+			t.reconfigure(null, true, true);
+
+			setTimeout(function(t) {
+
+				var value = t.get();
+				var tmp = el.getAttribute('default');
+				if (tmp) {
+					t.$default = new Function('return ' + tmp);
+					if (value === undefined && t.path) {
+						value = t.$default();
+						set(t.path, value, null, 1);
+						emitwatch(t.path, value, 0);
+					}
+				}
+
+				if (!t.$binded) {
+					t.$binded = true;
+					try {
+						t.setterX(value, t.path, 0);
+					} catch (e) {
+						throwerror(e);
+					}
+				}
+
+			}, 2, t);
+		}
+
+		init() {
+			var t = this;
+			t.node.make && t.node.make();
+			t.reconfigure(t.config, true);
+		}
+
+		singleton() {
+			this.$singleton = true;
+		}
+
+		readonly() {
+			var t = this;
+			t.validate = null;
+			t.getter = null;
+			t.setter = null;
+		}
+
+		bindvisible(timeout) {
+			var self = this;
+			if (timeout === false) {
+				self.$bindvisible = false;
+				self.$bindcache = null;
+			} else {
+				self.$bindvisible = true;
+				self.$bindtimeout = timeout || MD.delaybinder;
+				self.$bindcache = {};
+			}
+			return self;
+		}
+
+		bindchanges() {
+			this.$bindchanges = true;
+		}
+
+		closest(selector) {
+			return this.element.closest(selector);
+		}
+
+		find(selector) {
+			return this.element.find(selector);
+		}
+
+		aclass(cls, timeout) {
+
+			var callback = function(t, cls) {
+				var arr = cls.split(' ');
+				for (var m of arr)
+					t.classList.add(m);
+			};
+
+			if (timeout)
+				setTimeout(callback, timeout, this.node, cls);
+			else
+				callback(this.node, cls);
+		}
+
+		rclass(cls, timeout) {
+
+			var callback = function(t, cls) {
+				var arr = cls.split(' ');
+				for (var m of arr)
+					t.classList.remove(m);
+			};
+
+			if (timeout)
+				setTimeout(callback, timeout, this.node, cls);
+			else
+				callback(this.node, cls);
+		}
+
+		rclass2(cls, timeout) {
+
+			var callback = function(t, cls) {
+				var arr = cls.split(' ');
+				for (var m of t.classList) {
+					for (var c of arr) {
+						if (m.indexOf(c) !== -1)
+							t.classList.remove(m);
+					}
+				}
+			};
+
+			if (timeout)
+				setTimeout(callback, timeout, this.node, cls);
+			else
+				callback(this.node, cls);
+
+		}
+
+		tclass(cls, timeout) {
+
+			var callback = function(t, cls) {
+				var arr = cls.split(' ');
+				for (var m of arr)
+					t.classList.toggle(m);
+			};
+
+			if (timeout)
+				setTimeout(callback, timeout, this.node, cls);
+			else
+				callback(this.node, cls);
+		}
+
+		hclass(cls) {
+			return this.node.classList.contains(cls);
+		}
+
+		attr(name, value) {
+			var t = this.node;
+			if (value == null)
+				return t.getAttribute(name);
+			t.setAttribute(name, value);
+		}
+
+		attrd(name, value) {
+			return this.attr('data-' + name, value);
+		}
+
+		modify(value, type) {
+			var t = this;
+			t.config.touched = true;
+			value = t.parser(value);
+			t.set(value, type == null ? 2 : type);
+		}
+
+		read(raw) {
+			var val = this.get();
+			return raw ? val : this.formatter(val);
+		}
+
+		css(name, value) {
+
+			var t = this.node;
+			var type = typeof(name);
+
+			if (type === 'string' && value == null)
+				return this.style[name];
+
+			if (type === 'object') {
+				for (var key in name)
+					t.style[key] = name[key];
+			} else
+				t.style[name] = value;
+		}
+
+		reconfigure(value, init, noemit) {
+			var t = this;
+			if (value == null)
+				value = t.node.getAttribute('config');
+			t.$reconfigure(value, null, init, noemit);
+			t.$reconfigure2();
+		}
+
+		remap(path) {
+			var t = this;
+			if (path == null)
+				path = t.node.getAttribute('path');
+			t.plugin = findscope(t.node);
+			t.setPath(t.plugin ? t.plugin.makepath(path) : path);
+		}
+
+		get() {
+			return GET(this.path);
+		}
+
+		set(value, type) {
+			this.config.modified = true;
+			SET(this.path, value, type);
+		}
+
+		update(type) {
+			this.config.modified = true;
+			SET(this.path, this.get(), type);
+		}
+
+		kill(remove) {
+			var t = this;
+			if (!t.removed) {
+				t.removed = true;
+				t.destroy && t.destroy();
+				remove && t.node.parentNode.removeChild(t.node);
+			}
+		}
+
+		reset() {
+			this.reconfigure({ invalid: false, modified: false });
+		}
+
+		datasource(path, callback, init) {
+
+			var t = this;
+			var ds = t.$datasource;
+
+			ds && t.unwatch(ds.path, ds.fn);
+
+			if (path) {
+				path = M.makepath(t.plugin, path);
+				t.$datasource = { path: path, fn: callback };
+				if (init !== false && !t.$loaded) {
+					t.watch(path, callback);
+					t.$confds = function() {
+						callback.call(t, path, get(path), 0);
+					};
+				} else
+					t.watch(path, callback, init !== false);
+			} else
+				t.$datasource = null;
+
+		}
+
+	}
+
+	class HTMLComponent extends HTMLElement {
+
+		// Implement status
+		constructor() {
+			super();
+		}
+
+		static get observedAttributes() {
+			return ['path', 'config'];
+		}
+
+		connectedCallback() {
+			var t = this;
+			t.$initialized = false;
+			t.ui = new UIComponent(t);
+			t.ui.init();
+			setTimeout(() => this.$initialized = true, 2);
+		}
+
+		modify(value, type) {
+			this.ui.modify(value, type);
+		}
+
+		read(raw) {
+			return this.ui.read(raw);
+		}
+
+		attributeChangedCallback(property, ovalue, nvalue) {
+			var t = this;
+
+			if (!this.$initialized)
+				return;
+
+			switch (property) {
+				case 'path':
+					t.ui.remap(nvalue);
+					break;
+				case 'config':
+					t.ui.reconfigure(nvalue);
+					break;
+			}
+		}
+	}
+
+	customElements.define('ui-plugin', HTMLPlugin);
+	customElements.define('ui-bind', HTMLBinder);
+
+	W.HTMLPlugin = HTMLPlugin;
+	W.HTMLBinder = HTMLBinder;
+	W.HTMLComponent = HTMLComponent;
+	W.UIComponent = UIComponent;
 
 })();
