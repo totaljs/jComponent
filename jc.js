@@ -13735,19 +13735,17 @@
 		}
 	}
 
-	class HTMLBinder extends HTMLElement {
+	class HTMLBind extends HTMLElement {
 
 		constructor() {
 			super();
 		}
 
-		static get observedAttributes() {
-			return ['path'];
-		}
-
 		connectedCallback() {
 			var t = this;
-			t.ui = parsebinder(t, t.getAttribute('path'));
+			var config = t.getAttribute('config');
+			var data = t.getAttribute('path') + (config ? ('__' + config) : '');
+			t.ui = parsebinder(t, data);
 			t.ui.$new = 1;
 			t.ui.$type = 'binder';
 		}
@@ -14084,10 +14082,10 @@
 	}
 
 	customElements.define('ui-plugin', HTMLPlugin);
-	customElements.define('ui-bind', HTMLBinder);
+	customElements.define('ui-bind', HTMLBind);
 
 	W.HTMLPlugin = HTMLPlugin;
-	W.HTMLBinder = HTMLBinder;
+	W.HTMLBind = HTMLBind;
 	W.HTMLComponent = HTMLComponent;
 	W.UIComponent = UIComponent;
 
