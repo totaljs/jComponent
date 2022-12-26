@@ -4081,7 +4081,18 @@
 			if (el.$scopedata)
 				return el.$scopedata;
 
-			var path = el.tagName === 'UI-PLUGIN' ? el.getAttribute(T_PATH) : (el.getAttribute ? (el.getAttribute(ATTRPLUGIN) || el.getAttribute(PLUGINNAME) || el.getAttribute(ATTRSCOPE2) || el.getAttribute(SCOPENAME)) : null);
+			var path;
+			if (el.tagName === 'UI-PLUGIN') {
+				path = el.getAttribute(T_PATH) || '';
+				if (path.indexOf('__') === -1) {
+					path += '__' + el.getAttribute(T_CONFIG) || 'null';
+					var tmp = el.getAttribute(T_DEFAULT);
+					if (tmp)
+						path += '__' + tmp;
+				}
+			} else
+				path = (el.getAttribute ? (el.getAttribute(ATTRPLUGIN) || el.getAttribute(PLUGINNAME) || el.getAttribute(ATTRSCOPE2) || el.getAttribute(SCOPENAME)) : null);
+
 			if (path) {
 
 				if (!DEF.inspectable) {
