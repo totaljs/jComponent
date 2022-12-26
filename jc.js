@@ -47,6 +47,7 @@
 	var REG_TIME = /am|pm/i;
 	var T_CSRF = 'x-csrf-token';
 	var T_BODY = 'BODY';
+	var T_PATH = 'path';
 	var T_DISABLED = 'disabled';
 	var T_HIDDEN = 'hidden';
 	var T_WIDTH = 'width';
@@ -67,6 +68,7 @@
 	var T_CLASS = 'class';
 	var T_HTML = 'html';
 	var T_CONFIG = 'config';
+	var T_DEFAULT = 'default';
 	var T_COMPILED = 'jc-compile';
 	var T_IMPORT = 'import';
 	var T_TMP = 'jctmp.';
@@ -364,6 +366,8 @@
 	var lazycom = {};
 	var repeats = {};
 	var pluginableplugins = {};
+	var waitfordownload = [];
+	var waitforimport = [];
 
 	var current_owner = null;
 	var current_element = null;
@@ -488,7 +492,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.076;
+	M.version = 19.078;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -796,7 +800,7 @@
 		if (expression.indexOf('return') === -1)
 			expression = 'return ' + expression;
 
-		exp = new Function(T_VALUE, 'path', expression);
+		exp = new Function(T_VALUE, T_PATH, expression);
 		temp[key] = exp;
 		return exp.call(val, val, path);
 	};
@@ -3708,18 +3712,12 @@
 	function dependencies(declaration, callback, obj, el) {
 
 		if (declaration.importing) {
-			WAIT(function() {
-				return declaration.importing !== true;
-			}, function() {
-				callback(obj, el);
-			});
+			WAIT(() => declaration.importing !== true, () => callback(obj, el));
 			return;
 		}
 
 		if (!declaration.dependencies || !declaration.dependencies.length) {
-			setTimeout(function(callback, obj, el) {
-				callback(obj, el);
-			}, 5, callback, obj, el);
+			setTimeout((callback, obj, el) => callback(obj, el), 5, callback, obj, el);
 			return;
 		}
 
@@ -3760,9 +3758,7 @@
 
 		if (C.pending.length) {
 			(function(container) {
-				C.pending.push(function() {
-					compile(container);
-				});
+				C.pending.push(() => compile(container));
 			})(container);
 			return;
 		}
@@ -3770,306 +3766,9 @@
 		DEF.monitor && monitor_method('compilation', 1);
 
 		var has = false;
-		crawler(container, function(name, dom) {
 
-			var el = $(dom);
-			var meta = name.split(REGMETA);
-			if (meta.length) {
-				meta = meta.trim(true);
-				name = meta[0];
-			} else
-				meta = null;
-
-			has = true;
-
-			// Check singleton instance
-			if (statics['$ST_' + name]) {
-				remove(el);
-				return;
-			}
-
-			var instances = [];
-			var all = name.split(',');
-
-			for (var y = 0; y < all.length; y++) {
-
-				var name = all[y].trim();
-				var is = false;
-
-				if (name.indexOf('|') !== -1) {
-
-					// Multiple versions
-					var keys = name.split('|');
-					for (var i = 0; i < keys.length; i++) {
-						var key = keys[i].trim();
-						if (key && M.$components[key]) {
-							name = key;
-							is = true;
-							break;
-						}
-					}
-
-					if (!is)
-						name = keys[0].trim();
-				}
-
-				var lazy = false;
-
-				if (name.substring(0, 5).toLowerCase() === 'lazy ') {
-					name = name.substring(5);
-					lazy = true;
-				}
-
-				if (!is && name.lastIndexOf('@') === -1) {
-					if (versions[name])
-						name += '@' + versions[name];
-					else if (MD.versioncomponents)
-						name += '@' + MD.versioncomponents;
-				}
-
-				var com = M.$components[name];
-				var lo = null;
-
-				if (lazy && name) {
-					var namea = name.substring(0, name.indexOf('@'));
-					lo = lazycom[name];
-					if (!lo) {
-						if (namea && name !== namea)
-							lazycom[name] = lazycom[namea] = { state: 1 };
-						else
-							lazycom[name] = { state: 1 };
-						DEF.monitor && monitor_method('lazy', 1);
-						continue;
-					}
-					if (lo.state === 1)
-						continue;
-				}
-
-				if (!com) {
-
-					if (!fallback[name]) {
-						fallback[name] = 1;
-						fallback.$++;
-					}
-
-					var x;
-
-					if (meta[2]) {
-						var index = meta[2].indexOf('$url:');
-						if (index !== -1) {
-							var end = meta[2].indexOf(';', index + 5);
-							if (end === -1)
-								end = meta[2].length;
-							x = meta[2].substring(index + 5, end);
-						}
-					}
-
-					if (!x) {
-						!statics['$NE_' + name] && (statics['$NE_' + name] = true);
-						continue;
-					}
-
-					if (C.imports[x] === 1)
-						continue;
-
-					if (C.imports[x] === 2) {
-						!statics['$NE_' + name] && (statics['$NE_' + name] = true);
-						continue;
-					}
-
-					C.imports[x] = 1;
-					C.importing++;
-
-					IMPORT(x, function() {
-						C.importing--;
-						C.imports[x] = 2;
-					});
-
-					continue;
-				}
-
-				if (fallback[name] === 1) {
-					fallback.$--;
-					delete fallback[name];
-				}
-
-				if (statics['$ST_' + com.name]) {
-					remove(el);
-					continue;
-				}
-
-				var obj = new COM(com.name);
-				var parent = dom.parentNode;
-
-				while (true) {
-					if (parent.$com) {
-						var pc = parent.$com;
-						obj.owner = pc;
-						if (pc.$children)
-							pc.$children++;
-						else
-							pc.$children = 1;
-						break;
-					} else if (parent.tagName === T_BODY)
-						break;
-					parent = parent.parentNode;
-					if (parent == null)
-						break;
-				}
-
-				obj.global = com.shared;
-				obj.element = el;
-				obj.dom = dom;
-				obj.version && obj.aclass('jc-v' + obj.version);
-
-				var p = attrcom(el, 'path') || (meta ? meta[1] === TYPE_NULL ? '' : meta[1] : '') || ''; // || obj._id;
-				var tmp = TRANSLATE(attrcom(el, T_CONFIG) || (meta ? meta[2] === TYPE_NULL ? '' : meta[2] : ''));
-
-				if (p.charAt(0) === '%' || (tmp && tmp.indexOf('$noscope:') !== -1))
-					obj.$noscope = true;
-
-				obj.setPath(pathmaker(p, 1, 1), 1);
-
-				if (!obj.id)
-					obj.id = obj._id;
-
-				obj.siblings = all.length > 1;
-				obj.$lazy = lo;
-
-				// @TODO: here can be a problem with multiple components
-				dom.$com = obj;
-
-				if (!obj.$noscope)
-					obj.$noscope = attrcom(el, 'noscope') === T_TRUE;
-
-				var code = obj.path ? obj.path.charCodeAt(0) : 0;
-				if (!obj.$noscope && !obj.$pp) {
-
-					var scope = findscope(dom);
-					var is = false;
-
-					if (obj.path && code !== 33 && code !== 35) {
-						if (scope) {
-
-							is = (obj.path || '').indexOf('?') !== -1;
-
-							if (obj.path === '?') {
-								obj.setPath(scope.path, 2);
-								is = true;
-							} else
-								is && obj.setPath(scope.makepath(obj.path), 2);
-						} else {
-							var pn = dom.parentNode;
-							if (pn && !pn.$noscope)
-								pn.$noscope = true;
-						}
-
-					} else {
-						obj.$$path = EMPTYARRAY;
-						obj.path = '';
-					}
-
-					if (is) {
-						obj.scope = scope;
-						obj.pathscope = scope.path;
-					}
-				}
-
-				if (!DEF.inspectable) {
-					dom.removeAttribute(T_DATA + '-');
-					dom.removeAttribute(T_DATA + T_);
-				}
-
-				if (tmp && tmp.charAt(0) === '%')
-					obj.config = W[tmp.substring(1)] || {};
-				else
-					obj.config = {};
-
-				obj.config.modified = false;
-				obj.config.touched = false;
-				obj.config.invalid = false;
-
-				// Default config
-				com.config && obj.reconfigure(com.config, NOOP);
-				tmp && obj.reconfigure(tmp, NOOP);
-
-				for (var i = 0; i < configs.length; i++) {
-					var con = configs[i];
-					con.fn(obj) && obj.reconfigure(typeof(con.config) === TYPE_FN ? con.config.call(obj) : con.config, NOOP);
-				}
-
-				var at = obj.name.lastIndexOf('@');
-				current_com = obj;
-				com.declaration.call(obj, obj, obj.config, MD.prefixcsscomponents + (at === - 1 ? obj.name : obj.name.substring(0, at)));
-				current_com = null;
-
-				meta[3] && el.attrd('jc-value', meta[3]);
-
-				if (obj.init && !statics[name]) {
-					statics[name] = true;
-					obj.init();
-				}
-
-				instances.push(obj);
-
-				if (typeof(obj.make) === TYPE_S) {
-
-					if (obj.make.indexOf('<') !== -1) {
-						dependencies(com, function(obj, el) {
-							if (obj.prerender)
-								obj.make = obj.prerender(obj.make);
-							el.html(obj.make);
-							init(el, obj);
-						}, obj, el);
-						continue;
-					}
-
-					$.get(makeurl(obj.make), function(data) {
-						dependencies(com, function(obj, el) {
-							if (obj.prerender)
-								data = obj.prerender(data);
-							el.html(data);
-							init(el, obj);
-						}, obj, el);
-					});
-
-					continue;
-				}
-
-				if (com.dependencies) {
-					dependencies(com, function(obj, el) {
-
-						if (obj.make) {
-							var parent = current_com;
-							current_com = obj;
-							obj.make();
-							current_com = parent;
-						}
-
-						init(el, obj);
-					}, obj, el);
-				} else {
-
-					// Because sometimes make doesn't contain the content of the element
-					setTimeout(function(init, el, obj) {
-
-						if (obj.make) {
-							var parent = current_com;
-							current_com = obj;
-							obj.make();
-							current_com = parent;
-						}
-
-						init(el, obj);
-					}, 5, init, el, obj);
-				}
-			}
-
-			// A reference to instances
-			if (instances.length > 0)
-				el.$com = instances.length > 1 ? instances : instances[0];
-
-		}, undefined);
+		if (!MD.webcomponentsonly)
+			crawler(container, compilecomponent, undefined);
 
 		// perform binder
 		rebindbinder();
@@ -4087,6 +3786,288 @@
 		}, nextpending);
 	}
 
+	function compilecomponent(comname, dom, callback) {
+
+		var el = $(dom);
+		var meta = comname.split(REGMETA);
+		if (meta.length) {
+			meta = meta.trim(true);
+			comname = meta[0];
+		} else
+			meta = null;
+
+		has = true;
+
+		// Check singleton instance
+		if (statics['$ST_' + comname]) {
+			console.log('REM', comname);
+			remove(el);
+			return;
+		}
+
+		var instances = [];
+		var all = comname.split(',');
+
+		for (var y = 0; y < all.length; y++) {
+
+			var name = all[y].trim();
+			var is = false;
+
+			if (name.indexOf('|') !== -1) {
+
+				// Multiple versions
+				var keys = name.split('|');
+				for (var i = 0; i < keys.length; i++) {
+					var key = keys[i].trim();
+					if (key && M.$components[key]) {
+						name = key;
+						is = true;
+						break;
+					}
+				}
+
+				if (!is)
+					name = keys[0].trim();
+			}
+
+			var lazy = false;
+
+			if (name.substring(0, 5).toLowerCase() === 'lazy ') {
+				name = name.substring(5);
+				lazy = true;
+			}
+
+			if (!is && name.lastIndexOf('@') === -1) {
+				if (versions[name])
+					name += '@' + versions[name];
+				else if (MD.versioncomponents)
+					name += '@' + MD.versioncomponents;
+			}
+
+			var com = M.$components[name];
+			var lo = null;
+
+			if (lazy && name) {
+				var namea = name.substring(0, name.indexOf('@'));
+				lo = lazycom[name];
+				if (!lo) {
+					if (namea && name !== namea)
+						lazycom[name] = lazycom[namea] = { state: 1 };
+					else
+						lazycom[name] = { state: 1 };
+					DEF.monitor && monitor_method('lazy', 1);
+					continue;
+				}
+				if (lo.state === 1)
+					continue;
+			}
+
+			if (!com) {
+
+				if (!fallback[name]) {
+					fallback[name] = 1;
+					fallback.$++;
+				}
+
+				var x;
+
+				if (meta[2]) {
+					var index = meta[2].indexOf('$url:');
+					if (index !== -1) {
+						var end = meta[2].indexOf(';', index + 5);
+						if (end === -1)
+							end = meta[2].length;
+						x = meta[2].substring(index + 5, end);
+					}
+				}
+
+				if (!x) {
+					!statics['$NE_' + name] && (statics['$NE_' + name] = true);
+					continue;
+				}
+
+				if (C.imports[x] === 1)
+					continue;
+
+				if (C.imports[x] === 2) {
+					!statics['$NE_' + name] && (statics['$NE_' + name] = true);
+					continue;
+				}
+
+				C.imports[x] = 1;
+				C.importing++;
+
+				IMPORT(x, function() {
+					C.importing--;
+					C.imports[x] = 2;
+				});
+
+				continue;
+			}
+
+			if (fallback[name] === 1) {
+				fallback.$--;
+				delete fallback[name];
+			}
+
+			if (statics['$ST_' + com.name]) {
+				remove(el);
+				continue;
+			}
+
+			var obj = new COM(com.name);
+			var parent = dom.parentNode;
+
+			while (true) {
+				if (parent.$com) {
+					var pc = parent.$com;
+					obj.owner = pc;
+					if (pc.$children)
+						pc.$children++;
+					else
+						pc.$children = 1;
+					break;
+				} else if (parent.tagName === T_BODY)
+					break;
+				parent = parent.parentNode;
+				if (parent == null)
+					break;
+			}
+
+			obj.global = com.shared;
+			obj.element = el;
+			obj.dom = dom;
+			obj.version && obj.aclass('jc-v' + obj.version);
+
+			var p = attrcom(el, T_PATH) || (meta ? meta[1] === TYPE_NULL ? '' : meta[1] : '') || ''; // || obj._id;
+			var tmp = TRANSLATE(attrcom(el, T_CONFIG) || (meta ? meta[2] === TYPE_NULL ? '' : meta[2] : ''));
+
+			if (p.charAt(0) === '%' || (tmp && tmp.indexOf('$noscope:') !== -1))
+				obj.$noscope = true;
+
+			obj.setPath(pathmaker(p, 1, 1), 1);
+
+			if (!obj.id)
+				obj.id = obj._id;
+
+			obj.siblings = all.length > 1;
+			obj.$lazy = lo;
+
+			// @TODO: here can be a problem with multiple components
+			dom.$com = obj;
+
+			if (!obj.$noscope)
+				obj.$noscope = attrcom(el, 'noscope') === T_TRUE;
+
+			var code = obj.path ? obj.path.charCodeAt(0) : 0;
+			if (!obj.$noscope && !obj.$pp) {
+
+				var scope = findscope(dom);
+				var is = false;
+
+				if (obj.path && code !== 33 && code !== 35) {
+					if (scope) {
+
+						is = (obj.path || '').indexOf('?') !== -1;
+
+						if (obj.path === '?') {
+							obj.setPath(scope.path, 2);
+							is = true;
+						} else
+							is && obj.setPath(scope.makepath(obj.path), 2);
+					} else {
+						var pn = dom.parentNode;
+						if (pn && !pn.$noscope)
+							pn.$noscope = true;
+					}
+
+				} else {
+					obj.$$path = EMPTYARRAY;
+					obj.path = '';
+				}
+
+				if (is) {
+					obj.scope = scope;
+					obj.pathscope = scope.path;
+				}
+			}
+
+			if (!DEF.inspectable) {
+				dom.removeAttribute(T_DATA + '-');
+				dom.removeAttribute(T_DATA + T_);
+			}
+
+			if (tmp && tmp.charAt(0) === '%')
+				obj.config = W[tmp.substring(1)] || {};
+			else
+				obj.config = {};
+
+			obj.config.modified = false;
+			obj.config.touched = false;
+			obj.config.invalid = false;
+
+			// Default config
+			com.config && obj.reconfigure(com.config, NOOP);
+			tmp && obj.reconfigure(tmp, NOOP);
+
+			for (var i = 0; i < configs.length; i++) {
+				var con = configs[i];
+				con.fn(obj) && obj.reconfigure(typeof(con.config) === TYPE_FN ? con.config.call(obj) : con.config, NOOP);
+			}
+
+			var at = obj.name.lastIndexOf('@');
+			current_com = obj;
+			com.declaration.call(obj, obj, obj.config, MD.prefixcsscomponents + (at === - 1 ? obj.name : obj.name.substring(0, at)));
+			current_com = null;
+
+			meta[3] && el.attrd('jc-value', meta[3]);
+
+			if (obj.init && !statics[name]) {
+				statics[name] = true;
+				obj.init();
+			}
+
+			instances.push(obj);
+
+			if (dom.tagName === 'UI-COMPONENT') {
+				dom.$initialized = true;
+				dom.config = obj.config;
+			}
+
+			if (com.dependencies) {
+				dependencies(com, function(obj, el) {
+
+					if (obj.make) {
+						var parent = current_com;
+						current_com = obj;
+						obj.make();
+						current_com = parent;
+					}
+
+					init(el, obj);
+				}, obj, el);
+			} else {
+
+				// Because sometimes make doesn't contain the content of the element
+				setTimeout(function(init, el, obj) {
+
+					if (obj.make) {
+						var parent = current_com;
+						current_com = obj;
+						obj.make();
+						current_com = parent;
+					}
+
+					init(el, obj);
+				}, 5, init, el, obj);
+			}
+		}
+
+		// A reference to instances
+		if (instances.length > 0)
+			el.$com = instances.length > 1 ? instances : instances[0];
+	}
+
 	function findscope(el) {
 
 		// OLD: el = el.parentNode;
@@ -4100,7 +4081,7 @@
 			if (el.$scopedata)
 				return el.$scopedata;
 
-			var path = el.tagName === 'UI-PLUGIN' ? el.getAttribute('path') : (el.getAttribute ? (el.getAttribute(ATTRPLUGIN) || el.getAttribute(PLUGINNAME) || el.getAttribute(ATTRSCOPE2) || el.getAttribute(SCOPENAME)) : null);
+			var path = el.tagName === 'UI-PLUGIN' ? el.getAttribute(T_PATH) : (el.getAttribute ? (el.getAttribute(ATTRPLUGIN) || el.getAttribute(PLUGINNAME) || el.getAttribute(ATTRSCOPE2) || el.getAttribute(SCOPENAME)) : null);
 			if (path) {
 
 				if (!DEF.inspectable) {
@@ -4248,7 +4229,12 @@
 	function download() {
 
 		var arr = [];
-		var items = $('[' + T_DATA + T_IMPORT + ']');
+		var items = waitforimport.splice(0);
+
+		var els = MD.webcomponentsonly ? EMPTYARRAY : document.querySelectorAll('[' + T_DATA + T_IMPORT + ']');
+
+		for (var i = 0; i < els.length; i++)
+			items.push(els[i]);
 
 		for (var i = 0; i < items.length; i++) {
 
@@ -4256,7 +4242,7 @@
 			if (!t.$downloaded) {
 
 				var el = $(t);
-				var data = el.attrd(T_IMPORT).parseConfig();
+				var data = (el.attrd(T_IMPORT) || el.attr(T_CONFIG) || '').parseConfig();
 
 				t.$downloaded = 1;
 
@@ -4652,12 +4638,18 @@
 			setTimeout(downloadfallback, 1000);
 		} else {
 			setTimeout2('$fallback', function() {
+				var pending = waitfordownload.splice(0);
 				fallbackpending.splice(0).wait(function(item, next) {
-					if (M.$components[item])
+					if (M.$components[item]) {
 						next();
-					else {
+					} else {
 						warn('Downloading: ' + item);
 						IMPORTCACHE(MD.fallback.format(item), MD.fallbackcache, next);
+					}
+				}, function() {
+					for (var el of pending) {
+						el.$compile();
+						delete el.$compile;
 					}
 				}, 3);
 			}, 100);
@@ -5684,6 +5676,13 @@
 
 		if (tmp.invalid != config.invalid)
 			update.push('invalid');
+
+		var clsl = self.dom.classList;
+
+		clsl.toggle('ui-modified', config.modified == true);
+		clsl.toggle('ui-touched', config.touched == true);
+		clsl.toggle('ui-disabled', config.disabled == true);
+		clsl.toggle('ui-invalid', config.invalid == true && (config.modified == true || config.touched == true));
 
 		if (update.length) {
 			for (var key of update) {
@@ -7215,7 +7214,7 @@
 						return;
 					case '.':
 						// path
-						prop = 'path';
+						prop = T_PATH;
 						break;
 					case '#':
 						// id
@@ -10792,24 +10791,26 @@
 
 	var $rebinder;
 
+	function rebindbinderexec() {
+		var arr = bindersnew.splice(0);
+		var n = 'binder';
+		for (var i = 0; i < arr.length; i++) {
+			var item = arr[i];
+			if (!item.$init) {
+				var curr_scope = current_scope;
+				if (item.com)
+					item.exec(item.com.data(item.path), item.path);
+				else
+					item.exec(GET(item.path), item.path);
+				current_scope = curr_scope;
+				events[n] && EMIT(n, item);
+			}
+		}
+	}
+
 	function rebindbinder() {
 		$rebinder && clearTimeout($rebinder);
-		$rebinder = setTimeout(function() {
-			var arr = bindersnew.splice(0);
-			var n = 'binder';
-			for (var i = 0; i < arr.length; i++) {
-				var item = arr[i];
-				if (!item.$init) {
-					var curr_scope = current_scope;
-					if (item.com)
-						item.exec(item.com.data(item.path), item.path);
-					else
-						item.exec(GET(item.path), item.path);
-					current_scope = curr_scope;
-					events[n] && EMIT(n, item);
-				}
-			}
-		}, 50);
+		$rebinder = setTimeout(rebindbinderexec, 50);
 	}
 
 	function rebinddecode(val) {
@@ -10829,6 +10830,7 @@
 	}
 
 	function parsebinder(el, b, r) {
+
 		var meta = b.split(REGMETA);
 		if (meta.indexOf('|') !== -1) {
 			if (!r) {
@@ -10956,7 +10958,7 @@
 						var vbeg = v.indexOf('(');
 						var vfn = vbeg == -1 ? v : v.substring(0, vbeg);
 						var vkey = ATTRDATA + GUID(5);
-						v = new Function('value', 'path', 'el', 'var fn=el[0].' + vkey + ';if(!fn){var _s=el.scope();if(_s){el[0].' + vkey + '=fn=GET(_s.makepath(\'' + vfn + '\'))}}if(fn)return fn' + (vbeg == -1 ? '(value,path,el)' : v.substring(vbeg)));
+						v = new Function('value', T_PATH, 'el', 'var fn=el[0].' + vkey + ';if(!fn){var _s=el.scope();if(_s){el[0].' + vkey + '=fn=GET(_s.makepath(\'' + vfn + '\'))}}if(fn)return fn' + (vbeg == -1 ? '(value,path,el)' : v.substring(vbeg)));
 					}
 
 					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'tracktype', T_RESIZE, 'delay', 'macro', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'helper', 'helpers', 'currency', 'empty', 'changes', 'ready', 'once') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
@@ -11103,7 +11105,7 @@
 								k = 'val';
 								backup = true;
 								break;
-							case 'default':
+							case T_DEFAULT:
 								k = 'def';
 								break;
 							case 'delay':
@@ -11199,7 +11201,7 @@
 
 								r && !ns && scr.remove();
 								break;
-							case 'path':
+							case T_PATH:
 								k = 'setpath';
 								break;
 						}
@@ -11796,6 +11798,7 @@
 					THROWERR(e);
 				}
 			}
+
 			item.template.$compile && tmp && W.COMPILE(el);
 		}
 
@@ -13742,19 +13745,18 @@
 		}
 	}
 
-	class HTMLBind extends HTMLElement {
+	function htmlbindparse(t) {
+		var config = t.getAttribute(T_CONFIG);
+		var data = t.getAttribute(T_PATH) + (config ? ('__' + config) : '');
+		t.ui = parsebinder(t, data);
+		t.ui.$new = 1;
+		t.ui.$type = 'binder';
+	}
 
+	class HTMLBind extends HTMLElement {
 		constructor() {
 			super();
-		}
-
-		connectedCallback() {
-			var t = this;
-			var config = t.getAttribute('config');
-			var data = t.getAttribute('path') + (config ? ('__' + config) : '');
-			t.ui = parsebinder(t, data);
-			t.ui.$new = 1;
-			t.ui.$type = 'binder';
+			setTimeout(htmlbindparse, 1, this);
 		}
 	}
 
@@ -13785,6 +13787,9 @@
 		//   |-- this.attr(name, [value]);
 		//   |-- this.attrd(name, [value]);
 		//   |-- this.css(name, [value]);
+		//   |-- this.on();
+		//   |-- this.off();
+		//   |-- this.datasource();
 
 		constructor(el) {
 			var t = this;
@@ -13810,7 +13815,7 @@
 			setTimeout(function(t) {
 
 				var value = t.get();
-				var tmp = el.getAttribute('default');
+				var tmp = el.getAttribute(T_DEFAULT);
 				if (tmp) {
 					t.$default = new Function('return ' + tmp);
 					if (value === undefined && t.path) {
@@ -13980,7 +13985,7 @@
 		reconfigure(value, init, noemit) {
 			var t = this;
 			if (value == null)
-				value = t.node.getAttribute('config');
+				value = t.node.getAttribute(T_CONFIG);
 			t.$reconfigure(value, null, init, noemit);
 			t.$reconfigure2();
 		}
@@ -13988,7 +13993,7 @@
 		remap(path) {
 			var t = this;
 			if (path == null)
-				path = t.node.getAttribute('path');
+				path = t.node.getAttribute(T_PATH);
 			t.plugin = findscope(t.node);
 			t.setPath(t.plugin ? t.plugin.makepath(path) : path);
 		}
@@ -14039,9 +14044,14 @@
 					t.watch(path, callback, init !== false);
 			} else
 				t.$datasource = null;
-
 		}
+	}
 
+	function htmlcomponentparse(t) {
+		t.$initialized = false;
+		t.ui = new UIComponent(t);
+		t.ui.init();
+		setTimeout(() => this.$initialized = true, 2);
 	}
 
 	class HTMLComponent extends HTMLElement {
@@ -14049,18 +14059,11 @@
 		// Implement status
 		constructor() {
 			super();
+			setTimeout(htmlcomponentparse, 1, this);
 		}
 
 		static get observedAttributes() {
-			return ['path', 'config'];
-		}
-
-		connectedCallback() {
-			var t = this;
-			t.$initialized = false;
-			t.ui = new UIComponent(t);
-			t.ui.init();
-			setTimeout(() => this.$initialized = true, 2);
+			return [T_PATH, T_CONFIG];
 		}
 
 		modify(value, type) {
@@ -14078,18 +14081,86 @@
 				return;
 
 			switch (property) {
-				case 'path':
+				case T_PATH:
 					t.ui.remap(nvalue);
 					break;
-				case 'config':
+				case T_CONFIG:
 					t.ui.reconfigure(nvalue);
 					break;
 			}
 		}
 	}
 
+	function htmlcomponentparse2(t) {
+		var n = t.getAttribute('name') || '';
+
+		if (!n)
+			return;
+
+		var p = t.getAttribute(T_PATH) || 'null';
+		var c = t.getAttribute(T_CONFIG) || '';
+		var d = t.getAttribute(T_DEFAULT) || '';
+		var s = '__';
+
+		var meta = n + s + p + s + c + (d ? (s + d) : '');
+
+		compilecomponent(meta, t);
+
+		if (!t.$com) {
+			t.$compile = () => compilecomponent(meta, t);
+			waitfordownload.push(t);
+		}
+	}
+
 	customElements.define('ui-plugin', HTMLPlugin);
 	customElements.define('ui-bind', HTMLBind);
+	customElements.define('ui-component', class extends HTMLElement {
+
+		// Implement status
+		constructor() {
+			super();
+			setTimeout(htmlcomponentparse2, 1, this);
+		}
+
+		static get observedAttributes() {
+			return [T_CONFIG];
+		}
+
+		reconfigure(value, init, noemit) {
+			var t = this;
+			if (value == null)
+				value = t.getAttribute(T_CONFIG);
+			t.$com.reconfigure(value, null, init, noemit);
+		}
+
+		attributeChangedCallback(property, ovalue, nvalue) {
+			var t = this;
+
+			if (!this.$initialized)
+				return;
+
+			switch (property) {
+				case T_CONFIG:
+					t.$com.reconfigure(nvalue);
+					break;
+			}
+		}
+
+	});
+
+	function importparse(t) {
+		waitforimport.push(t);
+		W.COMPILE();
+	}
+
+	customElements.define('ui-import', class extends HTMLElement {
+
+		constructor() {
+			super();
+			setTimeout(importparse, 1, this);
+		}
+
+	});
 
 	W.HTMLPlugin = HTMLPlugin;
 	W.HTMLBind = HTMLBind;
