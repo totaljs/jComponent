@@ -492,7 +492,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.078;
+	M.version = 19.081;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -13758,7 +13758,7 @@
 
 	function htmlbindparse(t) {
 		var config = t.getAttribute(T_CONFIG);
-		var data = t.getAttribute(T_PATH) + (config ? ('__' + config) : '');
+		var data = t.getAttribute(T_PATH) + (config ? ('__' + config.replace(/\;/g, '__')) : '');
 		t.ui = parsebinder(t, data);
 		t.ui.$new = 1;
 		t.ui.$type = 'binder';
