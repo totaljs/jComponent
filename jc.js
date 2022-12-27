@@ -3768,7 +3768,7 @@
 		var has = false;
 
 		if (!MD.webcomponentsonly)
-			crawler(container, compilecomponent, undefined);
+			crawler(container, compilecomponent);
 
 		// perform binder
 		rebindbinder();
@@ -3786,7 +3786,7 @@
 		}, nextpending);
 	}
 
-	function compilecomponent(comname, dom, callback) {
+	function compilecomponent(comname, dom) {
 
 		var el = $(dom);
 		var meta = comname.split(REGMETA);
@@ -3800,7 +3800,6 @@
 
 		// Check singleton instance
 		if (statics['$ST_' + comname]) {
-			console.log('REM', comname);
 			remove(el);
 			return;
 		}
@@ -3851,10 +3850,19 @@
 				var namea = name.substring(0, name.indexOf('@'));
 				lo = lazycom[name];
 				if (!lo) {
+
+					var obj = {};
+					obj.state = 1;
+					obj.nodes = [];
+
 					if (namea && name !== namea)
-						lazycom[name] = lazycom[namea] = { state: 1 };
+						lazycom[name] = lazycom[namea] = obj;
 					else
-						lazycom[name] = { state: 1 };
+						lazycom[name] = obj;
+
+					if (dom.$jcwebcomponent)
+						obj.nodes.push(dom);
+
 					DEF.monitor && monitor_method('lazy', 1);
 					continue;
 				}
@@ -4030,7 +4038,7 @@
 			instances.push(obj);
 
 			if (dom.tagName === 'UI-COMPONENT') {
-				dom.$initialized = true;
+				dom.$jcinitialized = true;
 				dom.config = obj.config;
 			}
 
@@ -7443,6 +7451,7 @@
 		var myselector;
 		var scope = current_scope;
 		var cl;
+		var lazy;
 
 		for (var i = beg; i < arguments.length; i++)
 			arg.push(arguments[i]);
@@ -7470,17 +7479,20 @@
 				myselector = myselector.substring(0, tmp);
 			}
 
-			if (lazycom[myselector] && lazycom[myselector].state !== 3) {
-
-				if (lazycom[myselector].state === 1) {
-
+			lazy = lazycom[myselector];
+			if (lazy && lazy.state !== 3) {
+				if (lazy.state === 1) {
 					if (is)
 						return;
-
-					lazycom[myselector].state = 2;
+					lazy.state = 2;
 					events.lazy && EMIT('lazy', myselector, true);
 					warn('Lazy load: ' + myselector);
 					DEF.monitor && monitor_method('lazy', 2);
+					if (lazy.nodes && lazy.nodes.length) {
+						for (var m of lazy.nodes)
+							htmlcomponentparse2(m);
+						delete lazy.nodes;
+					}
 					compile();
 				}
 
@@ -7541,14 +7553,22 @@
 				is = true;
 			}
 
-			if (lazycom[myselector] && lazycom[myselector].state !== 3) {
-				if (lazycom[myselector].state === 1) {
+			lazy = lazycom[myselector];
+			if (lazy && lazy.state !== 3) {
+				if (lazy.state === 1) {
 					if (is)
 						return;
-					lazycom[myselector].state = 2;
+					lazy.state = 2;
 					events.lazy && EMIT('lazy', myselector, true);
 					DEF.monitor && monitor_method('lazy', 2);
 					warn('Lazy load: ' + myselector);
+
+					if (lazy.nodes && lazy.nodes.length) {
+						for (var m of lazy.nodes)
+							htmlcomponentparse2(m);
+						delete lazy.nodes;
+					}
+
 					compile();
 				}
 
@@ -8213,11 +8233,17 @@
 		if (isWaiting) {
 			WAIT(function() {
 				var val = FIND(value, many, noCache);
-				if (lazycom[value] && lazycom[value].state === 1) {
-					lazycom[value].state = 2;
+				var lazy = lazycom[value];
+				if (lazy && lazy.state === 1) {
+					lazy.state = 2;
 					events.lazy && EMIT('lazy', value, true);
 					DEF.monitor && monitor_method('lazy', 2);
 					warn('Lazy load: ' + value);
+					if (lazy.nodes && lazy.nodes.length) {
+						for (var m of lazy.nodes)
+							htmlcomponentparse2(m);
+						delete lazy.nodes;
+					}
 					compile();
 				}
 				return val instanceof Array ? val.length > 0 : !!val;
@@ -9965,6 +9991,7 @@
 			var isget;
 			var tmp;
 			var cl;
+			var lazy;
 
 			for (var i = beg; i < arguments.length; i++)
 				arg.push(arguments[i]);
@@ -9991,13 +10018,18 @@
 				if (tmp.charAt(0) === '^')
 					myselector = myselector.substring(1).trim();
 
-				if (lazycom[myselector] && lazycom[myselector].state !== 3) {
-
-					if (lazycom[myselector].state === 1) {
-						lazycom[myselector].state = 2;
+				lazy = lazycom[myselector];
+				if (lazy && lazy.state !== 3) {
+					if (lazy.state === 1) {
+						lazy.state = 2;
 						events.lazy && EMIT('lazy', myselector, true);
 						DEF.monitor && monitor_method('lazy', 2);
 						warn('Lazy load: ' + myselector);
+						if (lazy.nodes && lazy.nodes.length) {
+							for (var m of lazy.nodes)
+								htmlcomponentparse2(m);
+							delete lazy.nodes;
+						}
 						compile();
 					}
 
@@ -10044,13 +10076,18 @@
 				if (tmp.charAt(0) === '^')
 					myselector = myselector.substring(1).trim();
 
-				if (lazycom[myselector] && lazycom[myselector].state !== 3) {
-
-					if (lazycom[myselector].state === 1) {
-						lazycom[myselector].state = 2;
+				lazy = lazycom[myselector];
+				if (lazy && lazy.state !== 3) {
+					if (lazy.state === 1) {
+						lazy.state = 2;
 						events.lazy && EMIT('lazy', myselector, true);
 						DEF.monitor && monitor_method('lazy', 2);
 						warn('Lazy load: ' + myselector);
+						if (lazy.nodes && lazy.nodes.length) {
+							for (var m of lazy.nodes)
+								htmlcomponentparse2(m);
+							delete lazy.nodes;
+						}
 						compile();
 					}
 
@@ -14059,10 +14096,11 @@
 	}
 
 	function htmlcomponentparse(t) {
-		t.$initialized = false;
+		t.$jcwebcomponent = true;
+		t.$jcinitialized = false;
 		t.ui = new UIComponent(t);
 		t.ui.init();
-		setTimeout(() => this.$initialized = true, 2);
+		setTimeout(() => this.$jcinitialized = true, 2);
 	}
 
 	class HTMLComponent extends HTMLElement {
@@ -14088,7 +14126,7 @@
 		attributeChangedCallback(property, ovalue, nvalue) {
 			var t = this;
 
-			if (!this.$initialized)
+			if (!t.$jcinitialized)
 				return;
 
 			switch (property) {
@@ -14114,6 +14152,8 @@
 		var s = '__';
 
 		var meta = n + s + p + s + c + (d ? (s + d) : '');
+
+		t.$jcwebcomponent = true;
 
 		compilecomponent(meta, t);
 
