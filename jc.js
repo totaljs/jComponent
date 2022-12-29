@@ -426,7 +426,6 @@
 		delete MD.secret;
 	};
 
-	MD.inspectable = true;
 	MD.repeatfocus = true;
 	MD.monitor = false;
 	MD.scope = W;
@@ -492,7 +491,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.082;
+	M.version = 19.083;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4000,11 +3999,6 @@
 				}
 			}
 
-			if (!DEF.inspectable) {
-				dom.removeAttribute(T_DATA + '-');
-				dom.removeAttribute(T_DATA + T_);
-			}
-
 			if (tmp && tmp.charAt(0) === '%')
 				obj.config = W[tmp.substring(1)] || {};
 			else
@@ -4105,13 +4099,6 @@
 				path = (el.getAttribute ? (el.getAttribute(ATTRPLUGIN) || el.getAttribute(PLUGINNAME) || el.getAttribute(ATTRSCOPE2) || el.getAttribute(SCOPENAME)) : null);
 
 			if (path) {
-
-				if (!DEF.inspectable) {
-					el.removeAttribute(ATTRSCOPE2, '');
-					el.removeAttribute(SCOPENAME, '');
-					el.removeAttribute(ATTRPLUGIN, '');
-					el.removeAttribute(PLUGINNAME, '');
-				}
 
 				var meta = path.split(REGMETA);
 				if (meta.length > 1)
@@ -6119,6 +6106,9 @@
 			scope = prev.attrd(n);
 		}
 
+		if (!scope)
+			scope = prev.attr(n);
+
 		var data = prev[0].$scopedata;
 
 		prev.rattrd(ATTRDATA, '-', T_, T_COM);
@@ -6128,13 +6118,17 @@
 
 		if (remove)
 			prev.off().remove();
-		else if (!DEF.inspectable)
+		else
 			self.attrd('jc-replaced', T_TRUE);
 
 		self.element = $(el);
 
-		if (scope)
-			self.element.attrd(n, scope);
+		if (scope) {
+			if (self.element[0].tagName.substring(0, 3) === 'UI-')
+				self.element.attr(n, scope);
+			else
+				self.element.attrd(n, scope);
+		}
 
 		self.dom = self.element[0];
 		self.dom.$com = self;
@@ -6145,11 +6139,6 @@
 			var ctx = PLUGINS[data.path];
 			if (ctx)
 				ctx.element = self.element;
-		}
-
-		if (!DEF.inspectable) {
-			self.attrd(T_, self.name);
-			scope && self.attrd(n, scope);
 		}
 
 		self.siblings = false;
@@ -11515,9 +11504,6 @@
 		}
 
 		obj.$init = 0;
-
-		if (!DEF.inspectable)
-			el.removeAttribute(T_DATA + T_BIND);
 
 		if (!obj.virtual) {
 			var tmp = obj.el.filter(ATTRCOM);
