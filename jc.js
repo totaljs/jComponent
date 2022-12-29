@@ -492,7 +492,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.081;
+	M.version = 19.082;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4090,7 +4090,8 @@
 				return el.$scopedata;
 
 			var path;
-			if (el.tagName === 'UI-PLUGIN') {
+			var tag = el.tagName;
+			if (tag === 'UI-PLUGIN') {
 				path = el.getAttribute(T_PATH) || '';
 				if (path.indexOf('__') === -1) {
 					path += '__' + el.getAttribute(T_CONFIG) || 'null';
@@ -4098,7 +4099,9 @@
 					if (tmp)
 						path += '__' + tmp;
 				}
-			} else
+			} else if (tag === 'UI-COMPONENT' || tag === 'UI-BIND' || tag === 'UI-IMPORT') // e.g. <ui-component name="box" plugin=""
+				path = el.getAttribute(PLUGINNAME);
+			else
 				path = (el.getAttribute ? (el.getAttribute(ATTRPLUGIN) || el.getAttribute(PLUGINNAME) || el.getAttribute(ATTRSCOPE2) || el.getAttribute(SCOPENAME)) : null);
 
 			if (path) {
@@ -12084,7 +12087,7 @@
 				ext.call(t, t);
 		}
 
-		events.plugin && EMIT('plugin', t);
+		events.plugin && EMIT(PLUGINNAME, t);
 		DEF.monitor && monitor_method('plugins', fn ? 1 : 0);
 		W.PLUGINS[t.name] = t;
 		current_scope = null;
@@ -13789,7 +13792,7 @@
 	class HTMLPlugin extends HTMLElement {
 		constructor() {
 			super();
-			this.ui = { $new: 1, $type: 'plugin' };
+			this.ui = { $new: 1, $type: PLUGINNAME };
 		}
 	}
 
@@ -14141,6 +14144,7 @@
 	}
 
 	function htmlcomponentparse2(t) {
+
 		var n = t.getAttribute('name') || '';
 
 		if (!n)
@@ -14152,7 +14156,6 @@
 		var s = '__';
 
 		var meta = n + s + p + s + c + (d ? (s + d) : '');
-
 		t.$jcwebcomponent = true;
 
 		compilecomponent(meta, t);
