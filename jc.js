@@ -491,7 +491,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.083;
+	M.version = 19.084;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4313,7 +4313,7 @@
 					response = TRANSLATE(response).VARIABLES().replace(/~CDN~/g, DEF.cdn);
 
 					if (item.path)
-						response = response.replace(/~PATH~/g, item.path);
+						response = response.replace(/~PATH~/g, item.path).replace('PLUGIN(function(', 'PLUGIN(\'{0}\', function('.format(item.path));
 
 					if (item.id)
 						response = response.replace(/~ID~/g, item.id);
