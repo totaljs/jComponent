@@ -491,7 +491,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.084;
+	M.version = 19.085;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4267,6 +4267,8 @@
 
 				// Unique
 				var url = data.url;
+				if (!url)
+					url = el.attr(T_PATH);
 
 				var once = url.substring(0, 5).toLowerCase() === 'once ';
 				if (url.charAt(0) === '!' || once) {
@@ -10830,6 +10832,7 @@
 	}
 
 	var $rebinder;
+	var $reimport;
 
 	function rebindbinderexec() {
 		var arr = bindersnew.splice(0);
@@ -10850,7 +10853,12 @@
 
 	function rebindbinder() {
 		$rebinder && clearTimeout($rebinder);
-		$rebinder = setTimeout(rebindbinderexec, 50);
+		$rebinder = setTimeout(rebindbinderexec, 15);
+	}
+
+	function reimport() {
+		$reimport && clearTimeout($reimport);
+		$reimport = setTimeout(download, 15);
 	}
 
 	function rebinddecode(val) {
@@ -13788,6 +13796,7 @@
 		t.ui = parsebinder(t, data);
 		t.ui.$new = 1;
 		t.ui.$type = 'binder';
+		rebindbinder();
 	}
 
 	class HTMLBind extends HTMLElement {
@@ -14190,7 +14199,7 @@
 
 	function importparse(t) {
 		waitforimport.push(t);
-		W.COMPILE();
+		reimport();
 	}
 
 	customElements.define('ui-import', class extends HTMLElement {
