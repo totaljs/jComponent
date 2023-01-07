@@ -491,7 +491,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.085;
+	M.version = 19.086;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7697,6 +7697,7 @@
 		path = makeandexecflags(path);
 
 		// Event
+		// #
 		if (c === 35) {
 			p = path.substring(1);
 			if (wait) {
@@ -7706,13 +7707,16 @@
 			return;
 		}
 
-		if (c === 45 && path.substring(0, 3) === T_COM) {
-			var args = [path.substring(3).trim(), arg[0], arg[1], arg[2], arg[3], arg[4]];
+		// -
+		if (c === 45) {
+			var is = path.substring(0, 3) === T_COM; // backward compatibility
+			var args = [path.substring(is ? 3 : 1).trim(), arg[0], arg[1], arg[2], arg[3], arg[4]];
 			wait && args.unshift(wait);
 			CL(cl, () => SETTER.apply(W, args));
 			return;
 		}
 
+		// &
 		if (c === 38) {
 			CL(cl, () => CMD.call(ctx, path.substring(1), arg[0], arg[1], arg[2], arg[3], arg[4]));
 			return;
