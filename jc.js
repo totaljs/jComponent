@@ -7654,10 +7654,13 @@
 
 	W.ADAPT = function(path, id, text) {
 
+		if (!text || typeof(text) !== TYPE_S)
+			return text;
+
 		text = TRANSLATE(text).VARIABLES().replace(/~CDN~/g, DEF.cdn);
 
 		if (path) {
-			text = text.replace(/~PATH~/g, path).replace(/<ui-plugin.*?>/, function(text) {
+			text = text.replace(/~PATH~/g, path).replace(/<ui-plugin.*?>/g, function(text) {
 				return text.indexOf('path=') === -1 ? (text.substring(0, 10) + ' path="' + path + '"' + text.substring(10)) : text;
 			}).replace('PLUGIN(function(', 'PLUGIN(\'{0}\', function('.format(path));
 		}
