@@ -491,7 +491,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.086;
+	M.version = 19.087;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1592,7 +1592,7 @@
 				}
 
 				url = '$import' + url;
-				response = TRANSLATE(response).VARIABLES().replace(/~CDN~/g, DEF.cdn);
+				response = ADAPT(null, null, response);
 
 				if (preparator)
 					response = preparator(response, output);
@@ -4310,17 +4310,8 @@
 
 				current_element = item.element[0];
 
-				if (typeof(response) === TYPE_S) {
-
-					response = TRANSLATE(response).VARIABLES().replace(/~CDN~/g, DEF.cdn);
-
-					if (item.path)
-						response = response.replace(/~PATH~/g, item.path).replace('PLUGIN(function(', 'PLUGIN(\'{0}\', function('.format(item.path));
-
-					if (item.id)
-						response = response.replace(/~ID~/g, item.id);
-
-				}
+				if (typeof(response) === TYPE_S)
+					response = ADAPT(item.path, item.id, response);
 
 				if (!item.reevaluate && statics[key])
 					response = removescripts(response);
@@ -7660,6 +7651,22 @@
 		execsetterflags.push(text.substring(2));
 		return '';
 	}
+
+	W.ADAPT = function(path, id, text) {
+
+		text = TRANSLATE(text).VARIABLES().replace(/~CDN~/g, DEF.cdn);
+
+		if (path) {
+			text = text.replace(/~PATH~/g, path).replace(/<ui-plugin.*?>/, function(text) {
+				return text.indexOf('path=') === -1 ? (text.substring(0, 10) + ' path="' + path + '"' + text.substring(10)) : text;
+			}).replace('PLUGIN(function(', 'PLUGIN(\'{0}\', function('.format(path));
+		}
+
+		if (id)
+			text = text.replace(/~ID~/g, id);
+
+		return text;
+	};
 
 	W.inDOM = inDOM;
 	W.EXE = W.EXEC = function(path) {
