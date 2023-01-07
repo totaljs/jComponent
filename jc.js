@@ -177,7 +177,6 @@
 
 	W.TRANSLATE = function(str) {
 
-
 		if (!str || typeof(str) !== 'string' || str.indexOf('@(') === -1)
 			return str;
 
@@ -420,6 +419,7 @@
 	MD.inspectable = true;
 	MD.repeatfocus = true;
 	MD.monitor = false;
+	MD.cdn = '';
 	MD.scope = W;
 	MD.delay = 555;
 	MD.delaykeypress = 200;
@@ -482,7 +482,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 18.275;
+	M.version = 18.276;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1657,7 +1657,7 @@
 				}
 
 				url = '$import' + url;
-				response = TRANSLATE(response);
+				response = ADAPT(null, null, response);
 
 				if (preparator)
 					response = preparator(response, output);
@@ -4272,9 +4272,7 @@
 				key = '$import' + key;
 
 				current_element = item.element[0];
-
-				if (response)
-					response = TRANSLATE(response);
+				response = ADAPT(item.path, item.id, response);
 
 				if (!data.reevaluate && statics[key])
 					response = removescripts(response);
@@ -4283,9 +4281,6 @@
 
 				statics[key] = true;
 				item.toggle && item.toggle.length && item.toggle[0] && toggles.push(item);
-
-				if (item.path)
-					response = response.replace(/~PATH~/g, item.path);
 
 				if (item.make) {
 					var fn = null;
@@ -7571,6 +7566,22 @@
 		execsetterflags.push(text.substring(2));
 		return '';
 	}
+
+	W.ADAPT = function(path, id, text) {
+
+		if (!text || typeof(text) !== TYPE_S)
+			return text;
+
+		text = TRANSLATE(text).replace(/~CDN~/g, DEF.cdn);
+
+		if (path)
+			text = text.replace(/~PATH~/g, path).replace('PLUGIN(function(', 'PLUGIN(\'{0}\', function('.format(path));
+
+		if (id)
+			text = text.replace(/~ID~/g, id);
+
+		return text;
+	};
 
 	W.EXE = W.EXEC = function(path) {
 
