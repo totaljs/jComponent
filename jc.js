@@ -491,7 +491,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.087;
+	M.version = 19.088;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3524,8 +3524,8 @@
 			var el = arr[i];
 			if (el) {
 
-				if (!el.tagName)
-					continue;
+				if (!el.tagName || el.tagName.indexOf('-') !== -1)
+					continue
 
 				comp = el.getAttribute(T_DATA + T_COMPILED);
 				if (comp === '0' || comp === T_FALSE)
@@ -3741,7 +3741,8 @@
 
 		var arr = [];
 
-		W.READY instanceof Array && arr.push.apply(arr, W.READY);
+		if (W.READY instanceof Array && W.READY.length)
+			arr.push.apply(arr, W.READY.splice(0));
 
 		if (arr.length) {
 			while (true) {
@@ -4650,8 +4651,10 @@
 					}
 				}, function() {
 					for (var el of pending) {
-						el.$compile();
-						delete el.$compile;
+						if (el.$compilecomponent) {
+							el.$compilecomponent();
+							delete el.$compilecomponent;
+						}
 					}
 				}, 3);
 			}, 100);
@@ -14166,12 +14169,24 @@
 
 		var meta = n + s + p + s + c + (d ? (s + d) : '');
 		t.$jcwebcomponent = true;
-
 		compilecomponent(meta, t);
 
-		if (!t.$com) {
-			t.$compile = () => compilecomponent(meta, t);
-			waitfordownload.push(t);
+		if (!t.$com && !t.$compilecomponent) {
+
+			if (n.substring(0, 5).toLowerCase() === 'lazy ')
+				n = n.substring(5);
+
+			if (n.lastIndexOf('@') === -1) {
+				if (versions[n])
+					n += '@' + versions[n];
+				else if (MD.versioncomponents)
+					n += '@' + MD.versioncomponents;
+			}
+
+			if (!M.$components[n]) {
+				t.$compilecomponent = () => compilecomponent(meta, t);
+				waitfordownload.push(t);
+			}
 		}
 	}
 
