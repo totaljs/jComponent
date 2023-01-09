@@ -491,7 +491,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.088;
+	M.version = 19.089;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3510,6 +3510,7 @@
 		}
 
 		var name = attrcom(container);
+
 		!container.$com && name != null && onComponent(name, container, 0);
 
 		var arr = container.childNodes;
@@ -3524,20 +3525,22 @@
 			var el = arr[i];
 			if (el) {
 
-				if (!el.tagName || el.tagName.indexOf('-') !== -1)
+				if (!el.tagName)
 					continue
+
+				var webc = el.tagName.indexOf('-') !== -1;
 
 				comp = el.getAttribute(T_DATA + T_COMPILED);
 				if (comp === '0' || comp === T_FALSE)
 					continue;
 
-				if (el.$com === undefined) {
+				if (!webc && el.$com === undefined) {
 					name = attrcom(el);
 					if (name != null)
 						onComponent(name || '', el, level);
 				}
 
-				if (!el.$jcbind) {
+				if (!webc && !el.$jcbind) {
 					b = el.getAttribute(T_DATA + T_BIND) || el.getAttribute(T_BIND);
 					if (b) {
 						el.$jcbind = 1;
@@ -4094,9 +4097,10 @@
 					if (tmp)
 						path += '__' + tmp;
 				}
-			} else if (tag === 'UI-COMPONENT' || tag === 'UI-BIND' || tag === 'UI-IMPORT') // e.g. <ui-component name="box" plugin=""
+			} else if (tag === 'UI-COMPONENT' || tag === 'UI-BIND' || tag === 'UI-IMPORT') {
+				// e.g. <ui-component name="box" plugin=""
 				path = el.getAttribute(PLUGINNAME);
-			else
+			} else
 				path = (el.getAttribute ? (el.getAttribute(ATTRPLUGIN) || el.getAttribute(PLUGINNAME) || el.getAttribute(ATTRSCOPE2) || el.getAttribute(SCOPENAME)) : null);
 
 			if (path) {
