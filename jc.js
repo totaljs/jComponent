@@ -491,7 +491,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.091;
+	M.version = 19.092;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6078,16 +6078,30 @@
 	};
 
 	PPC.exec = function(name, a, b, c, d, e) {
+
 		var self = this;
-		var childs = self.find(ATTRCOM);
-		for (var i = 0; i < childs.length; i++) {
-			var t = childs[i];
-			if (t.$com) {
-				MD.monitor && monitor(self);
-				t.$com.caller = self;
-				t.$com[name] && this.$com[name](a, b, c, d, e);
-			}
+		var cl;
+
+		if (name.indexOf(' #') !== -1) {
+			var tmp = makecl(name);
+			cl = tmp.cl;
+			name = tmp.path;
 		}
+
+		name = makeandexecflags(name);
+
+		CL(cl, function() {
+			var childs = self.find(ATTRCOM);
+			for (var i = 0; i < childs.length; i++) {
+				var t = childs[i];
+				if (t.$com) {
+					MD.monitor && monitor(self);
+					t.$com.caller = self;
+					t.$com[name] && t.$com[name](a, b, c, d, e);
+				}
+			}
+		});
+
 		return self;
 	};
 
@@ -12308,11 +12322,25 @@
 	};
 
 	PP.exec = function(name, a, b, c, d, e) {
+
 		var self = this;
-		self.scope();
-		var fn = self[name];
-		MD.monitor && monitor_method('plugins');
-		fn && fn.call(self, a, b, c, d, e);
+		var cl;
+
+		if (name.indexOf(' #') !== -1) {
+			var tmp = makecl(name);
+			cl = tmp.cl;
+			name = tmp.path;
+		}
+
+		name = makeandexecflags(name);
+
+		CL(cl, function() {
+			self.scope();
+			var fn = self[name];
+			MD.monitor && monitor_method('plugins');
+			fn && fn.call(self, a, b, c, d, e);
+		});
+
 		return self;
 	};
 
