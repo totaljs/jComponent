@@ -491,7 +491,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.089;
+	M.version = 19.091;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -13813,11 +13813,15 @@
 
 	function htmlbindparse(t) {
 		var config = t.getAttribute(T_CONFIG);
-		var data = t.getAttribute(T_PATH) + (config ? ('__' + config.replace(/\;/g, '__')) : '');
-		t.ui = parsebinder(t, data);
-		t.ui.$new = 1;
-		t.ui.$type = 'binder';
-		rebindbinder();
+		var path = t.getAttribute(T_PATH);
+		if (path) {
+			path += (config ? ('__' + config.replace(/\;/g, '__')) : '');
+			t.ui = parsebinder(t, path);
+			t.ui.$new = 1;
+			t.ui.$type = 'binder';
+			rebindbinder();
+		} else
+			WARN('Invalid <ui-bind>', t);
 	}
 
 	class HTMLBind extends HTMLElement {
