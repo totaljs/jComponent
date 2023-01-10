@@ -24,8 +24,8 @@
 	var T_COM = '---';
 	var T_ = '--';
 	var T_DATA = 'data-';
-	var ATTRCOM = '[data--],[data' + T_COM + ']';
-	var ATTRBIND = '[data-bind],[bind]';
+	var ATTRCOM = 'ui-component,[data--],[data' + T_COM + ']';
+	var ATTRBIND = 'ui-bind,[data-bind],[bind]';
 	var ATTRJCBIND = 'data-jc-bind';
 	var ATTRDATA = 'jc';
 	var ATTRDEL = T_DATA + 'jc-removed';
@@ -491,7 +491,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.093;
+	M.version = 19.094;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -527,10 +527,18 @@
 		t.binders = [];
 		var fn = function() {
 			var dom = this;
-			var el = $(dom);
-			var b = el.attrd(T_BIND) || el.attr(T_BIND);
-			dom.$jcbind = parsebinder(dom, b, EMPTYARRAY);
-			dom.$jcbind && t.binders.push(dom.$jcbind);
+			if (dom.tagName === 'UI-BIND') {
+				htmlbindparse(dom);
+				if (dom.ui) {
+					dom.$jcbind = dom.ui;
+					t.binders.push(dom.ui);
+				}
+			} else {
+				var el = $(dom);
+				var b = el.attrd(T_BIND) || el.attr(T_BIND);
+				dom.$jcbind = parsebinder(dom, b, EMPTYARRAY);
+				dom.$jcbind && t.binders.push(dom.$jcbind);
+			}
 		};
 		e.filter(ATTRBIND).each(fn);
 		e.find(ATTRBIND).each(fn);
@@ -13857,6 +13865,9 @@
 	class HTMLBind extends HTMLElement {
 		constructor() {
 			super();
+			var path = this.getAttribute('path');
+			if (path && path.charAt(0) === '.')
+				return;
 			setTimeout(htmlbindparse, 1, this);
 		}
 	}
