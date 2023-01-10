@@ -491,7 +491,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.094;
+	M.version = 19.095;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3972,6 +3972,9 @@
 
 			// @TODO: here can be a problem with multiple components
 			dom.$com = obj;
+
+			if (!dom.ui)
+				dom.ui = obj;
 
 			if (!obj.$noscope)
 				obj.$noscope = attrcom(el, 'noscope') === T_TRUE;
