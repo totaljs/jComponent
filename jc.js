@@ -491,7 +491,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.092;
+	M.version = 19.093;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3526,7 +3526,7 @@
 			if (el) {
 
 				if (!el.tagName)
-					continue
+					continue;
 
 				var webc = el.tagName.indexOf('-') !== -1;
 
@@ -3798,8 +3798,6 @@
 			comname = meta[0];
 		} else
 			meta = null;
-
-		has = true;
 
 		// Check singleton instance
 		if (statics['$ST_' + comname]) {
@@ -13840,16 +13838,20 @@
 	}
 
 	function htmlbindparse(t) {
-		var config = t.getAttribute(T_CONFIG);
+		var config = t.getAttribute(T_CONFIG) || '';
 		var path = t.getAttribute(T_PATH);
 		if (path) {
-			path += (config ? ('__' + config.replace(/\;/g, '__')) : '');
+			path += (config ? ('__' + config.replace(/;/g, '__')) : '');
 			t.ui = parsebinder(t, path);
-			t.ui.$new = 1;
-			t.ui.$type = 'binder';
-			rebindbinder();
-		} else
-			WARN('Invalid <ui-bind>', t);
+			if (t.ui) {
+				t.ui.$new = 1;
+				t.ui.$type = 'binder';
+				rebindbinder();
+				return;
+			}
+		}
+
+		WARN('Invalid <ui-bind>', t);
 	}
 
 	class HTMLBind extends HTMLElement {
