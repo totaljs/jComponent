@@ -491,7 +491,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.095;
+	M.version = 19.097;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -14261,6 +14261,32 @@
 			if (value == null)
 				value = t.getAttribute(T_CONFIG);
 			t.$com.reconfigure(value, null, init, noemit);
+		}
+
+		modify(value, type) {
+			this.$com.modify(value, type);
+		}
+
+		read(raw) {
+			return this.$com.read(raw);
+		}
+
+		get() {
+			return GET(this.$com.path);
+		}
+
+		set(value, type) {
+			this.config.modified = true;
+			SET(this.$com.path, value, type);
+		}
+
+		update(type) {
+			this.config.modified = true;
+			SET(this.$com.path, this.get(), type);
+		}
+
+		reset() {
+			this.reconfigure({ invalid: false, modified: false });
 		}
 
 		attributeChangedCallback(property, ovalue, nvalue) {
