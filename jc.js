@@ -491,7 +491,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.099;
+	M.version = 19.101;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -13880,9 +13880,7 @@
 	class HTMLBind extends HTMLElement {
 		constructor() {
 			super();
-			var path = this.getAttribute('path');
-			if (path && path.charAt(0) !== '.')
-				setTimeout(W.NEWUIBIND, 1, this, path, this.getAttribute('config'));
+			setTimeout(W.NEWUIBIND, 2, this);
 		}
 	}
 
