@@ -491,7 +491,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.097;
+	M.version = 19.098;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8028,6 +8028,9 @@
 	};
 
 	W.PARSE = function(value, date) {
+
+		if (typeof(value) === TYPE_O)
+			return value;
 
 		// Is selector?
 		var c = (value || '').charAt(0);
