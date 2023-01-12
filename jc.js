@@ -491,7 +491,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.098;
+	M.version = 19.099;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7367,14 +7367,15 @@
 				}
 			}
 
-			var ck = '';
+			var arr = value.split('__');
 
 			if (config) {
-				ck = T_CONFIG + GUID(10);
-				W[ck] = config;
+				var key = T_CONFIG + GUID(10);
+				W[key] = config;
+				arr[2] = '%' + key;
 			}
 
-			$(element || D.body).append('<div data---="{0}"{1}>{2}</div>'.format(value, ck ? ' data-jc-config="%' + ck + '"' : '', content || ''));
+			$(element || D.body).append('<ui-component name="{0}" path="{1}" config="{2}">{3}</ui-component>'.format(arr[0], arr[1] || 'null', arr[2] || 'null', content || ''));
 			recompile();
 		}
 	};
@@ -13851,30 +13852,39 @@
 		}
 	}
 
-	function htmlbindparse(t) {
-		var config = t.getAttribute(T_CONFIG) || '';
-		var path = t.getAttribute(T_PATH);
+	W.NEWUIBIND = function(element, path, config) {
+
+		if (element instanceof jQuery)
+			element = element[0];
+
+		if (!path)
+			path = element.getAttribute('path');
+
+		if (!config)
+			config = element.getAttribute('config');
+
+		if (config)
+			path += '__' + config.replace(/;/g, '__');
+
 		if (path) {
-			path += (config ? ('__' + config.replace(/;/g, '__')) : '');
-			t.ui = parsebinder(t, path);
-			if (t.ui) {
-				t.ui.$new = 1;
-				t.ui.$type = 'binder';
+			element.ui = parsebinder(element, path);
+			if (element.ui) {
+				element.ui.$new = 1;
+				element.ui.$type = 'binder';
 				rebindbinder();
 				return;
 			}
 		}
 
-		WARN('Invalid <ui-bind>', t);
-	}
+		WARN('Invalid <ui-bind>', element);
+	};
 
 	class HTMLBind extends HTMLElement {
 		constructor() {
 			super();
 			var path = this.getAttribute('path');
-			if (path && path.charAt(0) === '.')
-				return;
-			setTimeout(htmlbindparse, 1, this);
+			if (path && path.charAt(0) !== '.')
+				setTimeout(W.NEWUIBIND, 1, this, path, this.getAttribute('config'));
 		}
 	}
 
