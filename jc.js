@@ -528,11 +528,8 @@
 		var fn = function() {
 			var dom = this;
 			if (dom.tagName === 'UI-BIND') {
-				htmlbindparse(dom);
-				if (dom.ui) {
-					dom.$jcbind = dom.ui;
-					t.binders.push(dom.ui);
-				}
+				W.NEWUIBIND(dom);
+				dom.ui && t.binders.push(dom.ui);
 			} else {
 				var el = $(dom);
 				var b = el.attrd(T_BIND) || el.attr(T_BIND);
@@ -13869,6 +13866,7 @@
 		if (path) {
 			element.ui = parsebinder(element, path);
 			if (element.ui) {
+				element.$jcbind = element.ui;
 				element.ui.$new = 1;
 				element.ui.$type = 'binder';
 				rebindbinder();
