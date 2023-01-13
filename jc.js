@@ -491,7 +491,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.101;
+	M.version = 19.102;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -13860,21 +13860,21 @@
 		if (!config)
 			config = element.getAttribute('config');
 
+		if (!path)
+			path = 'null';
+
 		if (config)
 			path += '__' + config.replace(/;/g, '__');
 
-		if (path) {
-			element.ui = parsebinder(element, path);
-			if (element.ui) {
-				element.$jcbind = element.ui;
-				element.ui.$new = 1;
-				element.ui.$type = 'binder';
-				rebindbinder();
-				return;
-			}
-		}
+		element.ui = parsebinder(element, path);
 
-		WARN('Invalid <ui-bind>', element);
+		if (element.ui) {
+			element.$jcbind = element.ui;
+			element.ui.$new = 1;
+			element.ui.$type = 'binder';
+			rebindbinder();
+		} else
+			WARN('Invalid <ui-bind>', element);
 	};
 
 	class HTMLBind extends HTMLElement {
@@ -14224,7 +14224,7 @@
 			return;
 
 		var p = t.getAttribute(T_PATH) || 'null';
-		var c = t.getAttribute(T_CONFIG) || '';
+		var c = t.getAttribute(T_CONFIG) || 'null';
 		var d = t.getAttribute(T_DEFAULT) || '';
 		var s = '__';
 
