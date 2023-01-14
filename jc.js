@@ -119,10 +119,6 @@
 		W.console && W.console.warn.apply(W.console, arguments);
 	};
 
-	var throwerror = function(e) {
-		W.console && W.console.error(e);
-	};
-
 	// Source: https://stackoverflow.com/questions/5353934/check-if-element-is-visible-on-screen
 	W.VISIBLE = function(el, threshold, mode) {
 
@@ -491,7 +487,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.102;
+	M.version = 19.103;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1883,40 +1879,43 @@
 		};
 
 		var onmessage = function(e) {
-			try {
 
-				var data = e.data;
+			var data = e.data;
 
-				if (encryptsecret)
-					data = decrypt_data(data, encryptsecret);
+			if (encryptsecret)
+				data = decrypt_data(data, encryptsecret);
 
-				data = PARSE(data);
-				opt.message && opt.message(data);
+			data = PARSE(data);
+			opt.message && opt.message(data);
 
-				if (data) {
-					switch (data.TYPE) {
-						case 'ping':
-							var msg = STRINGIFY({ TYPE: 'pong' });
-							if (output.encrypted)
-								msg = encrypt_data(msg, encryptsecret);
-							socket.send(msg);
-							break;
-						case 'api':
-							var output = callbacks[data.callbackid];
-							if (output) {
-								output.timeout && clearTimeout(output.timeout);
-								output.timeout = null;
-								delete callbacks[data.callbackid];
-								ajaxprocess(output, 200, '', data.data, EMPTYOBJECT);
-							}
-							break;
-					}
+			if (data) {
+				switch (data.TYPE) {
+					case 'ping':
+						var msg = STRINGIFY({ TYPE: 'pong' });
+						if (output.encrypted)
+							msg = encrypt_data(msg, encryptsecret);
+						socket.send(msg);
+						break;
+					case 'api':
+						var output = callbacks[data.callbackid];
+						if (output) {
+							output.timeout && clearTimeout(output.timeout);
+							output.timeout = null;
+							delete callbacks[data.callbackid];
+							ajaxprocess(output, 200, '', data.data, EMPTYOBJECT);
+						}
+						break;
 				}
-				events.message && opt.emit('message', data);
+			}
+			events.message && opt.emit('message', data);
+
+			/*
+			try {
 			} catch (e) {
+				THROWERR(e);
 				events.error && opt.emit('error', e);
 				opt.error && opt.error(e, e.data);
-			}
+			}*/
 		};
 
 		var connect = function(type) {
@@ -2729,7 +2728,7 @@
 					try {
 						com.setterX(result, newpath, type);
 					} catch (e) {
-						throwerror(e);
+						THROWERR(e);
 					}
 				}
 
@@ -2787,7 +2786,7 @@
 					try {
 						com.setterX(val, com.path, 1);
 					} catch (e) {
-						throwerror(e);
+						THROWERR(e);
 					}
 				}
 				com.state && com.stateX(1, 6);
@@ -2840,7 +2839,7 @@
 							try {
 								com.setterX(result, p, type);
 							} catch (e) {
-								throwerror(e);
+								THROWERR(e);
 							}
 						}
 
@@ -2975,14 +2974,14 @@
 						try {
 							com.setterX(result, newpath, type);
 						} catch (e) {
-							throwerror(e);
+							THROWERR(e);
 						}
 					} else {
 						try {
 							var val = get(com.path);
 							com.setterX(val, newpath, type);
 						} catch (e) {
-							throwerror(e);
+							THROWERR(e);
 						}
 					}
 				}
@@ -4557,7 +4556,7 @@
 					try {
 						obj.setterX(value, obj.path, 0);
 					} catch (e) {
-						throwerror(e);
+						THROWERR(e);
 					}
 				}
 			}
@@ -5868,7 +5867,7 @@
 					try {
 						com.setterX(value, value, 2);
 					} catch (e) {
-						throwerror(e);
+						THROWERR(e);
 					}
 				}
 			}
@@ -13954,7 +13953,7 @@
 					try {
 						t.setterX(value, t.path, 0);
 					} catch (e) {
-						throwerror(e);
+						THROWERR(e);
 					}
 				}
 
