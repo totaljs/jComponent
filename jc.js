@@ -487,7 +487,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.103;
+	M.version = 19.104;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10949,6 +10949,8 @@
 		var sub = {};
 		var e = obj.el = $(el);
 		var isclick = false;
+		var isnew = el.tagName === 'UI-BIND';
+		var isnewdefselector = 'ui-component,input,textarea,select,button';
 		var tmp;
 
 		DEF.monitor && monitor_method('binders', 1);
@@ -11186,12 +11188,22 @@
 								k = 'refreshbind';
 								break;
 							case T_DISABLED: // internal rewrite because binder contains '.disabled` property
+							case 'disable':
 								k = 'disable';
 								backup = true;
+								if (isnew && !obj.selector)
+									obj.selector = isnewdefselector;
+								break;
+							case 'config':
+								if (isnew && !obj.selector)
+									obj.selector = 'ui-component';
 								break;
 							case 'enabled':
+							case 'enable':
 								k = 'enable';
 								backup = true;
+								if (isnew && !obj.selector)
+									obj.selector = isnewdefselector;
 								break;
 							case T_VALUE:
 								k = 'val';
@@ -11209,8 +11221,6 @@
 							case 'title':
 							case T_HTML:
 							case 'text':
-							case 'disable':
-							case 'enable':
 							case T_CHECKED:
 								backup = true;
 								break;
@@ -13848,22 +13858,29 @@
 		}
 	}
 
+	function safereplacesemicolon(text, newtext) {
+		return text.replace(/(.)?;/g, function(c) {
+			var f = c.charAt(0);
+			return f === '\\' ? c : (f + newtext);
+		});
+	}
+
 	W.NEWUIBIND = function(element, path, config) {
 
 		if (element instanceof jQuery)
 			element = element[0];
 
 		if (!path)
-			path = element.getAttribute('path');
+			path = element.getAttribute(T_PATH);
 
 		if (!config)
-			config = element.getAttribute('config');
+			config = element.getAttribute(T_CONFIG);
 
 		if (!path)
 			path = 'null';
 
 		if (config)
-			path += '__' + config.replace(/;/g, '__');
+			path += '__' + safereplacesemicolon(config, '__');
 
 		element.ui = parsebinder(element, path);
 
