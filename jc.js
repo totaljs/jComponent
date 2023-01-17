@@ -487,7 +487,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.104;
+	M.version = 19.105;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7631,7 +7631,7 @@
 		if (typeof(path) === TYPE_FN) {
 			path(a, b, c, d);
 		} else {
-			if (path.indexOf('/') !== -1 || typeof(safeget(path)) === TYPE_FN)
+			if (path.indexOf('/') !== -1 || typeof(get(safeget(path))) === TYPE_FN)
 				EXEC(path, a, b, c, d);
 			else
 				SET(path, a);
