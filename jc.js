@@ -487,7 +487,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.105;
+	M.version = 19.106;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -13855,6 +13855,7 @@
 		constructor() {
 			super();
 			this.ui = { $new: 1, $type: PLUGINNAME };
+			setTimeout(findscope, 2, this);
 		}
 	}
 
