@@ -12234,6 +12234,13 @@
 		return ppcall(this, 'AJAX', name, data, callback);
 	};
 
+	PP.on = function(name, callback, init) {
+		var t = this;
+		t.scope();
+		ON(name, callback, init);
+		return t;
+	};
+
 	PP.watch = function(name, callback, init) {
 
 		var t = this;
