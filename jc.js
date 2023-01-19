@@ -487,7 +487,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.106;
+	M.version = 19.107;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11194,7 +11194,7 @@
 								if (isnew && !obj.selector)
 									obj.selector = isnewdefselector;
 								break;
-							case 'config':
+							case T_CONFIG:
 								if (isnew && !obj.selector)
 									obj.selector = 'ui-component';
 								break;
@@ -11211,6 +11211,10 @@
 								break;
 							case T_DEFAULT:
 								k = 'def';
+								break;
+							case 'set':
+								if (isnew && !obj.selector)
+									obj.selector = 'ui-component';
 								break;
 							case 'delay':
 								fn = +v;
@@ -11630,9 +11634,9 @@
 		current_scope = curr_scope;
 	}
 
-	function bindsetterx(item, value, path, type, counter) {
-		if (item && item.el && item.set) {
-			var com = item.el[0].$com;
+	function bindsetterx(el, item, value, path, type, counter) {
+		if (el && item.set) {
+			var com = el[0].$com;
 			if (com && !com.$removed && com.$loaded && !com.path && (com.setter || (com.dom && com.dom.setter))) {
 				if (com.$jcbind !== item) {
 					com.$jcbind = item;
@@ -11649,7 +11653,7 @@
 				}
 			} else if (!counter || counter < 30) {
 				item.setid && clearTimeout(item.setid);
-				item.setid = setTimeout(bindsetterx, 100, item, value, path, type, counter || 1);
+				item.setid = setTimeout(bindsetterx, 100, el, item, value, path, type, counter || 1);
 			}
 		}
 	}
@@ -11766,8 +11770,8 @@
 		}
 
 		if (item.set) {
-			tmp = item.set.call(item.el, value, path, item.el);
-			bindsetterx(item, tmp, path, type);
+			tmp = item.set.call(item.el, value, path, el);
+			bindsetterx(el, item, tmp, path, type);
 		}
 
 		can = can !== false;
@@ -11902,6 +11906,7 @@
 		}
 
 		if (item.disable && (can || item.disable.$nv)) {
+
 			if (value != null || !item.disable.$nn) {
 				tmp = !!item.disable.call(el, value, path, el);
 				el.prop(T_DISABLED, tmp);
