@@ -5789,6 +5789,10 @@
 			var id = item[0];
 			if (self.type === TYPE_N || self.config.type === TYPE_N)
 				id = id ? id.parseInt() : null;
+
+			if (!item[1])
+				item[1] = id + '';
+
 			output.push({ id: id, name: item[1], icon: item[2] || '' });
 		}
 		return output;
