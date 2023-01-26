@@ -487,7 +487,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.107;
+	M.version = 19.108;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11448,8 +11448,10 @@
 				if (scope) {
 					path = scope.makepath(path);
 					obj.scope = scope.path;
-				} else
+				} else {
+					WARN('Missing <ui-plugin>', el);
 					return;
+				}
 			}
 
 			var arr = path.split('.');
