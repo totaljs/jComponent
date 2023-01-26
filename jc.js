@@ -9630,7 +9630,7 @@
 		if (format)
 			return parseDateFormat(format, this);
 
-		var self = this.trim();
+		var self = this.trim().env();
 		if (!self)
 			return null;
 
