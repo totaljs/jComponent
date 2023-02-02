@@ -487,7 +487,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.108;
+	M.version = 19.109;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6820,15 +6820,18 @@
 			return self.element.parent();
 
 		if (sel === 'auto') {
-			var dom = self.dom.parentNode;
-			while (true) {
-				if (dom.tagName === 'BODY')
-					break;
-				if (dom.style.height && !dom.classList.contains(MD.prefixcsslibrary + 'scrollbar-area'))
-					return $(dom);
+			var dom = self.dom;
+			if (dom) {
 				dom = dom.parentNode;
+				while (true) {
+					if (!dom || dom.tagName === 'BODY')
+						break;
+					if (dom.style.height && !dom.classList.contains(MD.prefixcsslibrary + 'scrollbar-area'))
+						return $(dom);
+					dom = dom.parentNode;
+				}
+				return $W;
 			}
-			return $W;
 		}
 
 		if (sel.substring(0, 6) !== 'parent')
