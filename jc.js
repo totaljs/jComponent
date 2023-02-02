@@ -2011,7 +2011,7 @@
 		if (typeof(name) === TYPE_O)
 			return W.WAPI_INIT(name);
 
-		if (typeof(data) === 'function' && !callback) {
+		if (typeof(data) === TYPE_FN && !callback) {
 			callback = data;
 			data = null;
 		}
@@ -3214,7 +3214,7 @@
 			expire = '';
 		}
 
-		if (typeof(callback) === 'string') {
+		if (typeof(callback) === TYPE_S) {
 			var url = callback;
 			callback = function(next) {
 				var tmp = url.split(' ');
@@ -4311,7 +4311,7 @@
 
 				key = '$import' + key;
 
-				if (typeof(response) !== 'string') {
+				if (typeof(response) !== TYPE_S) {
 					statics[key] = true;
 					current_element = null;
 					next();
@@ -6262,7 +6262,7 @@
 			p = p.substring(1);
 			var com = self.parent().component();
 			if (com) {
-				if (typeof(com[p]) === 'function')
+				if (typeof(com[p]) === TYPE_FN)
 					com[p](a, b, c, d);
 				else
 					com[p] = a;
@@ -6297,7 +6297,7 @@
 			p = p.substring(1);
 			var com = self.parent().component();
 			if (com) {
-				if (typeof(com[p]) === 'function')
+				if (typeof(com[p]) === TYPE_FN)
 					com[p](a, b, c, d);
 				else
 					com[p] = a;
@@ -6917,7 +6917,7 @@
 
 		var el = this.element;
 
-		if (selector && typeof(selector) === 'object') {
+		if (selector && typeof(selector) === TYPE_O) {
 			var tmp = {};
 			for (var key in selector)
 				tmp[key] = el.find(selector[key]);
@@ -7349,28 +7349,46 @@
 				ADD(value[i], element, config, content);
 		} else {
 
-			var name = value.split('__')[0];
-			if (name.charAt(0) === '!') {
+			var arr;
 
-				value = value.substring(1);
-				name = name.substring(1);
+			if (typeof(value) === TYPE_O) {
 
-				var keys = Object.keys(M.$components);
-				var index = name.indexOf('@');
-				if (index !== -1)
-					name = name.substring(0, index);
+				arr = [];
+				arr.push(value.name || '');
+				arr.push(value.path || '');
 
-				for (var i = 0; i < keys.length; i++) {
-					var key = keys[i];
-					index = key.indexOf('@');
+				if (value.config && typeof(value.config) === TYPE_O)
+					config = value.config;
+				else
+					arr.push(value.config || '');
+
+				if (value.element)
+					element = value.element;
+
+			} else {
+				var name = value.split('__')[0];
+				if (name.charAt(0) === '!') {
+
+					value = value.substring(1);
+					name = name.substring(1);
+
+					var keys = Object.keys(M.$components);
+					var index = name.indexOf('@');
 					if (index !== -1)
-						key = key.substring(0, index);
-					if (key === name)
-						return;
-				}
-			}
+						name = name.substring(0, index);
 
-			var arr = value.split('__');
+					for (var i = 0; i < keys.length; i++) {
+						var key = keys[i];
+						index = key.indexOf('@');
+						if (index !== -1)
+							key = key.substring(0, index);
+						if (key === name)
+							return;
+					}
+				}
+
+				arr = value.split('__');
+			}
 
 			if (config) {
 				var key = T_CONFIG + GUID(10);
@@ -10846,7 +10864,7 @@
 					else
 						return null;
 
-				} else if (t === 'number')
+				} else if (t === TYPE_N)
 					v = value;
 				else
 					return null;
@@ -12262,7 +12280,7 @@
 
 		t.scope();
 
-		if (typeof(fn) === 'function') {
+		if (typeof(fn) === TYPE_FN) {
 			fn = function(path, value, type) {
 				callback(value, path, type);
 			};
@@ -14134,10 +14152,10 @@
 			var t = this.node;
 			var type = typeof(name);
 
-			if (type === 'string' && value == null)
+			if (type === TYPE_S && value == null)
 				return this.style[name];
 
-			if (type === 'object') {
+			if (type === TYPE_O) {
 				for (var key in name)
 					t.style[key] = name[key];
 			} else
