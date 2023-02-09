@@ -487,7 +487,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.111;
+	M.version = 19.112;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7738,7 +7738,7 @@
 		text = TRANSLATE(text).VARIABLES().replace(/~CDN~/g, DEF.cdn);
 
 		if (path) {
-			text = text.replace(/~PATH~/g, path).replace(/<ui-plugin.*?>/g, function(text) {
+			text = text.replace(/~PATH~|CLASS/g, path).replace(/<ui-plugin.*?>/g, function(text) {
 				return text.indexOf('path=') === -1 ? (text.substring(0, 10) + ' path="' + path + '"' + text.substring(10)) : text;
 			}).replace('PLUGIN(function(', 'PLUGIN(\'{0}\', function('.format(path));
 		}
