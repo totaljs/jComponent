@@ -487,7 +487,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.109;
+	M.version = 19.111;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3729,10 +3729,25 @@
 
 		declaration.importing = true;
 		declaration.dependencies.wait(function(item, next) {
-			if (typeof(item) === TYPE_FN)
+			if (typeof(item) === TYPE_FN) {
 				item(next);
-			else
+			} else {
+
+				if (item.charAt(0) === '@') {
+
+					// Component
+					var name = item.substring(1);
+					if (!PPC.caniuse(name)) {
+						ADD({ name: name, prepend: true });
+						WARN('The "{0}" component has downloaded the dependent component "{1}".'.format(obj.name, name));
+						WAIT(() => PPC.caniuse(name), next, 500, 2000);
+					} else
+						next();
+					return;
+				}
+
 				IMPORT((item.indexOf('<') === -1 ? 'once ' : '') + item, next);
+			}
 		}, function() {
 			declaration.importing = false;
 			callback(obj, el);
@@ -7350,6 +7365,7 @@
 		} else {
 
 			var arr;
+			var prepend = false;
 
 			if (typeof(value) === TYPE_O) {
 
@@ -7364,6 +7380,9 @@
 
 				if (value.element)
 					element = value.element;
+
+				if (value.prepend)
+					prepend = true;
 
 			} else {
 				var name = value.split('__')[0];
@@ -7396,7 +7415,14 @@
 				arr[2] = '%' + key;
 			}
 
-			$(element || D.body).append('<ui-component name="{0}" path="{1}" config="{2}">{3}</ui-component>'.format(arr[0], arr[1] || 'null', arr[2] || 'null', content || ''));
+			var content = '<ui-component name="{0}" path="{1}" config="{2}">{3}</ui-component>'.format(arr[0], arr[1] || 'null', arr[2] || 'null', content || '');
+			var el = $(element || D.body);
+
+			if (prepend)
+				el.prepend(content);
+			else
+				el.append(content);
+
 			recompile();
 		}
 	};
@@ -8499,8 +8525,12 @@
 	};
 
 	W.WAIT = function(fn, callback, interval, timeout) {
+
 		var key = ((Math.random() * 10000) >> 0).toString(16);
 		var tkey = timeout > 0 ? key + '_timeout' : 0;
+
+		if (timeout == null)
+			timeout = 5000;
 
 		if (typeof(callback) === TYPE_N) {
 			var tmp = interval;
@@ -8531,7 +8561,7 @@
 			return;
 		}
 
-		if (tkey) {
+		if (tkey && timeout) {
 			waits[tkey] = setTimeout(function() {
 				clearInterval(waits[key]);
 				delete waits[tkey];
