@@ -487,7 +487,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.112;
+	M.version = 19.113;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3798,8 +3798,10 @@
 		if (!has || !C.pending.length)
 			C.is = false;
 
-		if (container !== undefined || !toggles.length)
-			return nextpending();
+		if (container !== undefined || !toggles.length) {
+			nextpending();
+			return;
+		}
 
 		async(toggles, function(item, next) {
 			for (var i = 0; i < item.toggle.length; i++)
@@ -4628,17 +4630,15 @@
 		var item = arr.shift();
 		if (item == null)
 			return done && done();
-		fn(item, function() {
-			async(arr, fn, done);
-		});
+		fn(item, () => async(arr, fn, done));
 	}
 
 	function nextpending() {
 
 		var next = C.pending.shift();
-		if (next)
+		if (next) {
 			next();
-		else if ($domready) {
+		} else if ($domready) {
 
 			if (C.ready)
 				C.is = false;
@@ -4661,12 +4661,16 @@
 	}
 
 	function downloadfallback() {
+
 		if (C.importing) {
 			setTimeout(downloadfallback, 1000);
 		} else {
+
 			setTimeout2('$fallback', function() {
 				var pending = waitfordownload.splice(0);
+				var cache = {};
 				fallbackpending.splice(0).wait(function(item, next) {
+					cache[item] = 1;
 					if (M.$components[item]) {
 						next();
 					} else {
@@ -4675,10 +4679,14 @@
 					}
 				}, function() {
 					for (var el of pending) {
-						if (el.$compilecomponent) {
-							el.$compilecomponent();
-							delete el.$compilecomponent;
-						}
+						if (cache[el.$componentname]) {
+							if (el.$compilecomponent) {
+								el.$compilecomponent();
+								delete el.$compilecomponent;
+								delete el.$componentname;
+							}
+						} else
+							waitfordownload.push(el);
 					}
 				}, 3);
 			}, 100);
@@ -4772,9 +4780,9 @@
 					arr[i](count);
 				C.ready = undefined;
 				compile();
+				setTimeout(nextpending, 500);
+				setTimeout(nextpending, 1800);
 				setTimeout(compile, 3000);
-				setTimeout(compile, 6000);
-				setTimeout(compile, 9000);
 			}
 		}, 100);
 	}
@@ -8427,7 +8435,16 @@
 			}
 		}
 
+		if (obj.color && !obj.rgb) {
+			var color = obj.color.substring(1);
+			if (color.length === 3)
+				color += color;
+			obj.rgb = parseInt(color.substring(0, 2), 16) + ',' + parseInt(color.substring(2, 4), 16) + ',' + parseInt(color.substring(4, 6), 16);
+			builder.push(T_ + 'rgb:' + obj.rgb);
+		}
+
 		$('body').tclass(MD.prefixcsslibrary + 'dark', !!dark).tclass(MD.prefixcsslibrary + 'large', !!large);
+
 		if (builder.length)
 			CSS(':root{' + builder.join(';') + '}', id);
 		else
@@ -14305,7 +14322,6 @@
 	function htmlcomponentparse2(t) {
 
 		var n = t.getAttribute('name') || '';
-
 		if (!n)
 			return;
 
@@ -14316,11 +14332,13 @@
 
 		var meta = n + s + p + s + c + (d ? (s + d) : '');
 		t.$jcwebcomponent = true;
+
 		compilecomponent(meta, t);
 
 		if (!t.$com && !t.$compilecomponent) {
 
-			if (n.substring(0, 5).toLowerCase() === 'lazy ')
+			var islazy = n.substring(0, 5).toLowerCase() === 'lazy ';
+			if (islazy)
 				n = n.substring(5);
 
 			if (n.lastIndexOf('@') === -1) {
@@ -14331,6 +14349,7 @@
 			}
 
 			if (!M.$components[n]) {
+				t.$componentname = n;
 				t.$compilecomponent = () => compilecomponent(meta, t);
 				waitfordownload.push(t);
 			}
