@@ -8429,8 +8429,12 @@
 				case 'large':
 				case 'largemode':
 					break;
-				default:
-					builder.push(T_ + key.trim() + ':' + (obj[key] + '').trim());
+				case 'color':
+				case 'rgb':
+				case 'radius':
+				case 'gap':
+				case 'margin':
+					obj[key] && builder.push(T_ + key.trim() + ':' + (obj[key] + '').trim());
 					break;
 			}
 		}
