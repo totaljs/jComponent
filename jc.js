@@ -266,10 +266,12 @@
 		}
 		M.loaded = true;
 		PREFLOADED = 1;
-		for (var i = 0; i < plugininit.length; i++) {
-			var tmp = plugininit[i];
-			W.PLUGIN(tmp.name, tmp.fn);
-		}
+		for (var m of plugininit)
+			W.PLUGIN(m.name, m.fn);
+		for (var m of pluginelements)
+			findscope(m);
+		plugininit.length = 0;
+		pluginelements.length = 0;
 		NOTIFY('PREF');
 		compile();
 	};
@@ -346,6 +348,7 @@
 	var versions = {};
 	var autofill = [];
 	var plugininit = [];
+	var pluginelements = [];
 	var pluginscope = {};
 	var defaults = {};
 	var waits = {};
@@ -487,7 +490,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.113;
+	M.version = 19.114;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -13945,7 +13948,10 @@
 		constructor() {
 			super();
 			this.ui = { $new: 1, $type: PLUGINNAME };
-			setTimeout(findscope, 2, this);
+			if (PREFLOADED)
+				setTimeout(findscope, 1, this);
+			else
+				pluginelements.push(this);
 		}
 	}
 
