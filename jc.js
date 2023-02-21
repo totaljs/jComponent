@@ -490,7 +490,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.114;
+	M.version = 19.115;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5807,21 +5807,13 @@
 	};
 
 	PPC.parsesource = function(value) {
-		var self = this;
-		var arr = value.split(',');
-		var output = [];
-		for (var i = 0; i < arr.length; i++) {
-			var item = arr[i].split('|');
-			var id = item[0];
-			if (self.type === TYPE_N || self.config.type === TYPE_N)
-				id = id ? id.parseInt() : null;
 
-			if (!item[1])
-				item[1] = id + '';
+		var type = '';
 
-			output.push({ id: id, name: item[1], icon: item[2] || '' });
-		}
-		return output;
+		if (self.type === TYPE_N || self.config.type === TYPE_N)
+			type = TYPE_N;
+
+		return value.parseSource(type);
 	};
 
 	PPC.modify = function(value, type) {
@@ -8813,6 +8805,25 @@
 		return url.replace(/[^:]\/{2,}/, replace);
 	};
 
+	SP.parseSource = function(type) {
+
+		var arr = this.split(',');
+		var output = [];
+		for (var i = 0; i < arr.length; i++) {
+			var item = arr[i].split('|');
+			var id = item[0];
+			if (type && (type === Number || type === TYPE_N))
+				id = id ? id.parseInt() : null;
+
+			if (!item[1])
+				item[1] = id + '';
+
+			output.push({ id: id, name: item[1], icon: item[2] || '' });
+		}
+
+		return output;
+	};
+
 	SP.encode = function() {
 		return Thelpers.encode(this);
 	};
@@ -10878,7 +10889,7 @@
 			setTimeout(W.PREF.load, 2, prefload);
 			$domready = true;
 		});
-	}, 100);
+	}, 50);
 
 	function keypressdelay(self) {
 		var com = self.$com;
