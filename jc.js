@@ -490,7 +490,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.115;
+	M.version = 19.116;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3668,8 +3668,11 @@
 
 		for (var i = 0; i < arr.length; i++) {
 			var el = arr[i];
-			if (el && el.tagName) {
-				el.childNodes.length && el.tagName !== 'SCRIPT' && !attrcom(el) && sub.push(el);
+			if (el && !el.$com && el.tagName) {
+
+				if (el.childNodes.length && el.tagName !== 'SCRIPT' && !attrcom(el))
+					sub.push(el);
+
 				if (ACTRLS[el.tagName] && el.getAttribute(ATTRJCBIND) != null && onElement(el) === false)
 					return;
 			}
@@ -3985,8 +3988,6 @@
 
 			obj.siblings = all.length > 1;
 			obj.$lazy = lo;
-
-			// @TODO: here can be a problem with multiple components
 			dom.$com = obj;
 
 			if (!dom.ui)
