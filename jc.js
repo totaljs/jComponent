@@ -5810,6 +5810,7 @@
 	PPC.parsesource = function(value) {
 
 		var type = '';
+		var self = this;
 
 		if (self.type === TYPE_N || self.config.type === TYPE_N)
 			type = TYPE_N;
