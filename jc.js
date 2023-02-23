@@ -490,7 +490,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.116;
+	M.version = 19.117;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3668,9 +3668,15 @@
 
 		for (var i = 0; i < arr.length; i++) {
 			var el = arr[i];
-			if (el && !el.$com && el.tagName) {
 
-				if (el.childNodes.length && el.tagName !== 'SCRIPT' && !attrcom(el))
+			if (el && el.tagName) {
+
+				var tag = el.tagName;
+
+				if (tag !== 'INPUT' && tag !== 'SELECT' && tag !== 'TEXTAREA' && el.$com)
+					continue;
+
+				if (el.childNodes.length && tag !== 'SCRIPT' && !attrcom(el))
 					sub.push(el);
 
 				if (ACTRLS[el.tagName] && el.getAttribute(ATTRJCBIND) != null && onElement(el) === false)
