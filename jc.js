@@ -78,6 +78,7 @@
 	var OK = Object.keys;
 	var SKIPBODYENCRYPTOR = { ':': 1, '"': 1, '[': 1, ']': 1, '\'': 1, '_': 1, '{': 1, '}': 1, '&': 1, '=': 1, '+': 1, '-': 1, '\\': 1, '/': 1, ',': 1 };
 	var debug = false;
+	var P_DEFCL = 'DEF.cl.';
 
 	// No scrollbar
 	var W = window;
@@ -490,7 +491,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.118;
+	M.version = 19.119;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1193,7 +1194,7 @@
 
 			// Codelist
 			if (c === '#')
-				path = 'DEF.cl.' + path.substring(1);
+				path = P_DEFCL + path.substring(1);
 
 			// Temporary
 			if (c === '%')
@@ -3114,7 +3115,7 @@
 		if (c === '%')
 			obj.path = T_TMP + obj.path.substring(1);
 		else if (c === '#')
-			obj.path = 'DEF.cl.' + obj.path.substring(1);
+			obj.path = P_DEFCL + obj.path.substring(1);
 
 		obj.flags2 = [];
 
@@ -4983,7 +4984,7 @@
 		if (code === 37)
 			path = T_TMP + path.substring(1);
 		else if (code === 35)
-			path = 'DEF.cl.' + path.substring(1);
+			path = P_DEFCL + path.substring(1);
 
 		var key = '=' + path;
 		if (paths[key])
@@ -11459,6 +11460,9 @@
 						path = path.substring(1);
 						obj.notnull = true;
 					}
+
+					if (c === '#')
+						path = P_DEFCL + path.substring(1);
 
 					if (path === '-')
 						path = (attrcom(obj.el) || '').split(REGMETA)[1];
