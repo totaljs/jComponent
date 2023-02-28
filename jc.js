@@ -491,7 +491,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.119;
+	M.version = 19.121;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3265,7 +3265,7 @@
 		}
 
 		var arr = name.split(',').trim();
-		arr.wait(function(key, next) {
+		arr.wait(function checkcl(key, next) {
 			key = pathmaker(key);
 			var item = M.cl[key];
 			if (item) {
@@ -3283,8 +3283,12 @@
 						next();
 					});
 				}
-			} else
-				next();
+			} else {
+				if (DEF.cl[key])
+					next();
+				else
+					setTimeout(checkcl, M.delaywatcher, key, next);
+			}
 		}, callback);
 	};
 
