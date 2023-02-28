@@ -490,7 +490,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.117;
+	M.version = 19.118;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3210,7 +3210,19 @@
 		}
 	};
 
-	W.CL_INIT = function(name, callback, expire, init) {
+	W.CLRELOAD = function(name, callback) {
+		var arr = name.split(',').trim();
+		arr.wait(function(name, next) {
+			var cl = M.cl[name];
+			if (cl) {
+				cl.reload = true;
+				CL(name, () => next());
+			} else
+				next();
+		}, callback);
+	};
+
+	W.CL_INIT = W.CLINIT = function(name, callback, expire, init) {
 
 		if (typeof(expire) === TYPE_B) {
 			init = expire;
