@@ -463,12 +463,18 @@
 	MD.thousandsseparator = ' ';
 	MD.decimalseparator = '.';
 	MD.dateformat = 'yyyy-MM-dd';
+	MD.timeformat = 'HH:mm';
 	MD.dateformatutc = false;
 	// MD.currency = ''; DEFAULT CURRENCY
 	MD.localstorage = ATTRDATA;
 	MD.languagekey = 'language';
 	MD.versionkey = 'version';
 	MD.currencies = {};
+	MD.firtdayofweek = 1;
+
+	ENV.ts = MD.dateformat + ' - ' + MD.timeformat;
+	ENV.date = MD.dateformat;
+	ENV.time = MD.timeformat;
 
 	// MD.language
 	// MD.languagehtml
@@ -491,7 +497,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.121;
+	M.version = 19.122;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -779,7 +785,7 @@
 		MD.localstorage = name;
 		MD.version = version || '';
 		MD.languagehtml = language || '';
-		env && ENV(env);
+		env && W.ENV(env);
 		reload && load();
 	};
 
@@ -9500,7 +9506,7 @@
 		if (typeof(decimals) === TYPE_S) {
 			var tmp;
 			if (decimals.charAt(0) === '[') {
-				tmp = ENV(decimals.substring(1, decimals.length - 1));
+				tmp = W.ENV(decimals.substring(1, decimals.length - 1));
 				if (tmp) {
 					if (tmp >= 0) {
 						decimals = tmp;
