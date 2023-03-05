@@ -497,7 +497,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.122;
+	M.version = 19.123;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11033,12 +11033,10 @@
 	function parsebinderskip(str) {
 		var a = arguments;
 		str = str.split(' ')[0].trim().replace(REGBINDERCOMPARE, '');
-
 		for (var i = 1; i < a.length; i++) {
 			if (str === a[i])
 				return false;
 		}
-
 		return true;
 	}
 
@@ -11167,6 +11165,14 @@
 								}
 							};
 						})(v);
+					} else if (v.includes('/')) {
+						dfn = (function(p) {
+							return function(value, path, el) {
+								var fn = GET(p);
+								if (fn)
+									return fn.call(el, value, path, el);
+							};
+						})(v);
 					}
 
 					if (k !== T_CLICK && REGSCOPECHECK.test(v)) {
@@ -11177,6 +11183,7 @@
 					}
 
 					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'tracktype', T_RESIZE, 'delay', 'macro', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'helper', 'helpers', 'currency', 'empty', 'changes', 'ready', 'once') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+
 					if (!fn)
 						return null;
 
