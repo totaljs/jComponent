@@ -11426,18 +11426,22 @@
 
 								var et = s ? e.find(s) : e;
 								var scr = ns ? $(ns) : et.find(T_SCRIPT + ',' + T_TEMPLATE).eq(0);
+
 								var r = false;
 								if (scr.length)
 									r = true;
 								else
 									scr = et;
+
 								tmp = TRANSLATE(scr.html());
+
 								try {
 									fn = Tangular.compile(tmp);
 								} catch (e) {
 									THROWERR(e);
 									fn = NOOP;
 								}
+
 								if (notnull)
 									fn.$nn = 1;
 								if (notvisible)
@@ -14031,6 +14035,11 @@
 		if (element instanceof jQuery)
 			element = element[0];
 
+		if (!virtual && !PREFLOADED) {
+		 	bindelements.push({ el: element, path: path, config: config });
+		 	return;
+		}
+
 		if (!path)
 			path = element.getAttribute(T_PATH);
 
@@ -14042,11 +14051,6 @@
 
 		if (config)
 			path += '__' + safereplacesemicolon(config, '__');
-
-		if (!virtual && !PREFLOADED) {
-			bindelements.push({ el: element, path: path, config: config });
-			return;
-		}
 
 		element.ui = parsebinder(element, path);
 
