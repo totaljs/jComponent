@@ -265,14 +265,27 @@
 
 			remove && setTimeout2('PREF', W.PREF.save, 1000, null, PREF);
 		}
+
 		M.loaded = true;
 		PREFLOADED = 1;
-		for (var m of plugininit)
+
+		for (let m of plugininit)
 			W.PLUGIN(m.name, m.fn);
-		for (var m of pluginelements)
+
+		for (let m of pluginelements)
 			findscope(m);
+
+		for (let m of comelements)
+			htmlcomponentparse2(m);
+
+		for (let m of bindelements)
+			NEWUIBIND(m.el, m.path, m.config);
+
 		plugininit.length = 0;
 		pluginelements.length = 0;
+		comelements.length = 0;
+		bindelements.length = 0;
+
 		NOTIFY('PREF');
 		compile();
 	};
@@ -351,6 +364,8 @@
 	var plugininit = [];
 	var pluginelements = [];
 	var pluginscope = {};
+	var bindelements = [];
+	var comelements = [];
 	var defaults = {};
 	var waits = {};
 	var statics = {};
@@ -497,7 +512,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.123;
+	M.version = 19.124;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -534,7 +549,7 @@
 		var fn = function() {
 			var dom = this;
 			if (dom.tagName === 'UI-BIND') {
-				W.NEWUIBIND(dom);
+				W.NEWUIBIND(dom, null, null, true);
 				dom.ui && t.binders.push(dom.ui);
 			} else {
 				var el = $(dom);
@@ -1205,6 +1220,10 @@
 			// Temporary
 			if (c === '%')
 				path = T_TMP + path.substring(1);
+
+			// Raw plugin
+			if (c === '=')
+				path = 'PLUGINS["{0}"].'.format(scope || 'undefined') + path.substring(1);
 
 			path = path.env();
 
@@ -3122,6 +3141,10 @@
 			obj.path = T_TMP + obj.path.substring(1);
 		else if (c === '#')
 			obj.path = P_DEFCL + obj.path.substring(1);
+
+		var index = obj.path.indexOf('|');
+		if (index !== -1)
+			obj.path = 'PLUGINS["{0}"].'.format(obj.path.substring(0, index)) + obj.path.substring(index + 1);
 
 		obj.flags2 = [];
 
@@ -5383,7 +5406,7 @@
 
 	SCP.makepath = function(val) {
 		var t = this;
-		return val.replace(/\?\d+/g, function(text) {
+		val = val.replace(/\?\d+/g, function(text) {
 			var skip = +text.substring(1);
 			var parent = t.parent;
 			for (var i = 1; i < skip; i++) {
@@ -5392,6 +5415,8 @@
 			}
 			return parent ? parent.path : t.path;
 		}).replace(REGSCOPEINLINE, t.path);
+		var index = val.indexOf('|');
+		return index === -1 ? val : 'PLUGINS["{0}"].'.format(val.substring(0, index)) + val.substring(index + 1);
 	};
 
 	SCP.unwatch = function(path, fn) {
@@ -6454,11 +6479,8 @@
 
 	PPC.makepath = function(path) {
 		var self = this;
+
 		if (path.indexOf('?') !== -1) {
-
-			if (self.$new === 1)
-				return M.makepath(self.plugin, path);
-
 			var scope = self.pathscope ? self.scope : self.$scopepath;
 			if (self.$scopepath === undefined)
 				scope = self.$scopepath = self.element.scope() || null;
@@ -11571,6 +11593,7 @@
 			path = bj ? path : pathmaker(path, 0, 1);
 
 			if (path.indexOf('?') !== -1 || (obj.formatter && obj.formatter.scope)) {
+
 				var scope = findscope(el);
 				if (scope) {
 					path = scope.makepath(path);
@@ -13996,17 +14019,6 @@
 		com.$compare = PPC.$compare;
 	}
 
-	class HTMLPlugin extends HTMLElement {
-		constructor() {
-			super();
-			this.ui = { $new: 1, $type: PLUGINNAME };
-			if (PREFLOADED)
-				setTimeout(findscope, 1, this);
-			else
-				pluginelements.push(this);
-		}
-	}
-
 	function safereplacesemicolon(text, newtext) {
 		return text.replace(/(.)?;/g, function(c) {
 			var f = c.charAt(0);
@@ -14014,7 +14026,7 @@
 		});
 	}
 
-	W.NEWUIBIND = function(element, path, config) {
+	W.NEWUIBIND = function(element, path, config, virtual) {
 
 		if (element instanceof jQuery)
 			element = element[0];
@@ -14031,6 +14043,11 @@
 		if (config)
 			path += '__' + safereplacesemicolon(config, '__');
 
+		if (!virtual && !PREFLOADED) {
+			bindelements.push({ el: element, path: path, config: config });
+			return;
+		}
+
 		element.ui = parsebinder(element, path);
 
 		if (element.ui) {
@@ -14042,346 +14059,12 @@
 			WARN('Invalid <ui-bind>', element);
 	};
 
-	class HTMLBind extends HTMLElement {
-		constructor() {
-			super();
-			setTimeout(W.NEWUIBIND, 2, this);
-		}
-	}
-
-	class UIComponent {
-
-		// |--- Properties:
-		//   |-- this.$path {String} backuped path
-		//   |-- this.path {String}
-
-		// |--- Handlers:
-		//   |-- this.configure(key, value);
-		//   |-- this.onconfig(config);
-		//   |-- this.validate(value, init);
-
-		// |--- Methods:
-		//   |-- this.kill();
-		//   |-- this.configure([config]);
-		//   |-- this.remap([path]);
-		//   |-- this.reset();
-		//   |-- this.get();
-		//   |-- this.set(value, [type]);
-		//   |-- this.update([type]);
-		//   |-- this.aclass(cls, [timeout]);
-		//   |-- this.rclass(cls, [timeout]);
-		//   |-- this.rclass2(cls, [timeout]);
-		//   |-- this.tclass(cls, [timeout]);
-		//   |-- this.hclass(cls);
-		//   |-- this.attr(name, [value]);
-		//   |-- this.attrd(name, [value]);
-		//   |-- this.css(name, [value]);
-		//   |-- this.on();
-		//   |-- this.off();
-		//   |-- this.datasource();
-
-		constructor(el) {
-			var t = this;
-			t._id = t.ID = 'wc' + (M.compiler.counter++);
-			t.$name = t.name = el.tagName.toLowerCase().substring(3);
-			t.$new = 1; // internal
-			t.config = { disabled: false, invalid: false, modified: false, touched: false };
-			t.$configwatcher = {};
-			t.$configchanges = {};
-			t.$formatter = [];
-			t.$parser = [];
-			t.$loaded = true;
-			t.trim = true;
-			t.node = t.dom = el;
-			t.node.config = t.config;
-			t.$type = 'component';
-			t.element = $(el);
-			extendcomponent(t);
-			t.remap();
-			M.components.push(t);
-			t.reconfigure(null, true, true);
-
-			setTimeout(function(t) {
-
-				var value = t.get();
-				var tmp = el.getAttribute(T_DEFAULT);
-				if (tmp) {
-					t.$default = new Function('return ' + tmp);
-					if (value === undefined && t.path) {
-						value = t.$default();
-						set(t.path, value, null, 1);
-						emitwatch(t.path, value, 0);
-					}
-				}
-
-				if (!t.$binded) {
-					t.$binded = true;
-					try {
-						t.setterX(value, t.path, 0);
-					} catch (e) {
-						THROWERR(e);
-					}
-				}
-
-			}, 2, t);
-		}
-
-		init() {
-			var t = this;
-			t.node.make && t.node.make();
-			t.reconfigure(t.config, true);
-		}
-
-		singleton() {
-			this.$singleton = true;
-		}
-
-		readonly() {
-			var t = this;
-			t.validate = null;
-			t.getter = null;
-			t.setter = null;
-		}
-
-		bindvisible(timeout) {
-			var self = this;
-			if (timeout === false) {
-				self.$bindvisible = false;
-				self.$bindcache = null;
-			} else {
-				self.$bindvisible = true;
-				self.$bindtimeout = timeout || MD.delaybinder;
-				self.$bindcache = {};
-			}
-			return self;
-		}
-
-		bindchanges() {
-			this.$bindchanges = true;
-		}
-
-		closest(selector) {
-			return this.element.closest(selector);
-		}
-
-		find(selector) {
-			return this.element.find(selector);
-		}
-
-		aclass(cls, timeout) {
-
-			var callback = function(t, cls) {
-				var arr = cls.split(' ');
-				for (var m of arr)
-					t.classList.add(m);
-			};
-
-			if (timeout)
-				setTimeout(callback, timeout, this.node, cls);
-			else
-				callback(this.node, cls);
-		}
-
-		rclass(cls, timeout) {
-
-			var callback = function(t, cls) {
-				var arr = cls.split(' ');
-				for (var m of arr)
-					t.classList.remove(m);
-			};
-
-			if (timeout)
-				setTimeout(callback, timeout, this.node, cls);
-			else
-				callback(this.node, cls);
-		}
-
-		rclass2(cls, timeout) {
-
-			var callback = function(t, cls) {
-				var arr = cls.split(' ');
-				for (var m of t.classList) {
-					for (var c of arr) {
-						if (m.indexOf(c) !== -1)
-							t.classList.remove(m);
-					}
-				}
-			};
-
-			if (timeout)
-				setTimeout(callback, timeout, this.node, cls);
-			else
-				callback(this.node, cls);
-
-		}
-
-		tclass(cls, timeout) {
-
-			var callback = function(t, cls) {
-				var arr = cls.split(' ');
-				for (var m of arr)
-					t.classList.toggle(m);
-			};
-
-			if (timeout)
-				setTimeout(callback, timeout, this.node, cls);
-			else
-				callback(this.node, cls);
-		}
-
-		hclass(cls) {
-			return this.node.classList.contains(cls);
-		}
-
-		attr(name, value) {
-			var t = this.node;
-			if (value == null)
-				return t.getAttribute(name);
-			t.setAttribute(name, value);
-		}
-
-		attrd(name, value) {
-			return this.attr('data-' + name, value);
-		}
-
-		modify(value, type) {
-			var t = this;
-			t.config.touched = true;
-			value = t.parser(value);
-			t.set(value, type == null ? 2 : type);
-		}
-
-		read(raw) {
-			var val = this.get();
-			return raw ? val : this.formatter(val);
-		}
-
-		css(name, value) {
-
-			var t = this.node;
-			var type = typeof(name);
-
-			if (type === TYPE_S && value == null)
-				return this.style[name];
-
-			if (type === TYPE_O) {
-				for (var key in name)
-					t.style[key] = name[key];
-			} else
-				t.style[name] = value;
-		}
-
-		reconfigure(value, init, noemit) {
-			var t = this;
-			if (value == null)
-				value = t.node.getAttribute(T_CONFIG);
-			t.$reconfigure(value, null, init, noemit);
-			t.$reconfigure2();
-		}
-
-		remap(path) {
-			var t = this;
-			if (path == null)
-				path = t.node.getAttribute(T_PATH);
-			t.plugin = findscope(t.node);
-			t.setPath(t.plugin ? t.plugin.makepath(path) : path);
-		}
-
-		get() {
-			return GET(this.path);
-		}
-
-		set(value, type) {
-			this.config.modified = true;
-			SET(this.path, value, type);
-		}
-
-		update(type) {
-			this.config.modified = true;
-			SET(this.path, this.get(), type);
-		}
-
-		kill(remove) {
-			var t = this;
-			if (!t.removed) {
-				t.removed = true;
-				t.destroy && t.destroy();
-				remove && t.node.parentNode.removeChild(t.node);
-			}
-		}
-
-		reset() {
-			this.reconfigure({ invalid: false, modified: false });
-		}
-
-		datasource(path, callback, init) {
-
-			var t = this;
-			var ds = t.$datasource;
-
-			ds && t.unwatch(ds.path, ds.fn);
-
-			if (path) {
-				path = M.makepath(t.plugin, path);
-				t.$datasource = { path: path, fn: callback };
-				if (init !== false && !t.$loaded) {
-					t.watch(path, callback);
-					t.$confds = function() {
-						callback.call(t, path, get(path), 0);
-					};
-				} else
-					t.watch(path, callback, init !== false);
-			} else
-				t.$datasource = null;
-		}
-	}
-
-	function htmlcomponentparse(t) {
-		t.$jcwebcomponent = true;
-		t.$jcinitialized = false;
-		t.ui = new UIComponent(t);
-		t.ui.init();
-		setTimeout(() => this.$jcinitialized = true, 2);
-	}
-
-	class HTMLComponent extends HTMLElement {
-
-		// Implement status
-		constructor() {
-			super();
-			setTimeout(htmlcomponentparse, 1, this);
-		}
-
-		static get observedAttributes() {
-			return [T_PATH, T_CONFIG];
-		}
-
-		modify(value, type) {
-			this.ui.modify(value, type);
-		}
-
-		read(raw) {
-			return this.ui.read(raw);
-		}
-
-		attributeChangedCallback(property, ovalue, nvalue) {
-			var t = this;
-
-			if (!t.$jcinitialized)
-				return;
-
-			switch (property) {
-				case T_PATH:
-					t.ui.remap(nvalue);
-					break;
-				case T_CONFIG:
-					t.ui.reconfigure(nvalue);
-					break;
-			}
-		}
-	}
-
 	function htmlcomponentparse2(t) {
+
+		if (!PREFLOADED) {
+			comelements.push(t);
+			return;
+		}
 
 		var n = t.getAttribute('name') || '';
 		if (!n)
@@ -14418,8 +14101,24 @@
 		}
 	}
 
-	customElements.define('ui-plugin', HTMLPlugin);
-	customElements.define('ui-bind', HTMLBind);
+	customElements.define('ui-plugin',class extends HTMLElement {
+		constructor() {
+			super();
+			this.ui = { $new: 1, $type: PLUGINNAME };
+			if (PREFLOADED)
+				setTimeout(findscope, 1, this);
+			else
+				pluginelements.push(this);
+		}
+	});
+
+	customElements.define('ui-bind', class extends HTMLElement {
+		constructor() {
+			super();
+			setTimeout(W.NEWUIBIND, 2, this);
+		}
+	});
+
 	customElements.define('ui-component', class extends HTMLElement {
 
 		// Implement status
@@ -14493,10 +14192,5 @@
 		}
 
 	});
-
-	W.HTMLPlugin = HTMLPlugin;
-	W.HTMLBind = HTMLBind;
-	W.HTMLComponent = HTMLComponent;
-	W.UIComponent = UIComponent;
 
 })();
