@@ -512,7 +512,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.125;
+	M.version = 19.126;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -12572,6 +12572,9 @@
 		// Does it contain flags only?
 		if (c === '@')
 			return self.name + ' ' + path;
+
+		if (c === '|')
+			return self.name + path;
 
 		return (c === '%' || c === '#') ? path : (self.name + (path ? ('.' + path).replace(/\?(\.)?/, '') : ''));
 	};
