@@ -512,7 +512,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.124;
+	M.version = 19.125;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11100,7 +11100,6 @@
 
 			var item = TRANSLATE(meta[i].trim());
 			if (item) {
-
 				if (i) {
 
 					var k, v = '';
@@ -11204,10 +11203,12 @@
 						v = new Function('value', T_PATH, 'el', 'var fn=el[0].' + vkey + ';if(!fn){var _s=el.scope();if(_s){el[0].' + vkey + '=fn=GET(_s.makepath(\'' + vfn + '\'))}}if(fn)return fn' + (vbeg == -1 ? '(value,path,el)' : v.substring(vbeg)));
 					}
 
-					var fn = parsebinderskip(rk, 'setter', 'strict', 'track', 'tracktype', T_RESIZE, 'delay', 'macro', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'helper', 'helpers', 'currency', 'empty', 'changes', 'ready', 'once') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
+					var fn = parsebinderskip(rk, 'setter', 'strict', 'check', 'track', 'tracktype', T_RESIZE, 'delay', 'macro', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'helper', 'helpers', 'currency', 'empty', 'changes', 'ready', 'once') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
 
-					if (!fn)
-						return null;
+					if (!fn) {
+						WARN('Invalid <ui-bind> command ' + item, el);
+						continue;
+					}
 
 					var keys = k.split('+');
 
@@ -11292,9 +11293,8 @@
 							case 'macro':
 								fn = v.split(',').trim();
 								break;
+							case 'check':
 							case 'currency':
-								fn = v;
-								break;
 							case 'focus':
 							case T_RESIZE:
 								fn = v;
@@ -11608,6 +11608,9 @@
 				}
 			}
 
+			if (obj.check)
+				obj.check = obj.check.replace(/\?/, obj.scope);
+
 			var arr = path.split('.');
 			var p = '';
 
@@ -11898,6 +11901,24 @@
 
 		if (item.scope)
 			current_scope = item.scope;
+
+		if (item.check) {
+			var tmpindex = item.check.indexOf('/');
+			var fn;
+			if (tmpindex === -1) {
+				// not method
+				if (!GET(item.check))
+					return;
+			} else {
+				// plugin
+				var plugin = PLUGINS[item.check.substring(0, tmpindex)];
+				if (plugin) {
+					fn = plugin[item.check.substring(index + 1)];
+					if (fn && !fn.call(item.el, value, path, item.el))
+						return;
+				}
+			}
+		}
 
 		if (item.def && value == null)
 			value = item.def;
