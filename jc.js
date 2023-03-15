@@ -12579,7 +12579,9 @@
 		if (c === '%' || c === '#')
 			return path;
 
-		path = path.replace(/\?(\.)?/, '');
+		if (path)
+			path = path.replace(/\?(\.)?/, '');
+
 		return self.name + (path ? ('.' + path) : '');
 	};
 
