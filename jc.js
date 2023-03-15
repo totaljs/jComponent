@@ -512,7 +512,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.126;
+	M.version = 19.127;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -12576,7 +12576,11 @@
 		if (c === '|')
 			return self.name + path;
 
-		return (c === '%' || c === '#') ? path : (self.name + (path ? ('.' + path).replace(/\?(\.)?/, '') : ''));
+		if (c === '%' || c === '#')
+			return path;
+
+		path = path.replace(/\?(\.)?/, '');
+		return self.name + (path ? ('.' + path) : '');
 	};
 
 	PP.remove = PP.$remove = function() {
