@@ -512,7 +512,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.127;
+	M.version = 19.128;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2179,13 +2179,18 @@
 		var nocsrf = false;
 		var customflags = [];
 		var wraperror = false;
+		var cl = [];
 
 		url = url.replace(REGAJAXFLAGS, function(text) {
 			var c = text.charAt(1);
 			var l = c.toLowerCase();
-			if (c === '#')
+			if (c === '#') {
 				reqid = text.substring(2);
-			else if (c === '@')
+				if (M.cl[reqid]) {
+					cl.push(reqid);
+					reqid = '';
+				}
+			} else if (c === '@')
 				customflags.push(text.substring(2));
 			else if (l === 'r')
 				repeat = true;
@@ -2401,7 +2406,10 @@
 
 		};
 
-		setTimeout($call, timeout || 0);
+		if (cl.length)
+			CL(cl.join(','), () => setTimeout($call, timeout || 0));
+		else
+			setTimeout($call, timeout || 0);
 	};
 
 	function ajaxcustomerror(response, headers, code) {
@@ -14023,36 +14031,6 @@
 		return true;
 	};
 
-	function extendcomponent(com) {
-		com.on = PPC.on;
-		com.off = PPC.off;
-		com.watch = PPC.watch;
-		com.unwatch = PPC.unwatch;
-		com.parsesource = PPC.parsesource;
-		com.modify = PPC.modify;
-		com.icon = PPC.icon;
-		com.$reconfigure = PPC.reconfigure;
-		com.$reconfigure2 = PPC.$reconfigure;
-		com.configdisplay = PPC.configdisplay;
-		com.$configmonitor = PPC.$configmonitor;
-		com.parent = PPC.parent;
-		com.html = PPC.html;
-		com.text = PPC.text;
-		com.empty = PPC.empty;
-		com.append = PPC.append;
-		com.event = PPC.event;
-		com.find = PPC.find;
-		com.formatter = PPC.formatter;
-		com.parser = PPC.parser;
-		com.makepath = PPC.makepath;
-		com.setterX = PPC.setterX;
-		com.stateX = PPC.stateX;
-		com.setPath = PPC.setPath;
-		com.hidden = PPC.hidden;
-		com.visible = PPC.visible;
-		com.$compare = PPC.$compare;
-	}
-
 	function safereplacesemicolon(text, newtext) {
 		return text.replace(/(.)?;/g, function(c) {
 			var f = c.charAt(0);
@@ -14066,8 +14044,8 @@
 			element = element[0];
 
 		if (!virtual && !PREFLOADED) {
-		 	bindelements.push({ el: element, path: path, config: config });
-		 	return;
+			bindelements.push({ el: element, path: path, config: config });
+			return;
 		}
 
 		if (!path)
