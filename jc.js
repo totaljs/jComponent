@@ -512,7 +512,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.128;
+	M.version = 19.129;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8487,6 +8487,7 @@
 					break;
 				default:
 					obj[key] && builder.push(T_ + key.trim() + ':' + (obj[key] + '').trim());
+					break;
 			}
 		}
 
