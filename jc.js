@@ -512,7 +512,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.131;
+	M.version = 19.132;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4151,6 +4151,7 @@
 					}
 
 					init(el, obj);
+
 				}, 5, init, el, obj);
 			}
 		}
@@ -8926,12 +8927,12 @@
 				break;
 		}
 
-		var arr = this.env().replace(/\\;/g, '\0').split(';');
+		var arr = this.replace(/\\;/g, '\0').split(';');
 		var colon = /(https|http|wss|ws):\/\//gi;
 
-		for (var i = 0; i < arr.length; i++) {
+		for (var m of arr) {
 
-			var item = arr[i].replace(/\0/g, ';').replace(/\\:/g, '\0').replace(colon, function(text) {
+			var item = m.replace(/\0/g, ';').replace(/\\:/g, '\0').replace(colon, function(text) {
 				return text.replace(/:/g, '\0');
 			});
 
@@ -8941,7 +8942,7 @@
 			if (l !== 2)
 				continue;
 
-			var k = kv[0].trim();
+			var k = kv[0].trim().env();
 			var v = kv[1].trim().replace(/\0/g, ':').env();
 
 			if (v === T_TRUE || v === T_FALSE)
