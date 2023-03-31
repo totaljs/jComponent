@@ -512,7 +512,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.129;
+	M.version = 19.131;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -12352,6 +12352,13 @@
 			}
 		};
 
+		Object.defineProperty(t, 'parent', {
+			get() {
+				var scope = this.element.scope();
+				return scope && scope.parent ? scope.parent.plugin : null;
+			}
+		});
+
 		Object.defineProperty(t, 'model', ext);
 		Object.defineProperty(t, 'data', ext);
 		Object.defineProperty(t, 'form', {
@@ -12569,6 +12576,7 @@
 	PP.makepath = function(path) {
 
 		var self = this;
+
 		self.scope();
 
 		var c = path ? path.charAt(0) : '';
