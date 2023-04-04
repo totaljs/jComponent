@@ -512,7 +512,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.132;
+	M.version = 19.133;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3150,10 +3150,7 @@
 		else if (c === '#')
 			obj.path = P_DEFCL + obj.path.substring(1);
 
-		var index = obj.path.indexOf('|');
-		if (index !== -1)
-			obj.path = 'PLUGINS["{0}"].'.format(obj.path.substring(0, index)) + obj.path.substring(index + 1);
-
+		obj.path = makepluginpath(obj.path);
 		obj.flags2 = [];
 
 		var keys = Object.keys(obj.flags);
@@ -5017,6 +5014,11 @@
 		return scope;
 	}
 
+	function makepluginpath(path) {
+		var index = path.indexOf('|');
+		return index === -1 ? path : (path = 'PLUGINS["' + path.substring(0, index) + '"].' + path.substring(index + 1));
+	}
+
 	function get(path, scope) {
 
 		if (path == null)
@@ -5034,13 +5036,6 @@
 
 		if (path.indexOf('?') !== -1)
 			return;
-
-		if (path.substring(0, 9) === 'PLUGINS[\'') {
-			var index = path.indexOf(']');
-			var fn = (new Function('w', 'var p=w.{0};return p?p[\'{1}\']:undefined'.format(path.substring(0, index + 1), path.substring(index + 2))));
-			paths[key] = fn;
-			return fn(scope || MD.scope);
-		}
 
 		var arr = parsepath(path);
 		var builder = [];
@@ -5071,31 +5066,17 @@
 			var p = arr[i];
 			var index = p.indexOf('[');
 			if (index === -1) {
-				if (p.indexOf('-') === -1) {
-					all.push(p);
-					builder.push(all.join('.'));
-				} else {
-					var a = all.splice(all.length - 1);
-					all.push(a + '[\'' + p + '\']');
-					builder.push(all.join('.'));
-				}
+				all.push(p);
+				builder.push(all.join('.'));
 			} else {
-				if (p.indexOf('-') === -1) {
-					all.push(p.substring(0, index));
-					builder.push(all.join('.'));
-					all.splice(all.length - 1);
-					all.push(p);
-					builder.push(all.join('.'));
-				} else {
-					all.push('[\'' + p.substring(0, index) + '\']');
-					builder.push(all.join(''));
-					all.push(p.substring(index));
-					builder.push(all.join(''));
-				}
+				all.push(p.substring(0, index));
+				builder.push(all.join('.'));
+				all.splice(all.length - 1);
+				all.push(p);
+				builder.push(all.join('.'));
 			}
 		}
-
-		return builder;
+return builder;
 	}
 
 	C.get = get;
@@ -5424,8 +5405,7 @@
 			}
 			return parent ? parent.path : t.path;
 		}).replace(REGSCOPEINLINE, t.path);
-		var index = val.indexOf('|');
-		return index === -1 ? val : 'PLUGINS["{0}"].'.format(val.substring(0, index)) + val.substring(index + 1);
+		return makepluginpath(val);
 	};
 
 	SCP.unwatch = function(path, fn) {
@@ -6487,6 +6467,7 @@
 	};
 
 	PPC.makepath = function(path) {
+
 		var self = this;
 
 		if (path.indexOf('?') !== -1) {
@@ -6497,7 +6478,7 @@
 				path = scope.makepath(path);
 		}
 
-		return path;
+		return makepluginpath(path);
 	};
 
 	PPC.scopepath = function(path) {
