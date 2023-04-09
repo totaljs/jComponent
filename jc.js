@@ -512,7 +512,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.133;
+	M.version = 19.134;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11079,6 +11079,7 @@ return builder;
 		var isnew = el.tagName === 'UI-BIND';
 		var isnewdefselector = 'ui-component,input,textarea,select,button';
 		var tmp;
+		var isscope = false;
 
 		DEF.monitor && monitor_method('binders', 1);
 
@@ -11172,7 +11173,7 @@ return builder;
 								}
 							};
 						})(v);
-					} else if (v.includes('/')) {
+					} else if (v.includes('/') && k !== 'check') {
 						dfn = (function(p) {
 							return function(value, path, el) {
 								var fn = GET(p);
@@ -11182,11 +11183,14 @@ return builder;
 						})(v);
 					}
 
-					if (k !== T_CLICK && REGSCOPECHECK.test(v)) {
-						var vbeg = v.indexOf('(');
-						var vfn = vbeg == -1 ? v : v.substring(0, vbeg);
-						var vkey = ATTRDATA + GUID(5);
-						v = new Function('value', T_PATH, 'el', 'var fn=el[0].' + vkey + ';if(!fn){var _s=el.scope();if(_s){el[0].' + vkey + '=fn=GET(_s.makepath(\'' + vfn + '\'))}}if(fn)return fn' + (vbeg == -1 ? '(value,path,el)' : v.substring(vbeg)));
+					if (REGSCOPECHECK.test(v)) {
+						isscope = true;
+						if (k !== T_CLICK && k !== 'check') {
+							var vbeg = v.indexOf('(');
+							var vfn = vbeg == -1 ? v : v.substring(0, vbeg);
+							var vkey = ATTRDATA + GUID(5);
+							v = new Function('value', T_PATH, 'el', 'var fn=el[0].' + vkey + ';if(!fn){var _s=el.scope();if(_s){el[0].' + vkey + '=fn=GET(_s.makepath(\'' + vfn + '\'))}}if(fn)return fn' + (vbeg == -1 ? '(value,path,el)' : v.substring(vbeg)));
+						}
 					}
 
 					var fn = parsebinderskip(rk, 'setter', 'strict', 'check', 'track', 'tracktype', T_RESIZE, 'delay', 'macro', T_IMPORT, T_CLASS, T_TEMPLATE, T_VBINDARR, 'focus', T_CLICK, 'format', 'helper', 'helpers', 'currency', 'empty', 'changes', 'ready', 'once') && k.substring(0, 3) !== 'def' ? typeof(v) === TYPE_FN ? v : v.indexOf('=>') !== -1 ? FN(rebinddecode(v)) : isValue(v) ? FN('(value,path,el)=>' + rebinddecode(v), true) : v.charAt(0) === '@' ? obj.com[v.substring(1)] : dfn ? dfn : GET(v) : 1;
@@ -11582,8 +11586,7 @@ return builder;
 			var bj = obj.com && path.charAt(0) === '@';
 			path = bj ? path : pathmaker(path, 0, 1);
 
-			if (path.indexOf('?') !== -1 || (obj.formatter && obj.formatter.scope)) {
-
+			if (isscope || path.indexOf('?') !== -1 || (obj.formatter && obj.formatter.scope)) {
 				var scope = findscope(el);
 				if (scope) {
 					path = scope.makepath(path);
@@ -11899,7 +11902,7 @@ return builder;
 				// plugin
 				var plugin = PLUGINS[item.check.substring(0, tmpindex)];
 				if (plugin) {
-					fn = plugin[item.check.substring(index + 1)];
+					fn = plugin[item.check.substring(tmpindex + 1)];
 					if (fn && !fn.call(item.el, value, path, item.el))
 						return;
 				}
