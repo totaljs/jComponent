@@ -512,7 +512,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.134;
+	M.version = 19.135;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5058,12 +5058,19 @@
 
 	function parsepath(path) {
 
+		var cache = [];
+
+		// Clear more complex paths
+		path = path.replace(/\[.*?\]/g, text => '#' + (cache.push(text) - 1));
+
 		var arr = path.split('.');
 		var builder = [];
 		var all = [];
 
-		for (var i = 0; i < arr.length; i++) {
-			var p = arr[i];
+		for (var p of arr) {
+
+			p = p.replace(/#\d+/g, text => cache[+text.substring(1)]);
+
 			var index = p.indexOf('[');
 			if (index === -1) {
 				all.push(p);
@@ -5076,7 +5083,8 @@
 				builder.push(all.join('.'));
 			}
 		}
-return builder;
+
+		return builder;
 	}
 
 	C.get = get;
