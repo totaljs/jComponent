@@ -485,7 +485,7 @@
 	MD.languagekey = 'language';
 	MD.versionkey = 'version';
 	MD.currencies = {};
-	MD.firtdayofweek = 1;
+	MD.firstdayofweek = 1;
 
 	ENV.ts = MD.dateformat + ' - ' + MD.timeformat;
 	ENV.date = MD.dateformat;
@@ -512,7 +512,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.135;
+	M.version = 19.136;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
