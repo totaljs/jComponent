@@ -512,7 +512,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.137;
+	M.version = 19.138;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2662,6 +2662,10 @@
 	W.CAN = function(path, flags) {
 
 		var arr = findcomponents(pathmaker(path), flags);
+
+		// Without components
+		if (!arr.length)
+			return true;
 
 		var touched = false;
 		var invalid = false;
