@@ -512,7 +512,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.138;
+	M.version = 19.139;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11081,6 +11081,18 @@
 			return output;
 		}
 
+		var ne = el.getAttribute('element');
+		if (ne) {
+			el = $(ne)[0];
+		} else {
+			ne = el.getAttribute('child');
+			if (ne)
+				el = $(el).find(ne)[0];
+		}
+
+		if (!el)
+			return;
+
 		var path = null;
 		var index = null;
 		var obj = new jBinder();
@@ -11090,8 +11102,8 @@
 		var isclick = false;
 		var isnew = el.tagName === 'UI-BIND';
 		var isnewdefselector = 'ui-component,input,textarea,select,button';
-		var tmp;
 		var isscope = false;
+		var tmp;
 
 		DEF.monitor && monitor_method('binders', 1);
 
