@@ -512,7 +512,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.139;
+	M.version = 19.141;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11086,7 +11086,10 @@
 			el = $(ne)[0];
 		} else {
 			ne = el.getAttribute('child');
-			if (ne)
+			var pe = el.getAttribute('parent');
+			if (pe)
+				el = $(el).closest(pe)[0];
+			if (ne && el)
 				el = $(el).find(ne)[0];
 		}
 
