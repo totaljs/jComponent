@@ -422,6 +422,7 @@
 	MD.prefixcsscomponents = 'ui-';
 	MD.prefixcssmacros = 'm-';
 	MD.prefixcsslibrary = 'ui-';
+	MD.color = '#4285F4';
 
 	W.DEBUG = function() {
 		if (!encryptsecret)
@@ -8484,6 +8485,9 @@
 					break;
 			}
 		}
+
+		if (obj.color)
+			DEF.color = obj.color;
 
 		if (obj.color && !obj.rgb) {
 			var color = obj.color.substring(1);
