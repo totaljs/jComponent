@@ -8486,8 +8486,7 @@
 			}
 		}
 
-		if (obj.color)
-			DEF.color = obj.color;
+		obj.color && SET('DEF.color', obj.color);
 
 		if (obj.color && !obj.rgb) {
 			var color = obj.color.substring(1);
