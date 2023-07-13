@@ -513,7 +513,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.141;
+	M.version = 19.142;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6988,16 +6988,9 @@
 	};
 
 	MPC.find = PPC.find = SCP.find = function(selector) {
-
 		var el = this.element;
-
-		if (selector && typeof(selector) === TYPE_O) {
-			var tmp = {};
-			for (var key in selector)
-				tmp[key] = el.find(selector[key]);
-			return tmp;
-		}
-
+		if (selector && typeof(selector) === TYPE_O)
+			return el.multiple(selector);
 		return el.find(selector);
 	};
 
@@ -10056,6 +10049,13 @@
 					e.preventDefault();
 			}
 		});
+
+		$.fn.multiple = function(selector) {
+			var tmp = {};
+			for (var key in selector)
+				tmp[key] = this.find(selector[key]);
+			return tmp;
+		};
 
 		$.fn.FIND = function(selector, many, callback, timeout) {
 
