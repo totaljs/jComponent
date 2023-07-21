@@ -513,7 +513,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.142;
+	M.version = 19.144;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -555,7 +555,7 @@
 			} else {
 				var el = $(dom);
 				var b = el.attrd(T_BIND) || el.attr(T_BIND);
-				dom.$jcbind = parsebinder(dom, b, EMPTYARRAY);
+				dom.$jcbind = dom.uibind = parsebinder(dom, b, EMPTYARRAY);
 				dom.$jcbind && t.binders.push(dom.$jcbind);
 			}
 		};
@@ -3626,7 +3626,7 @@
 		if (binders) {
 			for (var i = 0; i < binders.length; i++) {
 				var a = binders[i];
-				a.el.$jcbind = parsebinder(a.el, a.b);
+				a.el.$jcbind = a.el.uibind = parsebinder(a.el, a.b);
 			}
 		}
 	}
@@ -4050,7 +4050,7 @@
 
 			obj.siblings = all.length > 1;
 			obj.$lazy = lo;
-			dom.$com = obj;
+			dom.$com = dom.uicomponent = obj;
 
 			if (!dom.ui)
 				dom.ui = obj;
@@ -4160,7 +4160,7 @@
 
 		// A reference to instances
 		if (instances.length > 0)
-			el.$com = instances.length > 1 ? instances : instances[0];
+			el.$com = el.uicomponent = instances.length > 1 ? instances : instances[0];
 	}
 
 	function findscope(el) {
@@ -4467,7 +4467,7 @@
 
 	function remove(el) {
 		var dom = el[0];
-		dom.$com = null;
+		dom.$com = dom.uicomponent = null;
 		el.attr(ATTRDEL, true);
 		el.remove();
 	}
@@ -5834,7 +5834,7 @@
 		findcontrol(self.dom, function(t) {
 
 			if (t.$com !== self)
-				t.$com = self;
+				t.$com = t.uicomponent = self;
 
 			var path = t.$com.path;
 			if (path && path.length && path !== self.path)
@@ -6211,7 +6211,7 @@
 		var data = prev[0].$scopedata;
 
 		prev.rattrd(ATTRDATA, '-', T_, T_COM);
-		prev[0].$com = prev[0].$scopedata = null;
+		prev[0].$com = prev[0].uicomponent = prev[0].$scopedata = null;
 
 		scope && self.element.rattrd(n);
 
@@ -6230,7 +6230,7 @@
 		}
 
 		self.dom = self.element[0];
-		self.dom.$com = self;
+		self.dom.$com = self.dom.uicomponent = self;
 
 		if (data) {
 			self.dom.$scopedata = data;
@@ -10872,7 +10872,7 @@
 					// try to find
 					var elcom = $(self).closest(ATTRCOM);
 					if (elcom)
-						self.$com = elcom[0].$com;
+						self.$com = self.uicomponent = elcom[0].$com;
 				}
 
 				if (!com || com.$removed || !com.getter)
@@ -11821,7 +11821,7 @@
 			var com = el[0].$com;
 			if (com && !com.$removed && com.$loaded && !com.path && (com.setter || (com.dom && com.dom.setter))) {
 				if (com.$jcbind !== item) {
-					com.$jcbind = item;
+					com.$jcbind = com.uibind = item;
 					if (item.vbind && item.vbind.vbindarray)
 						com.$jcbindset = item.vbind.vbindarray.path + '[' + item.vbind.index + '].' + item.path;
 					else
@@ -14085,7 +14085,7 @@
 		element.ui = parsebinder(element, path);
 
 		if (element.ui) {
-			element.$jcbind = element.ui;
+			element.$jcbind = element.uibind = element.ui;
 			element.ui.$new = 1;
 			element.ui.$type = 'binder';
 			rebindbinder();
