@@ -1691,7 +1691,6 @@
 		if (arr[1])
 			arr[1] = new Function('return ' + arr[1]);
 
-
 		var skip = false;
 
 		WATCH(path, function(p, value) {
