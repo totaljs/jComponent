@@ -1,5 +1,7 @@
 # Library for creating reusable UI components and SPA
 
+[![Made in EU](https://cdn.componentator.com/eu-small.png)](https://european-union.europa.eu/)
+
 __Total.js UI library__ (internally called jComponent) is a client-side library for creating reusable UI components with many powerful features. The UI library contains everything you need to create Single Page Applications
 
 - Current version: `v19`
