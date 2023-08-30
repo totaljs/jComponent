@@ -1,4 +1,4 @@
-# Library for creating reusable UI components and SPA
+# Library for creating reusable Web UI components and SPA
 
 [![Made in EU](https://cdn.componentator.com/eu-small.png)](https://european-union.europa.eu/)
 
