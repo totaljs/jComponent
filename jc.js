@@ -5881,7 +5881,7 @@
 		return self;
 	};
 
-	PPC.cmd = function(name, a, b, c, d, e) {
+	PPC.CMD = function(name, a, b, c, d, e) {
 		var self = this;
 		events.cmd && EMIT('cmd', name, a, b, c, d, e);
 		DEF.monitor && monitor_method('cmd');
