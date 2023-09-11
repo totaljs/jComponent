@@ -513,7 +513,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.144;
+	M.version = 19.145;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5878,6 +5878,18 @@
 		value = self.parser(value);
 		self.config.touched = true;
 		self.set(value, type == null ? 2 : type);
+		return self;
+	};
+
+	PPC.cmd = function(name, a, b, c, d, e) {
+		var self = this;
+		events.cmd && EMIT('cmd', name, a, b, c, d, e);
+		DEF.monitor && monitor_method('cmd');
+		if (!self.$removed && self.$commands && self.$commands[name]) {
+			var commands = self.$commands[name];
+			for (var cmd of commands)
+				cmd(a, b, c, d, e);
+		}
 		return self;
 	};
 
