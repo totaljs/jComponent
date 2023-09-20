@@ -82,8 +82,8 @@
 
 	// No scrollbar
 	var W = window;
-	var $W = $(W);
 	var D = document;
+	var $W = $(W);
 
 	var THROWERR = function(e) {
 		W.console && W.console.error(e);
@@ -513,7 +513,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.145;
+	M.version = 19.146;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2986,6 +2986,12 @@
 
 		CL(meta.cl, function() {
 
+			if (meta.flags.diff) {
+				var val = get(newpath);
+				if (HASH(val) === HASH(value))
+					return;
+			}
+
 			set(newpath, value, null, type);
 
 			if (isupdate)
@@ -4578,9 +4584,9 @@
 
 	function initialize() {
 		var item = C.init.pop();
-		if (item === undefined)
+		if (item === undefined) {
 			!C.ready && compile();
-		else {
+		} else {
 			!item.$removed && prepare(item);
 			initialize();
 		}
