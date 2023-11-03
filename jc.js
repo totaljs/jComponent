@@ -513,7 +513,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.146;
+	M.version = 19.147;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3886,7 +3886,7 @@
 	function compilecomponent(comname, dom) {
 
 		var el = $(dom);
-		var meta = comname.split(REGMETA);
+		var meta = comname instanceof Array ? comname : comname.split(REGMETA);
 		if (meta.length) {
 			meta = meta.trim(true);
 			comname = meta[0];
@@ -14124,9 +14124,8 @@
 		var p = t.getAttribute(T_PATH) || 'null';
 		var c = t.getAttribute(T_CONFIG) || 'null';
 		var d = t.getAttribute(T_DEFAULT) || '';
-		var s = '__';
 
-		var meta = n + s + p + s + c + (d ? (s + d) : '');
+		var meta = [n, p, c, d || ''];
 		t.$jcwebcomponent = true;
 
 		compilecomponent(meta, t);
