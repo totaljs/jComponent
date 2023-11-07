@@ -513,7 +513,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.147;
+	M.version = 19.148;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8104,11 +8104,12 @@
 		if (url) {
 			var arr = url.split(' ');
 			var index = QUERIFYMETHODS[arr[0]] ? 1 : 0;
-			arr[index] += (arr[index].indexOf('?') === -1 ? '?' : '&') + arg.join('&');
+			if (arg.length)
+				arr[index] += (arr[index].indexOf('?') === -1 ? '?' : '&') + arg.join('&');
 			return arr.join(' ');
 		}
 
-		return '?' + arg.join('&');
+		return arg.length ? ('?' + arg.join('&')) : '';
 	};
 
 	W.STRINGIFY = function(obj, compress, fields, encrypt) {
