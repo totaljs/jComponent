@@ -513,7 +513,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.148;
+	M.version = 19.149;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1034,14 +1034,8 @@
 		output.decryption = !nodecrypt;
 		output.credentials = isCredentials;
 
-		if (callback && wraperror) {
-			/*
-			if (typeof(callback) === 'string') {
-				var target = callback;
-				callback = response => remap(target, response);
-			}*/
+		if (callback && wraperror)
 			callback = ERROR(true, callback);
-		}
 
 		if (DEF.csrf && !nocsrf) {
 			headers[T_CSRF] = DEF.csrf;
@@ -1079,10 +1073,13 @@
 					var percentage = 0;
 					if (evt.lengthComputable)
 						percentage = Math.round(evt.loaded * 100 / evt.total);
-					if (typeof(p) === TYPE_S)
-						remap(p, percentage);
-					else
-						p(percentage, evt.transferSpeed, evt.timeRemaining);
+					if (output.$progress !== percentage) {
+						if (typeof(p) === TYPE_S)
+							remap(p, percentage);
+						else
+							p(percentage, evt.transferSpeed, evt.timeRemaining);
+						output.$progress = percentage;
+					}
 				}
 			};
 
@@ -1094,6 +1091,11 @@
 			if (headers) {
 				for (var key in headers)
 					xhr.setRequestHeader(key, headers[key]);
+			}
+
+			if (!(data instanceof FormData)) {
+				xhr.setRequestHeader('content-type', 'application/json; charset=utf-8');
+				data = JSON.stringify(data);
 			}
 
 			xhr.send(data);
