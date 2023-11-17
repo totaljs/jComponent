@@ -23,9 +23,10 @@
 	var REGCL = /\s#[a-z0-9_-]+/gi;
 	var T_COM = '---';
 	var T_ = '--';
+	var TAGCOM = 'UI-COMPONENT';
 	var T_DATA = 'data-';
-	var ATTRCOM = 'ui-component,[data--],[data' + T_COM + ']';
-	var ATTRBIND = 'ui-bind,[data-bind],[bind]';
+	var ATTRCOM = 'ui-component';
+	var ATTRBIND = 'ui-bind';
 	var ATTRJCBIND = 'data-jc-bind';
 	var ATTRDATA = 'jc';
 	var ATTRDEL = T_DATA + 'jc-removed';
@@ -69,7 +70,6 @@
 	var T_HTML = 'html';
 	var T_CONFIG = 'config';
 	var T_DEFAULT = 'default';
-	var T_COMPILED = 'jc-compile';
 	var T_IMPORT = 'import';
 	var T_TMP = 'jctmp.';
 	var T_UNKNOWN = 'UNKNOWN';
@@ -77,8 +77,8 @@
 	var ERRCONN = 'ERR_CONNECTION_CLOSED';
 	var OK = Object.keys;
 	var SKIPBODYENCRYPTOR = { ':': 1, '"': 1, '[': 1, ']': 1, '\'': 1, '_': 1, '{': 1, '}': 1, '&': 1, '=': 1, '+': 1, '-': 1, '\\': 1, '/': 1, ',': 1 };
-	var debug = false;
 	var P_DEFCL = 'DEF.cl.';
+	var debug = false;
 
 	// No scrollbar
 	var W = window;
@@ -146,8 +146,6 @@
 		var below = rect.top - vw + threshold >= 0;
 		return mode === 'above' ? above : (mode === 'below' ? below : !above && !below);
 	};
-
-	W.STOPDEBUG = (function(){(function a(){try{(function b(i){if((''+(i/i)).length!==1||i%20===0){(function(){}).constructor('debugger')()}else{debugger}b(++i)})(0)}catch(e){setTimeout(a,5000)}})()});
 
 	W.HIDDEN = function(el) {
 		if (el == null)
@@ -369,7 +367,6 @@
 	var defaults = {};
 	var waits = {};
 	var statics = {};
-	var queues = {};
 	var ajaxconfig = {};
 	var $ready = setTimeout(load, 2);
 	var $loaded = false;
@@ -396,19 +393,6 @@
 	W.EMPTYARRAY = [];
 	W.EMPTYOBJECT = {};
 	W.NOW = new Date();
-
-	W.DEFAULT = function(path, timeout, reset) {
-		var arr = path.split(REGMETA);
-		if (arr.length > 1) {
-			var def = arr[1];
-			path = arr[0];
-			var index = path.indexOf('.*');
-			if (index !== -1)
-				path = path.substring(0, index);
-			SET(path + ' @default', new Function('return ' + def)(), timeout > 10 ? timeout : 3, timeout > 10 ? 3 : null);
-		} else
-			M.default(arr[0], timeout, null, reset);
-	};
 
 	var MD = W.DEF = M.defaults = {};
 	var ENV = MD.environment = {};
@@ -513,15 +497,15 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.149;
+	M.version = 20;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
 	M.macros = {};
 	M.performance = { plugins: {}, scopes: {}, components: {}, binders: {}, events: {}, setters: {}, exec: {}, set: {}, get: {}, watchers: {}, requests: {}, compilation: {}, validation: {}, reset: {}, lazy: {}, changes: {}, repeat: {}, cmd: {}, returns: {} };
 	M.components = [];
-	M.$formatter = [];
-	M.$parser = [];
+	M.formatters = [];
+	M.parsers = [];
 	M.compiler = C;
 	M.paths = {};
 	M.cl = {};
@@ -642,7 +626,6 @@
 	W.VBINDARRAY = function(html, el) {
 		var obj = {};
 		obj.html = html;
-		obj.compile = html.COMPILABLE();
 		obj.items = [];
 		obj.element = el instanceof COM ? el.element : $(el);
 		obj.element[0].$vbindarray = obj;
@@ -764,8 +747,6 @@
 					item.set(val, null, true);
 				}
 			}
-
-			obj.compile && COMPILE();
 		};
 
 		return obj;
@@ -858,55 +839,6 @@
 		rem: function(name) {
 			COOKIES.set(name.env(), '', -1);
 		}
-	};
-
-	W.FORMATTER = function(value, path, type, format) {
-
-		if (typeof(value) === TYPE_FN) {
-			!M.$formatter && (M.$formatter = []);
-
-			// Prepend
-			if (path === true)
-				M.$formatter.unshift(value);
-			else
-				M.$formatter.push(value);
-
-			return;
-		}
-
-		var a = M.$formatter;
-		if (a && a.length) {
-			for (var i = 0; i < a.length; i++) {
-				var val = a[i].call(M, path, value, type, format);
-				if (val !== undefined)
-					value = val;
-			}
-		}
-
-		return value;
-	};
-
-	W.PARSER = function(value, path, type, format) {
-
-		if (typeof(value) === TYPE_FN) {
-			!M.$parser && (M.$parser = []);
-
-			// Prepend
-			if (path === true)
-				M.$parser.unshift(value);
-			else
-				M.$parser.push(value);
-
-			return this;
-		}
-
-		var a = M.$parser;
-		if (a && a.length) {
-			for (var i = 0; i < a.length; i++)
-				value = a[i].call(M, path, value, type, format);
-		}
-
-		return value;
 	};
 
 	function parseHeaders(val) {
@@ -1455,7 +1387,6 @@
 		for (var i = 0; i < all.length; i++) {
 			var com = all[i];
 
-			//  || (isExcept && com.$except(except))
 			if (!com || com.$removed || !com.$loaded || !com.path || !com.$compare(path))
 				continue;
 
@@ -3551,91 +3482,7 @@
 	function attrcom(el, name) {
 		if (!el.attrd)
 			el = $(el);
-		return name ? el.attrd(ATTRDATA + '-' + name) : (el.attrd(T_COM) || el.attrd(T_));
-	}
-
-	function crawler(container, onComponent, level) {
-
-		if (container)
-			container = $(container)[0];
-		else
-			container = D.body;
-
-		if (!container)
-			return;
-
-		var comp = container ? attrcom(container, 'compile') : '1';
-		if (comp === '0' || comp === T_FALSE)
-			return;
-
-		var b = null;
-		var binders = null;
-
-		if (!container.$jcbind) {
-			b = container.getAttribute(T_DATA + T_BIND) || container.getAttribute(T_BIND);
-			if (b) {
-				!binders && (binders = []);
-				binders.push({ el: container, b: b });
-			}
-		}
-
-		var name = attrcom(container);
-
-		!container.$com && name != null && onComponent(name, container, 0);
-
-		var arr = container.childNodes;
-		var sub = [];
-
-		if (level === undefined)
-			level = 0;
-		else
-			level++;
-
-		for (var i = 0; i < arr.length; i++) {
-			var el = arr[i];
-			if (el) {
-
-				if (!el.tagName)
-					continue;
-
-				var webc = el.tagName.indexOf('-') !== -1;
-
-				comp = el.getAttribute(T_DATA + T_COMPILED);
-				if (comp === '0' || comp === T_FALSE)
-					continue;
-
-				if (!webc && el.$com === undefined) {
-					name = attrcom(el);
-					if (name != null)
-						onComponent(name || '', el, level);
-				}
-
-				if (!webc && !el.$jcbind) {
-					b = el.getAttribute(T_DATA + T_BIND) || el.getAttribute(T_BIND);
-					if (b) {
-						el.$jcbind = 1;
-						!binders && (binders = []);
-						binders.push({ el: el, b: b });
-					}
-				}
-
-				comp = el.getAttribute(T_DATA + T_COMPILED);
-				if (comp !== '0' && comp !== T_FALSE)
-					el.childNodes.length && el.tagName !== 'SCRIPT' && REGCOM.test(el.innerHTML) && sub.indexOf(el) === -1 && sub.push(el);
-			}
-		}
-
-		for (var i = 0; i < sub.length; i++) {
-			el = sub[i];
-			el && crawler(el, onComponent, level);
-		}
-
-		if (binders) {
-			for (var i = 0; i < binders.length; i++) {
-				var a = binders[i];
-				a.el.$jcbind = a.el.uibind = parsebinder(a.el, a.b);
-			}
-		}
+		return name ? el.attrd(ATTRDATA + '-' + name) : el[0].tagName === TAGCOM;
 	}
 
 	function findcomponent(container, selector, callback) {
@@ -3864,9 +3711,6 @@
 
 		var has = false;
 
-		if (!MD.webcomponentsonly)
-			crawler(container, compilecomponent);
-
 		// perform binder
 		rebindbinder();
 
@@ -3878,7 +3722,7 @@
 			return;
 		}
 
-		async(toggles, function(item, next) {
+		asynccall(toggles, function(item, next) {
 			for (var i = 0; i < item.toggle.length; i++)
 				item.element.tclass(item.toggle[i]);
 			next();
@@ -4130,7 +3974,7 @@
 
 			instances.push(obj);
 
-			if (dom.tagName === 'UI-COMPONENT') {
+			if (dom.tagName === TAGCOM) {
 				dom.$jcinitialized = true;
 				dom.config = obj.config;
 			}
@@ -4193,7 +4037,7 @@
 					if (tmp)
 						path += '__' + tmp;
 				}
-			} else if (tag === 'UI-COMPONENT' || tag === 'UI-BIND' || tag === 'UI-IMPORT') {
+			} else if (tag === TAGCOM || tag === 'UI-BIND' || tag === 'UI-IMPORT') {
 				// e.g. <ui-component name="box" plugin=""
 				path = el.getAttribute(PLUGINNAME);
 			} else
@@ -4341,11 +4185,6 @@
 		var arr = [];
 		var items = waitforimport.splice(0);
 
-		var els = MD.webcomponentsonly ? EMPTYARRAY : document.querySelectorAll('[' + T_DATA + T_IMPORT + ']');
-
-		for (var i = 0; i < els.length; i++)
-			items.push(els[i]);
-
 		for (var i = 0; i < items.length; i++) {
 
 			var t = items[i];
@@ -4394,7 +4233,7 @@
 
 		C.importing++;
 
-		async(arr, function(item, next) {
+		asynccall(arr, function(item, next) {
 
 			var key = makeurl(item.url);
 
@@ -4700,11 +4539,11 @@
 		}
 	}
 
-	function async(arr, fn, done) {
+	function asynccall(arr, fn, done) {
 		var item = arr.shift();
 		if (item == null)
 			return done && done();
-		fn(item, () => async(arr, fn, done));
+		fn(item, () => asynccall(arr, fn, done));
 	}
 
 	function nextpending() {
@@ -5221,15 +5060,8 @@
 			}
 
 			var c = component.element;
-			if (!component.$removed && c && inDOM(c[0])) {
-				if (!component.attr(ATTRDEL)) {
-					if (component.$parser && !component.$parser.length)
-						component.$parser = undefined;
-					if (component.$formatter && !component.$formatter.length)
-						component.$formatter = undefined;
-					continue;
-				}
-			}
+			if (!component.$removed && c && inDOM(c[0]) && !component.attr(ATTRDEL))
+				continue;
 
 			events.destroy && EMIT('destroy', component.name, component);
 			var e = 'component.destroy';
@@ -5543,8 +5375,6 @@
 
 		var self = this;
 		self._id = self.ID = ATTRDATA + (C.counter++);
-		self.$parser = [];
-		self.$formatter = [];
 		self.$configwatcher = {};
 		self.$configchanges = {};
 
@@ -5975,17 +5805,6 @@
 		return value;
 	};
 
-	PPC.$except = function(except) {
-		var p = self.$path;
-		for (var a = 0; a < except.length; a++) {
-			for (var b = 0; b < p.length; b++) {
-				if (except[a] === p[b])
-					return true;
-			}
-		}
-		return false;
-	};
-
 	function comparepath(path, updated) {
 
 		if (updated.length > path.length) {
@@ -6229,9 +6048,7 @@
 
 		var data = prev[0].$scopedata;
 
-		prev.rattrd(ATTRDATA, '-', T_, T_COM);
 		prev[0].$com = prev[0].uicomponent = prev[0].$scopedata = null;
-
 		scope && self.element.rattrd(n);
 
 		if (remove)
@@ -6254,7 +6071,7 @@
 		if (data) {
 			self.dom.$scopedata = data;
 			data.element = self.element;
-			var ctx = PLUGINS[data.path];
+			var ctx = W.PLUGINS[data.path];
 			if (ctx)
 				ctx.element = self.element;
 		}
@@ -6263,11 +6080,9 @@
 		return self;
 	};
 
-	PPC.compile = function(container) {
-		var self = this;
-		!container && self.attrd(T_COMPILED) && self.attrd(T_COMPILED, '1');
-		compile(container || self.element);
-		return self;
+	// Backward compatibility
+	PPC.compile = function() {
+		return this;
 	};
 
 	PPC.notify = function() {
@@ -6409,10 +6224,9 @@
 		return self;
 	};
 
+	// Backward compatibility
 	PPC.nocompile = function() {
-		var self = this;
-		self.element.attrd(T_COMPILED, '0');
-		return self;
+		return this;
 	};
 
 	PPC.singleton = function() {
@@ -7128,68 +6942,54 @@
 
 	PPC.formatter = function(value, prepend) {
 		var self = this;
-
 		if (typeof(value) === TYPE_FN) {
-			!self.$formatter && (self.$formatter = []);
+			!self.formatters && (self.formatters = []);
 			if (prepend === true)
-				self.$formatter.unshift(value);
+				self.formatters.unshift(value);
 			else
-				self.$formatter.push(value);
+				self.formatters.push(value);
 			return self;
 		}
-
 		var format = self.format || self.config.format;
 		var type = self.type || self.config.type;
-
-		var a = self.$formatter;
+		var a = self.formatters;
 		if (a && a.length) {
 			for (var i = 0; i < a.length; i++)
 				value = a[i].call(self, self.path, value, type, format);
 		}
-
-		a = M.$formatter;
+		a = M.formatters;
 		if (a && a.length) {
 			for (var i = 0; i < a.length; i++)
 				value = a[i].call(self, self.path, value, type, format);
 		}
-
 		return value;
 	};
 
 	PPC.parser = function(value, prepend) {
-
 		var self = this;
 		var type = typeof(value);
-
 		if (type === TYPE_FN) {
-			!self.$parser && (self.$parser = []);
-
+			!self.parsers && (self.parsers = []);
 			if (prepend === true)
-				self.$parser.unshift(value);
+				self.parsers.unshift(value);
 			else
-				self.$parser.push(value);
-
+				self.parsers.push(value);
 			return self;
 		}
-
 		if (self.trim && type === TYPE_S)
 			value = value.trim();
-
 		var format = self.format || self.config.format;
 		var type = self.type || self.config.type;
-
-		var a = self.$parser;
+		var a = self.parsers;
 		if (a && a.length) {
 			for (var i = 0; i < a.length; i++)
 				value = a[i].call(self, self.path, value, type, format);
 		}
-
-		a = M.$parser;
+		a = M.parsers;
 		if (a && a.length) {
 			for (var i = 0; i < a.length; i++)
 				value = a[i].call(self, self.path, value, type, format);
 		}
-
 		return value;
 	};
 
@@ -7992,7 +7792,6 @@
 	};
 
 	W.MAKE = function(obj, fn, update) {
-
 		switch (typeof(obj)) {
 			case TYPE_FN:
 				fn = obj;
@@ -8862,9 +8661,7 @@
 		var r = MD.root;
 		var b = MD.baseurl;
 		var ext = /(https|http|wss|ws|file):\/\/|\/\/[a-z0-9]|[a-z]:/i;
-		var replace = function(t) {
-			return t.charAt(0) + '/';
-		};
+		var replace = t => t.charAt(0) + '/';
 		if (r)
 			url = typeof(r) === TYPE_FN ? r(url) : ext.test(url) ? url : (r + url);
 		else if (!noBase && b)
@@ -8909,8 +8706,9 @@
 		return index === -1 ? self.env() : self.substring(0, index).env() + self.substring(index);
 	};
 
+	// Backward compatibility
 	SP.COMPILABLE = function() {
-		return REGCOM.test(this);
+		return false;
 	};
 
 	SP.parseConfig = function(def, callback) {
@@ -9512,10 +9310,7 @@
 		else
 			value = other;
 
-		return value.indexOf('#') === -1 ? value : value.replace(MR.pluralize, function(text) {
-			return text === '##' ? num.format() : (num + '');
-		});
-
+		return value.indexOf('#') === -1 ? value : value.replace(MR.pluralize, text => text === '##' ? num.format() : (num + ''));
 	};
 
 	NP.currency = function(currency, a, b, c) {
@@ -10057,9 +9852,7 @@
 	}
 
 	// Waits for jQuery
-	WAIT(function() {
-		return !!W.jQuery;
-	}, function() {
+	WAIT(() => !!W.jQuery, function() {
 
 		// Fixed IE <button tags
 		W.isIE && $W.on('keydown', function(e) {
@@ -10235,10 +10028,7 @@
 						compile();
 					}
 
-					setTimeout(function(arg) {
-						CL(cl, () => $.fn.SETTER.apply(self, arg));
-					}, 555, arguments);
-
+					setTimeout(arg => CL(cl, () => $.fn.SETTER.apply(self, arg)), 555, arguments);
 					return self;
 				}
 
@@ -10293,10 +10083,7 @@
 						compile();
 					}
 
-					setTimeout(function(arg) {
-						CL(cl, () => $.fn.SETTER.apply(self, arg));
-					}, 555, arguments);
-
+					setTimeout(arg => CL(cl, () => $.fn.SETTER.apply(self, arg)), 555, arguments);
 					return self;
 				}
 
@@ -10327,10 +10114,8 @@
 		};
 
 		var classtimeout = function(el, a, t) {
-
 			if (el.length)
 				delete el[0].$ct;
-
 			if (t === 1)
 				el.aclass(a);
 			else if (t === 2)
@@ -10380,12 +10165,12 @@
 			}
 
 			var arr = (self.attr(T_CLASS) || '').split(' ');
-			var isReg = typeof(a) === TYPE_O;
+			var isreg = typeof(a) === TYPE_O;
 
 			for (var i = 0; i < arr.length; i++) {
 				var cls = arr[i];
 				if (cls) {
-					if (isReg) {
+					if (isreg) {
 						a.test(cls) && self.rclass(cls);
 					} else {
 						cls.indexOf(a) !== -1 && self.rclass(cls);
@@ -10973,7 +10758,7 @@
 		com.getter(self.value, true);
 	}
 
-	M.$parser.push(function(path, value, type) {
+	M.parsers.push(function(path, value, type) {
 		switch (type) {
 			case TYPE_N:
 			case 'currency':
@@ -11497,7 +11282,6 @@
 								}
 
 								fn.$vdom = v;
-								fn.$compile = tmp.COMPILABLE();
 
 								r && !ns && scr.remove();
 								break;
@@ -12050,7 +11834,6 @@
 				var scrhtml = scr.html();
 				scr.replaceWith(scrhtml);
 				delete item.import;
-				scrhtml.COMPILABLE() && COMPILE();
 				scrhtml = null;
 			}
 		}
@@ -13773,110 +13556,6 @@
 
 		init && fn(indexer++, current_scope);
 		repeats[key] = setTimeout(fn, delay, current_scope, indexer);
-	};
-
-	W.QUEUE = function(name, fn) {
-
-		if (typeof(name) == TYPE_FN) {
-			fn = name;
-			name = T_COM;
-		}
-
-		var arr = queues[name];
-		if (!arr)
-			arr = queues[name] = [];
-
-		if (fn) {
-			arr.push({ fn: fn, scope: current_scope });
-			W.QUEUE(name);
-		} else if (!arr.isrunning) {
-			var item = arr.shift();
-			if (item) {
-				arr.isrunning = true;
-				current_scope = item.scope;
-				item.fn(function() {
-					arr.isrunning = false;
-					W.QUEUE(name);
-				}, arr.length);
-			}
-		}
-
-		return arr.length;
-	};
-
-	W.WORKFLOW = function(declaration, tasks, callback) {
-
-		if (typeof(tasks) === TYPE_FN) {
-			callback = tasks;
-			tasks = undefined;
-		}
-
-		var $ = {};
-		$.tasks = tasks || {};
-		$.scope = current_scope;
-		$.callback = function(fn) {
-			callback = fn;
-		};
-
-		$.next = $.trigger = function(next, val) {
-			setTimeout($.nextforce, 5, next, val);
-		};
-
-		$.nextforce = function(next, val) {
-
-			if (!$)
-				return;
-
-			$.prev = $.current;
-			var fn = $.tasks[next];
-			if (fn) {
-				var tmp = current_scope;
-				current_scope = $.scope;
-				$.current = next;
-
-				if (val != undefined)
-					$.value = val;
-
-				fn($, $.value);
-				current_scope = tmp;
-			} else
-				$.destroy();
-		};
-
-		$.next2 = function(name) {
-			return function(val) {
-				$ && $.next(name, val);
-			};
-		};
-
-		$.invalid = function(e) {
-			if ($.error)
-				$.error(e, $);
-			else if (!callback)
-				WARN('WORKFLOW: ' + $.current, e);
-			callback && callback.call($, DEF.ajaxerrors ? e : null, e, $);
-		};
-
-		$.push = function(name, cb) {
-			$.tasks[name] = cb;
-		};
-
-		$.done = function(val) {
-			if (val == undefined)
-				val = $.value;
-			callback && callback.call($, val, null, $);
-		};
-
-		$.clone = function() {
-			return W.WORKFLOW(null, $.tasks);
-		};
-
-		$.destroy = function() {
-			$ = null;
-		};
-
-		declaration && declaration($);
-		return $;
 	};
 
 	W.NODEINDEXOF = function(el) {
