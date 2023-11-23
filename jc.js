@@ -513,7 +513,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.149;
+	M.version = 19.151;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2730,6 +2730,10 @@
 
 	M.scope = function(val) {
 		return val === undefined ? current_scope : (current_scope = val);
+	};
+
+	M.caller = function(val) {
+		return val === undefined ? current_caller : (current_caller = val);
 	};
 
 	// 1 === manually
@@ -7905,12 +7909,13 @@
 		if (plugin_name) {
 			var ctrl = W.PLUGINS[plugin_name];
 			if (ctrl && typeof(ctrl[plugin_method]) === TYPE_FN) {
+
 				current_caller = tmp = current_scope;
 				current_scope = plugin_name;
 
 				CL(cl, function() {
 
-					var caller = current_caller && W.PLUGINS[current_caller];
+					var caller = tmp && W.PLUGINS[tmp];
 					if (caller && caller !== ctrl)
 						ctrl.caller = caller;
 
