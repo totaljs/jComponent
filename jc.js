@@ -513,7 +513,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.151;
+	M.version = 19.152;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3213,11 +3213,17 @@
 		if (!noscope && current_scope)
 			path = path.replace(REGSCOPEINLINE, current_scope);
 
+		var c = path.charCodeAt(0);
+
+		// codelist
+		if (c === 35)
+			return 'DEF.cl.' + path.substring(1);
+
 		// temporary
-		if (path.charCodeAt(0) === 37)
+		if (c === 37)
 			return T_TMP + path.substring(1) + tmp;
 
-		if (path.charCodeAt(0) === 64) {
+		if (c === 64) {
 			// parent component.data()
 			return path;
 		}
@@ -4051,7 +4057,7 @@
 			var p = attrcom(el, T_PATH) || (meta ? meta[1] === TYPE_NULL ? '' : meta[1] : '') || ''; // || obj._id;
 			var tmp = TRANSLATE(attrcom(el, T_CONFIG) || (meta ? meta[2] === TYPE_NULL ? '' : meta[2] : ''));
 
-			if (p.charAt(0) === '%' || (tmp && tmp.indexOf('$noscope:') !== -1))
+			if (p.charAt(0) === '%' || (tmp && tmp.indexOf('$noscope:') !== -1) | p.charAt(0) === '#')
 				obj.$noscope = true;
 
 			obj.setPath(pathmaker(p, 1, 1), 1);
