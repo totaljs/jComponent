@@ -79,6 +79,7 @@
 	var SKIPBODYENCRYPTOR = { ':': 1, '"': 1, '[': 1, ']': 1, '\'': 1, '_': 1, '{': 1, '}': 1, '&': 1, '=': 1, '+': 1, '-': 1, '\\': 1, '/': 1, ',': 1 };
 	var debug = false;
 	var P_DEFCL = 'DEF.cl.';
+	var P_COMMON = 'DEF.common.';
 
 	// No scrollbar
 	var W = window;
@@ -513,7 +514,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.152;
+	M.version = 19.153;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -524,6 +525,7 @@
 	M.$parser = [];
 	M.compiler = C;
 	M.paths = {};
+	M.common = {};
 	M.cl = {};
 
 	C.is = false;
@@ -1142,16 +1144,23 @@
 		// Commented because if the path doesn't contain scope and WATCH is inside in PLUGIN then scopes aren't work correctly
 		// var index = path.indexOf('?');
 		// ON(push + 'watch', path, fn, init, null, index === -1 ? '' : current_scope);
-		path = pathmaker(path, 1);
+
+		// if (path !== '*')
+		// 	path = pathmaker(path, 1);
+
 		ON(push + 'watch', path, fn, init, null, current_scope);
 	};
 
 	W.WATCHONCE = function(path, fn) {
-		path = pathmaker(path, 1);
+
+		if (path !== '*')
+			path = pathmaker(path, 1);
+
 		var cb = function(p, value, type) {
 			UNWATCH(path, cb);
 			fn(p, value, type);
 		};
+
 		WATCH(path, cb);
 	};
 
@@ -1215,14 +1224,25 @@
 				path = path.substring(0, path.length - 1);
 
 			var c = path.charAt(0);
+			var alias = null;
+
+			// Common
+			if (c === '*' && path !== '*') {
+				path = P_COMMON + path.substring(1);
+				alias = { length: P_COMMON.length, type: c };
+			}
 
 			// Codelist
-			if (c === '#')
+			if (c === '#') {
 				path = P_DEFCL + path.substring(1);
+				alias = { length: P_DEFCL.length, type: c };
+			}
 
 			// Temporary
-			if (c === '%')
+			if (c === '%') {
 				path = T_TMP + path.substring(1);
+				alias = { length: T_TMP.length, type: c };
+			}
 
 			// Raw plugin
 			if (c === '=')
@@ -1252,6 +1272,7 @@
 
 			obj.path = path;
 			obj.$path = arr;
+			obj.alias = alias;
 
 			if (M.paths[path])
 				M.paths[path]++;
@@ -1266,7 +1287,7 @@
 			if (init) {
 				DEF.monitor && monitor_method('watchers', 1);
 				obj.scope && (current_scope = obj.scope);
-				fn.call(context || M, path, obj.format ? obj.format(get(path), path, 0) : get(path), 0);
+				fn.call(context || M, alias ? (alias.type + path.substring(alias.length)) : path, obj.format ? obj.format(get(path), path, 0) : get(path), 0);
 			}
 
 		} else {
@@ -1301,6 +1322,24 @@
 
 		if (path === undefined)
 			path = '';
+
+		var c = path.charAt(0);
+
+		// Common
+		if (c === '*' && path !== '*')
+			path = P_COMMON + path.substring(1);
+
+		// Codelist
+		if (c === '#')
+			path = P_DEFCL + path.substring(1);
+
+		// Temporary
+		if (c === '%')
+			path = T_TMP + path.substring(1);
+
+		// Raw plugin
+		if (c === '=')
+			path = 'PLUGINS["{0}"].'.format(scope || 'undefined') + path.substring(1);
 
 		var owner = null;
 		var index = name.indexOf('#');
@@ -1337,6 +1376,7 @@
 
 		var cleararr = function(arr, key) {
 			return arr.remove(function(item) {
+
 				if (type > 2 && type < 5) {
 					if (item.path !== path)
 						return false;
@@ -3165,6 +3205,8 @@
 			obj.path = T_TMP + obj.path.substring(1);
 		else if (c === '#')
 			obj.path = P_DEFCL + obj.path.substring(1);
+		else if (c === '*')
+			obj.path = P_COMMON + obj.path.substring(1);
 
 		obj.path = makepluginpath(obj.path);
 		obj.flags2 = [];
@@ -3215,15 +3257,19 @@
 
 		var c = path.charCodeAt(0);
 
+		// common
+		if (c === 42) // *
+			return P_COMMON + path.substring(1);
+
 		// codelist
-		if (c === 35)
-			return 'DEF.cl.' + path.substring(1);
+		if (c === 35) // #
+			return P_DEFCL + path.substring(1);
 
 		// temporary
-		if (c === 37)
+		if (c === 37) // %
 			return T_TMP + path.substring(1) + tmp;
 
-		if (c === 64) {
+		if (c === 64) { // @
 			// parent component.data()
 			return path;
 		}
@@ -4057,7 +4103,9 @@
 			var p = attrcom(el, T_PATH) || (meta ? meta[1] === TYPE_NULL ? '' : meta[1] : '') || ''; // || obj._id;
 			var tmp = TRANSLATE(attrcom(el, T_CONFIG) || (meta ? meta[2] === TYPE_NULL ? '' : meta[2] : ''));
 
-			if (p.charAt(0) === '%' || (tmp && tmp.indexOf('$noscope:') !== -1) | p.charAt(0) === '#')
+			var c = p.charAt(0);
+
+			if (c === '%' || (tmp && tmp.indexOf('$noscope:') !== -1) || c === '#' || c === '*' || c === '=')
 				obj.$noscope = true;
 
 			obj.setPath(pathmaker(p, 1, 1), 1);
@@ -4782,6 +4830,7 @@
 		DEF.monitor && monitor_method('watchers');
 
 		for (var i = 0; i < watches.length; i++) {
+
 			var self = watches[i];
 
 			if (self.$pathfixed) {
@@ -4800,14 +4849,14 @@
 				if (index === -1 ? false : self.path === path.substring(0, index)) {
 					self.scope && (current_scope = self.scope);
 					var val = GET(self.path);
-					self.fn.call(self.context, path, self.format ? self.format(val, path, type) : val, type);
+					self.fn.call(self.context, self.alias ? (self.alias.type + path.substring(self.alias.length)) : path, self.format ? self.format(val, path, type) : val, type);
 				}
 			} else {
 				for (var j = 0; j < self.$path.length; j++) {
 					if (self.$path[j] === path) {
 						var val = GET(self.path);
 						self.scope && (current_scope = self.scope);
-						self.fn.call(self.context, path, self.format ? self.format(val, path, type) : val, type);
+						self.fn.call(self.context, self.alias ? (self.alias.type + path.substring(self.alias.length)) : path, self.format ? self.format(val, path, type) : val, type);
 						break;
 					}
 				}
@@ -5047,10 +5096,12 @@
 			return;
 
 		var code = path.charCodeAt(0);
-		if (code === 37)
+		if (code === 37) // %
 			path = T_TMP + path.substring(1);
-		else if (code === 35)
+		else if (code === 35) // #
 			path = P_DEFCL + path.substring(1);
+		else if (code === 42) // *
+			path = P_COMMON + path.substring(1);
 
 		var key = '=' + path;
 		if (paths[key])
@@ -11554,6 +11605,9 @@
 						path = path.substring(1);
 						obj.notnull = true;
 					}
+
+					if (c === '*')
+						path = P_COMMON + path.substring(1);
 
 					if (c === '#')
 						path = P_DEFCL + path.substring(1);
