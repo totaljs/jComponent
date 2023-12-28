@@ -514,7 +514,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.153;
+	M.version = 19.154;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1145,9 +1145,6 @@
 		// var index = path.indexOf('?');
 		// ON(push + 'watch', path, fn, init, null, index === -1 ? '' : current_scope);
 
-		// if (path !== '*')
-		// 	path = pathmaker(path, 1);
-
 		ON(push + 'watch', path, fn, init, null, current_scope);
 	};
 
@@ -1206,6 +1203,8 @@
 			index = path.indexOf('/');
 			if (index !== -1)
 				scope = path.substring(0, index);
+			else if (path !== '*')
+				path = pathmaker(path, 1);
 		}
 
 		var obj = { name: name, fn: fn, owner: owner || current_owner, context: context || (current_com == null ? undefined : current_com), scope: scope };
