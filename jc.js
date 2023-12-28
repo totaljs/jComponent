@@ -2767,7 +2767,7 @@
 		return false;
 	};
 
-	M.scope = function(val) {
+	M.plugin = M.scope = function(val) {
 		return val === undefined ? current_scope : (current_scope = val);
 	};
 
@@ -6463,7 +6463,7 @@
 		return self;
 	};
 
-	PPC.noscope = function(value) {
+	PPC.noplugin = PPC.noscope = function(value) {
 		var self = this;
 		self.$noscope = value === undefined ? true : value === true;
 		return self;
@@ -10382,7 +10382,7 @@
 			return this.SETTER(selector, 'reconfigure', value);
 		};
 
-		$.fn.scope = function() {
+		$.fn.plugin = $.fn.scope = function() {
 			var el = this;
 			return el.length ? findscope(el[0]) : null;
 		};
@@ -12666,7 +12666,7 @@
 		return self;
 	};
 
-	PP.scope = function(path) {
+	PP.plugin = PP.scope = function(path) {
 		var self = this;
 		current_caller = current_scope = path === null ? null : (path || self.name);
 		return self;
