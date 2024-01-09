@@ -514,7 +514,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.154;
+	M.version = 19.155;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -12670,6 +12670,17 @@
 		var self = this;
 		current_caller = current_scope = path === null ? null : (path || self.name);
 		return self;
+	};
+
+	PP.format = function(path) {
+
+		if (!path)
+			path = '';
+
+		if (path.indexOf('{') === -1)
+			path += '{0}';
+
+		return path.format(this.name);
 	};
 
 	PP.makepath = function(path) {
