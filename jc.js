@@ -416,7 +416,7 @@
 	var encrypthtml;
 
 	MD.pathcommon = 'common.';
-	MD.pathcl = 'DEF.cl';
+	MD.pathcl = 'DEF.cl.';
 	MD.cl = {};
 	MD.dictionary = {};
 	MD.cdn = '';
@@ -514,7 +514,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.156;
+	M.version = 19.157;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5085,6 +5085,11 @@
 	}
 
 	function makepluginpath(path) {
+
+		var c = path.charAt(0);
+		if (c === '*')
+			path = path.replace(c, cleancommonpath());
+
 		var index = path.indexOf('|');
 		return index === -1 ? path : (path = 'PLUGINS["' + path.substring(0, index) + '"].' + path.substring(index + 1));
 	}
@@ -7908,7 +7913,7 @@
 		var c = path.charAt(0);
 
 		if (c === '*')
-			path = path.replace(c, cleancommonpath());
+			path = path.replace(c, cleancommonpath() + (path.charAt(1) === '/' ? '' : '/'));
 
 		var tmp;
 		var cl;
@@ -12556,6 +12561,7 @@
 		name = name.split(',').trim();
 		for (var i = 0; i < name.length; i++)
 			name[i] = t.makepath(name[i]);
+
 		WATCH(name.join(','), fn, init);
 		return t;
 	};
@@ -12693,6 +12699,9 @@
 		self.scope();
 
 		var c = path ? path.charAt(0) : '';
+
+		if (c === '*')
+			return cleancommonpath();
 
 		// Does it contain flags only?
 		if (c === '@')
