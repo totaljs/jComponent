@@ -78,8 +78,6 @@
 	var OK = Object.keys;
 	var SKIPBODYENCRYPTOR = { ':': 1, '"': 1, '[': 1, ']': 1, '\'': 1, '_': 1, '{': 1, '}': 1, '&': 1, '=': 1, '+': 1, '-': 1, '\\': 1, '/': 1, ',': 1 };
 	var debug = false;
-	var P_DEFCL = 'DEF.cl.';
-	var P_COMMON = 'DEF.common.';
 
 	// No scrollbar
 	var W = window;
@@ -417,6 +415,8 @@
 	var encryptvalidator;
 	var encrypthtml;
 
+	MD.pathcommon = 'common.';
+	MD.pathcl = 'DEF.cl';
 	MD.cl = {};
 	MD.dictionary = {};
 	MD.cdn = '';
@@ -514,7 +514,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.155;
+	M.version = 19.156;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -1227,14 +1227,14 @@
 
 			// Common
 			if (c === '*' && path !== '*') {
-				path = P_COMMON + path.substring(1);
-				alias = { length: P_COMMON.length, type: c };
+				path = MD.pathcommon + path.substring(1);
+				alias = { length: MD.pathcommon.length, type: c };
 			}
 
 			// Codelist
 			if (c === '#') {
-				path = P_DEFCL + path.substring(1);
-				alias = { length: P_DEFCL.length, type: c };
+				path = MD.pathcl + path.substring(1);
+				alias = { length: MD.pathcl.length, type: c };
 			}
 
 			// Temporary
@@ -1326,11 +1326,11 @@
 
 		// Common
 		if (c === '*' && path !== '*')
-			path = P_COMMON + path.substring(1);
+			path = MD.pathcommon + path.substring(1);
 
 		// Codelist
 		if (c === '#')
-			path = P_DEFCL + path.substring(1);
+			path = MD.pathcl + path.substring(1);
 
 		// Temporary
 		if (c === '%')
@@ -3203,9 +3203,9 @@
 		if (c === '%')
 			obj.path = T_TMP + obj.path.substring(1);
 		else if (c === '#')
-			obj.path = P_DEFCL + obj.path.substring(1);
+			obj.path = MD.pathcl + obj.path.substring(1);
 		else if (c === '*')
-			obj.path = P_COMMON + obj.path.substring(1);
+			obj.path = MD.pathcommon + obj.path.substring(1);
 
 		obj.path = makepluginpath(obj.path);
 		obj.flags2 = [];
@@ -3258,11 +3258,11 @@
 
 		// common
 		if (c === 42) // *
-			return P_COMMON + path.substring(1);
+			return MD.pathcommon + path.substring(1);
 
 		// codelist
 		if (c === 35) // #
-			return P_DEFCL + path.substring(1);
+			return MD.pathcl + path.substring(1);
 
 		// temporary
 		if (c === 37) // %
@@ -5098,9 +5098,9 @@
 		if (code === 37) // %
 			path = T_TMP + path.substring(1);
 		else if (code === 35) // #
-			path = P_DEFCL + path.substring(1);
+			path = MD.pathcl + path.substring(1);
 		else if (code === 42) // *
-			path = P_COMMON + path.substring(1);
+			path = MD.pathcommon + path.substring(1);
 
 		var key = '=' + path;
 		if (paths[key])
@@ -7435,8 +7435,10 @@
 			name = name.substring(0, index).trim();
 		}
 
-		if (name.charAt(0) === '@') {
-			var id = name.substring(1).trim();
+		var c = name.charAt(0);
+
+		if (c === '@' || c === '*') {
+			var id = c === '*' ? cleancommonpath() : name.substring(1).trim();
 			var obj = W.PLUGINS[id];
 			if (obj) {
 				config.call(obj, obj);
@@ -7903,7 +7905,11 @@
 		for (var i = f; i < arguments.length; i++)
 			arg.push(arguments[i]);
 
-		var c = path.charCodeAt(0);
+		var c = path.charAt(0);
+
+		if (c === '*')
+			path = path.replace(c, cleancommonpath());
+
 		var tmp;
 		var cl;
 
@@ -7916,8 +7922,7 @@
 		path = makeandexecflags(path);
 
 		// Event
-		// #
-		if (c === 35) {
+		if (c === '#') {
 			p = path.substring(1);
 			if (wait) {
 				!events[p] && exechelper(ctx, path, arg, cl);
@@ -7926,8 +7931,7 @@
 			return;
 		}
 
-		// -
-		if (c === 45) {
+		if (c === '-') {
 			var is = path.substring(0, 3) === T_COM; // backward compatibility
 			var args = [path.substring(is ? 3 : 1).trim(), arg[0], arg[1], arg[2], arg[3], arg[4]];
 			wait && args.unshift(wait);
@@ -7935,8 +7939,7 @@
 			return;
 		}
 
-		// &
-		if (c === 38) {
+		if (c === '&') {
 			CL(cl, () => CMD.call(ctx, path.substring(1), arg[0], arg[1], arg[2], arg[3], arg[4]));
 			return;
 		}
@@ -7948,7 +7951,7 @@
 		var index = null;
 		var ok = 0;
 
-		if (c === 64) {
+		if (c === '@') {
 			index = path.indexOf('.');
 			plugin_name = path.substring(1, index);
 			plugin_method = path.substring(index + 1);
@@ -11606,10 +11609,10 @@
 					}
 
 					if (c === '*')
-						path = P_COMMON + path.substring(1);
+						path = MD.pathcommon + path.substring(1);
 
 					if (c === '#')
-						path = P_DEFCL + path.substring(1);
+						path = MD.pathcl + path.substring(1);
 
 					if (path === '-')
 						path = (attrcom(obj.el) || '').split(REGMETA)[1];
@@ -12748,7 +12751,15 @@
 		return true;
 	};
 
+	function cleancommonpath() {
+		return MD.pathcommon.substring(0, MD.pathcommon.length - 1);
+	}
+
 	W.PLUGINABLE = function(name, fn, init) {
+
+		if (name === '*')
+			name = cleancommonpath();
+
 		var tmp = pluginableplugins[name];
 		if (tmp && tmp.pending) {
 			tmp.fn = fn;
@@ -12758,6 +12769,9 @@
 	};
 
 	W.PLUGIN = function(name, fn, init, done) {
+
+		if (name === '*')
+			name = cleancommonpath();
 
 		if (PREFLOADED) {
 
