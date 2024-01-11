@@ -514,7 +514,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.158;
+	M.version = 19.159;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10670,6 +10670,7 @@
 		}
 
 		var windowresizeinterval;
+		var windowresizetimeout;
 		var windowresized = false;
 		var windowsize;
 		var windowwh = {};
@@ -10706,9 +10707,19 @@
 		}
 
 		function resize() {
+
 			var w = $W;
+
 			W.WW = w.width();
 			W.WH = w.height();
+
+			if (!W.WH || !W.WH) {
+				windowresizetimeout && clearTimeout(windowresizetimeout);
+				windowresizetimeout = setTimeout(resize, 10);
+				return;
+			}
+
+			windowresizetimeout = null;
 			windowresizeinterval && clearTimeout(windowresizeinterval);
 			windowresizeinterval = setTimeout(resize_noscrollbar, 300);
 		}
