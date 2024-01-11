@@ -514,7 +514,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.157;
+	M.version = 19.158;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -9053,13 +9053,20 @@
 		if (typeof(encode) === TYPE_S)
 			def = encode;
 
+		var isfn = typeof(encode) === 'function';
+
 		return this.replace(REGPARAMS, function(text) {
 			// Is double?
 			var l = text.charCodeAt(1) === 123 ? 2 : 1;
-			var val = get(text.substring(l, text.length - l).trim(), obj);
+			var key = text.substring(l, text.length - l).trim();
+			var val = get(key, obj);
 
-			if (encode === 'json')
-				return JSON.stringify(val);
+			if (encode) {
+				if (isfn)
+					return encode(val, key);
+				if (encode === 'json')
+					return JSON.stringify(val);
+			}
 
 			return val == null ? (def == null ? text : def) : encode ? encode === 'escape' ? Thelpers.encode(val) : encodeURIComponent(val + '') : val;
 		});
