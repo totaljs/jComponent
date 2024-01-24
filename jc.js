@@ -514,7 +514,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.159;
+	M.version = 19.161;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -2096,7 +2096,9 @@
 	};
 
 	W.DAPI = function(name, data, callback) {
-		return W.API(DEF.api + ' ' + name, data, callback);
+		var url = DEF.api;
+		url = typeof(url) === 'function' ? url(name, data) : (url + ' ' + name);
+		return W.API(url, data, callback);
 	};
 
 	W.API = function(url, data, callback, socket) {
