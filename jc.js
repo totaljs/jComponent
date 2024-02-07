@@ -514,7 +514,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.161;
+	M.version = 19.162;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -12721,7 +12721,7 @@
 		var c = path ? path.charAt(0) : '';
 
 		if (c === '*')
-			return cleancommonpath();
+			return cleancommonpath() + (path.length > 1 ? ('.' + path.substring(1)) : '');
 
 		// Does it contain flags only?
 		if (c === '@')
