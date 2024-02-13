@@ -514,7 +514,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.162;
+	M.version = 19.163;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8900,6 +8900,29 @@
 			arr.push(self[i]);
 		}
 		return arr;
+	};
+
+	SP.parseEncoded = function() {
+
+		var str = this;
+		var index = str.indexOf('?');
+
+		if (index !== -1)
+			str = str.substring(index + 1);
+
+		index = str.lastIndexOf('#');
+		if (index !== -1)
+			str = str.substring(0, index);
+
+		var arr = str.split('&');
+		var obj = {};
+
+		for (var m of arr) {
+			var tmp = m.split('=');
+			obj[decodeURIComponent(tmp[0])] = decodeURIComponent(tmp[1]);
+		}
+
+		return obj;
 	};
 
 	SP.VARIABLES = function(args) {
