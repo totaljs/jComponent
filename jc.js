@@ -77,6 +77,9 @@
 	var ERRCONN = 'ERR_CONNECTION_CLOSED';
 	var OK = Object.keys;
 	var SKIPBODYENCRYPTOR = { ':': 1, '"': 1, '[': 1, ']': 1, '\'': 1, '_': 1, '{': 1, '}': 1, '&': 1, '=': 1, '+': 1, '-': 1, '\\': 1, '/': 1, ',': 1 };
+	var SKIPCUSTOMELEMENTS = { component: 1, bind: 1, import: 1, plugin: 1 };
+	var ERREXEC = 'jC: The method "{0}" not found';
+	var ERRSETTER = 'jC: The component method "{0}" not found';
 	var debug = false;
 
 	// No scrollbar
@@ -488,6 +491,7 @@
 	MD.versionkey = 'version';
 	MD.currencies = {};
 	MD.firstdayofweek = 1;
+	MD.customelements = false;
 
 	ENV.ts = MD.dateformat + ' - ' + MD.timeformat;
 	ENV.date = MD.dateformat;
@@ -514,7 +518,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.163;
+	M.version = 19.164;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6409,7 +6413,10 @@
 		if (p.charAt(0) === '@') {
 			p = p.substring(1);
 			var com = self.parent().component();
-			com && com[p] && com[p](a, b, c, d);
+			if (com && com[p])
+				com[p](a, b, c, d);
+			else if (debug)
+				WARN(ERREXEC.format(path));
 		} else
 			EXEC(p, a, b, c, d);
 		return self;
@@ -6443,7 +6450,10 @@
 		if (p.charAt(0) === '@') {
 			p = p.substring(1);
 			var com = self.parent().component();
-			com && com[p] && com[p](a, b, c, d);
+			if (com && com[p])
+				com[p](a, b, c, d);
+			else if (debug)
+				WARN(ERREXEC.format(path));
 		} else
 			EXEC(p, a, b, c, d);
 
@@ -6463,7 +6473,8 @@
 					com[p](a, b, c, d);
 				else
 					com[p] = a;
-			}
+			} else if (debug)
+				WARN(ERREXEC.format(path));
 		} else
 			SEEX(p, a, b, c, d);
 
@@ -7575,6 +7586,9 @@
 			config = null;
 		}
 
+		if (MD.customelements && !SKIPCUSTOMELEMENTS[name])
+			registercustom('ui-' + name, name);
+
 		// Multiple versions
 		if (name.indexOf(',') !== -1) {
 			var tmp = name.split(',');
@@ -7720,6 +7734,8 @@
 					isget = methodname.indexOf('.') !== -1;
 					events.setter && EMIT('setter', myselector, methodname, arg[0], arg[1]);
 
+					var count = 0;
+
 					for (var i = 0; i < arr.length; i++) {
 						var o = arr[i];
 						var a = isget ? get(methodname, o) : o[methodname];
@@ -7727,9 +7743,15 @@
 						if (!a && o.$new)
 							a = isget ? get(methodname, o.node) : o.node[methodname];
 
-						if (typeof(a) === TYPE_FN)
+						if (typeof(a) === TYPE_FN) {
+							count++;
 							a.apply(o, arg);
+						}
 					}
+
+					if (debug && !count)
+						WARN(ERRSETTER.format(selector));
+
 				});
 			});
 
@@ -7790,6 +7812,7 @@
 			events.setter && EMIT('setter', myselector, methodname, arg[0], arg[1]);
 
 			CL(cl, function() {
+				var count = 0;
 				for (var i = 0; i < arr.length; i++) {
 					var o = arr[i];
 					var a = isget ? get(methodname, o) : o[methodname];
@@ -7797,9 +7820,14 @@
 					if (!a && o.$new)
 						a = isget ? get(methodname, o.node) : o.node[methodname];
 
-					if (typeof(a) === TYPE_FN)
+					if (typeof(a) === TYPE_FN) {
 						a.apply(o, arg);
+						count++;
+					}
 				}
+
+				if (debug && !count)
+					WARN(ERRSETTER.format(selector));
 			});
 		}
 	};
@@ -7994,9 +8022,10 @@
 					}
 
 					current_scope = tmp;
-					ok = 1;
 
 				});
+
+				return;
 
 			} else if (plugin_name) {
 				tmp = pluginableplugins[plugin_name];
@@ -8021,6 +8050,10 @@
 						wait = true;
 				}
 			}
+
+			if (debug && !wait)
+				WARN(ERREXEC.format(path));
+
 			wait && !ok && exechelper(ctx, path, arg, cl);
 			return;
 		}
@@ -8031,7 +8064,12 @@
 				CL(cl, () => fn.apply(ctx === W ? ctrl : ctx, arg));
 				ok = 1;
 			}
-			wait && !ok && exechelper(ctx, path, arg, cl);
+
+			if (wait && !ok)
+				exechelper(ctx, path, arg, cl);
+			else if (debug)
+				WARN(ERREXEC.format(path));
+
 			return;
 		}
 
@@ -8045,7 +8083,10 @@
 			ok = 1;
 		}
 
-		wait && !ok && exechelper(ctx, path, arg, cl);
+		if (wait && !ok)
+			exechelper(ctx, path, arg, cl);
+		else
+			WARN(ERREXEC.format(path));
 	};
 
 	W.ATTRD = function(el, attrd) {
@@ -14254,14 +14295,16 @@
 			WARN('Invalid <ui-bind>', element);
 	};
 
-	function htmlcomponentparse2(t) {
+	function htmlcomponentparse2(t, n) {
 
 		if (!PREFLOADED) {
 			comelements.push(t);
 			return;
 		}
 
-		var n = t.getAttribute('name') || '';
+		if (!n)
+			n = t.getAttribute('name') || '';
+
 		if (!n)
 			return;
 
@@ -14313,65 +14356,67 @@
 		}
 	});
 
-	customElements.define('ui-component', class extends HTMLElement {
+	function registercustom(name, component) {
+		customElements.define(name, class extends HTMLElement {
 
-		// Implement status
-		constructor() {
-			super();
-			setTimeout(htmlcomponentparse2, 1, this);
-		}
-
-		static get observedAttributes() {
-			return [T_CONFIG];
-		}
-
-		reconfigure(value, init, noemit) {
-			var t = this;
-			if (value == null)
-				value = t.getAttribute(T_CONFIG);
-			t.$com.reconfigure(value, null, init, noemit);
-		}
-
-		modify(value, type) {
-			this.$com.modify(value, type);
-		}
-
-		read(raw) {
-			return this.$com.read(raw);
-		}
-
-		get() {
-			return GET(this.$com.path);
-		}
-
-		set(value, type) {
-			this.config.modified = true;
-			SET(this.$com.path, value, type);
-		}
-
-		update(type) {
-			this.config.modified = true;
-			SET(this.$com.path, this.get(), type);
-		}
-
-		reset() {
-			this.reconfigure({ invalid: false, modified: false });
-		}
-
-		attributeChangedCallback(property, ovalue, nvalue) {
-			var t = this;
-
-			if (!this.$initialized)
-				return;
-
-			switch (property) {
-				case T_CONFIG:
-					t.$com.reconfigure(nvalue);
-					break;
+			// Implement status
+			constructor() {
+				super();
+				setTimeout(htmlcomponentparse2, 1, this, component);
 			}
-		}
 
-	});
+			static get observedAttributes() {
+				return [T_CONFIG];
+			}
+
+			reconfigure(value, init, noemit) {
+				var t = this;
+				if (value == null)
+					value = t.getAttribute(T_CONFIG);
+				t.$com.reconfigure(value, null, init, noemit);
+			}
+
+			modify(value, type) {
+				this.$com.modify(value, type);
+			}
+
+			read(raw) {
+				return this.$com.read(raw);
+			}
+
+			get() {
+				return GET(this.$com.path);
+			}
+
+			set(value, type) {
+				this.config.modified = true;
+				SET(this.$com.path, value, type);
+			}
+
+			update(type) {
+				this.config.modified = true;
+				SET(this.$com.path, this.get(), type);
+			}
+
+			reset() {
+				this.reconfigure({ invalid: false, modified: false });
+			}
+
+			attributeChangedCallback(property, ovalue, nvalue) {
+				var t = this;
+
+				if (!this.$initialized)
+					return;
+
+				switch (property) {
+					case T_CONFIG:
+						t.$com.reconfigure(nvalue);
+						break;
+				}
+			}
+
+		});
+	}
 
 	function importparse(t) {
 		waitforimport.push(t);
@@ -14386,5 +14431,7 @@
 		}
 
 	});
+
+	registercustom('ui-component');
 
 })();
