@@ -518,7 +518,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.164;
+	M.version = 19.165;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7984,7 +7984,6 @@
 		var plugin_method = null;
 		var plugin_name = null;
 		var index = null;
-		var ok = 0;
 
 		if (c === '@') {
 			index = path.indexOf('.');
@@ -8054,7 +8053,7 @@
 			if (debug && !wait)
 				WARN(ERREXEC.format(path));
 
-			wait && !ok && exechelper(ctx, path, arg, cl);
+			wait && exechelper(ctx, path, arg, cl);
 			return;
 		}
 
@@ -8062,14 +8061,13 @@
 			var fn = FUNC[path.substring(6)];
 			if (fn) {
 				CL(cl, () => fn.apply(ctx === W ? ctrl : ctx, arg));
-				ok = 1;
+				return;
 			}
 
-			if (wait && !ok)
+			if (wait)
 				exechelper(ctx, path, arg, cl);
 			else if (debug)
 				WARN(ERREXEC.format(path));
-
 			return;
 		}
 
@@ -8080,13 +8078,14 @@
 				fn.apply(ctx, arg);
 				DEF.monitor && monitor_method('exec');
 			});
-			ok = 1;
+			return;
 		}
 
-		if (wait && !ok)
+		if (wait)
 			exechelper(ctx, path, arg, cl);
-		else
+		else if (debug)
 			WARN(ERREXEC.format(path));
+
 	};
 
 	W.ATTRD = function(el, attrd) {
