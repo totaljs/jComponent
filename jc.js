@@ -518,7 +518,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.165;
+	M.version = 19.166;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4341,6 +4341,7 @@
 				if (tmp[1]) {
 					plugin = pluginscope[tmp[1]];
 					if (plugin) {
+						current_element = scope.element;
 						W.PLUGINS[scope.path] = scope.plugin = new Plugin(path, plugin.fn, 0, 0, current_caller && PLUGINS[current_caller]);
 						scope.plugin.scopedata = scope;
 					} else {
@@ -4523,8 +4524,11 @@
 						EXEC(true, item.init.replace('?', item.path || ''), item.element);
 				}
 
-				current_element = null;
-				next();
+				// Because plugin initialization takes 1 tick
+				setTimeout(function() {
+					current_element = null;
+					next();
+				}, 2);
 
 			}, item.cache == null ? MD.importcache : item.cache);
 
