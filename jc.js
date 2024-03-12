@@ -518,7 +518,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.166;
+	M.version = 19.167;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4351,8 +4351,15 @@
 				} else {
 					// Tries to assign an element into the plugin
 					scope.plugin = plugin = W.PLUGINS[scope.path];
-					if (plugin)
+					if (plugin) {
 						plugin.element = scope.element;
+					} else {
+						// The plugin not found
+						current_element = scope.element;
+						W.PLUGINS[scope.path] = scope.plugin = new Plugin(scope.path, NOOP, 0, 0, current_caller && PLUGINS[current_caller]);
+						scope.plugin.scopedata = scope;
+						WARN('Plugin "{0}" not defined'.format(scope.path));
+					}
 				}
 
 				scope.elements.push(el);
