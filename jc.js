@@ -80,6 +80,7 @@
 	var SKIPCUSTOMELEMENTS = { component: 1, bind: 1, import: 1, plugin: 1 };
 	var ERREXEC = 'jC: The method "{0}" not found';
 	var ERRSETTER = 'jC: The component method "{0}" not found';
+	var ERRPLUGIN = 'Plugin "{0}" not found';
 	var debug = false;
 
 	// No scrollbar
@@ -4345,7 +4346,7 @@
 						W.PLUGINS[scope.path] = scope.plugin = new Plugin(path, plugin.fn, 0, 0, current_caller && PLUGINS[current_caller]);
 						scope.plugin.scopedata = scope;
 					} else {
-						WARN('Plugin "? {0}" not found'.format(tmp[1]));
+						debug && WARN(ERRPLUGIN.format('? ' + tmp[1]));
 						return;
 					}
 				} else {
@@ -4358,7 +4359,7 @@
 						current_element = scope.element;
 						W.PLUGINS[scope.path] = scope.plugin = new Plugin(scope.path, NOOP, 0, 0, current_caller && PLUGINS[current_caller]);
 						scope.plugin.scopedata = scope;
-						WARN('Plugin "{0}" not defined'.format(scope.path));
+						debug && WARN(ERRPLUGIN.format(scope.path));
 					}
 				}
 
