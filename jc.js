@@ -519,7 +519,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.168;
+	M.version = 19.169;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4287,6 +4287,9 @@
 					path = tmp[0];
 				}
 
+				if (path === '*')
+					path = MD.pathcommon.substring(0, MD.pathcommon.length - 1);
+
 				scope._id = scope.ID = scope.id = GUID(10);
 				scope.element = $(el);
 				scope.config = conf;
@@ -4357,6 +4360,8 @@
 					} else {
 						// The plugin not found
 						current_element = scope.element;
+						W.PLUGINS[scope.path] = new Plugin(path, NOOP, 0, 0, current_caller && PLUGINS[current_caller]);
+						// "scope.plugin" can't be assigned due to the bad declaration in the Exec method
 						debug && WARN(ERRPLUGIN.format(scope.path));
 					}
 				}
@@ -5398,7 +5403,7 @@
 
 		for (var k in R) {
 			var a = R[k];
-			if (!a.element || !inDOM(a.element[0]) || !a.element[0].innerHTML) {
+			if (a.$remove && !a.element || !inDOM(a.element[0]) || !a.element[0].innerHTML) {
 				a.$remove();
 				delete R[k];
 				DEF.monitor && monitor('plugins', 2);
