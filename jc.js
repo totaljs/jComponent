@@ -519,7 +519,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.167;
+	M.version = 19.168;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4357,8 +4357,6 @@
 					} else {
 						// The plugin not found
 						current_element = scope.element;
-						W.PLUGINS[scope.path] = scope.plugin = new Plugin(scope.path, NOOP, 0, 0, current_caller && PLUGINS[current_caller]);
-						scope.plugin.scopedata = scope;
 						debug && WARN(ERRPLUGIN.format(scope.path));
 					}
 				}
