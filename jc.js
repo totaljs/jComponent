@@ -519,7 +519,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.169;
+	M.version = 19.171;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4159,6 +4159,7 @@
 				if (is) {
 					obj.scope = scope;
 					obj.pathscope = scope.path;
+					obj.plugin = scope.plugin;
 				}
 			}
 
@@ -11811,6 +11812,7 @@
 				if (scope) {
 					path = scope.makepath(path);
 					obj.scope = scope.path;
+					obj.plugin = scope.plugin;
 				} else {
 					WARN('Missing <ui-plugin>', el);
 					return;
