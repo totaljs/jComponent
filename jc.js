@@ -519,7 +519,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.171;
+	M.version = 19.172;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4818,7 +4818,6 @@
 		if (C.importing) {
 			setTimeout(downloadfallback, 1000);
 		} else {
-
 			setTimeout2('$fallback', function() {
 				var pending = waitfordownload.splice(0);
 				var cache = {};
@@ -14350,6 +14349,8 @@
 				t.$componentname = n;
 				t.$compilecomponent = () => compilecomponent(meta, t);
 				waitfordownload.push(t);
+				if (!C.ready)
+					setTimeout2('$nextpending', nextpending, 50);
 			}
 		}
 	}
