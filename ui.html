@@ -13,8 +13,10 @@
 </head>
 <body>
 
-	<ui-plugin path="mycustompath">
+	<ui-plugin path="mycustompath" config="test:1">
 		<div>
+			<ui-component name="input" path="?.name" config="required:1">Name</ui-component>
+			<ui-component name="input" path="?.name" config="required:1">Name</ui-component>
 			<ui-component name="input" path="?.name" config="required:1">Name</ui-component>
 			<ui-plugin path="?.address">
 				<ui-component name="input" path="?.name" config="required:1">Name</ui-component>
@@ -24,8 +26,9 @@
 
 	<script>
 
-		COMPONENT('input', 'required:0', function(self, config, element) {
+		var mycustompath = { name: 'Pičus' };
 
+		COMPONENT('input', 'required:0', function(self, config, element, cls) {
 			var skip = false;
 
 			self.validate = function(value) {
@@ -57,9 +60,7 @@
 
 		});
 
-		PLUGIN('mycustompath', function(exports) {
-
-			console.log('ready plugin:', exports.name, exports.get('@reset'));
+		PLUGIN('mycustompath', function(exports, config) {
 
 			exports.watch('name', function(value, path, type) {
 				console.log('event watch:', value, path, type);

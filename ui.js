@@ -41,7 +41,7 @@
 	*/
 	T.set = function(scope, path, value) {
 
-		var key = 'set' + path;
+		var key = 'A' + HASH(path);
 		var fn = T.cache.paths[key];
 
 		if (fn)
@@ -74,7 +74,7 @@
 	*/
 	T.get = function(scope, path) {
 
-		var key = 'get' + path;
+		var key = 'B' + HASH(path);
 		var fn = T.cache.paths[key];
 
 		if (fn)
@@ -126,6 +126,23 @@
 			}
 		}
 
+	};
+
+	T.find = function(scope, path, callback) {
+		path = path instanceof T.Path ? path : parsepath(path);
+		path.exec(function() {
+			var arr = [];
+			for (let m of T.components) {
+				if (m.ready && m.scope === scope) {
+					if (path.includes(m.path)) {
+						if ((path.flags.visible && HIDDEN(m.element)) || (path.flags.touched && !m.config.touched) || (path.flags.modified && !m.config.modified) || (path.flags.invalid && !m.config.invalid) || (path.flags.disabled && !m.config.disabled) || (path.flags.enabled && m.config.disabled))
+							continue;
+						arr.push(m);
+					}
+				}
+			}
+			callback(arr);
+		});
 	};
 
 	/*
@@ -222,10 +239,11 @@
 	}
 
 	function parsepath(path) {
-		var cache = T.cache.paths[path];
+		var key = 'C' + HASH(path);
+		var cache = T.cache.paths[key];
 		if (cache)
 			return cache;
-		return T.cache.paths[path] = new T.Path(path);
+		return T.cache.paths[key] = new T.Path(path);
 	}
 
 	function splitpath(path) {
@@ -308,6 +326,8 @@
 			let tmp;
 			let arr;
 
+			// @TODO: missing implementation for downloading dependencies
+
 			if (t.tag === 'UI-PLUGIN' && !t.instance) {
 				tmp = T.db.plugins[t.path];
 				if (!tmp) {
@@ -353,6 +373,7 @@
 			t.instance.path = new T.Path(t.path);
 			t.instance.proxy = t;
 			t.instance.element = t.element;
+			t.instance.dom = t.element[0];
 			t.instance.config = {};
 			t.instance.plugin = t.parent;
 
@@ -370,6 +391,7 @@
 					break;
 				case 'UI-COMPONENT':
 					t.element.aclass(cls);
+					t.instance.cls = cls;
 					break;
 			}
 
@@ -467,7 +489,7 @@
 			t.flags2 = [];
 
 			var keys = Object.keys(t.flags);
-			var skip = { reset: 1, default: 1, change: 1, extend: 1, nowatch: 1, type: 1, nobind: 1, modify: 1, modified: 1, touched: 1 };
+			var skip = { reset: 1, default: 1, change: 1, extend: 1, nowatch: 1, type: 1, nobind: 1, modify: 1, modified: 1, touched: 1, invalid: 1 };
 
 			for (var i = 0; i < keys.length; i++) {
 				var key = keys[i];
@@ -557,8 +579,15 @@
 			The method notifies all watchers based on the path.
 		*/
 		PROTO.notify = function(scope, flags) {
-			if (flags)
-				flags = ' ' + flags;
+			if (flags) {
+				if (typeof(flags) === 'object') {
+					let tmp = '';
+					for (let key in flags)
+						tmp += ' @' + key;
+					flags = tmp;
+				} else
+					flags = ' ' + flags;
+			}
 			T.notify(scope, flags ? (this.path + (flags || '')) : this);
 		};
 
@@ -578,6 +607,10 @@
 
 		};
 
+		PROTO.find = function(scope, callback) {
+			return T.find(scope, this, callback);
+		};
+
 	})();
 
 	// Plugin declaration
@@ -594,10 +627,10 @@
 
 			var ext = {
 				get() {
-					return t.get();
+					return t.path.get(t.scope);
 				},
 				set(value) {
-					t.set(value);
+					t.path.set(t.scope, value);
 				}
 			};
 
@@ -611,12 +644,12 @@
 			Object.defineProperty(t, 'data', ext);
 			Object.defineProperty(t, 'form', {
 				get() {
-					return t.get('@reset');
+					return t.path.get(t.scope, '@reset');
 				}
 			});
 			Object.defineProperty(t, 'modified', {
 				get() {
-					return t.get('@reset @modified') || {}
+					return t.get(t.scope, '@reset @modified') || {}
 				}
 			});
 		};
@@ -630,6 +663,8 @@
 
 			path = t.path.assign(path);
 
+			/*
+			@TODO: Not implemented
 			if (path.flags.modified) {
 				obj = {};
 				for (let m of T.components) {
@@ -637,7 +672,7 @@
 						T.set(path)
 					}
 				}
-			}
+			}*/
 
 			if (path.flags.reset) {
 				for (let m of T.components) {
@@ -649,11 +684,17 @@
 			return t.path.get(t.scope);
 		};
 
+		// Internal
 		PROTO.init = function() {
 			var t = this;
 			t.make && t.make();
 		};
 
+		/*
+			@Path: Plugin
+			@Method: instance.on(name, callback);
+			The method registers a global event.
+		*/
 		PROTO.on = function(name, callback) {
 			var t = this;
 			var arr = t.events[name];
@@ -662,8 +703,18 @@
 			arr.push(callback);
 		};
 
+		/*
+			@Path: Plugin
+			@Method: instance.emit(name, [a], [b], [c], [d]);
+			The method emits a global event within Total.js UI library.
+		*/
 		PROTO.emit = T.emit;
 
+		/*
+			@Path: Plugin
+			@Class: instance.format(path);
+			The method formats the path based on the plugin path.
+		*/
 		PROTO.format = function(path) {
 
 			if (!path)
@@ -675,18 +726,11 @@
 			return path.format(this.path);
 		};
 
-		PROTO.makepath = function(path) {
-			var t = this;
-			if (path) {
-				let c = path.charAt(0);
-				if (c !== '<' && c !== '@' && c !== '#')
-					path = t.format('{0}.' + path);
-				else
-					path = t.path + ' ' + path;
-			}
-			return path || t.path;
-		}
-
+		/*
+			@Path: Plugin
+			@Method: instance.watch(path, callback);
+			The method registers a new watcher to capture changes based on the path.
+		*/
 		PROTO.watch = function(path, callback) {
 
 			if (typeof(path) === 'function') {
@@ -696,10 +740,6 @@
 
 			var t = this;
 			t.watchers.push({ path: t.path.assign(path), fn: callback });
-		};
-
-		PROTO.validate = function() {
-
 		};
 
 	})();
@@ -720,9 +760,11 @@
 
 		var PROTO = T.Component.prototype;
 
+		// Internal
 		PROTO.init = function() {
 			var t = this;
 			t.make && t.make();
+			t.$setter(t.get(), t.path.path, { init: 1 });
 		};
 
 		// Deprecated
@@ -780,6 +822,11 @@
 			arr.push(callback);
 		};
 
+		/*
+			@Path: Component
+			@Method: instance.watch(path, callback);
+			The method registers a new watcher to capture changes based on the path.
+		*/
 		PROTO.watch = function(path, callback) {
 
 			if (typeof(path) === 'function') {
@@ -808,6 +855,17 @@
 			t.config.touched = true;
 			t.config.modified = true;
 			t.set(value, flags);
+		};
+
+		/*
+			@Path: Component
+			@Method: instance.touch();
+			The method simulates user "touch".
+		*/
+		PROTO.touch = function() {
+			var t = this;
+			t.config.touched = true;
+			t.$validate();
 		};
 
 		/*
@@ -1027,6 +1085,58 @@
 			}
 
 			T.db.plugins[name] = { config: (config || '').parseConfig(), callback: callback, dependencies: dependencies };
+		};
+
+		/*
+			@Path: Globals
+			@Method: ERRORS(path);
+			The method returns errors based on the path.
+		*/
+		W.ERRORS = function(path, callback) {
+			path = parsepath(path + ' @invalid');
+			path.find(T.scope, callback);
+		};
+
+		/*
+			@Path: Globals
+			@Method: HIDDEN(el);
+			The method determines whether the element is visible or not.
+		*/
+		W.HIDDEN = function(el) {
+			if (el == null)
+				return true;
+			if (el instanceof jQuery)
+				el = el[0];
+			return el.parentNode && el.parentNode.tagName === T_BODY ? false : W.isIE ? (!el.offsetWidth && !el.offsetHeight) : !el.offsetParent;
+		};
+
+		/*
+			@Path: Globals
+			@Method: HASH(value);
+			The method creates a hash from the `value`.
+		*/
+		W.HASH = function(value, unsigned) {
+			if (!value)
+				return 0;
+			var type = typeof(value);
+			if (type === 'number')
+				return value;
+			else if (type === 'boolean')
+				return value ? 1 : 0;
+			else if (value instanceof Date)
+				return value.getTime();
+			else if (type === 'object')
+				value = STRINGIFY(value);
+			var hash = 0, i, char;
+			if (!value.length)
+				return hash;
+			var l = value.length;
+			for (i = 0; i < l; i++) {
+				char = value.charCodeAt(i);
+				hash = ((hash << 5) - hash) + char;
+				hash |= 0; // Convert to 32bit integer
+			}
+			return hash >>> 0;
 		};
 
 	})();
