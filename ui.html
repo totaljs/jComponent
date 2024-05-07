@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Total.js UI library</title>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=11" />
+	<meta name="format-detection" content="telephone=no" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+	<meta name="robots" content="all,follow" />
+	<link href="https://cdn.componentator.com/spa.min@19.css" rel="stylesheet" type="text/css" />
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+	<script src="ui.js"></script>
+</head>
+<body>
+
+	<ui-plugin path="mycustompath">
+		<div>
+			<ui-component name="input" path="?.name" config="required:1">Name</ui-component>
+			<ui-plugin path="?.address">
+				<ui-component name="input" path="?.name" config="required:1">Name</ui-component>
+			</ui-plugin>
+		</div>
+	</ui-plugin>
+
+	<script>
+
+		COMPONENT('input', 'required:0', function(self, config, element) {
+
+			var skip = false;
+
+			self.validate = function(value) {
+				return value ? true : false;
+			};
+
+			self.make = function() {
+				element.append('<input type="text" />');
+				element.on('input', 'input', function() {
+					skip = true;
+					self.modify(this.value);
+				});
+			};
+
+			self.setter = function(value, path, flags) {
+
+				if (skip) {
+					skip = false;
+					return;
+				}
+
+				element.find('input').val(value);
+				console.log('setter component:', value, path, flags);
+			};
+
+			self.watch(function(value, path) {
+				console.log('SOM TU', value, path);
+			});
+
+		});
+
+		PLUGIN('mycustompath', function(exports) {
+
+			console.log('ready plugin:', exports.name, exports.get('@reset'));
+
+			exports.watch('name', function(value, path, type) {
+				console.log('event watch:', value, path, type);
+			});
+
+			exports.watch(function(value, path, type) {
+				console.log('event watch *:', value, path, type);
+			});
+		});
+
+		PLUGIN('?.address', function(exports) {
+			console.log('ready plugin:', exports.name);
+
+		});
+
+	</script>
+
+</body>
+</html>
