@@ -44,11 +44,16 @@
 	DEF.localstorage = 'totalui';
 	DEF.dictionary = {};
 	DEF.cdn = '';
+	DEF.iconprefix = 'ti ti-';
 	DEF.thousandsseparator = ' ';
 	DEF.decimalseparator = '.';
 	DEF.dateformat = 'yyyy-MM-dd';
 	DEF.timeformat = 'HH:mm';
 	DEF.dateformatutc = false;
+	DEF.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
+	DEF.empty = '---';
+	DEF.prefixcsscomponents = 'ui-';
+	DEF.prefixcsslibrary = 'ui-';
 
 	DEF.regexp = {};
 	DEF.regexp.int = /(-|\+)?[0-9]+/;
@@ -247,7 +252,119 @@
 
 	T.exec = function(name, a, b, c, d) {
 
+		// @important flag (it waits for a method)
 
+		let raw = name;
+		let index = name.indexOf(' ');
+		let path = '';
+
+		if (index !== -1) {
+			path = name.substring(index + 1);
+			name = name.substring(0, index);
+		}
+
+		path = parsepath(path);
+
+		if (name.includes('/')) {
+
+			let tmp = name.split('/');
+			let plugin = T.plugins[tmp[0]];
+
+			if (plugin) {
+				if (plugin[tmp[1]])
+					path.exec(() => plugin[tmp[1]](a, b, c, d));
+				else
+					WARN(ERR.format('The method "{0}/{1}" not found.'.format(tmp[0], tmp[1])));
+			} else {
+				if (path && path.flags.important)
+					setTimeout(T.exec, 500, raw, a, b, c, d);
+				else
+					WARN(ERR.format('The plugin "{0}" not found.'.format(tmp[0])));
+			}
+		} else {
+			if (W[name]) {
+				path.exec(() => W[name](a, b, c, d));
+			} else {
+				if (path && path.flags.important)
+					setTimeout(T.exec, 500, raw, a, b, c, d);
+				else
+					WARN(ERR.format('The method "{0}" not found.'.format(name)));
+			}
+		}
+	};
+
+	T.setter = function(element, name, a, b, c, d) {
+
+		var arr = T.components;
+		let raw = name;
+		let index = name.indexOf(' ');
+		let path = '';
+
+		if (index !== -1) {
+			path = name.substring(index + 1);
+			name = name.substring(0, index);
+		}
+
+		path = parsepath(path);
+
+		if (element) {
+			let arr = element.find('ui-component');
+			for (let m of arr) {
+				if (m.$totalui)
+					arr.push(m.$totalui);
+			}
+		}
+
+		let tmp = name.split('/').trim();
+		let sel = name.charAt(0);
+		let id = '';
+		let pth = '';
+
+		switch (sel) {
+			case '#': // identifier
+				id = name.substring(1);
+				name = '';
+				break;
+			case '.': // path
+				pth = name.substring(1);
+				name = '';
+				break;
+		}
+
+		let count = 0;
+		let run = [];
+
+		for (let m of arr) {
+			if (m.ready) {
+
+				if (id && m.id !== id)
+					continue;
+				else if (pth && !m.path.includes(pth))
+					continue;
+				else if (m.name !== tmp[0])
+					continue;
+
+				count++;
+
+				if (m[tmp[1]])
+					run.push(m);
+				else
+					WARN('The setter "{0}" not found.'.format(name));
+			}
+		}
+
+		if (run.length) {
+			path.exec(function() {
+				for (let m of run)
+					m[tmp[1]](a, b, c, d);
+			});
+		} else if (path.flags.important) {
+			setTimeout(T.setter, 800, element, raw, a, b, c, d);
+		} else
+			WARN(ERR.format('The setter "{0}" not found.'.format(name)));
+	};
+
+	T.cmd = function(element, name, a, b, c, d) {
 
 	};
 
@@ -475,6 +592,42 @@
 
 	}
 
+	function parent(sel) {
+
+		var t = this;
+		if (!sel)
+			return t.element.parent();
+
+		if (sel === 'auto') {
+			var dom = t.dom;
+			if (dom) {
+				dom = dom.parentNode;
+				while (true) {
+					if (!dom || dom.tagName === 'BODY')
+						break;
+					if (dom.style.height && !dom.classList.contains(MD.prefixcsslibrary + 'scrollbar-area'))
+						return $(dom);
+					dom = dom.parentNode;
+				}
+				return $(W);
+			}
+		}
+
+		if (sel.substring(0, 6) !== 'parent')
+			return sel === 'window' ? $(W) : sel === 'document' ? D : t.element.closest(sel);
+
+		var count = sel.substring(6);
+		var parent = t.element.parent();
+
+		if (count) {
+			count = +count;
+			for (var i = 0; i < count; i++)
+				parent = parent.parent();
+		}
+
+		return parent;
+	};
+
 	// Proxy declaration
 	(function() {
 
@@ -504,6 +657,7 @@
 			t.instance.dom = t.element[0];
 			t.instance.config = {};
 			t.instance.plugin = t.parent;
+			t.element[0].$totalui = t.instance;
 
 			for (let key in t.ref.config)
 				t.instance.config[key] = t.ref.config[key];
@@ -511,7 +665,7 @@
 			for (let key in t.config)
 				t.instance.config[key] = t.config[key];
 
-			var cls = 'ui-' + t.name;
+			var cls = DEF.prefixcsscomponents + t.name;
 			var extensions = null;
 
 			switch (t.tag) {
@@ -956,6 +1110,31 @@
 
 		/*
 			@Path: Plugin
+			@Method: instance.parent(selector); #selector {String};
+			The method tries to find parent element according to the selector.
+		*/
+		PROTO.parent = parent;
+
+		PROTO.SETTER = function(name, a, b, c, d) {
+			T.setter(this.element, name, a, b, c, d);
+		};
+
+		PROTO.CMD = function(name, a, b, c, d) {
+			T.cmd(this.element, name, a, b, c, d);
+		};
+
+		PROTO.exec = function(name, a, b, c, d, e) {
+			var t = this;
+			var path = parsepath(name);
+			var fn = t[path.path];
+			if (fn)
+				path.exec(() => fn());
+			else
+				WARN(ERR.format('The method "{0}/{1}" not found.'.format(t.name, path.path)));
+		};
+
+		/*
+			@Path: Plugin
 			@Method: instance.get(path);
 			The method reads a value from the plugin model.
 		*/
@@ -1180,6 +1359,13 @@
 
 		/*
 			@Path: Component
+			@Method: instance.parent(selector); #selector {String};
+			The method tries to find parent element according to the selector.
+		*/
+		PROTO.parent = parent;
+
+		/*
+			@Path: Component
 			@Method: instance.modify(value, [type]);
 			The method assigns a value to the model, sets a state to `touched` and calls `setter`.
 		*/
@@ -1371,12 +1557,20 @@
 		*/
 		PROTO.CMD = function(name, a, b, c, d, e) {
 			var t = this;
-			T.events.cmd && T.emit('cmd', name, a, b, c, d, e);
 			var commands = t.commands[name];
 			if (commands) {
 				for (let fn of commands)
 					fn(a, b, c, d, e);
 			}
+		};
+
+		/*
+			@Path: Component
+			@Method: instance.icon(value); #value {String};
+			The method checks if it is needed to add the icon prefix defined in `DEF.iconprefix`.
+		*/
+		PROTO.icon = function(value) {
+			return value ? ((value.includes(' ') ? DEF.iconprefix : '') + value) : '';
 		};
 
 		// Internal method
@@ -3034,6 +3228,15 @@
 			this.prepend(f);
 			return f;
 		};
+
+		$.fn.CMD = function(name, a, b, c, d) {
+			T.cmd($(this), name, a, b, c, d);
+		};
+
+		$.fn.SETTER = function(name, a, b, c, d) {
+			T.setter($(this), name, a, b, c, d);
+		};
+
 	})();
 
 	// load localStorage

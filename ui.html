@@ -13,29 +13,68 @@
 </head>
 <body>
 
-	<ui-plugin path="mycustompath" config="test:1">
+	<!--
+	<ui-plugin config="test:1">
 		<div>
 			<ui-component name="input" path="?.name" config="required:1">Name</ui-component>
 			<ui-component name="input" path="?.name" config="required:1">Name</ui-component>
 			<ui-component name="input" path="?.name" config="required:1">Name</ui-component>
-			<ui-plugin path="?.address">
+			<ui-plugin>
 				<ui-component name="input" path="?.name" config="required:1">Name</ui-component>
 			</ui-plugin>
 		</div>
 	</ui-plugin>
+	-->
+
+<!-- DEPENDENCIES -->
+<!--
+<ui-component name="LAZY directory" path="null" config="placeholder:Search..."></ui-component>
+<ui-component name="LAZY datepicker"></ui-component>
+<ui-component name="LAZY icons"></ui-component>
+-->
+
+<ui-component name="inputa"></ui-component>
+<ui-component name="inputa"></ui-component>
+<ui-component name="inputa"></ui-component>
+
+	<!-- <ui-import path="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></ui-import> -->
+	<!-- <ui-import config="url:ui-part.html"></ui-import> -->
 
 	<script>
 
-		var mycustompath = { name: 'Test' };
+		// @TODO: missing implementation for component config.$init, self.SEEX(), self.EXEC(), LAZY is not complete
+		// @TODO: missing implementation for FIND(), EXEC(), SETTER()
 
-		COMPONENT('input', 'required:0', function(self, config, element, cls) {
+		var expiredate = NOW.add('10 seconds');
+
+		function init(exports) {
+			console.log('INIT', exports);
+		}
+
+		var common = { name: 'Test' };
+
+		COMPONENT('inputa', 'required:0', function(self, config, element, cls) {
 			var skip = false;
+
+			self.alert = function() {
+				console.log('OK: alert');
+			};
+
+			self.destroy = function() {
+				console.log('destroyed', self.path, self.name);
+			};
 
 			self.validate = function(value) {
 				return value ? true : false;
 			};
 
+			self.configure = function() {
+				console.log('configure');
+				console.log(arguments);
+			};
+
 			self.make = function() {
+				self.on('service', counter => console.log('service:', counter));
 				element.append('<input type="text" />');
 				element.on('input', 'input', function() {
 					skip = true;
@@ -57,10 +96,15 @@
 			self.watch(function(value, path) {
 				console.log('SOM TU', value, path);
 			});
-
 		});
 
-		PLUGIN('mycustompath', function(exports, config) {
+		// }, 'https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js <d3>');
+
+		PLUGIN('*', function(exports, config) {
+
+			exports.make = function() {
+				exports.set('?.bool', true);
+			};
 
 			exports.watch('name', function(value, path, type) {
 				console.log('event watch:', value, path, type);
@@ -69,9 +113,15 @@
 			exports.watch(function(value, path, type) {
 				console.log('event watch *:', value, path, type);
 			});
+
 		});
 
 		PLUGIN('?.address', function(exports) {
+			console.log('ready plugin:', exports.name);
+			exports.on('service', counter => console.log('service:', counter));
+		});
+
+		PLUGIN('? neviem', function(exports) {
 			console.log('ready plugin:', exports.name);
 
 		});

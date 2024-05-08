@@ -1,0 +1,11 @@
+<ui-plugin path="XX">
+	<ui-component name="input" path="?.name" config="required:1">Name</ui-component>
+	<ui-component name="input" path="?.name" config="required:1">Name</ui-component>
+	<ui-component name="input" path="?.name" config="required:1">Name</ui-component>
+</ui-plugin>
+
+<script>
+	PLUGIN('XX', function(exports) {
+		console.log('SOM TU', exports.name);
+	});
+</script>
