@@ -5,6 +5,8 @@
 	const DEF = {
 		cl: {}
 	};
+
+	const TNB = { number: 1, boolean: 1 };
 	const T = Total;
 
 	W.Total = Total;
@@ -12,9 +14,64 @@
 	W.PLUGINS = {};
 	W.W = W;
 
+	/*
+		@Path: Globals
+		@Method: NOOP(); #return {Function};
+		The method returns empty function that means "no operation".
+	*/
+	W.NOOP = function() {};
+
+	/*
+		@Path: Globals
+		@Property: EMPTYARRAY; #return {Array};
+		THe property returns empty array;
+	*/
+	W.EMPTYARRAY = [];
+	Object.freeze(W.EMPTYARRAY);
+
+	/*
+		@Path: Globals
+		@Property: EMPTYOBJECT; #return {Object};
+		THe property returns empty object;
+	*/
+	W.EMPTYOBJECT = {};
+	Object.freeze(W.EMPTYOBJECT);
+
 	DEF.pathcommon = 'common.';
 	DEF.pathcl = 'DEF.cl.';
+	DEF.headers = { 'X-Requested-With': 'XMLHttpRequest' };
+	DEF.fallback = 'https://cdn.componentator.com/j-{0}.html';
+	DEF.localstorage = 'totalui';
+	DEF.dictionary = {};
+	DEF.cdn = '';
+	DEF.thousandsseparator = ' ';
+	DEF.decimalseparator = '.';
+	DEF.dateformat = 'yyyy-MM-dd';
+	DEF.timeformat = 'HH:mm';
+	DEF.dateformatutc = false;
 
+	DEF.regexp = {};
+	DEF.regexp.int = /(-|\+)?[0-9]+/;
+	DEF.regexp.float = /(-|\+)?[0-9.,]+/;
+	DEF.regexp.date = /YYYY|yyyy|YY|yy|MMMM|MMM|MM|M|dddd|DDDD|DDD|ddd|DD|dd|D|d|HH|H|hh|h|mm|m|ss|s|a|ww|w/g;
+	DEF.regexp.pluralize = /#{1,}/g;
+	DEF.regexp.format = /\{\d+\}/g;
+
+	DEF.onstorageread = function(callback) {
+		let cache = {};
+		try {
+			cache = PARSE(localStorage.getItem(DEF.localstorage) || '');
+		} catch (e) {}
+		callback(cache || {});
+	};
+
+	DEF.onstoragesave = function(data) {
+		try {
+			localStorage.setItem(DEF.localstorage, JSON.stringify(data));
+		} catch (e) {}
+	};
+
+	T.ready = false;
 	T.scope = W;
 	T.version = 20;
 	T.components = [];
@@ -26,12 +83,21 @@
 	T.data = {};
 
 	T.cache = {
+		lazy: {},
+		timeouts: {},
+		external: {},
+		imports: {},
+		storage: {},
 		paths: {},
-		counter: 0
+		plugins: [],
+		counter: 0,
+		statics: {}
 	};
 
 	T.db = {
 		plugins: {},
+		extensions: {},
+		configs: {},
 		components: {}
 	};
 
@@ -60,11 +126,28 @@
 				remove(m);
 		}
 
+		// Check cache
+		let resave = false;
+		for (let key in T.cache.storage) {
+			let m = T.cache.storage[key];
+			if (m.expire && m.expire < NOW) {
+				resave = true;
+				delete T.cache.storage[key];
+			}
+		}
+
+		resave && savestorage();
+
 		for (let m of remove)
 			m.$remove();
 
 		T.cache.counter++;
 		T.emit('service', T.cache.counter);
+
+		// Every 5 minutes
+		if (T.cache.counter % 5 === 0) {
+			T.cache.paths = {};
+		}
 
 	}, 60000);
 
@@ -94,7 +177,7 @@
 		var v = arr[arr.length - 1];
 		var ispush = v.lastIndexOf('[]') !== -1;
 		var regarr = /\[\]/g;
-		var a = builder.join(';') + ';var v=typeof(a)===\'function\'?a(F.TUtils.get(b)):a;w' + (v[0] === '[' ? '' : '.') + (ispush ? v.replace(regarr, '.push(v)') : (v + '=v')) + ';return v';
+		var a = builder.join(';') + ';var v=typeof(a)===\'function\'?a(Total.get(a, b)):a;w' + (v[0] === '[' ? '' : '.') + (ispush ? v.replace(regarr, '.push(v)') : (v + '=v')) + ';return v';
 
 		var fn = new Function('w', 'a', 'b', a);
 		T.cache.paths[key] = fn;
@@ -159,6 +242,12 @@
 					e(a, b, c, d);
 			}
 		}
+
+	};
+
+	T.exec = function(name, a, b, c, d) {
+
+
 
 	};
 
@@ -247,6 +336,27 @@
 
 	};
 
+	T.process = function(scope, value, callback) {
+
+		var type = typeof(callback);
+
+		if (type === 'function') {
+			callback(value);
+			return;
+		}
+
+		if (type === 'string')
+			callback = parsepath(callback);
+
+		if (callback instanceof T.Path) {
+			callback.exec(function() {
+				callback.set(scope, value);
+				callback.notify(scope);
+			});
+		}
+
+	};
+
 	/*
 		@Path: Core
 		@Method: Total.cl(name, callback); #name {String}; #callback {Function()};
@@ -289,6 +399,18 @@
 				return true;
 			parent = parent.parentNode;
 		}
+	}
+
+	function savestorage() {
+		var data = {};
+		for (let key in T.cache.storage) {
+			let item = T.cache.storage[key];
+			if (item.expire)
+				data[key] = item;
+		}
+		try {
+			DEF.onstoragesave(data);
+		} catch (e) {}
 	}
 
 	function parsepath(path) {
@@ -371,22 +493,102 @@
 
 		var PROTO = T.Proxy.prototype;
 
+		function init(t, arr) {
+			t.ready = true;
+			t.instance.ready = true;
+			t.instance.scope = W;
+			t.instance.name = t.name || t.path;
+			t.instance.path = new T.Path(t.path);
+			t.instance.proxy = t;
+			t.instance.element = t.element;
+			t.instance.dom = t.element[0];
+			t.instance.config = {};
+			t.instance.plugin = t.parent;
+
+			for (let key in t.ref.config)
+				t.instance.config[key] = t.ref.config[key];
+
+			for (let key in t.config)
+				t.instance.config[key] = t.config[key];
+
+			var cls = 'ui-' + t.name;
+			var extensions = null;
+
+			switch (t.tag) {
+				case 'UI-PLUGIN':
+					T.plugins[t.path] = t.instance;
+					extensions = T.db.extensions['@' + t.path];
+					break;
+				case 'UI-COMPONENT':
+					t.element.aclass(cls);
+					t.instance.cls = cls;
+					extensions = T.db.extensions[t.instance.name];
+					T.components.push(t.instance);
+					break;
+				case 'UI-BIND':
+					T.binders.push(t.instance);
+					break;
+			}
+
+			if (extensions) {
+				for (let m of extensions) {
+					if (m.config) {
+						for (let key in m.config)
+							t.instance.config[key] = m.config[key];
+					}
+				}
+			}
+
+			t.ref.callback.call(t.instance, t.instance, t.instance.config, t.element, cls);
+
+			if (extensions) {
+				for (let m of extensions)
+					m.callback.call(t.instance, t.instance, t.instance.config, t.element, cls);
+			}
+
+			t.instance.init();
+		}
+
 		PROTO.init = function(t) {
 
 			if (t.ready)
 				return;
 
-			let tmp;
-			let arr;
+			// Check if the Total.js UI library is initialized
+			if (!T.ready) {
+				setTimeout(t => t.init(t), 300, t);
+				return;
+			}
 
-			// @TODO: missing implementation for downloading dependencies
+			if (t.tag === 'UI-IMPORT') {
+
+				let url = t.path || t.config.url;
+
+				if (!T.cache.external[url]) {
+					T.cache.external[url] = true;
+					WARN(ERR.format('Downloading "{0}".').format(url));
+				}
+
+				IMPORT(url, t.element, function() {
+					t.ready = true;
+				});
+				return;
+			}
+
+			let tmp;
 
 			if (t.tag === 'UI-PLUGIN' && !t.instance) {
+
+				let last = T.cache.plugins.shift();
+
+				if (!t.path)
+					t.path = last || '';
 
 				if (t.path === '*')
 					t.path = DEF.pathcommon.substring(0, DEF.pathcommon.length - 1);
 
 				tmp = T.db.plugins[t.path];
+				t.ref = tmp;
 
 				if (t.path.includes(' ') && t.path.includes('?'))
 					t.path = 'Total.data.p' + GUID(10);
@@ -397,15 +599,43 @@
 				}
 
 				t.instance = new T.Plugin(t);
+
 			} else if (t.tag === 'UI-COMPONENT' && !t.instance) {
+
+				if (!t.lazy) {
+					let index = t.name.indexOf(' ');
+					if (index !== -1) {
+						t.lazy = t.name.substring(0, 5).toUpperCase() === 'LAZY ';
+						if (t.lazy) {
+							t.name = t.name.substring(5);
+							return;
+						}
+					}
+				}
+
 				tmp = T.db.components[t.name];
 				if (!tmp) {
+
+					if (t.fallback) {
+						WARN(ERR.format('The component "{0}" not found'.format(t.name)));
+						return;
+					}
+
 					// Try to download component from CDN
-					WARN(ERR.format('The component "{0}" not found'.format(t.name)));
+					if (!T.cache.external[t.name]) {
+						T.cache.external[t.name] = true;
+						WARN(ERR.format('Downloading "{0}" component.').format(t.name));
+					}
+
+					IMPORT(DEF.fallback.format(t.name), function() {
+						t.fallback = true;
+						t.init(t);
+					});
 					return;
 				}
+
 				t.instance = new T.Component(t);
-				arr = T.components;
+				t.ref = tmp;
 			} else if (t.tag === 'UI-BIND' && !t.instance)
 				t.instance = new T.Binder(t, t.config, t.element);
 
@@ -428,38 +658,12 @@
 				}
 			}
 
-			t.ready = true;
-			t.instance.ready = true;
-			t.instance.scope = W;
-			t.instance.name = t.name || t.path;
-			t.instance.path = new T.Path(t.path);
-			t.instance.proxy = t;
-			t.instance.element = t.element;
-			t.instance.dom = t.element[0];
-			t.instance.config = {};
-			t.instance.plugin = t.parent;
-
-			for (let key in tmp.config)
-				t.instance.config[key] = tmp.config[key];
-
-			for (let key in t.config)
-				t.instance.config[key] = t.config[key];
-
-			var cls = 'ui-' + t.name;
-
-			switch (t.tag) {
-				case 'UI-PLUGIN':
-					T.plugins[t.path] = t.instance;
-					break;
-				case 'UI-COMPONENT':
-					t.element.aclass(cls);
-					t.instance.cls = cls;
-					break;
-			}
-
-			arr && arr.push(t.instance);
-			tmp.callback.call(t.instance, t.instance, t.config, t.element, cls);
-			t.instance.init();
+			if (t.ref.dependencies) {
+				if (!(t.ref.dependencies instanceof Array))
+					t.ref.dependencies = t.ref.dependencies.split(',').trim();
+				t.ref.dependencies.wait(IMPORT, () => init(t));
+			} else
+				init(t);
 		};
 	})();
 
@@ -481,6 +685,12 @@
 		// attribute is changed
 	});
 
+	register('ui-import', function(el) {
+		new T.Proxy(el);
+	}, function(el, property, value) {
+		// attribute is changed
+	});
+
 	// Path declaration
 	(function() {
 
@@ -494,6 +704,12 @@
 			var t = this;
 
 			t.flags = {};
+			t.ERROR = false;
+
+			path = path.replace(' ERROR', function(text) {
+				t.ERROR = true;
+				return '';
+			});
 
 			if (path.includes(' #')) {
 				t.cl = [];
@@ -508,8 +724,8 @@
 
 			t.raw = path;
 
-			path = path.replace(/<.?>/g, function(text) {
-				t.cache = text;
+			path = path.replace(/<.*?>/g, function(text) {
+				t.cache = text.substring(1, text.length - 1).trim();
 				return '';
 			});
 
@@ -529,6 +745,10 @@
 			}).trim();
 
 			t.path = path.env();
+
+			if (t.path == 'null')
+				t.path = '';
+
 			t.split = splitpath(path);
 
 			let c = t.path.charAt(0);
@@ -623,7 +843,7 @@
 			The method reads a `value` based on a `path` in the defined `scope`.
 		*/
 		PROTO.get = function(scope) {
-			return T.get(scope, this.path);
+			return this.path ? T.get(scope, this.path) : undefined;
 		};
 
 		/*
@@ -858,8 +1078,9 @@
 			var t = this;
 			t.events = {};
 			t.internal = {};
+			t.commands = {};
 			t.watchers = [];
-		}
+		};
 
 		var PROTO = T.Component.prototype;
 
@@ -867,11 +1088,13 @@
 		PROTO.init = function() {
 			var t = this;
 			t.make && t.make();
+			t.reconfigure(t.config, true);
 			t.$setter(t.get(), t.path.path, { init: 1 });
 		};
 
 		// Deprecated
 		PROTO.bindvisible = NOOP;
+		PROTO.nocompile = NOOP;
 
 		/*
 			@Path: Component
@@ -880,6 +1103,14 @@
 		*/
 		PROTO.readonly = function() {
 			this.internal.readonly = true;
+		};
+
+		PROTO.blind = function() {
+			var t = this;
+			t.internal.blind = true;
+			var index = T.components.indexOf(t);
+			if (index !== -1)
+				T.components.splice(index, 1);
 		};
 
 		/*
@@ -908,8 +1139,7 @@
 			The method reads a value from the model.
 		*/
 		PROTO.get = function() {
-			var t = this;
-			return t.path.get(t.scope);
+			return this.path.get(this.scope);
 		};
 
 		/*
@@ -960,6 +1190,13 @@
 			t.set(value, flags);
 		};
 
+		PROTO.change = function() {
+			var t = this;
+			t.config.touched = true;
+			t.config.modified = true;
+			t.$validate();
+		};
+
 		/*
 			@Path: Component
 			@Method: instance.touch();
@@ -986,6 +1223,92 @@
 
 		};
 
+		PROTO.tclass = function(cls, v) {
+			var t = this;
+			t.element.tclass(cls, v);
+			return t;
+		};
+
+		PROTO.aclass = function(cls, timeout) {
+			var t = this;
+			if (timeout)
+				setTimeout(t => t.element.aclass(cls), timeout, t);
+			else
+				t.element.aclass(cls);
+			return t;
+		};
+
+		PROTO.hclass = function(cls) {
+			return this.element.hclass(cls);
+		};
+
+		PROTO.rclass = function(cls, timeout) {
+			var t = this;
+			var e = t.element;
+			if (timeout)
+				setTimeout(e => e.rclass(cls), timeout, e);
+			else {
+				if (cls)
+					e.rclass(cls);
+				else
+					e.rclass();
+			}
+			return t;
+		};
+
+		PROTO.rclass2 = function(search) {
+			this.element.rclass2(search);
+			return this;
+		};
+
+		PROTO.html = function(value) {
+			var el = this.element;
+			if (value === undefined)
+				return el.html();
+			if (value instanceof Array)
+				value = value.join('');
+			var type = typeof(value);
+			var v = (value || TNB[type]) ? el.empty().append(value) : el.empty();
+			return v;
+		};
+
+		PROTO.text = function(value) {
+			var el = this.element;
+			if (value === undefined)
+				return el.text();
+			if (value instanceof Array)
+				value = value.join('');
+			var type = typeof(value);
+			return (value || TNB[type]) ? el.empty().text(value) : el.empty();
+		};
+
+		PROTO.empty = function() {
+			var t = this;
+			t.element.empty();
+			return t;
+		};
+
+		PROTO.append = function(value) {
+			var el = this.element;
+			if (value instanceof Array)
+				value = value.join('');
+			var v = value ? el.append(value) : el;
+			return v;
+		};
+
+		PROTO.event = function() {
+			var t = this;
+			t.element.on.apply(t.element, arguments);
+			return t;
+		};
+
+		PROTO.find = function(selector) {
+			var el = this.element;
+			if (selector && typeof(selector) === 'object')
+				return el.multiple(selector);
+			return el.find(selector);
+		};
+
 		/*
 			@Path: Component
 			@Method: instance.reconfigure(value);
@@ -999,8 +1322,60 @@
 				value = value.parseConfig();
 
 			for (let key in value) {
-				t.configure && t.configure(key, value, t.config[key], init);
-				t.config[key] = value;
+				t.configure && t.configure(key, value[key], init ? null : t.config[key], init);
+				t.config[key] = value[key];
+			}
+
+			if (value.$assign)
+				T.set(T.scope, value.$assign, t);
+
+			if (value.$class)
+				t.element.tclass(value.$class);
+
+			if (value.$id)
+				t.id = value.$id;
+
+			// if (value.$init) {
+			// 	EXEC();
+			// }
+
+		};
+
+		/*
+			@Path: Component
+			@Method: instance.refresh();
+			The method refreshes value (in other words, it calls instance.setter()).
+		*/
+		PROTO.refresh = function() {
+			var t = this;
+			t.$setter(t.get(), t.path.path, { refresh: 1 });
+		};
+
+		/*
+			@Path: Component
+			@Method: instance.command(name, callback); #name {String}; #callback {Function(a, b, c, d, e)}
+			The method registers a new command.
+		*/
+		PROTO.command = function(name, callback) {
+			var t = this;
+			if (t.commands[name])
+				t.commands[name].push(callback);
+			else
+				t.commands[name] = [callback];
+		};
+
+		/*
+			@Path: Component
+			@Method: instance.CMD(name, [a], [b], [c], [d]); #name {String}; #[a] {Object}; #[b] {Object}; #[c] {Object}; #[d] {Object};
+			The method executes a command with custom arguments.
+		*/
+		PROTO.CMD = function(name, a, b, c, d, e) {
+			var t = this;
+			T.events.cmd && T.emit('cmd', name, a, b, c, d, e);
+			var commands = t.commands[name];
+			if (commands) {
+				for (let fn of commands)
+					fn(a, b, c, d, e);
 			}
 		};
 
@@ -1012,8 +1387,10 @@
 			cls.toggle('ui-modified', t.config.modified == true);
 			cls.toggle('ui-disabled', t.config.disabled == true);
 			cls.toggle('ui-invalid', t.config.invalid == true);
+			t.state && t.state();
 		};
 
+		// Internal method
 		PROTO.$validate = function(value) {
 
 			var t = this;
@@ -1045,11 +1422,16 @@
 				WARN(ERR.format(e));
 			}
 
-			var index = t.components.indexOf(t);
+			var index = T.components.indexOf(t);
 			if (index !== -1)
-				t.components.splice(index, 1);
+				T.components.splice(index, 1);
+
 			t.element.remove();
 		};
+
+		// Backward compatibility
+		PROTO.formatter = NOOP;
+		PROTO.parser = NOOP;
 
 	})();
 
@@ -1067,9 +1449,9 @@
 		// Internal method
 		PROTO.$remove = function() {
 			var t = this;
-			var index = t.binders.indexOf(t);
+			var index = T.binders.indexOf(t);
 			if (index !== -1)
-				t.binders.splice(index, 1);
+				T.binders.splice(index, 1);
 			t.element.remove();
 		};
 
@@ -1083,7 +1465,7 @@
 
 		/*
 			@Path: String prototype
-			@Prototype: String.prototype.format([index0], [index1], [index2]);
+			@Method: String.prototype.format([index0], [index1], [index2]);
 			The method replaces all indexes in the form `{index}` with values defined as arguments.
 		*/
 		PROTO.format = function() {
@@ -1096,7 +1478,7 @@
 
 		/*
 			@Path: String prototype
-			@Prototype: String.prototype.env();
+			@Method: String.prototype.env();
 			The method replaces all phrases `[key]` with values defined in the environment.
 		*/
 		PROTO.env = function() {
@@ -1109,7 +1491,7 @@
 
 		/*
 			@Path: String.prototype
-			@Prototype: String.prototype.parseConfig();
+			@Method: String.prototype.parseConfig();
 			The method parses Total.js UI library configuration in the form `key1:value;key2:value`.
 		*/
 		PROTO.parseConfig = function(def) {
@@ -1145,10 +1527,459 @@
 			return output;
 		};
 
+		/*
+			@Path: String.prototype
+			@Method: String.prototype.isJSONDate(); #return {Boolean};
+			The method checks if the string is a serialized JSON date.
+		*/
+		PROTO.isJSONDate = function() {
+			var t = this;
+			var l = t.length - 1;
+			return l > 18 && l < 30 && t.charCodeAt(l) === 90 && t.charCodeAt(10) === 84 && t.charCodeAt(4) === 45 && t.charCodeAt(13) === 58 && t.charCodeAt(16) === 58;
+		};
+
+		/*
+			@Path: String.prototype
+			@Method: String.prototype.VARIABLES(args); #args {Object}; #return {String};
+			The method applies `--VARIABLE--` defined in the `args` argument in the current string.
+		*/
+		PROTO.VARIABLES = function(args) {
+
+			var str = this;
+
+			if (!args)
+				args = {};
+
+			str = str.replace(/--(\s)?[a-zA-Z\s]+=+.*?--/g, function(text) {
+				var is = false;
+				for (var i = 2; i < text.length; i++) {
+					var c = text.charAt(i);
+					if (c === '=') {
+						args[text.substring(2, i).trim()] = text.substring(i + 1, text.length - 2).trim();
+						is = true;
+						break;
+					}
+				}
+				return is ? '' : text;
+			});
+
+			return str.replace(/--\w+--/g, text => args[text.substring(2, text.length - 2).trim()] || text);
+		};
+
+		PROTO.padLeft = function(t, e) {
+			var r = this + '';
+			return Array(Math.max(0, t - r.length + 1)).join(e || ' ') + r;
+		};
+
+		PROTO.padRight = function(t, e) {
+			var r = this + '';
+			return r + Array(Math.max(0, t - r.length + 1)).join(e || ' ');
+		};
+
+	})();
+
+	// Number prototypes
+	(function() {
+
+		var PROTO = Number.prototype;
+
+		PROTO.padLeft = function(t, e) {
+			return (this + '').padLeft(t, e || '0');
+		};
+
+		PROTO.padRight = function(t, e) {
+			return (this + '').padRight(t, e || '0');
+		};
+
+		PROTO.floor = function(decimals) {
+			return Math.floor(this * Math.pow(10, decimals)) / Math.pow(10, decimals);
+		};
+
+		PROTO.parseDate = function(offset) {
+			return new Date(this + (offset || 0));
+		};
+
+		PROTO.round = function(decimals) {
+			if (decimals == null)
+				decimals = 0;
+			return +(Math.round(this + 'e+' + decimals) + 'e-' + decimals);
+		};
+
+	})();
+
+	// Array prototypes
+	(function() {
+
+		var PROTO = Array.prototype;
+
+		/*
+			@Path: Array.prototype
+			@Method: Array.prototype.trim(); #return {Array};
+			The method trims all string values, and empty values will be skipped.
+		*/
+		PROTO.trim = function() {
+			var self = this;
+			var output = [];
+			for (var i = 0; i < self.length; i++) {
+				if (typeof(self[i]) === 'string')
+					self[i] = self[i].trim();
+				if (self[i])
+					output.push(self[i]);
+			}
+			return output;
+		};
+
+		PROTO.findIndex = function(cb, value) {
+
+			var self = this;
+			var isFN = typeof(cb) === 'function';
+			var isV = value !== undefined;
+
+			for (var i = 0; i < self.length; i++) {
+				if (isFN) {
+					if (cb.call(self, self[i], i))
+						return i;
+				} else if (isV) {
+					if (self[i][cb] === value)
+						return i;
+				} else if (self[i] === cb)
+					return i;
+			}
+			return -1;
+		};
+
+		PROTO.findAll = function(cb, value) {
+
+			var self = this;
+			var isFN = typeof(cb) === 'function';
+			var isV = value !== undefined;
+			var arr = [];
+
+			for (var i = 0; i < self.length; i++) {
+				if (isFN) {
+					cb.call(self, self[i], i) && arr.push(self[i]);
+				} else if (isV) {
+					self[i][cb] === value && arr.push(self[i]);
+				} else
+					self[i] === cb && arr.push(self[i]);
+			}
+			return arr;
+		};
+
+		PROTO.findItem = function(cb, value) {
+			var index = this.findIndex(cb, value);
+			if (index !== -1)
+				return this[index];
+		};
+
+		PROTO.findValue = function(cb, value, path, def, cache) {
+
+			if (typeof(cb) === 'function') {
+				def = path;
+				path = value;
+				value = undefined;
+				cache = false;
+			}
+
+			var key, val = def;
+
+			if (cache) {
+				key = 'fv_' + cb + '=' + value;
+				if (temp[key])
+					return temp[key];
+			}
+
+			var index = this.findIndex(cb, value);
+			if (index !== -1) {
+				var item = this[index];
+				if (path.indexOf('.') === -1)
+					item = item[path];
+				else
+					item = get(path, item);
+				cache && (temp[key] = val);
+				val = item == null ? def : item;
+			}
+
+			return val;
+		};
+
+		PROTO.remove = function(cb, value) {
+
+			var self = this;
+			var arr = [];
+			var isFN = typeof(cb) === 'function';
+			var isV = value !== undefined;
+
+			for (var i = 0; i < self.length; i++) {
+				if (isFN) {
+					!cb.call(self, self[i], i) && arr.push(self[i]);
+				} else if (isV) {
+					self[i][cb] !== value && arr.push(self[i]);
+				} else {
+					self[i] !== cb && arr.push(self[i]);
+				}
+			}
+			return arr;
+		};
+
+		PROTO.wait = function(onItem, callback, thread, tmp) {
+
+			var self = this;
+			var init = false;
+
+			// INIT
+			if (!tmp) {
+
+				if (typeof(callback) !== 'function') {
+					thread = callback;
+					callback = null;
+				}
+
+				tmp = {};
+				tmp.pending = 0;
+				tmp.index = 0;
+				tmp.thread = thread;
+
+				// thread === Boolean then array has to be removed item by item
+				init = true;
+			}
+
+			var item = thread === true ? self.shift() : self[tmp.index++];
+			if (item === undefined) {
+				if (!tmp.pending) {
+					callback && callback();
+					tmp.cancel = true;
+				}
+				return self;
+			}
+
+			tmp.pending++;
+			onItem.call(self, item, () => setTimeout(next_wait, 1, self, onItem, callback, thread, tmp), tmp.index);
+
+			if (!init || tmp.thread === 1)
+				return self;
+
+			for (var i = 1; i < tmp.thread; i++)
+				self.wait(onItem, callback, 1, tmp);
+
+			return self;
+		};
+
+		function next_wait(self, onItem, callback, thread, tmp) {
+			tmp.pending--;
+			self.wait(onItem, callback, thread, tmp);
+		}
+
+		PROTO.take = function(count) {
+			var arr = [];
+			var self = this;
+			for (var i = 0; i < self.length; i++) {
+				arr.push(self[i]);
+				if (arr.length >= count)
+					return arr;
+			}
+			return arr;
+		};
+
+		PROTO.skip = function(count) {
+			var arr = [];
+			var self = this;
+			for (var i = 0; i < self.length; i++)
+				i >= count && arr.push(self[i]);
+			return arr;
+		};
+
+		PROTO.takeskip = function(take, skip) {
+			var arr = [];
+			var self = this;
+			for (var i = 0; i < self.length; i++) {
+				if (i < skip)
+					continue;
+				if (arr.length >= take)
+					return arr;
+				arr.push(self[i]);
+			}
+			return arr;
+		};
+
+	})();
+
+
+	// Date prototypes
+	(function() {
+
+		var PROTO = Date.prototype;
+
+		/*
+			@Path: Date.prototype
+			@Method: Date.prototype.add(value); #value {String} #return {Date};
+			The method extends the current `Date` with the declared `value`.
+		*/
+		PROTO.add = function(value) {
+
+			var arr = value.split(' ');
+			var count = arr[0];
+
+			value = arr[1];
+			count = count.env();
+
+			if (typeof(count) === 'string')
+				count = +count;
+
+			var self = this;
+			var dt = new Date(self.getTime());
+
+			switch(value.substring(0, 3)) {
+				case 's':
+				case 'ss':
+				case 'sec':
+					dt.setSeconds(dt.getSeconds() + count);
+					return dt;
+				case 'm':
+				case 'mm':
+				case 'min':
+					dt.setMinutes(dt.getMinutes() + count);
+					return dt;
+				case 'h':
+				case 'hh':
+				case 'hou':
+					dt.setHours(dt.getHours() + count);
+					return dt;
+				case 'd':
+				case 'dd':
+				case 'day':
+					dt.setDate(dt.getDate() + count);
+					return dt;
+				case 'w':
+				case 'ww':
+				case 'wee':
+					dt.setDate(dt.getDate() + (count * 7));
+					return dt;
+				case 'M':
+				case 'MM':
+				case 'mon':
+					dt.setMonth(dt.getMonth() + count);
+					return dt;
+				case 'y':
+				case 'yy':
+				case 'yyy':
+				case 'yea':
+					dt.setFullYear(dt.getFullYear() + count);
+					return dt;
+			}
+			return dt;
+		};
+
+		PROTO.format = function(format, utc) {
+
+			var self = (utc || DEF.dateformatutc) ? this.toUTC() : this;
+
+			if (format == null)
+				format = DEF.dateformat;
+
+			if (!format || format === 'iso')
+				return self.getFullYear() + '-' + ((self.getMonth() + 1) + '').padLeft(2, '0') + '-' + (self.getDate() + '').padLeft(2, '0') + 'T' + (self.getHours() + '').padLeft(2, '0') + ':' + (self.getMinutes() + '').padLeft(2, '0') + ':' + (self.getSeconds() + '').padLeft(2, '0') + '.' + (self.getMilliseconds() + '').padLeft(3, '0') + 'Z';
+
+			var key = 'dt_' + format;
+
+			if (T.cache.statics[key])
+				return T.cache.statics[key](self);
+
+			var half = false;
+
+			format = format.env();
+
+			if (format && format.charAt(0) === '!') {
+				half = true;
+				format = format.substring(1);
+			}
+
+			var beg = '\'+';
+			var end = '+\'';
+			var before = [];
+
+			var ismm = false;
+			var isdd = false;
+			var isww = false;
+
+			format = format.replace(DEF.regexp.date, function(key) {
+				switch (key) {
+					case 'yyyy':
+					case 'YYYY':
+						return beg + 'd.getFullYear()' + end;
+					case 'yy':
+					case 'YY':
+						return beg + '(d.getFullYear()+\'\').substring(2)' + end;
+					case 'MMM':
+						ismm = true;
+						return beg + 'mm.substring(0, 3)' + end;
+					case 'MMMM':
+						ismm = true;
+						return beg + 'mm' + end;
+					case 'MM':
+						return beg + '(d.getMonth() + 1).padLeft(2, \'0\')' + end;
+					case 'M':
+						return beg + '(d.getMonth() + 1)' + end;
+					case 'ddd':
+					case 'DDD':
+						isdd = true;
+						return beg + 'dd.substring(0, 2).toUpperCase()' + end;
+					case 'dddd':
+					case 'DDDD':
+						isdd = true;
+						return beg + 'dd' + end;
+					case 'dd':
+					case 'DD':
+						return beg + 'd.getDate().padLeft(2, \'0\')' + end;
+					case 'd':
+					case 'D':
+						return beg + 'd.getDate()' + end;
+					case 'HH':
+					case 'hh':
+						return beg + (half ? 'W.$jcdatempam(d.getHours()).padLeft(2, \'0\')' : 'd.getHours().padLeft(2, \'0\')') + end;
+					case 'H':
+					case 'h':
+						return beg + (half ? 'W.$jcdatempam(d.getHours())' : 'd.getHours()') + end;
+					case 'mm':
+						return beg + 'd.getMinutes().padLeft(2, \'0\')' + end;
+					case 'm':
+						return beg + 'd.getMinutes()' + end;
+					case 'ss':
+						return beg + 'd.getSeconds().padLeft(2, \'0\')' + end;
+					case 's':
+						return beg + 'd.getSeconds()' + end;
+					case 'w':
+					case 'ww':
+						isww = true;
+						return beg + (key === 'ww' ? 'ww.padLeft(2, \'0\')' : 'ww') + end;
+					case 'a':
+						var b = '\'PM\':\'AM\'';
+						return beg + '(d.getHours()>=12 ? ' + b + ')' + end;
+				}
+			});
+
+			ismm && before.push('var mm=W.MONTHS[d.getMonth()];');
+			isdd && before.push('var dd=W.DAYS[d.getDay()];');
+			isww && before.push('var ww = new Date(+d);ww.setHours(0,0,0,0);ww.setDate(ww.getDate()+3-(ww.getDay()+6)%7);var ww1=new Date(ww.getFullYear(),0,4);ww=1+Math.round(((ww.getTime()-ww1.getTime())/86400000-3+(ww1.getDay()+6)%7)/7);');
+
+			T.cache.statics[key] = new Function('d', before.join('\n') + 'return \'' + format + '\';');
+			return T.cache.statics[key](self);
+		};
+
+		W.$jcdatempam = function(value) {
+			return value >= 12 ? value - 12 : value;
+		};
 	})();
 
 	// Window globals
 	(function() {
+
+		var ua = navigator.userAgent || '';
+		W.isMOBILE = (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i).test(ua);
+		W.isROBOT = (/search|agent|bot|crawler|spider/i).test(ua);
+		W.isSTANDALONE = navigator.standalone || W.matchMedia('(display-mode: standalone)').matches;
+		W.isTOUCH = !!('ontouchstart' in W || navigator.maxTouchPoints);
+		W.isIE = (/msie|trident/i).test(ua);
 
 		/*
 			@Path: Globals
@@ -1156,13 +1987,6 @@
 			The property always returns the current `Date` object refreshed in a one minute interval.
 		*/
 		W.NOW = new Date();
-
-		/*
-			@Path: Globals
-			@Property: NOOP(); #return {Function};
-			The method returns empty function that means "no operation".
-		*/
-		W.NOOP = function() {};
 
 		/*
 			@Path: Globals
@@ -1245,6 +2069,9 @@
 				name = DEF.pathcommon.substring(0, DEF.pathcommon.length - 1);
 
 			T.db.plugins[name] = { config: (config || '').parseConfig(), callback: callback, dependencies: dependencies };
+
+			// It's targeted for "<ui-plugin" elements without defined "path"
+			T.cache.plugins.push(name);
 		};
 
 		/*
@@ -1337,6 +2164,650 @@
 				b.push(Math.random().toString(36).substring(2));
 
 			return b.join('').substring(0, length);
+		};
+
+		function onresponse(opt) {
+
+			var req = opt.req;
+
+			opt.status = req.status;
+			opt.text = req.statusText;
+			opt.response = req.responseText;
+			opt.iserror = opt.status >= 399;
+			opt.onprogress && T.process(opt.scope, 100, opt.onprogress);
+			opt.duration = Date.now() - opt.duration;
+			opt.headers = {};
+
+			// Parse headers
+			let resheaders = req.getAllResponseHeaders().split('\n');
+			for (let line of resheaders) {
+				let index = line.indexOf(':');
+				if (index !== -1)
+					opt.headers[line.substring(0, index).toLowerCase()] = line.substring(index + 1).trim();
+			}
+
+			let type = opt.headers['content-type'];
+
+			if (type && type.indexOf('/json') !== -1)
+				opt.response = PARSE(opt.response);
+
+			T.events.response && F.emit('response', opt);
+
+			// Processed by another way
+			if (opt.cancel)
+				return;
+
+			if (opt.ERROR) {
+
+				if (opt.iserror && !opt.response) {
+					T.emit('ERROR', opt.status + '');
+					return;
+				}
+
+				if (W.ERROR(opt.response))
+					return;
+			}
+
+			if (opt.path && opt.path.cache)
+				CACHE(opt.id, opt.response, opt.path.cache);
+
+			T.process(opt.scope, opt.response, opt.callback);
+		}
+
+		/*
+			@Path: Globals
+			@Method: AJAX(url, [data], callback, [onprogress]); #url {String}; #[data] {Object}; #callback {Function(response)}; #onprogress {Function(percentage)};
+			The method parsers JSON and converts all dates to `Date` object.
+		*/
+		W.AJAX = function(url, data, callback, onprogress, scope) {
+
+			if (typeof(data) === 'function') {
+				scope = onprogress;
+				onprogress = callback;
+				callback = data;
+			}
+
+			if (!callback && data) {
+				callback = data;
+				data = null;
+			}
+
+			url = url.env();
+
+			var opt = {};
+			var index = url.indexOf(' ');
+
+			opt.id = url;
+			opt.method = url.substring(0, index);
+			opt.scope = scope || T.scope;
+			opt.flags = {};
+
+			url = url.substring(index + 1);
+			index = url.indexOf(' ');
+
+			if (index !== -1) {
+				opt.url = url.substring(0, index);
+				url = url.substring(index + 1);
+				opt.path = new T.Path(url);
+			} else
+				opt.url = url;
+
+			if (opt.url.substring(0, 2) === '//')
+				opt.url = location.protocol + opt.url;
+
+			if (typeof(callback) === 'string')
+				callback = parsepath(callback);
+
+			opt.headers = {};
+			opt.callback = callback;
+			opt.onprogress = typeof(onprogress) === 'string' ? parsepath(onprogress) : onprogress;
+			opt.duration = Date.now();
+
+			for (let key in DEF.headers)
+				opt.headers[key] = DEF.headers[key];
+
+			opt.data = data;
+
+			T.events.request && F.emit('request', opt);
+
+			if (opt.cancel)
+				return;
+
+			if (opt.path && opt.path.cache) {
+				let cache = CACHE(opt.id);
+				if (cache) {
+					T.process(opt.scope, cache, opt.callback);
+					return;
+				}
+			}
+
+			var percentage = 0;
+			var xhr = new XMLHttpRequest();
+
+			xhr.addEventListener('error', function() {
+				opt.req = this;
+				onresponse(opt);
+			});
+
+			xhr.addEventListener('load', function() {
+				opt.req = this;
+				onresponse(opt);
+			}, false);
+
+			if (onprogress) {
+				xhr.upload.onprogress = function(e) {
+					let p = e.lengthComputable ? Math.round(e.loaded * 100 / e.total) : 0;
+					if (percentage !== p) {
+						percentage = p;
+						opt.onprogress && T.process(opt.scope, p, opt.onprogress);
+					}
+				};
+			}
+
+			opt.xhr = xhr;
+			xhr.open(opt.method, opt.url);
+
+			for (let key in opt.headers)
+				xhr.setRequestHeader(key, opt.headers[key]);
+
+			if (!(data instanceof FormData))
+				opt.data = JSON.stringify(opt.data);
+
+			if (opt.path) {
+				opt.path.exec(() => xhr.send(opt.data));
+			} else
+				xhr.send(opt.data);
+		};
+
+		/*
+			@Path: Globals
+			@Method: ADAPT(path, id, text); #path {String}; #id {String}; #text {String}; #return {String};
+			The method replaces all keywords `CLASS` and `~PATH~` for the `path` value, and `~ID~` for the `id` value in the `text` argument.
+		*/
+		W.ADAPT = function(path, id, text) {
+
+			if (!text || typeof(text) !== 'string')
+				return text;
+
+			text = TRANSLATE(text).VARIABLES().replace(/~CDN~/g, DEF.cdn);
+
+			if (path) {
+				text = text.replace(/~PATH~|CLASS/g, path).replace(/<ui-plugin.*?>/g, function(text) {
+					return text.indexOf('path=') === -1 ? (text.substring(0, 10) + ' path="' + path + '"' + text.substring(10)) : text;
+				}).replace('PLUGIN(function(', 'PLUGIN(\'{0}\', function('.format(path));
+			}
+
+			if (id)
+				text = text.replace(/~ID~/g, id);
+
+			return text;
+		};
+
+		function removescripts(str) {
+			return str.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>|<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, function(text) {
+				var index = text.indexOf('>');
+				var scr = text.substring(0, index + 1);
+				return scr.substring(0, 6) === '<style' || (scr.substring(0, 7) === ('<script') && scr.indexOf('type="') === -1) || scr.indexOf('/javascript"') !== -1 ? '' : text;
+			});
+		}
+
+		function importscripts(str) {
+
+			var beg = -1;
+			var output = str;
+			var external = [];
+			var scr;
+
+			while (true) {
+
+				beg = str.indexOf('<script', beg);
+				if (beg === -1)
+					break;
+				var end = str.indexOf('</script>', beg + 8);
+				var code = str.substring(beg, end + 9);
+				beg = end + 9;
+				end = code.indexOf('>');
+				scr = code.substring(0, end);
+
+				if (scr.indexOf('type=') !== -1 && scr.lastIndexOf('javascript') === -1)
+					continue;
+
+				var tmp = code.substring(end + 1, code.length - 9).trim();
+				if (!tmp) {
+					output = output.replace(code, '').trim();
+					var eid = 'external' + HASH(code);
+					if (!T.cache.statics[eid]) {
+						external.push(code);
+						T.cache.statics[eid] = true;
+					}
+				}
+			}
+
+			external.length && $('head').append(external.join('\n'));
+			return output;
+		}
+
+		function importstyles(str, id) {
+
+			var builder = [];
+
+			str = str.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, function(text) {
+				text = text.replace('<style>', '<style type="text/css">');
+				builder.push(text.substring(23, text.length - 8).trim());
+				return '';
+			});
+
+			var key = 'css' + (id || '');
+
+			if (id) {
+				if (T.cache.statics[key])
+					$('#' + key).remove();
+				else
+					T.cache.statics[key] = true;
+			}
+
+			builder.length && $('<style' + (id ? ' id="' + key + '"' : '') + '>{0}</style>'.format(builder.join('\n'))).appendTo('head');
+			return str;
+		}
+
+		/*
+			@Path: Globals
+			@Method: IMPORT(url, [target], callback); #url {String}; #[target] {String/jQuery/Element}; #callback {Function};
+			The method imports external sources like JavaScript libaries, CSS libraries, UI components or parts.
+		*/
+		W.IMPORT = function(url, target, callback) {
+
+			if (typeof(target) === 'function') {
+				callback = target;
+				target = 'body';
+			}
+
+			if (T.cache.imports[url]) {
+				T.cache.imports[url].push(callback);
+				return;
+			}
+
+			if (!target)
+				target = 'body';
+
+			var key = url;
+
+			T.cache.imports[key] = [callback];
+
+			var done = function() {
+				for (let fn of T.cache.imports[key])
+					fn && fn();
+				delete T.cache.imports[key];
+			};
+
+			let d = document;
+			let ext = '';
+			let check = '';
+
+			url = url.replace(/<.*?>/, function(text) {
+				if (text.includes(' '))
+					return text;
+				check = text.substring(1, text.length - 1);
+				return '';
+			});
+
+			if (check && W[check]) {
+				return;
+			}
+
+			url = url.replace(/\s\.[a-z0-9]+/, function(text) {
+				ext = text.trim();
+				return '';
+			});
+
+			if (!ext) {
+				let index = url.indexOf(' ');
+				let tmp = url;
+				if (index !== -1)
+					tmp = tmp.substring(0, index);
+				ext = tmp.substring(tmp.lastIndexOf('.'));
+				if (ext !== '.js' && ext !== '.css')
+					ext = '';
+			}
+
+			if (ext === '.js') {
+				var scr = d.createElement('script');
+				scr.type = 'text/javascript';
+				scr.async = false;
+				scr.onload = function() {
+					done();
+					T.events.import && T.emit('import', url, $(scr));
+				};
+				scr.src = url;
+				d.getElementsByTagName('head')[0].appendChild(scr);
+				return;
+			}
+
+			if (ext === '.css') {
+				var link = d.createElement('link');
+				link.type = 'text/css';
+				link.rel = 'stylesheet';
+				link.href = url;
+				link.onload = function() {
+					setTimeout(done, 2);
+					T.events.import && T.emit('import', url, $(link));
+				};
+				d.getElementsByTagName('head')[0].appendChild(link);
+				return;
+			}
+
+			AJAX('GET ' + url, function(response) {
+
+				if (typeof(response) !== 'string') {
+					WARN(ERR.format('Invalid response for IMPORT("{0}")'.format(url)), response);
+					done();
+					return;
+				}
+
+				let id = 'import' + HASH(url);
+				response = ADAPT(null, null, response);
+				response = importscripts(importstyles(response, id)).trim();
+				target = $(target);
+				response && target.append(response);
+				setTimeout(function() {
+					done();
+					T.events.import && T.emit('import', url, target);
+				}, 10);
+			});
+
+		};
+
+		/*
+			@Path: Globals
+			@Method: PARSE(value); #value {String}; #return {Object};
+			The method parsers JSON and converts all dates to `Date` object.
+		*/
+		W.PARSE = function(value) {
+
+			if (typeof(value) === 'object')
+				return value;
+
+			// Is selector?
+			let c = (value || '').charAt(0);
+			if (c === '#' || c === '.')
+				return PARSE($(value).html());
+
+			try {
+				return JSON.parse(value, (key, value) => typeof(value) === 'string' && value.isJSONDate() ? new Date(value) : value);
+			} catch (e) {
+				return null;
+			}
+		};
+
+		/*
+			@Path: Globals
+			@Method: CACHE(key, value, expire); #key {String}; #value {Object}; #expire {String};
+			@Method: CACHE(key); #key {String}; #return {Object};
+			The method reads or writes persistent data into the `localStorage`.
+		*/
+		W.CACHE = function(key, value, expire) {
+			var date = new Date();
+
+			key = 'ui' + HASH(key).toString(36);
+
+			if (expire) {
+				let item = { value: value, expire: date.add(expire) };
+				T.cache.storage[key] = item;
+				item.expire && savestorage();
+			} else {
+				let tmp = T.cache.storage[key];
+				if (tmp && tmp.expire && tmp.expire < date)
+					tmp = null;
+				return tmp ? tmp.value : null;
+			}
+		};
+
+		/*
+			@Path: Globals
+			@Method: LOCALIZE(text); #text {String}; #return {String};
+			The method loads a localization dictionary. The format must be the same as the Total.js resource file.
+		*/
+		W.LOCALIZE = function(text) {
+			var lines = text.split('\n');
+			for (let line of lines) {
+				line = line.trim();
+				if (line && line.substring(0, 2) !== '//') {
+					var index = line.indexOf(':');
+					if (index !== -1) {
+						var key = line.substring(0, index).trim();
+						var val = line.substring(index + 1).trim();
+						DEF.dictionary[key] = val;
+					}
+				}
+			}
+		};
+
+		/*
+			@Path: Globals
+			@Method: LOCALIZE(text); #text {String}; #return {String};
+			The method translates the Total.js localization markup as `@(text to translate)`. The localization dictionary must be loaded via the `LOCALIZE()` method.
+		*/
+		W.TRANSLATE = function(str) {
+
+			if (!str || typeof(str) !== 'string' || str.indexOf('@(') === -1)
+				return str;
+
+			var index = 0;
+			var arr = [];
+
+			while (true) {
+
+				index = str.indexOf('@(', index);
+
+				if (index === -1)
+					break;
+
+				var length = str.length;
+				var count = 0;
+
+				for (var i = index + 2; i < length; i++) {
+					var c = str[i];
+
+					if (c === '(') {
+						count++;
+						continue;
+					}
+
+					if (c !== ')')
+						continue;
+					else if (count) {
+						count--;
+						continue;
+					}
+
+					arr.push(str.substring(index, i + 1));
+					index = i;
+					break;
+				}
+			}
+
+			for (var i = 0; i < arr.length; i++) {
+				var raw = arr[i];
+				var text = raw.substring(2, raw.length - 1);
+				var key = HASH(text).toString(36);
+				var tmp = DEF.dictionary[key];
+				if (!tmp) {
+					key = 'T' + key;
+					tmp = DEF.dictionary[key];
+				}
+				str = str.replace(raw, tmp || text);
+			}
+
+			return str;
+		};
+
+		W.setTimeout2 = function(name, fn, timeout, limit, param) {
+			var key = ':' + name;
+			var statics = T.cache.timeouts;
+			if (limit > 0) {
+				var key2 = key + ':limit';
+				if (statics[key2] >= limit)
+					return;
+				statics[key2] = (statics[key2] || 0) + 1;
+				statics[key] && clearTimeout(statics[key]);
+				statics[key] = setTimeout(function(param) {
+					statics[key2] = undefined;
+					fn && fn(param);
+				}, timeout, param);
+			} else {
+				statics[key] && clearTimeout(statics[key]);
+				statics[key] = setTimeout(fn, timeout, param);
+			}
+			return name;
+		};
+
+		W.clearTimeout2 = function(name) {
+			var key = ':' + name;
+			var statics = T.cache.timeouts;
+			if (statics[key]) {
+				clearTimeout(statics[key]);
+				statics[key] = undefined;
+				statics[key + ':limit'] && (statics[key + ':limit'] = undefined);
+				return true;
+			}
+			return false;
+		};
+
+		/*
+			@Path: Globals
+			@Method: ERROR(response, success, error); #response {Object}; #success {Function(response)}; #error {Function(response)};
+			The method processes errors.
+		*/
+		W.ERROR = function(response, success, error) {
+
+			if (typeof(response) === 'function') {
+				error = success;
+				success = response;
+				response = true;
+			}
+
+			if (response !== true) {
+				if (response) {
+					var iserr = response instanceof Error ? true : response instanceof Array && response.length ? response[0].error != null : response.error != null;
+					if (iserr) {
+						events.ERROR && EMIT('ERROR', response);
+						error && W.SEEX(error, response);
+						return true;
+					}
+				}
+				success && W.SEEX(success, response);
+				return false;
+			}
+
+			return function(response, err) {
+				if ((!response || typeof(response) === 'string') && err > 0)
+					response = [{ error: response || err }];
+				W.ERROR(response, success, error);
+			};
+
+		};
+
+		/*
+			@Path: Globals
+			@Method: EXTENSION(name, config, callback); #name {String}; #config {String/Object}; #callback {Function(instance, config, element, cls)};
+			The method extends UI components `component_name` or plugins `@plugin_name`.
+		*/
+		W.EXTENSION = function(name, config, callback) {
+			var obj = { config: config ? typeof(config) === 'string' ? config.parseConfig() : config : null, callback: callback };
+
+			if (T.db.extensions[name])
+				T.db.extensions[name].push(obj);
+			else
+				T.db.extensions[name] = [obj];
+
+			// Applying the extension for existing instances
+			// Plugins
+			if (name.charAt(0) === '@') {
+				name = name.substring(1);
+				for (let key in T.plugins) {
+					if (key === name) {
+						let plugin = T.plugins[key];
+						if (obj.config) {
+							for (let k in obj.config)
+								plugin.config[k] = obj.config[k];
+						}
+						callback(plugin, plugin.config, plugin.element);
+					}
+				}
+			} else {
+				for (let m of T.components) {
+					if (m.name === name) {
+						obj.config && m.reconfigure(obj.config);
+						callback(m, m.config, m.element, m.cls);
+					}
+				}
+			}
+		};
+
+		/*
+			@Path: Globals
+			@Method: CONFIG(selector, config); #selector {String/Function(instance)}; #config {String/Object};
+			The method reconfigure all existing and new components.
+
+			Possible selectors: `#component_id`, `.component_path`, `component_name`.
+		*/
+		W.CONFIG = function(selector, config) {
+
+			// #component_id
+			// component_name
+			// component_path
+			// function
+
+			if (typeof(config) === 'string')
+				config = config.parseConfig();
+
+			if (typeof(selector) === 'function') {
+				T.db.configs.push({ check: selector, config: config });
+
+				// apply for existing instances
+				for (let m of T.components) {
+					if (selector(m))
+						m.reconfigure(config);
+				}
+
+				return;
+			}
+
+			var arr;
+
+			if (selector.includes(',')) {
+				arr = selector.split(',');
+				for (let m of arr)
+					CONFIG(m.trim(), config);
+				return;
+			}
+
+			var c = selector.charAt(0);
+			var code = '';
+
+			switch (c) {
+				case '#': // id
+					code = 'instance.id === "{0}"'.format(selector.substring(1));
+					break;
+				case '.': // path
+					code = 'instance.path.includes("{0}")'.format(selector.substring(1));
+					break;
+				case '*': // all UI components
+					code = 'true';
+					break;
+				default:  // name
+					code = 'instance.name === "{0}"'.format(selector);
+					break;
+			}
+
+			selector = new Function('instance', 'return ' + code);
+			T.db.configs.push({ check: selector, config: config });
+
+			// apply for existing instances
+			for (let m of T.components) {
+				if (selector(m))
+					m.reconfigure(config);
+			}
 		};
 
 	})();
@@ -1565,5 +3036,14 @@
 		};
 	})();
 
+	// load localStorage
+	setTimeout(function() {
+
+		DEF.onstorageread(function(data) {
+			T.cache.storage = data || {};
+			T.ready = true;
+		});
+
+	}, 1);
 
 })(window);
