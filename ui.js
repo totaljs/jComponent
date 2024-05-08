@@ -10,7 +10,6 @@
 	W.Total = Total;
 	W.DEF = DEF;
 	W.PLUGINS = {};
-	W.NOOP = function(){};
 	W.W = W;
 
 	DEF.pathcommon = 'common.';
@@ -24,9 +23,11 @@
 	T.events = {};
 	T.plugins = W.PLUGINS;
 	T.env = {};
+	T.data = {};
 
 	T.cache = {
-		paths: {}
+		paths: {},
+		counter: 0
 	};
 
 	T.db = {
@@ -34,9 +35,42 @@
 		components: {}
 	};
 
+	setInterval(function() {
+
+		W.NOW = new Date();
+
+		let remove = [];
+
+		// Delete unused plugins
+		for (let key in T.plugins) {
+			let m = T.plugins[key];
+			if (!inDOM(m.dom))
+				m.$remove();
+		}
+
+		// Delete unused components
+		for (let m of T.components) {
+			if (!inDOM(m.dom))
+				remove.push(m);
+		}
+
+		// Delete unused binders
+		for (let m of T.binders) {
+			if (!inDOM(m.dom))
+				remove(m);
+		}
+
+		for (let m of remove)
+			m.$remove();
+
+		T.cache.counter++;
+		T.emit('service', T.cache.counter);
+
+	}, 60000);
+
 	/*
 		@Path: Core
-		@Method: Total.set(scope, path, value);
+		@Method: Total.set(scope, path, value); #scope {Object}; #path {String}; #value {Object};
 		The method assigns a `value` based on a `path` to the defined `scope`.
 	*/
 	T.set = function(scope, path, value) {
@@ -69,7 +103,7 @@
 
 	/*
 		@Path: Core
-		@Method: Total.get(scope, path);
+		@Method: Total.get(scope, path); #scope {Object}; #path {String}; #return {String/Boolean/Object};
 		The method reads a `value` based on a `path` in the defined `scope`.
 	*/
 	T.get = function(scope, path) {
@@ -128,6 +162,11 @@
 
 	};
 
+	/*
+		@Path: Core
+		@Method: Total.find(scope, path, callback); #scope {object}; #path {String}; #callback {Function(arr)};
+		The method returns in the callback all component instances defined in the path scope.
+	*/
 	T.find = function(scope, path, callback) {
 		path = path instanceof T.Path ? path : parsepath(path);
 		path.exec(function() {
@@ -147,7 +186,7 @@
 
 	/*
 		@Path: Core
-		@Method: Total.notify(scope, path);
+		@Method: Total.notify(scope, path); #scope {Object}; #path {String};
 		The method notifies all watchers based on a `path` ot the defined `scope`.
 	*/
 	T.notify = function(scope, path, onlyflags) {
@@ -208,12 +247,13 @@
 
 	};
 
+	/*
+		@Path: Core
+		@Method: Total.cl(name, callback); #name {String}; #callback {Function()};
+		The method inicializes codelists.
+	*/
 	T.cl = function(name, callback) {
 		callback();
-	};
-
-	W.WARN = function() {
-		W.console && W.console.warn.apply(W.console, arguments);
 	};
 
 	function register(name, callback, attribute) {
@@ -236,6 +276,19 @@
 			}
 
 		});
+	}
+
+	function inDOM(el) {
+		if (!el)
+			return;
+		if (el.tagName === 'BODY')
+			return true;
+		var parent = el.parentNode;
+		while (parent) {
+			if (parent.tagName === 'BODY')
+				return true;
+			parent = parent.parentNode;
+		}
 	}
 
 	function parsepath(path) {
@@ -329,11 +382,20 @@
 			// @TODO: missing implementation for downloading dependencies
 
 			if (t.tag === 'UI-PLUGIN' && !t.instance) {
+
+				if (t.path === '*')
+					t.path = DEF.pathcommon.substring(0, DEF.pathcommon.length - 1);
+
 				tmp = T.db.plugins[t.path];
+
+				if (t.path.includes(' ') && t.path.includes('?'))
+					t.path = 'Total.data.p' + GUID(10);
+
 				if (!tmp) {
 					WARN(ERR.format('The plugin "{0}" not found'.format(t.path)));
 					return;
 				}
+
 				t.instance = new T.Plugin(t);
 			} else if (t.tag === 'UI-COMPONENT' && !t.instance) {
 				tmp = T.db.components[t.name];
@@ -506,7 +568,7 @@
 
 		/*
 			@Path: Path
-			@Method: instance.includes(path)
+			@Method: instance.includes(path); #path {String};
 			The method checks to see if the path is part of the route.
 		*/
 		PROTO.includes = function(path) {
@@ -537,7 +599,7 @@
 
 		/*
 			@Path: Path
-			@Method: instance.assign(path)
+			@Method: instance.assign(path); #path {String};
 			The method assigns a new path to the current path instance.
 		*/
 		PROTO.assign = function(path) {
@@ -550,14 +612,14 @@
 			if (c === '@' || c === '<' || c === '>' || c === '(' || c === ')')
 				path = ' ' + path;
 			else
-				path = path ? ('.' + path) : '';
+				path = c === '?' ? path.substring(1) : path ? ('.' + path) : '';
 
 			return parsepath(this.path + path);
 		};
 
 		/*
 			@Path: Path
-			@Method: instance.get(scope)
+			@Method: instance.get(scope); #scope {Object};
 			The method reads a `value` based on a `path` in the defined `scope`.
 		*/
 		PROTO.get = function(scope) {
@@ -566,7 +628,7 @@
 
 		/*
 			@Path: Path
-			@Method: instance.set(scope, value)
+			@Method: instance.set(scope, value); #scope {Object}; #value {String/Number/Boolean/Object/Date};
 			The method assigns a `value` based on a `path` to the defined `scope`.
 		*/
 		PROTO.set = function(scope, value) {
@@ -575,7 +637,7 @@
 
 		/*
 			@Path: Path
-			@Method: instance.notify(scope)
+			@Method: instance.notify(scope); #scope {Object};
 			The method notifies all watchers based on the path.
 		*/
 		PROTO.notify = function(scope, flags) {
@@ -591,6 +653,11 @@
 			T.notify(scope, flags ? (this.path + (flags || '')) : this);
 		};
 
+		/*
+			@Path: Path
+			@Method: instance.exec([callback]); #[callback] {Function()};
+			The method executes flags and code lists.
+		*/
 		PROTO.exec = function(callback) {
 
 			var t = this;
@@ -607,6 +674,11 @@
 
 		};
 
+		/*
+			@Path: Path
+			@Method: instance.find(scope, callback); #scope {object}; #callback {Function(arr)};
+			The method returns in the callback all component instances defined in the path scope.
+		*/
 		PROTO.find = function(scope, callback) {
 			return T.find(scope, this, callback);
 		};
@@ -656,6 +728,17 @@
 
 		var PROTO = T.Plugin.prototype;
 
+		// Internal
+		PROTO.init = function() {
+			var t = this;
+			t.make && t.make();
+		};
+
+		/*
+			@Path: Plugin
+			@Method: instance.get(path);
+			The method reads a value from the plugin model.
+		*/
 		PROTO.get = function(path) {
 
 			var t = this;
@@ -684,10 +767,16 @@
 			return t.path.get(t.scope);
 		};
 
-		// Internal
-		PROTO.init = function() {
+		/*
+			@Path: Plugin
+			@Method: instance.set(path, value)
+			The method assigns a `value` based on a `path` to the defined plugin `scope`.
+		*/
+		PROTO.set = function(path, value) {
 			var t = this;
-			t.make && t.make();
+			path = t.path.assign(path);
+			path.set(t.scope, value);
+			path.notify(t.scope);
 		};
 
 		/*
@@ -740,6 +829,20 @@
 
 			var t = this;
 			t.watchers.push({ path: t.path.assign(path), fn: callback });
+		};
+
+		// Internal method
+		PROTO.$remove = function() {
+			var t = this;
+
+			try {
+				t.destroy && t.destroy();
+			} catch (e) {
+				WARN(ERR.format(e));
+			}
+
+			delete T.plugins[t.path];
+			t.element.remove();
 		};
 
 	})();
@@ -932,6 +1035,22 @@
 			t.$validate();
 		};
 
+		// Internal method
+		PROTO.$remove = function() {
+			var t = this;
+
+			try {
+				t.destroy && t.destroy();
+			} catch (e) {
+				WARN(ERR.format(e));
+			}
+
+			var index = t.components.indexOf(t);
+			if (index !== -1)
+				t.components.splice(index, 1);
+			t.element.remove();
+		};
+
 	})();
 
 	// Binder declaration
@@ -944,6 +1063,16 @@
 		PROTO.init = function() {
 
 		};
+
+		// Internal method
+		PROTO.$remove = function() {
+			var t = this;
+			var index = t.binders.indexOf(t);
+			if (index !== -1)
+				t.binders.splice(index, 1);
+			t.element.remove();
+		};
+
 
 	})();
 
@@ -1023,7 +1152,35 @@
 
 		/*
 			@Path: Globals
-			@Method: SET(path, value);
+			@Property: NOW; #return {Date};
+			The property always returns the current `Date` object refreshed in a one minute interval.
+		*/
+		W.NOW = new Date();
+
+		/*
+			@Path: Globals
+			@Property: NOOP(); #return {Function};
+			The method returns empty function that means "no operation".
+		*/
+		W.NOOP = function() {};
+
+		/*
+			@Path: Globals
+			@Property: ON(name, callback); #name {String}; #callback {Function(a, b, c, d)};
+			The method registers a new handler for capturing a specific event.
+		*/
+		W.ON = T.on;
+
+		/*
+			@Path: Globals
+			@Property: EMIT(name, [a], [b], [c], [d]); #name {String}; #[a] {Object}; #[b] {Object}; #[c] {Object}; #[d] {Object};
+			The method emits a specific event to all plugins and components.
+		*/
+		W.EMIT = T.emit;
+
+		/*
+			@Path: Globals
+			@Method: SET(path, value); #path {String}; #value {Object};
 			The method sets and notifies all UI components and watchers based on the path.
 		*/
 		W.SET = function(path, value) {
@@ -1036,7 +1193,7 @@
 
 		/*
 			@Path: Globals
-			@Method: GET(path);
+			@Method: GET(path); #path {String}; #return {Object};
 			Based on the path, the method returns a value.
 		*/
 		W.GET = function(path) {
@@ -1048,7 +1205,7 @@
 
 		/*
 			@Path: Globals
-			@Method: UPD(path);
+			@Method: UPD(path); #path {String};
 			The method notifies all UI components and watchers based on the path.
 		*/
 		W.UPD = W.UPDATE = function(path) {
@@ -1057,7 +1214,7 @@
 
 		/*
 			@Path: Globals
-			@Method: COMPONENT(name, [config], callback, [dependencies]);
+			@Method: COMPONENT(name, [config], callback, [dependencies]); #path {String}; #[config] {Object}; #callback {Function(self, config, element, cls)}; #[dependencies] {String};
 			The method registers a new component declaration.
 		*/
 		W.COMPONENT = function(name, config, callback, dependencies) {
@@ -1073,7 +1230,7 @@
 
 		/*
 			@Path: Globals
-			@Method: PLUGIN(name, [config], callback, [dependencies]);
+			@Method: PLUGIN(path, [config], callback, [dependencies]); #path {String}; #[config] {Object}; #callback {Function(self, config, element, cls)}; #[dependencies] {String};
 			The method registers a new plugin declaration.
 		*/
 		W.PLUGIN = function(name, config, callback, dependencies) {
@@ -1084,12 +1241,15 @@
 				config = '';
 			}
 
+			if (name === '*')
+				name = DEF.pathcommon.substring(0, DEF.pathcommon.length - 1);
+
 			T.db.plugins[name] = { config: (config || '').parseConfig(), callback: callback, dependencies: dependencies };
 		};
 
 		/*
 			@Path: Globals
-			@Method: ERRORS(path);
+			@Method: ERRORS(path, callback); #path {String}; #callback {Function(arr)};
 			The method returns errors based on the path.
 		*/
 		W.ERRORS = function(path, callback) {
@@ -1099,7 +1259,7 @@
 
 		/*
 			@Path: Globals
-			@Method: HIDDEN(el);
+			@Method: HIDDEN(el); #el {jQuery/Element}
 			The method determines whether the element is visible or not.
 		*/
 		W.HIDDEN = function(el) {
@@ -1112,7 +1272,7 @@
 
 		/*
 			@Path: Globals
-			@Method: HASH(value);
+			@Method: HASH(value); #value {String/Number/Boolean/Object/Date};
 			The method creates a hash from the `value`.
 		*/
 		W.HASH = function(value, unsigned) {
@@ -1137,6 +1297,46 @@
 				hash |= 0; // Convert to 32bit integer
 			}
 			return hash >>> 0;
+		};
+
+		/*
+			@Path: Globals
+			@Method: WARN(a, [b], [c], [d]); #a {Object}; #[b] {Object}; #[c] {Object}; #[d] {Object};
+			The method prints a warning on the web dev console.
+		*/
+		W.WARN = function() {
+			W.console && W.console.warn.apply(W.console, arguments);
+		};
+
+		function rnd2() {
+			return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+		}
+
+		function rnd3() {
+			return arguments[Math.floor(Math.random() * arguments.length)];
+		}
+
+		/*
+			@Path: Globals
+			@Method: GUID([length]); #length {Number};
+			The method generates a unique identifier randomly. The `length {Number}` argument can affect its length.
+		*/
+		W.GUID = function(length) {
+
+			if (!length) {
+				var ticks = Date.now();
+				var low = ticks.toString(16);
+				var sec = (ticks / 60000 >> 0).toString(16);
+				return low.substring(0, 8) + '-' + (low.length < 8 ? low.substring(8).padLeft(4, '0') : low.substring(4, 8)) + '-' + rnd3(1, 2, 3, 4, 5) + sec.substring(1, 4) + '-' + rnd3(0, 8, 9, 'a', 'b') + sec.substring(4, 7) + '-' + rnd2() + rnd2() + rnd2();
+			}
+
+			var l = ((length / 10) >> 0) + 1;
+			var b = [];
+
+			for (var i = 0; i < l; i++)
+				b.push(Math.random().toString(36).substring(2));
+
+			return b.join('').substring(0, length);
 		};
 
 	})();
