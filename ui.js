@@ -9,10 +9,13 @@
 	const TNB = { number: 1, boolean: 1 };
 	const T = Total;
 
-	W.Total = Total;
+	W.Total = T;
 	W.DEF = DEF;
 	W.PLUGINS = {};
 	W.W = W;
+	W.MAIN = T;
+	W.M = T;
+	W.$W = $(W);
 
 	/*
 		@Path: Globals
@@ -39,12 +42,14 @@
 
 	DEF.pathcommon = 'common.';
 	DEF.pathcl = 'DEF.cl.';
+	DEF.pathplugins = 'Total.data';
 	DEF.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 	DEF.fallback = 'https://cdn.componentator.com/j-{0}.html';
 	DEF.localstorage = 'totalui';
 	DEF.dictionary = {};
 	DEF.cdn = '';
 	DEF.iconprefix = 'ti ti-';
+	DEF.scrollbaranimate = true;
 	DEF.thousandsseparator = ' ';
 	DEF.decimalseparator = '.';
 	DEF.dateformat = 'yyyy-MM-dd';
@@ -81,6 +86,7 @@
 	T.version = 20;
 	T.components = [];
 	T.binders = [];
+	T.scrollbars = [];
 	T.watchers = [];
 	T.events = {};
 	T.plugins = W.PLUGINS;
@@ -88,7 +94,6 @@
 	T.data = {};
 
 	T.cache = {
-		lazy: {},
 		timeouts: {},
 		external: {},
 		imports: {},
@@ -96,10 +101,12 @@
 		paths: {},
 		plugins: [],
 		counter: 0,
-		statics: {}
+		statics: {},
+		lockers: {}
 	};
 
 	T.db = {
+		lazy: {},
 		plugins: {},
 		extensions: {},
 		configs: {},
@@ -308,10 +315,20 @@
 		path = parsepath(path);
 
 		if (element) {
-			let arr = element.find('ui-component');
-			for (let m of arr) {
-				if (m.$totalui)
-					arr.push(m.$totalui);
+
+			let arr = [];
+
+			if (element instanceof T.Plugin) {
+				for (let m of T.components) {
+					if (m.plugin === element)
+						arr.push(m);
+				}
+			} else {
+				arr = element.find('ui-component');
+				for (let m of arr) {
+					if (m.$totalcomponent)
+						arr.push(m.$totalcomponent);
+				}
 			}
 		}
 
@@ -319,6 +336,8 @@
 		let sel = name.charAt(0);
 		let id = '';
 		let pth = '';
+
+		name = tmp[0];
 
 		switch (sel) {
 			case '#': // identifier
@@ -331,18 +350,41 @@
 				break;
 		}
 
+		if (T.cache.lockers[name]) {
+			setTimeout(T.setter, 300, element, raw, a, b, c, d);
+			return;
+		}
+
+		// Check lazy components
+		if (name) {
+			let proxy = T.db.lazy[name];
+			if (proxy) {
+				delete T.db.lazy[name];
+				T.cache.lockers[tmp[0]] = true;
+				proxy.callback = function() {
+					delete T.cache.lockers[tmp[0]];
+					T.setter(element, raw, a, b, c, d);
+				};
+				proxy.init(proxy);
+				return;
+			}
+		}
+
 		let count = 0;
 		let run = [];
 
 		for (let m of arr) {
+
 			if (m.ready) {
 
-				if (id && m.id !== id)
-					continue;
-				else if (pth && !m.path.includes(pth))
-					continue;
-				else if (m.name !== tmp[0])
-					continue;
+				if (tmp[0] != '*') {
+					if (id && m.id !== id)
+						continue;
+					else if (pth && !m.path.includes(pth))
+						continue;
+					else if (m.name !== tmp[0])
+						continue;
+				}
 
 				count++;
 
@@ -505,6 +547,24 @@
 		});
 	}
 
+	function autofocus(el, selector, counter) {
+		if (!isMOBILE) {
+			if (typeof(counter) !== 'function')
+				counter = 0;
+			var target = el.find(typeof(selector) === 'string' ? selector : 'input,select,textarea');
+			for (var i = 0; i < target.length; i++) {
+				var item = target[i];
+				if (item && !HIDDEN(item)) {
+					item.focus();
+					if (document.activeElement == item)
+						return;
+				}
+			}
+			if (counter < 15)
+				setTimeout(autofocus, 200, el, selector, counter + 1);
+		}
+	};
+
 	function inDOM(el) {
 		if (!el)
 			return;
@@ -575,6 +635,17 @@
 		return builder;
 	}
 
+	function findplugin(parent) {
+		if (parent.tagName === 'UI-PLUGIN' || parent.getAttribute('plugin'))
+			return parent;
+		parent = parent.parentNode;
+		if (parent) {
+			if (parent.tagName === 'BODY')
+				return;
+			return findplugin(parent);
+		}
+	}
+
 	function findparent(el, tag) {
 
 		parent = el.parentNode;
@@ -605,7 +676,7 @@
 				while (true) {
 					if (!dom || dom.tagName === 'BODY')
 						break;
-					if (dom.style.height && !dom.classList.contains(MD.prefixcsslibrary + 'scrollbar-area'))
+					if (dom.style.height && !dom.classList.contains(DEF.prefixcsslibrary + 'scrollbar-area'))
 						return $(dom);
 					dom = dom.parentNode;
 				}
@@ -631,24 +702,29 @@
 	// Proxy declaration
 	(function() {
 
-		T.Proxy = function(el) {
+		T.Proxy = function(type, el, name, path, config, callback) {
 			el = $(el);
 			var t = this;
+			t.type = type;
 			t.element = el;
-			t.name = el.attr('name') || '';
-			t.path = el.attr('path') || '';
-			t.config = (el.attr('config') || '').parseConfig();
-			t.tag = el[0].tagName;
+			t.name = name || path || '';
+			t.path = path || '';
+			t.config = (typeof(config) === 'string' ? config.parseConfig() : config) || {};
+			t.dom = el[0];
 			t.ready = false;
-			el[0].$proxy = t;
+			t.callback = callback;
+			t.pending = [];
 			setTimeout(t.init, 1, t);
 		}
 
 		var PROTO = T.Proxy.prototype;
 
 		function init(t, arr) {
+
+			if (t.ref.count != null)
+				t.ref.count++;
+
 			t.ready = true;
-			t.instance.ready = true;
 			t.instance.scope = W;
 			t.instance.name = t.name || t.path;
 			t.instance.path = new T.Path(t.path);
@@ -657,7 +733,6 @@
 			t.instance.dom = t.element[0];
 			t.instance.config = {};
 			t.instance.plugin = t.parent;
-			t.element[0].$totalui = t.instance;
 
 			for (let key in t.ref.config)
 				t.instance.config[key] = t.ref.config[key];
@@ -667,22 +742,29 @@
 
 			var cls = DEF.prefixcsscomponents + t.name;
 			var extensions = null;
+			var reference = '';;
 
-			switch (t.tag) {
-				case 'UI-PLUGIN':
+			switch (t.type) {
+				case 'plugin':
 					T.plugins[t.path] = t.instance;
 					extensions = T.db.extensions['@' + t.path];
+					reference = '$totalplugin';
 					break;
-				case 'UI-COMPONENT':
+				case 'component':
 					t.element.aclass(cls);
 					t.instance.cls = cls;
 					extensions = T.db.extensions[t.instance.name];
+					reference = '$totalcomponent';
 					T.components.push(t.instance);
 					break;
-				case 'UI-BIND':
+				case 'bind':
+					reference = '$totalbinder';
 					T.binders.push(t.instance);
 					break;
 			}
+
+			if (reference)
+				t.element[0][reference] = t.instance;
 
 			if (extensions) {
 				for (let m of extensions) {
@@ -693,14 +775,24 @@
 				}
 			}
 
-			t.ref.callback.call(t.instance, t.instance, t.instance.config, t.element, cls);
+			t.ref.callback.call(t.instance, t.instance, t.instance.config, cls);
 
 			if (extensions) {
 				for (let m of extensions)
-					m.callback.call(t.instance, t.instance, t.instance.config, t.element, cls);
+					m.callback.call(t.instance, t.instance, t.instance.config, cls);
+				delete T.cache.lockers[t.name];
+				delete T.cache.lockers[t.path];
 			}
 
-			t.instance.init();
+			t.instance.$init();
+
+			// pending
+			if (t.pending) {
+				for (let proxy of t.pending)
+					proxy.init(proxy);
+				delete t.pending;
+			}
+
 		}
 
 		PROTO.init = function(t) {
@@ -714,7 +806,24 @@
 				return;
 			}
 
-			if (t.tag === 'UI-IMPORT') {
+			// Inline plugin definition
+			if (t.type !== 'plugin') {
+				let plugin = t.element.attr('plugin');
+				if (plugin) {
+					let pp = t.dom.$proxyplugin;
+					if (pp) {
+						if (!pp.ready) {
+							pp.pending.push(t);
+							return;
+						}
+					} else {
+						T.newplugin(t.element, plugin).pending.push(t);
+						return;
+					}
+				}
+			}
+
+			if (t.type === 'import') {
 
 				let url = t.path || t.config.url;
 
@@ -725,13 +834,17 @@
 
 				IMPORT(url, t.element, function() {
 					t.ready = true;
+					for (let proxy of t.pending)
+						proxy.init(proxy);
+					delete t.pending;
 				});
+
 				return;
 			}
 
 			let tmp;
 
-			if (t.tag === 'UI-PLUGIN' && !t.instance) {
+			if (t.type === 'plugin' && !t.instance) {
 
 				let last = T.cache.plugins.shift();
 
@@ -745,7 +858,7 @@
 				t.ref = tmp;
 
 				if (t.path.includes(' ') && t.path.includes('?'))
-					t.path = 'Total.data.p' + GUID(10);
+					t.path = DEF.pathplugins + '.' + GUID(10).replace(/^[0-9]/g, 'x');
 
 				if (!tmp) {
 					WARN(ERR.format('The plugin "{0}" not found'.format(t.path)));
@@ -754,14 +867,14 @@
 
 				t.instance = new T.Plugin(t);
 
-			} else if (t.tag === 'UI-COMPONENT' && !t.instance) {
+			} else if (t.type === 'component' && !t.instance) {
 
 				if (!t.lazy) {
 					let index = t.name.indexOf(' ');
 					if (index !== -1) {
-						t.lazy = t.name.substring(0, 5).toUpperCase() === 'LAZY ';
-						if (t.lazy) {
+						if (t.name.substring(0, 5).toUpperCase() === 'LAZY ') {
 							t.name = t.name.substring(5);
+							T.db.lazy[t.name] = t;
 							return;
 						}
 					}
@@ -795,15 +908,15 @@
 
 			if (t.path.includes('?')) {
 				// absolute path
-				let parent = findparent(t.element[0], 'UI-PLUGIN');
+				let parent = findplugin(t.element[0]);
 				if (parent) {
-					let proxy = parent.$proxy;
+					let proxy = parent.$proxyplugin;
 					if (proxy && proxy.ready) {
 						// @TODO: missing skipper "?1" or "?3"
 						t.parent = proxy.element;
 						t.path = t.path.replace(/\?/g, proxy.path);
 					} else {
-						setTimeout(t.init, 500, t);
+						setTimeout(t.init, 50, t);
 						return;
 					}
 				} else {
@@ -821,26 +934,48 @@
 		};
 	})();
 
+	T.newplugin = function(element, path, config, callback) {
+		return element[0].$proxyplugin = new T.Proxy('plugin', element, path, path, config, callback);
+	};
+
+	T.newcomponent = function(element, name, path, config, callback, def) {
+		return element[0].$proxycomponent = new T.Proxy('component', element, name, path, config, callback);
+	};
+
+	T.newbinder = function(element, path, config, callback) {
+		return element[0].$proxybinder = new T.Proxy('bind', element, path, path, config, callback);
+	};
+
+	T.newimporter = function(element, path, config, callback) {
+		return element[0].$proxyimporter = new T.Proxy('import', element, path, path, config, callback);
+	};
+
 	register('ui-component', function(el) {
-		new T.Proxy(el);
+		el = $(el);
+		T.newcomponent(el, el.attr('name'), el.attr('path'), el.attr('config'));
 	}, function(el, property, value) {
 		// attribute is changed
 	});
 
 	register('ui-plugin', function(el) {
-		new T.Proxy(el);
+		el = $(el);
+		let path = el.attr('path');
+		T.newplugin(el, path, path, el.attr('config'));
 	}, function(el, property, value) {
 		// attribute is changed
 	});
 
 	register('ui-bind', function(el) {
-		new T.Proxy(el);
+		el = $(el);
+		let path = el.attr('path');
+		T.newbinder(el, path, path, el.attr('config'));
 	}, function(el, property, value) {
 		// attribute is changed
 	});
 
 	register('ui-import', function(el) {
-		new T.Proxy(el);
+		el = $(el);
+		T.newimporter(el, path, el.attr('config'));
 	}, function(el, property, value) {
 		// attribute is changed
 	});
@@ -1103,8 +1238,13 @@
 		var PROTO = T.Plugin.prototype;
 
 		// Internal
-		PROTO.init = function() {
+		PROTO.$init = function() {
 			var t = this;
+			if (t.proxy.callback) {
+				t.proxy.callback();
+				t.proxy.callback = null;
+			}
+			t.ready = true;
 			t.make && t.make();
 		};
 
@@ -1255,20 +1395,42 @@
 		*/
 		T.Component = function(proxy) {
 			var t = this;
+
 			t.events = {};
 			t.internal = {};
 			t.commands = {};
 			t.watchers = [];
+
+			// Backward compatibility
+			t.$ready = true;
+			t.ID = t.id = GUID(10);
+
 		};
 
 		var PROTO = T.Component.prototype;
 
 		// Internal
-		PROTO.init = function() {
+		PROTO.$init = function() {
+
 			var t = this;
-			t.make && t.make();
-			t.reconfigure(t.config, true);
-			t.$setter(t.get(), t.path.path, { init: 1 });
+			t.ready = true;
+
+			try {
+
+				if (!T.db.components[t.name].init) {
+					T.db.components[t.name].init = true;
+					t.init && t.init();
+				}
+
+				t.make && t.make();
+				t.reconfigure(t.config, true);
+				t.$setter(t.get(), t.path.path, { init: 1 });
+			} finally {
+				if (t.proxy.callback) {
+					t.proxy.callback();
+					t.proxy.callback = null;
+				}
+			}
 		};
 
 		// Deprecated
@@ -1308,8 +1470,11 @@
 		*/
 		PROTO.set = function(value, flags) {
 			var t = this;
-			t.path.set(t.scope, value, flags);
-			t.path.notify(t.scope, flags);
+			if (t.path.path) {
+				t.path.set(t.scope, value, flags);
+				t.path.notify(t.scope, flags);
+			} else
+				WARN(ERR.format('The component "{0}" does not have a defined path'.format(t.name), t));
 		};
 
 		/*
@@ -1478,8 +1643,21 @@
 			var el = this.element;
 			if (value instanceof Array)
 				value = value.join('');
-			var v = value ? el.append(value) : el;
-			return v;
+			return value ? el.append(value) : el;
+		};
+
+
+		PROTO.autofocus = function(selector, counter) {
+			autofocus(this.element, selector, counter);
+			return this;
+		};
+
+		PROTO.css = function(name, value) {
+			var el = this.element;
+			if (value === undefined)
+				return el.css(name);
+			el.css(name, value);
+			return this;
 		};
 
 		PROTO.event = function() {
@@ -1519,7 +1697,7 @@
 				t.element.tclass(value.$class);
 
 			if (value.$id)
-				t.id = value.$id;
+				t.ID = t.id = value.$id;
 
 			// if (value.$init) {
 			// 	EXEC();
@@ -1571,6 +1749,22 @@
 		*/
 		PROTO.icon = function(value) {
 			return value ? ((value.includes(' ') ? DEF.iconprefix : '') + value) : '';
+		};
+
+		/*
+			@Path: Component
+			@Method: instance.replace(target, [remove]); #target {Element/jQuery}; #[remove] {Boolean};
+			The method moves the component into another element defined in the `target` argument.
+		*/
+		PROTO.replace = function(target, remove) {
+			var t = this;
+			var prev = t.element;
+			delete t.dom.$totalcomponent;
+			remove && prev.off().remove();
+			t.element = $(target);
+			t.dom = t.element[0];
+			t.dom.$totalcomponent = t;
+			return t;
 		};
 
 		// Internal method
@@ -1636,8 +1830,13 @@
 
 		var PROTO = T.Binder.prototype;
 
-		PROTO.init = function() {
-
+		PROTO.$init = function() {
+			let t = this;
+			t.ready = true;
+			if (t.proxy.callback) {
+				t.proxy.callback();
+				t.proxy.callback = null;
+			}
 		};
 
 		// Internal method
@@ -1768,6 +1967,60 @@
 		PROTO.padRight = function(t, e) {
 			var r = this + '';
 			return r + Array(Math.max(0, t - r.length + 1)).join(e || ' ');
+		};
+
+
+		PROTO.parseInt = function(def) {
+			var str = this.trim();
+			var val = str.match(DEF.regexp.int);
+			if (!val)
+				return def || 0;
+			val = +val[0];
+			return isNaN(val) ? def || 0 : val;
+		};
+
+		PROTO.parseFloat = function(def) {
+			var str = this.trim();
+			var val = str.match(DEF.regexp.float);
+			if (!val)
+				return def || 0;
+			val = val[0];
+			if (val.indexOf(',') !== -1)
+				val = val.replace(',', '.');
+			val = +val;
+			return isNaN(val) ? def || 0 : val;
+		};
+
+		/*
+			@Path: String.prototype
+			@Method: String.prototype.args(obj, [encode]); #obj {Object} payload, #encode {String/Function(key, value)} supported values `json`, `escape` and `encode`; #return {String};
+			The method checks if the string is a serialized JSON date.
+		*/
+		PROTO.args = function(obj, encode, def) {
+
+			var isfn = typeof(encode) === 'function';
+
+			return this.replace(/\{{1,2}[a-z0-9_.-\s]+\}{1,2}/gi, function(text) {
+
+				// Is double?
+				var l = text.charCodeAt(1) === 123 ? 2 : 1;
+				var key = text.substring(l, text.length - l).trim();
+				var val = T.get(obj, key);
+
+				if (isfn)
+					return encode(val, key);
+
+				switch (encode) {
+					case 'json':
+						return JSON.stringify(val);
+					case 'encode':
+						return val ? encodeURIComponent(val + '') : (val == null ? '' : val);
+					case 'escape':
+						return val ? Thelpers.encode(val + '') : (val == null ? '' : val);
+				}
+
+				return val === undefined ? text : val === null ? '' : (val + '');
+			});
 		};
 
 	})();
@@ -2243,7 +2496,7 @@
 				config = '';
 			}
 
-			T.db.components[name] = { config: (config || '').parseConfig(), callback: callback, dependencies: dependencies };
+			T.db.components[name] = { count: 0, config: (config || '').parseConfig(), callback: callback, dependencies: dependencies };
 		};
 
 		/*
@@ -2262,7 +2515,7 @@
 			if (name === '*')
 				name = DEF.pathcommon.substring(0, DEF.pathcommon.length - 1);
 
-			T.db.plugins[name] = { config: (config || '').parseConfig(), callback: callback, dependencies: dependencies };
+			T.db.plugins[name] = { count: 0, config: (config || '').parseConfig(), callback: callback, dependencies: dependencies };
 
 			// It's targeted for "<ui-plugin" elements without defined "path"
 			T.cache.plugins.push(name);
@@ -2288,7 +2541,89 @@
 				return true;
 			if (el instanceof jQuery)
 				el = el[0];
-			return el.parentNode && el.parentNode.tagName === T_BODY ? false : W.isIE ? (!el.offsetWidth && !el.offsetHeight) : !el.offsetParent;
+			return el.parentNode && el.parentNode.tagName === 'body' ? false : W.isIE ? (!el.offsetWidth && !el.offsetHeight) : !el.offsetParent;
+		};
+
+		/*
+			@Path: Globals
+			@Method: VISIBLE(el, [threshold], [mode]); #el {jQuery/Element}; #[threshold] {Number}; #mode {visible|above|below}; return {Boolean};
+			The method checks if the element is visible on the screen.
+		*/
+		// Source: https://stackoverflow.com/questions/5353934/check-if-element-is-visible-on-screen
+		W.VISIBLE = function(el, threshold, mode) {
+
+			if (el instanceof jQuery)
+				el = el[0];
+
+			if (el.parentNode && el.parentNode.tagName !== 'body') {
+				if (W.isIE) {
+					if (!el.offsetWidth && !el.offsetHeight)
+						return false;
+				} else if (!el.offsetParent)
+					return false;
+			}
+
+			if (!threshold)
+				threshold = 0;
+
+			if (!mode)
+				mode = 'visible';
+
+			var rect = el.getBoundingClientRect();
+			var vw = Math.max(document.documentElement.clientHeight, W.innerHeight);
+			var above = rect.bottom - threshold < 0;
+			var below = rect.top - vw + threshold >= 0;
+			return mode === 'above' ? above : (mode === 'below' ? below : !above && !below);
+		};
+
+		/*
+			@Path: Globals
+			@Method: NOTFOCUSED(); #return {Boolean};
+			The method checks if the browser window is focused or not.
+		*/
+		W.NOTFOCUSED = function() {
+			return document.hidden || document.msHidden || document.webkitHidden;
+		};
+
+		/*
+			@Path: Globals
+			@Method: SCROLLBAR(element, options); #element {String/jQuery/Element}; #options {Object}; #return {Scrollbar};
+			The method wraps the `element` with a custom scrollbar.
+		*/
+		W.SCROLLBAR = function(el, opt) {
+			return new CustomScrollbar(el, opt);
+		};
+
+		/*
+			@Path: Globals
+			@Method: SCROLLBARWIDTH(); #return {Number};
+			The method returns the width of the scrollbar.
+		*/
+		W.SCROLLBARWIDTH = function() {
+			var id = 'totaluiscrollbar';
+			if (T.cache.scrollbarwidth != null)
+				return T.cache.scrollbarwidth;
+			var b = document.body;
+			$(b).append('<div id="{0}" style="width{1}height{1}overflow:scroll;position:absolute;top{2}left{2}"></div>'.format(id, ':100px;', ':9999px;'));
+			var el = document.getElementById(id);
+			if (el) {
+				T.cache.scrollbarwidth = el.offsetWidth - el.clientWidth;
+				b.removeChild(el);
+			}
+			return T.cache.scrollbarwidth || 0;
+		};
+
+		/*
+			@Path: Globals
+			@Method: WIDTH(element); #element {String/jQuery}; #return {Number};
+			The method returns the element's width.
+		*/
+		W.WIDTH = function(el) {
+			if (!el)
+				el = $W;
+			var w = el.width();
+			var d = DEF.devices;
+			return w >= d.md.min && w <= d.md.max ? 'md' : w >= d.sm.min && w <= d.sm.max ? 'sm' : w > d.lg.min ? 'lg' : w <= d.xs.max ? 'xs' : '';
 		};
 
 		/*
@@ -2360,6 +2695,120 @@
 			return b.join('').substring(0, length);
 		};
 
+		W.CLONE = function(obj, path) {
+
+			var type = typeof(obj);
+			switch (type) {
+				case 'number':
+				case 'boolean':
+					return obj;
+				case 'string':
+					return path ? obj : CLONE(GET(obj));
+			}
+
+			if (obj == null)
+				return obj;
+
+			if (obj instanceof Date)
+				return new Date(obj.getTime());
+
+			return PARSE(JSON.stringify(obj));
+		};
+
+		var QUERIFYMETHODS = { GET: 1, POST: 1, DELETE: 1, PUT: 1, PATCH: 1, API: 1 };
+
+		W.QUERIFY = function(url, obj) {
+
+			if (typeof(url) !== 'string') {
+				obj = url;
+				url = '';
+			}
+
+			if (!obj)
+				return url;
+
+			var arg = [];
+			var keys = Object.keys(obj);
+
+			for (var i = 0; i < keys.length; i++) {
+
+				var key = keys[i];
+				var val = obj[key];
+				if (val != null) {
+
+					if (val instanceof Date)
+						val = val.toISOString();
+					else if (val instanceof Array)
+						val = val.join(',');
+
+					val = val + '';
+					val && arg.push(encodeURIComponent(key) + '=' + encodeURIComponent(val));
+				}
+			}
+
+			if (url) {
+				var arr = url.split(' ');
+				var index = QUERIFYMETHODS[arr[0]] ? 1 : 0;
+				if (arg.length)
+					arr[index] += (arr[index].indexOf('?') === -1 ? '?' : '&') + arg.join('&');
+				return arr.join(' ');
+			}
+
+			return arg.length ? ('?' + arg.join('&')) : '';
+		};
+
+		W.STRINGIFY = function(obj, compress, fields, encrypt) {
+			var tf = typeof(fields);
+			var tmp = JSON.stringify(obj, function(key, value) {
+
+				if (!key)
+					return value;
+
+				if (fields) {
+					if (fields instanceof Array) {
+						if (fields.indexOf(key) === -1)
+							return undefined;
+					} else if (tf === 'function') {
+						if (!fields(key, value))
+							return undefined;
+					} else if (fields[key] === false)
+						return undefined;
+				}
+
+				if (compress === true) {
+					var t = typeof(value);
+					if (t === 'string') {
+						value = value.trim();
+						return value ? value : undefined;
+					} else if (value === false || value == null)
+						return undefined;
+				}
+
+				return value;
+			});
+			return encrypt && encryptsecret ? encrypt_data(tmp, encryptsecret) : tmp;
+		};
+
+		W.PARSE = function(value, date) {
+
+			if (typeof(value) === 'object')
+				return value;
+
+			// Is selector?
+			var c = (value || '').charAt(0);
+			if (c === '#' || c === '.')
+				return PARSE($(value).html(), date);
+
+			date === undefined && (date = MD.jsondate);
+			try {
+				return JSON.parse(value, function(key, value) {
+					return typeof(value) === 'string' && date && value.isJSONDate() ? new Date(value) : value;
+				});
+			} catch (e) {
+				return null;
+			}
+		};
+
 		function onresponse(opt) {
 
 			var req = opt.req;
@@ -2406,6 +2855,13 @@
 				CACHE(opt.id, opt.response, opt.path.cache);
 
 			T.process(opt.scope, opt.response, opt.callback);
+
+			let arr = T.cache.lockers[opt.id];
+			if (arr) {
+				for (let fn of arr)
+					T.process(opt.scope, opt.response, fn);
+				delete T.cache.lockers[opt.id];
+			}
 		}
 
 		/*
@@ -2440,11 +2896,20 @@
 			index = url.indexOf(' ');
 
 			if (index !== -1) {
+
 				opt.url = url.substring(0, index);
 				url = url.substring(index + 1);
 				opt.path = new T.Path(url);
 			} else
 				opt.url = url;
+
+			if (opt.path && (opt.path.cache || opt.path.sync)) {
+				let arr = T.cache.lockers[opt.id];
+				if (arr)
+					arr.push(callback);
+				else
+					T.cache.lockers[opt.id] = [];
+			}
 
 			if (opt.url.substring(0, 2) === '//')
 				opt.url = location.protocol + opt.url;
@@ -2470,6 +2935,7 @@
 			if (opt.path && opt.path.cache) {
 				let cache = CACHE(opt.id);
 				if (cache) {
+					delete T.cache.lockers[opt.id];
 					T.process(opt.scope, cache, opt.callback);
 					return;
 				}
@@ -2745,7 +3211,7 @@
 			key = 'ui' + HASH(key).toString(36);
 
 			if (expire) {
-				let item = { value: value, expire: date.add(expire) };
+				let item = { value: value, expire: expire === 'session' ? null : date.add(expire) };
 				T.cache.storage[key] = item;
 				item.expire && savestorage();
 			} else {
@@ -2884,7 +3350,7 @@
 				if (response) {
 					var iserr = response instanceof Error ? true : response instanceof Array && response.length ? response[0].error != null : response.error != null;
 					if (iserr) {
-						events.ERROR && EMIT('ERROR', response);
+						T.events.ERROR && T.emit('ERROR', response);
 						error && W.SEEX(error, response);
 						return true;
 					}
@@ -2907,6 +3373,9 @@
 			The method extends UI components `component_name` or plugins `@plugin_name`.
 		*/
 		W.EXTENSION = function(name, config, callback) {
+
+			name = name.split(':').trim()[0];
+
 			var obj = { config: config ? typeof(config) === 'string' ? config.parseConfig() : config : null, callback: callback };
 
 			if (T.db.extensions[name])
@@ -3002,6 +3471,10 @@
 				if (selector(m))
 					m.reconfigure(config);
 			}
+		};
+
+		W.SETTER = function(name, a, b, c, d) {
+			T.setter(null, name, a, b, c, d);
 		};
 
 	})();
@@ -3248,5 +3721,991 @@
 		});
 
 	}, 1);
+
+	function CustomScrollbar(element, options) {
+
+		var self = this;
+		var size = {};
+		var drag = {};
+
+		if (!options)
+			options = {};
+
+		var n = DEF.prefixcsslibrary + 'scrollbar';
+		var id = GUID(5);
+
+		element.aclass(n);
+		element.wrapInner('<div class="{0}-area" data-id="{1}"><div class="{0}-body" data-id="{1}"></div></div>'.format(n, id));
+
+		var iscc = !!options.controls;
+		var controls = options.controls || element;
+		var visibleX = options.visibleX == null ? false : options.visibleX;
+		var visibleY = options.visibleY == null ? false : options.visibleY;
+		var orientation = options.orientation;
+		var canX = !orientation || orientation === 'x';
+		var canY = !orientation || orientation === 'y';
+		var isedge = navigator.userAgent.indexOf('Edge') !== -1;
+
+		controls.prepend(('<div class="{0}-path {0}-notready" data-id="{1}">' + (canY ? '<div class="{0}-y" data-id="{1}"><span><b></b></span></div>' : '') + (canX ? '<div class="{0}-x" data-id="{1}"><span><b></b></span></div></div>' : '')).format(n, id));
+		element[0].$scrollbar = self;
+
+		if (options.padding == null)
+			options.padding = 5;
+
+		if (!options.minsize)
+			options.minsize = 50;
+
+		var di = '[data-id="{0}"]'.format(id);
+		var pe = 'pointer-events';
+		var path = controls.find('.' + n + '-path' + di);
+		var pathx = canX ? $(path.find('.' + n + '-x' + di)[0]) : null;
+		var pathy = canY ? $(path.find('.' + n + '-y' + di)[0]) : null;
+		var barx = canX ? $(pathx.find('span')[0]) : null;
+		var bary = canY ? $(pathy.find('span')[0]) : null;
+		var bodyarea = element.find('.' + n + '-body' + di);
+		var area = $(element.find('> .' + n + '-area' + di)[0]);
+		var shadowtop;
+		var shadowbottom;
+		var shadowleft;
+		var shadowright;
+		var sc = 'shadow';
+		var shadowheight = 0;
+
+		if (options[sc]) {
+
+			element.prepend(('<div class="{0}-{1}">' + (canX ? '<div class="{0}-{1}-left {0}-{1}-h" style="opacity:0"></div><div class="{0}-{1}-right {0}-{1}-h" style="opacity:0"></div>' : '') + (canY ? '<div class="{0}-{1}-top {0}-{1}-v" style="opacity:0"></div><div class="{0}-{1}-bottom {0}-{1}-v" style="opacity:0"></div>' : '') + '</div>').format(n, sc));
+			var shadow = element.find('> .' + n + '-' + sc);
+
+			if (canY) {
+				shadowtop = shadow.find('> .' + n + '-' + sc + '-top');
+				shadowbottom = shadow.find('> .' + n + '-'  + sc + '-bottom');
+			}
+
+			if (canX) {
+				shadowleft = shadow.find('> .' + n + '-' + sc + '-left');
+				shadowright = shadow.find('> .' + n + '-'  + sc + '-right');
+			}
+
+			shadowheight = shadowtop ? shadowtop.height() : shadowleft.width();
+		}
+
+		var notemmited = true;
+		var intervalresize;
+		var delayresize;
+		var delay;
+		var resizeid;
+		var syncx = [];
+		var syncy = [];
+		var synclocked;
+		var syncdelay;
+		var syncid = 'cs' + GUID(5);
+		var scrollbarcache = {};
+
+		self.options = options;
+		self.pathx = pathx;
+		self.pathy = pathy;
+		self.barx = barx;
+		self.bary = bary;
+		self.element = element;
+		self.area = area;
+		self.body = bodyarea;
+
+		var handlers = {};
+
+		handlers.onmousemove = function(e) {
+			if (drag.is) {
+				var p, diff, h;
+				if (drag.type === 'y') {
+
+					diff = e.pageY - drag.offset;
+
+					if (diff < 0)
+						diff = 0;
+
+					h = size.vbarlength - size.vbarsize;
+					p = (diff / h) * 100;
+					area[0].scrollTop = ((size.scrollHeight - size.viewHeight + (options.marginY || 0)) / 100) * (p > 100 ? 100 : p);
+
+					if (drag.counter++ > 10) {
+						drag.counter = 0;
+						drag.pos = e.pageY;
+					}
+
+				} else {
+
+					diff = e.pageX - drag.offset;
+
+					if (diff < 0)
+						diff = 0;
+
+					h = size.hbarlength - size.hbarsize;
+					p = (diff / h) * 100;
+					area[0].scrollLeft = ((size.scrollWidth - size.viewWidth + (options.marginX || 0)) / 100) * (p > 100 ? 100 : p);
+
+					if (drag.counter++ > 5) {
+						drag.counter = 0;
+						drag.pos = e.pageX;
+					}
+				}
+
+				// if (p < -20 || p > 120)
+				// 	drag.is = false;
+			}
+		};
+
+		handlers.onresize = function() {
+
+			if (!delayresize) {
+				scrollbarcache.ready = 0;
+				path.aclass(n + '-notready');
+			}
+
+			delayresize && clearTimeout(delayresize);
+			delayresize = setTimeout(self.resize, 500);
+		};
+
+		var bind = function() {
+			animcache.disabled = true;
+			if (!drag.binded) {
+				drag.binded = true;
+				var w = $W.on('mousemove', handlers.onmousemove).on('mouseup', handlers.onmouseup);
+				if (W.parent !== W)
+					w.on('mouseout', handlers.onmouseout);
+			}
+		};
+
+		var unbind = function() {
+			animcache.disabled = false;
+			if (drag.binded) {
+				pathy && pathy.rclass(n + '-y-show');
+				pathx && pathx.rclass(n + '-x-show');
+				drag.binded = false;
+				var w = $W.off('mousemove', handlers.onmousemove).off('mouseup', handlers.onmouseup);
+				if (W.parent !== W)
+					w.off('mouseout', handlers.onmouseout);
+			}
+		};
+
+		var animyt = {};
+		var animcache = {};
+
+		var animyt_fn = function(value) {
+			if (animcache.y !== value && !animcache.yis) {
+				animcache.y = value;
+				animyt.top = value + 20;
+				bary.stop().animate(animyt, 150, function() {
+					animyt.top = value;
+					bary.stop().animate(animyt, 150, function() {
+						animcache.yis = false;
+					});
+				});
+			}
+		};
+
+		var animxt = {};
+		var animxt_fn = function(value) {
+			if (animcache.x !== value && !animcache.xis) {
+				animcache.xis = true;
+				animcache.x = value;
+				animxt.left = value + 20;
+				barx.stop().animate(animxt, 150, function() {
+					animxt.left = value;
+					barx.stop().animate(animxt, 150, function() {
+						animcache.xis = false;
+					});
+				});
+			}
+		};
+
+		var animyb = {};
+		var animyb_fn = function(value) {
+			if (animcache.y !== value && !animcache.yis) {
+				animcache.yis = true;
+				animyb.height = value - 20;
+				bary.stop().animate(animyb, 150, function() {
+					animyb.height = value;
+					bary.stop().animate(animyb, 150, function() {
+						animcache.yis = false;
+					});
+				});
+			}
+		};
+
+		var animxr = {};
+		var animxr_fn = function(value) {
+			if (animcache.x !== value && !animcache.xis) {
+				animcache.yis = true;
+				animxr.width = value - 20;
+				barx.stop().animate(animxr, 150, function() {
+					animxr.width = value;
+					barx.stop().animate(animxr, 150, function() {
+						animcache.xis = false;
+					});
+				});
+			}
+		};
+
+		var animyt2 = function(pos, max) {
+			size.animvpost = null;
+			if (pos === max) {
+				size.animvpos = true;
+				animyt_fn(pos);
+			} else if (pos === 0) {
+				animyb_fn(+bary.attrd('size'));
+				size.animvpos = true;
+			}
+		};
+
+		var animxt2 = function(pos, max) {
+			size.animhpost = null;
+			if (pos === max) {
+				size.animhpos = true;
+				animxt_fn(pos);
+			} else if (pos === 0) {
+				animxr_fn(+barx.attrd('size'));
+				size.animhpos = true;
+			}
+		};
+
+		handlers.onmouseup = function() {
+			drag.is = false;
+			unbind();
+		};
+
+		handlers.onmouseout = function(e) {
+			var f = e.relatedTarget || e.toElement;
+			if (!f || f.tagName == 'HTML') {
+				drag.is = false;
+				unbind();
+			}
+		};
+
+		handlers.forcey = function() {
+			bary[0].style.top = size.vpos + 'px';
+			if (DEF.scrollbaranimate && !animcache.disabled && (size.vpos === 0 || size.vpos === size.vmax)) {
+				size.animvpost && clearTimeout(size.animvpost);
+				size.animvpost = setTimeout(animyt2, 10, size.vpos, size.vmax);
+			}
+		};
+
+		handlers.forcex = function() {
+			barx[0].style.left = size.hpos + 'px';
+			if (DEF.scrollbaranimate && !animcache.disabled && (size.hpos === 0 || size.hpos === size.hmax)) {
+				size.animhpost && clearTimeout(size.animhpost);
+				size.animhpost = setTimeout(animxt2, 10, size.hpos, size.hmax);
+			}
+		};
+
+		handlers.clearscroll = function() {
+			delay = null;
+			notemmited = true;
+			size.animvpos = false;
+			animcache.y = -1;
+			animcache.x = -1;
+			options.onidle && options.onidle(self);
+			T.events.scrollidle && T.emit('scrollidle', area);
+		};
+
+		handlers.onscroll = function() {
+
+			var y = area[0].scrollTop;
+			var x = area[0].scrollLeft;
+			var is = size.prevx !== x || size.prevy !== y;
+			var pos;
+			var p;
+			var d;
+			var max;
+
+			size.prevx = x;
+			size.prevy = y;
+
+			if (shadowtop || shadowleft) {
+
+				if (!shadowheight)
+					shadowheight = shadowtop ? shadowtop.height() : shadowleft.width();
+
+				if (canY) {
+					if (y > shadowheight) {
+						if (!size.shadowtop) {
+							size.shadowtop = true;
+							shadowtop.stop().animate({ opacity: 1 }, 200);
+						}
+					} else {
+						if (size.shadowtop) {
+							size.shadowtop = false;
+							shadowtop.stop().animate({ opacity: 0 }, 200);
+						}
+					}
+
+					if (y < ((size.scrollHeight - size.clientHeight) - shadowheight)) {
+						if (!size.shadowbottom) {
+							size.shadowbottom = true;
+							shadowbottom.stop().animate({ opacity: 1 }, 200);
+						}
+					} else {
+						if (size.shadowbottom) {
+							size.shadowbottom = false;
+							shadowbottom.stop().animate({ opacity: 0 }, 200);
+						}
+					}
+				}
+
+				if (canX) {
+					if (x > shadowheight) {
+						if (!size.shadowleft) {
+							size.shadowleft = true;
+							shadowleft.stop().animate({ opacity: 1 }, 200);
+						}
+					} else {
+						if (size.shadowleft) {
+							size.shadowleft = false;
+							shadowleft.stop().animate({ opacity: 0 }, 200);
+						}
+					}
+
+					if (x < ((size.scrollWidth - size.clientWidth) - shadowheight)) {
+						if (!size.shadowright) {
+							size.shadowright = true;
+							shadowright.stop().animate({ opacity: 1 }, 200);
+						}
+					} else {
+						if (size.shadowright) {
+							size.shadowright = false;
+							shadowright.stop().animate({ opacity: 0 }, 200);
+						}
+					}
+				}
+			}
+
+			if (size.vbar && canY) {
+
+				d = (size.scrollHeight - size.clientHeight) + 1;
+				p = d ? Math.ceil((y / d) * 100) : 0;
+				if (p > 100)
+					p = 100;
+
+				max = (size.vbarlength || 0) - (size.vbarsize || 0);
+				pos = Math.ceil((p / 100) * max);
+
+				if (pos < 0)
+					pos = 0;
+				else {
+					if (pos > max)
+						pos = max;
+				}
+				if (size.vpos !== pos) {
+					size.vpos = pos;
+					size.vmax = max;
+					W.requestAnimationFrame(handlers.forcey);
+				}
+			}
+
+			if (size.hbar && canX) {
+
+				d = (size.scrollWidth - size.clientWidth) + 1;
+				p = d ? Math.ceil((x / d) * 100) : 0;
+
+				if (p > 100)
+					p = 100;
+
+				max = size.hbarlength - size.hbarsize;
+				pos = ((p / 100) * max) >> 0;
+
+				if (pos < 0)
+					pos = 0;
+				else {
+					if (pos > max)
+						pos = max;
+				}
+
+				if (size.hpos !== pos) {
+					size.hpos = pos;
+					size.hmax = max;
+					W.requestAnimationFrame(handlers.forcex);
+				}
+			}
+
+			if (is) {
+
+				if (notemmited) {
+					clearTimeout(resizeid);
+					resizeid = setTimeout(self.resize, 500, true);
+					T.events.scroll && T.emit('scroll', area);
+					notemmited = false;
+				}
+
+				delay && clearTimeout(delay);
+				delay = setTimeout(handlers.clearscroll, 700);
+
+				options.onscroll && options.onscroll(self);
+
+			} else {
+				if (size.hbar || size.vbar) {
+					clearTimeout(resizeid);
+					resizeid = setTimeout(self.resize, 500, true);
+				}
+			}
+
+			if (syncx.length || syncy.length) {
+
+				if (synclocked) {
+					if (synclocked !== syncid)
+						return;
+				} else
+					synclocked = syncid;
+
+				self.unsync();
+
+				for (var i = 0; i < syncx.length; i++) {
+					if (syncx[i].$csid !== synclocked) {
+						syncx[i].scrollLeft = x;
+						syncx[i].style[pe] = 'none';
+					}
+				}
+
+				for (var i = 0; i < syncy.length; i++) {
+					if (syncy[i].$csid !== synclocked) {
+						syncy[i].scrollTop = y;
+						syncy[i].style[pe] = 'none';
+					}
+				}
+			}
+		};
+
+		pathx && pathx.on('mousedown', function(e) {
+
+			drag.type = 'x';
+
+			var tag = e.target.tagName;
+
+			if (tag === 'SPAN' || tag === 'B') {
+				bind();
+				drag.offset = element.offset().left + e.offsetX;
+				drag.offset2 = e.offsetX;
+				drag.is = true;
+				drag.pos = e.pageX;
+				drag.counter = 0;
+			} else {
+				// path
+				var offsetX = e.offsetX < 10 ? 0 : e.offsetX > (size.viewWidth - 10) ? size.viewWidth : (e.offsetX - 10);
+				var p = Math.ceil((offsetX / (size.viewWidth - size.hbarsize)) * 100);
+				self.scrollLeft(((size.scrollWidth - size.viewWidth + (options.marginX || 0)) / 100) * (p > 100 ? 100 : p));
+				drag.is = false;
+				return;
+			}
+
+			if (!pathx.hclass(n + '-' + 'hidden'))
+				pathx.aclass(n + '-x-show');
+
+			e.preventDefault();
+			e.stopPropagation();
+		}).on('mouseup', function() {
+			drag.is = false;
+			unbind();
+		});
+
+		pathy && pathy.on('mousedown', function(e) {
+
+			drag.type = 'y';
+
+			var tag = e.target.tagName;
+
+			if (tag === 'SPAN' || tag === 'B') {
+				bind();
+				drag.offset = element.offset().top + e.offsetY;
+				drag.offset2 = e.offsetY;
+				drag.pos = e.pageY;
+				drag.is = true;
+				drag.counter = 0;
+			} else {
+				// path
+				var offsetY = e.offsetY < 10 ? 0 : e.offsetY > (size.viewHeight - 10) ? size.viewHeight : (e.offsetY - 10);
+				var p = Math.ceil((offsetY / (size.viewHeight - size.vbarsize)) * 100);
+				self.scrollTop(((size.scrollHeight - size.viewHeight + (options.marginY || 0)) / 100) * (p > 100 ? 100 : p));
+				drag.is = false;
+				return;
+			}
+
+			if (!pathy.hclass(n + '-' + 'hidden'))
+				pathy.aclass(n + '-y-show');
+
+			e.preventDefault();
+			e.stopPropagation();
+
+		}).on('mouseup', function() {
+			drag.is = false;
+			unbind();
+		});
+
+		area.on('scroll', handlers.onscroll);
+
+		self.element.on('scroll', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			var t = this;
+			if (t.scrollTop)
+				t.scrollTop = 0;
+			if (t.scrollLeft)
+				t.scrollLeft = 0;
+			return false;
+		});
+
+		self.check = function() {
+
+			var el = element[0];
+			var parent = el.parentNode;
+			var is = false;
+
+			while (parent) {
+				if (parent.tagName === 'body') {
+					is = true;
+					break;
+				}
+				parent = parent.parentNode;
+			}
+
+			if (is)
+				self.resize();
+			else
+				self.destroy();
+		};
+
+		var cssx = {};
+		var cssy = {};
+		var cssba = {};
+
+		var PR = 'padding-right';
+		var PB = 'padding-bottom';
+
+		self.size = size;
+		self.resize2 = onresize;
+		self.resize = function(scrolling, force) {
+
+			if (resizeid) {
+				clearTimeout(resizeid);
+				resizeid = null;
+			}
+
+			// Not visible
+			if (!force && HIDDEN(element[0]))
+				return;
+
+			animcache.yis = false;
+			animcache.xis = false;
+			animcache.y = -1;
+			animcache.x = -1;
+
+			var a = area[0];
+			var el = element;
+			var md = isMOBILE && !SCROLLBARWIDTH();
+
+			delayresize = null;
+
+			if (options.parent) {
+				el = typeof(options.parent) === 'object' ? $(options.parent) : el.closest(options.parent);
+				if (!el[0].$scrollbar) {
+					el[0].$scrollbar = self;
+					el.on('scroll', function(e) {
+						var t = this;
+						if (t.scrollTop)
+							t.scrollTop = 0;
+						if (t.scrollLeft)
+							t.scrollLeft = 0;
+						e.preventDefault();
+						return false;
+					});
+				}
+			}
+
+			size.viewWidth = el.width() + (options.offsetX || 0);
+			size.viewHeight = el.height() + (options.offsetY || 0);
+
+			var sw = SCROLLBARWIDTH();
+			size.margin = sw;
+
+			if (!size.margin && !md) {
+				// Mac OS
+				size.empty = 1;
+				size.margin = options.margin == null ? 25 : options.margin;
+				self.margin = options.margin == null ? (size.thicknessH ? -size.thicknessH : 0) : options.margin;
+				self.marginX = canY ? self.margin : 0;
+				self.marginY = canX ? self.margin : 0;
+			} else {
+				size.empty = 0;
+				self.margin = sw;
+				self.marginX = canY ? self.margin : 0;
+				self.marginY = canX ? self.margin : 0;
+			}
+
+			self.thinknessX = size.thicknessH;
+			self.thinknessY = size.thicknessY;
+
+			var mx = canX ? (options.marginX || 0) : 0;
+			var my = canY ? (options.marginY || 0) : 0;
+			var aw;
+			var ah;
+
+			// Safari iOS
+			if (md) {
+
+				if (size.viewWidth > WW)
+					size.viewWidth = WW;
+
+				if (size.viewWidth > screen.width)
+					size.viewWidth = screen.width;
+
+				aw = size.viewWidth - mx;
+				ah = size.viewHeight - my;
+
+				if (scrollbarcache.md != md) {
+					// scrollbarcache.md = md; --> is defined below
+					path.tclass('hidden', md);
+				}
+
+			} else {
+				aw = size.viewWidth + (canY ? size.margin : 0) - mx;
+				ah = size.viewHeight + (canX ? size.margin : 0) - my;
+			}
+
+			if (scrollbarcache.aw !== aw) {
+				scrollbarcache.aw = aw;
+				!md && area.css('width', aw);
+				if (shadowtop) {
+					var shadowm = options.marginshadowY || 0;
+					shadowtop.css('width', size.viewWidth - shadowm);
+					shadowbottom.css('width', size.viewWidth - shadowm);
+				}
+				shadowright && shadowright.css('left', size.viewWidth - shadowheight);
+				bodyarea.css(orientation === 'y' ? 'width' : 'min-' + 'width', size.viewWidth - mx + (W.isIE || isedge || !sw ? size.margin : 0) - (orientation === 'x' ? size.margin : 0));
+			}
+
+			if (scrollbarcache.ah !== ah) {
+				scrollbarcache.ah = ah;
+				area.css('height', ah);
+				shadowbottom && shadowbottom.css('top', size.viewHeight - shadowheight);
+			}
+
+			size.scrollWidth = a.scrollWidth || 0;
+			size.scrollHeight = a.scrollHeight || 0;
+
+			if (canX)
+				size.clientWidth = Math.ceil(area.innerWidth());
+
+			if (canY)
+				size.clientHeight = Math.ceil(area.innerHeight());
+
+			var defthickness = options.thickness || 10;
+
+			if (!size.thicknessH && canX)
+				size.thicknessH = (pathx.height() || defthickness) - 1;
+
+			if (!size.thicknessV && canY)
+				size.thicknessV = (pathy.width() || defthickness) - 1;
+
+			if (size.hpos == null)
+				size.hpos = 0;
+
+			if (size.vpos == null)
+				size.vpos = 0;
+
+			if (canX) {
+
+				if (iscc) {
+					cssx.top = size.viewHeight - size.thicknessH;
+					cssx.width = size.viewWidth;
+				} else {
+					cssx.top = size.viewHeight - size.thicknessH;
+					cssx.width = size.viewWidth;
+				}
+
+				if (options.marginXY)
+					cssx.top -= options.marginXY;
+
+				if (options.marginX)
+					cssx.width -= options.marginX;
+
+				if (shadowleft) {
+					var shadowm = options.marginshadowX || 0;
+					var shadowplus = options.floating === false ? 0 : pathx.height();
+					shadowleft.css('height', cssx.top - (options.marginshadowX || 0) + shadowplus);
+					shadowright.css('height', cssx.top - (options.marginshadowX || 0) + shadowplus);
+				}
+
+				var pl = pathx.css('left');
+				if (pl) {
+					pl = pl.parseInt();
+					cssx.width -= (pl * 2);
+				}
+
+				if (options.padding)
+					cssx.top -= options.padding;
+
+				pathx.css(cssx);
+			}
+
+			if (canY) {
+
+				if (iscc) {
+					cssy.left = controls.width() - size.thicknessV;
+					cssy.height = controls.height();
+				} else {
+					cssy.left = size.viewWidth - size.thicknessV;
+					cssy.height = size.viewHeight;
+				}
+
+				if (options.padding)
+					cssy.left -= options.padding;
+
+				var pt = pathy.css('top');
+				if (pt) {
+					pt = pt.parseInt();
+					cssy.height -= (pt * 2);
+				}
+
+				if (options.marginYX && cssx.left != null)
+					cssx.left -= options.marginYX;
+
+				if (options.marginY)
+					cssy.height -= options.marginY;
+
+				pathy.css(cssy);
+				size.vbar = (size.scrollHeight - size.clientHeight) > 5;
+				if (size.vbar) {
+					size.vbarsize = (size.clientHeight * (cssy.height / size.scrollHeight)) >> 0;
+					if (size.vbarsize < options.minsize)
+						size.vbarsize = options.minsize;
+					size.vbarlength = cssy.height;
+					if (scrollbarcache.vbarsize !== size.vbarsize) {
+						scrollbarcache.vbarsize = size.vbarsize;
+						bary.stop().css('height', size.vbarsize).attrd('size', size.vbarsize);
+					}
+				}
+			}
+
+			if (canX) {
+				size.hbar = size.scrollWidth > size.clientWidth;
+				if (size.hbar) {
+					size.hbarsize = (size.clientWidth * (cssx.width / size.scrollWidth)) >> 0;
+					size.hbarlength = cssx.width;
+					if (size.hbarsize < options.minsize)
+						size.hbarsize = options.minsize;
+					if (scrollbarcache.hbarsize !== size.hbarsize) {
+						scrollbarcache.hbarsize = size.hbarsize;
+						barx.stop().css('width', size.hbarsize).attrd('size', size.hbarsize);
+					}
+				}
+			}
+
+			if (scrollbarcache.canX !== canX) {
+				scrollbarcache.canX = canX;
+				area[0].style['overflow-x'] = canX ? '' : 'hidden';
+			}
+
+			if (scrollbarcache.canY !== canY) {
+				scrollbarcache.canY = canY;
+				area[0].style['overflow-y'] = canY ? '' : 'hidden';
+			}
+
+			if (!size.vbarsize)
+				size.vbarsize = 0;
+
+			if (!size.hbarsize)
+				size.hbarsize = 0;
+
+			var n = DEF.prefixcsslibrary + 'scrollbar-';
+
+			if (canX && scrollbarcache.hbar !== size.hbar) {
+				scrollbarcache.hbar = size.hbar;
+				pathx.tclass((visibleX ? n : '') + 'hidden', !size.hbar);
+			}
+
+			if (canY && scrollbarcache.vbar !== size.vbar) {
+				scrollbarcache.vbar = size.vbar;
+				pathy.tclass((visibleY ? n : '') + 'hidden', !size.vbar);
+			}
+
+			if (visibleX && !size.hbar)
+				size.hbar = true;
+
+			if (visibleY && !size.vbar)
+				size.vbar = true;
+
+			var isx = size.hbar && canX;
+			var isy = size.vbar && canY;
+
+			if (scrollbarcache.isx !== isx) {
+				scrollbarcache.isx = isx;
+				element.tclass(n + 'isx', isx);
+			}
+
+			if (scrollbarcache.isy !== isy) {
+				scrollbarcache.isy = isy;
+				element.tclass(n + 'isy', isy);
+			}
+
+			if (scrollbarcache.md !== md) {
+				scrollbarcache.md = md;
+				element.tclass(n + 'touch', md);
+			}
+
+			if (!scrollbarcache.ready) {
+				scrollbarcache.ready = 1;
+				path.rclass(n + 'notready');
+			}
+
+			if (size.margin) {
+				var plus = size.margin;
+
+				if (W.isIE == false && sw && !isedge)
+					plus = 0;
+
+				if (options.floating == false) {
+					if (canY)
+						cssba[PR] = size.vbar ? (size.thicknessV + plus) : plus;
+					if (canX)
+						cssba[PB] = size.hbar ? (size.thicknessH + plus) : plus;
+				} else {
+					if (canY)
+						cssba[PR] = plus;
+					if (canX)
+						cssba[PB] = plus;
+				}
+
+				if (scrollbarcache[PR] !== cssba[PR] || scrollbarcache[PB] !== cssba[PB]) {
+					scrollbarcache[PR] = cssba[PR];
+					scrollbarcache[PB] = cssba[PB];
+					bodyarea.css(cssba);
+				}
+			}
+
+			options.onresize && options.onresize(self);
+
+			if (!scrolling)
+				handlers.onscroll();
+
+			return self;
+		};
+
+		self.scrollLeft = function(val) {
+
+			if (val == null)
+				return area[0].scrollLeft;
+
+			if (typeof(val) === 'string')
+				val = area[0].scrollLeft + (+val);
+
+			size.hpos = -1;
+			return area[0].scrollLeft = val;
+		};
+
+		self.scrollTop = function(val) {
+
+			if (val == null)
+				return area[0].scrollTop;
+
+			if (typeof(val) === 'string')
+				val = area[0].scrollTop + (+val);
+
+			size.vpos = -1;
+			return area[0].scrollTop = val;
+		};
+
+		self.scrollBottom = function(val) {
+			if (val == null)
+				return area[0].scrollTop;
+			size.vpos = -1;
+			return area[0].scrollTop = (area[0].scrollHeight - size.clientHeight) - (val || 0);
+		};
+
+		self.scrollRight = function(val) {
+			if (val == null)
+				return area[0].scrollLeft;
+			size.hpos = -1;
+			return area[0].scrollLeft = (area[0].scrollWidth - size.clientWidth) - (val || 0);
+		};
+
+		self.scroll = function(x, y) {
+			area[0].scrollLeft = x;
+			area[0].scrollTop = y;
+			size.vpos = -1;
+			size.hpos = -1;
+			return self;
+		};
+
+		self.destroy = function() {
+			clearInterval(intervalresize);
+			unbind();
+			area && area.off();
+			pathx && pathx.off();
+			pathy && pathy.off();
+			T.off('resize', self.resize);
+			var index = T.scrollbars.indexOf(self);
+			if (index !== -1)
+				T.scrollbars.splice(index, 1);
+		};
+
+		var resize_visible = function() {
+			if (HIDDEN(element[0]))
+				setTimeout(resize_visible, 234);
+			else {
+				setTimeout(self.resize, 500);
+				setTimeout(self.resize, 1000);
+				self.resize();
+			}
+		};
+
+		if (options.autoresize == null || options.autoresize) {
+			$W.on('resize', onresize);
+			T.on('resize', self.resize);
+		}
+
+		self.unsyncdone = function() {
+			synclocked = null;
+			syncdelay = null;
+
+			for (var i = 0; i < syncx.length; i++)
+				syncx[i].style[pe] = '';
+
+			for (var i = 0; i < syncy.length; i++)
+				syncy[i].style[pe] = '';
+		};
+
+		self.unsync = function() {
+			syncdelay && clearTimeout(syncdelay);
+			syncdelay = setTimeout(self.unsyncdone, 300);
+		};
+
+		self.sync = function(el, offset) {
+
+			el = el instanceof jQuery ? el : $(el);
+			el[0].$csid = 'cs' + GUID(8);
+
+			var isx = !offset || offset === 'left' || offset === 'x';
+			var isy = !offset || offset === 'top' || offset === 'y';
+
+			el.on('scroll', function() {
+
+				if (synclocked && synclocked !== this.$csid)
+					return;
+
+				synclocked = this.$csid;
+				self.unsync();
+
+				if (isx)
+					self.area[0].scrollLeft = this.scrollLeft;
+
+				if (isy)
+					self.area[0].scrollTop = this.scrollTop;
+			});
+
+			isx && syncx.push(el[0]);
+			isy && syncy.push(el[0]);
+		};
+
+		resize_visible();
+		intervalresize = setInterval(self.check, options.interval || 54321);
+		T.scrollbars.push(self);
+		return self;
+	}
 
 })(window);
