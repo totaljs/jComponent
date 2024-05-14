@@ -47,6 +47,8 @@
 	DEF.fallback = 'https://cdn.componentator.com/j-{0}.html';
 	DEF.localstorage = 'totalui';
 	DEF.dictionary = {};
+	DEF.currency = '';
+	DEF.currencies = {};
 	DEF.cdn = '';
 	DEF.iconprefix = 'ti ti-';
 	DEF.scrollbaranimate = true;
@@ -57,6 +59,7 @@
 	DEF.dateformatutc = false;
 	DEF.devices = { xs: { max: 768 }, sm: { min: 768, max: 992 }, md: { min: 992, max: 1200 }, lg: { min: 1200 }};
 	DEF.empty = '---';
+	DEF.env = {};
 	DEF.prefixcsscomponents = 'ui-';
 	DEF.prefixcsslibrary = 'ui-';
 
@@ -102,7 +105,8 @@
 		plugins: [],
 		counter: 0,
 		statics: {},
-		lockers: {}
+		lockers: {},
+		tmp: {}
 	};
 
 	T.db = {
@@ -222,6 +226,16 @@
 		fn = (new Function('w', builder.join(';') + ';return w' + (v[0] === '[' ? '' : '.') + v));
 		T.cache.paths[key] = fn;
 		return fn(scope);
+	};
+
+	T.off = function(name, callback) {
+		if (callback) {
+			var arr = T.events[name];
+			var index = arr.indexOf(callback);
+			if (index !== -1)
+				arr.splice(index, 1);
+		} else
+			delete T.events[name];
 	};
 
 	T.on = function(name, callback) {
@@ -491,6 +505,12 @@
 				if (m.scope === scope && (!m.path || m.path.includes(path)))
 					m.fn(path, m.path.get(scope), path.flags);
 			}
+
+			// Binders
+			for (let m of T.binders) {
+				if (m.fn && m.scope === scope && (!m.path || m.path.includes(path)))
+					m.fn(path, m.path.get(scope), path.flags);
+			}
 		});
 
 	};
@@ -709,7 +729,7 @@
 			t.element = el;
 			t.name = name || path || '';
 			t.path = path || '';
-			t.config = (typeof(config) === 'string' ? config.parseConfig() : config) || {};
+			t.config = (typeof(config) === 'string' ? config.parseConfig(type === 'bind') : config) || {};
 			t.dom = el[0];
 			t.ready = false;
 			t.callback = callback;
@@ -732,7 +752,7 @@
 			t.instance.element = t.element;
 			t.instance.dom = t.element[0];
 			t.instance.config = {};
-			t.instance.plugin = t.parent;
+			t.instance.plugin = t.parent ? t.parent[0].$totalplugin : null;
 
 			for (let key in t.ref.config)
 				t.instance.config[key] = t.ref.config[key];
@@ -775,7 +795,7 @@
 				}
 			}
 
-			t.ref.callback.call(t.instance, t.instance, t.instance.config, cls);
+			t.ref.callback && t.ref.callback.call(t.instance, t.instance, t.instance.config, cls);
 
 			if (extensions) {
 				for (let m of extensions)
@@ -903,8 +923,10 @@
 
 				t.instance = new T.Component(t);
 				t.ref = tmp;
-			} else if (t.tag === 'UI-BIND' && !t.instance)
+			} else if (t.type === 'bind' && !t.instance) {
+				t.ref = { config: t.config };
 				t.instance = new T.Binder(t, t.config, t.element);
+			}
 
 			if (t.path.includes('?')) {
 				// absolute path
@@ -932,6 +954,7 @@
 			} else
 				init(t);
 		};
+
 	})();
 
 	T.newplugin = function(element, path, config, callback) {
@@ -968,7 +991,7 @@
 	register('ui-bind', function(el) {
 		el = $(el);
 		let path = el.attr('path');
-		T.newbinder(el, path, path, el.attr('config'));
+		T.newbinder(el, path, el.attr('config'));
 	}, function(el, property, value) {
 		// attribute is changed
 	});
@@ -1437,6 +1460,44 @@
 		PROTO.bindvisible = NOOP;
 		PROTO.nocompile = NOOP;
 
+		// Backward compatibility
+		PROTO.autobind = function() {
+
+			var t = this;
+
+			if (t.$binded)
+				return;
+
+			t.$binded = true;
+
+			var selector = 'input,select,textarea';
+			var timeout = null;
+
+			var updateforce = function() {
+				timeout = null;
+				var value = t.find(selector).val();
+				t.rewrite(value);
+			};
+
+			var update = function() {
+				timeout && clearTimeout(timeout);
+				timeout = setTimeout(updateforce, 200);
+			};
+
+			t.element.on('input', selector, function() {
+				t.config.modified = true;
+				t.rewrite($(this).val());
+			}).on('focusin', selector, function() {
+				t.config.touched = true;
+			}).on('change', selector, function() {
+				t.config.modified = true;
+				update();
+			}).on('blur', selector, function() {
+				t.config.touched = true;
+				update();
+			});
+		};
+
 		/*
 			@Path: Component
 			@Method: instance.readonly();
@@ -1465,16 +1526,26 @@
 
 		/*
 			@Path: Component
-			@Method: instance.set(value, [type]);
-			The method assings a value to the model and calls `setter`.
+			@Method: instance.set(value, [flags]); #value {String}; #[flags] {String} with @;
+			The method assigns a value to the model and calls `setter`.
 		*/
 		PROTO.set = function(value, flags) {
 			var t = this;
 			if (t.path.path) {
-				t.path.set(t.scope, value, flags);
+				t.path.set(t.scope, value);
 				t.path.notify(t.scope, flags);
 			} else
 				WARN(ERR.format('The component "{0}" does not have a defined path'.format(t.name), t));
+		};
+
+		/*
+			@Path: Component
+			@Method: instance.rewrite(value, [flags]); #value {String}; #[flags] {String} with @;
+			The method assigns a value to the model without calling the setter.
+		*/
+		PROTO.rewrite = function(value, flags) {
+			this.skip = true;
+			this.set(value, flags);
 		};
 
 		/*
@@ -1796,7 +1867,10 @@
 		// Internal method
 		PROTO.$setter = function(value, path, flags) {
 			var t = this;
-			t.setter && t.setter(value, path, flags);
+			if (t.skip)
+				t.skip = false;
+			else if (t.setter)
+				t.setter(value, path, flags);
 			t.$validate();
 		};
 
@@ -1826,17 +1900,337 @@
 	// Binder declaration
 	(function() {
 
-		T.Binder = function(proxy) {}
+		function compile(value) {
+			return new Function('element', 'path', 'value', 'var el = element;return ' + value);
+		}
+
+		T.Binder = function(proxy) {
+			var t = this;
+		};
+
+		function reconfigure(el, config) {
+			var arr = el.find('ui-component');
+			for (let m of arr)
+				m.$totalcomponent.reconfigure(config);
+		}
 
 		var PROTO = T.Binder.prototype;
+		var DEFMODEL = {};
 
 		PROTO.$init = function() {
+
 			let t = this;
+			let proxy = t.proxy;
+
 			t.ready = true;
+
+			var el = proxy.element;
+			var selector = el.attr('element');
+
+			if (selector)
+				el = $(selector);
+			else {
+				selector = el.attr('child');
+				if (selector) {
+					el = el.find(selector);
+				} else {
+					selector = el.attr('parent');
+					if (selector)
+						el = el.closest(selector);
+					else
+						el = t.element;
+				}
+			}
+
+			let config = proxy.config;
+			let commands = [];
+
+			t.config = config;
+			t.element = proxy.element;
+			t.target = el;
+			t.path = proxy.path;
+			t.empty = '';
+
+			if (t.path.charAt(0) === '!') {
+				t.notnull = true;
+				t.path = t.path.substring(1);
+			}
+
+			t.path = parsepath(t.path);
+
+			for (let key in config) {
+
+				let cmd = {};
+				let arg = key.split(' ');
+
+				cmd.name = arg[0];
+				cmd.name = cmd.name.replace(/^(~!|!~|!|~)/, function(text) {
+					if (text.includes('!'))
+						cmd.notnull = true;
+					if (text.includes('~'))
+						cmd.visible = true; // not implemented
+					return '';
+				});
+
+				if (cmd.name.charAt(0) === '.')
+					cmd.isclass = 1;
+
+				cmd.priority = 10;
+
+				var value = cmd.value = config[key];
+
+				if (cmd.name === 'attr') {
+					cmd.attr = arg[1];
+					cmd.selector = arg[2];
+				} else if (arg[1])
+					cmd.selector = arg[1];
+
+				switch (cmd.name) {
+
+					case 'track':
+						t.track = t.replaceplugin(cmd.value).split(',').trim();
+						break;
+					case 'once':
+					case 'strict':
+					case 'changes':
+						t[cmd.name] = true;
+						break;
+					case 'empty':
+						t[cmd.name] = value || DEF.empty;
+						break;
+					case 'class':
+					case 'assign':
+						t[cmd.name] = t.replaceplugin(value);
+						break;
+					case 'delay':
+						t[cmd.name] = (value || '100').parseInt();
+						break;
+					case 'focus':
+						commands.push(cmd);
+						break;
+					case 'exec':
+					case 'refresh':
+						cmd.value = t.replaceplugin(value);
+						commands.push(cmd);
+						break;
+					case 'check':
+						t[cmd.name] = parsepath(cmd.value);
+						break;
+					case 'template':
+
+						if (value && value.charAt(0) === '{') {
+							// external selector
+							cmd.template = $(value.substring(1, value.length - 1)).html();
+						} else {
+							let scr = t.element.find('script,template');
+							if (scr.length) {
+								cmd.template = scr.html();
+								scr.remove();
+							} else
+								cmd.template = t.element.html();
+							if (value)
+								cmd.vdom = value.split('->').trim();
+						}
+
+						el.empty();
+
+						cmd.template = Tangular.compile(cmd.template);
+						commands.push(cmd);
+						break;
+					default:
+
+						if (cmd.value) {
+							if (cmd.name !== 'resize')
+								cmd.fn = compile(cmd.value);
+						}
+
+						switch (cmd.name) {
+							case 'show':
+							case 'hide':
+								cmd.priority = 0;
+								break;
+							case 'visible':
+							case 'invisible':
+								cmd.priority = 2;
+								break;
+						}
+
+						if (cmd.isclass)
+							cmd.name = cmd.name.substring(1);
+
+						commands.push(cmd);
+						break;
+				}
+
+			}
+
+			commands.quicksort('priority')
+			t.commands = commands;
+
 			if (t.proxy.callback) {
 				t.proxy.callback();
 				t.proxy.callback = null;
 			}
+		};
+
+		PROTO.replaceplugin = function(val) {
+			var t = this;
+			return t.plugin ? val.replace(/\?/, t.plugin.path.path) : val;
+		};
+
+		PROTO.fn = function(path, value, flags, nodelay) {
+
+			let t = this;
+
+			t.value = value;
+
+			if (!t.loaded) {
+
+				if (t.assign) {
+					T.set(t.scope, t.assign, t);
+					T.notify(t.scope, t.assign);
+					delete t.assign;
+				}
+
+				if (t.init) {
+					T.exec(t.init, t);
+					delete t.init;
+				}
+
+				t.loaded = true;
+			}
+
+			if (t.notnull && (value === null || value === undefined))
+				return;
+
+			if (t.strict && t.path.path !== path.path)
+				return;
+
+			if (t.track) {
+				let is = false;
+				for (let m of t.track) {
+					if (path.path.includes('.' + m)) {
+						is = true;
+						break;
+					}
+				}
+				if (!is)
+					return;
+			}
+
+			if (t.delay && !nodelay) {
+				t.timeout && clearTimeout(t.timeout);
+				t.timeout = setTimeout((path, value, flags) => this.fn(path, value, flags, true), t.delay, path, value, flags);
+				return;
+			}
+
+			if (t.changes) {
+				let hash = HASH(value);
+				if (hash === t.hash)
+					return;
+				t.hash = hash;
+			}
+
+			for (let m of t.commands) {
+
+				let el = t.element;
+
+				if (m.selector)
+					el = el.find(m.selector);
+
+				var val = m.fn ? m.fn(el, path, value, flags) : value;
+
+				if (m.notnull && val == null)
+					continue;
+
+				if (m.isclass) {
+					el.tclass(m.name, !!val);
+					continue;
+				}
+
+				switch (m.name) {
+					case 'template':
+
+						DEFMODEL.value = value;
+						DEFMODEL.path = path;
+						DEFMODEL.element = el;
+
+						if (m.vdom)
+							DIFFDOM(el, m.vdom[0], m.template(DEFMODEL, null, m.helpers ? m.helpers() : null), m.vdom[1]);
+						else
+							el.html(m.template(DEFMODEL, null, m.helpers ? m.helpers() : null));
+
+						break;
+					case 'resize':
+						T.setter(el, (value || '*') + '/resize');
+						break;
+					case 'exec':
+					case 'refresh':
+						T.exec(m.value, value, path, el);
+						break;
+					case 'focus':
+						setTimeout(autofocus, 500, el, m.value);
+						break;
+					case 'required':
+						reconfigure(el, { required: !!val });
+						break;
+					case 'disabled':
+						reconfigure(el, { disabled: !!val });
+						el.find('input,select,textarea').prop('disabled', !!val);
+						break;
+					case 'enabled':
+						reconfigure(el, { disabled: !val });
+						el.find('input,select,textarea').prop('disabled', !val);
+						break;
+					case 'attr':
+						el.attr(m.attr, val);
+						break;
+					case 'checked':
+						el.find('input').prop('checked', !!val);
+						break;
+					case 'show':
+						el.tclass('hidden', !val);
+						break;
+					case 'hide':
+						el.tclass('hidden', !!val);
+						break;
+					case 'visible':
+						el.tclass('invisible', !val);
+						break;
+					case 'invisible':
+						el.tclass('invisible', !!val);
+						break;
+					case 'html':
+						el.html(val == null || val == '' ? t.empty : val.toString());
+						break;
+					case 'text':
+						el.text(val == null || val == '' ? t.empty : val.toString());
+						break;
+					case 'value':
+						el.val(val == null || val == '' ? t.empty : val.toString());
+						break;
+					case 'title':
+					case 'href':
+					case 'src':
+						el.attr(m.name, val == null || val == '' ? t.empty : val.toString());
+						break;
+				}
+			}
+
+			if (t.class) {
+				t.element.tclass(t.class);
+				delete t.class;
+			}
+
+			// remove
+			if (t.once) {
+				t.fn = null;
+				let index = T.binders.indexOf(t);
+				if (index !== -1)
+					T.binders.splice(index, 1);
+			}
+
+			// console.log(path, value, flags);
 		};
 
 		// Internal method
@@ -1847,7 +2241,6 @@
 				T.binders.splice(index, 1);
 			t.element.remove();
 		};
-
 
 	})();
 
@@ -1887,7 +2280,7 @@
 			@Method: String.prototype.parseConfig();
 			The method parses Total.js UI library configuration in the form `key1:value;key2:value`.
 		*/
-		PROTO.parseConfig = function(def) {
+		PROTO.parseConfig = function(noconvert) {
 
 			let arr = this.replace(/\\;/g, '\0').split(';');
 			let colon = /(https|http|wss|ws):\/\//gi;
@@ -1900,18 +2293,17 @@
 				let kv = item.split(':');
 				let l = kv.length;
 
-				if (l !== 2)
-					continue;
-
 				let k = kv[0].trim().env();
-				let v = kv[1].trim().replace(/\0/g, ':').env();
+				let v = l === 2 ? kv[1].trim().replace(/\0/g, ':').env() : null;
 
-				if (v === 'true' || v === 'false')
-					v = v === 'true';
-				else if (regnum.test(v)) {
-					let tmp = +v;
-					if (!isNaN(tmp))
-						v = tmp;
+				if (noconvert !== true) {
+					if (v === 'true' || v === 'false')
+						v = v === 'true';
+					else if (regnum.test(v)) {
+						let tmp = +v;
+						if (!isNaN(tmp))
+							v = tmp;
+					}
 				}
 
 				output[k] = v;
@@ -2052,12 +2444,226 @@
 			return +(Math.round(this + 'e+' + decimals) + 'e-' + decimals);
 		};
 
+		PROTO.currency = function(currency, a, b, c) {
+			if (currency == null)
+				currency = DEF.currency;
+			if (currency.charAt(0) === '[')
+				currency = currency.env();
+			var curr = DEF.currencies[currency];
+			return curr ? curr(this, a, b, c) : this.format(2);
+		};
+
+		PROTO.format = function(decimals, separator, separatorDecimal) {
+
+			var self = this;
+			var num = self + '';
+			var dec = '';
+			var output = '';
+			var minus = num.charAt(0) === '-' ? '-' : '';
+			if (minus)
+				num = num.substring(1);
+
+			var index = num.indexOf('.');
+
+			if (typeof(decimals) === 'string') {
+				var tmp;
+				if (decimals.charAt(0) === '[') {
+					tmp = W.ENV(decimals.substring(1, decimals.length - 1));
+					if (tmp) {
+						if (tmp >= 0) {
+							decimals = tmp;
+						} else {
+							decimals = tmp.decimals;
+							if (tmp.separator)
+								separator = tmp.separator;
+							if (tmp.decimalseparator)
+								separatorDecimal = tmp.decimalseparator;
+						}
+					}
+				} else {
+					tmp = separator;
+					separator = decimals;
+					decimals = tmp;
+				}
+			}
+
+			if (separator === undefined)
+				separator = DEF.thousandsseparator;
+
+			if (index !== -1) {
+				dec = num.substring(index + 1);
+				num = num.substring(0, index);
+			}
+
+			index = -1;
+			for (var i = num.length - 1; i >= 0; i--) {
+				index++;
+				if (index > 0 && index % 3 === 0)
+					output = separator + output;
+				output = num[i] + output;
+			}
+
+			if (decimals || dec.length) {
+				if (dec.length > decimals)
+					dec = dec.substring(0, decimals || 0);
+				else
+					dec = dec.padRight(decimals || 0, '0');
+			}
+
+			if (dec.length && separatorDecimal === undefined)
+				separatorDecimal = DEF.decimalseparator;
+
+			return minus + output + (dec.length ? separatorDecimal + dec : '');
+		};
+
 	})();
 
 	// Array prototypes
 	(function() {
 
 		var PROTO = Array.prototype;
+
+		var lcomparer = function(a, b) {
+			if (!a && !b)
+				return 0;
+			if (!a && b)
+				return -1;
+			if (a && !b)
+				return 1;
+			return W.Intl ? W.Intl.Collator().compare(a, b) : (a + '').localeCompare(b + '');
+		};
+
+		var lcomparer_desc = function(a, b) {
+			if (!a && !b)
+				return 0;
+			if (!a && b)
+				return 1;
+			if (a && !b)
+				return -1;
+			return (W.Intl ? W.Intl.Collator().compare(a, b) : (a + '').localeCompare(b + '')) * -1;
+		};
+
+		var sortcomparer = function(sort) {
+
+			var key = 'sort_' + sort;
+			var meta = T.cache.tmp[key];
+
+			if (!meta) {
+				meta = [];
+				sort = sort.replace(/\s/g, '').split(',');
+				for (var i = 0; i < sort.length; i++) {
+					var tmp = sort[i].split((/_(desc|asc)/));
+					var obj = { name: tmp[0], type: null, desc: tmp[1] === 'desc' };
+					if (tmp[0].indexOf('.') !== -1)
+						obj.read = new Function('val', 'return val.' + tmp[0].replace(/\./g, '?.'));
+					meta.push(obj);
+				}
+				T.cache.tmp[key] = meta;
+			}
+
+			return function(a, b) {
+				for (var i = 0; i < meta.length; i++) {
+					var col = meta[i];
+					var va = col.read ? col.read(a) : a[col.name];
+					var vb = col.read ? col.read(b) : b[col.name];
+
+					if (!col.type) {
+						if (va != null)
+							col.type = va instanceof Date ? 4 : typeof(va);
+						else if (vb != null)
+							col.type = vb instanceof Date ? 4: typeof(vb);
+						switch (col.type) {
+							case 'string':
+								col.type = 1;
+								break;
+							case 'number':
+								col.type = 2;
+								break;
+							case 'boolean':
+								col.type = 3;
+								break;
+							case 'object':
+								col.type = 5;
+								break;
+						}
+					}
+
+					if (col.type) {
+						switch (col.type) {
+							case 1:
+								tmp = col.desc ? lcomparer_desc(va, vb) : lcomparer(va, vb);
+								if (tmp)
+									return tmp;
+								break;
+							case 2:
+								tmp = va > vb ? (col.desc ? -1 : 1) : va < vb ? (col.desc ? 1 : -1) : 0;
+								if (tmp)
+									return tmp;
+								break;
+							case 3:
+								tmp = va === true && vb === false ? (col.desc ? -1 : 1) : va === false && vb === true ? (col.desc ? 1 : -1) : 0;
+								if (tmp)
+									return tmp;
+								break;
+							case 4:
+
+								if (!va && !vb)
+									break;
+
+								if (va && !vb)
+									return col.desc ? -1 : 1;
+
+								if (!va && vb)
+									return col.desc ? 1 : -1;
+
+								if (!va.getTime)
+									va = new Date(va);
+
+								if (!vb.getTime)
+									vb = new Date(vb);
+
+								tmp = va > vb ? (col.desc ? -1 : 1) : va < vb ? (col.desc ? 1 : -1) : 0;
+
+								if (tmp)
+									return tmp;
+
+								break;
+						}
+					} else
+						return 0;
+				}
+
+				return 0;
+			};
+		}
+
+		PROTO.quicksort = function(sort) {
+
+			var self = this;
+			if (self.length < 2)
+				return self;
+
+			var self = this;
+
+			// Backward compatibility
+			if (!sort || sort === true) {
+				self.sort(lcomparer);
+				return self;
+			}
+
+			// Backward compatibility
+			if (sort === false) {
+				self.sort(lcomparer_desc);
+				return self;
+			}
+
+			var args = arguments;
+			if (args[1] === false || args[1] === 'desc' || args[1] === 2)
+				sort += '_desc';
+
+			self.sort(sortcomparer(sort));
+			return self;
+		};
 
 		/*
 			@Path: Array.prototype
@@ -2251,7 +2857,6 @@
 
 	})();
 
-
 	// Date prototypes
 	(function() {
 
@@ -2383,10 +2988,10 @@
 						return beg + 'd.getDate()' + end;
 					case 'HH':
 					case 'hh':
-						return beg + (half ? 'W.$jcdatempam(d.getHours()).padLeft(2, \'0\')' : 'd.getHours().padLeft(2, \'0\')') + end;
+						return beg + (half ? 'W.$totaluidate(d.getHours()).padLeft(2, \'0\')' : 'd.getHours().padLeft(2, \'0\')') + end;
 					case 'H':
 					case 'h':
-						return beg + (half ? 'W.$jcdatempam(d.getHours())' : 'd.getHours()') + end;
+						return beg + (half ? 'W.$totaluidate(d.getHours())' : 'd.getHours()') + end;
 					case 'mm':
 						return beg + 'd.getMinutes().padLeft(2, \'0\')' + end;
 					case 'm':
@@ -2413,7 +3018,7 @@
 			return T.cache.statics[key](self);
 		};
 
-		W.$jcdatempam = function(value) {
+		W.$totaluidate = function(value) {
 			return value >= 12 ? value - 12 : value;
 		};
 	})();
@@ -2441,6 +3046,13 @@
 			The method registers a new handler for capturing a specific event.
 		*/
 		W.ON = T.on;
+
+		/*
+			@Path: Globals
+			@Property: OFF(name, [callback]); #name {String}; #[callback] {Function};
+			The method removes the existing handler for capturing a specific event.
+		*/
+		W.OFF = T.off;
 
 		/*
 			@Path: Globals
@@ -2624,6 +3236,37 @@
 			var w = el.width();
 			var d = DEF.devices;
 			return w >= d.md.min && w <= d.md.max ? 'md' : w >= d.sm.min && w <= d.sm.max ? 'sm' : w > d.lg.min ? 'lg' : w <= d.xs.max ? 'xs' : '';
+		};
+
+		/*
+			@Path: Globals
+			@Method: ENV(name, value); #name {String}; #value {String};
+			The method registers a new environment variable.
+		*/
+		/*
+			@Path: Globals
+			@Method: ENV(name); #name {String}; #returns {String};
+			The method reads the value of the environment variable.
+		*/
+		W.ENV = function(name, value) {
+
+			if (typeof(name) === 'object') {
+				if (name) {
+					for (var key in name) {
+						DEF.env[key] = name[key];
+						T.events.env && EMIT('env', key, name[key]);
+					}
+				}
+				return name;
+			}
+
+			if (value !== undefined) {
+				T.events.env && EMIT('env', name, value);
+				DEF.env[name] = value;
+				return value;
+			}
+
+			return DEF.env[name];
 		};
 
 		/*
@@ -3473,9 +4116,79 @@
 			}
 		};
 
+		W.EXEC = function(name, a, b, c, d) {
+			T.exec(name, a, b, c, d);
+		};
+
 		W.SETTER = function(name, a, b, c, d) {
 			T.setter(null, name, a, b, c, d);
 		};
+
+		function diffdomchecksum(el, type) {
+			return type ? el.getAttribute(type) : el.outerHTML;
+		}
+
+		W.DIFFDOM = function(el, selector, html, attr) {
+
+			var vdom = $(html);
+			var varr = vdom.filter(selector);
+			var vels = el.find(selector);
+			var output = { add: 0, upd: 0, rem: 0 };
+			var arr = [];
+
+			for (var j = 0; j < vels.length; j++)
+				vels[j].$diffdom = 1;
+
+			for (var i = 0; i < varr.length; i++) {
+				var item = varr[i];
+				var obj = {};
+				obj.virtual = item;
+				obj.checksum = diffdomchecksum(item, attr);
+				for (var j = 0; j < vels.length; j++) {
+					var node = vels[j];
+					var checksum = diffdomchecksum(node, attr);
+					if (checksum === obj.checksum) {
+						delete node.$diffdom;
+						obj.node = node;
+						break;
+					}
+				}
+				arr.push(obj);
+			}
+
+			var dom = el[0];
+			var rem = [];
+
+			for (var j = 0; j < vels.length; j++) {
+				var node = vels[j];
+				if (node.$diffdom)
+					rem.push(node);
+			}
+
+			output.rem = rem.length;
+
+			for (var j = 0; j < rem.length; j++)
+				dom.removeChild(rem[j]);
+
+			for (var i = 0; i < arr.length; i++) {
+				var node = dom.children[i];
+				var item = arr[i];
+				if (item.node) {
+					output.upd++;
+					if (node && item.node !== node)
+						NODEINSERT(item.node, node, true);
+				} else {
+					output.add++;
+					if (node)
+						NODEINSERT(item.virtual, node, true);
+					else
+						dom.appendChild(item.virtual);
+				}
+			}
+
+			return output;
+		};
+
 
 	})();
 
