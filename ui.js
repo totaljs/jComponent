@@ -1,3 +1,7 @@
+// Total.js UI Library
+// jComponent v20
+// DEV
+
 (function(W) {
 
 	const ERR = 'Total.js UI: {0}';
