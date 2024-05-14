@@ -42,7 +42,8 @@
 
 	DEF.pathcommon = 'common.';
 	DEF.pathcl = 'DEF.cl.';
-	DEF.pathplugins = 'Total.data';
+	DEF.pathplugins = 'Total.data.';
+	DEF.pathtmp = 'DEF.tmp.';
 	DEF.headers = { 'X-Requested-With': 'XMLHttpRequest' };
 	DEF.fallback = 'https://cdn.componentator.com/j-{0}.html';
 	DEF.localstorage = 'totalui';
@@ -50,6 +51,7 @@
 	DEF.currency = '';
 	DEF.currencies = {};
 	DEF.cdn = '';
+	DEF.tmp = {};
 	DEF.iconprefix = 'ti ti-';
 	DEF.scrollbaranimate = true;
 	DEF.thousandsseparator = ' ';
@@ -215,6 +217,10 @@
 
 		if (!path)
 			return scope;
+
+		var plugin = path.split('/');
+		if (plugin.length > 1)
+			path = 'PLUGINS[\'{0}\'].{1}'.format(plugin[0], plugin[1]);
 
 		var arr = splitpath(path);
 		var builder = [];
@@ -878,7 +884,7 @@
 				t.ref = tmp;
 
 				if (t.path.includes(' ') && t.path.includes('?'))
-					t.path = DEF.pathplugins + '.' + GUID(10).replace(/^[0-9]/g, 'x');
+					t.path = DEF.pathplugins + GUID(10).replace(/^[0-9]/g, 'x');
 
 				if (!tmp) {
 					WARN(ERR.format('The plugin "{0}" not found'.format(t.path)));
@@ -1066,7 +1072,7 @@
 			let c = t.path.charAt(0);
 
 			if (c === '%')
-				t.path = T_TMP + t.path.substring(1);
+				t.path = DEF.pathtmp + t.path.substring(1);
 			else if (c === '#')
 				t.path = DEF.pathcl + t.path.substring(1);
 			else if (c === '*')
@@ -1135,11 +1141,30 @@
 			The method assigns a new path to the current path instance.
 		*/
 		PROTO.assign = function(path) {
+
+			if (!path)
+				return this;
+
 			var c = path.charAt(0);
 
 			// *common, #cl, %temp
-			if (c === '*' || c === '#' || c === '%')
-				return path;
+
+			switch (c) {
+				case '*':
+					let tmp = DEF.pathcommon;
+					path = path.substring(1);
+					if (path)
+						tmp += path;
+					else
+						tmp = tmp.substring(0, tmp.length - 1);
+					return parsepath(tmp);
+				case '#':
+					path = path.substring(1);
+					return parsepath(DEF.pathcl + path);
+				case '%':
+					path = path.substring(1);
+					return parsepath(DEF.pathtmp + path);
+			}
 
 			if (c === '@' || c === '<' || c === '>' || c === '(' || c === ')')
 				path = ' ' + path;
@@ -1278,12 +1303,35 @@
 		*/
 		PROTO.parent = parent;
 
-		PROTO.SETTER = function(name, a, b, c, d) {
+		PROTO.setter = PROTO.SETTER = function(name, a, b, c, d) {
 			T.setter(this.element, name, a, b, c, d);
 		};
 
-		PROTO.CMD = function(name, a, b, c, d) {
+		PROTO.cmd = PROTO.CMD = function(name, a, b, c, d) {
 			T.cmd(this.element, name, a, b, c, d);
+		};
+
+		PROTO.ajax = function(url, data, callback, onprogress) {
+
+			var t = this;
+			var type = typeof(data);
+
+			if (!callback && (type === 'string' || type === 'function')) {
+				callback = data;
+				data = null;
+			}
+
+			type = typeof(callback);
+
+			if (typeof(onprogress) === 'string')
+				onprogress = onprogress.replace('?', t.path.path);
+
+			if (type === 'function')
+				AJAX(url, data, callback, onprogress);
+			else if (type === 'string')
+				AJAX(url, data, response => t.set(callback, response), onprogress);
+			else
+				AJAX(url, data, NOOP);
 		};
 
 		PROTO.exec = function(name, a, b, c, d, e) {
@@ -1341,6 +1389,28 @@
 			path.notify(t.scope);
 		};
 
+		/*
+			@Path: Plugin
+			@Method: instance.set(path, value)
+			The method assigns a `value` based on a `path` to the defined plugin `scope`.
+		*/
+		PROTO.nul = function(path) {
+			var t = this;
+			path = t.path.assign(path);
+			path.set(t.scope, null);
+			path.notify(t.scope);
+		};
+
+		/*
+			@Path: Plugin
+			@Method: instance.update(path)
+			The method notifies all components and watchers based on the path.
+		*/
+		PROTO.update = function(path) {
+			var t = this;
+			path = t.path.assign(path);
+			path.notify(t.scope);
+		};
 		/*
 			@Path: Plugin
 			@Method: instance.on(name, callback);
@@ -1905,7 +1975,6 @@
 		}
 
 		T.Binder = function(proxy) {
-			var t = this;
 		};
 
 		function reconfigure(el, config) {
@@ -1961,7 +2030,7 @@
 			for (let key in config) {
 
 				let cmd = {};
-				let arg = key.split(' ');
+				let arg = key.replace(/\s\+\s/g, '+').split(' ');
 
 				cmd.name = arg[0];
 				cmd.name = cmd.name.replace(/^(~!|!~|!|~)/, function(text) {
@@ -1971,6 +2040,10 @@
 						cmd.visible = true; // not implemented
 					return '';
 				});
+
+				cmd.clone = cmd.name.split('+');
+				cmd.name = cmd.clone[0];
+				cmd.clone.shift();
 
 				if (cmd.name.charAt(0) === '.')
 					cmd.isclass = 1;
@@ -1988,7 +2061,7 @@
 				switch (cmd.name) {
 
 					case 'track':
-						t.track = t.replaceplugin(cmd.value).split(',').trim();
+						t.track = t.replaceplugin(value).split(',').trim();
 						break;
 					case 'once':
 					case 'strict':
@@ -2007,6 +2080,9 @@
 						break;
 					case 'focus':
 						commands.push(cmd);
+						break;
+					case 'helpers':
+						t[cmd.name] = new Function('scope', 'return Total.get(scope, "{0}")'.format(t.replace(value)));
 						break;
 					case 'exec':
 					case 'refresh':
@@ -2064,6 +2140,18 @@
 
 			}
 
+			for (let cmd of commands) {
+				if (cmd.clone.length > 1) {
+					for (let key of cmd.clone) {
+						let tmp = CLONE(cmd);
+						tmp.name = key;
+						delete tmp.clone;
+						commands.push(tmp);
+					}
+				}
+				delete cmd.clone;
+			}
+
 			commands.quicksort('priority')
 			t.commands = commands;
 
@@ -2118,6 +2206,15 @@
 					return;
 			}
 
+			if (t.check) {
+				let check = t.check.get(t.scope);
+				if (typeof(check) === 'function') {
+					if (!check(value, path, t.element))
+						return;
+				} else
+					WARN(ERR.format('the check "{0}" command does not exist'.format(t.check)), t.dom);
+			}
+
 			if (t.delay && !nodelay) {
 				t.timeout && clearTimeout(t.timeout);
 				t.timeout = setTimeout((path, value, flags) => this.fn(path, value, flags, true), t.delay, path, value, flags);
@@ -2156,9 +2253,9 @@
 						DEFMODEL.element = el;
 
 						if (m.vdom)
-							DIFFDOM(el, m.vdom[0], m.template(DEFMODEL, null, m.helpers ? m.helpers() : null), m.vdom[1]);
+							DIFFDOM(el, m.vdom[0], m.template(DEFMODEL, null, m.helpers ? m.helpers(t.scope) : null), m.vdom[1]);
 						else
-							el.html(m.template(DEFMODEL, null, m.helpers ? m.helpers() : null));
+							el.html(m.template(DEFMODEL, null, m.helpers ? m.helpers(t.scope) : null));
 
 						break;
 					case 'resize':
@@ -2230,7 +2327,6 @@
 					T.binders.splice(index, 1);
 			}
 
-			// console.log(path, value, flags);
 		};
 
 		// Internal method
