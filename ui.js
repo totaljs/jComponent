@@ -300,7 +300,6 @@
 
 			let tmp = name.split('/');
 			let plugin = T.plugins[tmp[0]];
-
 			if (plugin) {
 				if (plugin[tmp[1]])
 					path.exec(() => plugin[tmp[1]](a, b, c, d));
@@ -593,7 +592,7 @@
 			if (counter < 15)
 				setTimeout(autofocus, 200, el, selector, counter + 1);
 		}
-	};
+	}
 
 	function inDOM(el) {
 		if (!el)
@@ -727,7 +726,7 @@
 		}
 
 		return parent;
-	};
+	}
 
 	// Proxy declaration
 	(function() {
@@ -745,11 +744,11 @@
 			t.callback = callback;
 			t.pending = [];
 			setTimeout(t.init, 1, t);
-		}
+		};
 
 		var PROTO = T.Proxy.prototype;
 
-		function init(t, arr) {
+		function init(t) {
 
 			if (t.ref.count != null)
 				t.ref.count++;
@@ -772,7 +771,7 @@
 
 			var cls = DEF.prefixcsscomponents + t.name;
 			var extensions = null;
-			var reference = '';;
+			var reference = '';
 
 			switch (t.type) {
 				case 'plugin':
@@ -783,6 +782,11 @@
 				case 'component':
 					t.element.aclass(cls);
 					t.instance.cls = cls;
+					t.instance.def = t.element.attr('default');
+
+					if (t.instance.def)
+						t.instance.def = new Function('return ' + t.instance.def);
+
 					extensions = T.db.extensions[t.instance.name];
 					reference = '$totalcomponent';
 					T.components.push(t.instance);
@@ -940,7 +944,7 @@
 
 			if (t.path.includes('?')) {
 				// absolute path
-				let parent = findplugin(t.element[0]);
+				let parent = findplugin(t.type === 'plugin' ? t.dom.parentNode : t.dom);
 				if (parent) {
 					let proxy = parent.$proxyplugin;
 					if (proxy && proxy.ready) {
@@ -968,19 +972,23 @@
 	})();
 
 	T.newplugin = function(element, path, config, callback) {
-		return element[0].$proxyplugin = new T.Proxy('plugin', element, path, path, config, callback);
+		element[0].$proxyplugin = new T.Proxy('plugin', element, path, path, config, callback);
+		return element[0].$proxyplugin;
 	};
 
-	T.newcomponent = function(element, name, path, config, callback, def) {
-		return element[0].$proxycomponent = new T.Proxy('component', element, name, path, config, callback);
+	T.newcomponent = function(element, name, path, config, callback) {
+		[0].$proxycomponent = new T.Proxy('component', element, name, path, config, callback);
+		return element[0].$proxycomponent;
 	};
 
 	T.newbinder = function(element, path, config, callback) {
-		return element[0].$proxybinder = new T.Proxy('bind', element, path, path, config, callback);
+		element[0].$proxybinder = new T.Proxy('bind', element, path, path, config, callback);
+		return element[0].$proxybinder;
 	};
 
 	T.newimporter = function(element, path, config, callback) {
-		return element[0].$proxyimporter = new T.Proxy('import', element, path, path, config, callback);
+		element[0].$proxyimporter = new T.Proxy('import', element, path, path, config, callback);
+		return element[0].$proxyimporter;
 	};
 
 	register('ui-component', function(el) {
@@ -1008,7 +1016,7 @@
 
 	register('ui-import', function(el) {
 		el = $(el);
-		T.newimporter(el, path, el.attr('config'));
+		T.newimporter(el, el.attr('path'), el.attr('config'));
 	}, function(el, property, value) {
 		// attribute is changed
 	});
@@ -1282,7 +1290,7 @@
 			});
 			Object.defineProperty(t, 'modified', {
 				get() {
-					return t.get(t.scope, '@reset @modified') || {}
+					return t.get(t.scope, '@reset @modified') || {};
 				}
 			});
 		};
@@ -1307,6 +1315,10 @@
 		*/
 		PROTO.parent = parent;
 
+		PROTO.alias = function(name) {
+			T.plugins[name] = this;
+		};
+
 		PROTO.setter = PROTO.SETTER = function(name, a, b, c, d) {
 			T.setter(this.element, name, a, b, c, d);
 		};
@@ -1315,7 +1327,21 @@
 			T.cmd(this.element, name, a, b, c, d);
 		};
 
-		PROTO.ajax = function(url, data, callback, onprogress) {
+		PROTO.tapi = function(name, data, callback) {
+
+			var type = typeof(data);
+
+			if (!callback && (type === 'string' || type === 'function')) {
+				callback = data;
+				data = null;
+			}
+
+			var t = this;
+			data = { schema: name, data: data ? data : undefined };
+			return t.ajax('POST ' + DEF.api, data, callback);
+		};
+
+		PROTO.ajax = function(url, data, callback) {
 
 			var t = this;
 			var type = typeof(data);
@@ -1327,15 +1353,12 @@
 
 			type = typeof(callback);
 
-			if (typeof(onprogress) === 'string')
-				onprogress = onprogress.replace('?', t.path.path);
-
 			if (type === 'function')
-				AJAX(url, data, callback, onprogress);
+				return AJAX(url, data, callback, t.scope);
 			else if (type === 'string')
-				AJAX(url, data, response => t.set(callback, response), onprogress);
+				return AJAX(url, data, response => t.set(callback, response), t.scope);
 			else
-				AJAX(url, data, NOOP);
+				return AJAX(url, data, NOOP, t.scope);
 		};
 
 		PROTO.exec = function(name, a, b, c, d, e) {
@@ -1343,7 +1366,7 @@
 			var path = parsepath(name);
 			var fn = t[path.path];
 			if (fn)
-				path.exec(() => fn());
+				path.exec(() => fn(a, b, c, d, e));
 			else
 				WARN(ERR.format('The method "{0}/{1}" not found.'.format(t.name, path.path)));
 		};
@@ -1371,7 +1394,7 @@
 				}
 			}*/
 
-			if (path.flags.reset) {
+			if (path.flags.reset || path.flags.default) {
 				for (let m of T.components) {
 					if (path.includes(m.path))
 						m.reset();
@@ -1469,7 +1492,13 @@
 
 		// Internal method
 		PROTO.$remove = function() {
+
 			var t = this;
+
+			if (t.$removed)
+				return;
+
+			t.$removed = true;
 
 			try {
 				t.destroy && t.destroy();
@@ -1477,7 +1506,12 @@
 				WARN(ERR.format(e));
 			}
 
-			delete T.plugins[t.path];
+			// Remove all pointers (with all aliases)
+			for (let key in T.plugins) {
+				if (T.plugins[key] === t)
+					delete T.plugins[key];
+			}
+
 			t.element.remove();
 		};
 
@@ -1546,11 +1580,13 @@
 
 			var selector = 'input,select,textarea';
 			var timeout = null;
+			var prev = null;
 
 			var updateforce = function() {
 				timeout = null;
 				var value = t.find(selector).val();
-				t.rewrite(value);
+				if (value !== prev)
+					t.rewrite(value);
 			};
 
 			var update = function() {
@@ -1560,8 +1596,10 @@
 
 			t.element.on('input', selector, function() {
 				t.config.modified = true;
-				t.rewrite($(this).val());
+				prev = $(this).val();
+				t.rewrite(prev);
 			}).on('focusin', selector, function() {
+				prev = $(this).val();
 				t.config.touched = true;
 			}).on('change', selector, function() {
 				t.config.modified = true;
@@ -1941,16 +1979,28 @@
 		// Internal method
 		PROTO.$setter = function(value, path, flags) {
 			var t = this;
+
+			if ((flags.init || flags.default) && (value == null) && t.def) {
+				value = t.def();
+				t.rewrite(value);
+			}
+
 			if (t.skip)
 				t.skip = false;
 			else if (t.setter)
 				t.setter(value, path, flags);
+
 			t.$validate();
 		};
 
 		// Internal method
 		PROTO.$remove = function() {
 			var t = this;
+
+			if (t.$removed)
+				return;
+
+			t.$removed = true;
 
 			try {
 				t.destroy && t.destroy();
@@ -2336,10 +2386,13 @@
 		// Internal method
 		PROTO.$remove = function() {
 			var t = this;
-			var index = T.binders.indexOf(t);
-			if (index !== -1)
-				T.binders.splice(index, 1);
-			t.element.remove();
+			if (!t.$removed) {
+				t.$removed = true;
+				var index = T.binders.indexOf(t);
+				if (index !== -1)
+					T.binders.splice(index, 1);
+				t.element.remove();
+			}
 		};
 
 	})();
@@ -3607,20 +3660,28 @@
 			}
 		}
 
-		/*
-			@Path: Globals
-			@Method: AJAX(url, [data], callback, [onprogress]); #url {String}; #[data] {Object}; #callback {Function(response)}; #onprogress {Function(percentage)};
-			The method parsers JSON and converts all dates to `Date` object.
-		*/
-		W.AJAX = function(url, data, callback, onprogress, scope) {
+		W.TAPI = function(name, data, callback, scope) {
+			var type = typeof(data);
 
-			if (typeof(data) === 'function') {
-				scope = onprogress;
-				onprogress = callback;
+			if (!callback && (type === 'function' || type === 'string')) {
 				callback = data;
+				data = null;
 			}
 
-			if (!callback && data) {
+			data = { schema: name, data: data ? data : undefined };
+			return W.AJAX('POST ' + DEF.api, data, callback);
+		};
+
+		/*
+			@Path: Globals
+			@Method: AJAX(url, [data], callback); #url {String}; #[data] {Object}; #callback {Function(response)};
+			The method parsers JSON and converts all dates to `Date` object.
+		*/
+		W.AJAX = function(url, data, callback, scope) {
+
+			var type = typeof(data);
+
+			if (!callback && (type === 'function' || type === 'string')) {
 				callback = data;
 				data = null;
 			}
@@ -3664,6 +3725,9 @@
 			opt.callback = callback;
 			opt.onprogress = typeof(onprogress) === 'string' ? parsepath(onprogress) : onprogress;
 			opt.duration = Date.now();
+
+			if (opt.method !== 'GET')
+				opt.headers['Content-Type'] = typeof(data) === 'string' ? 'application/x-www-form-urlencoded' : 'application/json';
 
 			for (let key in DEF.headers)
 				opt.headers[key] = DEF.headers[key];
@@ -3825,21 +3889,21 @@
 				target = 'body';
 			}
 
-			if (T.cache.imports[url]) {
-				T.cache.imports[url].push(callback);
+			var key = url;
+
+			if (T.cache.imports[key]) {
+				T.cache.imports[key].push({ target: target, callback: callback });
 				return;
 			}
 
 			if (!target)
 				target = 'body';
 
-			var key = url;
-
-			T.cache.imports[key] = [callback];
+			T.cache.imports[key] = [{ target: target, callback: callback }];
 
 			var done = function() {
-				for (let fn of T.cache.imports[key])
-					fn && fn();
+				for (let m of T.cache.imports[key])
+					m.callback && m.callback();
 				delete T.cache.imports[key];
 			};
 
@@ -3910,8 +3974,14 @@
 				let id = 'import' + HASH(url);
 				response = ADAPT(null, null, response);
 				response = importscripts(importstyles(response, id)).trim();
-				target = $(target);
-				response && target.append(response);
+
+				if (response) {
+					for (let m of T.cache.imports[key]) {
+						if (m.target)
+							$(m.target).append(response);
+					}
+				}
+
 				setTimeout(function() {
 					done();
 					T.events.import && T.emit('import', url, target);
