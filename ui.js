@@ -18,6 +18,8 @@
 	W.PLUGINS = {};
 	W.W = W;
 	W.MAIN = T;
+	W.FUNC = {};
+	W.TEMP = {};
 	W.M = T;
 	W.$W = $(W);
 
@@ -26,7 +28,7 @@
 		@Method: NOOP(); #return {Function};
 		The method returns empty function that means "no operation".
 	*/
-	W.NOOP = function() {};
+	W.COMPILE = W.NOOP = function() {};
 
 	/*
 		@Path: Globals
@@ -90,6 +92,7 @@
 		} catch (e) {}
 	};
 
+	T.is20 = true;
 	T.ready = false;
 	T.scope = W;
 	T.version = 20;
@@ -101,6 +104,7 @@
 	T.plugins = W.PLUGINS;
 	T.env = {};
 	T.data = {};
+	T.caller = null;
 
 	T.cache = {
 		timeouts: {},
@@ -112,6 +116,7 @@
 		counter: 0,
 		statics: {},
 		lockers: {},
+		resize: {},
 		tmp: {}
 	};
 
@@ -127,6 +132,39 @@
 
 		W.NOW = new Date();
 
+		try {
+			T.free();
+		} catch (e) {
+			WARN(ERR.format('T.free()'), e);
+		}
+
+		// Check cache
+		let resave = false;
+		for (let key in T.cache.storage) {
+			let m = T.cache.storage[key];
+			if (m.expire && m.expire < NOW) {
+				resave = true;
+				delete T.cache.storage[key];
+			}
+		}
+
+		resave && savestorage();
+		W.TEMP = {};
+		T.cache.counter++;
+		T.emit('service', T.cache.counter);
+
+		// Every 5 minutes
+		if (T.cache.counter % 5 === 0)
+			T.cache.paths = {};
+
+	}, 60000);
+
+	/*
+		@Path: Core
+		@Method: Total.free();
+		The method clears all removed components, binders and plugins.
+	*/
+	T.free = function() {
 		let remove = [];
 
 		// Delete unused plugins
@@ -148,30 +186,9 @@
 				remove(m);
 		}
 
-		// Check cache
-		let resave = false;
-		for (let key in T.cache.storage) {
-			let m = T.cache.storage[key];
-			if (m.expire && m.expire < NOW) {
-				resave = true;
-				delete T.cache.storage[key];
-			}
-		}
-
-		resave && savestorage();
-
 		for (let m of remove)
 			m.$remove();
-
-		T.cache.counter++;
-		T.emit('service', T.cache.counter);
-
-		// Every 5 minutes
-		if (T.cache.counter % 5 === 0) {
-			T.cache.paths = {};
-		}
-
-	}, 60000);
+	};
 
 	/*
 		@Path: Core
@@ -186,6 +203,12 @@
 		if (fn)
 			return fn(scope, value);
 
+		var params = [];
+
+		path = path.replace(/\['.*?'\]|\[".*?"\]/g, function(text) {
+			return '[#' + (params.push(text) - 1) + ']';
+		});
+
 		var arr = splitpath(path);
 		var builder = [];
 		var regarr = /\[\d+\]|\[\]$/;
@@ -199,10 +222,13 @@
 		var v = arr[arr.length - 1];
 		var ispush = v.lastIndexOf('[]') !== -1;
 		var regarr = /\[\]/g;
-		var a = builder.join(';') + ';var v=typeof(a)===\'function\'?a(Total.get(a, b)):a;w' + (v[0] === '[' ? '' : '.') + (ispush ? v.replace(regarr, '.push(v)') : (v + '=v')) + ';return v';
+		var a = builder.join('') + 'var v=typeof(a)===\'function\'?a(Total.get(a, b)):a;w' + (v[0] === '[' ? '' : '.') + (ispush ? v.replace(regarr, '.push(v)') : (v + '=v')) + ';return v';
+
+		a = a.replace(/\[#\d+\]/g, function(text) {
+			return params[+text.substring(2, text.length - 1)];
+		});
 
 		var fn = new Function('w', 'a', 'b', a);
-		T.cache.paths[key] = fn;
 		return fn(scope, value, path);
 	};
 
@@ -239,6 +265,14 @@
 	};
 
 	T.off = function(name, callback) {
+
+		if (name.includes('+')) {
+			let arr = name.split('+').trim();
+			for (let m of arr)
+				T.off(m, callback);
+			return;
+		}
+
 		if (callback) {
 			var arr = T.events[name];
 			var index = arr.indexOf(callback);
@@ -248,11 +282,63 @@
 			delete T.events[name];
 	};
 
-	T.on = function(name, callback) {
+	T.on = function(name, callback, autoinit) {
+
+		if (T.ready && (name === 'ready' || name === 'init')) {
+			callback();
+			return;
+		}
+
+		if (name.includes('+')) {
+			let arr = name.split('+').trim();
+			for (let m of arr)
+				T.on(m, callback, autoinit);
+			return;
+		}
+
 		var arr = T.events[name];
+
 		if (!arr)
 			arr = T.events[name] = [];
+
 		arr.push(callback);
+		autoinit && setTimeout(callback, 1);
+	};
+
+	T.watch = function(path, callback, autoinit) {
+
+		if (path.includes('+')) {
+			let arr = path.split('+').trim();
+			for (let m of arr)
+				T.watch(m, callback, autoinit);
+			return;
+		}
+
+		path = parsepath(path);
+		T.watchers.push({ scope: T.scope, path: path, callback: callback });
+		autoinit && setTimeout(() => callback(path.get(T.scope), path.path, path.flags), 1);
+	};
+
+	T.unwatch = function(path, callback) {
+
+		if (path.includes('+')) {
+			let arr = path.split('+').trim();
+			for (let m of arr)
+				T.unwatch(m, callback);
+			return;
+		}
+
+		path = parsepath(path);
+		let rem = [];
+		for (let m of T.watchers) {
+			if (m.path.path === path.path) {
+				if (!callback || m.callback == callback)
+					rem.push(m);
+			}
+		}
+
+		for (let m of rem)
+			T.watchers.splice(T.watchers.indexOf(m), 1);
 	};
 
 	T.emit = function(name, a, b, c, d) {
@@ -285,6 +371,9 @@
 
 		// @important flag (it waits for a method)
 
+		if (name.charAt(0) === '*')
+			name = DEF.pathcommon.substring(0, DEF.pathcommon.length - 1) + name.substring(1);
+
 		let raw = name;
 		let index = name.indexOf(' ');
 		let path = '';
@@ -301,9 +390,10 @@
 			let tmp = name.split('/');
 			let plugin = T.plugins[tmp[0]];
 			if (plugin) {
-				if (plugin[tmp[1]])
+				if (plugin[tmp[1]]) {
 					path.exec(() => plugin[tmp[1]](a, b, c, d));
-				else
+					T.caller = plugin;
+				} else
 					WARN(ERR.format('The method "{0}/{1}" not found.'.format(tmp[0], tmp[1])));
 			} else {
 				if (path && path.flags.important)
@@ -323,6 +413,48 @@
 		}
 	};
 
+	T.seex = function(name, a, b, c, d) {
+
+		if (name.charAt(0) === '*')
+			name = DEF.pathcommon.substring(0, DEF.pathcommon.length - 1) + name.substring(1);
+
+		let raw = name;
+		let index = name.indexOf(' ');
+		let path = '';
+
+		if (index !== -1) {
+			path = name.substring(index + 1);
+			name = name.substring(0, index);
+		}
+
+		path = parsepath(path);
+
+		if (name.includes('/')) {
+			let tmp = name.split('/');
+			let plugin = T.plugins[tmp[0]];
+			if (plugin) {
+				if (plugin[tmp[1]]) {
+					path.exec(() => plugin[tmp[1]](a, b, c, d));
+					T.caller = plugin;
+				} else
+					WARN(ERR.format('The method "{0}/{1}" not found.'.format(tmp[0], tmp[1])));
+			} else {
+				if (path && path.flags.important)
+					setTimeout(T.exec, 500, raw, a, b, c, d);
+				else
+					WARN(ERR.format('The plugin "{0}" not found.'.format(tmp[0])));
+			}
+		} else {
+			var fn = null;
+			if (typeof(W[name]) == 'function')
+				fn = () => W[name](a, b, c, d);
+			else
+				fn = () => SET(name, a);
+			path.exec(fn);
+		}
+
+	};
+
 	T.setter = function(element, name, a, b, c, d) {
 
 		var arr = T.components;
@@ -338,17 +470,15 @@
 		path = parsepath(path);
 
 		if (element) {
-
-			let arr = [];
-
+			arr = [];
 			if (element instanceof T.Plugin) {
 				for (let m of T.components) {
 					if (m.plugin === element)
 						arr.push(m);
 				}
 			} else {
-				arr = element.find('ui-component');
-				for (let m of arr) {
+				let tmp = element.find('ui-component');
+				for (let m of tmp) {
 					if (m.$totalcomponent)
 						arr.push(m.$totalcomponent);
 				}
@@ -399,8 +529,7 @@
 		for (let m of arr) {
 
 			if (m.ready) {
-
-				if (tmp[0] != '*') {
+				if (sel != '*') {
 					if (id && m.id !== id)
 						continue;
 					else if (pth && !m.path.includes(pth))
@@ -413,8 +542,8 @@
 
 				if (m[tmp[1]])
 					run.push(m);
-				else
-					WARN('The setter "{0}" not found.'.format(name));
+				else if (sel !== '*')
+					WARN('The setter "{0}" not found.'.format(raw));
 			}
 		}
 
@@ -423,14 +552,37 @@
 				for (let m of run)
 					m[tmp[1]](a, b, c, d);
 			});
-		} else if (path.flags.important) {
-			setTimeout(T.setter, 800, element, raw, a, b, c, d);
-		} else
-			WARN(ERR.format('The setter "{0}" not found.'.format(name)));
+		} else if (path.flags.important)
+			setTimeout(T.setter, 500, element, raw, a, b, c, d);
+
 	};
 
 	T.cmd = function(element, name, a, b, c, d) {
 
+		var arr = T.components;
+
+		if (element) {
+			arr = [];
+			if (element instanceof T.Plugin) {
+				for (let m of T.components) {
+					if (m.plugin === element)
+						arr.push(m);
+				}
+			} else {
+				arr = element.find('ui-component');
+				for (let m of arr) {
+					if (m.$totalcomponent)
+						arr.push(m.$totalcomponent);
+				}
+			}
+		}
+
+		for (let m of arr) {
+			if (m.ready) {
+				if (m.commands[name])
+					m.cmd(name, a, b, c, d);
+			}
+		}
 	};
 
 	/*
@@ -512,13 +664,13 @@
 			// Global watchers
 			for (let m of T.watchers) {
 				if (m.scope === scope && (!m.path || m.path.includes(path)))
-					m.fn(path, m.path.get(scope), path.flags);
+					m.fn(m.path.get(scope), path.path, path.flags);
 			}
 
 			// Binders
 			for (let m of T.binders) {
 				if (m.fn && m.scope === scope && (!m.path || m.path.includes(path)))
-					m.fn(path, m.path.get(scope), path.flags);
+					m.fn(m.path.get(scope), path.path, path.flags);
 			}
 		});
 
@@ -627,6 +779,36 @@
 		return T.cache.paths[key] = new T.Path(path);
 	}
 
+	function pluginparent(plugin, count, prop) {
+
+		if (!plugin)
+			return '';
+
+		if (!count)
+			return plugin[prop].toString();
+
+		for (var i = 0; i < count; i++) {
+			plugin = plugin.plugin;
+			if (plugin == null)
+				break;
+		}
+
+		return plugin ? plugin[prop].toString() : '';
+	}
+
+	function preparepath(plugin, path) {
+
+		if (plugin instanceof T.Component)
+			plugin = plugin.plugin;
+
+		path = path.replace(/\?(\d)?\|/, function(text) {
+			text = text.substring(0, text.length);
+			return 'PLUGINS["{0}"]'.format(pluginparent(plugin, +text.substring(1), 'path')) + '.';
+		}).replace(/\|/, () => 'PLUGINS["{0}"]'.format(pluginparent(plugin, 0, 'path')) + '.').replace(/\?(\d)?/, text => pluginparent(plugin, +text.substring(1), 'path'));
+
+		return parsepath(path).path;
+	}
+
 	function splitpath(path) {
 
 		var arr = path.split('.');
@@ -677,7 +859,7 @@
 
 	function findparent(el, tag) {
 
-		parent = el.parentNode;
+		let parent = el.parentNode;
 
 		if (parent) {
 
@@ -761,7 +943,7 @@
 			t.instance.element = t.element;
 			t.instance.dom = t.element[0];
 			t.instance.config = {};
-			t.instance.plugin = t.parent ? t.parent[0].$totalplugin : null;
+			t.instance.plugin = t.instance.dom.$totalplugin || (t.parent ? t.parent[0].$totalplugin : null);
 
 			for (let key in t.ref.config)
 				t.instance.config[key] = t.ref.config[key];
@@ -780,7 +962,7 @@
 					reference = '$totalplugin';
 					break;
 				case 'component':
-					t.element.aclass(cls);
+					// t.element.aclass(cls);
 					t.instance.cls = cls;
 					t.instance.def = t.element.attr('default');
 
@@ -915,10 +1097,11 @@
 				}
 
 				tmp = T.db.components[t.name];
+
 				if (!tmp) {
 
 					if (t.fallback) {
-						WARN(ERR.format('The component "{0}" not found'.format(t.name)));
+						WARN(ERR.format('The component "{0}" not found'.format(t.name)), t.dom);
 						return;
 					}
 
@@ -932,6 +1115,12 @@
 						t.fallback = true;
 						t.init(t);
 					});
+
+					return;
+				}
+
+				if (tmp.singleton) {
+					t.element.remove();
 					return;
 				}
 
@@ -977,7 +1166,7 @@
 	};
 
 	T.newcomponent = function(element, name, path, config, callback) {
-		[0].$proxycomponent = new T.Proxy('component', element, name, path, config, callback);
+		element[0].$proxycomponent = new T.Proxy('component', element, name, path, config, callback);
 		return element[0].$proxycomponent;
 	};
 
@@ -992,8 +1181,10 @@
 	};
 
 	register('ui-component', function(el) {
-		el = $(el);
-		T.newcomponent(el, el.attr('name'), el.attr('path'), el.attr('config'));
+		let name = el.getAttribute('name');
+		let config = el.getAttribute('config');
+		let path = el.getAttribute('path');
+		name && T.newcomponent($(el), name, path, config);
 	}, function(el, property, value) {
 		// attribute is changed
 	});
@@ -1001,7 +1192,7 @@
 	register('ui-plugin', function(el) {
 		el = $(el);
 		let path = el.attr('path');
-		T.newplugin(el, path, path, el.attr('config'));
+		T.newplugin(el, path, el.attr('config'));
 	}, function(el, property, value) {
 		// attribute is changed
 	});
@@ -1079,8 +1270,6 @@
 			if (t.path == 'null')
 				t.path = '';
 
-			t.split = splitpath(path);
-
 			let c = t.path.charAt(0);
 
 			if (c === '%')
@@ -1096,8 +1285,10 @@
 				path = path.replace(c, DEF.pathcommon.substring(0, DEF.pathcommon.length - 1));
 
 			let index = path.indexOf('|');
+			if (index !== -1)
+				t.path = 'PLUGINS["' + path.substring(0, index) + '"].' + path.substring(index + 1);
 
-			t.path = index === -1 ? path : (path = 'PLUGINS["' + path.substring(0, index) + '"].' + path.substring(index + 1));
+			t.split = splitpath(t.path);
 			t.flags2 = [];
 
 			var keys = Object.keys(t.flags);
@@ -1126,7 +1317,7 @@
 			var t = this;
 
 			if (path instanceof T.Path)
-				path = path.path;
+				path = path.toString();
 
 			if (path.length > t.path.length) {
 				for (var i = 0; i < t.path.length; i++) {
@@ -1145,6 +1336,10 @@
 					return true;
 			}
 
+		};
+
+		PROTO.toString = function() {
+			return this.path;
 		};
 
 		/*
@@ -1258,10 +1453,10 @@
 	(function() {
 
 		/*
-			@Class: Total.Plugin(proxy)
+			@Class: Total.Plugin()
 			The class handles plugins.
 		*/
-		T.Plugin = function(proxy) {
+		T.Plugin = function() {
 			var t = this;
 			t.watchers = [];
 			t.events = {};
@@ -1300,10 +1495,14 @@
 		// Internal
 		PROTO.$init = function() {
 			var t = this;
+
+			t.name = t.path.path;
+
 			if (t.proxy.callback) {
 				t.proxy.callback();
 				t.proxy.callback = null;
 			}
+
 			t.ready = true;
 			t.make && t.make();
 		};
@@ -1369,6 +1568,7 @@
 				path.exec(() => fn(a, b, c, d, e));
 			else
 				WARN(ERR.format('The method "{0}/{1}" not found.'.format(t.name, path.path)));
+			T.caller = t;
 		};
 
 		/*
@@ -1411,6 +1611,7 @@
 		*/
 		PROTO.set = function(path, value) {
 			var t = this;
+			T.caller = t;
 			path = t.path.assign(path);
 			path.set(t.scope, value);
 			path.notify(t.scope);
@@ -1423,6 +1624,7 @@
 		*/
 		PROTO.nul = function(path) {
 			var t = this;
+			T.caller = t;
 			path = t.path.assign(path);
 			path.set(t.scope, null);
 			path.notify(t.scope);
@@ -1433,7 +1635,7 @@
 			@Method: instance.update(path)
 			The method notifies all components and watchers based on the path.
 		*/
-		PROTO.update = function(path) {
+		PROTO.upd = PROTO.update = function(path) {
 			var t = this;
 			path = t.path.assign(path);
 			path.notify(t.scope);
@@ -1445,6 +1647,14 @@
 		*/
 		PROTO.on = function(name, callback) {
 			var t = this;
+
+			if (name.includes('+')) {
+				let arr = name.split('+').trim();
+				for (let m of arr)
+					t.on(m, callback);
+				return;
+			}
+
 			var arr = t.events[name];
 			if (!arr)
 				arr = t.events[name] = [];
@@ -1479,15 +1689,25 @@
 			@Method: instance.watch(path, callback);
 			The method registers a new watcher to capture changes based on the path.
 		*/
-		PROTO.watch = function(path, callback) {
+		PROTO.watch = function(path, callback, autoinit) {
 
 			if (typeof(path) === 'function') {
 				callback = path;
 				path = '';
 			}
 
+			if (path.includes('+')) {
+				let arr = path.split('+').trim();
+				for (let m of arr)
+					t.watch(m, callback, autoinit);
+				return;
+			}
+
 			var t = this;
-			t.watchers.push({ path: t.path.assign(path), fn: callback });
+
+			path = t.path.assign(path);
+			t.watchers.push({ path: path, fn: callback });
+			autoinit && setTimeout(() => callback(path.get(t.scope), path.path, path.flags), 1);
 		};
 
 		// Internal method
@@ -1556,17 +1776,23 @@
 				t.make && t.make();
 				t.reconfigure(t.config, true);
 				t.$setter(t.get(), t.path.path, { init: 1 });
+				t.$datasource && t.$datasource.refresh && t.$datasource.refresh();
 			} finally {
 				if (t.proxy.callback) {
 					t.proxy.callback();
 					t.proxy.callback = null;
 				}
+				t.$loaded = true;
 			}
 		};
 
 		// Deprecated
 		PROTO.bindvisible = NOOP;
 		PROTO.nocompile = NOOP;
+
+		PROTO.makepath = function(path) {
+			return preparepath(this, path);
+		};
 
 		// Backward compatibility
 		PROTO.autobind = function() {
@@ -1634,6 +1860,7 @@
 		*/
 		PROTO.singleton = function() {
 			this.internal.singleton = true;
+			this.proxy.ref.singleton = true;
 		};
 
 		/*
@@ -1643,6 +1870,28 @@
 		*/
 		PROTO.set = function(value, flags) {
 			var t = this;
+
+			// Backward compatibility
+			if (typeof(flags) === 'number') {
+				switch (flags) {
+					case 3:
+						flags = '@default';
+						break;
+					case 2:
+						flags = '@touched @modified';
+						break;
+					case 1:
+						flags = '@modified';
+						break;
+					case 0:
+						flags = '@init';
+						break;
+					default:
+						flags = '';
+						break;
+				}
+			}
+
 			if (t.path.path) {
 				t.path.set(t.scope, value);
 				t.path.notify(t.scope, flags);
@@ -1658,6 +1907,15 @@
 		PROTO.rewrite = function(value, flags) {
 			this.skip = true;
 			this.set(value, flags);
+		};
+
+		PROTO.upd = PROTO.update = function(flags) {
+
+			// Backward compatibility
+			if (typeof(flags) === 'boolean')
+				flags = null;
+
+			this.path.notify(this.scope, flags);
 		};
 
 		/*
@@ -1676,6 +1934,14 @@
 		*/
 		PROTO.on = function(name, callback) {
 			var t = this;
+
+			if (name.includes('+')) {
+				let arr = name.split('+').trim();
+				for (let m of arr)
+					t.on(m, callback);
+				return;
+			}
+
 			var arr = t.events[name];
 			if (!arr)
 				arr = t.events[name] = [];
@@ -1687,15 +1953,58 @@
 			@Method: instance.watch(path, callback);
 			The method registers a new watcher to capture changes based on the path.
 		*/
-		PROTO.watch = function(path, callback) {
+		PROTO.watch = function(path, callback, autoinit) {
+
+			var t = this;
 
 			if (typeof(path) === 'function') {
 				callback = path;
-				path = '';
+				path = t.path.toString();
+			} else if (path.includes('+')) {
+				let arr = path.split('+').trim();
+				for (let m of arr)
+					t.watch(m, callback, autoinit);
+				return;
+			}
+
+			path = parsepath(t.makepath(path));
+			t.watchers.push({ path: path, fn: callback });
+			autoinit && setTimeout(() => callback(path.get(t.scope), path.path, path.flags));
+		};
+
+		/*
+			@Path: Component
+			@Method: instance.unwatch(path, [callback]);
+			The method unregisters an existing watcher.
+		*/
+		PROTO.unwatch = function(path, callback) {
+
+			if (typeof(path) === 'function') {
+				callback = path;
+				path = t.path.toString();
+			} else if (path.includes('+')) {
+				let arr = path.split('+').trim();
+				for (let m of arr)
+					t.unwatch(m, callback);
+				return;
 			}
 
 			var t = this;
-			t.watchers.push({ path: t.path.assign(path), fn: callback });
+			var rem = [];
+
+			path = t.makepath(path);
+
+			for (let m of t.watchers) {
+				if (callback) {
+					if (m.path === path && m.callback === callback)
+						rem.push(m);
+				} else if (m.path === path)
+					rem.push(m);
+			}
+
+			for (let m of rem)
+				t.watchers.splice(t.watchers.indexOf(m), 1);
+
 		};
 
 		/*
@@ -1795,6 +2104,14 @@
 			return this;
 		};
 
+		PROTO.attr = function(name, value) {
+			var el = this.element;
+			if (value === undefined)
+				return el.attr(name);
+			el.attr(name, value);
+			return this;
+		};
+
 		PROTO.html = function(value) {
 			var el = this.element;
 			if (value === undefined)
@@ -1829,6 +2146,9 @@
 			return value ? el.append(value) : el;
 		};
 
+		PROTO.import = function(url, callback, prepare) {
+			IMPORT(url, this.element, callback, prepare);
+		};
 
 		PROTO.autofocus = function(selector, counter) {
 			autofocus(this.element, selector, counter);
@@ -1874,7 +2194,7 @@
 			}
 
 			if (value.$assign)
-				T.set(T.scope, value.$assign, t);
+				T.set(t.scope, t.makepath(value.$assign), t);
 
 			if (value.$class)
 				t.element.tclass(value.$class);
@@ -1895,7 +2215,7 @@
 		*/
 		PROTO.refresh = function() {
 			var t = this;
-			t.$setter(t.get(), t.path.path, { refresh: 1 });
+			t.$setter(t.get(), t.path.toString(), { refresh: 1 });
 		};
 
 		/*
@@ -1925,14 +2245,37 @@
 			}
 		};
 
+		PROTO.GET = function(path) {
+			return GET(this.makepath(path));
+		};
+
+		PROTO.SET = function(path, value) {
+			return SET(this.makepath(path), value);
+		};
+
+		PROTO.EXEC = function(name, a, b, c, d) {
+			T.exec(preparepath(this, name), a, b, c, d);
+		};
+
+		PROTO.SETTER = function(name, a, b, c, d) {
+			T.setter(null, name, a, b, c, d);
+		};
+
+		PROTO.SEEX = function(name, a, b, c, d) {
+			T.seex(preparepath(this, name), a, b, c, d);
+		};
+
 		/*
 			@Path: Component
 			@Method: instance.icon(value); #value {String};
 			The method checks if it is needed to add the icon prefix defined in `DEF.iconprefix`.
 		*/
-		PROTO.icon = function(value) {
+		PROTO.icon = PROTO.faicon = function(value) {
 			return value ? ((value.includes(' ') ? DEF.iconprefix : '') + value) : '';
 		};
+
+		// Backward compatibility
+		PROTO.release = NOOP;
 
 		/*
 			@Path: Component
@@ -1940,13 +2283,49 @@
 			The method moves the component into another element defined in the `target` argument.
 		*/
 		PROTO.replace = function(target, remove) {
+
 			var t = this;
 			var prev = t.element;
-			delete t.dom.$totalcomponent;
-			remove && prev.off().remove();
+
+			if (remove) {
+				delete t.dom.$totalcomponent;
+				delete t.dom.$totalplugin;
+				prev.off().remove();
+			}
+
 			t.element = $(target);
 			t.dom = t.element[0];
 			t.dom.$totalcomponent = t;
+			t.dom.$proxycomponent = t.proxy;
+
+			if (t.plugin) {
+				t.element.attr('plugin', t.plugin.name);
+				t.dom.$proxyplugin = t.plugin.proxy;
+				t.dom.$totalplugin = t.plugin;
+			}
+
+			return t;
+		};
+
+		PROTO.datasource = function(path, callback, init) {
+
+			var t = this;
+			var source = t.$datasource;
+
+			source && t.unwatch(source.path, source.fn);
+
+			if (path) {
+				path = t.makepath(path);
+				t.$datasource = source = { path: path, fn: callback };
+				if (init !== false && !t.$loaded) {
+					t.watch(path, callback);
+					source.refresh = () => callback(T.get(t.scope, path), path, {});
+				} else
+					t.watch(path, callback, init !== false);
+
+			} else
+				t.$datasource = null;
+
 			return t;
 		};
 
@@ -2206,7 +2585,7 @@
 				delete cmd.clone;
 			}
 
-			commands.quicksort('priority')
+			commands.quicksort('priority');
 			t.commands = commands;
 
 			if (t.proxy.callback) {
@@ -2220,7 +2599,7 @@
 			return t.plugin ? val.replace(/\?/, t.plugin.path.path) : val;
 		};
 
-		PROTO.fn = function(path, value, flags, nodelay) {
+		PROTO.fn = function(value, path, flags, nodelay) {
 
 			let t = this;
 
@@ -2428,6 +2807,9 @@
 			});
 		};
 
+		// Backward compatibility
+		PROTO.COMPILABLE = NOOP;
+
 		/*
 			@Path: String.prototype
 			@Method: String.prototype.parseConfig();
@@ -2514,6 +2896,24 @@
 			return r + Array(Math.max(0, t - r.length + 1)).join(e || ' ');
 		};
 
+		PROTO.parseSource = function(type) {
+
+			var arr = this.split(',');
+			var output = [];
+			for (var i = 0; i < arr.length; i++) {
+				var item = arr[i].split('|');
+				var id = item[0];
+				if (type && (type === Number || type === TYPE_N))
+					id = id ? id.parseInt() : null;
+
+				if (!item[1])
+					item[1] = id + '';
+
+				output.push({ id: id, name: item[1], icon: item[2] || '' });
+			}
+
+			return output;
+		};
 
 		PROTO.parseInt = function(def) {
 			var str = this.trim();
@@ -3008,6 +3408,11 @@
 			return arr;
 		};
 
+		PROTO.last = function(def) {
+			var item = this[this.length - 1];
+			return item === undefined ? def : item;
+		};
+
 	})();
 
 	// Date prototypes
@@ -3216,6 +3621,25 @@
 
 		/*
 			@Path: Globals
+			@Method: ATTRD(el, attrd); #el {jQuery/Element}; #attrd {String} attribute name (default: `id`); #return {String};
+			The method tries to read closest `data-{attrd}` value.
+		*/
+		W.ATTRD = function(el, attrd) {
+			if (el) {
+				if (el instanceof jQuery)
+					return el.attrd2(attrd || 'id');
+				else if (el instanceof jQuery.Event)
+					return $(el.currentTarget).attrd2(attrd || 'id');
+				else if (typeof(el.getAttribute) === 'function')
+					return W.ATTRD($(el), attrd);
+				else if (typeof(el) === 'object')
+					return el[attrd || 'id'];
+			}
+			return el;
+		};
+
+		/*
+			@Path: Globals
 			@Method: SET(path, value); #path {String}; #value {Object};
 			The method sets and notifies all UI components and watchers based on the path.
 		*/
@@ -3260,6 +3684,9 @@
 				callback = config;
 				config = '';
 			}
+
+			if (T.db.components[name])
+				WARN(ERR.format('Overwriting component "{0}"'.format(name)));
 
 			T.db.components[name] = { count: 0, config: (config || '').parseConfig(), callback: callback, dependencies: dependencies };
 		};
@@ -3407,14 +3834,14 @@
 				if (name) {
 					for (var key in name) {
 						DEF.env[key] = name[key];
-						T.events.env && EMIT('env', key, name[key]);
+						T.events.env && T.emit('env', key, name[key]);
 					}
 				}
 				return name;
 			}
 
 			if (value !== undefined) {
-				T.events.env && EMIT('env', name, value);
+				T.events.env && T.emit('env', name, value);
 				DEF.env[name] = value;
 				return value;
 			}
@@ -3422,12 +3849,22 @@
 			return DEF.env[name];
 		};
 
+		W.ENVIRONMENT = function(name, version, language, env) {
+			DEF.localstorage = name;
+			DEF.version = version || '';
+			DEF.languagehtml = language || '';
+			env && W.ENV(env);
+		};
+
+		// Backward compatibility
+		W.FREE = T.free;
+
 		/*
 			@Path: Globals
 			@Method: HASH(value); #value {String/Number/Boolean/Object/Date};
 			The method creates a hash from the `value`.
 		*/
-		W.HASH = function(value, unsigned) {
+		W.HASH = function(value) {
 			if (!value)
 				return 0;
 			var type = typeof(value);
@@ -3450,6 +3887,86 @@
 			}
 			return hash >>> 0;
 		};
+
+		W.CSS = function(value, id, selector) {
+			id && $('#css' + id).remove();
+			var val = (value instanceof Array ? value.join('') : value);
+			val && $('<style type="text/css"' + (id ? ' id="css' + id + '"' : '') + '>' + (selector ? wrap(selector, val) : val) + '</style>').appendTo('head');
+		};
+
+		W.APPEARANCE = function(obj) {
+
+			var keys = Object.keys(obj);
+			var dark = obj.dark || obj.darkmode;
+			var large = obj.large || obj.largemode;
+			var builder = [];
+			var id = 'appearance';
+
+			for (var i = 0; i < keys.length; i++) {
+				var key = keys[i];
+				switch (key) {
+					case 'dark':
+					case 'darkmode':
+					case 'large':
+					case 'largemode':
+						break;
+					default:
+						obj[key] && builder.push('--' + key.trim() + ':' + (obj[key] + '').trim());
+						break;
+				}
+			}
+
+			obj.color && SET('DEF.color', obj.color);
+
+			if (obj.color && !obj.rgb) {
+				var color = obj.color.substring(1);
+				if (color.length === 3)
+					color += color;
+				obj.rgb = parseInt(color.substring(0, 2), 16) + ',' + parseInt(color.substring(2, 4), 16) + ',' + parseInt(color.substring(4, 6), 16);
+				builder.push('--rgb:' + obj.rgb);
+			}
+
+			$('body').tclass(DEF.prefixcsslibrary + 'dark', !!dark).tclass(DEF.prefixcsslibrary + 'large', !!large);
+
+			if (builder.length)
+				CSS(':root{' + builder.join(';') + '}', id);
+			else
+				$('#css' + id).remove();
+		};
+
+		function wrap(selector, css) {
+
+			var beg = css.indexOf('{');
+			var builder = [];
+
+			while (beg !== -1) {
+
+				var sel = css.substring(0, beg);
+				var end = css.indexOf('}', beg + 1);
+
+				if (end === -1)
+					break;
+
+				end++;
+
+				var tmp = [];
+
+				if (sel.indexOf('@') === -1) {
+					var arr = sel.split(',');
+					for (var i = 0; i < arr.length; i++) {
+						var a = arr[i].trim();
+						tmp.push(selector + ' ' + a);
+					}
+				} else
+					tmp.push(sel);
+
+				builder.push(tmp.join(',') + css.substring(beg, end));
+				css = css.substring(end);
+				beg = css.indexOf('{');
+			}
+
+			return builder.join('');
+		}
 
 		/*
 			@Path: Globals
@@ -3509,6 +4026,53 @@
 				return new Date(obj.getTime());
 
 			return PARSE(JSON.stringify(obj));
+		};
+
+		W.NODEINDEXOF = function(el) {
+			if (el instanceof jQuery)
+				el = el[0];
+			var children = el.parentNode.children;
+			for (var i = 0; i < children.length; i++) {
+				if (children[i] === el)
+					return i;
+			}
+			return -1;
+		};
+
+		W.NODEINSERT = function(a, b, before) {
+			if (a instanceof jQuery)
+				a = a[0];
+			if (b instanceof jQuery)
+				b = b[0];
+			if (before)
+				b.parentNode.insertBefore(a, b);
+			else if (b.nextSibling)
+				b.parentNode.insertBefore(a, b.nextSibling);
+			else
+				b.parentNode.appendChild(a);
+		};
+
+		W.NODEMOVE = function(el, up) {
+			if (el instanceof jQuery) {
+				for (var i = 0; i < el.length; i++)
+					W.NODEMOVE(el[i], up);
+			} else {
+				var index = W.NODEINDEXOF(el);
+				if (index > -1) {
+					var parent = el.parentNode;
+					var children = parent.children;
+					if (up) {
+						if (index > 0)
+							parent.insertBefore(el, children[index - 1]);
+					} else {
+						var dom = children[index + 2];
+						if (dom)
+							parent.insertBefore(el, dom);
+						else
+							parent.appendChild(el);
+					}
+				}
+			}
 		};
 
 		var QUERIFYMETHODS = { GET: 1, POST: 1, DELETE: 1, PUT: 1, PATCH: 1, API: 1 };
@@ -3880,9 +4444,9 @@
 		/*
 			@Path: Globals
 			@Method: IMPORT(url, [target], callback); #url {String}; #[target] {String/jQuery/Element}; #callback {Function};
-			The method imports external sources like JavaScript libaries, CSS libraries, UI components or parts.
+			The method imports external sources like JavaScript libaries, CSS libraries, UI components or parts. Supported flags: @prepend, @singleton, <global_variable_name>, url .extension, .
 		*/
-		W.IMPORT = function(url, target, callback) {
+		W.IMPORT = function(url, target, callback, prepare) {
 
 			if (typeof(target) === 'function') {
 				callback = target;
@@ -3892,20 +4456,12 @@
 			var key = url;
 
 			if (T.cache.imports[key]) {
-				T.cache.imports[key].push({ target: target, callback: callback });
+				T.cache.imports[key].push({ target: target, callback: callback, prepare: prepare });
 				return;
 			}
 
 			if (!target)
 				target = 'body';
-
-			T.cache.imports[key] = [{ target: target, callback: callback }];
-
-			var done = function() {
-				for (let m of T.cache.imports[key])
-					m.callback && m.callback();
-				delete T.cache.imports[key];
-			};
 
 			let d = document;
 			let ext = '';
@@ -3918,14 +4474,35 @@
 				return '';
 			});
 
-			if (check && W[check]) {
+			if (check && W[check])
 				return;
-			}
+
+			T.cache.imports[key] = [{ target: target, callback: callback, prepare: prepare }];
+
+			var done = function() {
+				for (let m of T.cache.imports[key])
+					m.callback && m.callback();
+				delete T.cache.imports[key];
+			};
 
 			url = url.replace(/\s\.[a-z0-9]+/, function(text) {
 				ext = text.trim();
 				return '';
 			});
+
+			var path = parsepath(url);
+			var cachekey = path.flags.singleton ? ('singleton' + key) : '';
+
+			if (cachekey) {
+				let tmp = T.cache.imports[cachekey];
+				if (tmp != null) {
+					if (prepare)
+						tmp = prepare(tmp);
+					$(target)[path.flags.prepend ? 'prepend' : 'append'](tmp);
+					done();
+					return;
+				}
+			}
 
 			if (!ext) {
 				let index = url.indexOf(' ');
@@ -3963,29 +4540,36 @@
 				return;
 			}
 
-			AJAX('GET ' + url, function(response) {
+			path.exec(function() {
+				AJAX('GET ' + url, function(response) {
 
-				if (typeof(response) !== 'string') {
-					WARN(ERR.format('Invalid response for IMPORT("{0}")'.format(url)), response);
-					done();
-					return;
-				}
-
-				let id = 'import' + HASH(url);
-				response = ADAPT(null, null, response);
-				response = importscripts(importstyles(response, id)).trim();
-
-				if (response) {
-					for (let m of T.cache.imports[key]) {
-						if (m.target)
-							$(m.target).append(response);
+					if (typeof(response) !== 'string') {
+						WARN(ERR.format('Invalid response for IMPORT("{0}")'.format(url)), response);
+						done();
+						return;
 					}
-				}
 
-				setTimeout(function() {
-					done();
-					T.events.import && T.emit('import', url, target);
-				}, 10);
+					let id = 'import' + HASH(url);
+					response = ADAPT(null, null, response);
+					response = importscripts(importstyles(response, id)).trim();
+
+					if (cachekey)
+						T.cache.imports[cachekey] = response;
+
+					for (let m of T.cache.imports[key]) {
+						if (m.target) {
+							let html = response;
+							if (m.prepare)
+								html = m.prepare(html);
+							html && $(m.target)[path.flags.prepend ? 'prepend' : 'append'](html);
+						}
+					}
+
+					setTimeout(function() {
+						done();
+						T.events.import && T.emit('import', url, target);
+					}, 10);
+				});
 			});
 
 		};
@@ -4286,6 +4870,10 @@
 			}
 		};
 
+		W.SEEX = function(name, a, b, c, d) {
+			T.seex(name, a, b, c, d);
+		};
+
 		W.EXEC = function(name, a, b, c, d) {
 			T.exec(name, a, b, c, d);
 		};
@@ -4392,8 +4980,13 @@
 			The method finds the closest plugin.
 		*/
 		$.fn.plugin = function() {
-			var parent = findparent(this, 'UI-PLUGIN');
-			return parent ? parent.$proxy.instance : null;
+			var parent = findplugin(this[0]);
+			return parent ? parent.$proxyplugin.instance : null;
+		};
+
+		$.fn.component = function() {
+			var parent = findparent(this[0], 'UI-COMPONENT');
+			return parent ? parent.$proxycomponent.instance : null;
 		};
 
 		var classtimeout = function(el, a, t) {
@@ -4580,6 +5173,7 @@
 			var f = D.createDocumentFragment();
 			while (d.firstChild.firstChild)
 				f.appendChild(d.firstChild.firstChild);
+
 			f = $(f);
 			this.prepend(f);
 			return f;
@@ -4593,14 +5187,80 @@
 			T.setter($(this), name, a, b, c, d);
 		};
 
+		$.fn.EXEC = function(name, a, b, c, d) {
+			var c = name.charAt(0);
+			if (c === '?' || c === '|') {
+				var plugin = this.plugin();
+				T.exec(preparepath(plugin, name), a, b, c, d);
+			} else
+				T.exec(name, a, b, c, d);
+		};
+
+		$.fn.SEEX = function(name, a, b, c, d) {
+			var c = name.charAt(0);
+			if (c === '?' || c === '|') {
+				var plugin = this.plugin();
+				T.seex(preparepath(plugin, name), a, b, c, d);
+			} else
+				T.seex(name, a, b, c, d);
+		};
+
 	})();
+
+	T.resize = function() {
+
+		var resize = T.cache.resize;
+
+		resize.timeout && clearTimeout(resize.timeout);
+		resize.resize = null;
+
+		var w = $W;
+
+		W.WW = w.width();
+		W.WH = w.height();
+
+		if (!W.WH || !W.WH) {
+			resize.timeout = setTimeout(T.resize, 10);
+			return;
+		}
+
+		if (WW === resize.w && WH === resize.h)
+			return;
+
+		var d = WIDTH();
+
+		resize.w = WW;
+		resize.h = WH;
+
+		if (resize.d !== d) {
+			resize.d = d;
+			var body = $('body');
+			body.rclass('jc-lg jc-md jc-sm jc-xs');
+			body.aclass('jc-' + d);
+		}
+
+		T.ready && T.emit('resize2');
+	};
 
 	// load localStorage
 	setTimeout(function() {
 
+		T.emit('init');
+		T.resize();
+
 		DEF.onstorageread(function(data) {
+
 			T.cache.storage = data || {};
 			T.ready = true;
+
+			$W.on('resize', function() {
+				var resize = T.cache.resize;
+				resize.timeout && clearTimeout(resize.timeout);
+				resize.timeout = setTimeout(T.resize, 100);
+			});
+
+			$W.on('visibilitychange', () => T.emit('visible', !document.hidden));
+			$(document).ready(() => T.emit('ready'));
 		});
 
 	}, 1);
