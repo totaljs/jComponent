@@ -51,7 +51,8 @@
 	DEF.pathplugins = 'Total.data.';
 	DEF.pathtmp = 'DEF.tmp.';
 	DEF.headers = { 'X-Requested-With': 'XMLHttpRequest' };
-	DEF.fallback = 'https://cdn.componentator.com/j-{0}.html';
+	// DEF.fallback = 'https://cdn.componentator.com/20/{0}.html';
+	DEF.fallback = 'https://assets.totaljs.com/ui/components/{0}.html';
 	DEF.localstorage = 'totalui';
 	DEF.dictionary = {};
 	DEF.currency = '';
@@ -706,6 +707,20 @@
 		callback();
 	};
 
+	function reuildcssforce() {
+		var builder = [];
+		for (let key in M.db.components) {
+			let item = M.db.components[key];
+			if (item.css)
+				builder.push(item.css.replace(/CLASS/g, 'ui-' + key));
+		}
+		CSS(builder.join('\n'), 'components');
+	}
+
+	function rebuildcss() {
+		setTimeout2('uicomponentcss', reuildcssforce, 5);
+	}
+
 	function register(name, callback, attribute) {
 		customElements.define(name, class extends HTMLElement {
 
@@ -804,7 +819,9 @@
 		path = path.replace(/\?(\d)?\|/, function(text) {
 			text = text.substring(0, text.length);
 			return 'PLUGINS["{0}"]'.format(pluginparent(plugin, +text.substring(1), 'path')) + '.';
-		}).replace(/\|/, () => 'PLUGINS["{0}"]'.format(pluginparent(plugin, 0, 'path')) + '.').replace(/\?(\d)?/, text => pluginparent(plugin, +text.substring(1), 'path'));
+		}).replace(/\|/, () => 'PLUGINS["{0}"]'.format(pluginparent(plugin, 0, 'path')) + '.').replace(/\?(\d)?/, function(text) {
+			return pluginparent(plugin, +text.substring(1), 'path');
+		});
 
 		return parsepath(path).path;
 	}
@@ -962,7 +979,7 @@
 					reference = '$totalplugin';
 					break;
 				case 'component':
-					// t.element.aclass(cls);
+					t.element.aclass(cls);
 					t.instance.cls = cls;
 					t.instance.def = t.element.attr('default');
 
@@ -991,7 +1008,11 @@
 				}
 			}
 
-			t.ref.callback && t.ref.callback.call(t.instance, t.instance, t.instance.config, cls);
+			try {
+				t.ref.callback && t.ref.callback.call(t.instance, t.instance, t.instance.config, cls);
+			} catch (e) {
+				WARN(ERR.format('Unexpected component error "{0}":'.format(t.instance.name)), e);
+			}
 
 			if (extensions) {
 				for (let m of extensions)
@@ -1133,13 +1154,14 @@
 
 			if (t.path.includes('?')) {
 				// absolute path
+
 				let parent = findplugin(t.type === 'plugin' ? t.dom.parentNode : t.dom);
 				if (parent) {
 					let proxy = parent.$proxyplugin;
 					if (proxy && proxy.ready) {
-						// @TODO: missing skipper "?1" or "?3"
 						t.parent = proxy.element;
 						t.path = t.path.replace(/\?/g, proxy.path);
+						// t.path = preparepath(proxy.plugin, t.path);
 					} else {
 						setTimeout(t.init, 50, t);
 						return;
@@ -1227,7 +1249,7 @@
 			t.flags = {};
 			t.ERROR = false;
 
-			path = path.replace(' ERROR', function(text) {
+			path = path.replace(' ERROR', function() {
 				t.ERROR = true;
 				return '';
 			});
@@ -1277,7 +1299,7 @@
 			else if (c === '#')
 				t.path = DEF.pathcl + t.path.substring(1);
 			else if (c === '*')
-				t.path = DEF.pathcommon + t.path.substring(1);
+				t.path = (t.path.charAt(1) === '/' ? DEF.pathcommon.substring(0, DEF.pathcommon.length - 1) : DEF.pathcommon) + t.path.substring(1);
 
 			c = path.charAt(0);
 
@@ -1752,8 +1774,6 @@
 			t.commands = {};
 			t.watchers = [];
 
-			// Backward compatibility
-			t.$ready = true;
 			t.ID = t.id = GUID(10);
 
 		};
@@ -1768,8 +1788,10 @@
 
 			try {
 
-				if (!T.db.components[t.name].init) {
-					T.db.components[t.name].init = true;
+				var com = T.db.components[t.name];
+
+				if (!com.init) {
+					com.init = true;
 					t.init && t.init();
 				}
 
@@ -1795,7 +1817,7 @@
 		};
 
 		// Backward compatibility
-		PROTO.autobind = function() {
+		PROTO.autobind = function(prepare) {
 
 			var t = this;
 
@@ -1811,8 +1833,11 @@
 			var updateforce = function() {
 				timeout = null;
 				var value = t.find(selector).val();
-				if (value !== prev)
+				if (value !== prev) {
+					if (prepare)
+						value = prepare(value);
 					t.rewrite(value);
+				}
 			};
 
 			var update = function() {
@@ -1822,8 +1847,13 @@
 
 			t.element.on('input', selector, function() {
 				t.config.modified = true;
-				prev = $(this).val();
-				t.rewrite(prev);
+				var value = $(this).val();
+				prev = value;
+
+				if (prepare)
+					value = prepare(value);
+
+				t.rewrite(value);
 			}).on('focusin', selector, function() {
 				prev = $(this).val();
 				t.config.touched = true;
@@ -2176,6 +2206,11 @@
 			return el.find(selector);
 		};
 
+		PROTO.watchconfig = function(key, path) {
+			var t = this;
+			t.watch(t.makepath(path), value => key ? t.reconfigure({ [key]: value }) : t.reconfigure(value), true);
+		};
+
 		/*
 			@Path: Component
 			@Method: instance.reconfigure(value);
@@ -2185,12 +2220,34 @@
 
 			var t = this;
 
-			if (typeof(value) === 'string')
+			if (typeof(value) === 'string') {
+
+				if (value.charAt(0) === '=') {
+					// autobinding according to the path
+					return;
+				}
+
 				value = value.parseConfig();
+			}
 
 			for (let key in value) {
-				t.configure && t.configure(key, value[key], init ? null : t.config[key], init);
-				t.config[key] = value[key];
+
+				let val = value[key];
+
+				if (key === '=') {
+					// global watcher
+					t.watchconfig(null, val);
+					continue;
+				}
+
+				if (key.charAt(0) === '=') {
+					// key watcher
+					t.watchconfig(key.substring(1), val);
+					continue;
+				}
+
+				t.configure && t.configure(key, val, init ? null : t.config[key], init);
+				t.config[key] = val;
 			}
 
 			if (value.$assign)
@@ -2200,12 +2257,10 @@
 				t.element.tclass(value.$class);
 
 			if (value.$id)
-				t.ID = t.id = value.$id;
+				t.id = value.$id;
 
-			// if (value.$init) {
-			// 	EXEC();
-			// }
-
+			if (value.$init)
+				t.EXEC(value.$init, t);
 		};
 
 		/*
@@ -2246,11 +2301,11 @@
 		};
 
 		PROTO.GET = function(path) {
-			return GET(this.makepath(path));
+			return GET(preparepath(this, path));
 		};
 
 		PROTO.SET = function(path, value) {
-			return SET(this.makepath(path), value);
+			return SET(preparepath(this, path), value);
 		};
 
 		PROTO.EXEC = function(name, a, b, c, d) {
@@ -2270,12 +2325,9 @@
 			@Method: instance.icon(value); #value {String};
 			The method checks if it is needed to add the icon prefix defined in `DEF.iconprefix`.
 		*/
-		PROTO.icon = PROTO.faicon = function(value) {
+		PROTO.icon = function(value) {
 			return value ? ((value.includes(' ') ? DEF.iconprefix : '') + value) : '';
 		};
-
-		// Backward compatibility
-		PROTO.release = NOOP;
 
 		/*
 			@Path: Component
@@ -2364,11 +2416,17 @@
 				t.rewrite(value);
 			}
 
-			if (t.skip)
-				t.skip = false;
-			else if (t.setter)
-				t.setter(value, path, flags);
+			if (!flags)
+				flags = {};
 
+			if (t.skip) {
+				flags.skip = true;
+				t.skip = false;
+			} else if (t.setter)
+				t.setter(value, flags, path);
+
+			t.setter2 && t.setter2(value, flags, path);
+			t.config.$setter && t.EXEC(t.config.$setter, value, flags, path);
 			t.$validate();
 		};
 
@@ -2393,10 +2451,6 @@
 
 			t.element.remove();
 		};
-
-		// Backward compatibility
-		PROTO.formatter = NOOP;
-		PROTO.parser = NOOP;
 
 	})();
 
@@ -2807,9 +2861,6 @@
 			});
 		};
 
-		// Backward compatibility
-		PROTO.COMPILABLE = NOOP;
-
 		/*
 			@Path: String.prototype
 			@Method: String.prototype.parseConfig();
@@ -2910,6 +2961,59 @@
 					item[1] = id + '';
 
 				output.push({ id: id, name: item[1], icon: item[2] || '' });
+			}
+
+			return output;
+		};
+
+		PROTO.parseComponent = function(tags) {
+
+			var html = this;
+			var beg = -1;
+			var end = -1;
+			var output = {};
+
+			for (var key in tags) {
+
+				var tagbeg = tags[key];
+				var tagindex = tagbeg.indexOf(' ');
+
+				if (tagindex === -1)
+					tagindex = tagbeg.length - 1;
+
+				var tagend = '</' + tagbeg.substring(1, tagindex) + '>';
+				var tagbeg2 = '<' + tagend.substring(2);
+
+				beg = html.indexOf(tagbeg);
+
+				if (beg !== -1) {
+
+					var count = 0;
+					end = -1;
+
+					for (var j = (beg + tagbeg.length); j < html.length; j++) {
+						var a = html.substring(j, j + tagbeg2.length);
+						if (a === tagbeg2) {
+							count++;
+						} else {
+							if (html.substring(j, j + tagend.length) === tagend) {
+								if (count) {
+									count--;
+								} else {
+									end = j;
+									break;
+								}
+							}
+						}
+					}
+
+					if (end !== -1) {
+						var tmp = html.substring(html.indexOf('>', beg) + 1, end);
+						html = html.replace(html.substring(beg, end + tagend.length), '').trim();
+						output[key] = tmp.replace(/^\n|\n$/, '');
+					}
+
+				}
 			}
 
 			return output;
@@ -3677,7 +3781,7 @@
 			@Method: COMPONENT(name, [config], callback, [dependencies]); #path {String}; #[config] {Object}; #callback {Function(self, config, element, cls)}; #[dependencies] {String};
 			The method registers a new component declaration.
 		*/
-		W.COMPONENT = function(name, config, callback, dependencies) {
+		W.COMPONENT = function(name, config, callback, css, dependencies) {
 
 			if (typeof(config) === 'function') {
 				dependencies = callback;
@@ -3688,7 +3792,8 @@
 			if (T.db.components[name])
 				WARN(ERR.format('Overwriting component "{0}"'.format(name)));
 
-			T.db.components[name] = { count: 0, config: (config || '').parseConfig(), callback: callback, dependencies: dependencies };
+			T.db.components[name] = { count: 0, config: (config || '').parseConfig(), callback: callback, dependencies: dependencies, css: css };
+			rebuildcss();
 		};
 
 		/*
