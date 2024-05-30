@@ -519,7 +519,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.172;
+	M.version = 19.173;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
