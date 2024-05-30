@@ -1459,8 +1459,10 @@
 			value = true;
 		var arr = findcomponents(pathmaker(path), EMPTYOBJECT);
 		var is = value === undefined || value === true;
-		for (var com of arr)
+		for (var com of arr) {
 			com.config.touched = is;
+			com.config.modified = is;
+		}
 		state(arr, 1, 2);
 	};
 
@@ -2830,8 +2832,11 @@
 					com.config.touched = false;
 				}
 
-				if (meta.flags.change || meta.flags.touch)
+				if (meta.flags.change || meta.flags.modify || meta.flags.touch)
 					com.config.touched = true;
+
+				if (meta.flags.change || meta.flags.modify)
+					com.config.modified = true;
 
 				var invalid = com.validate ? (!com.validate(result)) : false;
 				com.config.invalid = invalid;
@@ -2944,8 +2949,11 @@
 							com.config.touched = false;
 						}
 
-						if (meta.flags.change || meta.flags.touch)
+						if (meta.flags.change || meta.flags.modify || meta.flags.touch)
 							com.config.touched = true;
+
+						if (meta.flags.change || meta.flags.modify)
+							com.config.modified = true;
 
 						com.config.invalid = com.validate ? (!com.validate(result)) : false;
 						com.state && statelist.push(com);
@@ -3096,8 +3104,11 @@
 					com.config.modified = false;
 				}
 
-				if (meta.flags.change || meta.flags.touch)
+				if (meta.flags.change || meta.flags.modify || meta.flags.touch)
 					com.config.touched = true;
+
+				if (meta.flags.change || meta.flags.modify)
+					com.config.modified = true;
 
 				com.config.invalid = com.validate ? (!com.validate(result)) : false;
 			}
@@ -3447,7 +3458,9 @@
 			var p = arr[i];
 			if (model == null)
 				model = {};
-			set2(model, p.substring(path.length + 1), get(p));
+			var prop = p.substring(path.length + 1).trim();
+			if (prop)
+				set2(model, prop, get(p));
 		}
 		return model;
 	}
@@ -4272,11 +4285,12 @@
 
 				var scope = new Scope();
 				var conf = TRANSLATE((meta[1] || '').replace(/\$/g, '').parseConfig());
-				var isolated = path.charAt(0) === '!';
+				var c = path.charAt(0);
+				var isolated = c === '!' || c !== '?';
 
 				scope.isolated = isolated || !!conf.isolated;
 
-				if (isolated)
+				if (c === '!')
 					path = path.substring(1);
 
 				var tmp = path.split(' ');
