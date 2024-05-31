@@ -519,7 +519,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.173;
+	M.version = 19.174;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4286,7 +4286,7 @@
 				var scope = new Scope();
 				var conf = TRANSLATE((meta[1] || '').replace(/\$/g, '').parseConfig());
 				var c = path.charAt(0);
-				var isolated = c === '!' || c !== '?';
+				var isolated = c === '!';
 
 				scope.isolated = isolated || !!conf.isolated;
 
