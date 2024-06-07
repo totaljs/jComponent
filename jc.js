@@ -519,7 +519,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.175;
+	M.version = 19.176;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -4751,7 +4751,7 @@
 			obj.config.invalid = !obj.validate(obj.get(), true);
 
 		obj.done && setTimeout(obj.done, 20);
-		obj.state && obj.stateX(0, 3);
+		obj.stateX(0, 3);
 
 		obj.$init && setTimeout(function() {
 			var fn = get(obj.makepath(obj.$init));
@@ -5886,7 +5886,7 @@
 		clsl.toggle('ui-modified', config.modified == true);
 		clsl.toggle('ui-touched', config.touched == true);
 		clsl.toggle('ui-disabled', config.disabled == true);
-		clsl.toggle('ui-invalid', self.$autobind ? config.invalid == true : (config.invalid == true && (config.modified == true || config.touched == true)));
+		clsl.toggle('ui-invalid', config.invalid == true);
 
 		if (update.length) {
 			for (var key of update) {
@@ -6031,101 +6031,48 @@
 		return t;
 	};
 
-	PPC.autobind = function(prepare) {
+	PPC.bind = function(flags, value) {
 
 		var t = this;
+		var validate = false;
 
-		if (t.$autobind)
-			return;
-
-		t.$autobind = true;
-
-		var selector = 'input,select,textarea';
-		var timeout = null;
-		var prev = null;
-
-		var updateforce = function() {
-			timeout = null;
-
-			var value = t.find(selector).val();
-			var invalid = t.validate ? (!t.validate(value)) : false;
-			if (invalid !== t.config.invalid) {
-				t.config.invalid = invalid;
-				t.stateX(0, 0);
+		if (flags) {
+			var arr = flags.split(/\s|,|\|/);
+			for (var m of arr) {
+				if (m.charAt(0) === '@')
+					m = m.substring(1);
+				switch (m) {
+					case 'validate':
+						validate = true;
+						break;
+					case 'touched':
+					case 'touch':
+						t.config.touched = true;
+						break;
+					case 'modified':
+					case 'changed':
+					case 'modify':
+					case 'change':
+						t.config.modified = true;
+						break;
+					case 'reset':
+						t.config.modified = false;
+						t.config.touched = false;
+						break;
+				}
 			}
+		}
 
-			if (value !== prev) {
-				if (prepare)
-					value = prepare(value);
-				t.$skipsetter = true;
-				t.set(value);
-			}
+		if (validate)
+			t.validate2();
 
-		};
-
-		var update = function() {
-			timeout && clearTimeout(timeout);
-			timeout = setTimeout(updateforce, 200);
-		};
-
-		t.element.on('input', selector, function() {
-
-			if (!t.config.modified || !t.config.touche) {
-				let tmp = {};
-				if (!t.config.modified)
-					tmp.modified = 1;
-				if (!t.config.touched)
-					tmp.touched = 1;
-				t.reconfigure(tmp);
-				t.stateX(0, 0);
-			}
-
-			var value = $(this).val();
-			prev = value;
-
-			if (prepare)
-				value = prepare(value);
-
-			// t.config.invalid = t.validate ? (!t.validate(value)) : false;
-			t.$skipsetter = true;
-			t.set(value);
-
-		}).on('focusin', selector, function() {
-			prev = $(this).val();
-		}).on('change', selector, function() {
-			if (!t.config.modified)
-				t.reconfigure({ modified: 1 });
-			update();
-		}).on('blur', selector, function() {
-			if (!t.config.touched)
-				t.reconfigure({ touched: 1 });
-			update();
-		});
-
-		t.setter = function(value, path, type) {
-
-			if (value == null)
-				value = '';
-
-			t.config.invalid = t.validate ? (!t.validate(value, type === 0)) : false;
+		if (value === undefined) {
 			t.stateX(0, 0);
+			return;
+		}
 
-			var control = t.find('input,textarea,select')[0];
-			if (control) {
-
-				let selectone = 'select-one';
-
-				if (control.type === 'checkbox') {
-					let tmp = value != null ? (value + '').toLowerCase() : '';
-					t.checked = tmp === 'true' || tmp === '1' || tmp === 'on' || tmp === 'yes' || tmp === 'ok' || tmp === 'y';
-				} else
-					$(control).val(value);
-
-				if (!type && self.$autofill && t.type !== a && t.type !== 'range' && !self.$default)
-					autofill.push(t.$com);
-
-			}
-		};
+		t.$skipsetter = true;
+		t.path && M.set(t.path, value, 2);
 	};
 
 	PPC.import = function(url, callback, insert, preparator) {
