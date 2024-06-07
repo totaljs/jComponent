@@ -6086,7 +6086,7 @@
 			if (prepare)
 				value = prepare(value);
 
-			t.config.invalid = t.validate ? (!t.validate(value)) : false;
+			// t.config.invalid = t.validate ? (!t.validate(value)) : false;
 			t.$skipsetter = true;
 			t.set(value);
 
