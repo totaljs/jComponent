@@ -519,7 +519,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.175;
+	M.version = 19.176;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6513,6 +6513,14 @@
 			SEEX(p, a, b, c, d);
 
 		return self;
+	};
+
+	PPC.GET = function(path) {
+		return GET(this.makepath(path));
+	};
+
+	PPC.SET = function(path, value) {
+		return SET(this.makepath(path), value);
 	};
 
 	PPC.EXEC = function(path, a, b, c, d) {
