@@ -18,6 +18,7 @@
 	var REGSCOPEINLINE = /\?/g;
 	var REGSCOPECHECK = /\?\/|\?\./;
 	var REGSCOPEREPLACE = /\?\//g;
+	var REGSCR = /SCR/g;
 	var REGNUM = /^(-)?[0-9.]+$/;
 	var REGFLAGS = /\s@[a-z0-9]+/gi;
 	var REGCL = /\s#[a-z0-9_-]+/gi;
@@ -519,7 +520,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.176;
+	M.version = 19.177;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11679,7 +11680,7 @@
 									r = true;
 								else
 									scr = e;
-								fn = VBINDARRAY(TRANSLATE(scr.html()), e);
+								fn = VBINDARRAY(TRANSLATE(scr.html().replace(REGSCR, T_SCRIPT)), e);
 								if (notvisible)
 									fn.$nv = 1;
 								r && scr.remove();
@@ -11706,7 +11707,7 @@
 								else
 									scr = et;
 
-								tmp = TRANSLATE(scr.html());
+								tmp = TRANSLATE(scr.html().replace(REGSCR, T_SCRIPT));
 
 								try {
 									fn = Tangular.compile(tmp);
