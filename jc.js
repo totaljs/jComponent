@@ -394,6 +394,7 @@
 	var current_scope = null;
 	var current_caller = null;
 
+	W.jComponent = M;
 	W.MAIN = W.M = M;
 	W.TEMP = {};
 	W.PLUGINS = {};
@@ -520,7 +521,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.177;
+	M.version = 19.178;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8634,6 +8635,30 @@
 		output = r;
 		!noCache && (cache[key] = output);
 		return output;
+	};
+
+	W.COMPONENTS = function(path) {
+
+		var flags = {};
+
+		path = path.replace(/@\w+/g, function(text) {
+			flags[text.substring(1)] = 1;
+			return '';
+		}).trim();
+
+		path = pathmaker(path, 0, 1);
+
+		var arr = [];
+
+		for (let m of M.components) {
+			if (!m || m.$removed || !m.$loaded || !m.path || !m.$compare(path))
+				continue;
+			if ((flags.visible && HIDDEN(m.element)) || (flags.hidden && !HIDDEN(m.element)) || (flags.touched && !m.config.touched) || (flags.modified && !m.config.modified) || (flags.required && !m.config.required) || (flags.invalid && !m.config.invalid) || (flags.valid && m.config.invalid) || (flags.disabled && !m.config.disabled) || (flags.enabled && m.config.disabled))
+				continue;
+			arr.push(m);
+		}
+
+		return arr;
 	};
 
 	W.BIND = function(path) {
