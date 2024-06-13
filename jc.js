@@ -521,7 +521,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.178;
+	M.version = 19.179;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6037,6 +6037,7 @@
 
 		var t = this;
 		var validate = false;
+		var setter = false;
 
 		if (flags) {
 			var arr = flags.split(/\s|,|\|/);
@@ -6044,6 +6045,9 @@
 				if (m.charAt(0) === '@')
 					m = m.substring(1);
 				switch (m) {
+					case 'setter':
+						setter = true;
+						break;
 					case 'validate':
 						validate = true;
 						break;
@@ -6065,15 +6069,17 @@
 			}
 		}
 
-		if (validate)
-			t.validate2();
+		validate && t.validate2();
 
 		if (value === undefined) {
 			t.stateX(0, 0);
+			setter && t.setter(t.get(), t.path, 2);
 			return;
 		}
 
-		t.$skipsetter = true;
+		if (!setter)
+			t.$skipsetter = true;
+
 		t.path && M.set(t.path, value, 2);
 	};
 
