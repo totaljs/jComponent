@@ -521,7 +521,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.179;
+	M.version = 19.181;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -6080,7 +6080,8 @@
 		if (!setter)
 			t.$skipsetter = true;
 
-		t.path && M.set(t.path, value, 2);
+		if (t.path && value !== undefined)
+			M.set(t.path, value, 2);
 	};
 
 	PPC.import = function(url, callback, insert, preparator) {
