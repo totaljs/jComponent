@@ -521,7 +521,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.181;
+	M.version = 19.182;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -11075,6 +11075,62 @@
 		});
 
 		$(D).ready(function() {
+
+			if (!M.$components.exec) {
+				(function() {
+					var timeout = null;
+					var el = $(document.body);
+					var fn = function(plus, forceprevent) {
+						return function execlick(e) {
+
+							if (M.$components.exec)
+								return;
+
+							var el = $(this);
+
+							if (!plus && timeout)
+								return;
+
+							if (!e.$force && !plus && el.hclass('exec2')) {
+								timeout && clearTimeout(timeout);
+								timeout = setTimeout(function(ctx, e) {
+									timeout = null;
+									e.$force = true;
+									execlick.call(ctx, e);
+								}, 300, this, e);
+								return;
+							}
+
+							var attr = el.attrd('exec' + plus);
+							var href = el.attrd('href' + plus);
+
+							if (timeout) {
+								clearTimeout(timeout);
+								timeout = null;
+							}
+
+							var prevent = forceprevent ? '1' : el.attrd('prevent' + plus);
+							if (prevent === 'true' || prevent === '1') {
+								e.preventDefault();
+								e.stopPropagation();
+							}
+
+							if (attr) {
+								if (attr.includes('?')) {
+									var scope = el.scope();
+									if (scope)
+										attr = scope.makepath(attr);
+								}
+								EXEC(attr, el, e);
+							}
+							href && REDIRECT(href);
+						};
+					};
+					el.on('contextmenu', '.exec3', fn('3', true));
+					el.on('dblclick', '.exec2', fn('2'));
+					el.on('click', '.exec', fn(''));
+				})();
+			}
 
 			var body = $(D.body);
 
