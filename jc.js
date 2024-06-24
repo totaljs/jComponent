@@ -11987,11 +11987,11 @@
 				var length = arr.length;
 				for (var i = 0; i < length; i++) {
 					p += (p ? '.' : '') + arr[i];
-					var k = i === (length - 1) ? p : '!' + p;
+					var k = i === (length - 1) ? p : ('!' + p);
 					if (!skiparr) {
 						var index = arr[i].indexOf('[');
 						if (index !== -1) {
-							var ka = k.substring(0, k.length - index);
+							var ka = k.substring(0, k.length - (arr[i].length - index));
 							if (binders[ka])
 								binders[ka].push(obj);
 							else
