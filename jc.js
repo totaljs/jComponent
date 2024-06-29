@@ -521,11 +521,12 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.183;
+	M.version = 19.184;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
 	M.macros = {};
+	M.events = events;
 	M.performance = { plugins: {}, scopes: {}, components: {}, binders: {}, events: {}, setters: {}, exec: {}, set: {}, get: {}, watchers: {}, requests: {}, compilation: {}, validation: {}, reset: {}, lazy: {}, changes: {}, repeat: {}, cmd: {}, returns: {} };
 	M.components = [];
 	M.$formatter = [];
