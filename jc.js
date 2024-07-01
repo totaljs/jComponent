@@ -483,7 +483,7 @@
 
 	W.jComponent = M;
 	M.loaded = false;
-	M.version = 18.276;
+	M.version = 18.277;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
