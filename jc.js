@@ -483,7 +483,7 @@
 
 	W.jComponent = M;
 	M.loaded = false;
-	M.version = 18.277;
+	M.version = 18.278;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -5445,6 +5445,8 @@
 			var key = type + 'x' + what;
 			if (!self.$bindchanges || self.$state !== key) {
 				self.$state = key;
+				self.config.invalid = !self.$valid;
+				self.config.modified = self.config.touched = !self.$dirty;
 				self.config.$state && EXEC.call(self, self.config.$state.SCOPE(self), type, what);
 				self.state(type, what);
 				self.state2 && self.state2(type, what);
@@ -8241,7 +8243,7 @@
 		for (let m of M.components) {
 			if (!m || m.$removed || !m.$loaded || !m.path || !m.$compare(path))
 				continue;
-			if ((flags.visible && HIDDEN(m.element)) || (flags.hidden && !HIDDEN(m.element)) || (flags.touched && !m.config.touched) || (flags.modified && !m.config.modified) || (flags.required && !m.config.required) || (flags.invalid && !m.config.invalid) || (flags.valid && m.config.invalid) || (flags.disabled && !m.config.disabled) || (flags.enabled && m.config.disabled))
+			if ((flags.visible && HIDDEN(m.element)) || (flags.hidden && !HIDDEN(m.element)) || ((flags.modified || flags.touched) && m.$dirty) || (flags.required && !m.config.required) || (flags.invalid && m.$valid) || (flags.valid && !m.$valid) || (flags.disabled && !m.config.disabled) || (flags.enabled && m.config.disabled))
 				continue;
 			arr.push(m);
 		}
