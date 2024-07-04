@@ -10914,8 +10914,8 @@
 
 		function parseUA() {
 			var arr = ua.match(/[a-z]+/gi);
+			var data = {};
 			if (arr) {
-				var data = {};
 				for (var i = 0; i < arr.length; i++) {
 					var uai = arr[i];
 
