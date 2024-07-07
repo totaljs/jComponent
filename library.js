@@ -2011,6 +2011,16 @@
 				}
 
 				t.make && t.make();
+
+				// From the UI-BIND
+				if (t.dom.$uiconfig) {
+					for (let cfg of t.dom.$uiconfig) {
+						for (let key in cfg)
+							t.config[key] = cfg[key];
+					}
+					delete t.dom.$uiconfig;
+				}
+
 				t.reconfigure(t.config, true);
 				t.$datasource && t.$datasource.refresh && t.$datasource.refresh();
 				t.path && t.$setter(t.get(), { init: 1 }, t.path.path);
@@ -2915,8 +2925,15 @@
 
 		function reconfigure(el, config) {
 			var arr = el.find('ui-component');
-			for (let m of arr)
-				m.$uicomponent.reconfigure(config);
+			for (let m of arr) {
+				if (m.$uicomponent)
+					m.$uicomponent.reconfigure(config);
+				else {
+					if (!m.$uiconfig)
+						m.$uiconfig = [];
+					m.$uiconfig.push(config);
+				}
+			}
 		}
 
 		var PROTO = T.Binder.prototype;
