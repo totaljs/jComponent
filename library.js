@@ -3140,7 +3140,7 @@
 			if (t.track) {
 				let is = false;
 				for (let m of t.track) {
-					if (path.includes(m, true)) {
+					if (path.split.length <= t.path.split.length || path.includes(m, true)) {
 						is = true;
 						break;
 					}
