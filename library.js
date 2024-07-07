@@ -408,24 +408,24 @@
 
 		// @important flag (it waits for a method)
 
-		var c = name.charAt(0);
+		var char = name.charAt(0);
 
-		if (c === '-') {
+		if (char === '-') {
 			T.setter(null, name.substring(1), a, b, c, d);
 			return;
 		}
 
-		if (c === '#') {
+		if (char === '#') {
 			T.emit(name.substring(1), a, b, c, d);
 			return;
 		}
 
-		if (c === '&') {
+		if (char === '&') {
 			T.cmd(null, name.substring(1), a, b, c, d);
 			return;
 		}
 
-		if (c === '*')
+		if (char === '*')
 			name = DEF.path.clean('common') + name.substring(1);
 
 		let raw = name;
@@ -440,7 +440,6 @@
 		path = parsepath(path);
 
 		if (name.includes('/')) {
-
 			let tmp = name.split('/');
 			let plugin = T.plugins[tmp[0]];
 			if (plugin) {
@@ -4892,7 +4891,7 @@
 							if (extend === true) {
 								let tmp = GET(DEF.path.clean('cl'));
 								for (let key in val) {
-									tmp[key] = val;
+									tmp[key] = val[key];
 									T.notify(T.root, DEF.path.cl + key);
 								}
 							} else
