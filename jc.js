@@ -521,7 +521,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.184;
+	M.version = 19.185;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10325,6 +10325,11 @@
 					e.preventDefault();
 			}
 		});
+
+		$.fn.autofocus = function(selector) {
+			autofocus(this, selector);
+			return this;
+		};
 
 		$.fn.multiple = function(selector) {
 			var tmp = {};
