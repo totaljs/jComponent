@@ -70,6 +70,7 @@
 	DEF.iconprefix = 'ti ti-';
 	DEF.color = '#4285F4';
 	DEF.scrollbaranimate = true;
+	DEF.firstdayofweek = 1;
 	DEF.thousandsseparator = ' ';
 	DEF.decimalseparator = '.';
 	DEF.dateformat = 'yyyy-MM-dd';
