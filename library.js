@@ -2979,6 +2979,7 @@
 			}
 
 			t.path = parsepath(t.path);
+			t.plugin = t.element.plugin();
 
 			for (let key in config) {
 
@@ -3035,7 +3036,7 @@
 						commands.push(cmd);
 						break;
 					case 'helpers':
-						t[cmd.name] = new Function('scope', 'return jComponent.get(scope, "{0}")'.format(t.replace(value)));
+						t[cmd.name] = new Function('scope', 'return W.GET("{0}")'.format(t.replaceplugin(value)));
 						break;
 					case 'exec':
 					case 'refresh':
@@ -3213,9 +3214,9 @@
 						DEFMODEL.element = el;
 
 						if (m.vdom)
-							DIFFDOM(el, m.vdom[0], m.template(DEFMODEL, null, m.helpers ? m.helpers(t.scope) : null), m.vdom[1]);
+							DIFFDOM(el, m.vdom[0], m.template(DEFMODEL, null, t.helpers ? t.helpers(t.scope) : null), m.vdom[1]);
 						else
-							el.html(m.template(DEFMODEL, null, m.helpers ? m.helpers(t.scope) : null));
+							el.html(m.template(DEFMODEL, null, t.helpers ? t.helpers(t.scope) : null));
 
 						break;
 					case 'resize':
