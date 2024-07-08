@@ -3032,6 +3032,9 @@
 					case 'delay':
 						t[cmd.name] = (value || '100').parseInt();
 						break;
+					case 'format':
+						t[cmd.name] = value;
+						break;
 					case 'focus':
 						commands.push(cmd);
 						break;
@@ -3217,8 +3220,8 @@
 							DIFFDOM(el, m.vdom[0], m.template(DEFMODEL, null, t.helpers ? t.helpers(t.scope) : null), m.vdom[1]);
 						else
 							el.html(m.template(DEFMODEL, null, t.helpers ? t.helpers(t.scope) : null));
-
 						break;
+
 					case 'resize':
 						T.setter(el, (value || '*') + '/resize');
 						break;
@@ -3241,7 +3244,7 @@
 						el.find('input,select,textarea').prop('disabled', !val);
 						break;
 					case 'attr':
-						el.attr(m.attr, val);
+						el.attr(m.attr, t.format ? val.format(t.format) :  val);
 						break;
 					case 'checked':
 						el.find('input').prop('checked', !!val);
@@ -3259,18 +3262,18 @@
 						el.tclass('invisible', !!val);
 						break;
 					case 'html':
-						el.html(val == null || val == '' ? t.empty : val.toString());
+						el.html(val == null || val == '' ? t.empty : (t.format ? val.format(t.format) : val.toString()));
 						break;
 					case 'text':
-						el.text(val == null || val == '' ? t.empty : val.toString());
+						el.text(val == null || val == '' ? t.empty : (t.format ? val.format(t.format) : val.toString()));
 						break;
 					case 'value':
-						el.val(val == null || val == '' ? t.empty : val.toString());
+						el.val(val == null || val == '' ? t.empty : (t.format ? val.format(t.format) : val.toString()));
 						break;
 					case 'title':
 					case 'href':
 					case 'src':
-						el.attr(m.name, val == null || val == '' ? t.empty : val.toString());
+						el.attr(m.name, val == null || val == '' ? t.empty : (t.format ? val.format(t.format) : val.toString()));
 						break;
 				}
 			}
@@ -6347,6 +6350,16 @@
 			for (var key in selector)
 				tmp[key] = this.find(selector[key]);
 			return tmp;
+		};
+
+		/*
+			@Path: jQuery extensions
+			@Method: $(selector).autofocus([selector]);
+			The method performs auto-focus for `selector`. Default: `selector` value `input,textarea,select`.
+		*/
+		$.fn.autofocus = function(selector) {
+			autofocus(this, selector);
+			return this;
 		};
 
 		/*
