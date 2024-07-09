@@ -1,0 +1,11 @@
+========================
+20.001
+========================
+
+- fixed `EXEC()` calls
+- fixed `CLINIT()` with `extend` argument
+- fixed `track` option in `<ui-bind>`
+- fixed `format` option in `<ui-bind>`
+- fixed reconfiguring unintialized components in `<ui-bind>`
+- extended jQuery by adding `$.autofocus([selector])` method
+- fixed unexpected removing of custom scrollbars
