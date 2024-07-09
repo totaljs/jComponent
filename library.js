@@ -112,7 +112,7 @@
 		} catch {}
 	};
 
-	T.version = 20;
+	T.version = 20.001;
 	T.is20 = true;
 	T.ready = false;
 	T.root = W;
@@ -7503,7 +7503,7 @@
 			var is = false;
 
 			while (parent) {
-				if (parent.tagName === 'body') {
+				if (parent.tagName === 'BODY') {
 					is = true;
 					break;
 				}
@@ -7949,7 +7949,8 @@
 		};
 
 		resize_visible();
-		intervalresize = setInterval(self.check, options.interval || 54321);
+		// intervalresize = setInterval(self.check, options.interval || 54321);
+		intervalresize = setInterval(self.check, 5000);
 		T.scrollbars.push(self);
 		return self;
 	}
