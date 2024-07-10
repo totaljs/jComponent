@@ -521,7 +521,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.185;
+	M.version = 19.186;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7573,7 +7573,7 @@
 
 		for (var i = 0; i < M.components.length; i++) {
 			var m = M.components[i];
-			if (!m.$removed || name === m.name){
+			if (!m.$removed && name === m.name){
 				config && m.reconfigure(config, undefined, true);
 				declaration.call(m, m, m.config, 'ui–' + m.name);
 			}
