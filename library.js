@@ -445,6 +445,7 @@
 			let plugin = T.plugins[tmp[0]];
 			if (plugin) {
 				if (plugin[tmp[1]]) {
+					plugin.caller = T.caller;
 					path.exec(() => plugin[tmp[1]](a, b, c, d));
 					T.caller = plugin;
 				} else
@@ -811,6 +812,8 @@
 					return null;
 				if (value instanceof Date)
 					return value;
+				if (format == 'auto')
+					format = '';
 				value = value.parseDate(format || DEF.dateformat);
 				return value && value.getTime() ? value : null;
 		}
@@ -2115,6 +2118,9 @@
 
 			if (t.$parser)
 				value = t.$parser(t.path.path, value);
+
+			if (t.config.type)
+				value = T.parse(t.config.type, value, t.config.format);
 
 			t.internal.autobound = true;
 
@@ -7949,8 +7955,7 @@
 		};
 
 		resize_visible();
-		// intervalresize = setInterval(self.check, options.interval || 54321);
-		intervalresize = setInterval(self.check, 5000);
+		intervalresize = setInterval(self.check, options.interval || 54321);
 		T.scrollbars.push(self);
 		return self;
 	}
