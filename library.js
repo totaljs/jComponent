@@ -1,6 +1,3 @@
-// Total.js UI Library (jComponent v20)
-// DEV
-
 (function(W) {
 
 	if (W.jComponent)
@@ -1124,6 +1121,11 @@
 					if (t.instance.def)
 						t.instance.def = new Function('return ' + t.instance.def);
 
+					if (!t.instance.plugin) {
+						let tmp = findplugin(t.dom);
+						t.instance.plugin = tmp ? tmp.$uiplugin : null;
+					}
+
 					extensions = T.db.extensions[t.instance.name];
 					reference = '$uicomponent';
 					T.components.push(t.instance);
@@ -1537,7 +1539,7 @@
 			if (c === '@' || c === '<' || c === '>' || c === '(' || c === ')')
 				path = ' ' + path;
 			else
-				path = c === '?' ? path.substring(1) : path ? ('.' + path) : '';
+				path = c === '?' ? path.substring(1) : c === '|' ? path : path ? ('.' + path) : '';
 
 			return parsepath(this.path + path);
 		};
