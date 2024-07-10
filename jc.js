@@ -402,6 +402,10 @@
 	W.EMPTYOBJECT = {};
 	W.NOW = new Date();
 
+	M.parse = function(type, value, format) {
+		return W.PARSER(value, '', type, format);
+	};
+
 	W.DEFAULT = function(path, timeout, reset) {
 		var arr = path.split(REGMETA);
 		if (arr.length > 1) {
@@ -521,7 +525,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.186;
+	M.version = 19.187;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
