@@ -141,7 +141,8 @@
 		blocked: {},
 		wait: {},
 		tmp: {},
-		cl: {}
+		cl: {},
+		fn: {}
 	};
 
 	T.db = {
@@ -4902,6 +4903,54 @@
 
 			T.cache.cl[name] = { callback: callback, expire: expire };
 			init && W.CL(name, NOOP);
+		};
+
+		W.FN = function(value) {
+
+			var key = HASH(value);
+			var fn = T.cache.fn[key];
+			if (fn)
+				return fn;
+
+			var index = value.indexOf('=>');
+			if (index === -1)
+				return T.cache.fn[key] = new Function('value', 'return ' + value);
+
+			var arg = value.substring(0, index).trim();
+			var val = value.substring(index + 2).trim();
+			var is = false;
+
+			arg = arg.replace(/\(|\)|\s/g, '').trim();
+			if (arg)
+				arg = arg.split(',');
+
+			if (val.charCodeAt(0) === 123) {
+				is = true;
+				val = val.substring(1, val.length - 1).trim();
+			}
+
+			var output = (is ? '' : 'return ') + val;
+
+			switch (arg.length) {
+				case 1:
+					fn = new Function(arg[0], output);
+					break;
+				case 2:
+					fn = new Function(arg[0], arg[1], output);
+					break;
+				case 3:
+					fn = new Function(arg[0], arg[1], arg[2], output);
+					break;
+				case 4:
+					fn = new Function(arg[0], arg[1], arg[2], arg[3], output);
+					break;
+				case 0:
+				default:
+					fn = new Function(output);
+					break;
+			}
+
+			return T.cache.fn[key] = fn;
 		};
 
 		W.CL = function(name, callback) {
