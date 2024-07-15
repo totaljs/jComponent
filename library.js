@@ -406,7 +406,6 @@
 	T.exec = function(name, a, b, c, d) {
 
 		// @important flag (it waits for a method)
-
 		var char = name.charAt(0);
 
 		if (char === '-') {
@@ -444,8 +443,8 @@
 			if (plugin) {
 				if (plugin[tmp[1]]) {
 					plugin.caller = T.caller;
-					path.exec(() => plugin[tmp[1]](a, b, c, d));
 					T.caller = plugin;
+					path.exec(() => plugin[tmp[1]](a, b, c, d));
 				} else
 					WARN(ERR.format('The method "{0}/{1}" not found.'.format(tmp[0], tmp[1])));
 			} else {
@@ -1325,7 +1324,12 @@
 			if (t.ref.dependencies) {
 				if (!(t.ref.dependencies instanceof Array))
 					t.ref.dependencies = t.ref.dependencies.split(',').trim();
-				t.ref.dependencies.wait(IMPORT, () => init(t));
+				t.ref.dependencies.wait(function(item, next) {
+					if (typeof(item) === 'string')
+						W.IMPORT(item, next);
+					else
+						item(next);
+				}, () => init(t));
 			} else
 				init(t);
 		};

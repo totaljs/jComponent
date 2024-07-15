@@ -9,3 +9,4 @@
 - fixed reconfiguring unintialized components in `<ui-bind>`
 - extended jQuery by adding `$.autofocus([selector])` method
 - fixed unexpected removing of custom scrollbars
+- fixed component's dependencies
