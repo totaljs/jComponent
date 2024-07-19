@@ -2298,6 +2298,20 @@
 			t.path.notify(t.scope, flags);
 		};
 
+		PROTO.push = function(value) {
+			var t = this;
+			if (t.path) {
+				var arr = t.path.get(t.scope);
+				if (!arr)
+					arr = [];
+				else if (!(arr instanceof Array))
+					arr = [arr];
+				arr.push(value);
+				t.path.set(t.scope, arr);
+				t.path.notify(t.scope);
+			}
+		};
+
 		/*
 			@Path: Component
 			@Method: instance.rewrite(value, [flags]); #value {String}; #[flags] {String} with @;
