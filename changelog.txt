@@ -10,3 +10,4 @@
 - extended jQuery by adding `$.autofocus([selector])` method
 - fixed unexpected removing of custom scrollbars
 - fixed component's dependencies
+- added missing `component.push()` method
