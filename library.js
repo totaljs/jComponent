@@ -1802,6 +1802,10 @@
 			path.notify(t.scope);
 		};
 
+		PROTO.cachepath = function(path, expire, def) {
+			CACHEPATH(this.path.assign(path).toString(), expire, def);
+		};
+
 		/*
 			@Path: Plugin
 			@Method: instance.push(path, value)
@@ -3589,6 +3593,9 @@
 			The method checks if the string is a serialized JSON date.
 		*/
 		PROTO.args = function(obj, encode) {
+
+			if (!obj)
+				obj = EMPTYOBJECT;
 
 			var isfn = typeof(encode) === 'function';
 
@@ -6057,6 +6064,20 @@
 					tmp = null;
 				return tmp ? tmp.value : null;
 			}
+		};
+
+		W.CACHEPATH = function(path, expire, def) {
+
+			var value = GET(path);
+			if (value == null) {
+				if (def)
+					value = typeof(def) === 'function' ? def() : def;
+			}
+
+			if (value != null)
+				SET(path, value);
+
+			WATCH(path, value => CACHE('path_' + path, value, expire));
 		};
 
 		/*
