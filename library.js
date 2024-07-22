@@ -1743,11 +1743,15 @@
 			var t = this;
 			var path = parsepath(name);
 			var fn = t[path.path];
-			if (fn)
+			if (fn) {
 				path.exec(() => fn(a, b, c, d, e));
-			else
+				T.caller = t;
+			} else
 				WARN(ERR.format('The method "{0}/{1}" not found.'.format(t.name, path.path)));
-			T.caller = t;
+		};
+
+		PROTO.talker = function() {
+			T.caller = this;
 		};
 
 		/*
@@ -1922,6 +1926,7 @@
 			if (path.indexOf('{') === -1)
 				path += '{0}';
 
+			T.caller = this;
 			return path.format(this.path);
 		};
 
