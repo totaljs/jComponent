@@ -26,6 +26,10 @@
 	W.MONTHS = 'January,February,March,April,May,June,July,August,September,October,November,December'.split(',');
 	W.DAYS = 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'.split(',');
 
+	function WARN2() {
+		DEF.warnings && W.console && W.console.warn.apply(W.console, arguments);
+	}
+
 	/*
 		@Path: Globals
 		@Method: NOOP(); #return {Function};
@@ -77,6 +81,7 @@
 	DEF.baseurl = ''; // String or Function
 	DEF.root = ''; // String or Function
 	DEF.empty = '---';
+	DEF.warnings = false;
 	DEF.env = {};
 	DEF.env.ts = DEF.dateformat + ' - ' + DEF.timeformat;
 	DEF.env.date = DEF.dateformat;
@@ -159,8 +164,8 @@
 
 		try {
 			T.free();
-		} catch {
-			WARN(ERR.format('T.free()'), e);
+		} catch (e) {
+			WARN2(ERR.format('T.free()'), e);
 		}
 
 		// Check cache
@@ -446,12 +451,12 @@
 					T.caller = plugin;
 					path.exec(() => plugin[tmp[1]](a, b, c, d));
 				} else
-					WARN(ERR.format('The method "{0}/{1}" not found.'.format(tmp[0], tmp[1])));
+					WARN2(ERR.format('The method "{0}/{1}" not found.'.format(tmp[0], tmp[1])));
 			} else {
 				if (path && path.flags.important)
 					setTimeout(T.exec, 500, raw, a, b, c, d);
 				else
-					WARN(ERR.format('The plugin "{0}" not found.'.format(tmp[0])));
+					WARN2(ERR.format('The plugin "{0}" not found.'.format(tmp[0])));
 			}
 		} else {
 			if (W[name]) {
@@ -460,7 +465,7 @@
 				if (path && path.flags.important)
 					setTimeout(T.exec, 500, raw, a, b, c, d);
 				else
-					WARN(ERR.format('The method "{0}" not found.'.format(name)));
+					WARN2(ERR.format('The method "{0}" not found.'.format(name)));
 			}
 		}
 	};
@@ -489,12 +494,12 @@
 					path.exec(() => plugin[tmp[1]](a, b, c, d));
 					T.caller = plugin;
 				} else
-					WARN(ERR.format('The method "{0}/{1}" not found.'.format(tmp[0], tmp[1])));
+					WARN2(ERR.format('The method "{0}/{1}" not found.'.format(tmp[0], tmp[1])));
 			} else {
 				if (path && path.flags.important)
 					setTimeout(T.exec, 500, raw, a, b, c, d);
 				else
-					WARN(ERR.format('The plugin "{0}" not found.'.format(tmp[0])));
+					WARN2(ERR.format('The plugin "{0}" not found.'.format(tmp[0])));
 			}
 		} else {
 			var fn = null;
@@ -608,7 +613,7 @@
 				if (m[tmp[1]])
 					run.push(m);
 				else if (sel !== '*')
-					WARN('The setter "{0}" not found.'.format(raw));
+					WARN2('The setter "{0}" not found.'.format(raw));
 			}
 		}
 
@@ -1259,14 +1264,14 @@
 				if (!tmp) {
 
 					if (t.fallback) {
-						WARN(ERR.format('The component "{0}" not found'.format(t.name)), t.dom);
+						WARN2(ERR.format('The component "{0}" not found'.format(t.name)), t.dom);
 						return;
 					}
 
 					// Try to download component from CDN
 					if (!T.cache.external[t.name]) {
 						T.cache.external[t.name] = true;
-						WARN(ERR.format('Downloading "{0}" component.').format(t.name));
+						WARN2(ERR.format('Downloading "{0}" component.').format(t.name));
 					}
 
 					IMPORT(DEF.fallback.format(t.name), function() {
@@ -1747,7 +1752,7 @@
 				path.exec(() => fn(a, b, c, d, e));
 				T.caller = t;
 			} else
-				WARN(ERR.format('The method "{0}/{1}" not found.'.format(t.name, path.path)));
+				WARN2(ERR.format('The method "{0}/{1}" not found.'.format(t.name, path.path)));
 		};
 
 		PROTO.talker = function() {
@@ -3213,7 +3218,7 @@
 					if (!check(value, path, t.element))
 						return;
 				} else
-					WARN(ERR.format('the check "{0}" command does not exist'.format(t.check)), t.dom);
+					WARN2(ERR.format('the check "{0}" command does not exist'.format(t.check)), t.dom);
 			}
 
 			if (t.delay && !nodelay) {
@@ -6935,7 +6940,7 @@
 				LS.removeItem(pmk);
 			} catch {
 				W.isPRIVATEMODE = true;
-				WARN(ERR.format('localStorage is disabled'));
+				WARN2(ERR.format('localStorage is disabled'));
 			}
 
 			var body = document.body.classList;
