@@ -216,7 +216,7 @@
 		// Delete unused binders
 		for (let m of T.binders) {
 			if (!inDOM(m.dom))
-				remove(m);
+				remove.push(m);
 		}
 
 		for (let m of remove)
