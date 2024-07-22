@@ -2358,6 +2358,14 @@
 			return this.path ? this.path.get(this.scope) : null;
 		};
 
+		PROTO.width = function() {
+			return this.element.width();
+		};
+
+		PROTO.height = function() {
+			return this.element.height();
+		};
+
 		/*
 			@Path: Component
 			@Method: instance.on(name, callback);
