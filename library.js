@@ -5958,6 +5958,8 @@
 			var path = parsepath(url);
 			var cachekey = path.flags.singleton ? ('singleton' + key) : '';
 
+			url = path.path;
+
 			if (cachekey) {
 				let tmp = T.cache.imports[cachekey];
 				if (tmp != null) {
