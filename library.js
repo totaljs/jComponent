@@ -27,6 +27,15 @@
 	W.$W = $(W);
 	W.MONTHS = 'January,February,March,April,May,June,July,August,September,October,November,December'.split(',');
 	W.DAYS = 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'.split(',');
+	W.PREF = {};
+
+	W.PREF.set = function(key, value) {
+		if (key !== 'set') {
+			W.PREF[key] = value;
+			CACHE('PREF', W.PREF, '1 year');
+		}
+		return value;
+	};
 
 	function WARN2() {
 		DEF.warnings && W.console && W.console.warn.apply(W.console, arguments);
@@ -6991,7 +7000,17 @@
 
 		DEF.onstorageread(function(data) {
 
-			T.cache.storage = data || {};
+			var cache = data || {};
+			T.cache.storage = cache;
+
+			var pref = CACHE('PREF');
+			if (pref) {
+				for (let key in pref) {
+					if (key !== 'set')
+						PREF[key] = pref[key];
+				}
+			}
+
 			T.ready = true;
 			T.loaded = true;
 
