@@ -11,3 +11,4 @@
 - fixed unexpected removing of custom scrollbars
 - fixed component's dependencies
 - added missing `component.push()` method
+- fixed `enabled` and `disabled` of `<ui-bind>` commands for HTML controls

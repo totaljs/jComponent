@@ -11,6 +11,8 @@
 
 	const TNB = { number: 1, boolean: 1 };
 	const T = Total;
+	const HTML_CONTROLS = 'input,select,textarea,button';
+
 	var readycounter = 0;
 
 	W.Total = T;
@@ -3287,11 +3289,13 @@
 						break;
 					case 'disabled':
 						reconfigure(el, { disabled: !!val });
-						el.find('input,select,textarea').prop('disabled', !!val);
+						el.find(HTML_CONTROLS).prop('disabled', !!val);
+						el.filter(HTML_CONTROLS).prop('disabled', !!val);
 						break;
 					case 'enabled':
 						reconfigure(el, { disabled: !val });
-						el.find('input,select,textarea').prop('disabled', !val);
+						el.find(HTML_CONTROLS).prop('disabled', !val);
+						el.filter(HTML_CONTROLS).prop('disabled', !val);
 						break;
 					case 'attr':
 						el.attr(m.attr, t.format ? val.format(t.format) :  val);
