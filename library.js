@@ -29,6 +29,10 @@
 	W.DAYS = 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'.split(',');
 	W.PREF = {};
 
+	W.PREF.get = function(key) {
+		return W.PREF[key];
+	};
+
 	W.PREF.set = function(key, value) {
 		if (key !== 'set') {
 			W.PREF[key] = value;
