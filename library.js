@@ -5980,9 +5980,11 @@
 			if (cachekey) {
 				let tmp = T.cache.imports[cachekey];
 				if (tmp != null) {
-					if (prepare)
-						tmp = prepare(tmp);
-					$(target)[path.flags.prepend ? 'prepend' : 'append'](tmp);
+					if (tmp) {
+						if (prepare)
+							tmp = prepare(tmp);
+						$(target)[path.flags.prepend ? 'prepend' : 'append'](tmp);
+					}
 					done();
 					return;
 				}
@@ -5999,6 +6001,8 @@
 			}
 
 			if (ext === '.js') {
+				if (cachekey)
+					T.cache.imports[cachekey] = '';
 				var scr = d.createElement('script');
 				scr.type = 'text/javascript';
 				scr.async = false;
@@ -6012,6 +6016,8 @@
 			}
 
 			if (ext === '.css') {
+				if (cachekey)
+					T.cache.imports[cachekey] = '';
 				var link = d.createElement('link');
 				link.type = 'text/css';
 				link.rel = 'stylesheet';
