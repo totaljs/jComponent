@@ -14,3 +14,4 @@
 - fixed `enabled` and `disabled` of `<ui-bind>` commands for HTML controls
 - fixed `PREF` functionality
 - fixed `@singleton` in the `IMPORT()` method
+- added missing `UNAUTHORIZED` method
