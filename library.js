@@ -1123,7 +1123,6 @@
 			for (let key in t.config)
 				t.instance.config[key] = t.config[key];
 
-			var cls = DEF.prefixcsscomponents + t.name;
 			var extensions = null;
 			var reference = '';
 
@@ -1132,10 +1131,13 @@
 					T.plugins[t.path] = t.instance;
 					extensions = T.db.extensions['@' + t.path];
 					reference = '$uiplugin';
+					if (t.instance.config.aclass)
+						t.element.aclass(t.name);
+					t.instance.cls = t.name;
 					break;
 				case 'component':
 					// t.element.aclass(cls);
-					t.instance.cls = cls;
+					t.instance.cls = DEF.prefixcsscomponents + t.name;
 					t.instance.def = t.element.attr('default');
 
 					if (t.instance.def)
@@ -1169,7 +1171,7 @@
 			}
 
 			try {
-				t.ref.callback && t.ref.callback.call(t.instance, t.instance, t.instance.config, cls);
+				t.ref.callback && t.ref.callback.call(t.instance, t.instance, t.instance.config, t.instance.cls);
 			} catch (e) {
 				WARN(ERR.format('Unexpected component error "{0}":'.format(t.instance.name)), e, t.element);
 			}
