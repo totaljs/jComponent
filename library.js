@@ -6060,7 +6060,7 @@
 					setTimeout(function() {
 						done();
 						T.emit('import', url, target);
-					}, 10);
+					}, 150);
 				});
 			});
 
