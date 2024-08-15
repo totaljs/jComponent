@@ -525,7 +525,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.187;
+	M.version = 19.188;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -3172,9 +3172,9 @@
 			}
 
 			if (n)
-				M.set(p, arr, type);
+				M.set(p + meta.flagslist, arr, type);
 			else if (is)
-				M.update(p, undefined, type);
+				M.update(p + meta.flagslist, undefined, type);
 		});
 	};
 
