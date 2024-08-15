@@ -2135,7 +2135,7 @@
 
 				// arguments true, false - are due to backward functionality
 				t.getter(value, true, false);
-				update(true);
+				update(false); // it can't change setter because it replaces incomplete user value (example: "0." will replace it to "0")
 
 			}).on('focusin', selector, function() {
 				prev = $(this).val();

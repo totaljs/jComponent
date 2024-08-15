@@ -16,3 +16,4 @@
 - fixed `@singleton` in the `IMPORT()` method
 - added missing `UNAUTHORIZED()` method
 - increased delay after importing 3rd party content via the `IMPORT()` method
+- fixed `real-time` binding values in the `component.autobind20()` method
