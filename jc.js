@@ -525,7 +525,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.188;
+	M.version = 19.189;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -10586,7 +10586,14 @@
 			return this.SETTER(selector, 'reconfigure', value);
 		};
 
-		$.fn.plugin = $.fn.scope = function() {
+		$.fn.plugin = function() {
+			var el = this;
+			var plugin = el.length ? findscope(el[0]) : null;
+			if (plugin)
+				return plugin.plugin;
+		};
+
+		$.fn.scope = function() {
 			var el = this;
 			return el.length ? findscope(el[0]) : null;
 		};
