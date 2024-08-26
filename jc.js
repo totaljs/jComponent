@@ -12829,11 +12829,11 @@
 			};
 		}
 
-		name = name.split(',').trim();
+		name = name.split(/,|(\s)\+(\s)/).trim();
 		for (var i = 0; i < name.length; i++)
 			name[i] = t.makepath(name[i]);
 
-		WATCH(name.join(','), fn, init);
+		WATCH(name.join(' + '), fn, init);
 		return t;
 	};
 
