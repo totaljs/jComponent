@@ -129,7 +129,7 @@
 		} catch {}
 	};
 
-	T.version = 20.001;
+	T.version = 20.002;
 	T.is20 = true;
 	T.ready = false;
 	T.root = W;
@@ -2274,7 +2274,10 @@
 			The method disables validation.
 		*/
 		PROTO.readonly = function() {
-			this.internal.readonly = true;
+			var t = this;
+			t.internal.readonly = true;
+			t.getter = null;
+			t.setter = null;
 		};
 
 		PROTO.blind = function() {
@@ -6254,7 +6257,10 @@
 					var iserr = response instanceof Error ? true : response instanceof Array && response.length ? response[0].error != null : response.error != null;
 					if (iserr) {
 						T.emit('ERROR', response);
-						error && W.SEEX(error, response);
+						if (typeof(error) === 'function')
+							error(response);
+						else if (error)
+							W.SEEX(error, response);
 						return true;
 					}
 				}
@@ -7128,7 +7134,7 @@
 							if (val) {
 								var tmp = m.$parser ? m.$parser(val) : val;
 								if (tmp)
-									m.set(val, '@change @init');
+									m.set(tmp, '@change @init');
 							}
 						}
 					}
