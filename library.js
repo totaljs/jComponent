@@ -129,7 +129,7 @@
 		} catch {}
 	};
 
-	T.version = 20.002;
+	T.version = 20.003;
 	T.is20 = true;
 	T.ready = false;
 	T.root = W;
@@ -1191,6 +1191,8 @@
 					proxy.init(proxy);
 				delete t.pending;
 			}
+
+			T.emit(t.type, t.instance);
 
 		}
 
@@ -5793,6 +5795,8 @@
 				return;
 
 			if (opt.path && opt.path.cache) {
+				if (opt.data)
+					opt.id = opt.id + HASH(opt.data);
 				let cache = CACHE(opt.id);
 				if (cache) {
 					delete T.cache.lockers[opt.id];
