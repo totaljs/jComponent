@@ -4353,7 +4353,13 @@
 			let groups = {};
 
 			for (let m of this) {
-				let key = m[name] || '__';
+				let key = m[name];
+
+				if (key != null)
+					key = key.toString();
+				else
+					key = '__';
+
 				let tmp = groups[key];
 				if (tmp)
 					tmp.push(m);
