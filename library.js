@@ -4313,7 +4313,7 @@
 
 				return 0;
 			};
-		}
+		};
 
 		PROTO.quicksort = function(sort) {
 
@@ -4341,6 +4341,35 @@
 
 			self.sort(sortcomparer(sort));
 			return self;
+		};
+
+		/*
+			@Path: Array.prototype
+			@Method: Array.prototype.group(key); #return {Array};
+			The method groups items according to the @key field.
+		*/
+		PROTO.group = function(name) {
+
+			let groups = {};
+
+			for (let m of this) {
+				let key = m[name] || '__';
+				let tmp = groups[key];
+				if (tmp)
+					tmp.push(m);
+				else
+					groups[key] = [m];
+			}
+
+			let output = [];
+
+			for (let key in groups) {
+				let id = key === '__' ? '' : key;
+				output.push({ name: id, items: groups[key] });
+			}
+
+			output.quicksort('name');
+			return output;
 		};
 
 		/*
