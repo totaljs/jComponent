@@ -525,7 +525,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.191;
+	M.version = 19.192;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -9059,6 +9059,35 @@
 			arr.push(self[i]);
 		}
 		return arr;
+	};
+
+	AP.group = function(name) {
+
+		var groups = {};
+
+		for (var m of this) {
+			var key = m[name];
+			if (key != null)
+				key = key.toString();
+			else
+				key = '__';
+
+			var tmp = groups[key];
+			if (tmp)
+				tmp.push(m);
+			else
+				groups[key] = [m];
+		}
+
+		var output = [];
+
+		for (var key in groups) {
+			var id = key === '__' ? '' : key;
+			output.push({ name: id, items: groups[key] });
+		}
+
+		output.quicksort('name');
+		return output;
 	};
 
 	SP.parseEncoded = function() {
