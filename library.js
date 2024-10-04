@@ -129,7 +129,7 @@
 		} catch {}
 	};
 
-	T.version = 20.003;
+	T.version = 20.004;
 	T.is20 = true;
 	T.ready = false;
 	T.root = W;
@@ -1293,7 +1293,7 @@
 						WARN2(ERR.format('Downloading "{0}" component.').format(t.name));
 					}
 
-					IMPORT(DEF.fallback.format(t.name), function() {
+					IMPORT(t.element.attr('source') || DEF.fallback.format(t.name), function() {
 						t.fallback = true;
 						t.init(t);
 					});
@@ -2205,6 +2205,7 @@
 			var is = false;
 			var validate = false;
 			var setter = false;
+			var notify = false;
 			var f = {};
 
 			if (flags) {
@@ -2225,6 +2226,9 @@
 							is = true;
 							cfg.touched = true;
 							break;
+						case 'notify':
+							notify = true;
+							break;
 						case 'modified':
 						case 'changed':
 						case 'modify':
@@ -2243,6 +2247,13 @@
 
 			is && t.reconfigure(cfg);
 			validate && t.$validate();
+
+			notify && t.path && t.path.find(t.scope, function(arr) {
+				for (let m of arr) {
+					if (m !== t && m.state2)
+						m.state2(t);
+				}
+			});
 
 			if (value !== undefined)
 				t.rewrite(value);
@@ -2508,6 +2519,21 @@
 			var t = this;
 			t.reconfigure({ touched: 1 });
 			t.$validate();
+		};
+
+		PROTO.setPath = function(path) {
+			var t = this;
+			if (path instanceof T.Path) {
+				t.path = path;
+			} else if (path.includes('?')) {
+				let parent = findplugin(t.dom);
+				if (parent) {
+					let proxy = parent.$proxyplugin;
+					if (proxy)
+						t.path = new T.Path(t.path.replace(/\?/g, proxy.path));
+				}
+			} else
+				t.path = new T.Path(path);
 		};
 
 		/*
@@ -6594,6 +6620,10 @@
 
 		$.fn.binder = function() {
 			return findinstance(this[0], '$uibinder');
+		};
+
+		$.fn.scrollbar = function() {
+			return findinstance(this[0], '$scrollbar');
 		};
 
 		var classtimeout = function(el, a, t) {

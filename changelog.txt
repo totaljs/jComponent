@@ -1,4 +1,13 @@
 ========================
+20.004
+========================
+
+- added `component.setPath(path)` method
+- added `$(element).scrollbar()` for finding the closest custom scrollbar instance
+- added a new attribute `source="URL address"` for `ui-component` element
+- extended `component.bind()` by adding `notify` flag (it notifies all components within the path about the component state)
+
+========================
 20.003
 ========================
 
