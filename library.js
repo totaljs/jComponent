@@ -129,7 +129,7 @@
 		} catch {}
 	};
 
-	T.version = 20.004;
+	T.version = 20.005;
 	T.is20 = true;
 	T.ready = false;
 	T.root = W;
@@ -1115,7 +1115,7 @@
 			t.instance.element = t.element;
 			t.instance.dom = t.element[0];
 			t.instance.config = {};
-			t.instance.plugin = t.instance.dom.$uiplugin || (t.parent ? t.parent[0].$uiplugin : null);
+			t.instance.plugin = t.instance.dom.$uiplugin || (t.parent ? t.parent[0].$proxyplugin && t.parent[0].$proxyplugin.instance : null);
 
 			for (let key in t.ref.config)
 				t.instance.config[key] = t.ref.config[key];
@@ -1323,8 +1323,10 @@
 					if (proxy && proxy.ready) {
 						t.parent = proxy.element;
 
-						if (t.path.includes('?'))
-							t.path = t.path.replace(/\?/g, proxy.path);
+						if (t.path.includes('?')) {
+							// t.path = t.path.replace(/\?/g, proxy.path);
+							t.path = preparepath(proxy.instance, t.path);
+						}
 
 					} else {
 						setTimeout(t.init, 50, t);
