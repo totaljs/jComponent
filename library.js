@@ -129,7 +129,7 @@
 		} catch {}
 	};
 
-	T.version = 20.005;
+	T.version = 20.006;
 	T.is20 = true;
 	T.ready = false;
 	T.root = W;
@@ -1290,7 +1290,7 @@
 					// Try to download component from CDN
 					if (!T.cache.external[t.name]) {
 						T.cache.external[t.name] = true;
-						WARN2(ERR.format('Downloading "{0}" component.').format(t.name));
+						WARN(ERR.format('Downloading "{0}" component.').format(t.name));
 					}
 
 					IMPORT(t.element.attr('source') || DEF.fallback.format(t.name), function() {
@@ -4791,9 +4791,15 @@
 			return T.cache.statics[key](self);
 		};
 
+		PROTO.toUTC = function(ticks) {
+			var dt = this.getTime() + this.getTimezoneOffset() * 60000;
+			return ticks ? dt : new Date(dt);
+		};
+
 		W.$totaluidate = function(value) {
 			return value >= 12 ? value - 12 : value;
 		};
+
 	})();
 
 	// Window globals

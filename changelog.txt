@@ -1,4 +1,11 @@
 ========================
+20.006
+========================
+
+- added missing `Date.toUTC([ticks])` method
+- fixed a warning information about downloading UI components from CDN
+
+========================
 20.005
 ========================
 
