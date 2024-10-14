@@ -1821,7 +1821,7 @@
 		PROTO.set = function(path, value) {
 			var t = this;
 
-			if (value == undefined) {
+			if (path && value === undefined && typeof(path) === 'object') {
 				path = '';
 				value = path;
 			}
