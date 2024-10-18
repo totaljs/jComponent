@@ -4,6 +4,7 @@
 
 - added missing `Date.toUTC([ticks])` method
 - fixed a warning information about downloading UI components from CDN
+- fixed appending `array` in the `plugin.push()` method
 
 ========================
 20.005

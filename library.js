@@ -1850,7 +1850,11 @@
 				arr = [];
 			else if (!(arr instanceof Array))
 				arr = [arr];
-			arr.push(value);
+			if (value instanceof Array) {
+				for (let item of value)
+					arr.push(item);
+			} else
+				arr.push(value);
 			path.set(t.scope, arr);
 			path.notify(t.scope);
 		};
