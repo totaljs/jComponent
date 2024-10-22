@@ -5,6 +5,10 @@
 - added missing `Date.toUTC([ticks])` method
 - fixed a warning information about downloading UI components from CDN
 - fixed appending `array` in the `plugin.push()` method
+- added TAPI alternative:
+	- `DEF.pipe = '/total-api-endpoint/'`
+	- `plugin.pipe(name, [data], [path|callback])`
+	- `PIPE(name, [data], [path|callback])`
 
 ========================
 20.005

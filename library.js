@@ -96,7 +96,7 @@
 	DEF.baseurl = ''; // String or Function
 	DEF.root = ''; // String or Function
 	DEF.empty = '---';
-	DEF.warnings = false;
+	DEF.warnings = true;
 	DEF.env = {};
 	DEF.env.ts = DEF.dateformat + ' - ' + DEF.timeformat;
 	DEF.env.date = DEF.dateformat;
@@ -1723,7 +1723,7 @@
 			T.cmd(this.element, name, a, b, c, d);
 		};
 
-		PROTO.tapi = function(name, data, callback) {
+		function api(t, url, name, data, callback) {
 
 			var type = typeof(data);
 
@@ -1740,9 +1740,16 @@
 				name = name.substring(0, index);
 			}
 
-			var t = this;
 			data = { schema: name, data: data ? data : undefined };
-			return t.ajax('POST ' + DEF.api + flags, data, callback);
+			return t.ajax('POST ' + url + flags, data, callback);
+		}
+
+		PROTO.tapi = function(name, data, callback) {
+			return api(this, DEF.api, name, data, callback);
+		};
+
+		PROTO.pipe = function(name, data, callback) {
+			return api(this, DEF.pipe, name, data, callback);
 		};
 
 		PROTO.ajax = function(url, data, callback) {
@@ -5773,7 +5780,7 @@
 			}
 		}
 
-		W.TAPI = function(name, data, callback, scope) {
+		function API(url, name, data, callback, scope) {
 			var type = typeof(data);
 
 			if (!callback && (type === 'function' || type === 'string')) {
@@ -5790,7 +5797,15 @@
 			}
 
 			data = { schema: name, data: data ? data : undefined };
-			return W.AJAX('POST ' + DEF.api + flags, data, callback, scope);
+			return W.AJAX('POST ' + url + flags, data, callback, scope);
+		}
+
+		W.TAPI = function(name, data, callback, scope) {
+			return API(DEF.api, name, data, callback, scope);
+		};
+
+		W.PIPE = function(name, data, callback, scope) {
+			return API(DEF.pipe, name, data, callback, scope);
 		};
 
 		function req_respond(value) {
