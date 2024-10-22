@@ -96,7 +96,7 @@
 	DEF.baseurl = ''; // String or Function
 	DEF.root = ''; // String or Function
 	DEF.empty = '---';
-	DEF.warnings = true;
+	DEF.warnings = false;
 	DEF.env = {};
 	DEF.env.ts = DEF.dateformat + ' - ' + DEF.timeformat;
 	DEF.env.date = DEF.dateformat;
