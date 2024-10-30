@@ -9,6 +9,7 @@
 	- `DEF.pipe = '/total-api-endpoint/'`
 	- `plugin.pipe(name, [data], [path|callback])`
 	- `PIPE(name, [data], [path|callback])`
+- improved `Thelpers.empty(value, [def], [raw])` by adding `raw` argument
 
 ========================
 20.005
