@@ -197,6 +197,7 @@
 		W.TEMP = {};
 		T.cache.counter++;
 		T.emit('service', T.cache.counter);
+		T.events.knockknock && T.emit('knockknock', T.cache.counter);
 
 		// Every 5 minutes
 		if (T.cache.counter % 5 === 0) {
