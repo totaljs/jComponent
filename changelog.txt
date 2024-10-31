@@ -10,6 +10,7 @@
 	- `plugin.pipe(name, [data], [path|callback])`
 	- `PIPE(name, [data], [path|callback])`
 - improved `Thelpers.empty(value, [def], [raw])` by adding `raw` argument
+- added old `knockknock` event
 
 ========================
 20.005
