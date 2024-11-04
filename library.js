@@ -1179,7 +1179,7 @@
 
 			if (extensions) {
 				for (let m of extensions)
-					m.callback.call(t.instance, t.instance, t.instance.config, cls);
+					m.callback.call(t.instance, t.instance, t.instance.config, t.instance.cls);
 				delete T.cache.lockers[t.name];
 				delete T.cache.lockers[t.path];
 			}
