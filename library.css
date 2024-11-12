@@ -103,11 +103,12 @@ ui-component, ui-plugin, ui-import { display: block; }
 .ui-disabled.pointer,.ui-disabled .pointer { cursor: not-allowed!important; }
 
 .exec { cursor: pointer; }
-.scrollbar::-webkit-scrollbar { width: 11px; }
-.scrollbar { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.2) transparent; }
-.scrollbar::-webkit-scrollbar-thumb { background-color: transparent; border-radius: var(--radius); border: 3px solid rgba(0,0,0,0.2); }
-.ui-dark .scrollbar, .ui-dark.scrollbar { scrollbar-color: rgba(255,255,255,0.4) transparent; }
-.ui-dark .scrollbar::-webkit-scrollbar-thumb, .ui-dark.ui-scrollbar::-webkit-scrollbar-thumb { border-color: rgba(255,255,255,0.4); }
+.scrollbar { scrollbar-width: 18px; scrollbar-color: rgba(0,0,0,0.2) transparent; border: 5px solid transparent; -webkit-overflow-scrolling: auto !important; }
+.scrollbar::-webkit-scrollbar { width: 18px; }
+.scrollbar::-webkit-scrollbar-track { background-color: transparent; }
+.scrollbar::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.2); border-radius: 20px; border: 5px solid transparent; background-clip: content-box; }
+.ui-dark .scrollbar { scrollbar-color: rgba(255,255,255,0.4) transparent; }
+.ui-dark .scrollbar::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,0.4); }
 
 .ui-clcolor { display: block; border-radius: var(--radius); color: #FFF; padding: 0 3px; }
 .ui-clcolor i { margin-right: 3px; }
