@@ -11,6 +11,7 @@
 	- `PIPE(name, [data], [path|callback])`
 - improved `Thelpers.empty(value, [def], [raw])` by adding `raw` argument
 - added old `knockknock` event
+- added `native: Boolean` option to the custom `SCROLLBAR()`
 
 ========================
 20.005
