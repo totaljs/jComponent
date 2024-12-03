@@ -6041,6 +6041,7 @@
 			let ext = '';
 			let check = '';
 
+			url = url.env();
 			url = url.replace(/<.*?>/, function(text) {
 				if (text.includes(' '))
 					return text;
@@ -6070,10 +6071,16 @@
 					ext = ext.toString();
 			}
 
-			var path = parsepath(url);
-			var cachekey = path.flags.singleton ? ('singleton' + key) : '';
+			var index = url.indexOf(' ');
+			var flags = '';
 
-			url = path.path;
+			if (index !== -1) {
+				flags = url.substring(index + 1);
+				url = url.substring(0, index);
+			}
+
+			var path = parsepath(flags);
+			var cachekey = path.flags.singleton ? ('singleton' + key) : '';
 
 			if (cachekey) {
 				let tmp = T.cache.imports[cachekey];
