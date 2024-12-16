@@ -1260,8 +1260,8 @@
 
 				tmp = T.db.plugins[t.path];
 
-				if (t.path.includes(' ') && t.path.includes('?'))
-					t.path = DEF.path.plugins + GUID(10).replace(/^[0-9]/g, 'x');
+				if (t.path.includes(' '))
+					t.path = t.path.includes('?') ? (DEF.path.plugins + GUID(10).replace(/^[0-9]/g, 'x')) : t.path.split(' ')[0];
 
 				t.ref = tmp;
 				t.instance = new T.Plugin(t);

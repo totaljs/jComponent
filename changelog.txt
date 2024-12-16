@@ -13,6 +13,7 @@
 - added old `knockknock` event
 - added `native: Boolean` option to the custom `SCROLLBAR()`
 - fixed links with `@` in the `IMPORT()` method
+- fixed "complex" paths in plugins
 
 ========================
 20.005
