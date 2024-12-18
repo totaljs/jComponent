@@ -3490,7 +3490,8 @@
 					}
 				}
 
-				output[k] = v;
+				if (k)
+					output[k] = v;
 			}
 
 			return output;
