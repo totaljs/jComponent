@@ -1,3 +1,4 @@
+// Total.js UI Library | (c) Total.js Platform
 (function(W) {
 
 	if (W.jComponent)
@@ -7289,7 +7290,10 @@
 			element.aclass('scrollbar').css(tmp);
 		} else {
 			element.aclass(n);
-			element.wrapInner('<div class="{0}-area" data-id="{1}"><div class="{0}-body" data-id="{1}"></div></div>'.format(n, id));
+
+			if (options.wrap !== false)
+				element.wrapInner('<div class="{0}-area" data-id="{1}"><div class="{0}-body" data-id="{1}"></div></div>'.format(n, id));
+
 			iscc = !!options.controls;
 			controls = options.controls || element;
 			controls.prepend(('<div class="{0}-path {0}-notready" data-id="{1}">' + (canY ? '<div class="{0}-y" data-id="{1}"><span><b></b></span></div>' : '') + (canX ? '<div class="{0}-x" data-id="{1}"><span><b></b></span></div></div>' : '')).format(n, id));
@@ -7310,8 +7314,8 @@
 		var pathy = !native && canY ? $(path.find('.' + n + '-y' + di)[0]) : null;
 		var barx = !native && canX ? $(pathx.find('span')[0]) : null;
 		var bary = !native && canY ? $(pathy.find('span')[0]) : null;
-		var bodyarea = native ? null : element.find('.' + n + '-body' + di);
-		var area = native ? element : $(element.find('> .' + n + '-area' + di)[0]);
+		var bodyarea = native || options.wrap === false ? null : element.find('.' + n + '-body' + di);
+		var area = native || options.wrap === false ? element : $(element.find('> .' + n + '-area' + di)[0]);
 		var shadowtop;
 		var shadowbottom;
 		var shadowleft;
@@ -7321,7 +7325,7 @@
 		var animyt = {};
 		var animcache = {};
 
-		if (!native && options[sc]) {
+		if (!native && options.wrap !== false && options[sc]) {
 
 			element.prepend(('<div class="{0}-{1}">' + (canX ? '<div class="{0}-{1}-left {0}-{1}-h" style="opacity:0"></div><div class="{0}-{1}-right {0}-{1}-h" style="opacity:0"></div>' : '') + (canY ? '<div class="{0}-{1}-top {0}-{1}-v" style="opacity:0"></div><div class="{0}-{1}-bottom {0}-{1}-v" style="opacity:0"></div>' : '') + '</div>').format(n, sc));
 			var shadow = element.find('> .' + n + '-' + sc);
@@ -7363,6 +7367,7 @@
 		var handlers = {};
 
 		handlers.onmousemove = function(e) {
+
 			if (drag.is) {
 				var p, diff, h;
 				if (drag.type === 'y') {
@@ -7798,7 +7803,7 @@
 
 		area.on('scroll', handlers.onscroll);
 
-		if (!native) {
+		if (!native && options.wrap !== false) {
 			self.element.on('scroll', function(e) {
 				e.preventDefault();
 				e.stopPropagation();
@@ -7931,7 +7936,7 @@
 				ah = size.viewHeight + (canX ? size.margin : 0) - my;
 			}
 
-			if (scrollbarcache.aw !== aw) {
+			if (options.wrap !== false && scrollbarcache.aw !== aw) {
 				scrollbarcache.aw = aw;
 				!md && area.css('width', aw);
 				if (shadowtop) {
@@ -7940,10 +7945,10 @@
 					shadowbottom.css('width', size.viewWidth - shadowm);
 				}
 				shadowright && shadowright.css('left', size.viewWidth - shadowheight);
-				bodyarea.css(orientation === 'y' ? 'width' : 'min-' + 'width', size.viewWidth - mx + (W.isIE || isedge || !sw ? size.margin : 0) - (orientation === 'x' ? size.margin : 0));
+				bodyarea && bodyarea.css(orientation === 'y' ? 'width' : 'min-' + 'width', size.viewWidth - mx + (W.isIE || isedge || !sw ? size.margin : 0) - (orientation === 'x' ? size.margin : 0));
 			}
 
-			if (scrollbarcache.ah !== ah) {
+			if (options.wrap !== false && scrollbarcache.ah !== ah) {
 				scrollbarcache.ah = ah;
 				area.css('height', ah);
 				shadowbottom && shadowbottom.css('top', size.viewHeight - shadowheight);
@@ -8135,7 +8140,7 @@
 						cssba[PB] = plus;
 				}
 
-				if (scrollbarcache[PR] !== cssba[PR] || scrollbarcache[PB] !== cssba[PB]) {
+				if (bodyarea && (scrollbarcache[PR] !== cssba[PR] || scrollbarcache[PB] !== cssba[PB])) {
 					scrollbarcache[PR] = cssba[PR];
 					scrollbarcache[PB] = cssba[PB];
 					bodyarea.css(cssba);
