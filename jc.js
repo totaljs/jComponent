@@ -525,7 +525,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.192;
+	M.version = 19.193;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -7090,7 +7090,7 @@
 			if (dom) {
 				dom = dom.parentNode;
 				while (true) {
-					if (!dom || dom.tagName === 'BODY')
+					if (!dom || dom.tagName === T_BODY)
 						break;
 					if (dom.style.height && !dom.classList.contains(MD.prefixcsslibrary + 'scrollbar-area'))
 						return $(dom);
@@ -10720,7 +10720,7 @@
 			while (c[0] && v == null) {
 				v = c.attr(a);
 				if (!v) {
-					if (c[0].tagName === 'BODY')
+					if (c[0].tagName === T_BODY)
 						break;
 					c = c.parent();
 				}
@@ -10952,7 +10952,7 @@
 		function viewportheight() {
 			if (screen.orientation) {
 				var viewport = document.querySelector('meta[name=viewport]');
-				if (viewport && viewport.content && viewport.content.indexOf('height') === -1)
+				if (viewport && viewport.content && viewport.content.indexOf(T_HEIGHT) === -1)
 					viewport.setAttribute('content', viewport.content + ', height=' + W.innerHeight);
 			}
 		}
@@ -13114,22 +13114,35 @@
 		if (!options)
 			options = {};
 
-		var n = MD.prefixcsslibrary + 'scrollbar';
-		var id = GUID(5);
-
-		element.aclass(n);
-		element.wrapInner('<div class="{0}-area" data-id="{1}"><div class="{0}-body" data-id="{1}"></div></div>'.format(n, id));
-
-		var iscc = !!options.controls;
-		var controls = options.controls || element;
+		var native = options.native;
 		var visibleX = options.visibleX == null ? false : options.visibleX;
 		var visibleY = options.visibleY == null ? false : options.visibleY;
 		var orientation = options.orientation;
 		var canX = !orientation || orientation === 'x';
 		var canY = !orientation || orientation === 'y';
-		var isedge = navigator.userAgent.indexOf('Edge') !== -1;
+		var id = GUID(5);
+		var di = '[data-id="{0}"]'.format(id);
+		var area = null;
+		var controls = null;
+		var iscc = null;
+		var isedge = navigator.userAgent.includes('Edge');
+		var n = DEF.prefixcsslibrary + 'scrollbar';
 
-		controls.prepend(('<div class="{0}-path {0}-notready" data-id="{1}">' + (canY ? '<div class="{0}-y" data-id="{1}"><span><b></b></span></div>' : '') + (canX ? '<div class="{0}-x" data-id="{1}"><span><b></b></span></div></div>' : '')).format(n, id));
+		if (native) {
+			let tmp = {};
+			tmp['overflow' + (canY && canX ? '' : canY ? '-y' : '-x')] = 'scroll';
+			element.aclass('scrollbar').css(tmp);
+		} else {
+			element.aclass(n);
+
+			if (options.wrap !== false)
+				element.wrapInner('<div class="{0}-area" data-id="{1}"><div class="{0}-body" data-id="{1}"></div></div>'.format(n, id));
+
+			iscc = !!options.controls;
+			controls = options.controls || element;
+			controls.prepend(('<div class="{0}-path {0}-notready" data-id="{1}">' + (canY ? '<div class="{0}-y" data-id="{1}"><span><b></b></span></div>' : '') + (canX ? '<div class="{0}-x" data-id="{1}"><span><b></b></span></div></div>' : '')).format(n, id));
+		}
+
 		element[0].$scrollbar = self;
 
 		if (options.padding == null)
@@ -13140,21 +13153,23 @@
 
 		var di = '[data-id="{0}"]'.format(id);
 		var pe = 'pointer-events';
-		var path = controls.find('.' + n + '-path' + di);
-		var pathx = canX ? $(path.find('.' + n + '-x' + di)[0]) : null;
-		var pathy = canY ? $(path.find('.' + n + '-y' + di)[0]) : null;
-		var barx = canX ? $(pathx.find('span')[0]) : null;
-		var bary = canY ? $(pathy.find('span')[0]) : null;
-		var bodyarea = element.find('.' + n + '-body' + di);
-		var area = $(element.find('> .' + n + '-area' + di)[0]);
+		var path = native ? null : controls.find('.' + n + '-path' + di);
+		var pathx = !native && canX ? $(path.find('.' + n + '-x' + di)[0]) : null;
+		var pathy = !native && canY ? $(path.find('.' + n + '-y' + di)[0]) : null;
+		var barx = !native && canX ? $(pathx.find('span')[0]) : null;
+		var bary = !native && canY ? $(pathy.find('span')[0]) : null;
+		var bodyarea = native || options.wrap === false ? null : element.find('.' + n + '-body' + di);
+		var area = native || options.wrap === false ? element : $(element.find('> .' + n + '-area' + di)[0]);
 		var shadowtop;
 		var shadowbottom;
 		var shadowleft;
 		var shadowright;
 		var sc = 'shadow';
 		var shadowheight = 0;
+		var animyt = {};
+		var animcache = {};
 
-		if (options[sc]) {
+		if (!native && options.wrap !== false && options[sc]) {
 
 			element.prepend(('<div class="{0}-{1}">' + (canX ? '<div class="{0}-{1}-left {0}-{1}-h" style="opacity:0"></div><div class="{0}-{1}-right {0}-{1}-h" style="opacity:0"></div>' : '') + (canY ? '<div class="{0}-{1}-top {0}-{1}-v" style="opacity:0"></div><div class="{0}-{1}-bottom {0}-{1}-v" style="opacity:0"></div>' : '') + '</div>').format(n, sc));
 			var shadow = element.find('> .' + n + '-' + sc);
@@ -13196,6 +13211,7 @@
 		var handlers = {};
 
 		handlers.onmousemove = function(e) {
+
 			if (drag.is) {
 				var p, diff, h;
 				if (drag.type === 'y') {
@@ -13268,9 +13284,6 @@
 					w.off('mouseout', handlers.onmouseout);
 			}
 		};
-
-		var animyt = {};
-		var animcache = {};
 
 		var animyt_fn = function(value) {
 			if (animcache.y !== value && !animcache.yis) {
@@ -13390,6 +13403,19 @@
 		};
 
 		handlers.onscroll = function() {
+
+			if (native) {
+				if (notemmited) {
+					clearTimeout(resizeid);
+					resizeid = setTimeout(self.resize, 500, true);
+					events.scroll && EMIT('scroll', area);
+					notemmited = false;
+				}
+				delay && clearTimeout(delay);
+				delay = setTimeout(handlers.clearscroll, 700);
+				options.onscroll && options.onscroll(self);
+				return;
+			}
 
 			var y = area[0].scrollTop;
 			var x = area[0].scrollLeft;
@@ -13519,7 +13545,6 @@
 
 				delay && clearTimeout(delay);
 				delay = setTimeout(handlers.clearscroll, 700);
-
 				options.onscroll && options.onscroll(self);
 
 			} else {
@@ -13555,7 +13580,7 @@
 			}
 		};
 
-		pathx && pathx.on('mousedown', function(e) {
+		pathx && !native && pathx.on('mousedown', function(e) {
 
 			drag.type = 'x';
 
@@ -13587,7 +13612,7 @@
 			unbind();
 		});
 
-		pathy && pathy.on('mousedown', function(e) {
+		pathy && !native && pathy.on('mousedown', function(e) {
 
 			drag.type = 'y';
 
@@ -13622,16 +13647,18 @@
 
 		area.on('scroll', handlers.onscroll);
 
-		self.element.on('scroll', function(e) {
-			e.preventDefault();
-			e.stopPropagation();
-			var t = this;
-			if (t.scrollTop)
-				t.scrollTop = 0;
-			if (t.scrollLeft)
-				t.scrollLeft = 0;
-			return false;
-		});
+		if (!native && options.wrap !== false) {
+			self.element.on('scroll', function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+				var t = this;
+				if (t.scrollTop)
+					t.scrollTop = 0;
+				if (t.scrollLeft)
+					t.scrollLeft = 0;
+				return false;
+			});
+		}
 
 		self.check = function() {
 
@@ -13663,6 +13690,9 @@
 		self.size = size;
 		self.resize2 = onresize;
 		self.resize = function(scrolling, force) {
+
+			if (native)
+				return;
 
 			if (resizeid) {
 				clearTimeout(resizeid);
@@ -13750,7 +13780,7 @@
 				ah = size.viewHeight + (canX ? size.margin : 0) - my;
 			}
 
-			if (scrollbarcache.aw !== aw) {
+			if (options.wrap !== false && scrollbarcache.aw !== aw) {
 				scrollbarcache.aw = aw;
 				!md && area.css(T_WIDTH, aw);
 				if (shadowtop) {
@@ -13759,10 +13789,10 @@
 					shadowbottom.css(T_WIDTH, size.viewWidth - shadowm);
 				}
 				shadowright && shadowright.css('left', size.viewWidth - shadowheight);
-				bodyarea.css(orientation === 'y' ? T_WIDTH : 'min-' + T_WIDTH, size.viewWidth - mx + (W.isIE || isedge || !sw ? size.margin : 0) - (orientation === 'x' ? size.margin : 0));
+				bodyarea && bodyarea.css(orientation === 'y' ? T_WIDTH : 'min-' + T_WIDTH, size.viewWidth - mx + (W.isIE || isedge || !sw ? size.margin : 0) - (orientation === 'x' ? size.margin : 0));
 			}
 
-			if (scrollbarcache.ah !== ah) {
+			if (options.wrap !== false && scrollbarcache.ah !== ah) {
 				scrollbarcache.ah = ah;
 				area.css(T_HEIGHT, ah);
 				shadowbottom && shadowbottom.css('top', size.viewHeight - shadowheight);
@@ -13881,12 +13911,12 @@
 
 			if (scrollbarcache.canX !== canX) {
 				scrollbarcache.canX = canX;
-				area[0].style['overflow-x'] = canX ? '' : 'hidden';
+				area[0].style['overflow-x'] = canX ? '' : T_HIDDEN;
 			}
 
 			if (scrollbarcache.canY !== canY) {
 				scrollbarcache.canY = canY;
-				area[0].style['overflow-y'] = canY ? '' : 'hidden';
+				area[0].style['overflow-y'] = canY ? '' : T_HIDDEN;
 			}
 
 			if (!size.vbarsize)
@@ -13895,7 +13925,7 @@
 			if (!size.hbarsize)
 				size.hbarsize = 0;
 
-			var n = MD.prefixcsslibrary + 'scrollbar-';
+			var n = DEF.prefixcsslibrary + 'scrollbar-';
 
 			if (canX && scrollbarcache.hbar !== size.hbar) {
 				scrollbarcache.hbar = size.hbar;
@@ -13954,7 +13984,7 @@
 						cssba[PB] = plus;
 				}
 
-				if (scrollbarcache[PR] !== cssba[PR] || scrollbarcache[PB] !== cssba[PB]) {
+				if (bodyarea && (scrollbarcache[PR] !== cssba[PR] || scrollbarcache[PB] !== cssba[PB])) {
 					scrollbarcache[PR] = cssba[PR];
 					scrollbarcache[PB] = cssba[PB];
 					bodyarea.css(cssba);
@@ -13997,14 +14027,14 @@
 			if (val == null)
 				return area[0].scrollTop;
 			size.vpos = -1;
-			return area[0].scrollTop = (area[0].scrollHeight - size.clientHeight) - (val || 0);
+			return area[0].scrollTop = (area[0].scrollHeight - (size.clientHeight || 0)) - (val || 0);
 		};
 
 		self.scrollRight = function(val) {
 			if (val == null)
 				return area[0].scrollLeft;
 			size.hpos = -1;
-			return area[0].scrollLeft = (area[0].scrollWidth - size.clientWidth) - (val || 0);
+			return area[0].scrollLeft = (area[0].scrollWidth - (size.clientWidth || 0)) - (val || 0);
 		};
 
 		self.scroll = function(x, y) {
@@ -14085,8 +14115,11 @@
 			isy && syncy.push(el[0]);
 		};
 
-		resize_visible();
-		intervalresize = setInterval(self.check, options.interval || 54321);
+		if (!native) {
+			resize_visible();
+			intervalresize = setInterval(self.check, options.interval || 54321);
+		}
+
 		M.scrollbars.push(self);
 		return self;
 	}
