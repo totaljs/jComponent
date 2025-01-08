@@ -1819,7 +1819,7 @@
 				}
 			}
 
-			return t.path.get(t.scope);
+			return path.get(t.scope);
 		};
 
 		/*
