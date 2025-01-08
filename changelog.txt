@@ -3,6 +3,8 @@
 ========================
 
 - fixed `plugin.get()` method
+- fixed adding `DEF.version` to all `.html` requests
+- fixed adding `DEF.language` to all requests
 
 ========================
 20.006

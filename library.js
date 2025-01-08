@@ -102,6 +102,8 @@
 	DEF.env.ts = DEF.dateformat + ' - ' + DEF.timeformat;
 	DEF.env.date = DEF.dateformat;
 	DEF.env.time = DEF.timeformat;
+	DEF.languagekey = 'language';
+	DEF.versionkey = 'version';
 
 	DEF.prefixcsscomponents = 'ui-';
 	DEF.prefixcsslibrary = 'ui-';
@@ -130,7 +132,7 @@
 		} catch {}
 	};
 
-	T.version = 20.006;
+	T.version = 20.007;
 	T.is20 = true;
 	T.ready = false;
 	T.root = W;
@@ -5419,7 +5421,7 @@
 		W.ENVIRONMENT = function(name, version, language, env) {
 			DEF.localstorage = name;
 			DEF.version = version || '';
-			DEF.languagehtml = language || '';
+			DEF.language = language || '';
 			env && W.ENV(env);
 		};
 
@@ -5865,6 +5867,19 @@
 
 			if (typeof(callback) === 'string')
 				callback = parsepath(callback);
+
+			let qkey = DEF.versionkey;
+			let qval = DEF.version || DEF.versionhtml;
+
+			if (qval && opt.url.includes('.html') && !opt.url.includes(qkey + '=')) {
+				opt.url += (opt.url.includes('?') ? '&' : '?') + qkey + '=' + encodeURIComponent(qval);
+			}
+
+			qkey = DEF.languagekey;
+			qval = DEF.language;
+
+			if (qval && !opt.url.includes(qkey + '='))
+				opt.url += (opt.url.includes('?') ? '&' : '?') + qkey + '=' + encodeURIComponent(qval);
 
 			opt.headers = {};
 			opt.callback = callback;
