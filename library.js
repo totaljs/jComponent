@@ -685,7 +685,7 @@
 			var arr = [];
 			for (let m of T.components) {
 				if (!m.internal.blind && m.ready && m.scope === scope) {
-					if (m.path && path.includes(m.path)) {
+					if (!m.dom.$inactive && m.path && path.includes(m.path)) {
 						if ((path.flags.visible && HIDDEN(m.element)) || (path.flags.touched && !m.config.touched) || (path.flags.modified && !m.config.modified) || (path.flags.required && !m.config.required) || (path.flags.invalid && !m.config.invalid) || (path.flags.disabled && !m.config.disabled) || (path.flags.enabled && m.config.disabled))
 							continue;
 						arr.push(m);
@@ -710,7 +710,7 @@
 
 			// Component watchers
 			for (let m of T.components) {
-				if (!m.internal.blind && m.ready && m.scope === scope) {
+				if (!m.dom.$inactive && !m.internal.blind && m.ready && m.scope === scope) {
 
 					if (!m.path || m.path.includes(path)) {
 
@@ -741,7 +741,7 @@
 			// Plugin watchers
 			for (let key in T.plugins) {
 				let plugin = T.plugins[key];
-				if (plugin.ready && plugin.scope === scope) {
+				if (!plugin.dom.$inactive && plugin.ready && plugin.scope === scope) {
 					for (let m of plugin.watchers) {
 						if (!m.path || m.path.includes(path))
 							m.fn(m.path.get(scope), path.flags, path.path);
@@ -757,9 +757,10 @@
 
 			// Binders
 			for (let m of T.binders) {
-				if (m.fn && m.scope === scope && (!m.path || m.path.includes(path)))
+				if (!m.dom.$inactive && m.fn && m.scope === scope && (!m.path || m.path.includes(path)))
 					m.fn(m.path.get(scope), path.flags, path);
 			}
+
 		});
 
 	};
@@ -879,9 +880,17 @@
 			}
 
 			attributeChangedCallback(property, ovalue, nvalue) {
-				var t = this;
+				let t = this;
 				if (t.$initialized && attribute)
 					 attribute(this, property, nvalue);
+			}
+
+			connectedCallback() {
+				this.$inactive = false;
+			}
+
+			disconnectedCallback() {
+				this.$inactive = true;
 			}
 
 		});
@@ -1399,23 +1408,17 @@
 		el = $(el);
 		let path = el.attr('path');
 		T.newplugin(el, path, el.attr('config'));
-	}, function(el, property, value) {
-		// attribute is changed
 	});
 
 	register('ui-bind', function(el) {
 		el = $(el);
 		let path = el.attr('path');
 		T.newbinder(el, path, el.attr('config'));
-	}, function(el, property, value) {
-		// attribute is changed
 	});
 
 	register('ui-import', function(el) {
 		el = $(el);
 		T.newimporter(el, el.attr('path'), el.attr('config'));
-	}, function(el, property, value) {
-		// attribute is changed
 	});
 
 	// Path declaration
@@ -2095,6 +2098,11 @@
 				t.$state();
 				t.done && t.done();
 			}
+		};
+
+		PROTO.$rebind = function() {
+			let t = this;
+			t.path && t.$setter(t.get(), { rebind: 1 }, t.path.path);
 		};
 
 		// Deprecated
@@ -3183,8 +3191,10 @@
 						el.empty();
 
 						cmd.template = Tangular.compile(cmd.template.replace(/SCR/g, 'script'));
+						cmd.priority = 100;
 						commands.push(cmd);
 						break;
+
 					default:
 
 						if (cmd.value) {
@@ -3193,6 +3203,7 @@
 						}
 
 						switch (cmd.name) {
+							case 'forcerender':
 							case 'show':
 							case 'hide':
 								cmd.priority = 0;
@@ -3200,6 +3211,10 @@
 							case 'visible':
 							case 'invisible':
 								cmd.priority = 2;
+								break;
+							case 'html':
+							case 'text':
+								cmd.priority = 99;
 								break;
 						}
 
@@ -3226,6 +3241,7 @@
 
 			commands.quicksort('priority');
 			t.commands = commands;
+			t.visible = true;
 
 			if (t.proxy.callback) {
 				t.proxy.callback();
@@ -3233,6 +3249,11 @@
 			}
 
 			t.fn(t.path.get(t.scope), { init: 1 }, t.path);
+		};
+
+		PROTO.$rebind = function() {
+			let t = this;
+			t.fn(t.path.get(t.scope), { rebind: 1 }, t.path);
 		};
 
 		PROTO.replaceplugin = function(val) {
@@ -3307,6 +3328,8 @@
 				t.hash = hash;
 			}
 
+			let render = false;
+
 			for (let m of t.commands) {
 
 				let el = t.target;
@@ -3325,16 +3348,21 @@
 				}
 
 				switch (m.name) {
+					case 'forcerender':
+						render = !!val;
+						break;
 					case 'template':
 
-						DEFMODEL.value = value;
-						DEFMODEL.path = path;
-						DEFMODEL.element = el;
+						if (render || t.visible) {
+							DEFMODEL.value = value;
+							DEFMODEL.path = path;
+							DEFMODEL.element = el;
+							if (m.vdom)
+								DIFFDOM(el, m.vdom[0], m.template(DEFMODEL, null, t.helpers ? t.helpers(t.scope) : null), m.vdom[1]);
+							else
+								el.html(m.template(DEFMODEL, null, t.helpers ? t.helpers(t.scope) : null));
+						}
 
-						if (m.vdom)
-							DIFFDOM(el, m.vdom[0], m.template(DEFMODEL, null, t.helpers ? t.helpers(t.scope) : null), m.vdom[1]);
-						else
-							el.html(m.template(DEFMODEL, null, t.helpers ? t.helpers(t.scope) : null));
 						break;
 
 					case 'resize':
@@ -3367,22 +3395,28 @@
 						el.find('input').prop('checked', !!val);
 						break;
 					case 'show':
+						t.visible = !!val;
 						el.tclass('hidden', !val);
 						break;
 					case 'hide':
+						t.visible = !val;
 						el.tclass('hidden', !!val);
 						break;
 					case 'visible':
+						t.visible = !!val;
 						el.tclass('invisible', !val);
 						break;
 					case 'invisible':
+						t.visible = !val;
 						el.tclass('invisible', !!val);
 						break;
 					case 'html':
-						el.html(val == null || val == '' ? t.empty : (t.format ? val.format(t.format) : val.toString()));
+						if (render || t.visible)
+							el.html(val == null || val == '' ? t.empty : (t.format ? val.format(t.format) : val.toString()));
 						break;
 					case 'text':
-						el.text(val == null || val == '' ? t.empty : (t.format ? val.format(t.format) : val.toString()));
+						if (render || t.visible)
+							el.text(val == null || val == '' ? t.empty : (t.format ? val.format(t.format) : val.toString()));
 						break;
 					case 'value':
 						el.val(val == null || val == '' ? t.empty : (t.format ? val.format(t.format) : val.toString()));
@@ -3393,6 +3427,7 @@
 						el.attr(m.name, val == null || val == '' ? t.empty : (t.format ? val.format(t.format) : val.toString()));
 						break;
 				}
+
 			}
 
 			if (t.class) {

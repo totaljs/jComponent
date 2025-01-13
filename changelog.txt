@@ -5,6 +5,9 @@
 - fixed `plugin.get()` method
 - fixed adding `DEF.version` to all AJAX `.html` requests
 - fixed adding `DEF.language` to all AJAX  requests
+- improved `ui-bind` by adding:
+	- compatibility with v19 with only visible elements to be rendered
+	- `forcerender` command that allows rendering in hidden elements
 
 ========================
 20.006
