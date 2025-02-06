@@ -1,4 +1,3 @@
-// Total.js UI Library | (c) Total.js Platform
 (function(W) {
 
 	if (W.jComponent)
@@ -1309,14 +1308,22 @@
 					}
 
 					// Try to download component from CDN
-					if (!T.cache.external[t.name]) {
-						T.cache.external[t.name] = true;
+					if (T.cache.external[t.name]) {
+						T.cache.external[t.name].push(t);
+						return;
+					} else {
+						T.cache.external[t.name] = [t];
 						WARN(ERR.format('Downloading "{0}" component.').format(t.name));
 					}
 
 					IMPORT(t.element.attr('source') || DEF.fallback.format(t.name), function() {
-						t.fallback = true;
-						t.init(t);
+
+						for (let m of T.cache.external[t.name]) {
+							m.fallback = true;
+							m.init(m);
+						}
+
+						delete T.cache.external[t.name];
 					});
 
 					return;
@@ -3296,7 +3303,7 @@
 				t.loaded = true;
 			}
 
-			if (t.notnull && (value === null || value === undefined))
+			if (t.notnull && value == null)
 				return;
 
 			if (t.strict && t.path.path !== path.path)
@@ -3345,10 +3352,13 @@
 				if (m.selector)
 					el = el.find(m.selector);
 
-				var val = m.fn ? m.fn(el, value, flags, path) : value;
+				var val;
 
-				if (m.notnull && val == null)
-					continue;
+				try {
+					val = m.fn ? m.fn(el, value, flags, path) : value;
+				} catch (e) {
+					console.error(ERR.format(e), t);
+				}
 
 				if (m.isclass) {
 					el.tclass(m.name, !!val);

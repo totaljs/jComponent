@@ -10,6 +10,7 @@
 	- `forcerender` command that allows rendering in hidden elements
 - fixed `NEWUIBIND()` method
 - fixed internal `.exec` functionality
+- improved downloading components from CDN
 
 ========================
 20.006
