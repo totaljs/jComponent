@@ -481,6 +481,14 @@
 			if (W[name]) {
 				path.exec(() => W[name](a, b, c, d));
 			} else {
+
+				// Try to check method according to the path e.g. "FUNC.something"
+				let fn = GET(name);
+				if (typeof(fn) === 'function') {
+					path.exec(() => fn(a, b, c, d));
+					return;
+				}
+
 				if (path && path.flags.important)
 					setTimeout(T.exec, 500, raw, a, b, c, d);
 				else
@@ -5219,11 +5227,14 @@
 
 		W.NEWUIBIND = function(element, path, config) {
 
+			if (!(element instanceof jQuery))
+				element = $(element);
+
 			if (!path)
-				path = element.getAttribute('path');
+				path = element.attr('path');
 
 			if (!config)
-				config = element.getAttribute('config');
+				config = element.attr('config');
 
 			return T.newbinder(element, path, config);
 		};

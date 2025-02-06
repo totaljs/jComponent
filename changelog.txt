@@ -8,6 +8,8 @@
 - improved `ui-bind` by adding:
 	- compatibility with v19 with only visible elements to be rendered
 	- `forcerender` command that allows rendering in hidden elements
+- fixed `NEWUIBIND()` method
+- fixed internal `.exec` functionality
 
 ========================
 20.006
