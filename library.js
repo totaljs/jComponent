@@ -1,3 +1,4 @@
+// Total.js UI Library | (c) Total.js Platform
 (function(W) {
 
 	if (W.jComponent)
@@ -1101,6 +1102,43 @@
 		return parent;
 	}
 
+	function shared_on(name, callback) {
+		let t = this;
+
+		if (name.includes('+')) {
+			let arr = name.split('+').trim();
+			for (let m of arr)
+				t.on(m, callback);
+			return;
+		}
+
+		let arr = t.events[name];
+		if (!arr)
+			arr = t.events[name] = [];
+		arr.push(callback);
+	}
+
+	function shared_off(name, callback) {
+		let t = this;
+
+		if (name.includes('+')) {
+			let arr = name.split('+').trim();
+			for (let m of arr)
+				t.off(m, callback);
+			return;
+		}
+
+		let arr = t.events[name];
+		if (arr) {
+			if (callback) {
+				let index = arr.indexOf(callback);
+				if (index !== -1)
+					arr.splice(index, 1);
+			} else
+				delete t.events[name];
+		}
+	}
+
 	// Proxy declaration
 	(function() {
 
@@ -1944,26 +1982,14 @@
 			path = t.path.assign(path);
 			path.notify(t.scope);
 		};
+
 		/*
 			@Path: Plugin
 			@Method: instance.on(name, callback);
 			The method registers a global event.
 		*/
-		PROTO.on = function(name, callback) {
-			var t = this;
-
-			if (name.includes('+')) {
-				let arr = name.split('+').trim();
-				for (let m of arr)
-					t.on(m, callback);
-				return;
-			}
-
-			var arr = t.events[name];
-			if (!arr)
-				arr = t.events[name] = [];
-			arr.push(callback);
-		};
+		PROTO.on = shared_on;
+		PROTO.off = shared_off;
 
 		/*
 			@Path: Plugin
@@ -2444,21 +2470,8 @@
 			@Method: instance.on(name, callback);
 			The method registers a global event.
 		*/
-		PROTO.on = function(name, callback) {
-			var t = this;
-
-			if (name.includes('+')) {
-				let arr = name.split('+').trim();
-				for (let m of arr)
-					t.on(m, callback);
-				return;
-			}
-
-			var arr = t.events[name];
-			if (!arr)
-				arr = t.events[name] = [];
-			arr.push(callback);
-		};
+		PROTO.on = shared_on;
+		PROTO.off = shared_off;
 
 		/*
 			@Path: Component
