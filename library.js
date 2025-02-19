@@ -1103,6 +1103,7 @@
 	}
 
 	function shared_on(name, callback) {
+
 		let t = this;
 
 		if (name.includes('+')) {
@@ -1112,9 +1113,17 @@
 			return;
 		}
 
+		if (name === 'ready') {
+			if (T.ready && (t.ready != false)) {
+				callback();
+				return;
+			}
+		}
+
 		let arr = t.events[name];
 		if (!arr)
 			arr = t.events[name] = [];
+
 		arr.push(callback);
 	}
 
