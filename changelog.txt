@@ -11,6 +11,7 @@
 - fixed `NEWUIBIND()` method
 - fixed internal `.exec` functionality
 - improved downloading components from CDN
+- extended `component.autobind20([delay], [realtimebinding])` method by adding two arguments
 
 ========================
 20.006

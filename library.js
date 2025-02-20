@@ -2168,12 +2168,18 @@
 			this.$autofill = val == null || value === true;
 		};
 
-		PROTO.autobind20 = function() {
+		PROTO.autobind20 = function(delay, realtimebinding) {
+
+			// @delay {Number} a delay for binding the value to the model (default: 200)
+			// @realtimebinding {Boolean} allows delayed real-time binding of value to the component setter (default: false)
 
 			var t = this;
 
 			if (t.$autobind)
 				return;
+
+			if (!delay)
+				delay = 200;
 
 			t.$autobind = true;
 
@@ -2193,7 +2199,7 @@
 
 			var update = function(setter) {
 				timeout && clearTimeout(timeout);
-				timeout = setTimeout(updateforce, 200, setter);
+				timeout = setTimeout(updateforce, delay, setter);
 			};
 
 			t.element.on('input', selector, function() {
@@ -2212,7 +2218,7 @@
 
 				// arguments true, false - are due to backward functionality
 				t.getter(value, true, false);
-				update(false); // it can't change setter because it replaces incomplete user value (example: "0." will replace it to "0")
+				update(realtimebinding == true); // it can't change setter because it replaces incomplete user value (example: "0." will replace it to "0")
 
 			}).on('focusin', selector, function() {
 				prev = $(this).val();
