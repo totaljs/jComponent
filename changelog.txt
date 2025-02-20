@@ -11,6 +11,7 @@
 - fixed `NEWUIBIND()` method
 - fixed internal `.exec` functionality
 - improved downloading components from CDN
+- added missing `plugin.off()` and `component.off()` method
 - extended `component.autobind20([delay], [realtimebinding])` method by adding two arguments
 
 ========================
