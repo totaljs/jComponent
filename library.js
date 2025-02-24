@@ -2561,6 +2561,10 @@
 		*/
 		PROTO.parent = parent;
 
+		PROTO.closest = function(sel) {
+			return this.element.closest(sel);
+		};
+
 		/*
 			@Path: Component
 			@Method: instance.modify(value, [type]);

@@ -13,6 +13,7 @@
 - improved downloading components from CDN
 - added missing `plugin.off()` and `component.off()` method
 - extended `component.autobind20([delay], [realtimebinding])` method by adding two arguments
+- added missing `component.closest(selector)` method
 
 ========================
 20.006
