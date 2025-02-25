@@ -1326,8 +1326,11 @@
 
 				tmp = T.db.plugins[t.path];
 
-				if (t.path.includes(' '))
-					t.path = t.path.includes('?') ? (DEF.path.plugins + GUID(10).replace(/^[0-9]/g, 'x')) : t.path.split(' ')[0];
+				if (t.path.includes(' ')) {
+					let split = t.path.split(' ');
+					t.path = t.path.includes('?') ? (DEF.path.plugins + GUID(10).replace(/^[0-9]/g, 'x')) : split[0];
+					tmp = T.db.plugins[split[1] || t.path];
+				}
 
 				t.ref = tmp;
 				t.instance = new T.Plugin(t);
@@ -1757,6 +1760,7 @@
 
 		// Internal
 		PROTO.$init = function() {
+
 			var t = this;
 
 			t.name = t.path.path;
@@ -1766,8 +1770,10 @@
 				t.proxy.callback = null;
 			}
 
-			if (t instanceof T.Plugin)
+			if (t instanceof T.Plugin) {
 				t.config.init && EXEC(t.makepath(t.config.init), t.element);
+				t.config.class && setTimeout(t => t.element.tclass(t.config.class), 500, t);
+			}
 
 			t.ready = true;
 			t.make && t.make();

@@ -14,6 +14,8 @@
 - added missing `plugin.off()` and `component.off()` method
 - extended `component.autobind20([delay], [realtimebinding])` method by adding two arguments
 - added missing `component.closest(selector)` method
+- fixed functionality with dynamic plugins
+- fixed plugin `class` config option
 
 ========================
 20.006
