@@ -1263,7 +1263,7 @@
 
 		}
 
-		PROTO.init = function(t) {
+		PROTO.init = function(t, retry) {
 
 			readycounter--;
 
@@ -1317,21 +1317,28 @@
 			if (t.type === 'plugin' && !t.instance) {
 
 				let last = T.cache.plugins.shift();
+				let path = t.path;
 
-				if (!t.path)
-					t.path = last || '';
+				if (!path)
+					path = last || '';
 
-				if (t.path === '*')
-					t.path = DEF.path.clean('common');
+				if (path === '*')
+					path = DEF.path.clean('common');
 
-				tmp = T.db.plugins[t.path];
+				tmp = T.db.plugins[path];
 
-				if (t.path.includes(' ')) {
-					let split = t.path.split(' ');
-					t.path = t.path.includes('?') ? (DEF.path.plugins + GUID(10).replace(/^[0-9]/g, 'x')) : split[0];
-					tmp = T.db.plugins[split[1] || t.path];
+				if (path.includes(' ')) {
+					let split = path.split(' ');
+					path = path.includes('?') ? (DEF.path.plugins + GUID(10).replace(/^[0-9]/g, 'x')) : split[0];
+					tmp = T.db.plugins[split[1] || path];
 				}
 
+				if (!tmp && !retry) {
+					setTimeout(t.init, 333, t, true);
+					return;
+				}
+
+				t.path = path;
 				t.ref = tmp;
 				t.instance = new T.Plugin(t);
 

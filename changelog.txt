@@ -16,6 +16,7 @@
 - added missing `component.closest(selector)` method
 - fixed functionality with dynamic plugins
 - fixed plugin `class` config option
+- improved loading plugin instance
 
 ========================
 20.006
