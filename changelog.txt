@@ -17,6 +17,7 @@
 - fixed functionality with dynamic plugins
 - fixed plugin `class` config option
 - improved loading plugin instance
+- fixed functionality in the `CLRELOAD()` method
 
 ========================
 20.006

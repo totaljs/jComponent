@@ -5115,7 +5115,7 @@
 			arr.wait(function(name, next) {
 				var cl = DEF.cl[name];
 				if (cl) {
-					cl.reload = true;
+					T.cache.cl[name].reload = true;
 					W.CL(name, () => next());
 				} else
 					next();
