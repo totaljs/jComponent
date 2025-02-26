@@ -656,7 +656,15 @@
 
 	T.cmd = function(element, name, a, b, c, d) {
 
-		var arr = T.components;
+		let arr = T.components;
+		let index = name.indexOf(' ');
+		let path = null;
+
+		if (index === -1) {
+			let tmp = name.substring(index);
+			name = name.substring(0, index);
+			path = new T.Path(tmp);
+		}
 
 		if (element) {
 			arr = [];
@@ -674,12 +682,20 @@
 			}
 		}
 
-		for (let m of arr) {
-			if (m.ready) {
-				if (m.commands[name])
+		if (!arr.length)
+			return;
+
+		let cmd = function() {
+			for (let m of arr) {
+				if (m.ready && m.commands[name])
 					m.cmd(name, a, b, c, d);
 			}
-		}
+		};
+
+		if (path)
+			path.exec(cmd);
+		else
+			cmd();
 	};
 
 	/*
@@ -857,7 +873,39 @@
 		The method inicializes codelists.
 	*/
 	T.cl = function(name, callback) {
-		callback();
+
+		if (!name) {
+			callback && callback();
+			return;
+		}
+
+		name.split(',').trim().wait(function checkcl(key, next) {
+			var item = T.cache.cl[key];
+			if (item) {
+				if (!item.reload && DEF.cl[key]) {
+					next();
+				} else {
+					item.callback(function(val, extend) {
+						if (extend === true) {
+							let tmp = GET(DEF.path.clean('cl'));
+							for (let key in val) {
+								tmp[key] = val[key];
+								T.notify(T.root, DEF.path.cl + key);
+							}
+						} else
+							SET(DEF.path.cl + key, val);
+						item.date = NOW = new Date();
+						item.reload = false;
+						next();
+					});
+				}
+			} else {
+				if (DEF.cl[key])
+					next();
+				else
+					setTimeout(checkcl, 500, key, next);
+			}
+		}, callback);
 	};
 
 	function reuildcssforce() {
@@ -5203,41 +5251,7 @@
 			return T.cache.fn[key] = fn;
 		};
 
-		W.CL = function(name, callback) {
-
-			if (!name) {
-				callback && callback();
-				return;
-			}
-
-			name.split(',').trim().wait(function checkcl(key, next) {
-				var item = T.cache.cl[key];
-				if (item) {
-					if (!item.reload && DEF.cl[key]) {
-						next();
-					} else {
-						item.callback(function(val, extend) {
-							if (extend === true) {
-								let tmp = GET(DEF.path.clean('cl'));
-								for (let key in val) {
-									tmp[key] = val[key];
-									T.notify(T.root, DEF.path.cl + key);
-								}
-							} else
-								SET(DEF.path.cl + key, val);
-							item.date = NOW = new Date();
-							item.reload = false;
-							next();
-						});
-					}
-				} else {
-					if (DEF.cl[key])
-						next();
-					else
-						setTimeout(checkcl, 500, key, next);
-				}
-			}, callback);
-		};
+		W.CL = T.cl;
 
 		/*
 			@Path: Globals

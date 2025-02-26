@@ -18,6 +18,8 @@
 - fixed plugin `class` config option
 - improved loading plugin instance
 - fixed functionality in the `CLRELOAD()` method
+- fixed evaluating code lists in paths `path #codelist1 #codelist2`
+- added support for flags in the `CMD()` method
 
 ========================
 20.006
