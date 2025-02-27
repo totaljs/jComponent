@@ -6179,10 +6179,7 @@
 					return text;
 				check = text.substring(1, text.length - 1);
 				return '';
-			});
-
-			if (check && W[check])
-				return;
+			}).trim();
 
 			T.cache.imports[key] = [{ target: target, callback: callback, prepare: prepare }];
 
@@ -6191,6 +6188,11 @@
 					m.callback && m.callback();
 				delete T.cache.imports[key];
 			};
+
+			if (check && W[check]) {
+				done();
+				return;
+			}
 
 			url = url.replace(/\s\.[a-z0-9]+/, function(text) {
 				ext = text.trim();

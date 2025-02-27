@@ -20,6 +20,7 @@
 - fixed functionality in the `CLRELOAD()` method
 - fixed evaluating code lists in paths `path #codelist1 #codelist2`
 - added support for flags in the `CMD()` method
+- fixed importing dependencies defined in components
 
 ========================
 20.006
