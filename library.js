@@ -1,4 +1,3 @@
-// Total.js UI Library | (c) Total.js Platform
 (function(W) {
 
 	if (W.jComponent)
@@ -2246,9 +2245,16 @@
 
 			var selector = 'input,select,textarea';
 			var timeout = null;
+			var timeout2 = null;
 			var prev = null;
 
+			var realtimegetter = function(value) {
+				timeout2 = null;
+				t.getter(value, true, false);
+			};
+
 			var updateforce = function(setter) {
+				timeout2 && clearTimeout(timeout2);
 				timeout = null;
 				var value = t.find(selector).val();
 				if (value !== prev) {
@@ -2278,7 +2284,9 @@
 				prev = value;
 
 				// arguments true, false - are due to backward functionality
-				t.getter(value, true, false);
+				timeout2 && clearTimeout(timeout2);
+				timeout2 = setTimeout(realtimegetter, delay, value);
+
 				update(realtimebinding == true); // it can't change setter because it replaces incomplete user value (example: "0." will replace it to "0")
 
 			}).on('focusin', selector, function() {
