@@ -4,7 +4,7 @@
 
 __Total.js UI library__ (internally called jComponent) is a client-side library for creating reusable UI components with many powerful features. The UI library contains everything you need to create Single Page Applications
 
-- Current version: `v19`
+- Current version: `v20`
 - [__Documentation__](https://docs.totaljs.com/components/)
 - [300+ UI components](https://componentator.com)
 
