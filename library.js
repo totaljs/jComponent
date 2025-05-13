@@ -21,6 +21,7 @@
 	W.PLUGINS = {};
 	W.W = W;
 	W.MAIN = T;
+	W.REPO = {};
 	W.FUNC = {};
 	W.TEMP = {};
 	W.M = T;

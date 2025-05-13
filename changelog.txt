@@ -21,6 +21,7 @@
 - fixed evaluating code lists in paths `path #codelist1 #codelist2`
 - added support for flags in the `CMD()` method
 - fixed importing dependencies defined in components
+- added global variable `REPO`
 
 ========================
 20.006
