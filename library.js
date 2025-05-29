@@ -132,7 +132,7 @@
 		} catch {}
 	};
 
-	T.version = 20.007;
+	T.version = 20.008;
 	T.is20 = true;
 	T.ready = false;
 	T.root = W;
@@ -2932,7 +2932,18 @@
 		};
 
 		PROTO.EXEC = function(name, a, b, c, d) {
-			T.exec(preparepath(this, name), a, b, c, d);
+
+			if (name.charAt(0) === '@') {
+				// name.substring(1);
+				let tmp = $(this.dom.parentNode).component();
+				if (tmp) {
+					name = name.substring(1);
+					tmp = tmp[name];
+					if (typeof(tmp) === 'function')
+						tmp.call(this, a, b, c, d);
+				}
+			} else
+				T.exec(preparepath(this, name), a, b, c, d);
 		};
 
 		PROTO.SETTER = function(name, a, b, c, d) {
@@ -7014,18 +7025,18 @@
 		};
 
 		$.fn.EXEC = function(name, a, b, c, d) {
-			var c = name.charAt(0);
 
-			if (c === '@') {
+			let ch = name.charAt(0);
+			if (ch === '@') {
 				// component
-				var component = this.component();
+				let component = this.component();
 				if (component) {
 					name = name.substring(1);
 					let fn = component[name];
 					fn && fn(component, a, b, c, d);
 				}
 			} else if (c === '?' || c === '|') {
-				var plugin = this.plugin();
+				let plugin = this.plugin();
 				T.exec(preparepath(plugin, name), a, b, c, d);
 			} else
 				T.exec(name, a, b, c, d);
