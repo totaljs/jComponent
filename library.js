@@ -7035,7 +7035,7 @@
 					let fn = component[name];
 					fn && fn(component, a, b, c, d);
 				}
-			} else if (c === '?' || c === '|') {
+			} else if (ch === '?' || ch === '|') {
 				let plugin = this.plugin();
 				T.exec(preparepath(plugin, name), a, b, c, d);
 			} else
