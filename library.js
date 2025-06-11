@@ -3,6 +3,7 @@
 	if (W.jComponent)
 		return;
 
+	const jc_globals = W.jc_globals || EMPTYOBJECT;
 	const ERR = 'jComponent: {0}';
 	const Total = {};
 	const DEF = {
@@ -5592,12 +5593,16 @@
 			return hash >>> 0;
 		};
 
-		// @Note: previous name CSS()
+		// @NOTE: previous name CSS()
 		W.STYLE = function(value, id, selector) {
 			id && $('#css' + id).remove();
 			var val = (value instanceof Array ? value.join('') : value);
 			val && $('<style type="text/css"' + (id ? ' id="css' + id + '"' : '') + '>' + (selector ? wrap(selector, val) : val) + '</style>').appendTo('head');
 		};
+
+		// @TODO: remove in jComponent v21
+		if (jc_globals.CSS != false)
+			W.CSS = W.STYLE;
 
 		W.APPEARANCE = function(obj) {
 

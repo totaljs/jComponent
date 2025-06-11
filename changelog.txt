@@ -4,6 +4,8 @@
 
 - added support for '@method_name` for the `component.EXEC()` method (it executes parent component method)
 - renamed the `CSS()` method to the `STYLE()`
+- added `window.jc_globals = { ... }` object for disabling jComponent globals method:
+	- it only supports one method: `CSS: false`, which disables the registration of the `CSS()` method
 
 ========================
 20.007
