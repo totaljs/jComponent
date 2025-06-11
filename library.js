@@ -5592,7 +5592,8 @@
 			return hash >>> 0;
 		};
 
-		W.CSS = function(value, id, selector) {
+		// @Note: previous name CSS()
+		W.STYLE = function(value, id, selector) {
 			id && $('#css' + id).remove();
 			var val = (value instanceof Array ? value.join('') : value);
 			val && $('<style type="text/css"' + (id ? ' id="css' + id + '"' : '') + '>' + (selector ? wrap(selector, val) : val) + '</style>').appendTo('head');
