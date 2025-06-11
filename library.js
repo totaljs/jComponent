@@ -3,7 +3,6 @@
 	if (W.jComponent)
 		return;
 
-	const jc_globals = W.jc_globals || EMPTYOBJECT;
 	const ERR = 'jComponent: {0}';
 	const Total = {};
 	const DEF = {
@@ -69,6 +68,9 @@
 	*/
 	W.EMPTYOBJECT = {};
 	Object.freeze(W.EMPTYOBJECT);
+
+	// Global variables
+	const jc_globals = W.jc_globals || EMPTYOBJECT;
 
 	DEF.cl = {};
 	DEF.path = {};
