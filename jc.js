@@ -88,6 +88,7 @@
 	var W = window;
 	var D = document;
 	var $W = $(W);
+	var jc_globals = W.jc_globals || {};
 
 	var THROWERR = function(e) {
 		W.console && W.console.error(e);
@@ -525,7 +526,7 @@
 	MR.format = /\{\d+\}/g;
 
 	M.loaded = false;
-	M.version = 19.193;
+	M.version = 19.194;
 	M.scrollbars = [];
 	M.$components = {};
 	M.binders = [];
@@ -8699,11 +8700,14 @@
 		timeouts[path] = setTimeout(updbind, timeout, path, reset);
 	};
 
-	W.CSS = function(value, id, selector) {
+	W.STYLE = function(value, id, selector) {
 		id && $('#css' + id).remove();
 		var val = (value instanceof Array ? value.join('') : value);
 		val && $('<style type="text/css"' + (id ? ' id="css' + id + '"' : '') + '>' + (selector ? wrap(selector, val) : val) + '</style>').appendTo('head');
 	};
+
+	if (jc_globals.CSS != false)
+		W.CSS = W.STYLE;
 
 	var windowappearance = 'light';
 
@@ -8742,7 +8746,7 @@
 		$('body').tclass(MD.prefixcsslibrary + 'dark', !!dark).tclass(MD.prefixcsslibrary + 'large', !!large);
 
 		if (builder.length)
-			CSS(':root{' + builder.join(';') + '}', id);
+			STYLE(':root{' + builder.join(';') + '}', id);
 		else
 			$('#css' + id).remove();
 
