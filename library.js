@@ -915,7 +915,7 @@
 			if (item.css)
 				builder.push(item.css.replace(/CLASS/g, 'ui-' + key));
 		}
-		CSS(builder.join('\n'), 'components');
+		STYLE(builder.join('\n'), 'components');
 	}
 
 	function rebuildcss() {
@@ -5634,7 +5634,7 @@
 			$('body').tclass(DEF.prefixcsslibrary + 'dark', !!dark).tclass(DEF.prefixcsslibrary + 'large', !!large);
 
 			if (builder.length)
-				CSS(':root{' + builder.join(';') + '}', id);
+				STYLE(':root{' + builder.join(';') + '}', id);
 			else
 				$('#css' + id).remove();
 		};
