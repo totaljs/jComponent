@@ -1353,7 +1353,7 @@
 					WARN(ERR.format('Downloading "{0}".').format(url));
 				}
 
-				IMPORT(url, t.element, function() {
+				IMPORT(url, t.config.target ? $(t.config.target) : t.element, function() {
 					t.ready = true;
 					for (let proxy of t.pending)
 						proxy.init(proxy);
