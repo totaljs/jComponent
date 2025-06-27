@@ -1,3 +1,4 @@
+// Total.js UI Library | (c) Total.js Platform
 (function(W) {
 
 	if (W.jComponent)
@@ -1353,11 +1354,15 @@
 					WARN(ERR.format('Downloading "{0}".').format(url));
 				}
 
-				IMPORT(url, t.config.target ? $(t.config.target) : t.element, function() {
+				let target = t.config.target ? $(t.config.target) : t.element;
+
+				IMPORT(url, target, function() {
 					t.ready = true;
 					for (let proxy of t.pending)
 						proxy.init(proxy);
 					delete t.pending;
+					t.config.init && target.EXEC(t.config.init, t);
+					t.config.class && target.tclass(t.config.class);
 				}, value => value ? ADAPT(t.config.path, t.config.id, value) : value);
 
 				return;

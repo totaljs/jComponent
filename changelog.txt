@@ -7,6 +7,8 @@
 - added `window.jc_globals = { ... }` object for disabling jComponent globals method:
 	- it only supports one method: `CSS: false`, which disables the registration of the `CSS()` method
 - fixed the `target` option for the `ui-import` element
+- fixed the `class` option for the `ui-import` element
+- fixed the `init` option for the `ui-import` element
 
 ========================
 20.007
