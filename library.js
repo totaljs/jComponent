@@ -3309,10 +3309,13 @@
 						t[cmd.name] = parsepath(cmd.value);
 						break;
 					case 'template':
-
 						if (value && value.charAt(0) === '{') {
 							// external selector
-							cmd.template = $(value.substring(1, value.length - 1)).html();
+							let sel = value.substring(1, value.indexOf('}'));
+							cmd.template = $(sel).html();
+							value = value.substring(sel.length + 2).trim();
+							if (value)
+								cmd.vdom = value.split('->').trim();
 						} else {
 							let scr = el.find('script,template');
 							if (scr.length) {

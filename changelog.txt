@@ -9,6 +9,7 @@
 - fixed the `target` option for the `ui-import` element
 - fixed the `class` option for the `ui-import` element
 - fixed the `init` option for the `ui-import` element
+- fixed `ui-bind` with custom `template` selector
 
 ========================
 20.007
