@@ -10,6 +10,7 @@
 - fixed the `class` option for the `ui-import` element
 - fixed the `init` option for the `ui-import` element
 - fixed `ui-bind` with custom `template` selector
+- fixed the virtual DOM operator `-->` with two dashes
 
 ========================
 20.007
