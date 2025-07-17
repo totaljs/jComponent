@@ -3315,7 +3315,7 @@
 							cmd.template = $(sel).html();
 							value = value.substring(sel.length + 2).trim();
 							if (value)
-								cmd.vdom = value.split('->').trim();
+								cmd.vdom = value.split(/-{1,2}>/).trim();
 						} else {
 							let scr = el.find('script,template');
 							if (scr.length) {
@@ -3324,7 +3324,7 @@
 							} else
 								cmd.template = el.html();
 							if (value)
-								cmd.vdom = value.split('->').trim();
+								cmd.vdom = value.split(/-{1,2}>/).trim();
 						}
 
 						el.empty();
