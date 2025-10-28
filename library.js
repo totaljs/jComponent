@@ -136,7 +136,7 @@
 		} catch {}
 	};
 
-	T.version = 20.008;
+	T.version = 20.009;
 	T.is20 = true;
 	T.ready = false;
 	T.root = W;
@@ -7127,7 +7127,9 @@
 
 		// Initial configuration
 		(function() {
-			var arr = (navigator.userAgent || '').match(/[a-z]+/gi);
+
+			var ua = navigator.userAgent || '';
+			var arr = ua.match(/[a-z]+/gi);
 			var data = {};
 
 			if (arr) {
@@ -7251,13 +7253,19 @@
 				}
 			}
 
-			var keys = Object.keys(data);
 			var output = { os: '', browser: '', device: 'desktop' };
 
 			if (data.Tablet)
 				output.device = 'tablet';
 			else if (data.Mobile)
 				output.device = 'mobile';
+
+			if (data.SamsungBrowser) {
+				delete data.Mobile;
+				delete data.Chrome;
+			}
+
+			var keys = Object.keys(data);
 
 			for (var i = 0; i < keys.length; i++) {
 				var val = data[keys[i]];
@@ -7301,7 +7309,7 @@
 			if (isSTANDALONE)
 				body.add('jc-standalone');
 
-			output.browser && body.add('jc-' + output.browser.toLowerCase());
+			output.browser && body.add('jc-' + output.browser.split(' ')[0].toLowerCase());
 			output.os && body.add('jc-' + output.os.toLowerCase());
 			output.device && body.add('jc-' + output.device.toLowerCase());
 
