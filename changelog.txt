@@ -1,4 +1,11 @@
 ========================
+20.009
+========================
+
+- jComponent initialization for Samsumg mobile
+- added missing `COOKIES`
+
+========================
 20.008
 ========================
 

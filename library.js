@@ -47,6 +47,35 @@
 		DEF.warnings && W.console && W.console.warn.apply(W.console, arguments);
 	}
 
+	W.COOKIES = {
+		get: function(name) {
+			name = name.env();
+			var arr = document.cookie.split(';');
+			for (var i = 0; i < arr.length; i++) {
+				var c = arr[i];
+				if (c.charAt(0) === ' ')
+					c = c.substring(1);
+				var v = c.split('=');
+				if (v.length > 1 && v[0] === name)
+					return v[1];
+			}
+			return '';
+		},
+		set: function(name, value, expire, samesite) {
+			var type = typeof(expire);
+			if (type === 'function') {
+				var date = W.NOW;
+				date.setTime(date.getTime() + (expire * 24 * 60 * 60 * 1000));
+				expire = date;
+			} else if (type === 'string')
+				expire = new Date(Date.now() + expire.parseExpire());
+			document.cookie = name.env() + '=' + value + '; expires=' + expire.toGMTString() + '; path=/' + (samesite ? ('; samesite=' + samesite.charAt(0).toUpperCase() + samesite.substring(1)) : '');
+		},
+		rem: function(name) {
+			COOKIES.set(name.env(), '', '-1 day');
+		}
+	};
+
 	/*
 		@Path: Globals
 		@Method: NOOP(); #return {Function};
