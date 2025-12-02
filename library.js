@@ -26,6 +26,7 @@
 	W.FUNC = {};
 	W.TEMP = {};
 	W.M = T;
+
 	W.$W = $(W);
 	W.MONTHS = 'January,February,March,April,May,June,July,August,September,October,November,December'.split(',');
 	W.DAYS = 'Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday'.split(',');
@@ -165,7 +166,7 @@
 		} catch {}
 	};
 
-	T.version = 20.009;
+	T.version = 20.011;
 	T.is20 = true;
 	T.ready = false;
 	T.root = W;
@@ -193,6 +194,7 @@
 		counter: 0,
 		statics: {},
 		lockers: {},
+		sync: {},
 		resize: {},
 		blocked: {},
 		wait: {},
@@ -1598,6 +1600,11 @@
 				return '';
 			});
 
+			path = path.replace(' SYNC', function() {
+				t.SYNC = true;
+				return '';
+			});
+
 			if (path.includes(' #')) {
 				t.cl = [];
 				path = path.replace(/\s#[a-z0-9_-]+/gi, function(text) {
@@ -1908,7 +1915,7 @@
 			}
 
 			data = { schema: name, data: data ? data : undefined };
-			return t.ajax('POST ' + url + flags, data, callback);
+			return t.ajax('POST ' + url + flags, data, callback, 'POST ' + url + '~' + name);
 		}
 
 		PROTO.tapi = function(name, data, callback) {
@@ -1919,7 +1926,7 @@
 			return api(this, DEF.pipe, name, data, callback);
 		};
 
-		PROTO.ajax = function(url, data, callback) {
+		PROTO.ajax = function(url, data, callback, id) {
 
 			var t = this;
 			var type = typeof(data);
@@ -1932,11 +1939,11 @@
 			type = typeof(callback);
 
 			if (type === 'function')
-				return AJAX(url, data, callback, t.scope);
+				return AJAX(url, data, callback, null, t.scope, id);
 			else if (type === 'string')
-				return AJAX(url, data, response => t.set(callback, response), t.scope);
+				return AJAX(url, data, response => t.set(callback, response), null, t.scope, id);
 			else
-				return AJAX(url, data, NOOP, t.scope);
+				return AJAX(url, data, NOOP, null, t.scope, id);
 		};
 
 		PROTO.exec = function(name, a, b, c, d, e) {
@@ -5930,6 +5937,15 @@
 				}
 			}
 
+			arr = T.cache.sync[opt.id];
+			if (arr) {
+				let item = arr.shift();
+				if (item)
+					AJAX(item.url.replace(' SYNC', ''), item.data, item.callback, item.onprogress, item.scope, opt.id);
+				else
+					delete T.cache.sync[opt.id];
+			}
+
 			let type = opt.headers['content-type'];
 
 			if (type && type.indexOf('/json') !== -1)
@@ -5957,12 +5973,13 @@
 
 			T.process(opt.scope, opt.response, opt.callback);
 
-			let arr = T.cache.lockers[opt.id];
+			arr = T.cache.lockers[opt.id];
 			if (arr) {
 				for (let fn of arr)
 					T.process(opt.scope, opt.response, fn);
 				delete T.cache.lockers[opt.id];
 			}
+
 		}
 
 		function API(url, name, data, callback, scope) {
@@ -5982,7 +5999,7 @@
 			}
 
 			data = { schema: name, data: data ? data : undefined };
-			return W.AJAX('POST ' + url + flags, data, callback, scope);
+			return W.AJAX('POST ' + url + flags, data, callback, null, scope, 'POST ' + url + '~' + name);
 		}
 
 		W.TAPI = function(name, data, callback, scope) {
@@ -6002,10 +6019,10 @@
 
 		/*
 			@Path: Globals
-			@Method: AJAX(url, [data], callback); #url {String}; #[data] {Object}; #callback {Function(response)};
+			@Method: AJAX(url, [data], callback); #url {String}; #[data] {Object}; #callback {Function(response)}, #onprogress {Function(percentage)};
 			The method parsers JSON and converts all dates to `Date` object.
 		*/
-		W.AJAX = W.UPLOAD = function(url, data, callback, scope) {
+		W.AJAX = W.UPLOAD = function(url, data, callback, onprogress, scope, id) {
 
 			var type = typeof(data);
 
@@ -6014,12 +6031,13 @@
 				data = null;
 			}
 
+			let urltmp = url;
 			url = url.env();
 
 			var opt = {};
 			var index = url.indexOf(' ');
 
-			opt.id = url;
+			opt.id = id || url;
 			opt.method = url.substring(0, index);
 			opt.scope = scope || T.root;
 			opt.flags = {};
@@ -6034,12 +6052,22 @@
 			} else
 				opt.url = url;
 
-			if (opt.path && (opt.path.cache || opt.path.sync)) {
-				let arr = T.cache.lockers[opt.id];
-				if (arr)
-					arr.push(callback);
-				else
-					T.cache.lockers[opt.id] = [];
+			if (opt.path) {
+				let arr;
+				if (opt.path.cache) {
+					arr = T.cache.lockers[opt.id];
+					if (arr)
+						arr.push(callback);
+					else
+						T.cache.lockers[opt.id] = [];
+				} else if (opt.path.SYNC) {
+					arr = T.cache.sync[opt.id];
+					if (arr) {
+						arr.push({ url: urltmp, data: data, callback: callback, onprogress: onprogress, scope: scope });
+						return;
+					} else
+						T.cache.sync[opt.id] = [];
+				}
 			}
 
 			if (opt.url.substring(0, 2) === '//')

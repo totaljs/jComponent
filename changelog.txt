@@ -1,4 +1,11 @@
 ========================
+20.011
+========================
+
+- fixed `SYNC` keyword in the `AJAX()` method
+- added a missing `onprogress` handler to the `AJAX()` and `UPLOAD()` method
+
+========================
 20.009
 ========================
 
