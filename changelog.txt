@@ -1,4 +1,10 @@
 ========================
+20.012
+========================
+
+- added missing `component.$ready` property for several components (j-Layout, j-Windows, etc.) that implement it
+
+========================
 20.011
 ========================
 

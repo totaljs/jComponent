@@ -166,7 +166,7 @@
 		} catch {}
 	};
 
-	T.version = 20.011;
+	T.version = 20.012;
 	T.is20 = true;
 	T.ready = false;
 	T.root = W;
@@ -1286,7 +1286,9 @@
 					t.instance.cls = t.name;
 					break;
 				case 'component':
+
 					// t.element.aclass(cls);
+					t.instance.$ready = true;
 					t.instance.cls = DEF.prefixcsscomponents + t.name;
 					t.instance.def = t.element.attr('default');
 
