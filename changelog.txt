@@ -3,6 +3,7 @@
 ========================
 
 - added missing `component.$ready` property for several components (j-Layout, j-Windows, etc.) that implement it
+- added missing `API(url, name, data, callback, [scope])` method
 
 ========================
 20.011

@@ -166,7 +166,7 @@
 		} catch {}
 	};
 
-	T.version = 20.012;
+	T.version = 20.013;
 	T.is20 = true;
 	T.ready = false;
 	T.root = W;
@@ -6003,6 +6003,8 @@
 			data = { schema: name, data: data ? data : undefined };
 			return W.AJAX('POST ' + url + flags, data, callback, null, scope, 'POST ' + url + '~' + name);
 		}
+
+		W.API = API;
 
 		W.TAPI = function(name, data, callback, scope) {
 			return API(DEF.api, name, data, callback, scope);
