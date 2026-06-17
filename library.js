@@ -4278,7 +4278,8 @@
 		PROTO.round = function(decimals) {
 			if (decimals == null)
 				decimals = 0;
-			return +(Math.round(this + 'e+' + decimals) + 'e-' + decimals);
+			let num = this.valueOf();
+			return Number(Math.round((num + Number.EPSILON) * (10 ** decimals)) / (10 ** decimals));
 		};
 
 		PROTO.currency = function(currency, a, b, c) {
@@ -5651,6 +5652,10 @@
 		// @TODO: remove in jComponent v21
 		if (jc_globals.CSS != false)
 			W.CSS = W.STYLE;
+
+		W.CMD = function(name, a, b, c, d) {
+			T.cmd(null, name, a, b, c, d);
+		};
 
 		W.APPEARANCE = function(obj) {
 
