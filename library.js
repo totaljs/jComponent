@@ -6732,7 +6732,7 @@
 			T.seex(name, a, b, c, d);
 		};
 
-		W.EXEC = function(name, a, b, c, d) {
+		W.EXEC = W.EXE = function(name, a, b, c, d) {
 			T.exec(name, a, b, c, d);
 		};
 
