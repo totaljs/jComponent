@@ -166,7 +166,7 @@
 		} catch {}
 	};
 
-	T.version = 20.013;
+	T.version = 20.014;
 	T.is20 = true;
 	T.ready = false;
 	T.root = W;
@@ -6807,6 +6807,34 @@
 			}
 
 			return output;
+		};
+
+		W.DECRYPT = function(hex, key, type) {
+			let index = hex.lastIndexOf('x');
+			if (index !== -1) {
+				if (!type)
+					type = '';
+				let hash = hex.substring(index + 1);
+				let o = hex.substring(type.length, index);
+				let t = type ? hex.substring(0, type.length) : '';
+				if (t === type && HASH(o + (key || '') + type).toString(32) === hash) {
+					o = decodeURIComponent(o.replace(/(..)/g, '%$1'));
+					let c = o.charAt(0);
+					return c === '[' || c === '{' || c === '"' ? PARSE(o) : o;
+				}
+			}
+		};
+
+		W.ENCRYPT = function(str, key, type) {
+			if (typeof(str) === 'object')
+				str = STRINGIFY(str, true);
+			let arr = unescape(encodeURIComponent(str)).split('');
+			for (let i = 0; i < arr.length; i++)
+				arr[i] = arr[i].charCodeAt(0).toString(16);
+			if (!type)
+				type = '';
+			let o = arr.join('');
+			return type + o + 'x' + HASH(o + (key || '') + type).toString(32);
 		};
 
 		W.UNAUTHORIZED = function() {

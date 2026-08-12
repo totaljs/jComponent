@@ -1,4 +1,11 @@
 ========================
+20.014
+========================
+
+- added missing `ENCRYPT(str, key, type)` method
+- added missing `DECRYPT(hex, key, type)` method
+
+========================
 20.013
 ========================
 
