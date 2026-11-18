@@ -1,4 +1,71 @@
 ========================
+20.015
+========================
+
+- added missing `plugin.unwatch(path, [callback])` method
+- added `abort` and `timeout` handling to the `AJAX()` method
+- added error handling for scripts and styles to the `IMPORT()` method (the callback is executed even if the import fails)
+- improved performance of `SET()` (compiled setters are cached)
+- improved performance of `Array.prototype.quicksort()` (shared `Intl.Collator` instance)
+- improved `inDOM()` by using `element.isConnected`
+- improved `COOKIES.set()`, the `expire` argument is optional and it doesn't modify `NOW`
+- __changed__: `Number.prototype.format()` rounds decimals instead of cutting them
+- __changed__: `Date.prototype.format('iso')` returns a real UTC date
+- __changed__: `<ui-bind>` commands `html`, `text`, `value`, `title`, `href` and `src` render `0` instead of the `empty` value
+- __changed__: `EXTENSION()` executes the callback for existing instances with the same arguments as for new instances `(instance, config, cls)`
+- __changed__: `AJAX()` evaluates a response as an error from the status code `400` (before `399`)
+- __changed__: `WAIT(path, callback)` waits for a truthy value
+- fixed collisions in the cache of paths (different paths could return the same value)
+- fixed `SET(path, function(value))`
+- fixed `CMD()`, `plugin.cmd()` and `$(element).CMD()` methods
+- fixed `OFF(name, callback)` for unregistered events
+- fixed emitting of events when a handler unregisters itself
+- fixed infinite loop in the `autofocus()` method
+- fixed infinite loop in the `TRANSLATE()` method with unclosed `@(` markup
+- fixed `$` characters in translations in the `TRANSLATE()` method
+- fixed `CONFIG('.path', config)` for components without a path
+- fixed counting of pending elements for the `ready` event
+- fixed `?1|` (parent plugin) in paths
+- fixed `plugin.watch()` with multiple paths `path1 + path2`
+- fixed `plugin.set(object)`
+- fixed `plugin.modified` property
+- fixed `component.unwatch()` (it affected `component.datasource()` too)
+- fixed `component.autofill()` and processing of auto-filled values
+- fixed `component.setPath()` with the `?` character
+- fixed `component.caniuse()` with the `|` separator
+- fixed the previous value in the `component.configure(key, value, init, prev)` delegate
+- fixed `checkbox` in the default `component.setter()`
+- fixed internal `component.$setter()` without flags
+- fixed duplicated `component.attr()` declaration
+- fixed multiple commands `html+title` in `<ui-bind>`
+- fixed using of a previous value in `<ui-bind>` when a command throws an error
+- fixed arguments in `$(element).SEEX()`
+- fixed double execution of callbacks in cached `AJAX()` requests
+- fixed `opt.respond()` in the `request` event
+- fixed sending of `String` data in the `AJAX()` method
+- fixed implicit global variable `arr` in the `AJAX()` response
+- fixed `encrypt` argument in the `STRINGIFY()` method
+- fixed restoring of values in the `CACHEPATH()` method
+- fixed HTTP method parsing with `!` in the `CLINIT()` method
+- fixed a possible interval leak in the `WAIT()` method
+- fixed `COOKIES.set()` with a number of days and `COOKIES.get()` for values with the `=` character
+- fixed `localStorage` errors in the `BLOCKED()` method and in the initialization
+- fixed 12-hour clock (`hh`, `h`, `am/pm`) in `String.prototype.parseDate()` and `Date.prototype.format()`
+- fixed a missing day and milliseconds in `String.prototype.parseDate()`
+- fixed apostrophes and environment variables in `Date.prototype.format()`
+- fixed `Number.prototype.add()` with a number
+- fixed `Number.prototype.format()` with exponential notation
+- fixed `Number.prototype.pluralize()` without all arguments
+- fixed `String.prototype.parseExpire()` without a unit
+- fixed `String.prototype.parseSource()` with the `number` type
+- fixed `Array.prototype.findValue()` with cache
+- fixed sorting of different data types by the same key in `Array.prototype.quicksort()`
+- fixed short HEX colors in the `APPEARANCE()` method
+- fixed `VISIBLE()` for elements placed directly in the `<body>`
+- fixed checking of window size in the internal resize handler
+- fixed `resize` handler, animations and `destroy()` in the `SCROLLBAR()`
+
+========================
 20.014
 ========================
 

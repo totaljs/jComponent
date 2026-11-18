@@ -53,24 +53,20 @@
 			name = name.env();
 			var arr = document.cookie.split(';');
 			for (var i = 0; i < arr.length; i++) {
-				var c = arr[i];
-				if (c.charAt(0) === ' ')
-					c = c.substring(1);
-				var v = c.split('=');
-				if (v.length > 1 && v[0] === name)
-					return v[1];
+				var c = arr[i].trim();
+				var index = c.indexOf('=');
+				if (index !== -1 && c.substring(0, index) === name)
+					return c.substring(index + 1);
 			}
 			return '';
 		},
 		set: function(name, value, expire, samesite) {
 			var type = typeof(expire);
-			if (type === 'function') {
-				var date = W.NOW;
-				date.setTime(date.getTime() + (expire * 24 * 60 * 60 * 1000));
-				expire = date;
-			} else if (type === 'string')
+			if (type === 'number')
+				expire = new Date(Date.now() + (expire * 24 * 60 * 60 * 1000));
+			else if (type === 'string')
 				expire = new Date(Date.now() + expire.parseExpire());
-			document.cookie = name.env() + '=' + value + '; expires=' + expire.toGMTString() + '; path=/' + (samesite ? ('; samesite=' + samesite.charAt(0).toUpperCase() + samesite.substring(1)) : '');
+			document.cookie = name.env() + '=' + value + (expire ? ('; expires=' + expire.toUTCString()) : '') + '; path=/' + (samesite ? ('; samesite=' + samesite.charAt(0).toUpperCase() + samesite.substring(1)) : '');
 		},
 		rem: function(name) {
 			COOKIES.set(name.env(), '', '-1 day');
@@ -166,7 +162,7 @@
 		} catch {}
 	};
 
-	T.version = 20.014;
+	T.version = 20.015;
 	T.is20 = true;
 	T.ready = false;
 	T.root = W;
@@ -191,6 +187,7 @@
 		normalizer: {},
 		splitter: {},
 		plugins: [],
+		cachepaths: [],
 		counter: 0,
 		statics: {},
 		lockers: {},
@@ -284,13 +281,14 @@
 	*/
 	T.set = function(scope, path, value) {
 
-		var key = 'A' + HASH(path);
+		var key = 'A' + path;
 		var fn = T.cache.paths[key];
 
 		if (fn)
-			return fn(scope, value);
+			return fn(scope, value, path);
 
 		var params = [];
+		var raw = path;
 
 		path = path.replace(/\['.*?'\]|\[".*?"\]/g, text => '[#' + (params.push(text) - 1) + ']');
 
@@ -307,12 +305,12 @@
 		var v = arr[arr.length - 1];
 		var ispush = v.lastIndexOf('[]') !== -1;
 		var regarr = /\[\]/g;
-		var a = builder.join('') + 'var v=typeof(a)===\'function\'?a(jComponent.get(a, b)):a;w' + (v[0] === '[' ? '' : '.') + (ispush ? v.replace(regarr, '.push(v)') : (v + '=v')) + ';return v';
+		var a = builder.join('') + 'var v=typeof(a)===\'function\'?a(jComponent.get(w, b)):a;w' + (v[0] === '[' ? '' : '.') + (ispush ? v.replace(regarr, '.push(v)') : (v + '=v')) + ';return v';
 
 		a = a.replace(/\[#\d+\]/g, text => params[+text.substring(2, text.length - 1)]);
 
-		var fn = new Function('w', 'a', 'b', a);
-		return fn(scope, value, path);
+		fn = T.cache.paths[key] = new Function('w', 'a', 'b', a);
+		return fn(scope, value, raw);
 	};
 
 	/*
@@ -322,7 +320,7 @@
 	*/
 	T.get = function(scope, path) {
 
-		var key = 'B' + HASH(path);
+		var key = 'B' + path;
 		var fn = T.cache.paths[key];
 
 		if (fn)
@@ -358,9 +356,11 @@
 
 		if (callback) {
 			var arr = T.events[name];
-			var index = arr.indexOf(callback);
-			if (index !== -1)
-				arr.splice(index, 1);
+			if (arr) {
+				var index = arr.indexOf(callback);
+				if (index !== -1)
+					arr.splice(index, 1);
+			}
 		} else
 			delete T.events[name];
 	};
@@ -440,14 +440,14 @@
 
 		var arr = T.events[name];
 		if (arr) {
-			for (var e of arr)
+			for (var e of arr.slice(0))
 				e(a, b, c, d);
 		}
 
 		for (let m of T.components) {
 			arr = m.events[name];
 			if (arr) {
-				for (var e of arr)
+				for (var e of arr.slice(0))
 					e(a, b, c, d);
 			}
 		}
@@ -455,7 +455,7 @@
 		for (let key in T.plugins) {
 			arr = T.plugins[key].events[name];
 			if (arr) {
-				for (var e of arr)
+				for (var e of arr.slice(0))
 					e(a, b, c, d);
 			}
 		}
@@ -695,10 +695,10 @@
 		let index = name.indexOf(' ');
 		let path = null;
 
-		if (index === -1) {
-			let tmp = name.substring(index);
+		if (index !== -1) {
+			let tmp = name.substring(index + 1);
 			name = name.substring(0, index);
-			path = new T.Path(tmp);
+			path = parsepath(tmp);
 		}
 
 		if (element) {
@@ -709,8 +709,8 @@
 						arr.push(m);
 				}
 			} else {
-				arr = element.find('ui-component');
-				for (let m of arr) {
+				let tmp = element.find('ui-component');
+				for (let m of tmp) {
 					if (m.$uicomponent)
 						arr.push(m.$uicomponent);
 				}
@@ -723,7 +723,7 @@
 		let cmd = function() {
 			for (let m of arr) {
 				if (m.ready && m.commands[name])
-					m.cmd(name, a, b, c, d);
+					m.CMD(name, a, b, c, d);
 			}
 		};
 
@@ -989,7 +989,7 @@
 
 	function autofocus(el, selector, counter) {
 		if (!isMOBILE) {
-			if (typeof(counter) !== 'function')
+			if (typeof(counter) !== 'number')
 				counter = 0;
 			var target = el.find(typeof(selector) === 'string' ? selector : 'input,select,textarea');
 			for (var i = 0; i < target.length; i++) {
@@ -1008,6 +1008,8 @@
 	function inDOM(el) {
 		if (!el)
 			return;
+		if (el.isConnected != null)
+			return el.isConnected;
 		if (el.tagName === 'BODY')
 			return true;
 		var parent = el.parentNode;
@@ -1035,7 +1037,7 @@
 		if (path instanceof T.Path)
 			return path;
 
-		var key = 'C' + HASH(path);
+		var key = 'C' + path;
 		var cache = T.cache.paths[key];
 		if (cache)
 			return cache;
@@ -1066,7 +1068,7 @@
 			plugin = plugin.plugin;
 
 		path = path.replace(/\?(\d)?\|/, function(text) {
-			text = text.substring(0, text.length);
+			text = text.substring(0, text.length - 1);
 			return 'PLUGINS["{0}"]'.format(pluginparent(plugin, +text.substring(1), 'path')) + '.';
 		}).replace(/\|/, () => 'PLUGINS["{0}"]'.format(pluginparent(plugin, 0, 'path')) + '.').replace(/\?(\d)?/, function(text) {
 			return pluginparent(plugin, +text.substring(1), 'path');
@@ -1350,8 +1352,6 @@
 
 		PROTO.init = function(t, retry) {
 
-			readycounter--;
-
 			if (t.ready)
 				return;
 
@@ -1359,6 +1359,12 @@
 			if (!T.ready) {
 				setTimeout(t => t.init(t), 300, t);
 				return;
+			}
+
+			// The proxy is counted only once (the method can be executed multiple times)
+			if (!t.$counted) {
+				t.$counted = true;
+				readycounter--;
 			}
 
 			// Inline plugin definition
@@ -1852,7 +1858,7 @@
 			});
 			Object.defineProperty(t, 'modified', {
 				get() {
-					return t.get(t.scope, '@reset @modified') || {};
+					return t.get('@reset @modified') || {};
 				}
 			});
 		};
@@ -2005,8 +2011,8 @@
 			var t = this;
 
 			if (path && value === undefined && typeof(path) === 'object') {
-				path = '';
 				value = path;
+				path = '';
 			}
 
 			T.caller = t;
@@ -2138,6 +2144,8 @@
 		*/
 		PROTO.watch = function(path, callback, autoinit) {
 
+			var t = this;
+
 			if (typeof(path) === 'function') {
 				callback = path;
 				path = '';
@@ -2150,11 +2158,43 @@
 				return;
 			}
 
-			var t = this;
-
 			path = t.path.assign(path);
 			t.watchers.push({ path: path, fn: callback });
 			autoinit && setTimeout(() => callback(path.get(t.scope), path.flags, path.path), 1);
+		};
+
+		/*
+			@Path: Plugin
+			@Method: instance.unwatch(path, [callback]);
+			The method unregisters an existing watcher.
+		*/
+		PROTO.unwatch = function(path, callback) {
+
+			var t = this;
+
+			if (typeof(path) === 'function') {
+				callback = path;
+				path = '';
+			}
+
+			if (path.includes('+')) {
+				let arr = path.split('+').trim();
+				for (let m of arr)
+					t.unwatch(m, callback);
+				return;
+			}
+
+			path = t.path.assign(path).path;
+
+			var rem = [];
+
+			for (let m of t.watchers) {
+				if (m.path.path === path && (!callback || m.fn === callback))
+					rem.push(m);
+			}
+
+			for (let m of rem)
+				t.watchers.splice(t.watchers.indexOf(m), 1);
 		};
 
 		// Internal method
@@ -2272,7 +2312,7 @@
 		};
 
 		PROTO.autofill = function(val) {
-			this.$autofill = val == null || value === true;
+			this.$autofill = val == null || val === true;
 		};
 
 		PROTO.autobind20 = function(delay, realtimebinding) {
@@ -2384,7 +2424,7 @@
 
 				if (control.type === 'checkbox') {
 					let tmp = value != null ? (value + '').toLowerCase() : '';
-					t.checked = tmp === 'true' || tmp === '1' || tmp === 'on' || tmp === 'yes' || tmp === 'ok';
+					control.checked = tmp === 'true' || tmp === '1' || tmp === 'on' || tmp === 'yes' || tmp === 'ok';
 				} else
 					$(control).val(value);
 
@@ -2635,6 +2675,8 @@
 		*/
 		PROTO.unwatch = function(path, callback) {
 
+			var t = this;
+
 			if (typeof(path) === 'function') {
 				callback = path;
 				path = t.path.toString();
@@ -2645,16 +2687,12 @@
 				return;
 			}
 
-			var t = this;
 			var rem = [];
 
 			path = t.makepath(path);
 
 			for (let m of t.watchers) {
-				if (callback) {
-					if (m.path === path && m.callback === callback)
-						rem.push(m);
-				} else if (m.path === path)
+				if (m.path.path === path && (!callback || m.fn === callback))
 					rem.push(m);
 			}
 
@@ -2718,7 +2756,7 @@
 				if (parent) {
 					let proxy = parent.$proxyplugin;
 					if (proxy)
-						t.path = new T.Path(t.path.replace(/\?/g, proxy.path));
+						t.path = new T.Path(path.replace(/\?/g, proxy.path));
 				}
 			} else
 				t.path = new T.Path(path);
@@ -2742,13 +2780,6 @@
 			if (value === undefined)
 				return el.attr(key);
 			el.attr(key, value);
-		};
-
-		PROTO.attr = function(name, value) {
-			let el = this.element;
-			if (value === undefined)
-				return el.attr(name);
-			el.attr(name, value);
 		};
 
 		PROTO.tclass = function(cls, v) {
@@ -2908,8 +2939,9 @@
 				if (c === '$')
 					continue;
 
+				let prev = t.config[key];
 				t.config[key] = val;
-				t.configure && t.configure(key, val, init, init ? null : t.config[key], init);
+				t.configure && t.configure(key, val, init, init ? null : prev, init);
 
 				if (key === 'touched' || key === 'invalid' || key === 'modified' || key === 'disabled')
 					state = true;
@@ -3025,7 +3057,7 @@
 			The method checks if the component `name` is defined or not. You can use multiple names in the form `message|notify`.
 		*/
 		PROTO.caniuse = function(name) {
-			var arr = name.split(/\,|\|\s/);
+			var arr = name.split(/[,|]/).trim();
 			for (var key of arr) {
 				if (T.db.components[key] || T.db.lazy[key])
 					return key;
@@ -3165,13 +3197,13 @@
 
 			var t = this;
 
+			if (!flags)
+				flags = {};
+
 			if ((flags.init || flags.default) && (value == null) && t.def) {
 				value = t.def();
 				t.rewrite(value);
 			}
-
-			if (!flags)
-				flags = {};
 
 			if (t.skip) {
 				flags.skip = true;
@@ -3404,14 +3436,14 @@
 
 			}
 
-			for (let cmd of commands) {
-				if (cmd.clone.length > 1) {
-					for (let key of cmd.clone) {
-						let tmp = CLONE(cmd);
-						tmp.name = key;
-						delete tmp.clone;
-						commands.push(tmp);
-					}
+			for (let cmd of commands.slice(0)) {
+				for (let key of cmd.clone) {
+					// A shallow copy keeps the compiled function "cmd.fn"
+					let tmp = Object.assign({}, cmd);
+					tmp.isclass = key.charAt(0) === '.' ? 1 : 0;
+					tmp.name = tmp.isclass ? key.substring(1) : key;
+					delete tmp.clone;
+					commands.push(tmp);
 				}
 				delete cmd.clone;
 			}
@@ -3519,6 +3551,8 @@
 				try {
 					val = m.fn ? m.fn(el, value, flags, path) : value;
 				} catch (e) {
+					// Prevents using a value from the previous command
+					val = undefined;
 					console.error(ERR.format(e), t);
 				}
 
@@ -3592,19 +3626,19 @@
 						break;
 					case 'html':
 						if (render || t.visible)
-							el.html(val == null || val == '' ? t.empty : (t.format ? val.format(t.format) : val.toString()));
+							el.html(val == null || val === '' || val === false ? t.empty : (t.format ? val.format(t.format) : val.toString()));
 						break;
 					case 'text':
 						if (render || t.visible)
-							el.text(val == null || val == '' ? t.empty : (t.format ? val.format(t.format) : val.toString()));
+							el.text(val == null || val === '' || val === false ? t.empty : (t.format ? val.format(t.format) : val.toString()));
 						break;
 					case 'value':
-						el.val(val == null || val == '' ? t.empty : (t.format ? val.format(t.format) : val.toString()));
+						el.val(val == null || val === '' || val === false ? t.empty : (t.format ? val.format(t.format) : val.toString()));
 						break;
 					case 'title':
 					case 'href':
 					case 'src':
-						el.attr(m.name, val == null || val == '' ? t.empty : (t.format ? val.format(t.format) : val.toString()));
+						el.attr(m.name, val == null || val === '' || val === false ? t.empty : (t.format ? val.format(t.format) : val.toString()));
 						break;
 				}
 
@@ -3793,7 +3827,7 @@
 			for (var i = 0; i < arr.length; i++) {
 				var item = arr[i].split('|');
 				var id = item[0];
-				if (type && (type === Number || type === TYPE_N))
+				if (type && (type === Number || type === 'number'))
 					id = id ? id.parseInt() : null;
 
 				if (!item[1])
@@ -4026,7 +4060,7 @@
 
 			var min = 60000 * 60;
 
-			switch (str[1].trim().replace(/\./g, '')) {
+			switch ((str[1] || '').trim().replace(/\./g, '')) {
 				case 'minutes':
 				case 'minute':
 				case 'min':
@@ -4079,7 +4113,7 @@
 			var tmpformat = [];
 			var prev = '';
 			var prevformat = '';
-			var allowed = { y: 1, Y: 1, M: 1, m: 1, d: 1, D: 1, H: 1, s: 1, a: 1, w: 1 };
+			var allowed = { y: 1, Y: 1, M: 1, m: 1, d: 1, D: 1, H: 1, h: 1, s: 1, w: 1 };
 
 			for (var i = 0; i < format.length; i++) {
 
@@ -4121,12 +4155,17 @@
 					dt[type.charAt(0)] = +tmp[i];
 			}
 
-			var h = dt.h || dt.H;
+			var h = dt.h != null ? dt.h : dt.H;
 
 			if (h != null) {
 				var ampm = val.match(/am|pm/i);
-				if (ampm && ampm[0].toLowerCase() === 'pm')
-					h += 12;
+				if (ampm) {
+					if (ampm[0].toLowerCase() === 'pm') {
+						if (h < 12)
+							h += 12;
+					} else if (h === 12)
+						h = 0;
+				}
 			}
 
 			var y = (dt.y || dt.Y) || 0;
@@ -4134,7 +4173,7 @@
 			if (y < 100)
 				y += 2000;
 
-			return new Date(y, (dt.M || 1) - 1, dt.d || dt.D || 0, h || 0, dt.m || 0, dt.s || 0);
+			return new Date(y, (dt.M || 1) - 1, dt.d || dt.D || 1, h || 0, dt.m || 0, dt.s || 0);
 		}
 
 		PROTO.parseDate = function(format) {
@@ -4211,8 +4250,11 @@
 			if (ampm) {
 				// 12 hours time
 				tmp = +time[0];
-				if (ampm === 'pm')
-					time[0] = tmp + 12;
+				if (ampm === 'pm') {
+					if (tmp < 12)
+						time[0] = tmp + 12;
+				} else if (tmp === 12)
+					time[0] = 0;
 			}
 
 			parsed.push(+date[firstDay ? 2 : 0]); // year
@@ -4249,7 +4291,7 @@
 				}
 			}
 
-			return new Date(parsed[0], parsed[1] - 1, parsed[2], parsed[3], parsed[4], parsed[5]);
+			return new Date(parsed[0], parsed[1] - 1, parsed[2], parsed[3], parsed[4], parsed[5], parsed[6]);
 		};
 
 	})();
@@ -4294,14 +4336,8 @@
 		PROTO.format = function(decimals, separator, separatorDecimal) {
 
 			var self = this;
-			var num = self + '';
 			var dec = '';
 			var output = '';
-			var minus = num.charAt(0) === '-' ? '-' : '';
-			if (minus)
-				num = num.substring(1);
-
-			var index = num.indexOf('.');
 
 			if (typeof(decimals) === 'string') {
 				var tmp;
@@ -4327,6 +4363,21 @@
 
 			if (separator === undefined)
 				separator = DEF.thousandsseparator;
+
+			var value = Math.abs(self);
+
+			// Rounds the number instead of cutting decimals
+			if (decimals != null && decimals >= 0)
+				value = value.round(+decimals);
+
+			var num = value + '';
+
+			// Exponential notation
+			if (num.indexOf('e') !== -1)
+				num = value.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 });
+
+			var minus = self < 0 && value ? '-' : '';
+			var index = num.indexOf('.');
 
 			if (index !== -1) {
 				dec = num.substring(index + 1);
@@ -4361,7 +4412,7 @@
 			if (value == null)
 				return self;
 
-			if (typeof(value) === 'function')
+			if (typeof(value) === 'number')
 				return self + value;
 
 			var first = value.charCodeAt(0);
@@ -4449,7 +4500,7 @@
 			else if (num > 1 && num < 5)
 				value = few || '';
 			else
-				value = other;
+				value = other || '';
 
 			return value.includes('#') ? value.replace(DEF.regexp.pluralize, text => text === '##' ? num.format() : (num + '')) : value;
 		};
@@ -4461,6 +4512,9 @@
 
 		var PROTO = Array.prototype;
 
+		// A shared instance (creating of the collator is expensive)
+		var collator = W.Intl ? new W.Intl.Collator() : null;
+
 		var lcomparer = function(a, b) {
 			if (!a && !b)
 				return 0;
@@ -4468,7 +4522,7 @@
 				return -1;
 			if (a && !b)
 				return 1;
-			return W.Intl ? W.Intl.Collator().compare(a, b) : (a + '').localeCompare(b + '');
+			return collator ? collator.compare(a, b) : (a + '').localeCompare(b + '');
 		};
 
 		var lcomparer_desc = function(a, b) {
@@ -4478,7 +4532,7 @@
 				return 1;
 			if (a && !b)
 				return -1;
-			return (W.Intl ? W.Intl.Collator().compare(a, b) : (a + '').localeCompare(b + '')) * -1;
+			return (collator ? collator.compare(a, b) : (a + '').localeCompare(b + '')) * -1;
 		};
 
 		var sortcomparer = function(sort) {
@@ -4499,9 +4553,12 @@
 				T.cache.tmp[key] = meta;
 			}
 
+			// The type of values is detected for each sorting separately
+			var cols = meta.map(m => ({ name: m.name, type: null, desc: m.desc, read: m.read }));
+
 			return function(a, b) {
-				for (var i = 0; i < meta.length; i++) {
-					var col = meta[i];
+				for (var i = 0; i < cols.length; i++) {
+					var col = cols[i];
 					var va = col.read ? col.read(a) : a[col.name];
 					var vb = col.read ? col.read(b) : b[col.name];
 
@@ -4737,9 +4794,9 @@
 			var key, val = def;
 
 			if (cache) {
-				key = 'fv_' + cb + '=' + value;
-				if (temp[key])
-					return temp[key];
+				key = 'fv_' + cb + '=' + value + ':' + path;
+				if (W.TEMP[key] !== undefined)
+					return W.TEMP[key];
 			}
 
 			var index = this.findIndex(cb, value);
@@ -4748,9 +4805,9 @@
 				if (path.indexOf('.') === -1)
 					item = item[path];
 				else
-					item = get(path, item);
-				cache && (temp[key] = val);
+					item = T.get(item, path);
 				val = item == null ? def : item;
+				cache && (W.TEMP[key] = val);
 			}
 
 			return val;
@@ -4934,8 +4991,13 @@
 			if (format == null)
 				format = DEF.dateformat;
 
+			// The suffix "Z" means UTC, so the value must be in UTC
 			if (!format || format === 'iso')
-				return self.getFullYear() + '-' + ((self.getMonth() + 1) + '').padLeft(2, '0') + '-' + (self.getDate() + '').padLeft(2, '0') + 'T' + (self.getHours() + '').padLeft(2, '0') + ':' + (self.getMinutes() + '').padLeft(2, '0') + ':' + (self.getSeconds() + '').padLeft(2, '0') + '.' + (self.getMilliseconds() + '').padLeft(3, '0') + 'Z';
+				return isNaN(this.getTime()) ? '' : this.toISOString();
+
+			// The environment can be changed, so the cache key must contain the final format
+			if (format.indexOf('[') !== -1)
+				format = format.env();
 
 			var key = 'dt_' + format;
 
@@ -4943,8 +5005,6 @@
 				return T.cache.statics[key](self);
 
 			var half = false;
-
-			format = format.env();
 
 			if (format && format.charAt(0) === '!') {
 				half = true;
@@ -4958,6 +5018,9 @@
 			var ismm = false;
 			var isdd = false;
 			var isww = false;
+
+			// Escapes characters which could break the compiled function
+			format = format.replace(/\\/g, '\\\\').replace(/'/g, '\\\'').replace(/\n/g, '\\n').replace(/\r/g, '');
 
 			format = format.replace(DEF.regexp.date, function(key) {
 				switch (key) {
@@ -5029,7 +5092,7 @@
 		};
 
 		W.$totaluidate = function(value) {
-			return value >= 12 ? value - 12 : value;
+			return (value % 12) || 12;
 		};
 
 	})();
@@ -5253,7 +5316,7 @@
 					var tmp = url.split(' ');
 					tmp[0] = tmp[0].toLowerCase();
 					if (tmp[0].charAt(0) === '!')
-						tmp[0] === tmp[0].substring(1);
+						tmp[0] = tmp[0].substring(1);
 					switch (tmp[0]) {
 						case 'get':
 						case 'post':
@@ -5435,8 +5498,11 @@
 			var local = timeout < 10000;
 			T.cache.blocked[key] = now + timeout;
 
-			if (!local && W.localStorage)
-				W.localStorage.setItem(DEF.localstorage + '.blocked', STRINGIFY(T.cache.blocked));
+			if (!local) {
+				try {
+					W.localStorage.setItem(DEF.localstorage + '.blocked', STRINGIFY(T.cache.blocked));
+				} catch {}
+			}
 
 			callback && callback();
 			return false;
@@ -5444,7 +5510,6 @@
 
 		W.WAIT = function(fn, callback) {
 
-			var key = ((Math.random() * 10000) >> 0).toString(36);
 			var is = typeof(fn) === 'string';
 			var run = false;
 
@@ -5460,17 +5525,16 @@
 				return;
 			}
 
-			T.cache.wait[key] = setInterval(function() {
+			var interval = setInterval(function() {
 
 				if (is) {
 					var result = T.get(T.root, fn);
-					if (result == null)
+					if (!result)
 						return;
 				} else if (!fn())
 					return;
 
-				clearInterval(T.cache.wait[key]);
-				delete T.cache.wait[key];
+				clearInterval(interval);
 				callback();
 
 			}, 500);
@@ -5500,7 +5564,7 @@
 			if (el instanceof jQuery)
 				el = el[0];
 
-			if (el.parentNode && el.parentNode.tagName !== 'body') {
+			if (el.parentNode && el.parentNode.tagName !== 'BODY') {
 				if (W.isIE) {
 					if (!el.offsetWidth && !el.offsetHeight)
 						return false;
@@ -5684,7 +5748,7 @@
 			if (obj.color && !obj.rgb) {
 				var color = obj.color.substring(1);
 				if (color.length === 3)
-					color += color;
+					color = color.charAt(0) + color.charAt(0) + color.charAt(1) + color.charAt(1) + color.charAt(2) + color.charAt(2);
 				obj.rgb = parseInt(color.substring(0, 2), 16) + ',' + parseInt(color.substring(2, 4), 16) + ',' + parseInt(color.substring(4, 6), 16);
 				builder.push('--rgb:' + obj.rgb);
 			}
@@ -5919,7 +5983,8 @@
 
 				return value;
 			});
-			return encrypt && encryptsecret ? encrypt_data(tmp, encryptsecret) : tmp;
+			// @encrypt {Boolean/String} a string is used as a key
+			return encrypt ? W.ENCRYPT(tmp, typeof(encrypt) === 'string' ? encrypt : '') : tmp;
 		};
 
 		function onresponse(opt) {
@@ -5929,7 +5994,7 @@
 			opt.status = req.status;
 			opt.text = req.statusText;
 			opt.response = req.responseText;
-			opt.iserror = opt.status >= 399 || opt.status === 0;
+			opt.iserror = opt.status >= 400 || opt.status === 0;
 			opt.onprogress && T.process(opt.scope, 100, opt.onprogress);
 			opt.duration = Date.now() - opt.duration;
 			opt.headers = {};
@@ -5944,7 +6009,7 @@
 				}
 			}
 
-			arr = T.cache.sync[opt.id];
+			let arr = T.cache.sync[opt.id];
 			if (arr) {
 				let item = arr.shift();
 				if (item)
@@ -5958,10 +6023,15 @@
 			if (type && type.indexOf('/json') !== -1)
 				opt.response = PARSE(opt.response);
 
+			// Releases callbacks waiting for the same cached request
+			let lockers = opt.path && opt.path.cache ? T.cache.lockers[opt.id] : null;
+			if (lockers)
+				delete T.cache.lockers[opt.id];
+
 			T.emit('response', opt);
 
 			// Processed by another way
-			if (opt.cancel)
+			if (opt.cancel && !opt.responded)
 				return;
 
 			if (opt.path && opt.path.ERROR) {
@@ -5980,11 +6050,9 @@
 
 			T.process(opt.scope, opt.response, opt.callback);
 
-			arr = T.cache.lockers[opt.id];
-			if (arr) {
-				for (let fn of arr)
+			if (lockers) {
+				for (let fn of lockers)
 					T.process(opt.scope, opt.response, fn);
-				delete T.cache.lockers[opt.id];
 			}
 
 		}
@@ -6022,7 +6090,8 @@
 		function req_respond(value) {
 			var opt = this;
 			opt.cancel = true;
-			opt.req = { status: 200, response: value };
+			opt.responded = true;
+			opt.req = { status: 200, statusText: 'OK', responseText: value };
 			onresponse(opt);
 		}
 
@@ -6062,15 +6131,8 @@
 				opt.url = url;
 
 			if (opt.path) {
-				let arr;
-				if (opt.path.cache) {
-					arr = T.cache.lockers[opt.id];
-					if (arr)
-						arr.push(callback);
-					else
-						T.cache.lockers[opt.id] = [];
-				} else if (opt.path.SYNC) {
-					arr = T.cache.sync[opt.id];
+				if (!opt.path.cache && opt.path.SYNC) {
+					let arr = T.cache.sync[opt.id];
 					if (arr) {
 						arr.push({ url: urltmp, data: data, callback: callback, onprogress: onprogress, scope: scope });
 						return;
@@ -6122,19 +6184,31 @@
 					opt.id = opt.id + HASH(opt.data);
 				let cache = CACHE(opt.id);
 				if (cache) {
-					delete T.cache.lockers[opt.id];
 					T.process(opt.scope, cache, opt.callback);
 					return;
 				}
+
+				// The same request is pending, so the callback waits for its response
+				let lockers = T.cache.lockers[opt.id];
+				if (lockers) {
+					lockers.push(opt.callback);
+					return;
+				}
+
+				T.cache.lockers[opt.id] = [];
 			}
 
 			var percentage = 0;
 			var xhr = new XMLHttpRequest();
 
-			xhr.addEventListener('error', function() {
+			var onfail = function() {
 				opt.req = this;
 				onresponse(opt);
-			});
+			};
+
+			xhr.addEventListener('error', onfail);
+			xhr.addEventListener('abort', onfail);
+			xhr.addEventListener('timeout', onfail);
 
 			xhr.addEventListener('load', function() {
 				opt.req = this;
@@ -6157,7 +6231,8 @@
 			for (let key in opt.headers)
 				xhr.setRequestHeader(key, opt.headers[key]);
 
-			if (!(data instanceof FormData))
+			// A string is sent as it is (urlencoded data)
+			if (!(opt.data instanceof FormData) && typeof(opt.data) !== 'string')
 				opt.data = JSON.stringify(opt.data);
 
 			if (opt.path) {
@@ -6351,6 +6426,10 @@
 					done();
 					T.emit('import', url, $(scr));
 				};
+				scr.onerror = function() {
+					WARN(ERR.format('IMPORT("{0}") failed'.format(url)));
+					done();
+				};
 				scr.src = url;
 				d.getElementsByTagName('head')[0].appendChild(scr);
 				return;
@@ -6366,6 +6445,10 @@
 				link.onload = function() {
 					setTimeout(done, 2);
 					T.emit('import', url, $(link));
+				};
+				link.onerror = function() {
+					WARN(ERR.format('IMPORT("{0}") failed'.format(url)));
+					done();
 				};
 				d.getElementsByTagName('head')[0].appendChild(link);
 				return;
@@ -6453,15 +6536,28 @@
 		W.CACHEPATH = function(path, expire, def) {
 
 			var value = GET(path);
-			if (value == null) {
-				if (def)
-					value = typeof(def) === 'function' ? def() : def;
-			}
+			var empty = value == null;
+
+			if (empty && def)
+				value = typeof(def) === 'function' ? def() : def;
 
 			if (value != null)
 				SET(path, value);
 
-			WATCH(path, value => CACHE('path_' + path, value, expire));
+			// The cached value can be restored when the storage is loaded
+			var restore = function() {
+				if (empty) {
+					let cached = CACHE('path_' + path);
+					if (cached != null)
+						SET(path, cached);
+				}
+				WATCH(path, value => CACHE('path_' + path, value, expire));
+			};
+
+			if (T.ready)
+				restore();
+			else
+				T.cache.cachepaths.push(restore);
 		};
 
 		/*
@@ -6526,6 +6622,10 @@
 					index = i;
 					break;
 				}
+
+				// Unclosed markup
+				if (i >= length)
+					break;
 			}
 
 			for (var i = 0; i < arr.length; i++) {
@@ -6537,7 +6637,7 @@
 					key = 'T' + key;
 					tmp = DEF.dictionary[key];
 				}
-				str = str.replace(raw, tmp || text);
+				str = str.replace(raw, () => tmp || text);
 			}
 
 			return str;
@@ -6619,7 +6719,7 @@
 
 		/*
 			@Path: Globals
-			@Method: EXTENSION(name, config, callback); #name {String}; #config {String/Object}; #callback {Function(instance, config, element, cls)};
+			@Method: EXTENSION(name, config, callback); #name {String}; #config {String/Object}; #callback {Function(instance, config, cls)};
 			The method extends UI components `component_name` or plugins `@plugin_name`.
 		*/
 		W.EXTENSION = function(name, config, callback) {
@@ -6649,14 +6749,14 @@
 							for (let k in obj.config)
 								plugin.config[k] = obj.config[k];
 						}
-						callback(plugin, plugin.config, plugin.element);
+						callback.call(plugin, plugin, plugin.config, plugin.cls);
 					}
 				}
 			} else {
 				for (let m of T.components) {
 					if (m.name === name) {
 						obj.config && m.reconfigure(obj.config);
-						callback(m, m.config, m.element, m.cls);
+						callback.call(m, m, m.config, m.cls);
 					}
 				}
 			}
@@ -6708,7 +6808,7 @@
 					code = 'instance.id === "{0}"'.format(selector.substring(1));
 					break;
 				case '.': // path
-					code = 'instance.path.includes("{0}")'.format(selector.substring(1));
+					code = '(!!instance.path && instance.path.includes("{0}"))'.format(selector.substring(1));
 					break;
 				case '*': // all UI components
 					code = 'true';
@@ -7153,8 +7253,8 @@
 		};
 
 		$.fn.SEEX = function(name, a, b, c, d) {
-			var c = name.charAt(0);
-			if (c === '?' || c === '|') {
+			var ch = name.charAt(0);
+			if (ch === '?' || ch === '|') {
 				var plugin = this.plugin();
 				T.seex(preparepath(plugin, name), a, b, c, d);
 			} else
@@ -7175,7 +7275,7 @@
 		W.WW = w.width();
 		W.WH = w.height();
 
-		if (!W.WH || !W.WH) {
+		if (!W.WW || !W.WH) {
 			resize.timeout = setTimeout(T.resize, 10);
 			return;
 		}
@@ -7207,7 +7307,11 @@
 			return;
 		}
 
-		T.cache.blocked = PARSE(W.localStorage && W.localStorage.getItem(DEF.localstorage + '.blocked') || '{}');
+		try {
+			T.cache.blocked = PARSE(W.localStorage.getItem(DEF.localstorage + '.blocked') || '{}') || {};
+		} catch {
+			T.cache.blocked = {};
+		}
 
 		var now = Date.now();
 		var blocked = T.cache.blocked;
@@ -7435,6 +7539,10 @@
 				}
 			}
 
+			// Restores values registered via CACHEPATH() before the storage was loaded
+			for (let fn of T.cache.cachepaths.splice(0))
+				fn();
+
 			T.ready = true;
 			T.loaded = true;
 
@@ -7501,14 +7609,14 @@
 					let arr = T.autofill.splice(0);
 					for (let m of arr) {
 
-						if (!m.def)
+						if (m.def)
 							continue;
 
 						let el = m.element.find('input,textarea,select');
 						if (el.length) {
 							let val = el.val();
 							if (val) {
-								var tmp = m.$parser ? m.$parser(val) : val;
+								var tmp = m.$parser ? m.$parser(m.path ? m.path.path : '', val) : val;
 								if (tmp)
 									m.set(tmp, '@change @init');
 							}
@@ -7680,6 +7788,9 @@
 
 		handlers.onresize = function() {
 
+			if (native)
+				return;
+
 			if (!delayresize) {
 				scrollbarcache.ready = 0;
 				path.aclass(n + '-notready');
@@ -7713,6 +7824,7 @@
 
 		var animyt_fn = function(value) {
 			if (animcache.y !== value && !animcache.yis) {
+				animcache.yis = true;
 				animcache.y = value;
 				animyt.top = value + 20;
 				bary.stop().animate(animyt, 150, function() {
@@ -7756,7 +7868,7 @@
 		var animxr = {};
 		var animxr_fn = function(value) {
 			if (animcache.x !== value && !animcache.xis) {
-				animcache.yis = true;
+				animcache.xis = true;
 				animxr.width = value - 20;
 				barx.stop().animate(animxr, 150, function() {
 					animxr.width = value;
@@ -8114,7 +8226,7 @@
 		var PB = 'padding-bottom';
 
 		self.size = size;
-		self.resize2 = onresize;
+		self.resize2 = handlers.onresize;
 		self.resize = function(scrolling, force) {
 
 			if (native)
@@ -8177,7 +8289,7 @@
 			}
 
 			self.thinknessX = size.thicknessH;
-			self.thinknessY = size.thicknessY;
+			self.thinknessY = size.thicknessV;
 
 			var mx = canX ? (options.marginX || 0) : 0;
 			var my = canY ? (options.marginY || 0) : 0;
@@ -8473,6 +8585,13 @@
 
 		self.destroy = function() {
 			clearInterval(intervalresize);
+			delayresize && clearTimeout(delayresize);
+			resizeid && clearTimeout(resizeid);
+			delay && clearTimeout(delay);
+			syncdelay && clearTimeout(syncdelay);
+			$W.off('resize', handlers.onresize);
+			if (element[0].$scrollbar === self)
+				delete element[0].$scrollbar;
 			unbind();
 			area && area.off();
 			pathx && pathx.off();
@@ -8494,7 +8613,7 @@
 		};
 
 		if (options.autoresize == null || options.autoresize) {
-			$W.on('resize', onresize);
+			$W.on('resize', handlers.onresize);
 			T.on('resize', self.resize);
 		}
 
