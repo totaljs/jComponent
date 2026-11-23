@@ -159,7 +159,7 @@
 			return true;
 		if (el instanceof jQuery)
 			el = el[0];
-		return el.parentNode && el.parentNode.tagName === T_BODY ? false : W.isIE ? (!el.offsetWidth && !el.offsetHeight) : !el.offsetParent;
+		return el.parentNode && el.parentNode.tagName === T_BODY ? W.getComputedStyle(el).display === 'none' : W.isIE ? (!el.offsetWidth && !el.offsetHeight) : !el.offsetParent;
 	};
 
 	W.LOCALIZE = function(str) {
@@ -803,8 +803,8 @@
 		}
 
 		if (value !== undefined) {
-			events[KEY_ENV] && EMIT(KEY_ENV, name, value);
 			ENV[name] = value;
+			events[KEY_ENV] && EMIT(KEY_ENV, name, value);
 			return value;
 		}
 
@@ -3151,7 +3151,8 @@
 			var n = false;
 
 			if (!(arr instanceof Array)) {
-				arr = [];
+				// A value which is not an array is kept as the first item
+				arr = arr == null ? [] : [arr];
 				n = true;
 			}
 
@@ -3395,7 +3396,7 @@
 			key = pathmaker(key);
 			var item = M.cl[key];
 			if (item) {
-				if (!item.reload && DEF.cl[key]) {
+				if (!item.reload && DEF.cl[key] && (!item.expire || !item.date || (item.date.getTime() + (typeof(item.expire) === TYPE_N ? item.expire : item.expire.parseExpire())) > Date.now())) {
 					next();
 				} else {
 					item.callback(function(val, extend) {
@@ -3844,12 +3845,17 @@
 		$ready && clearTimeout($ready);
 		$ready = null;
 
+		// Items written before the storage was read
+		var pending = null;
+
 		if (loaddone) {
 			// Clears previous cache
 			storage = {};
 			blocked = {};
-		} else
+		} else {
 			loaddone = true;
+			pending = storage;
+		}
 
 		var cache;
 
@@ -3858,6 +3864,18 @@
 			if (cache && typeof(cache) === TYPE_S)
 				storage = PARSE(cache);
 		} catch (e) {}
+
+		if (pending) {
+			var resave = false;
+			for (var key in pending) {
+				if (!storage)
+					storage = {};
+				storage[key] = pending[key];
+				resave = true;
+			}
+			resave && save();
+		}
+
 		try {
 			cache = LS.getItem(MD.localstorage + '.blocked');
 			if (cache && typeof(cache) === TYPE_S)
@@ -4468,6 +4486,11 @@
 				var url = data.url;
 				if (!url)
 					url = el.attr(T_PATH);
+
+				if (!url) {
+					WARN('The element "ui-import" does not have defined URL', t);
+					continue;
+				}
 
 				var once = url.substring(0, 5).toLowerCase() === 'once ';
 				if (url.charAt(0) === '!' || once) {
@@ -5463,6 +5486,11 @@
 	}
 
 	function save() {
+
+		// The storage is not read yet
+		if (!loaddone)
+			return;
+
 		!W.isPRIVATEMODE && LS.setItem(MD.localstorage + '.cache', STRINGIFY(storage));
 	}
 
@@ -8267,7 +8295,7 @@
 			case TYPE_B:
 				return obj;
 			case TYPE_S:
-				return path ? obj : CLONE(GET(obj));
+				return path ? obj : CLONE(GET(obj), true);
 		}
 
 		if (obj == null)
@@ -9037,9 +9065,9 @@
 		var arr = [];
 		var self = this;
 		for (var i = 0; i < self.length; i++) {
-			arr.push(self[i]);
 			if (arr.length >= count)
 				return arr;
+			arr.push(self[i]);
 		}
 		return arr;
 	};
@@ -9237,7 +9265,7 @@
 			if (l !== 2)
 				continue;
 
-			var k = kv[0].trim().env();
+			var k = kv[0].trim().replace(/\0/g, ':').env();
 			var v = kv[1].trim().replace(/\0/g, ':').env();
 
 			if (v === T_TRUE || v === T_FALSE)
@@ -9846,7 +9874,8 @@
 						if (tmp.decimalseparator)
 							separatorDecimal = tmp.decimalseparator;
 					}
-				}
+				} else
+					decimals = undefined;
 			} else {
 				tmp = separator;
 				separator = decimals;
@@ -9918,13 +9947,17 @@
 
 	NP.add = NP.inc = function(value, decimals) {
 
-		var self = this;
+		var self = this.valueOf();
 
 		if (value == null)
 			return self;
 
 		if (typeof(value) === TYPE_N)
 			return self + value;
+
+		// Unsupported values are ignored
+		if (typeof(value) !== TYPE_S || !value)
+			return self;
 
 		var first = value.charCodeAt(0);
 		var is = false;
@@ -9943,7 +9976,7 @@
 				var val = value.parseFloat();
 				switch (first) {
 					case 42:
-						num = self * ((self / 100) * val);
+						num = self * (val / 100);
 						break;
 					case 43:
 						num = self + ((self / 100) * val);
@@ -9952,7 +9985,10 @@
 						num = self - ((self / 100) * val);
 						break;
 					case 47:
-						num = self / ((self / 100) * val);
+						num = self / (val / 100);
+						break;
+					default:
+						num = self;
 						break;
 				}
 				return decimals !== undefined ? num.floor(decimals) : num;
@@ -9978,7 +10014,8 @@
 				num = self / num;
 				break;
 			default:
-				num = self;
+				// A number without an operator is added
+				num = is ? self : self + num;
 				break;
 		}
 
@@ -9986,6 +10023,8 @@
 	};
 
 	NP.floor = function(decimals) {
+		if (decimals == null)
+			decimals = 0;
 		return Math.floor(this * Math.pow(10, decimals)) / Math.pow(10, decimals);
 	};
 
@@ -10277,8 +10316,7 @@
 
 							break;
 					}
-				} else
-					return 0;
+				}
 			}
 
 			return 0;
@@ -10294,14 +10332,14 @@
 		var self = this;
 
 		// Backward compatibility
-		if (!sort || sort === true) {
-			self.sort(LCOMPARER);
+		if (sort === false) {
+			self.sort(LCOMPARER_DESC);
 			return self;
 		}
 
 		// Backward compatibility
-		if (sort === false) {
-			self.sort(LCOMPARER_DESC);
+		if (!sort || sort === true) {
+			self.sort(LCOMPARER);
 			return self;
 		}
 
@@ -10745,11 +10783,11 @@
 			var d = D.createElementNS('http://www.w3.org/1999/xhtml', 'div');
 			d.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg">' + tag + '</svg>';
 			var f = D.createDocumentFragment();
+			var nodes = [];
 			while (d.firstChild.firstChild)
-				f.appendChild(d.firstChild.firstChild);
-			f = $(f);
+				nodes.push(f.appendChild(d.firstChild.firstChild));
 			this.append(f);
-			return f;
+			return $(nodes);
 		};
 
 		$.fn.psvg = function(tag) {
@@ -10763,11 +10801,11 @@
 			var d = D.createElementNS('http://www.w3.org/1999/xhtml', 'div');
 			d.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg">' + tag + '</svg>';
 			var f = D.createDocumentFragment();
+			var nodes = [];
 			while (d.firstChild.firstChild)
-				f.appendChild(d.firstChild.firstChild);
-			f = $(f);
+				nodes.push(f.appendChild(d.firstChild.firstChild));
 			this.prepend(f);
-			return f;
+			return $(nodes);
 		};
 
 		function findinstance(t, type) {
@@ -11707,9 +11745,15 @@
 								break;
 							case 'check':
 							case 'currency':
-							case 'focus':
-							case T_RESIZE:
 								fn = v;
+								break;
+							case 'focus':
+								// Without a selector the default input selector is used
+								fn = v === T_VALUE ? 'input,select,textarea' : v;
+								break;
+							case T_RESIZE:
+								// Without a selector all components are resized (also resize:true and resize:1, as before)
+								fn = v === T_VALUE || v === 'true' || v === '1' ? '*' : v;
 								break;
 							case 'format':
 								fn = v === 'value' ? '' : (/^\d+$/).test(v) ? (+v) : v;
@@ -12011,10 +12055,13 @@
 			var bj = obj.com && path.charAt(0) === '@';
 			path = bj ? path : pathmaker(path, 0, 1);
 
-			if (isscope || path.indexOf('?') !== -1 || (obj.formatter && obj.formatter.scope)) {
+			// "|key" is a shortcut for "?|key"
+			var isplugin = path.charAt(0) === '|';
+
+			if (isscope || isplugin || path.indexOf('?') !== -1 || (obj.formatter && obj.formatter.scope)) {
 				var scope = findscope(el);
 				if (scope) {
-					path = scope.makepath(path);
+					path = scope.makepath(isplugin ? ('?' + path) : path);
 					obj.scope = scope.path;
 					obj.plugin = scope.plugin;
 				} else {
@@ -12181,8 +12228,8 @@
 		autofocus(item.el, item.focus);
 	}
 
-	function jbind_resize(el) {
-		el.SETTER('*', T_RESIZE);
+	function jbind_resize(el, selector) {
+		el.SETTER(selector || '*', T_RESIZE);
 	}
 
 	function jbind_macro_init(item, name) {
@@ -12598,7 +12645,7 @@
 			setTimeout(jbind_focus, el.find(item.focus).length ? 100 : 1500, item);
 
 		if (can && item.resize)
-			setTimeout(jbind_resize, 100, el);
+			setTimeout(jbind_resize, 100, el, item.resize);
 
 		item.macro && jbind_macro(el, item, value, path, type);
 
