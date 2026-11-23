@@ -294,7 +294,7 @@
 
 		var arr = splitpath(path);
 		var builder = [];
-		var regarr = /\[\d+\]|\[\]$/;
+		var regarr = /\[\d+\]$|\[\]$/;
 
 		for (var i = 0; i < arr.length - 1; i++) {
 			var type = arr[i + 1] ? (regarr.test(arr[i + 1]) ? '[]' : '{}') : '{}';
@@ -664,7 +664,7 @@
 						if (m.id !== id)
 							continue;
 					} else if (pth) {
-						if (!m.path.includes(pth))
+						if (!m.path || !m.path.includes(pth))
 							continue;
 					} else if (m.name !== tmp[0])
 						continue;
@@ -773,10 +773,12 @@
 
 					if (!m.path || m.path.includes(path)) {
 
-						if (path.flags.reset || path.flags.default)
-							m.reconfigure({ touched: 0, modified: 0 });
-						else if (path.flags.change || path.flags.touch || path.flags.modify || path.flags.modified)
-							m.reconfigure({ touched: 1, modified: 1 });
+						if (m.path) {
+							if (path.flags.reset || path.flags.default)
+								m.reconfigure({ touched: 0, modified: 0 });
+							else if (path.flags.change || path.flags.touch || path.flags.modify || path.flags.modified)
+								m.reconfigure({ touched: 1, modified: 1 });
+						}
 
 						if (onlyflags)
 							m.$validate();
@@ -917,7 +919,7 @@
 		name.split(',').trim().wait(function checkcl(key, next) {
 			var item = T.cache.cl[key];
 			if (item) {
-				if (!item.reload && DEF.cl[key]) {
+				if (!item.reload && DEF.cl[key] && (!item.expire || !item.date || (item.date.getTime() + (typeof(item.expire) === 'number' ? item.expire : item.expire.parseExpire())) > Date.now())) {
 					next();
 				} else {
 					item.callback(function(val, extend) {
@@ -948,7 +950,7 @@
 		for (let key in M.db.components) {
 			let item = M.db.components[key];
 			if (item.css)
-				builder.push(item.css.replace(/CLASS/g, 'ui-' + key));
+				builder.push(item.css.replace(/CLASS/g, DEF.prefixcsscomponents + key));
 		}
 		STYLE(builder.join('\n'), 'components');
 	}
@@ -1021,6 +1023,11 @@
 	}
 
 	function savestorage() {
+
+		// The storage is not read yet
+		if (!T.loaded)
+			return;
+
 		var data = {};
 		for (let key in T.cache.storage) {
 			let item = T.cache.storage[key];
@@ -1139,6 +1146,9 @@
 	}
 
 	function findinstance(t, prop) {
+
+		if (!t)
+			return;
 
 		if (t[prop])
 			return t[prop];
@@ -1388,6 +1398,11 @@
 
 				let url = t.path || t.config.url;
 
+				if (!url) {
+					WARN(ERR.format('The element "ui-import" does not have defined URL'), t.element[0]);
+					return;
+				}
+
 				if (!T.cache.external[url]) {
 					T.cache.external[url] = true;
 					WARN(ERR.format('Downloading "{0}".').format(url));
@@ -1503,7 +1518,7 @@
 					if (proxy && proxy.ready) {
 						t.parent = proxy.element;
 
-						if (t.path.includes('?')) {
+						if (t.path.includes('?') || /^!?\|/.test(t.path)) {
 							// t.path = t.path.replace(/\?/g, proxy.path);
 							t.path = preparepath(proxy.instance, t.path);
 						}
@@ -1959,7 +1974,7 @@
 			var path = parsepath(name);
 			var fn = t[path.path];
 			if (fn) {
-				path.exec(() => fn(a, b, c, d, e));
+				path.exec(() => fn.call(t, a, b, c, d, e));
 				T.caller = t;
 			} else
 				WARN2(ERR.format('The method "{0}/{1}" not found.'.format(t.name, path.path)));
@@ -2263,6 +2278,10 @@
 					com.init = true;
 					t.init && t.init();
 				}
+
+				// The identifier is needed for CONFIG('#id')
+				if (t.config.$id)
+					t.id = t.config.$id;
 
 				for (let m of T.db.configs) {
 					if (m.check(t)) {
@@ -2894,7 +2913,7 @@
 
 		PROTO.watchconfig = function(key, path) {
 			var t = this;
-			t.watch(t.makepath(path), value => key ? t.reconfigure({ [key]: value }) : t.reconfigure(value), true);
+			t.watch(t.makepath(path), value => key ? t.reconfigure({ [key]: value }) : value && t.reconfigure(value), true);
 		};
 
 		/*
@@ -3206,6 +3225,8 @@
 			}
 
 			if (t.skip) {
+				// A copy, "flags" can be shared by the path
+				flags = Object.assign({}, flags);
 				flags.skip = true;
 				t.skip = false;
 			} else {
@@ -3320,7 +3341,7 @@
 					if (text.includes('!'))
 						cmd.notnull = true;
 					if (text.includes('~'))
-						cmd.visible = true; // not implemented
+						cmd.visible = true;
 					return '';
 				});
 
@@ -3362,7 +3383,8 @@
 						t[cmd.name] = (value || '100').parseInt();
 						break;
 					case 'format':
-						t[cmd.name] = value;
+						// A number of decimals for numbers
+						t[cmd.name] = typeof(value) === 'string' && /^\d+$/.test(value) ? +value : value;
 						break;
 					case 'focus':
 						commands.push(cmd);
@@ -3543,6 +3565,14 @@
 
 				let el = t.target;
 
+				// The "!" prefix
+				if (m.notnull && value == null)
+					continue;
+
+				// The "~" prefix
+				if (m.visible && !render && !t.visible)
+					continue;
+
 				if (m.selector)
 					el = el.find(m.selector);
 
@@ -3580,14 +3610,14 @@
 						break;
 
 					case 'resize':
-						T.setter(el, (value || '*') + '/resize');
+						T.setter(el, (m.value || '*') + '/resize');
 						break;
 					case 'exec':
 					case 'refresh':
 						T.exec(m.value, value, path, el);
 						break;
 					case 'focus':
-						setTimeout(autofocus, 500, el, m.value);
+						setTimeout(autofocus, 500, el, m.value || null);
 						break;
 					case 'required':
 						reconfigure(el, { required: !!val });
@@ -3603,7 +3633,7 @@
 						el.filter(HTML_CONTROLS).prop('disabled', !val);
 						break;
 					case 'attr':
-						el.attr(m.attr, t.format ? val.format(t.format) :  val);
+						el.attr(m.attr, t.format && val != null && val !== '' && val !== false ? val.format(t.format) :  val);
 						break;
 					case 'checked':
 						el.find('input').prop('checked', !!val);
@@ -3727,10 +3757,11 @@
 
 			for (let m of arr) {
 
-				let item = m.replace(/\0/g, ';').replace(/\\:/g, ':');
+				// "\:" is unescaped after the key is split from the value
+				let item = m.replace(/\0/g, ';').replace(/\\:/g, '\u0001');
 				let index = item.indexOf(':');
-				let k = index === -1 ? item : item.substring(0, index).trim().env();
-				let v = index === -1 ? '' : item.substring(index + 1).trim().env();
+				let k = (index === -1 ? item : item.substring(0, index).trim().env()).replace(/\u0001/g, ':');
+				let v = index === -1 ? '' : item.substring(index + 1).trim().env().replace(/\u0001/g, ':');
 
 				if (noconvert !== true) {
 					if (v === 'true' || v === 'false')
@@ -4310,6 +4341,8 @@
 		};
 
 		PROTO.floor = function(decimals) {
+			if (decimals == null)
+				decimals = 0;
 			return Math.floor(this * Math.pow(10, decimals)) / Math.pow(10, decimals);
 		};
 
@@ -4353,7 +4386,8 @@
 							if (tmp.decimalseparator)
 								separatorDecimal = tmp.decimalseparator;
 						}
-					}
+					} else
+						decimals = undefined;
 				} else {
 					tmp = separator;
 					separator = decimals;
@@ -4407,13 +4441,17 @@
 
 		PROTO.add = PROTO.inc = function(value, decimals) {
 
-			var self = this;
+			var self = this.valueOf();
 
 			if (value == null)
 				return self;
 
 			if (typeof(value) === 'number')
 				return self + value;
+
+			// Unsupported values are ignored
+			if (typeof(value) !== 'string' || !value)
+				return self;
 
 			var first = value.charCodeAt(0);
 			var is = false;
@@ -4432,7 +4470,7 @@
 					var val = value.parseFloat();
 					switch (first) {
 						case 42:
-							num = self * ((self / 100) * val);
+							num = self * (val / 100);
 							break;
 						case 43:
 							num = self + ((self / 100) * val);
@@ -4441,7 +4479,10 @@
 							num = self - ((self / 100) * val);
 							break;
 						case 47:
-							num = self / ((self / 100) * val);
+							num = self / (val / 100);
+							break;
+						default:
+							num = self;
 							break;
 					}
 					return decimals !== undefined ? num.floor(decimals) : num;
@@ -4467,7 +4508,8 @@
 					num = self / num;
 					break;
 				default:
-					num = self;
+					// A number without an operator is added
+					num = is ? self : self + num;
 					break;
 			}
 
@@ -4624,8 +4666,7 @@
 
 								break;
 						}
-					} else
-						return 0;
+					}
 				}
 
 				return 0;
@@ -4641,14 +4682,14 @@
 			var self = this;
 
 			// Backward compatibility
-			if (!sort || sort === true) {
-				self.sort(lcomparer);
+			if (sort === false) {
+				self.sort(lcomparer_desc);
 				return self;
 			}
 
 			// Backward compatibility
-			if (sort === false) {
-				self.sort(lcomparer_desc);
+			if (!sort || sort === true) {
+				self.sort(lcomparer);
 				return self;
 			}
 
@@ -4884,9 +4925,9 @@
 			var arr = [];
 			var self = this;
 			for (var i = 0; i < self.length; i++) {
-				arr.push(self[i]);
 				if (arr.length >= count)
 					return arr;
+				arr.push(self[i]);
 			}
 			return arr;
 		};
@@ -5211,10 +5252,9 @@
 		*/
 		W.SET = function(path, value) {
 			path = parsepath(path);
-			path.exec(function() {
-				path.set(T.root, value);
-				path.notify(T.root);
-			});
+			path.set(T.root, value);
+			// The notification executes flags and code lists
+			path.notify(T.root);
 		};
 
 		/*
@@ -5268,34 +5308,36 @@
 			if (shift)
 				path = path.substring(1);
 			path = parsepath(path);
-			path.exec(function() {
-				var model = path.get(T.root);
-				var allocate = false;
 
-				if (model == null) {
-					model = [];
-					allocate = true;
-				}
+			var model = path.get(T.root);
+			var allocate = false;
 
-				if (!(model instanceof Array))
-					model = [model];
-				if (shift)
-					model.unshift(value);
-				else
-					model.push(value);
+			if (model == null) {
+				model = [];
+				allocate = true;
+			}
 
-				if (allocate)
-					path.set(T.root, model);
-				else
-					path.notify(T.root);
-			});
+			if (!(model instanceof Array)) {
+				model = [model];
+				allocate = true;
+			}
+
+			if (shift)
+				model.unshift(value);
+			else
+				model.push(value);
+
+			allocate && path.set(T.root, model);
+
+			// The notification executes flags and code lists
+			path.notify(T.root);
 		};
 
 		W.CLRELOAD = function(name, callback) {
 			var arr = name.split(',').trim();
 			arr.wait(function(name, next) {
 				var cl = DEF.cl[name];
-				if (cl) {
+				if (cl && T.cache.cl[name]) {
 					T.cache.cl[name].reload = true;
 					W.CL(name, () => next());
 				} else
@@ -5550,7 +5592,7 @@
 				return true;
 			if (el instanceof jQuery)
 				el = el[0];
-			return el.parentNode && el.parentNode.tagName === 'BODY' ? false : W.isIE ? (!el.offsetWidth && !el.offsetHeight) : !el.offsetParent;
+			return el.parentNode && el.parentNode.tagName === 'BODY' ? W.getComputedStyle(el).display === 'none' : W.isIE ? (!el.offsetWidth && !el.offsetHeight) : !el.offsetParent;
 		};
 
 		/*
@@ -5658,8 +5700,8 @@
 			}
 
 			if (value !== undefined) {
-				T.events.env && T.emit('env', name, value);
 				DEF.env[name] = value;
+				T.events.env && T.emit('env', name, value);
 				// T.notify(T.root, 'DEF.env.' + name);
 				return value;
 			}
@@ -5853,7 +5895,7 @@
 				case 'boolean':
 					return obj;
 				case 'string':
-					return path ? obj : CLONE(GET(obj));
+					return path ? obj : CLONE(GET(obj), true);
 			}
 
 			if (obj == null)
@@ -7189,11 +7231,11 @@
 			var d = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
 			d.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg">' + tag + '</svg>';
 			var f = document.createDocumentFragment();
+			var nodes = [];
 			while (d.firstChild.firstChild)
-				f.appendChild(d.firstChild.firstChild);
-			f = $(f);
+				nodes.push(f.appendChild(d.firstChild.firstChild));
 			this.append(f);
-			return f;
+			return $(nodes);
 		};
 
 		$.fn.psvg = function(tag) {
@@ -7207,12 +7249,12 @@
 			var d = document.createElementNS('http://www.w3.org/1999/xhtml', 'div');
 			d.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg">' + tag + '</svg>';
 			var f = document.createDocumentFragment();
+			var nodes = [];
 			while (d.firstChild.firstChild)
-				f.appendChild(d.firstChild.firstChild);
+				nodes.push(f.appendChild(d.firstChild.firstChild));
 
-			f = $(f);
 			this.prepend(f);
-			return f;
+			return $(nodes);
 		};
 
 		$.fn.CMD = function(name, a, b, c, d) {
@@ -7243,7 +7285,7 @@
 				if (component) {
 					name = name.substring(1);
 					let fn = component[name];
-					fn && fn(component, a, b, c, d);
+					typeof(fn) === 'function' && fn.call(component, a, b, c, d);
 				}
 			} else if (ch === '?' || ch === '|') {
 				let plugin = this.plugin();
@@ -7529,14 +7571,23 @@
 		DEF.onstorageread(function(data) {
 
 			var cache = data || {};
+
+			// Items written before the storage was read
+			var pending = T.cache.storage;
 			T.cache.storage = cache;
 
 			var pref = CACHE('PREF');
 			if (pref) {
 				for (let key in pref) {
-					if (key !== 'set')
+					if (key !== 'set' && !(key in PREF))
 						PREF[key] = pref[key];
 				}
+			}
+
+			var resave = false;
+			for (let key in pending) {
+				cache[key] = pending[key];
+				resave = true;
 			}
 
 			// Restores values registered via CACHEPATH() before the storage was loaded
@@ -7545,6 +7596,7 @@
 
 			T.ready = true;
 			T.loaded = true;
+			resave && savestorage();
 
 			$W.on('resize', function() {
 				var resize = T.cache.resize;

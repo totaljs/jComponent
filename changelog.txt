@@ -1,4 +1,52 @@
 ========================
+20.016
+========================
+
+- fixed creating of objects for array items in `SET()` and `MAIN.set()`, e.g. `SET('list[1].name', value)`
+- fixed double emitting of custom flags in `SET()` and `PUSH()`
+- fixed `PUSH()` notification for a missing path
+- fixed `PUSH()` to a value that is not an array (the value was lost)
+- fixed the plugin shortcut `|key` in paths of elements
+- fixed `<ui-bind>` command `format` for numbers, e.g. `format:2`
+- fixed `<ui-bind>` command prefixes `!` (skips `null` values) and `~` (runs only when the element is visible)
+- fixed `<ui-bind>` command `resize`
+- fixed `<ui-bind>` command `attr` with `format` for an empty value
+- fixed `<ui-bind>` command `focus` without a selector
+- fixed `SETTER('.path/method')` for components without a path
+- fixed `CONFIG('#id', config)` for new components with the `$id` config key
+- fixed `<ui-import>` without a URL
+- fixed the `expire` argument of the `CLINIT()` method
+- fixed `CLONE(path)` for a path with a string value
+- fixed `HIDDEN()` for direct children of the `body` element
+- fixed `CLRELOAD()` for code lists not registered via `CLINIT()`
+- fixed `CACHE()` and `PREF.set()` called before the storage is read (stored data were overwritten)
+- fixed `CLASS` keyword in CSS of components with `DEF.prefixcsscomponents`
+- fixed the `env` event in `ENV(name, value)`, the value is stored before the event is emitted
+- fixed the config key `=` for an empty path
+- fixed `flags.skip` left on the path flags after `component.rewrite()`
+- fixed `plugin.exec()`, the method is executed with `this` as the plugin
+- fixed notifications `@modified`, `@change`, `@reset` and `@default` for components without a path
+- fixed escaping of `\:` in keys in `String.prototype.parseConfig()`
+- fixed `Number.prototype.floor()` without decimals
+- fixed `Number.prototype.format('[key]')` for an undefined environment variable
+- fixed `Number.prototype.add()` with `*` and `/` percentages, e.g. `*10%`
+- fixed `Number.prototype.add()` with a number without an operator, e.g. `add('10')`, and with unsupported values (it always returns a number)
+- fixed `Array.prototype.quicksort(false)`
+- fixed `Array.prototype.quicksort()` when the first field is empty
+- fixed `Array.prototype.take(0)`
+- fixed `$(element).EXEC('@method')`, the method is executed with `this` as the component
+- fixed returning of inserted elements in `$(element).asvg()` and `$(element).psvg()`
+- fixed `$(element).component()`, `plugin()`, `binder()` and `scrollbar()` for an empty selection
+- fixed Tangular keyword `model`, e.g. `{{ model.name }}` and `{{ foreach n in model }}`
+- fixed Tangular strings with a dot, e.g. `{{ "12.5" | format(2) }}`
+- fixed Tangular helper `format` for numbers without arguments (it dropped the decimals)
+- fixed wildcard routes, e.g. `ROUTE('/docs/*')` matches more segments and it does not emit `404`
+- fixed repeated query parameters in `NAV.query`, they are an array
+- fixed relative redirects with a path, e.g. `REDIRECT('../foo/')` and `REDIRECT('./foo/')`
+- fixed `REDIRECT('/url/ @nohistory')`, it navigates without a new history entry
+- fixed `REDIRECT('#hash')` with `NAV.hashtags`, the route runs once
+
+========================
 20.015
 ========================
 
