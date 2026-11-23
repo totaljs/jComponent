@@ -1,4 +1,32 @@
 ========================
+20.016
+========================
+
+- fixed double emitting of custom flags in `SET()`, `PUSH()` and in `AJAX()` with a path as a callback
+- fixed creating of objects for array items in `SET()`, e.g. `SET('list[1].name', value)`
+- fixed `PUSH()` to a value that is not an array (the pushed value was lost)
+- fixed missing notification in `PUSH()` for a non-existent path
+- fixed `flags.skip` which stayed in the flags of a cached path after `component.rewrite()`
+- fixed `Array.prototype.take(0)`
+- fixed `<ui-bind>` command `format` with a number of decimals, e.g. `format:2`
+- fixed `<ui-bind>` command `format` for values without the `format` method (`Boolean`, `Object`)
+- fixed wildcard routes, e.g. `ROUTE('/docs/*')` matches `/docs/` and all nested URL addresses
+- fixed priority of routes, a fixed route `ROUTE('/docs/intro/')` has a higher priority than a wildcard route `ROUTE('/docs/*')`
+- fixed emitting of `404` when a wildcard route is found
+- updated Tangular to `v5.0.6`
+	- __changed__: the apostrophe `'` is encoded as `&#39;` (it affects `String.prototype.encode()` too)
+	- __changed__: `Math`, `JSON`, `RegExp`, `parseInt`, `parseFloat`, `isNaN`, `isFinite`, `NaN`, `Infinity`, `encodeURIComponent` and `decodeURIComponent` can't be used as names of model fields
+	- improved performance of `Tangular.render()` (compiled templates are cached) and of the `encode` helper
+	- fixed variables in expressions with a path, e.g. `{{ a.b + c }}` and `{{ if a.b > c.d }}`
+	- fixed built-in objects and keywords, e.g. `{{ Math.round(price) }}` and `{{ if typeof(value) === 'string' }}`
+	- fixed strings with a dot or with the `|` character, e.g. `{{ "12.5" | helper }}` and `{{ value | helper('a|b') }}`
+	- fixed `$index` after a nested loop
+	- fixed rewriting of a model field by a loop item with the same name
+	- fixed possible collisions of internal names in nested loops
+	- fixed custom tags with special characters, e.g. `Tangular.compile(template, '[[', ']]')`
+	- fixed a compiled template executed with the `null` model
+
+========================
 20.015
 ========================
 

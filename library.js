@@ -162,7 +162,7 @@
 		} catch {}
 	};
 
-	T.version = 20.015;
+	T.version = 20.016;
 	T.is20 = true;
 	T.ready = false;
 	T.root = W;
@@ -294,7 +294,7 @@
 
 		var arr = splitpath(path);
 		var builder = [];
-		var regarr = /\[\d+\]|\[\]$/;
+		var regarr = /\[\d+\]$|\[\]$/;
 
 		for (var i = 0; i < arr.length - 1; i++) {
 			var type = arr[i + 1] ? (regarr.test(arr[i + 1]) ? '[]' : '{}') : '{}';
@@ -760,12 +760,14 @@
 		@Method: jComponent.notify(scope, path, [onlyflags]); #scope {Object}; #path {String}; #onlyflags {Boolean} optional default "false";
 		The method notifies all watchers based on a `path` ot the defined `scope`.
 	*/
-	T.notify = function(scope, path, onlyflags) {
+	T.notify = function(scope, path, onlyflags, noexec) {
 
 		// @onlyflags = true notifies components about changed state
+		// @noexec = true skips flags and code lists (they have been executed by the caller, e.g. SET())
 
 		path = path instanceof T.Path ? path : parsepath(path);
-		path.exec(function() {
+
+		var fn = function() {
 
 			// Component watchers
 			for (let m of T.components) {
@@ -820,8 +822,12 @@
 					m.fn(m.path.get(scope), path.flags, path);
 			}
 
-		});
+		};
 
+		if (noexec)
+			fn();
+		else
+			path.exec(fn);
 	};
 
 	T.process = function(scope, value, callback) {
@@ -839,7 +845,8 @@
 		if (callback instanceof T.Path) {
 			callback.exec(function() {
 				callback.set(scope, value);
-				callback.notify(scope);
+				// Flags and code lists have been executed above
+				T.notify(scope, callback, false, true);
 			});
 		}
 
@@ -3206,6 +3213,8 @@
 			}
 
 			if (t.skip) {
+				// A copy, because "flags" can be shared by a cached path
+				flags = Object.assign({}, flags);
 				flags.skip = true;
 				t.skip = false;
 			} else {
@@ -3263,6 +3272,12 @@
 					m.$uiconfig.push(config);
 				}
 			}
+		}
+
+		// Values without the "format" method (Boolean, Object) are only converted to a string
+		function formatvalue(t, val) {
+			// "t.format" can be 0 (a number of decimals)
+			return t.format != null && t.format !== '' && typeof(val.format) === 'function' ? val.format(t.format) : val.toString();
 		}
 
 		var PROTO = T.Binder.prototype;
@@ -3362,7 +3377,8 @@
 						t[cmd.name] = (value || '100').parseInt();
 						break;
 					case 'format':
-						t[cmd.name] = value;
+						// The config of binders isn't converted, so "format:2" must be a number of decimals
+						t[cmd.name] = typeof(value) === 'string' && (/^\d+$/).test(value) ? +value : value;
 						break;
 					case 'focus':
 						commands.push(cmd);
@@ -3603,7 +3619,7 @@
 						el.filter(HTML_CONTROLS).prop('disabled', !val);
 						break;
 					case 'attr':
-						el.attr(m.attr, t.format ? val.format(t.format) :  val);
+						el.attr(m.attr, val != null && val !== '' && val !== false ? formatvalue(t, val) : val);
 						break;
 					case 'checked':
 						el.find('input').prop('checked', !!val);
@@ -3626,19 +3642,19 @@
 						break;
 					case 'html':
 						if (render || t.visible)
-							el.html(val == null || val === '' || val === false ? t.empty : (t.format ? val.format(t.format) : val.toString()));
+							el.html(val == null || val === '' || val === false ? t.empty : formatvalue(t, val));
 						break;
 					case 'text':
 						if (render || t.visible)
-							el.text(val == null || val === '' || val === false ? t.empty : (t.format ? val.format(t.format) : val.toString()));
+							el.text(val == null || val === '' || val === false ? t.empty : formatvalue(t, val));
 						break;
 					case 'value':
-						el.val(val == null || val === '' || val === false ? t.empty : (t.format ? val.format(t.format) : val.toString()));
+						el.val(val == null || val === '' || val === false ? t.empty : formatvalue(t, val));
 						break;
 					case 'title':
 					case 'href':
 					case 'src':
-						el.attr(m.name, val == null || val === '' || val === false ? t.empty : (t.format ? val.format(t.format) : val.toString()));
+						el.attr(m.name, val == null || val === '' || val === false ? t.empty : formatvalue(t, val));
 						break;
 				}
 
@@ -4884,9 +4900,9 @@
 			var arr = [];
 			var self = this;
 			for (var i = 0; i < self.length; i++) {
-				arr.push(self[i]);
 				if (arr.length >= count)
 					return arr;
+				arr.push(self[i]);
 			}
 			return arr;
 		};
@@ -5213,7 +5229,8 @@
 			path = parsepath(path);
 			path.exec(function() {
 				path.set(T.root, value);
-				path.notify(T.root);
+				// Flags and code lists have been executed above
+				T.notify(T.root, path, false, true);
 			});
 		};
 
@@ -5277,17 +5294,21 @@
 					allocate = true;
 				}
 
-				if (!(model instanceof Array))
+				// A value that is not an array is replaced with a new array
+				if (!(model instanceof Array)) {
 					model = [model];
+					allocate = true;
+				}
+
 				if (shift)
 					model.unshift(value);
 				else
 					model.push(value);
 
-				if (allocate)
-					path.set(T.root, model);
-				else
-					path.notify(T.root);
+				allocate && path.set(T.root, model);
+
+				// Flags and code lists have been executed above
+				T.notify(T.root, path, false, true);
 			});
 		};
 

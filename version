@@ -1,0 +1,18 @@
+20.016
+
+===================================
+Version: 20.016
+===================================
+
+- fixed double emitting of custom flags in `SET()`, `PUSH()` and in `AJAX()` with a path as a callback
+- fixed creating of objects for array items in `SET()`, e.g. `SET('list[1].name', value)`
+- fixed `PUSH()` to a value that is not an array (the pushed value was lost)
+- fixed missing notification in `PUSH()` for a non-existent path
+- fixed `flags.skip` which stayed in the flags of a cached path after `component.rewrite()`
+- fixed `Array.prototype.take(0)`
+- fixed `<ui-bind>` command `format` with a number of decimals, e.g. `format:2`
+- fixed `<ui-bind>` command `format` for values without the `format` method (`Boolean`, `Object`)
+- fixed wildcard routes, e.g. `ROUTE('/docs/*')` matches `/docs/` and all nested URL addresses
+- fixed priority of routes, a fixed route `ROUTE('/docs/intro/')` has a higher priority than a wildcard route `ROUTE('/docs/*')`
+- fixed emitting of `404` when a wildcard route is found
+- updated Tangular to `v5.0.6`
